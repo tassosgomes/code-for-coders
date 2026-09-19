@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "skills": {
+    "dotnet": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/dotnet/SKILL.md",
+      "computedHash": "de8ffb00a5656a93eb58d26653bd56c371962b0ba8418aaa8ae4898a5280bf48"
+    },
+    "react": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react/SKILL.md",
+      "computedHash": "e1e14c6c4914349cbd0c3d9fd270284da129572933a90111d400c6bcbb003183"
+    },
+    "tsg-flow-architecture-baseline": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-architecture-baseline/SKILL.md",
+      "computedHash": "39a28886ee6951e73d3b19dc6691f9bcd94a70dc7ad3c4175ebcae90526fc57d"
+    },
+    "tsg-flow-capability-backlog": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-capability-backlog/SKILL.md",
+      "computedHash": "3e36d3a5842bef65dbe8600113809552b8b36f57bcab3da61bcce73d5e7479ea"
+    },
+    "tsg-flow-contract-creator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-contract-creator/SKILL.md",
+      "computedHash": "f2551eadc76bbf4ea9c2ce2b0269bc6f6039b87e4e5028a5a9b7736ab3cd975f"
+    },
+    "tsg-flow-domain-creator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-domain-creator/SKILL.md",
+      "computedHash": "9edaf51d36bfc6e95721b9a0ad9b648efbb3841e391a0b8927bbe5f694822894"
+    },
+    "tsg-flow-domain-decomposer": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-domain-decomposer/SKILL.md",
+      "computedHash": "d8d0e9d3b98d5dd70308b88eb6afddef9c26f9a9caf01ac4a7da31603a0c2ce4"
+    },
+    "tsg-flow-implementer": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-implementer/SKILL.md",
+      "computedHash": "881b963ddc3d05a0cfb5a46702a48c73cfb70aa4d98ed5dfe5c3eaccc189798f"
+    },
+    "tsg-flow-integrator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-integrator/SKILL.md",
+      "computedHash": "d5a82fe422fd193f9b66f45acc240d3b0f47db47dc90daf86c23dfea1f87832b"
+    },
+    "tsg-flow-orchestrator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-orchestrator/SKILL.md",
+      "computedHash": "3a9820aa2fa06497d095426f694dc264b33ff09b6dbfb947ad7fef280acdfedc"
+    },
+    "tsg-flow-prd-creator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-prd-creator/SKILL.md",
+      "computedHash": "3b12d75d678255b34bc012b3468eb7ac471bec2db3db0f5fcec53ef0f9bd5851"
+    },
+    "tsg-flow-task-creator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-task-creator/SKILL.md",
+      "computedHash": "751f7969ac6814ab2339f495e8b4b701eee9c6589f9629bde324f635a293815e"
+    },
+    "tsg-flow-techspec-creator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-techspec-creator/SKILL.md",
+      "computedHash": "2c3c88b38968edbf0083385cda3c1cc547d5d40d6dcac3374559a945651ff1f2"
+    },
+    "tsg-flow-validator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-validator/SKILL.md",
+      "computedHash": "5d21c5a2f05fb714cb13c5d50d740aab5311aaa7755235ac0b6b17d4ca0332dd"
+    },
+    "tsg-flow-vision-creator": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tsg-flow-vision-creator/SKILL.md",
+      "computedHash": "74de8fe2b59eac642bae2e193755fe764850fbb40735548fa729e8248ce71a3f"
+    }
+  }
+}
