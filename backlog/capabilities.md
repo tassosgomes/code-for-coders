@@ -1,10 +1,10 @@
 ---
 tsg_artifact: capability-backlog
 product: code-4-coders
-version: 1.0
+version: 1.1
 status: in_review
 updated: 2026-09-20
-sources: vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline.md@1.0
+sources: vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline.md@1.1
 ---
 
 # Backlog de Capacidades
@@ -14,7 +14,7 @@ sources: vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline
 > unidades de valor que podem originar um PRD independente. Não decide feature, tela, endpoint ou tabela:
 > isso é escopo do PRD e da TechSpec.
 
-**Versão:** 1.0 (em revisão) · **Data:** 2026-09-20 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
+**Versão:** 1.1 (em revisão) · **Data:** 2026-09-20 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
 
 Cada capacidade tem **ID estável** (`CAP-001`…). Domain Docs e PRDs referenciam o ID, nunca o título.
 IDs são preservados em atualizações deste documento; capacidade descartada fica registrada como
@@ -29,12 +29,16 @@ IDs são preservados em atualizações deste documento; capacidade descartada fi
 A visão define a Fase 1 como "vender e assistir fim a fim". Isso torna críticos **7 domínios** —
 Identidade e Acesso, Catálogo e Oferta, Conteúdo e Currículo, Entrega de Mídia e Proteção, Matrícula e
 Direito de Acesso, Vendas e Checkout, Aprendizagem e Progresso — mais **Auditoria e Conformidade** em
-versão mínima, conforme o alerta de escopo do Domain Map e a topologia de 5 serviços do baseline (BA02).
+versão mínima, mais **Notificação** em versão transacional mínima — conforme o alerta de escopo do
+Domain Map e o agrupamento inicial de 6 serviços do baseline (BA02).
 
-Há uma **divergência proposta**: a visão coloca Notificação na Fase 2, mas `CAP-001` (conta e
-autenticação) não fecha ciclo de valor sem e-mail — confirmação de conta e recuperação de senha são
-parte do produto mínimo, não melhoria. Propõe-se antecipar `CAP-026` ao MVP **em versão transacional
-mínima** (um canal, sem preferência, sem campanha). A decisão é do negócio; está registrada em Riscos (R5).
+Houve uma **divergência com a visão, resolvida em 2026-09-20**: a visão coloca Notificação (`C14`) na
+Fase 2, mas `CAP-001` (conta e autenticação) não fecha ciclo de valor sem e-mail — confirmação de conta
+e recuperação de senha são produto mínimo, não melhoria, e `CAP-011` não comprova compra sem ele.
+`CAP-026` foi antecipada ao MVP **em versão transacional mínima** (um canal, sem preferência, sem
+campanha) e `notification` passou ao grupo inicial do baseline (BA02). A alternativa de hospedá-la como
+módulo dentro de `identity` foi descartada: `CAP-011` também precisa de e-mail no MVP e forçaria
+`commerce → identity`, junta que o Domain Map não permite. Histórico em Riscos (R5).
 
 ### 2. Fluxos centrais de negócio
 
@@ -831,3 +835,4 @@ Dois **ciclos aparentes** foram resolvidos por direção de dependência, não p
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-20 | Tasso Gomes | Backlog inicial: 31 capacidades em 16 domínios, 11 no MVP. Em revisão — não integrado |
+| 1.1 | 2026-09-20 | Tasso Gomes | Revalidado contra `architecture-baseline.md` v1.1: a divergência de Notificação deixa de ser proposta e passa a decisão registrada, e a citação a BA02 acompanha o agrupamento inicial de 6 serviços. Nenhuma capacidade, dependência ou fase foi alterada |

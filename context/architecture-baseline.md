@@ -1,7 +1,7 @@
 ---
 tsg_artifact: architecture-baseline
 product: code-4-coders
-version: 1.0
+version: 1.1
 status: approved
 updated: 2026-09-20
 sources: vision.md@1.1, context/domain-map.md@1.1
@@ -14,7 +14,7 @@ sources: vision.md@1.1, context/domain-map.md@1.1
 > nenhuma feature, tela, endpoint ou tabela é decidida aqui. TechSpecs consomem este documento; PRDs e
 > backlog herdam as restrições aplicáveis.
 
-**Versão:** 1.0 · **Data:** 2026-09-20 · **Origem:** `vision.md` v1.1, `context/domain-map.md` v1.1 · **Produto:** code-4-coders
+**Versão:** 1.1 · **Data:** 2026-09-20 · **Origem:** `vision.md` v1.1, `context/domain-map.md` v1.1 · **Produto:** code-4-coders
 **Padrões herdados:** skills `dotnet` (.NET 10 / ASP.NET Core) e `react` (React + Vite + TS) — são a
 decisão de stack e de convenção do time; este baseline **não as repete**, só define o que elas não cobrem:
 a fronteira entre serviços.
@@ -71,14 +71,15 @@ O que isso exige: a fronteira de módulo é tratada com a mesma severidade da fr
 não é pasta — é contrato. Compartilhar tabela entre módulos "porque estão no mesmo processo" é a única
 forma de perder essa opção, e é proibido.
 
-### Topologia da Fase 1
+### Topologia inicial
 
 ```text
   student-spa ─────▶ bff-student ──┬──▶ identity
   (React/Vite)       (YARP + BFF)  ├──▶ commerce
                                    ├──▶ learning
   admin-spa ───────▶ bff-admin ────┼──▶ media
-  (React/Vite)                     └──▶ (audit: só leitura)
+  (React/Vite)                     ├──▶ notification
+                                   └──▶ (audit: só leitura)
 
                      validação pública de certificado ──▶ rota anônima no bff-student (Fase 3)
 
@@ -87,6 +88,7 @@ forma de perder essa opção, e é proibido.
   learning   │ Content · Progress                     ← 2 módulos, 2 schemas
   media      │ Entrega de Mídia e Proteção
   audit      │ Auditoria e Conformidade (mínimo)      ← append-only, consumidor de eventos
+  notification │ Notificação (mínimo)                ← e-mail transacional, um canal
 
   RabbitMQ (topic) ── eventos de integração entre serviços
   PostgreSQL ─────── um banco por serviço
@@ -116,24 +118,30 @@ de banco de quem dá reembolso, não é auditoria. É o único caso em que a afi
 propriedade estrutural. Na Fase 1 ele é um consumidor de eventos com escrita append-only e leitura
 restrita ao backoffice.
 
-### Roadmap de serviços (proposta; revisada quando a fase chegar)
+### Agrupamento de domínios em unidades de deploy
 
-| Fase | Serviço | Domínios | Por quê |
+> Este baseline decide **agrupamento** e **gatilho de extração**, não *quando* cada unidade nasce.
+> Fase é consequência do sequenciamento das capacidades, e este documento é escrito antes do backlog
+> existir — sem enxergar dependência entre capacidades, qualquer fase atribuída aqui contradiz o
+> backlog na primeira dependência cruzada. A ordem em que cada unidade aparece deriva de
+> `backlog/capabilities.md`.
+
+| Grupo | Serviço | Domínios | Por quê |
 |---|---|---|---|
-| 1 | `identity` | Identidade e Acesso | Isolamento de segurança |
-| 1 | `commerce` | Catálogo e Oferta · Vendas e Checkout · Matrícula e Direito de Acesso | Mesma transação de negócio |
-| 1 | `learning` | Conteúdo e Currículo · Aprendizagem e Progresso | Currículo e percurso mudam por decisão pedagógica |
-| 1 | `media` | Entrega de Mídia e Proteção | CDN, custo de banda e escala próprios; estratégia de proteção volátil |
-| 1 | `audit` | Auditoria e Conformidade | Independência de quem pratica o ato |
-| 2 | `billing` | Cobrança e Assinatura · **Fiscal** (módulo) | Maior complexidade de estado no tempo; Fiscal é módulo com consumo assíncrono, o que já garante DE06 (falha fiscal não trava venda) |
-| 2 | `notification` | Notificação | Dono único do consentimento LGPD; integra provedores externos |
-| 3 | `certification` | Certificação | Único consumidor externo **não autenticado**: disponibilidade e imutabilidade de outra natureza |
-| 3 | — | Avaliação | Módulo `Assessment` em `learning`; extrai quando a correção dissertativa por professor virar fluxo próprio |
-| 4 | `community` | Comunidade e Engajamento | Volume de escrita de aluno e moderação |
-| 4 | `support` | Atendimento e Suporte | Atores, permissões e prazos distintos de Comunidade (exigência da visão) |
-| 5 | `analytics` | Inteligência de Negócio | Consumidor derivado; nunca escreve, nunca é consultado |
+| inicial | `identity` | Identidade e Acesso | Isolamento de segurança |
+| inicial | `commerce` | Catálogo e Oferta · Vendas e Checkout · Matrícula e Direito de Acesso | Mesma transação de negócio |
+| inicial | `learning` | Conteúdo e Currículo · Aprendizagem e Progresso | Currículo e percurso mudam por decisão pedagógica |
+| inicial | `media` | Entrega de Mídia e Proteção | CDN, custo de banda e escala próprios; estratégia de proteção volátil |
+| inicial | `audit` | Auditoria e Conformidade | Independência de quem pratica o ato |
+| posterior | `billing` | Cobrança e Assinatura · **Fiscal** (módulo) | Maior complexidade de estado no tempo; Fiscal é módulo com consumo assíncrono, o que já garante DE06 (falha fiscal não trava venda) |
+| inicial | `notification` | Notificação | Dono único do consentimento LGPD; integra provedores externos. No grupo inicial porque `CAP-001` e `CAP-011` não fecham ciclo sem e-mail transacional — decisão de 2026-09-20 |
+| posterior | `certification` | Certificação | Único consumidor externo **não autenticado**: disponibilidade e imutabilidade de outra natureza |
+| posterior | — | Avaliação | Módulo `Assessment` em `learning`; extrai quando a correção dissertativa por professor virar fluxo próprio |
+| posterior | `community` | Comunidade e Engajamento | Volume de escrita de aluno e moderação |
+| posterior | `support` | Atendimento e Suporte | Atores, permissões e prazos distintos de Comunidade (exigência da visão) |
+| posterior | `analytics` | Inteligência de Negócio | Consumidor derivado; nunca escreve, nunca é consultado |
 
-Fim do roadmap: **~11 serviços para 16 domínios.** Nenhum domínio do mapa desaparece; alguns vivem como
+No fim da evolução: **~11 serviços para 16 domínios.** Nenhum domínio do mapa desaparece; alguns vivem como
 módulo.
 
 ### Critério de extração de módulo para serviço
@@ -471,7 +479,7 @@ Guardrail que depende de alguém lembrar não é guardrail. A coluna **Mecanismo
 | # | Decisão | Racional | Origem |
 |---|---|---|---|
 | BA01 | Microsserviços com serviço internamente modular (módulo = domínio, schema por módulo) | Determinação top-down de microsserviços, com custo operacional compatível com 2 engenheiros e extração posterior sem redesenho | Decisão do time + risco de escopo da visão |
-| BA02 | Fase 1 com 5 serviços + 2 BFFs | Agrupamento por afinidade de mudança e de ritmo de deploy | Decisão do time |
+| BA02 | Grupo inicial com 6 serviços + 2 BFFs | Agrupamento por afinidade de mudança e de ritmo de deploy. `notification` entra no grupo inicial por dependência de `CAP-001` e `CAP-011`; a ordem de nascimento é do backlog, não deste baseline | Decisão do time (2026-09-20) |
 | BA03 | `audit` é serviço próprio mesmo mínimo | Auditoria precisa estar fora do alcance de quem pratica o ato | DE13 |
 | BA04 | `Entitlement` é módulo com schema e contrato próprios, primeiro candidato a extração | Nó mais consultado do sistema; risco DE01 de virar flag de checkout | DE01 |
 | BA05 | BFF por audiência (aluno e backoffice), SPA nunca fala com serviço | Superfícies com permissão, risco e ritmo diferentes; topologia não vaza para o frontend | Decisão do time |
@@ -516,3 +524,4 @@ Revisar este documento apenas quando uma premissa estrutural mudar.*
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-20 | Tasso Gomes | Baseline inicial (BA01–BA16, G01–G26) sobre `vision.md` v1.1 e `context/domain-map.md` v1.1 |
+| 1.1 | 2026-09-20 | Tasso Gomes | O roadmap de serviços por fase vira agrupamento em unidades de deploy: o baseline decide agrupamento e gatilho de extração, não sequência — ele é escrito antes do backlog e não enxerga dependência entre capacidades. `notification` passa ao grupo inicial (BA02: 6 serviços), porque `CAP-001` e `CAP-011` não fecham ciclo sem e-mail transacional |

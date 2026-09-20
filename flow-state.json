@@ -189,19 +189,10 @@
   ],
   "next_actions": [
     {
-      "id": "NA0",
-      "what": "Corrigir context/architecture-baseline.md: remover a coluna Fase do 'Roadmap de servicos' e manter so o agrupamento (quais dominios em qual unidade de deploy) com o gatilho de extracao. A fase de cada servico passa a ser derivada do backlog, que e o dono do sequenciamento. Remove a fonte do conflito de OD1 em vez de corrigir uma linha dele.",
-      "skill": "tsg-flow-architecture-baseline",
-      "blocked_by": [],
-      "why": "regra nova do tsg-flow-architecture-baseline: o baseline agrupa, nao sequencia"
-    },
-    {
       "id": "NA1",
-      "what": "Aprovar backlog/capabilities.md e integrar (hoje in_review, nao commitado)",
+      "what": "Aprovar backlog/capabilities.md v1.1 e integrar (hoje in_review). Na regeneracao, acrescentar o rastro de origem na visao (CAP-XXX <- CNN), que hoje nao existe",
       "skill": "tsg-flow-capability-backlog",
-      "blocked_by": [
-        "NA0"
-      ]
+      "blocked_by": []
     },
     {
       "id": "NA2",
@@ -315,6 +306,14 @@
       "decided_at": "2026-09-20",
       "owner": "negocio",
       "decision": "Sim. `notification` como servico proprio antecipado para a Fase 1, entregue em fatia minima (e-mail transacional, um canal, sem preferencia, sem consentimento, sem campanha). Modulo dentro de `identity` foi considerado e descartado: CAP-011 tambem precisa de e-mail no MVP e forcaria commerce -> identity, junta que o Domain Map proibe."
+    },
+    {
+      "id": "OD6",
+      "ref": "architecture-baseline.md, Agrupamento de dominios",
+      "what": "Onde mora a decisao de quando cada servico nasce",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "O baseline decide agrupamento e gatilho de extracao; a ordem de nascimento deriva do backlog. Roadmap de servicos por fase removido: o baseline e escrito antes do backlog e nao enxerga dependencia entre capacidades."
     }
   ]
 }
