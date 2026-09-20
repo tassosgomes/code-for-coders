@@ -259,7 +259,7 @@
     "services": [
       {
         "name": "identity",
-        "path": null,
+        "path": "src/identity",
         "phase": 1
       },
       {

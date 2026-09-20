@@ -1,0 +1,17 @@
+.git
+.github
+.agents
+.codex
+.vs
+.idea
+**/bin
+**/obj
+**/TestResults
+docs
+backlog
+context
+domains
+skills-lock.json
+flow-state.json
+vision.md
+

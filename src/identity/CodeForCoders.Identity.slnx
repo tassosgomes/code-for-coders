@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.Identity.Api/CodeForCoders.Identity.Api.csproj" />
+    <Project Path="src/CodeForCoders.Identity.Application/CodeForCoders.Identity.Application.csproj" />
+    <Project Path="src/CodeForCoders.Identity.Contracts/CodeForCoders.Identity.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.Identity.Domain/CodeForCoders.Identity.Domain.csproj" />
+    <Project Path="src/CodeForCoders.Identity.Infra.Data/CodeForCoders.Identity.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.Identity.Infra.Messaging/CodeForCoders.Identity.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.Identity.ArchitectureTests/CodeForCoders.Identity.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.Identity.EndToEndTests/CodeForCoders.Identity.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.Identity.Tests.Common/CodeForCoders.Identity.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.Identity.UnitTests/CodeForCoders.Identity.UnitTests.csproj" />
+  </Folder>
+</Solution>

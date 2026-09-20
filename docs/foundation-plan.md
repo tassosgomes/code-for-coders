@@ -4,7 +4,7 @@
 > A Fase 0 corre **fora do fluxo TSG**, por decisão registrada em `flow-state.json` (`foundation.nota`).
 > Critério de fechamento: hello-world de cada serviço da Fase 1 passando pela esteira.
 
-**Status:** não iniciada · **Criado em:** 2026-09-20
+**Status:** em andamento · **Criado em:** 2026-09-20
 
 ## Context
 
@@ -114,44 +114,44 @@ Abrir **14 issues**. Três são bloqueantes e devem ser implementadas antes da E
 
 ### 1.1 Raiz do monorepo
 
-- [ ] Copiar de `.agents/skills/dotnet/assets/` para a raiz: `global.json`, `Directory.Build.props`,
+- [x] Copiar de `.agents/skills/dotnet/assets/` para a raiz: `global.json`, `Directory.Build.props`,
       `Directory.Build.targets`, `Directory.Packages.props`, `.editorconfig`, `BannedSymbols.txt`
       (`Directory.Build.props` referencia `$(MSBuildThisFileDirectory)BannedSymbols.txt`, então os dois
       ficam juntos na raiz) + `.dockerignore`
-- [ ] `docker-compose.yml` com Postgres, RabbitMQ (com DLX), Valkey e coletor OTLP — **com as mesmas tags
+- [x] `docker-compose.yml` com Postgres, RabbitMQ (com DLX), Valkey e coletor OTLP — **com as mesmas tags
       usadas pelos Testcontainers**, conforme `.agents/skills/dotnet/references/operations.md`
-- [ ] `otel-collector-config.yaml`
+- [x] `otel-collector-config.yaml`
 
 ### 1.2 `src/identity/` — solution .NET 10 em Clean Architecture
 
-- [ ] Camadas `Domain`, `Application`, `Infra.Data.EF`, `Infra.Messaging`, `Api` + `Contracts` como
+- [x] Camadas `Domain`, `Application`, `Infra.Data.EF`, `Infra.Messaging`, `Api` + `Contracts` como
       projeto próprio (futuro pacote da issue #8); `ProjectName` → `CodeForCoders.Identity`
-- [ ] Módulo único `IdentityAccess` com schema próprio
-- [ ] `tenant_id` em toda entidade + global query filter (BA10, G07)
-- [ ] Outbox; caso de uso nunca publica no broker (G06)
-- [ ] `Program.cs`: OTLP com `service.name`, `/health/live` só `self`, `/health/ready` com Postgres,
+- [x] Módulo único `IdentityAccess` com schema próprio
+- [x] `tenant_id` em toda entidade + global query filter (BA10, G07)
+- [x] Outbox; caso de uso nunca publica no broker (G06)
+- [x] `Program.cs`: OTLP com `service.name`, `/health/live` só `self`, `/health/ready` com Postgres,
       RabbitMQ e Valkey, `ProblemDetails` com `traceId`, `AddStandardResilienceHandler`
-- [ ] **Hello-world que exercita mecanismo, não domínio** (o baseline proíbe decidir feature aqui):
+- [x] **Hello-world que exercita mecanismo, não domínio** (o baseline proíbe decidir feature aqui):
       migration inicial criando só a tabela de outbox (infra, não domínio) + endpoint técnico que publica
       `identity.platform.heartbeat.v1` pelo outbox e o consome de volta. Prova migration + outbox +
       RabbitMQ + DLQ + OTLP ponta a ponta. **Marcar como descartável** — sai quando o PRD de CAP-001 chegar
 
 ### 1.3 Testes
 
-- [ ] `ArchitectureTests` a partir de `.agents/skills/dotnet/assets/ArchitectureTests/`
+- [x] `ArchitectureTests` a partir de `.agents/skills/dotnet/assets/ArchitectureTests/`
       (`LayerDependencyTest.cs`, `ConventionTest.cs`, `ProjectArchitecture.cs`) — mecanismo de G01, G02,
       G06, G07 e G11
-- [ ] `IntegrationTests` com Testcontainers (Postgres + RabbitMQ)
-- [ ] `EndToEndTests` com `WebApplicationFactory`
+- [x] `IntegrationTests` com Testcontainers (Postgres + RabbitMQ)
+- [x] `EndToEndTests` com `WebApplicationFactory`
 
 ### 1.4 Container
 
-- [ ] `src/identity/Dockerfile` multi-stage `mcr.microsoft.com/dotnet/sdk:10.0` → `aspnet:10.0`, conforme
+- [x] `src/identity/Dockerfile` multi-stage `mcr.microsoft.com/dotnet/sdk:10.0` → `aspnet:10.0`, conforme
       `.agents/skills/dotnet/references/operations.md`. **Contexto de build é a raiz do repo** (issue #1)
 
 ### 1.5 `.github/workflows/identity.yml`
 
-- [ ] Workflow chamador com filtro de `paths:`
+- [x] Workflow chamador com filtro de `paths:`
 
 ```yaml
 on:
@@ -188,7 +188,7 @@ jobs:
 
 ### 1.7 Fechar a etapa
 
-- [ ] `flow-state.json` → `foundation.services[0].path = "src/identity"`
+- [x] `flow-state.json` → `foundation.services[0].path = "src/identity"`
 
 ---
 
