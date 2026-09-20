@@ -6,6 +6,10 @@
 
 **Status:** não iniciada · **Criado em:** 2026-09-20
 
+**Escopo desta execução:** somente a Etapa 0. A execução técnica dos itens abaixo acontece no
+`template-pipeline`; este arquivo registra a ordem, os gates e as evidências necessárias. Não iniciar
+as Etapas 1–3, nem alterar `flow-state.json`, enquanto o gate de saída da Etapa 0 não estiver aprovado.
+
 ## Context
 
 `context/architecture-baseline.md` v1.1 aceitou microsserviços, mas registrou uma condição estrutural:
@@ -38,6 +42,27 @@ réplica depois · Coolify em VPS para compute e dados, AWS S3+CloudFront só pa
 
 Abrir **14 issues**. Três são bloqueantes e devem ser implementadas antes da Etapa 1; depois cortar
 `v1.2.0` movendo a tag `v1` (fluxo do `_release.yml`, que espera o `_selftest.yml` verde no SHA exato).
+
+### Sequenciamento e gates
+
+Os números abaixo são os números pretendidos das issues no `template-pipeline`. Ao abrir cada issue,
+registrar aqui o link permanente e manter o checklist sincronizado com o estado real do issue.
+
+| Gate | Escopo | Evidência exigida | Libera |
+|---|---|---|---|
+| 0.0 — registro | Abrir #1–#14 com os labels indicados | 14 issues abertas, cada uma com link registrado e descrição autocontida | Execução da Etapa 0 |
+| 0.1 — CI | Implementar #1–#3 | `_selftest.yml` verde no SHA da mudança, `v1.2.0` publicada e `v1` apontando para esse SHA | Etapa 1 |
+| 0.2 — plataforma | Implementar #4–#7 | Deploy de um serviço com ambientes, segredos, migration e rollback por digest comprovados | CD da Etapa 1 |
+| 0.3 — contratos | Implementar #8–#10 | Pacote `Contracts` publicado e gates de lint/compatibilidade verdes | Consumo de contratos pelos serviços |
+| 0.4 — monorepo e defaults | Implementar #11–#14 | Self-test cobrindo o schema/versionamento e as três correções menores, sem regressão nos defaults | Fechamento da Etapa 0 |
+
+O gate 0.1 é a única saída antecipada permitida para a Etapa 1. Os gates 0.2–0.4 continuam sendo
+parte da Etapa 0 e devem permanecer rastreáveis até o fechamento formal. A Etapa 0 só fecha quando:
+
+- as 14 issues estiverem fechadas com links para o código, workflow ou configuração entregue;
+- cada evidência da tabela acima estiver anexada ao issue correspondente;
+- o contrato único (`scripts/check-contract.sh`) e o `_selftest.yml` estiverem verdes no SHA liberado;
+- a tag `v1` apontar para a mesma revisão validada de `v1.2.0`.
 
 ### 0.A Bloqueantes (impedem `identity` de passar na CI)
 
