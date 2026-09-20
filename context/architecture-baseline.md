@@ -1,11 +1,20 @@
+---
+tsg_artifact: architecture-baseline
+product: code-4-coders
+version: 1.0
+status: approved
+updated: 2026-09-20
+sources: vision.md@1.1, context/domain-map.md@1.1
+---
+
 # Baseline Arquitetural
 
-> **Nível 2 da hierarquia de documentação.** Deriva de `vision.md` (v1.0) e `context/domain-map.md`.
+> **Nível 2 da hierarquia de documentação.** Deriva de `vision.md` (v1.1) e `context/domain-map.md` (v1.1).
 > Traduz fronteiras conceituais em **regras estruturais de implementação**. Não projeta funcionalidade:
 > nenhuma feature, tela, endpoint ou tabela é decidida aqui. TechSpecs consomem este documento; PRDs e
 > backlog herdam as restrições aplicáveis.
 
-**Data:** 2026-09-20 · **Origem:** `vision.md` v1.0, `context/domain-map.md` · **Produto:** code-4-coders
+**Versão:** 1.0 · **Data:** 2026-09-20 · **Origem:** `vision.md` v1.1, `context/domain-map.md` v1.1 · **Produto:** code-4-coders
 **Padrões herdados:** skills `dotnet` (.NET 10 / ASP.NET Core) e `react` (React + Vite + TS) — são a
 decisão de stack e de convenção do time; este baseline **não as repete**, só define o que elas não cobrem:
 a fronteira entre serviços.
@@ -499,3 +508,11 @@ TechSpecs já escritas.
 *Baseline gerado com o agente `tsg-flow-architecture-baseline`. Próximo passo sugerido:
 `tsg-flow-capability-backlog` ou `tsg-flow-domain-creator` para o primeiro domínio da Fase 1.
 Revisar este documento apenas quando uma premissa estrutural mudar.*
+
+---
+
+## Histórico de Revisões
+
+| Versão | Data | Autor | Alterações |
+|---|---|---|---|
+| 1.0 | 2026-09-20 | Tasso Gomes | Baseline inicial (BA01–BA16, G01–G26) sobre `vision.md` v1.1 e `context/domain-map.md` v1.1 |

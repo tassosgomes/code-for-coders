@@ -1,3 +1,12 @@
+---
+tsg_artifact: vision
+product: code-4-coders
+version: 1.1
+status: approved
+updated: 2026-09-20
+sources:
+---
+
 # Vision Document — code-4-coders
 
 > **Nível 0 da hierarquia de documentação.** Este documento é a âncora de contexto para todos os Domain Docs, PRDs, Tech Specs e Tasks do projeto. Sempre que iniciar uma nova sessão com a IA, forneça este arquivo como contexto.

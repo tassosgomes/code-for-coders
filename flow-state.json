@@ -1,0 +1,320 @@
+{
+  "schema": "tsg-flow-state/1",
+  "product": "code-4-coders",
+  "updated": "2026-09-20",
+  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo e nunca sao duplicados aqui. Escrito pelas skills TSG Flow ao concluir uma etapa; validado por .tsg/validate_state.py.",
+  "artifacts": {
+    "vision": "vision.md",
+    "domain-map": "context/domain-map.md",
+    "architecture-baseline": "context/architecture-baseline.md",
+    "capability-backlog": "backlog/capabilities.md"
+  },
+  "capability_stages": [
+    "backlog",
+    "domain",
+    "prd",
+    "techspec",
+    "contract",
+    "tasks",
+    "in_progress",
+    "done"
+  ],
+  "capabilities": [
+    {
+      "id": "CAP-001",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 1
+    },
+    {
+      "id": "CAP-002",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 2
+    },
+    {
+      "id": "CAP-003",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 5
+    },
+    {
+      "id": "CAP-004",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-005",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 3
+    },
+    {
+      "id": "CAP-006",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 4
+    },
+    {
+      "id": "CAP-007",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 7
+    },
+    {
+      "id": "CAP-008",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 6
+    },
+    {
+      "id": "CAP-009",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-010",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-011",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 8
+    },
+    {
+      "id": "CAP-012",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-013",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-014",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-015",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-016",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-017",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 7
+    },
+    {
+      "id": "CAP-018",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-019",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-020",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-021",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-022",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-023",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-024",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-025",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-026",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 1
+    },
+    {
+      "id": "CAP-027",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-028",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-029",
+      "stage": "backlog",
+      "artifacts": {}
+    },
+    {
+      "id": "CAP-030",
+      "stage": "backlog",
+      "artifacts": {},
+      "mvp_order": 2
+    },
+    {
+      "id": "CAP-031",
+      "stage": "backlog",
+      "artifacts": {}
+    }
+  ],
+  "next_actions": [
+    {
+      "id": "NA0",
+      "what": "Corrigir context/architecture-baseline.md: remover a coluna Fase do 'Roadmap de servicos' e manter so o agrupamento (quais dominios em qual unidade de deploy) com o gatilho de extracao. A fase de cada servico passa a ser derivada do backlog, que e o dono do sequenciamento. Remove a fonte do conflito de OD1 em vez de corrigir uma linha dele.",
+      "skill": "tsg-flow-architecture-baseline",
+      "blocked_by": [],
+      "why": "regra nova do tsg-flow-architecture-baseline: o baseline agrupa, nao sequencia"
+    },
+    {
+      "id": "NA1",
+      "what": "Aprovar backlog/capabilities.md e integrar (hoje in_review, nao commitado)",
+      "skill": "tsg-flow-capability-backlog",
+      "blocked_by": [
+        "NA0"
+      ]
+    },
+    {
+      "id": "NA2",
+      "what": "Domain doc de Identidade e Acesso (2 capacidades no MVP: CAP-001 e CAP-002). Notificacao e Auditoria tem 1 capacidade cada no horizonte: regras vao no proprio PRD",
+      "skill": "tsg-flow-domain-creator",
+      "blocked_by": [
+        "NA1"
+      ]
+    },
+    {
+      "id": "NA3",
+      "what": "PRD de CAP-026 em fatia minima, depois PRD de CAP-001 (provedor antes do consumidor)",
+      "skill": "tsg-flow-prd-creator",
+      "blocked_by": [
+        "NA2"
+      ]
+    }
+  ],
+  "open_decisions": [
+    {
+      "id": "OD2",
+      "ref": "vision.md A1 / capabilities.md R6",
+      "what": "Definir metricas de sucesso do produto (conversao, conclusao, churn, ticket medio)",
+      "owner": "negocio",
+      "blocks": [
+        "fim da Fase 1",
+        "CAP-028"
+      ]
+    },
+    {
+      "id": "OD3",
+      "ref": "vision.md A2 / capabilities.md R4",
+      "what": "Identidade visual e design system",
+      "owner": "time de design",
+      "blocks": [
+        "CAP-003 em publico"
+      ]
+    },
+    {
+      "id": "OD4",
+      "ref": "architecture-baseline.md, Dependencias de plataforma",
+      "what": "Esteira de deploy independente por servico, feed NuGet interno, RabbitMQ gerenciado com DLQ, PostgreSQL com banco e credencial por servico",
+      "owner": "time de plataforma",
+      "blocks": [
+        "Fase 1 em producao"
+      ]
+    },
+    {
+      "id": "OD5",
+      "ref": "capabilities.md R3",
+      "what": "Contratar gateway de pagamento",
+      "owner": "negocio",
+      "blocks": [
+        "CAP-011"
+      ]
+    }
+  ],
+  "foundation": {
+    "status": "pending",
+    "nota": "Fase 0 conduzida fora do fluxo TSG (PRD standalone ou plan mode). O fluxo nao a executa: detecta o que e detectavel (projeto existe no caminho declarado) e repete o que foi declarado (esteira, broker, banco). Criterio de fechamento: hello-world de cada servico da Fase 1 passando pela esteira, conforme as dependencias de plataforma do baseline.",
+    "services": [
+      {
+        "name": "identity",
+        "path": null,
+        "phase": 1
+      },
+      {
+        "name": "commerce",
+        "path": null,
+        "phase": 1
+      },
+      {
+        "name": "learning",
+        "path": null,
+        "phase": 1
+      },
+      {
+        "name": "media",
+        "path": null,
+        "phase": 1
+      },
+      {
+        "name": "audit",
+        "path": null,
+        "phase": 1
+      },
+      {
+        "name": "notification",
+        "path": null,
+        "phase": 1,
+        "nota": "Antecipado da Fase 2 por decisao de 2026-09-20; ver OD1"
+      },
+      {
+        "name": "bff-student",
+        "path": null,
+        "phase": 1
+      },
+      {
+        "name": "bff-admin",
+        "path": null,
+        "phase": 1
+      }
+    ],
+    "platform_ready": false
+  },
+  "decisions": [
+    {
+      "id": "OD1",
+      "ref": "capabilities.md R5 + baseline BA02",
+      "what": "Antecipar CAP-026 (notificacao transacional) ao MVP",
+      "decided_at": "2026-09-20",
+      "owner": "negocio",
+      "decision": "Sim. `notification` como servico proprio antecipado para a Fase 1, entregue em fatia minima (e-mail transacional, um canal, sem preferencia, sem consentimento, sem campanha). Modulo dentro de `identity` foi considerado e descartado: CAP-011 tambem precisa de e-mail no MVP e forcaria commerce -> identity, junta que o Domain Map proibe."
+    }
+  ]
+}

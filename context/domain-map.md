@@ -1,8 +1,17 @@
+---
+tsg_artifact: domain-map
+product: code-4-coders
+version: 1.1
+status: approved
+updated: 2026-09-20
+sources: vision.md@1.1
+---
+
 # Domain Map
 
-> **Nível 1 da hierarquia de documentação.** Deriva de `vision.md` (v1.0, aprovado). Este documento define fronteiras conceituais — não arquitetura, não serviços, não contratos. A decisão de como isso vira sistema físico é do Architecture Baseline.
+> **Nível 1 da hierarquia de documentação.** Deriva de `vision.md` (v1.1, aprovado). Este documento define fronteiras conceituais — não arquitetura, não serviços, não contratos. A decisão de como isso vira sistema físico é do Architecture Baseline.
 
-**Data:** 2026-09-19 · **Origem:** `vision.md` v1.0 · **Produto:** code-4-coders
+**Versão:** 1.1 · **Data:** 2026-09-20 · **Origem:** `vision.md` v1.1 · **Produto:** code-4-coders
 
 ---
 
@@ -310,3 +319,12 @@ São **16 domínios conceituais**. Isso não significa 16 serviços, 16 bancos o
 ---
 
 *Domain Map gerado com o agente `tsg-flow-domain-decomposer`. Próximo passo sugerido: `tsg-flow-architecture-baseline`, que traduz estas fronteiras conceituais em regras estruturais de implementação.*
+
+---
+
+## Histórico de Revisões
+
+| Versão | Data | Autor | Alterações |
+|---|---|---|---|
+| 1.0 | 2026-09-19 | Tasso Gomes | Decomposição inicial em 16 domínios conceituais a partir de `vision.md` v1.0 |
+| 1.1 | 2026-09-20 | Tasso Gomes | Incorpora `vision.md` v1.1: a estratégia de proteção do domínio Entrega de Mídia e Proteção passa a ser própria, sem DRM contratado |
