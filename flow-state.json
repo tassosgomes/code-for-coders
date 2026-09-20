@@ -22,14 +22,18 @@
   "capabilities": [
     {
       "id": "CAP-001",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "domain",
+      "artifacts": {
+        "domain": "domains/identidade-e-acesso/domain.md"
+      },
       "mvp_order": 1
     },
     {
       "id": "CAP-002",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "domain",
+      "artifacts": {
+        "domain": "domains/identidade-e-acesso/domain.md"
+      },
       "mvp_order": 2
     },
     {
@@ -189,26 +193,16 @@
   ],
   "next_actions": [
     {
-      "id": "NA1",
-      "what": "Aprovar backlog/capabilities.md v1.1 e integrar (hoje in_review). Na regeneracao, acrescentar o rastro de origem na visao (CAP-XXX <- CNN), que hoje nao existe",
-      "skill": "tsg-flow-capability-backlog",
-      "blocked_by": []
-    },
-    {
-      "id": "NA2",
-      "what": "Domain doc de Identidade e Acesso (2 capacidades no MVP: CAP-001 e CAP-002). Notificacao e Auditoria tem 1 capacidade cada no horizonte: regras vao no proprio PRD",
-      "skill": "tsg-flow-domain-creator",
-      "blocked_by": [
-        "NA1"
-      ]
-    },
-    {
       "id": "NA3",
       "what": "PRD de CAP-026 em fatia minima, depois PRD de CAP-001 (provedor antes do consumidor)",
       "skill": "tsg-flow-prd-creator",
-      "blocked_by": [
-        "NA2"
-      ]
+      "blocked_by": []
+    },
+    {
+      "id": "NA4",
+      "what": "Aprovar domains/identidade-e-acesso/domain.md (draft). Fechar QA-01 (mecanismo da junta com Notificacao) antes do PRD de CAP-026 e QA-05 (primeiro administrador) antes do PRD de CAP-002",
+      "skill": "tsg-flow-domain-creator",
+      "blocked_by": []
     }
   ],
   "open_decisions": [
@@ -247,6 +241,15 @@
       "owner": "negocio",
       "blocks": [
         "CAP-011"
+      ]
+    },
+    {
+      "id": "OD8",
+      "ref": "architecture-baseline.md BA15 vs BA16/G24",
+      "what": "Contradicao no baseline: BA15 lista limite de sessoes simultaneas na pilha de protecao; BA16 rejeita sessao unica e lease, e G24 proibe restricao de concorrencia sem dado",
+      "owner": "time",
+      "blocks": [
+        "CAP-001"
       ]
     }
   ],
@@ -314,6 +317,14 @@
       "decided_at": "2026-09-20",
       "owner": "tasso",
       "decision": "O baseline decide agrupamento e gatilho de extracao; a ordem de nascimento deriva do backlog. Roadmap de servicos por fase removido: o baseline e escrito antes do backlog e nao enxerga dependencia entre capacidades."
+    },
+    {
+      "id": "OD7",
+      "ref": "capabilities.md NA1",
+      "what": "Quando acrescentar o rastro de origem na visao (CAP-XXX <- CNN) ao backlog",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Agora, antes de qualquer artefato derivado. backlog/capabilities.md vai a v1.2 approved com o rastro nas 31 capacidades e a tabela de reconciliacao C01..C16. Aprovar v1.1 como estava foi considerado e descartado: o rastro entraria depois como v1.2 e o domain doc e os PRDs da rodada CAP-026/CAP-001, escritos contra @1.1, nasceriam com sources desatualizado. Descartar o rastro de vez tambem foi considerado e recusado: sem ele a divergencia de fase entre visao e backlog fica invisivel para o gate. O rastro expos duas divergencias que so tinham risco, nao origem declarada: CAP-029 (C15 antecipada a Fase 2, R9) e CAP-021 (C06 adiada a Fase 5, R11)."
     }
   ]
 }

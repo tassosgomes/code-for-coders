@@ -1,8 +1,8 @@
 ---
 tsg_artifact: capability-backlog
 product: code-4-coders
-version: 1.1
-status: in_review
+version: 1.2
+status: approved
 updated: 2026-09-20
 sources: vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline.md@1.1
 ---
@@ -10,11 +10,11 @@ sources: vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline
 # Backlog de Capacidades
 
 > **Nível 3 da hierarquia de documentação.** Deriva de `vision.md` (v1.1), `context/domain-map.md` (v1.1) e
-> `context/architecture-baseline.md` (v1.0). Traduz domínios e fronteiras em **capacidades de negócio** —
+> `context/architecture-baseline.md` (v1.1). Traduz domínios e fronteiras em **capacidades de negócio** —
 > unidades de valor que podem originar um PRD independente. Não decide feature, tela, endpoint ou tabela:
 > isso é escopo do PRD e da TechSpec.
 
-**Versão:** 1.1 (em revisão) · **Data:** 2026-09-20 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
+**Versão:** 1.2 (aprovado) · **Data:** 2026-09-20 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
 
 Cada capacidade tem **ID estável** (`CAP-001`…). Domain Docs e PRDs referenciam o ID, nunca o título.
 IDs são preservados em atualizações deste documento; capacidade descartada fica registrada como
@@ -98,6 +98,47 @@ O baseline não é negociável no nível de PRD. As restrições com efeito dire
 
 ---
 
+### 6. Rastro de origem na visão
+
+A visão numera 16 capacidades de negócio (`C01`…`C16`) como insumo do Domain Map. Cada `CAP-XXX`
+declara de qual delas deriva, no próprio bloco da capacidade. O elo existe para que uma divergência
+de fase entre os dois documentos seja **visível** — sem ele, a visão dizer Fase 2 e este backlog dizer
+MVP só apareceria quando alguém tentasse implementar. Derivação de muitos para muitos é normal.
+
+| Origem | Capacidade da visão | Fase na visão | Deriva em | Fase aqui |
+|---|---|---|---|---|
+| `C01` | Identidade e acesso | Fase 1 | `CAP-001` `CAP-002` | MVP |
+| `C02` | Catálogo e oferta | Fase 1 (mínimo) · cupons Fase 2 | `CAP-003` · `CAP-004` | MVP · Fase 2 |
+| `C03` | Autoria e conteúdo | Fase 1 (mínimo) | `CAP-005` | MVP |
+| `C04` | Entrega de vídeo e proteção | Fase 1 | `CAP-006` `CAP-007` | MVP |
+| `C05` | Aprendizagem e progresso | Fase 1 (progresso) · Fase 3 (liberação, anotações) | `CAP-017` · `CAP-018` `CAP-019` | MVP · Fase 3 |
+| `C06` | Avaliação | Fase 3 | `CAP-020` · `CAP-021` | Fase 3 · **Fase 5** |
+| `C07` | Certificação | Fase 3 | `CAP-022` | Fase 3 |
+| `C08` | Vendas e checkout | Fase 1 (avulsa) · Fase 5 (afiliados, turmas) | `CAP-011` · `CAP-008` · `CAP-012` `CAP-010` | MVP · Fase 5 |
+| `C09` | Cobrança e assinatura | Fase 2 | `CAP-013` `CAP-014` `CAP-015` `CAP-009` | Fase 2 |
+| `C10` | Fiscal | Fase 2 | `CAP-016` | Fase 2 |
+| `C11` | Comunidade | Fase 4 | `CAP-023` | Fase 4 |
+| `C12` | Engajamento e gamificação | Fase 4 | `CAP-024` | Fase 4 |
+| `C13` | Suporte | Fase 4 | `CAP-025` | Fase 4 |
+| `C14` | Notificação | Fase 2 (e-mail) · Fase 4 (push, WhatsApp) | `CAP-026` · `CAP-027` | **MVP mínimo** · Fase 4 |
+| `C15` | Analytics e BI | Fase 5 | `CAP-029` · `CAP-028` | **Fase 2** · Fase 5 |
+| `C16` | Auditoria e governança | Fase 1 (mínimo) · Fase 5 (completo) | `CAP-030` · `CAP-031` | MVP mínimo · Fase 5 |
+
+**Três divergências de fase, todas com risco e dono registrados** — nenhuma outra capacidade muda de
+fase em relação à visão:
+
+1. `CAP-026` (`C14`) **antecipada** da Fase 2 ao MVP em versão transacional mínima. R5 · Q1 · BA02.
+   É a única divergência que muda o escopo do MVP.
+2. `CAP-029` (`C15`) **antecipada** da Fase 5 à Fase 2, só na medição agregada. R9 · Q4 · contrapartida
+   de BA16. Não muda o agrupamento de serviços: agrega evento que `CAP-007`/`CAP-017` já emitem.
+3. `CAP-021` (`C06`) **adiada** da Fase 3 à Fase 5. R11. `C06` chega à Fase 3 pela correção automática
+   de `CAP-020`, que é o que o certificado (`C07`) exige; a dissertativa depende de regra de prazo que
+   o negócio ainda não definiu. Não muda o agrupamento: BA12 já declara Avaliação como extração futura.
+
+A visão também nomeia **turmas/coortes** no roadmap da Fase 5 e nos modelos de monetização sem dar a
+elas capacidade numerada; `CAP-010` deriva de `C08` (matrícula) e preserva essa fase.
+
+
 ## Definição do MVP
 
 **Promessa do MVP:** um visitante encontra um curso na vitrine, entende o nível e o que está comprando,
@@ -118,7 +159,7 @@ quem fez o quê.
 | `CAP-011` | Compra avulsa de curso | Vendas e Checkout | Único modelo de monetização obrigatório no MVP |
 | `CAP-007` | Reprodução protegida da aula | Entrega de Mídia e Proteção | É o produto sendo consumido |
 | `CAP-017` | Percurso e progresso do aluno | Aprendizagem e Progresso | Sem progresso, assistir não vira aprendizado registrado |
-| `CAP-026` | Notificação transacional por e-mail | Notificação | Divergência proposta: `CAP-001` e `CAP-011` não fecham sem ela |
+| `CAP-026` | Notificação transacional por e-mail | Notificação | Divergência registrada (R5/Q1): `CAP-001` e `CAP-011` não fecham sem ela |
 | `CAP-030` | Trilha de auditoria de atos administrativos | Auditoria e Conformidade | Versão mínima; precisa nascer junto do primeiro ato administrativo |
 
 **Fora do MVP, por decisão explícita:** assinatura e qualquer recorrência, cupom e campanha, emissão
@@ -293,6 +334,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** visitante se cadastra → confirma e-mail → autentica → obtém sessão → encerra ou
   recupera acesso quando esquece a senha.
 - **Dependências:** `CAP-026` (confirmação e recuperação por e-mail).
+- **Origem na visão:** `C01`
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** sessão opaca no BFF, token nunca no browser (BA06); CSRF em toda escrita (G18);
   nenhum limite de dispositivos ou sessões simultâneas (BA16/G24).
@@ -306,6 +348,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** administrador convida um ator interno → o convidado ativa a conta → recebe papel →
   exerce apenas as permissões do papel → tem acesso revogado quando sai.
 - **Dependências:** `CAP-001` (mecanismo de conta), `CAP-030` (registro do ato).
+- **Origem na visão:** `C01`
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** RBAC por claim, nunca string solta; o serviço dono autoriza o fino, o BFF não é
   fronteira de confiança.
@@ -322,6 +365,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** negócio cria a oferta sobre um curso publicado → define preço e vigência do acesso
   → publica na vitrine → visitante navega, filtra por nível, lê pré-requisito e escolhe.
 - **Dependências:** `CAP-005` (currículo publicado a referenciar).
+- **Origem na visão:** `C02` (vitrine e oferta, em versão mínima com nível)
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** pré-requisito e nível são informativos e nunca condicionam compra (DE04);
   nenhuma peça de oferta pode prometer exclusividade de conteúdo (BA15).
@@ -335,6 +379,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** negócio cria campanha ou cupom com regra e validade → o aluno aplica no checkout →
   o pedido congela a condição efetivamente aplicada.
 - **Dependências:** `CAP-003`, `CAP-011`.
+- **Origem na visão:** `C02` (cupons) e `C08` (cupons no checkout)
 - **Prioridade:** Média · **Fase:** Fase 2
 - **Restrições herdadas:** campanha pode alterar a vigência prometida, e `CAP-008` precisa honrar isso sem
   caso especial (DE01).
@@ -350,6 +395,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** professor cria curso → organiza módulos e aulas na ordem pedagógica → vincula mídia
   e materiais → publica uma versão → revisa e republica depois.
 - **Dependências:** `CAP-002` (papel de professor), `CAP-006` (mídia a vincular).
+- **Origem na visão:** `C03`
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** não define preço nem condição comercial (DE02); versão de publicação não pode
   invalidar progresso já registrado de aluno.
@@ -365,6 +411,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** professor envia o vídeo → a plataforma prepara a versão de reprodução e a protege →
   o ativo fica disponível para vínculo em `CAP-005` → o status da preparação é visível a quem enviou.
 - **Dependências:** `CAP-002`.
+- **Origem na visão:** `C04`
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** nenhum objeto de vídeo público (G21); nenhum artefato derivado por aluno (G22);
   o provedor de CDN não vaza para outro domínio.
@@ -379,6 +426,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
   reprodução individual → entrega por URL assinada de vida curta com marca d'água do e-mail do aluno
   sobreposta → informa o avanço a `CAP-017`.
 - **Dependências:** `CAP-006`, `CAP-008` (decisão de acesso), `CAP-001` (identidade para a marca d'água).
+- **Origem na visão:** `C04`
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** falha fechada quando a decisão de acesso não responde (BA07); marca d'água
   renderizada no cliente (G22); e-mail fora de log, URL, chave de cache e routing key (G23); nenhuma trava
@@ -398,6 +446,8 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
   origem e vigência → o direito é consultado a cada acesso → expira sozinho no fim da vigência, ou é
   vitalício conforme o contrato da compra.
 - **Dependências:** `CAP-003` (vigência prometida pela oferta).
+- **Origem na visão:** `C08` (matrícula); a visão registra que o direito de acesso **atravessa**
+  `C02`, `C08` e `C09` e é decisão estrutural, não detalhe de checkout
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** fonte de verdade única, sem réplica local (G11); cache ≤30s e falha fechada
   (BA07); concessão de cortesia gera ato auditável (`CAP-030`). Não decide liberação de próxima aula (G20).
@@ -411,6 +461,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** `CAP-014` ou `CAP-015` informa o fato financeiro → a concessão é suspensa ou
   revogada → o efeito vale em segundos na decisão de acesso → a regularização restaura o que foi suspenso.
 - **Dependências:** `CAP-008`, `CAP-014`, `CAP-015`.
+- **Origem na visão:** `C09` (bloqueio de acesso)
 - **Prioridade:** Alta · **Fase:** Fase 2
 - **Restrições herdadas:** quem bloqueia é este domínio, nunca Cobrança diretamente; todo ato
   administrativo de revogação é auditado com autor e motivo.
@@ -423,6 +474,8 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** negócio cria a turma sobre uma oferta → alunos matriculados recebem concessão
   vinculada à turma → a turma inicia na data → o acompanhamento é feito por turma.
 - **Dependências:** `CAP-008`, `CAP-003`, `CAP-011`.
+- **Origem na visão:** `C08` (matrícula/coorte). A visão nomeia turmas/coortes no roadmap da Fase 5
+  e nos modelos de monetização, sem capacidade numerada própria
 - **Prioridade:** Baixa · **Fase:** Fase 5
 - **Restrições herdadas:** hoje é agrupamento de matrículas (DE08); só vira domínio próprio se ganhar
   cronograma e encontro ao vivo — que são **non-goal** da versão atual.
@@ -438,6 +491,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno escolhe a oferta → identifica-se → paga por cartão, PIX ou boleto → o pedido
   congela o que foi comprado → a confirmação do pagamento libera o acesso automaticamente e notifica.
 - **Dependências:** `CAP-003`, `CAP-001`, `CAP-008`, `CAP-026`; externa: gateway de pagamento contratado.
+- **Origem na visão:** `C08` (venda avulsa)
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** dado de cartão não trafega nem é persistido; escrita idempotente (G09); pedido
   pendente (boleto/PIX não pago) é estado legítimo e não concede acesso.
@@ -449,6 +503,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** parceiro recebe link identificado → o visitante chega por ele → a compra registra a
   atribuição → o parceiro consulta o que gerou.
 - **Dependências:** `CAP-011`, `CAP-028` (apuração).
+- **Origem na visão:** `C08` (afiliados)
 - **Prioridade:** Baixa · **Fase:** Fase 5
 - **Restrições herdadas:** a regra de comissionamento, repasse e extrato não existe ainda; enquanto não
   existir, afiliado permanece alojado em Vendas (DE09).
@@ -463,6 +518,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno assina → o ciclo é cobrado na data → o sucesso renova a vigência do acesso →
   o cancelamento encerra a renovação sem retirar o que já foi pago.
 - **Dependências:** `CAP-011`, `CAP-008`, `CAP-026`.
+- **Origem na visão:** `C09`
 - **Prioridade:** Alta · **Fase:** Fase 2
 - **Restrições herdadas:** camada anticorrupção obrigatória sobre o gateway; webhook validado por
   assinatura e idempotente.
@@ -476,6 +532,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** a cobrança falha → novas tentativas são programadas → a régua avisa o aluno pelos
   canais consentidos → o prazo esgota → o fato é informado a `CAP-009`, que suspende.
 - **Dependências:** `CAP-013`, `CAP-026`, `CAP-009`.
+- **Origem na visão:** `C09` (inadimplência)
 - **Prioridade:** Alta · **Fase:** Fase 2
 - **Restrições herdadas:** Cobrança comunica o fato financeiro e **não** bloqueia acesso diretamente.
 
@@ -488,6 +545,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** operação ou financeiro decide o reembolso → o valor é estornado no gateway → o
   direito é revogado → o documento fiscal é cancelado → o aluno é notificado.
 - **Dependências:** `CAP-009`, `CAP-016`, `CAP-026`, `CAP-030`.
+- **Origem na visão:** `C09` (reembolso)
 - **Prioridade:** Média · **Fase:** Fase 2
 - **Restrições herdadas:** ato administrativo com efeito sobre dinheiro e acesso — auditoria obrigatória
   com autor, momento, alvo e motivo.
@@ -503,6 +561,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** o pagamento é confirmado → o fato gerador é registrado → a nota é solicitada ao
   provedor municipal → o documento fica disponível → o reembolso gera o cancelamento correspondente.
 - **Dependências:** `CAP-013`/`CAP-011` (fato gerador), `CAP-026`; externa: provedor de NFS-e contratado.
+- **Origem na visão:** `C10`
 - **Prioridade:** Alta · **Fase:** Fase 2
 - **Restrições herdadas:** **falha fiscal nunca impede venda nem acesso** (DE06); regra municipal não vaza
   para nenhum outro domínio (camada anticorrupção obrigatória).
@@ -519,6 +578,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno entra na área do aluno → vê os cursos a que tem direito e o quanto avançou →
   abre a aula onde parou → o avanço da reprodução é registrado → a aula é concluída → o curso é concluído.
 - **Dependências:** `CAP-005` (currículo), `CAP-008` (direito), `CAP-007` (avanço da reprodução).
+- **Origem na visão:** `C05` (progresso)
 - **Prioridade:** Alta · **Fase:** MVP
 - **Restrições herdadas:** domínio write-heavy — gravação com granularidade controlada, nunca um registro
   por segundo assistido; não decide direito de acesso (G20).
@@ -531,6 +591,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** professor define a regra de liberação no currículo → o aluno conclui a etapa → a
   próxima abre → etapa condicionada a avaliação consulta o resultado antes de abrir.
 - **Dependências:** `CAP-017`, `CAP-005`, `CAP-020`.
+- **Origem na visão:** `C05` (liberação progressiva)
 - **Prioridade:** Média · **Fase:** Fase 3
 - **Restrições herdadas:** aplica-se **dentro** de um curso, nunca entre cursos (DE05); confundi-la com
   direito de acesso é motivo de recusa de PRD (G20).
@@ -544,6 +605,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno anota durante a aula → a nota guarda o ponto do vídeo → ele revê suas notas do
   curso → clica e volta ao trecho.
 - **Dependências:** `CAP-017`, `CAP-007`.
+- **Origem na visão:** `C05` (anotações)
 - **Prioridade:** Baixa · **Fase:** Fase 3
 - **Restrições herdadas:** conteúdo pessoal do aluno — sujeito à solicitação do titular (`CAP-031`).
 
@@ -558,6 +620,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** professor monta a avaliação e o critério de aprovação → o aluno submete uma
   tentativa → o resultado é apurado na hora → a aprovação é publicada para liberação e certificação.
 - **Dependências:** `CAP-005`, `CAP-008`, `CAP-017`.
+- **Origem na visão:** `C06` (correção automática)
 - **Prioridade:** Alta · **Fase:** Fase 3
 - **Restrições herdadas:** vive como módulo de `learning` (BA12); limite de tentativas é regra de negócio,
   não detalhe de tela.
@@ -570,6 +633,10 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno submete a resposta → entra na fila do professor → o professor corrige e dá
   devolutiva → o resultado publica a aprovação.
 - **Dependências:** `CAP-020`, `CAP-002`, `CAP-026`.
+- **Origem na visão:** `C06`. **Divergência de fase:** a visão põe `C06` inteiro na Fase 3; aqui só
+  a correção automática (`CAP-020`) fica na Fase 3 e a dissertativa vai para a Fase 5, porque
+  depende de fluxo de professor e de regra de prazo ainda não definida pelo negócio (R11) e não é
+  pré-requisito do certificado
 - **Prioridade:** Baixa · **Fase:** Fase 5
 - **Restrições herdadas:** é o gatilho declarado para extrair Avaliação como serviço próprio (BA12);
   alteração de nota é ato administrativo auditável.
@@ -585,6 +652,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** o aluno conclui o curso e é aprovado → o certificado é emitido com código único →
   o aluno recebe e compartilha → um empregador consulta o código publicamente e vê a validade.
 - **Dependências:** `CAP-017`, `CAP-020`, `CAP-026`.
+- **Origem na visão:** `C07`
 - **Prioridade:** Alta · **Fase:** Fase 3
 - **Restrições herdadas:** única superfície pública sem sessão do sistema — rota anônima com rate limit e
   resposta mínima (nome, curso, data, status); imutabilidade do certificado emitido.
@@ -600,6 +668,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno abre a dúvida na sala da aula → a comunidade ou o professor responde → o
   autor da dúvida é notificado → conteúdo impróprio é moderado, com registro.
 - **Dependências:** `CAP-008` (liberar a sala), `CAP-026`, `CAP-030`, `CAP-002`.
+- **Origem na visão:** `C11`
 - **Prioridade:** Alta · **Fase:** Fase 4
 - **Restrições herdadas:** dúvida pedagógica é distinta de chamado de suporte (`CAP-025`) — exigência
   explícita da visão, com atores e permissões diferentes.
@@ -611,6 +680,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** o aluno conclui aula, conclui curso, é aprovado ou ajuda alguém → o marco concede
   ponto ou badge → o aluno vê seu reconhecimento e sua posição.
 - **Dependências:** `CAP-017`, `CAP-020`, `CAP-023`.
+- **Origem na visão:** `C12`
 - **Prioridade:** Média · **Fase:** Fase 4
 - **Restrições herdadas:** reage a eventos, não é dona do progresso (DE07); vira domínio próprio só se
   ganhar campanha, temporada ou recompensa com valor econômico.
@@ -626,6 +696,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** aluno busca no artigo de ajuda → não resolve → abre chamado → o suporte diagnostica
   consultando direito de acesso e cobrança → solicita a ação ao domínio dono → responde e encerra.
 - **Dependências:** `CAP-008`, `CAP-009`, `CAP-015`, `CAP-026`, `CAP-030`, `CAP-002`.
+- **Origem na visão:** `C13`
 - **Prioridade:** Alta · **Fase:** Fase 4
 - **Restrições herdadas:** o suporte **não** altera acesso nem executa reembolso por conta própria —
   solicita aos donos, que registram; menor privilégio (suporte não vê dado financeiro completo).
@@ -642,8 +713,11 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** um domínio pede o envio de uma mensagem → o consentimento e a preferência são
   verificados → a mensagem é entregue pelo canal → a entrega (ou a falha) é registrada.
 - **Dependências:** externa: provedor de e-mail transacional.
-- **Prioridade:** Alta · **Fase:** **MVP em versão mínima** (divergência proposta — a visão a coloca na
-  Fase 2; ver R5)
+- **Origem na visão:** `C14` (e-mail). **Divergência de fase:** a visão põe `C14` na Fase 2;
+  antecipada ao MVP em versão transacional mínima — decisão registrada em R5/Q1 e refletida no
+  agrupamento inicial do baseline (BA02)
+- **Prioridade:** Alta · **Fase:** **MVP em versão mínima** (divergência registrada — a visão a coloca na
+  Fase 2; ver R5 e a origem acima)
 - **Escopo mínimo no MVP:** e-mail transacional apenas (confirmação de conta, recuperação de senha,
   confirmação de compra e liberação de acesso). **Fora:** push, WhatsApp, preferência por tipo de
   mensagem, modelo editável pelo negócio — tudo isso é `CAP-027`.
@@ -658,6 +732,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** o aluno define suas preferências e consente por canal → o pedido de envio escolhe o
   canal adequado → a mensagem é entregue → a falha em um canal permite fallback.
 - **Dependências:** `CAP-026`; externa: provedor oficial de WhatsApp Business API.
+- **Origem na visão:** `C14` (push e WhatsApp)
 - **Prioridade:** Média · **Fase:** Fase 4
 - **Restrições herdadas:** aprovação de template é detalhe interno de Notificação; a plataforma notifica,
   **não faz campanha de marketing** (non-goal da visão).
@@ -674,6 +749,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
   o administrador consulta por recorte e por período.
 - **Dependências:** praticamente todas as capacidades produtoras de evento; bloqueada por **A1** (definição
   das métricas de sucesso e de "aluno ativo").
+- **Origem na visão:** `C15`
 - **Prioridade:** Alta · **Fase:** Fase 5
 - **Restrições herdadas:** consome e nunca é consultada por decisão operacional (DE11/G12); não é dona de
   nenhum dado; não substitui ferramenta de BI de mercado.
@@ -689,6 +765,9 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
   aulas distintas por aluno é agregada → o negócio observa a evolução → decide a ação (nenhuma, aviso,
   contato ou restrição) em **AB04**.
 - **Dependências:** `CAP-017`, `CAP-007`.
+- **Origem na visão:** `C15`. **Divergência de fase:** a visão põe `C15` na Fase 5; a medição
+  agregada é antecipada à Fase 2 como contrapartida da decisão de não restringir sessão nem
+  reprodução (BA16) — sem dado, restringir ou não restringir seria suposição (R9)
 - **Prioridade:** Média · **Fase:** Fase 2
 - **Restrições herdadas:** **agregado primeiro** — caso individual só com finalidade, base legal e retenção
   registradas (G25); IP não é sinal (G26); nenhuma restrição sem decisão explícita com dado (G24).
@@ -707,6 +786,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** um ator interno pratica um ato com efeito sobre aluno ou dinheiro → o fato é
   registrado fora do alcance de quem o praticou → o administrador consulta o histórico.
 - **Dependências:** `CAP-002`; consome eventos de todas as capacidades com ato administrativo.
+- **Origem na visão:** `C16` (log de ato administrativo, versão mínima)
 - **Prioridade:** Alta · **Fase:** **MVP em versão mínima**
 - **Escopo mínimo no MVP:** registro append-only dos atos existentes no MVP (gestão de acesso interno,
   publicação de curso, concessão de cortesia) e leitura restrita ao backoffice.
@@ -723,6 +803,7 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
 - **Resumo do fluxo:** o titular solicita → a solicitação é registrada com base legal e prazo → cada
   domínio dono executa a parte que lhe cabe → o resultado é devolvido ao titular e registrado.
 - **Dependências:** `CAP-030`, `CAP-026`; bloqueada por **AB03** (política de retenção e anonimização).
+- **Origem na visão:** `C16` (governança, escopo completo)
 - **Prioridade:** Média · **Fase:** Fase 5
 - **Restrições herdadas:** nenhum serviço decide sozinho apagar dado que sustenta obrigação fiscal;
   exclusão é coordenada, não propagada.
@@ -835,4 +916,5 @@ Dois **ciclos aparentes** foram resolvidos por direção de dependência, não p
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-20 | Tasso Gomes | Backlog inicial: 31 capacidades em 16 domínios, 11 no MVP. Em revisão — não integrado |
+| 1.2 | 2026-09-20 | Tasso Gomes | **Aprovado e integrado.** Acrescentado o rastro de origem na visão (`CAP-XXX ← CNN`) nas 31 capacidades e a tabela de reconciliação `C01`…`C16` → `CAP-XXX` com as três divergências de fase (R5, R9, R11). Nenhuma capacidade, dependência, fase ou ordem foi alterada |
 | 1.1 | 2026-09-20 | Tasso Gomes | Revalidado contra `architecture-baseline.md` v1.1: a divergência de Notificação deixa de ser proposta e passa a decisão registrada, e a citação a BA02 acompanha o agrupamento inicial de 6 serviços. Nenhuma capacidade, dependência ou fase foi alterada |
