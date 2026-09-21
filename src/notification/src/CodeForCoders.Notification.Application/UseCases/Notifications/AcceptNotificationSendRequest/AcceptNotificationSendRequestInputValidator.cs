@@ -1,4 +1,3 @@
-using CodeForCoders.Notification.Application.Common;
 using FluentValidation;
 
 namespace CodeForCoders.Notification.Application.UseCases.Notifications.AcceptNotificationSendRequest;
@@ -16,23 +15,17 @@ public sealed class AcceptNotificationSendRequestInputValidator
             .NotEmpty()
             .EmailAddress()
             .MaximumLength(320);
-        RuleFor(input => input.Request.Finalidade)
-            .Equal(NotificationPurposes.AccountConfirmation);
-        RuleFor(input => input.Request.Modelo)
-            .Equal(NotificationPurposes.AccountConfirmation);
-        RuleFor(input => input.Request.Dados)
-            .NotNull();
+
         When(
             input => input.Request.Dados is not null,
             () =>
             {
                 RuleFor(input => input.Request.Dados!.Nome)
-                    .NotEmpty()
                     .MaximumLength(255);
                 RuleFor(input => input.Request.Dados!.Link)
-                    .NotEmpty()
                     .MaximumLength(2048)
                     .Must(BeAbsoluteUri)
+                    .When(input => !string.IsNullOrWhiteSpace(input.Request.Dados!.Link))
                     .WithMessage("Link must be an absolute URI.");
             });
     }

@@ -4,13 +4,13 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": null,
-  "last_checkpoint": "1.0",
+  "last_checkpoint": "2.0",
   "phase": "checkpoint-task",
-  "active_task": "1.0",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 4,
+  "transport_retries": 5,
   "specs": ["techspec.md"],
   "delivery": "branch",
   "validated_commit": null,
@@ -19,9 +19,9 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "1.0",
+    "task": "2.0",
     "attempt": 1,
-    "run_id": "run.VoaT7yjw",
+    "run_id": "run.hlbIrKyo",
     "gate": "passed"
   },
   "history": [
@@ -118,6 +118,62 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.VoaT7yjw"
+    },
+    {
+      "phase": "implement",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "note": "herdr transport iniciado em background apos reconciliacao (nenhum run anterior para 2.0 no ledger)"
+    },
+    {
+      "phase": "implement",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.EgYUVA3z",
+      "reason": "timeout_or_blocked: wrapper timeout de 900s matou o processo (exit 143) antes de result.json; sem entrada no ledger"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "2.0",
+      "attempt": 1,
+      "outcome": "effects_present_gate_passed",
+      "evidence": "build ok (Application + IntegrationTests); gate do orquestrador executado diretamente: dotnet test ... RejectInvalidSendRequestTests -> 3/3 passed, gate_expect atendido",
+      "note": "efeitos preservados: novos arquivos (NotificationSendRequestRules.cs, RejectInvalidSendRequestTests.cs, migration AddDeliveryRecordRefusal) e alteracoes na Task 1.0; tratado como implementation_complete apesar da falha de transporte"
+    },
+    {
+      "phase": "validating",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.zcTAElRa",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/2.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.hlbIrKyo",
+      "gate": "passed"
     }
   ]
 }

@@ -19,7 +19,38 @@ public sealed class AcceptNotificationSendRequest(
         await validator.ValidateAndThrowAsync(input, cancellationToken);
         tenantContext.Set(input.Request.TenantId);
 
-        var acceptedOn = DateTimeOffset.UtcNow;
+        var refusalReason = NotificationSendRequestRules.GetRefusalReason(input.Request);
+        var transitionOn = DateTimeOffset.UtcNow;
+        if (refusalReason is not null)
+        {
+            var refusedRecord = DeliveryRecord.CreateRefused(
+                input.Request.TenantId,
+                input.Request.PedidoId,
+                input.Request.Destinatario!,
+                input.Request.Dados?.Nome,
+                input.Request.Dados?.Link,
+                input.Request.Finalidade,
+                input.Request.Modelo,
+                refusalReason,
+                input.Request.SolicitadoEm,
+                transitionOn,
+                input.CorrelationId);
+
+            await deliveryRecordRepository.AddAsync(refusedRecord, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
+            NotificationTelemetry.NotificationsRefused.Add(1);
+
+            return new AcceptNotificationSendRequestOutput(
+                refusedRecord.Id,
+                refusedRecord.RequestId,
+                refusedRecord.TenantId,
+                refusedRecord.Status,
+                refusedRecord.AcceptedOn,
+                refusedRecord.RefusedOn,
+                refusedRecord.Reason);
+        }
+
+        var acceptedOn = transitionOn;
         var data = input.Request.Dados!;
         var record = DeliveryRecord.Create(
             input.Request.TenantId,
@@ -41,6 +72,9 @@ public sealed class AcceptNotificationSendRequest(
             record.Id,
             record.RequestId,
             record.TenantId,
-            record.AcceptedOn);
+            record.Status,
+            record.AcceptedOn,
+            record.RefusedOn,
+            record.Reason);
     }
 }

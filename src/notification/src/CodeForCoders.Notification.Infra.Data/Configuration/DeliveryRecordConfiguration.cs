@@ -28,20 +28,19 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
             .IsRequired();
         builder.Property(record => record.RecipientName)
             .HasColumnName("recipient_name")
-            .HasMaxLength(DeliveryRecord.RecipientNameMaxLength)
-            .IsRequired();
+            .HasMaxLength(DeliveryRecord.RecipientNameMaxLength);
         builder.Property(record => record.Link)
             .HasColumnName("link")
-            .HasMaxLength(DeliveryRecord.LinkMaxLength)
-            .IsRequired();
+            .HasMaxLength(DeliveryRecord.LinkMaxLength);
         builder.Property(record => record.Purpose)
             .HasColumnName("purpose")
-            .HasMaxLength(DeliveryRecord.PurposeMaxLength)
-            .IsRequired();
+            .HasMaxLength(DeliveryRecord.PurposeMaxLength);
         builder.Property(record => record.Model)
             .HasColumnName("model")
-            .HasMaxLength(DeliveryRecord.ModelMaxLength)
-            .IsRequired();
+            .HasMaxLength(DeliveryRecord.ModelMaxLength);
+        builder.Property(record => record.Reason)
+            .HasColumnName("reason")
+            .HasMaxLength(DeliveryRecord.ReasonMaxLength);
         builder.Property(record => record.CorrelationId)
             .HasColumnName("correlation_id")
             .HasMaxLength(DeliveryRecord.CorrelationIdMaxLength);
@@ -58,8 +57,10 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
             .IsRequired();
         builder.Property(record => record.AcceptedOn)
             .HasColumnName("accepted_on")
-            .HasColumnType("timestamp with time zone")
-            .IsRequired();
+            .HasColumnType("timestamp with time zone");
+        builder.Property(record => record.RefusedOn)
+            .HasColumnName("refused_on")
+            .HasColumnType("timestamp with time zone");
         builder.Property(record => record.DeliveredOn)
             .HasColumnName("delivered_on")
             .HasColumnType("timestamp with time zone");

@@ -113,9 +113,9 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
                 requestId,
                 cancellationToken);
             Assert.Equal(DeliveryStatus.Delivered, deliveryRecord.Status);
-            Assert.True(deliveryRecord.AcceptedOn >= deliveryRecord.RequestedOn);
+            Assert.True(deliveryRecord.AcceptedOn!.Value >= deliveryRecord.RequestedOn);
             Assert.NotNull(deliveryRecord.DeliveredOn);
-            Assert.True(deliveryRecord.DeliveredOn >= deliveryRecord.AcceptedOn);
+            Assert.True(deliveryRecord.DeliveredOn!.Value >= deliveryRecord.AcceptedOn!.Value);
 
             var published = await WaitForPublishedMessageAsync(
                 channel,

@@ -27,7 +27,7 @@ public sealed class DeliverAcceptedNotification(
 
         var allowed = await consentService.AllowsAsync(
             record.Recipient,
-            record.Purpose,
+            record.Purpose!,
             cancellationToken);
         if (!allowed)
         {
@@ -35,10 +35,10 @@ public sealed class DeliverAcceptedNotification(
         }
 
         var email = messageTemplateRenderer.Render(
-            record.Model,
+            record.Model!,
             record.Recipient,
-            record.RecipientName,
-            record.Link);
+            record.RecipientName!,
+            record.Link!);
         await emailSender.SendAsync(email, cancellationToken);
 
         var deliveredOn = DateTimeOffset.UtcNow;
@@ -47,7 +47,7 @@ public sealed class DeliverAcceptedNotification(
         var payload = new NotificationMessageDeliveredV1(
             record.RequestId,
             record.TenantId,
-            record.Purpose,
+            record.Purpose!,
             record.Recipient,
             NotificationChannels.Email,
             deliveredOn);

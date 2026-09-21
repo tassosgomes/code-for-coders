@@ -6,3 +6,14 @@ public static class NotificationPurposes
 
     public const string PasswordRecovery = "recuperacao-de-senha";
 }
+
+public static class NotificationRefusalReasons
+{
+    public const string MissingPurpose = "finalidade ausente";
+
+    public const string UnknownPurpose = "finalidade desconhecida";
+
+    public const string UnknownModel = "modelo desconhecido";
+
+    public const string MissingData = "dado faltante";
+}
