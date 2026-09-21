@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.BffAdmin.Api/CodeForCoders.BffAdmin.Api.csproj" />
+    <Project Path="src/CodeForCoders.BffAdmin.Application/CodeForCoders.BffAdmin.Application.csproj" />
+    <Project Path="src/CodeForCoders.BffAdmin.Contracts/CodeForCoders.BffAdmin.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.BffAdmin.Domain/CodeForCoders.BffAdmin.Domain.csproj" />
+    <Project Path="src/CodeForCoders.BffAdmin.Infra.Data/CodeForCoders.BffAdmin.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.BffAdmin.Infra.Messaging/CodeForCoders.BffAdmin.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.BffAdmin.ArchitectureTests/CodeForCoders.BffAdmin.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.BffAdmin.EndToEndTests/CodeForCoders.BffAdmin.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.BffAdmin.Tests.Common/CodeForCoders.BffAdmin.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.BffAdmin.UnitTests/CodeForCoders.BffAdmin.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Audit.Application/CodeForCoders.Audit.Application.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Audit.Contracts/CodeForCoders.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Audit.Infra.Data/CodeForCoders.Audit.Infra.Data.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Audit.Infra.Messaging/CodeForCoders.Audit.Infra.Messaging.csproj" />
+    <ProjectReference Include="../CodeForCoders.Audit.Tests.Common/CodeForCoders.Audit.Tests.Common.csproj" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+</Project>

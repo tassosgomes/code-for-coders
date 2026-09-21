@@ -1,0 +1,20 @@
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
+
+namespace CodeForCoders.Audit.Application.Common;
+
+public static class AuditTelemetry
+{
+    public const string ServiceName = "CodeForCoders.Audit";
+    public const string ActivitySourceName = ServiceName;
+    public const string MeterName = ServiceName;
+
+    public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
+    public static readonly Meter Meter = new(MeterName);
+    public static readonly Counter<long> EventsRecorded = Meter.CreateCounter<long>(
+        "audit.events.recorded",
+        unit: "{event}");
+    public static readonly Counter<long> EventsConsumed = Meter.CreateCounter<long>(
+        "audit.events.consumed",
+        unit: "{event}");
+}

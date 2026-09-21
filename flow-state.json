@@ -264,38 +264,48 @@
       },
       {
         "name": "commerce",
-        "path": null,
+        "path": "src/commerce",
         "phase": 1
       },
       {
         "name": "learning",
-        "path": null,
+        "path": "src/learning",
         "phase": 1
       },
       {
         "name": "media",
-        "path": null,
+        "path": "src/media",
         "phase": 1
       },
       {
         "name": "audit",
-        "path": null,
+        "path": "src/audit",
         "phase": 1
       },
       {
         "name": "notification",
-        "path": null,
+        "path": "src/notification",
         "phase": 1,
         "nota": "Antecipado da Fase 2 por decisao de 2026-09-20; ver OD1"
       },
       {
         "name": "bff-student",
-        "path": null,
+        "path": "src/bff-student",
         "phase": 1
       },
       {
         "name": "bff-admin",
-        "path": null,
+        "path": "src/bff-admin",
+        "phase": 1
+      },
+      {
+        "name": "student-spa",
+        "path": "src/student-spa",
+        "phase": 1
+      },
+      {
+        "name": "admin-spa",
+        "path": "src/admin-spa",
         "phase": 1
       }
     ],

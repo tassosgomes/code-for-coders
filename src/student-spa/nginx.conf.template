@@ -1,0 +1,30 @@
+server {
+    listen      80;
+    server_name _;
+
+    location ${BASE_PATH} {
+        alias /usr/share/nginx/html/;
+        try_files $uri $uri/ ${BASE_PATH}index.html;
+    }
+
+    location = ${BASE_PATH}runtime-env.js {
+        alias /usr/share/nginx/html/runtime-env.js;
+        add_header Cache-Control "no-store";
+    }
+
+    location = ${BASE_PATH}index.html {
+        alias /usr/share/nginx/html/index.html;
+        add_header Cache-Control "no-store";
+    }
+
+    location ${BASE_PATH}assets/ {
+        alias /usr/share/nginx/html/assets/;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location /healthz {
+        access_log off;
+        return 200 'ok';
+        add_header Content-Type text/plain;
+    }
+}

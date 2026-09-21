@@ -222,18 +222,18 @@ jobs:
 Padrão já provado; execução mecânica, adequada a agente. Cada app ganha estrutura equivalente, workflow
 chamador com `paths:` próprio, `image-name` próprio e entrada em `foundation.services[].path`.
 
-- [ ] **`commerce`** (.NET) — 3 módulos, **3 schemas** (Catalog · Sales · Entitlement); `Entitlement` é o
+- [x] **`commerce`** (.NET) — 3 módulos, **3 schemas** (Catalog · Sales · Entitlement); `Entitlement` é o
       1º candidato a extração (BA04)
-- [ ] **`learning`** (.NET) — 2 módulos, 2 schemas (Content · Progress)
-- [ ] **`media`** (.NET) — camada anticorrupção de CDN/storage; AWS S3 + CloudFront
-- [ ] **`audit`** (.NET) — append-only, só consome evento; **permissão de banco sem `UPDATE`/`DELETE`** (G13)
-- [ ] **`notification`** (.NET) — fatia mínima: e-mail transacional, um canal (OD1)
-- [ ] **`bff-student`** (.NET + YARP) — sessão **opaca** em Valkey, token nunca no browser (BA06); CSRF (G18)
-- [ ] **`bff-admin`** (.NET + YARP) — idem
-- [ ] **`student-spa`** (React/Vite/TS, `ci-react-ts.yml`) — assets da skill `react`: `Dockerfile`,
+- [x] **`learning`** (.NET) — 2 módulos, 2 schemas (Content · Progress)
+- [x] **`media`** (.NET) — camada anticorrupção de CDN/storage; AWS S3 + CloudFront
+- [x] **`audit`** (.NET) — append-only, só consome evento; **permissão de banco sem `UPDATE`/`DELETE`** (G13)
+- [x] **`notification`** (.NET) — fatia mínima: e-mail transacional, um canal (OD1)
+- [x] **`bff-student`** (.NET + YARP) — sessão **opaca** em Valkey, token nunca no browser (BA06); CSRF (G18)
+- [x] **`bff-admin`** (.NET + YARP) — idem
+- [x] **`student-spa`** (React/Vite/TS, `ci-react-ts.yml`) — assets da skill `react`: `Dockerfile`,
       `nginx.conf.template`, `docker/40-runtime-env.sh`; `window.RUNTIME_ENV` (imagem única); OTel Web com
       `traceparent`. `ingress.yaml` é de Kubernetes — descartar no Coolify
-- [ ] **`admin-spa`** (React/Vite/TS) — idem
+- [x] **`admin-spa`** (React/Vite/TS) — idem
 
 ---
 

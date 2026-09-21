@@ -3,5 +3,8 @@
 **/bin/
 **/obj/
 **/TestResults/
+**/node_modules/
+**/dist/
+**/coverage/
 *.user
 *.suo

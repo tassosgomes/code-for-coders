@@ -1,0 +1,29 @@
+name: student-spa
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/student-spa/**'
+      - '.github/workflows/student-spa.yml'
+  pull_request:
+    paths:
+      - 'src/student-spa/**'
+      - '.github/workflows/student-spa.yml'
+
+permissions:
+  contents: read
+  security-events: write
+  packages: write
+
+jobs:
+  ci:
+    uses: tassosgomes/template-pipeline/.github/workflows/ci-react-ts.yml@v1
+    with:
+      working-directory: src/student-spa
+      version: '24'
+      build-args: '--base=/student/'
+      coverage-threshold: 70
+      build-container: true
+      image-name: code-4-coders-student-spa
+      security-mode: observe

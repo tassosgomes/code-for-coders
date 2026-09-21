@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Media.Application/CodeForCoders.Media.Application.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Media.Domain/CodeForCoders.Media.Domain.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Media.Infra.Data/CodeForCoders.Media.Infra.Data.csproj" />
+    <ProjectReference Include="../CodeForCoders.Media.Tests.Common/CodeForCoders.Media.Tests.Common.csproj" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+</Project>

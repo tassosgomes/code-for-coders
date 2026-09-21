@@ -1,0 +1,37 @@
+name: notification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/notification/**'
+      - 'Directory.*'
+      - 'global.json'
+      - 'BannedSymbols.txt'
+      - '.github/workflows/notification.yml'
+  pull_request:
+    paths:
+      - 'src/notification/**'
+      - 'Directory.*'
+      - 'global.json'
+      - 'BannedSymbols.txt'
+      - '.github/workflows/notification.yml'
+
+permissions:
+  contents: read
+  security-events: write
+  packages: write
+
+jobs:
+  ci:
+    uses: tassosgomes/template-pipeline/.github/workflows/ci-dotnet.yml@v1
+    with:
+      working-directory: src/notification
+      docker-context: .
+      dockerfile: src/notification/Dockerfile
+      version: '10.0.x'
+      test-configuration: Debug
+      coverage-threshold: 70
+      build-container: true
+      image-name: code-4-coders-notification
+      security-mode: observe

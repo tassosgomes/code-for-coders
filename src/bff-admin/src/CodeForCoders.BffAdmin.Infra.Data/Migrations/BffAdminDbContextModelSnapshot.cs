@@ -1,0 +1,43 @@
+using CodeForCoders.BffAdmin.Infra.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+
+#nullable disable
+
+namespace CodeForCoders.BffAdmin.Infra.Data.Migrations;
+
+[DbContext(typeof(BffAdminDbContext))]
+sealed partial class BffAdminDbContextModelSnapshot : ModelSnapshot
+{
+    protected override void BuildModel(ModelBuilder modelBuilder)
+    {
+#pragma warning disable 612, 618
+        modelBuilder
+            .HasDefaultSchema("bff_admin_access")
+            .HasAnnotation("ProductVersion", "10.0.12")
+            .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+        NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+        modelBuilder.Entity("CodeForCoders.BffAdmin.Infra.Data.Outbox.OutboxMessage", b =>
+        {
+            b.Property<Guid>("Id").HasColumnType("uuid").HasColumnName("id");
+            b.Property<int>("Attempts").HasColumnType("integer").HasColumnName("attempts");
+            b.Property<string>("LastError").HasMaxLength(2000).HasColumnType("character varying(2000)").HasColumnName("last_error");
+            b.Property<DateTimeOffset>("OccurredOn").HasColumnType("timestamp with time zone").HasColumnName("occurred_on");
+            b.Property<string>("Payload").IsRequired().HasColumnType("jsonb").HasColumnName("payload");
+            b.Property<DateTimeOffset?>("ProcessedOn").HasColumnType("timestamp with time zone").HasColumnName("processed_on");
+            b.Property<string>("RoutingKey").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)").HasColumnName("routing_key");
+            b.Property<Guid>("TenantId").HasColumnType("uuid").HasColumnName("tenant_id");
+            b.Property<string>("TraceParent").HasMaxLength(55).HasColumnType("character varying(55)").HasColumnName("trace_parent");
+            b.Property<string>("Type").IsRequired().HasMaxLength(200).HasColumnType("character varying(200)").HasColumnName("type");
+            b.HasKey("Id");
+            b.HasIndex("Id").HasDatabaseName("ix_outbox_messages_pending").HasFilter("processed_on IS NULL");
+            b.HasIndex("TenantId").HasDatabaseName("ix_outbox_messages_tenant_id");
+            b.ToTable("outbox_messages", "bff_admin_access");
+        });
+#pragma warning restore 612, 618
+    }
+}
