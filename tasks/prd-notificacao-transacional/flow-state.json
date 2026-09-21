@@ -4,9 +4,9 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": null,
-  "last_checkpoint": "2.0",
+  "last_checkpoint": "3.0",
   "phase": "checkpoint-task",
-  "active_task": "2.0",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,9 +19,9 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0",
+    "task": "3.0",
     "attempt": 1,
-    "run_id": "run.hlbIrKyo",
+    "run_id": "run.30isLJtu",
     "gate": "passed"
   },
   "history": [
@@ -173,6 +173,45 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.hlbIrKyo",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.JRIJYDfY",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.InjnhLBF",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/3.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.30isLJtu",
       "gate": "passed"
     }
   ]

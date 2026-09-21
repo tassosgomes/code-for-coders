@@ -12,6 +12,15 @@ public sealed class DeliveryRecordRepository(NotificationDbContext dbContext) : 
         return Task.CompletedTask;
     }
 
+    public Task<DeliveryRecord?> GetByRequestIdAsync(
+        Guid tenantId,
+        Guid requestId,
+        CancellationToken cancellationToken)
+        => dbContext.DeliveryRecords
+            .SingleOrDefaultAsync(
+                record => record.TenantId == tenantId && record.RequestId == requestId,
+                cancellationToken);
+
     public Task<DeliveryRecord?> GetAsync(Guid id, CancellationToken cancellationToken)
         => dbContext.DeliveryRecords.SingleOrDefaultAsync(record => record.Id == id, cancellationToken);
 

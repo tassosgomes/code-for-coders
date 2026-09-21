@@ -6,6 +6,11 @@ public interface IDeliveryRecordRepository
 {
     Task AddAsync(DeliveryRecord record, CancellationToken cancellationToken);
 
+    Task<DeliveryRecord?> GetByRequestIdAsync(
+        Guid tenantId,
+        Guid requestId,
+        CancellationToken cancellationToken);
+
     Task<DeliveryRecord?> GetAsync(Guid id, CancellationToken cancellationToken);
 
     Task<DeliveryRecord?> GetNextAcceptedAsync(CancellationToken cancellationToken);

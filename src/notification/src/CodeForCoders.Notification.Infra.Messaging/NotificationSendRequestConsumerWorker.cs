@@ -4,12 +4,15 @@ using System.Text.Json;
 using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Application.UseCases.Notifications.AcceptNotificationSendRequest;
 using CodeForCoders.Notification.Contracts;
+using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Infra.Messaging.Configuration;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
@@ -102,11 +105,24 @@ public sealed class NotificationSendRequestConsumerWorker(
                 logger.LogInformation(exception, "Notification send request was rejected by validation.");
                 await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
             }
+            catch (DbUpdateException exception) when (IsDeliveryRecordUniqueViolation(exception))
+            {
+                logger.LogInformation(
+                    "Notification send request was already processed; acknowledging the redelivery.");
+                await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
+            }
             catch (AlreadyClosedException exception)
             {
                 logger.LogError(exception, "RabbitMQ channel closed while consuming a notification request.");
             }
         }
+
+        private static bool IsDeliveryRecordUniqueViolation(DbUpdateException exception)
+            => exception.InnerException is PostgresException
+                {
+                    SqlState: PostgresErrorCodes.UniqueViolation,
+                }
+                && exception.Entries.Any(entry => entry.Entity is DeliveryRecord);
 
         private static void ValidateEnvelope(NotificationSendRequestedV1? request)
         {

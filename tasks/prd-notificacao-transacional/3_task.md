@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests\" --minimum-expected-tests 2"
@@ -54,8 +54,8 @@ modelo, não esta task).
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests" --minimum-expected-tests 2`
-- [ ] Publicar o mesmo `pedidoId` duas vezes em sequência resulta em uma única chamada ao fake do
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests" --minimum-expected-tests 2`
+- [x] Publicar o mesmo `pedidoId` duas vezes em sequência resulta em uma única chamada ao fake do
       provedor e um único Registro de Entrega
-- [ ] Publicar dois `pedidoId`s distintos com a mesma finalidade e destinatário resulta em dois
+- [x] Publicar dois `pedidoId`s distintos com a mesma finalidade e destinatário resulta em dois
       Registros de Entrega e duas chamadas ao fake do provedor

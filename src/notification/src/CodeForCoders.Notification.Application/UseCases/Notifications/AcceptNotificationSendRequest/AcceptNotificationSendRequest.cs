@@ -19,6 +19,15 @@ public sealed class AcceptNotificationSendRequest(
         await validator.ValidateAndThrowAsync(input, cancellationToken);
         tenantContext.Set(input.Request.TenantId);
 
+        var existingRecord = await deliveryRecordRepository.GetByRequestIdAsync(
+            input.Request.TenantId,
+            input.Request.PedidoId,
+            cancellationToken);
+        if (existingRecord is not null)
+        {
+            return ToOutput(existingRecord);
+        }
+
         var refusalReason = NotificationSendRequestRules.GetRefusalReason(input.Request);
         var transitionOn = DateTimeOffset.UtcNow;
         if (refusalReason is not null)
@@ -40,14 +49,7 @@ public sealed class AcceptNotificationSendRequest(
             await unitOfWork.CommitAsync(cancellationToken);
             NotificationTelemetry.NotificationsRefused.Add(1);
 
-            return new AcceptNotificationSendRequestOutput(
-                refusedRecord.Id,
-                refusedRecord.RequestId,
-                refusedRecord.TenantId,
-                refusedRecord.Status,
-                refusedRecord.AcceptedOn,
-                refusedRecord.RefusedOn,
-                refusedRecord.Reason);
+            return ToOutput(refusedRecord);
         }
 
         var acceptedOn = transitionOn;
@@ -68,7 +70,11 @@ public sealed class AcceptNotificationSendRequest(
         await unitOfWork.CommitAsync(cancellationToken);
         NotificationTelemetry.NotificationsAccepted.Add(1);
 
-        return new AcceptNotificationSendRequestOutput(
+        return ToOutput(record);
+    }
+
+    private static AcceptNotificationSendRequestOutput ToOutput(DeliveryRecord record)
+        => new(
             record.Id,
             record.RequestId,
             record.TenantId,
@@ -76,5 +82,4 @@ public sealed class AcceptNotificationSendRequest(
             record.AcceptedOn,
             record.RefusedOn,
             record.Reason);
-    }
 }
