@@ -1,10 +1,10 @@
 ---
 tsg_artifact: domain
 product: code-4-coders
-version: 1.0
-status: draft
-updated: 2026-09-20
-sources: vision.md@1.1, context/domain-map.md@1.1, backlog/capabilities.md@1.2
+version: 1.1
+status: approved
+updated: 2026-09-21
+sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4
 ---
 
 # Domain Document — Identidade e Acesso
@@ -124,9 +124,26 @@ Ambas derivam de `C01` na visão.
 
 Esta é a única dependência upstream do domínio, e é a razão pela qual `CAP-026` foi antecipada ao
 MVP (R5 · Q1 · OD1). O Domain Map declara a divisão: **o domínio de origem é dono do conteúdo da
-mensagem; Notificação é dona da entrega e do consentimento.** O *mecanismo* da junta (se Notificação
-assina o fato `identidade.conta-criada` ou se recebe um pedido explícito de envio) é decisão de
-contrato e está em QA-01.
+mensagem; Notificação é dona da entrega e do consentimento.**
+
+**Mecanismo decidido (QA-01, 2026-09-20).** Notificação é **carteiro, não redatora**:
+
+- Este domínio publica `notificacao.envio-solicitado` pelo outbox (G06), com destinatário,
+  **identificador do Modelo de Mensagem**, os **dados que o preenchem** (nome, link, validade) e a
+  **finalidade declarada**. A mensagem é **endereçada** a Notificação, não difundida.
+- Notificação verifica consentimento, entrega pelo canal, repete em falha e registra o resultado.
+  **Não conhece o conceito de "confirmação de conta" nem de "recuperação de senha".**
+- `identidade.conta-criada` segue existindo como fato de domínio para Matrícula e Inteligência de
+  Negócio, mas **não é ele que dispara o e-mail**. Fosse ele, o Token de Verificação viajaria dentro
+  de um fato difundido, legível por todo assinante — inclusive `analytics`.
+- **O texto mora em Notificação, não aqui.** O Modelo de Mensagem é entidade de Notificação no
+  Domain Map, e o backlog herda a restrição "nenhum domínio monta mensagem de canal" — consequência
+  de DE12. Este domínio dita **o quê** e **quando**; Notificação dita **como aquilo se parece** e
+  cuida de remetente, rodapé, descadastro e reentrega. O que `CAP-027` acrescenta depois é o negócio
+  **editar** o modelo, não a propriedade dele mudar de dono.
+- O ganho desta divisão não é teórico: fosse a origem a compor assunto e corpo, marca, rodapé legal
+  e descadastro estariam espalhados por seis serviços, que é exatamente o que DE12 existe para
+  impedir.
 
 ### Fornece para (Downstream)
 
@@ -171,8 +188,10 @@ Não há SSO, não há provedor de identidade externo e não há federação nes
 | RN-10 | O endereço IP não é usado como sinal de autorização, de sessão nem de detecção de compartilhamento | G26 |
 | RN-11 | Toda escrita autenticada por cookie de sessão exige proteção CSRF. Cookie sem CSRF é vulnerabilidade, não simplificação | G18 |
 | RN-12 | Permissão só é concedida **através de um Papel**. Nenhuma permissão é atribuída diretamente a uma Conta | `CAP-002` |
-| RN-13 | Toda Conta ativa carrega ao menos o papel `aluno`. Papéis internos são **adicionais** e nunca substituem o papel base | Política de produto |
-| RN-14 | **Não há auto-cadastro de ator interno.** Um ator interno só passa a existir por Convite de Acesso Interno emitido por quem tem a permissão de conceder acesso interno | `CAP-002` |
+| RN-13 | **Conta de aluno e conta de ator interno são contas distintas.** Uma conta não acumula os dois lados: ou ela é de aluno, ou é de ator interno. Papéis internos acumulam **entre si** (o mesmo ator pode ser professor e suporte) | QA-03 |
+| RN-13a | Uma pessoa que é aluno **e** ator interno mantém **duas contas, com endereços de e-mail distintos** — consequência direta de RN-01, que faz o e-mail identificar a conta unicamente. Na prática: endereço institucional para a conta interna, pessoal para a de aluno | QA-03 · RN-01 |
+| RN-13b | Quando essa pessoa compra e assiste a um curso, ela o faz **pela conta de aluno**: o direito de acesso, o progresso e a marca d'água seguem essa conta, nunca a interna | QA-03 · BA15 |
+| RN-14 | **Não há auto-cadastro de ator interno.** Um ator interno só passa a existir por Convite de Acesso Interno, e no MVP **apenas o administrador** pode emiti-lo. Delegar a permissão a outro papel é mudança posterior deliberada: delegar depois é fácil, recolher é difícil | `CAP-002` · QA-04 |
 | RN-15 | O Convite é de uso único, vinculado ao e-mail convidado e tem validade. Expirado, exige novo convite — não é reativável | `CAP-002` |
 | RN-16 | **Menor privilégio por papel:** o professor não acessa dado financeiro e o suporte não acessa dado de autoria. Um papel interno só enxerga o que o seu escopo declara | `CAP-002` · visão |
 | RN-17 | A revogação de papel tem efeito na **próxima decisão de autorização** e encerra as sessões do ator interno afetado | BA07 |
@@ -183,6 +202,10 @@ Não há SSO, não há provedor de identidade externo e não há federação nes
 | RN-22 | Este domínio responde "quem é o ator e o que ele pode fazer". **Nunca** responde "este aluno pode assistir a este curso agora" | Domain Map · G20 |
 | RN-23 | Desativar uma conta preserva a identidade para fins de auditoria e de obrigação fiscal. Exclusão e anonimização são coordenadas por `CAP-031`, nunca executadas unilateralmente aqui | LGPD · `CAP-031` |
 | RN-24 | Toda entidade deste domínio carrega `tenant_id` desde a Fase 1, mesmo em operação mono-tenant | BA10 · G07 |
+| RN-25 | O **primeiro administrador** nasce por provisionamento da Fase 0 — seed único, datado e executado pelo time, fora do fluxo de convite. Todo administrador seguinte nasce por Convite de Acesso Interno (RN-14). O seed é anterior a `CAP-030` e, por isso, **não aparece na trilha de auditoria**: é lacuna conhecida e aceita, não omissão | QA-05 · `CAP-002` |
+| RN-26 | O e-mail do aluno aparece no payload do pedido de envio a Notificação — é o destinatário, e não há entrega sem ele. Esta é a **segunda e última exceção declarada** a RN-21, junto com a marca d'água. Fora dessas duas, mascaramento vale em todo lugar | G23 · QA-01 |
+| RN-27 | Este domínio **não pede envio sem finalidade declarada**. Toda solicitação a Notificação carrega a finalidade, que é o que permite a ela aplicar consentimento sem conhecer o conteúdo | DE12 · QA-01 |
+| RN-28 | Este domínio **não monta mensagem de canal**. Pede o envio indicando o Modelo de Mensagem e fornecendo os dados que o preenchem; assunto, corpo, remetente e rodapé são de Notificação | Domain Map (Modelo de Mensagem) · DE12 |
 
 ---
 
@@ -201,6 +224,9 @@ Não há SSO, não há provedor de identidade externo e não há federação nes
 - `identidade.convite-interno-aceito` — o convidado ativou a conta e assumiu o papel
 - `identidade.papel-concedido` — ato administrativo, com autor e motivo
 - `identidade.papel-revogado` — ato administrativo, com autor e motivo
+- `notificacao.envio-solicitado` — pedido de entrega endereçado a Notificação. **O contrato é de
+  Notificação, não deste domínio** (por isso o prefixo): quem define o que um pedido de envio aceita
+  é quem entrega. Este domínio é apenas um dos remetentes, e informa modelo e dados, nunca texto
 
 Os quatro últimos são o que `CAP-030` consome para compor a trilha de auditoria; os três primeiros
 interessam a Notificação, Matrícula e Inteligência de Negócio.
@@ -222,35 +248,41 @@ ele não depende do fato consumado de ninguém.
 | RF-03 | **`identity` virar gargalo do caminho quente** se cada serviço perguntar quem é o ator a cada requisição | Média | Alto | BA06: JWT interno de vida curta validado localmente via JWKS, sem round-trip; a junta transversal não consome salto síncrono |
 | RF-04 | **O e-mail do aluno vazar por um caminho legítimo** — ele é dado pessoal que, por decisão de proteção de conteúdo, precisa chegar ao cliente do player | Média | Alto | RN-21 delimita a única exposição permitida; todo o resto é mascarado (G10 · G23) |
 | RF-05 | **Consentimento de comunicação migrar para cá** porque a confirmação de conta e a recuperação de senha nascem aqui | Média | Médio | Fora do Escopo explícito: Notificação é dona única do consentimento (DE12); este domínio fornece conteúdo, não decide envio |
-| RF-06 | **Restrição de sessão simultânea entrar por engano em um PRD** — a proteção de conteúdo é tema recorrente e a trava parece barata | Média | Alto | RN-09 e G24; e QA-02, que aponta uma contradição ainda aberta no próprio baseline |
+| RF-06 | **Restrição de sessão simultânea entrar por engano em um PRD** — a proteção de conteúdo é tema recorrente e a trava parece barata | Média | Alto | RN-09 e G24, confirmados pelo time em 2026-09-20: a medição é observatória e a restrição só se justifica com dado, para não cobrar do aluno pagante o erro. BA15 foi alinhada a essa decisão no baseline v1.2; OD8 permanece como registro histórico |
 
 ---
 
 ## 9. Questões em Aberto (Open Questions)
 
-- [ ] **QA-01 — Mecanismo da junta com Notificação.** O Domain Map declara a divisão de
-      responsabilidade (origem é dona do conteúdo, Notificação é dona da entrega e do consentimento),
-      mas não o mecanismo: Notificação **assina** `identidade.conta-criada` e monta a mensagem, ou
-      recebe de `identity` um **pedido explícito de envio** com o conteúdo pronto? A diferença decide
-      quem conhece o texto da mensagem e quem conhece o token de confirmação. **Precisa estar fechada
-      antes do PRD de `CAP-026`**, que é quem materializa o contrato.
-- [ ] **QA-02 — Contradição dentro do baseline sobre sessões simultâneas.** BA15 descreve a pilha de
-      proteção como "URL assinada + HLS AES-128 + marca d'água + **limite de sessões simultâneas**",
-      enquanto BA16 rejeita explicitamente sessão única e lease de reprodução, e G24 proíbe qualquer
-      restrição de concorrência sem decisão com dado. As duas não podem valer juntas, e o mecanismo
-      moraria neste domínio. **A decisão pertence ao `architecture-baseline.md`**, não a este
-      documento; RN-09 segue BA16/G24 até que o baseline se resolva. Dono: time.
-- [ ] **QA-03 — Conta única para quem acumula papéis.** Um professor que compra um curso usa a mesma
-      Conta (RN-13, papel base `aluno` + papel interno) ou duas contas separadas? RN-13 assume a
-      primeira; a alternativa muda o cadastro e a marca d'água. Dono: negócio.
-- [ ] **QA-04 — Quem pode convidar ator interno.** RN-14 exige a permissão de conceder acesso
-      interno, mas não diz se ela é exclusiva do administrador ou delegável a outro papel. Dono:
-      negócio. Não bloqueia o PRD de `CAP-001`.
-- [ ] **QA-05 — Primeiro administrador.** RN-14 elimina auto-cadastro de ator interno, o que torna o
-      primeiro administrador um problema de origem: ele nasce por provisionamento da Fase 0 ou por um
-      caminho de exceção auditado? Dono: time. Bloqueia o PRD de `CAP-002`, não o de `CAP-001`.
+- [x] **QA-01 — Mecanismo da junta com Notificação. Fechada em 2026-09-20.** Notificação assina a
+      própria fila de pedidos de envio, não o fato de domínio, e entrega sem conhecer o conteúdo.
+      Detalhe em §5; regras em RN-26, RN-27 e RN-28. Descartado: Notificação assinar `identidade.conta-criada`
+      e montar a mensagem — faria o Token de Verificação viajar num fato difundido e obrigaria
+      Notificação a conhecer as regras de identidade.
+- [x] **QA-02 — Sessões simultâneas. Confirmada em 2026-09-20.** A medição é observatória, para
+      indicar desvio e decidir depois com dado; a linha foi escolhida para não prejudicar a
+      experiência do aluno pagante. RN-09 e RF-06 já refletem isso. O baseline v1.2 corrigiu BA15
+      para ficar alinhado a BA16/G24; **OD8** permanece no `flow-state.json` como decisão registrada,
+      não como pendência deste documento.
+- [x] **QA-03 — Conta única para quem acumula papéis. Fechada em 2026-09-20: contas separadas.**
+      Formalizada em RN-13, RN-13a e RN-13b. A consequência que decorre de RN-01 e precisa ser dita:
+      como o e-mail identifica a conta unicamente, **as duas contas exigem endereços distintos**.
+      Não é preciosismo de modelagem — com o mesmo endereço em duas contas, "recuperar a senha deste
+      e-mail" deixaria de ter resposta única, e RF-03 do PRD de `CAP-026` perderia sentido.
+      Descartado: conta única com papel base `aluno` + papel interno.
+- [x] **QA-04 — Quem pode convidar ator interno. Fechada em 2026-09-20.** Exclusiva do administrador
+      no MVP; delegação a outro papel é mudança posterior deliberada. Formalizada em RN-14.
+- [x] **QA-05 — Primeiro administrador. Fechada em 2026-09-20.** Seed único e datado, executado pelo
+      time na Fase 0, fora do fluxo de convite. Formalizada em RN-25, com a lacuna de auditoria
+      declarada.
 
 ---
+
+## Histórico de Revisões
+
+| Versão | Data | Autor | Alterações |
+|---|---|---|---|
+| 1.1 | 2026-09-21 | Tasso Gomes | Revalidado contra as origens v1.2/v1.4 e contra o baseline v1.2; nenhuma fronteira ou regra do domínio foi alterada |
 
 *Domain Doc gerado com a skill `tsg-flow-domain-creator`. Para criar o PRD de uma capacidade que
 toca este domínio, use `tsg-flow-prd-creator` fornecendo o `vision.md`, este arquivo, os demais

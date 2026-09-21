@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-20",
+  "updated": "2026-09-21",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo e nunca sao duplicados aqui. Escrito pelas skills TSG Flow ao concluir uma etapa; validado por .tsg/validate_state.py.",
   "artifacts": {
     "vision": "vision.md",
@@ -160,8 +160,10 @@
     },
     {
       "id": "CAP-026",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "prd",
+      "artifacts": {
+        "prd": "tasks/prd-notificacao-transacional/prd.md"
+      },
       "mvp_order": 1
     },
     {
@@ -193,16 +195,18 @@
   ],
   "next_actions": [
     {
-      "id": "NA3",
-      "what": "PRD de CAP-026 em fatia minima, depois PRD de CAP-001 (provedor antes do consumidor)",
-      "skill": "tsg-flow-prd-creator",
+      "id": "NA5",
+      "what": "Criar o contrato da mensagem notificacao.envio-solicitado a partir de tasks/prd-notificacao-transacional/prd.md. Depois: PRD de CAP-001, que vai consumir o contrato",
+      "skill": "tsg-flow-contract-creator",
       "blocked_by": []
     },
     {
-      "id": "NA4",
-      "what": "Aprovar domains/identidade-e-acesso/domain.md (draft). Fechar QA-01 (mecanismo da junta com Notificacao) antes do PRD de CAP-026 e QA-05 (primeiro administrador) antes do PRD de CAP-002",
-      "skill": "tsg-flow-domain-creator",
-      "blocked_by": []
+      "id": "NA6",
+      "what": "PRD de CAP-001 (consumidor), depois do contrato",
+      "skill": "tsg-flow-prd-creator",
+      "blocked_by": [
+        "NA5"
+      ]
     }
   ],
   "open_decisions": [
@@ -226,15 +230,6 @@
       ]
     },
     {
-      "id": "OD4",
-      "ref": "architecture-baseline.md, Dependencias de plataforma",
-      "what": "Esteira de deploy independente por servico, feed NuGet interno, RabbitMQ gerenciado com DLQ, PostgreSQL com banco e credencial por servico",
-      "owner": "time de plataforma",
-      "blocks": [
-        "Fase 1 em producao"
-      ]
-    },
-    {
       "id": "OD5",
       "ref": "capabilities.md R3",
       "what": "Contratar gateway de pagamento",
@@ -244,18 +239,16 @@
       ]
     },
     {
-      "id": "OD8",
-      "ref": "architecture-baseline.md BA15 vs BA16/G24",
-      "what": "Contradicao no baseline: BA15 lista limite de sessoes simultaneas na pilha de protecao; BA16 rejeita sessao unica e lease, e G24 proibe restricao de concorrencia sem dado",
-      "owner": "time",
-      "blocks": [
-        "CAP-001"
-      ]
+      "id": "OD11",
+      "ref": "tasks/prd-notificacao-transacional/prd.md QP-01",
+      "what": "Prazo de retencao da camada com dado pessoal do Registro de Entrega. A forma ja esta decidida (RN-N16: duas camadas, parametrizada); falta o numero. Recomendacao a validar: ordem de 90 dias, que e o que cobre a finalidade de diagnostico. Prazo de guarda longo (5-6 anos) vale para documento fiscal e contrato, nao para log de entrega de e-mail",
+      "owner": "encarregado de dados + negocio",
+      "blocks": []
     }
   ],
   "foundation": {
-    "status": "pending",
-    "nota": "Fase 0 conduzida fora do fluxo TSG (PRD standalone ou plan mode). O fluxo nao a executa: detecta o que e detectavel (projeto existe no caminho declarado) e repete o que foi declarado (esteira, broker, banco). Criterio de fechamento: hello-world de cada servico da Fase 1 passando pela esteira, conforme as dependencias de plataforma do baseline.",
+    "status": "done",
+    "nota": "Fase 0 conduzida fora do fluxo TSG (PRD standalone ou plan mode). A Etapa 3 registrou a evidencia em docs/foundation.md e as decisoes de repositorio e runtime em docs/adr/. Os dez servicos da Fase 1 estao declarados com caminho preenchido; o fluxo TSG segue apenas com o progresso das capacidades.",
     "services": [
       {
         "name": "identity",
@@ -309,7 +302,7 @@
         "phase": 1
       }
     ],
-    "platform_ready": false
+    "platform_ready": true
   },
   "decisions": [
     {
@@ -335,6 +328,86 @@
       "decided_at": "2026-09-20",
       "owner": "tasso",
       "decision": "Agora, antes de qualquer artefato derivado. backlog/capabilities.md vai a v1.2 approved com o rastro nas 31 capacidades e a tabela de reconciliacao C01..C16. Aprovar v1.1 como estava foi considerado e descartado: o rastro entraria depois como v1.2 e o domain doc e os PRDs da rodada CAP-026/CAP-001, escritos contra @1.1, nasceriam com sources desatualizado. Descartar o rastro de vez tambem foi considerado e recusado: sem ele a divergencia de fase entre visao e backlog fica invisivel para o gate. O rastro expos duas divergencias que so tinham risco, nao origem declarada: CAP-029 (C15 antecipada a Fase 2, R9) e CAP-021 (C06 adiada a Fase 5, R11)."
+    },
+    {
+      "id": "OD9",
+      "ref": "domains/identidade-e-acesso/domain.md QA-01",
+      "what": "Mecanismo da junta Identidade -> Notificacao",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Notificacao e carteiro: assina a propria fila de pedidos de envio (notificacao.envio-solicitado, publicado pelo outbox da origem) e entrega sem conhecer o porque. A origem informa destinatario, identificador do Modelo de Mensagem, os dados que o preenchem e a finalidade; o texto (assunto, corpo, remetente, rodape, descadastro) e de Notificacao. Descartado: Notificacao assinar o fato identidade.conta-criada e montar a mensagem — faria o token de confirmacao viajar num fato difundido, legivel por analytics e Matricula, e obrigaria Notificacao a conhecer as regras de identidade. Tambem descartado: a origem compor assunto e corpo — contraria o Domain Map, que poe Modelo de Mensagem em Notificacao, e a restricao herdada \"nenhum dominio monta mensagem de canal\" (DE12); espalharia marca, rodape legal e descadastro por seis servicos."
+    },
+    {
+      "id": "OD10",
+      "ref": "domains/identidade-e-acesso/domain.md QA-05",
+      "what": "Origem do primeiro administrador, ja que nao ha auto-cadastro de ator interno (RN-14)",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Seed manual no banco, unico e datado, executado pelo time na Fase 0. Formalizado em RN-25. Consequencia aceita e declarada: o seed e anterior a CAP-030 e nao aparece na trilha de auditoria. Descartado: caminho de excecao auditado no proprio produto — codigo permanente para um ato que acontece uma vez."
+    },
+    {
+      "id": "OD8",
+      "ref": "architecture-baseline.md BA15 vs BA16/G24",
+      "what": "Contradicao no baseline sobre limite de sessoes simultaneas",
+      "decided_at": "2026-09-20",
+      "owner": "time",
+      "decision": "BA16/G24 prevalecem: medicao observatoria, nenhuma trava de concorrencia na Fase 1, para nao cobrar do aluno pagante o erro de quem compartilha. BA15 corrigido no proprio baseline (v1.2) em vez de a resolucao viver so no flow-state, porque o baseline e o documento que a TechSpec cita. Cascata assumida: capabilities.md revisitado a v1.3 para declarar baseline@1.2."
+    },
+    {
+      "id": "OD14",
+      "ref": "domains/identidade-e-acesso/domain.md QA-03",
+      "what": "Pessoa que e aluno e ator interno: uma conta ou duas",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Contas separadas (RN-13). Consequencia que decorre de RN-01 e foi formalizada em RN-13a: as duas contas exigem enderecos de e-mail distintos, porque o e-mail identifica a conta unicamente — com o mesmo endereco em duas contas, recuperacao de senha deixaria de ter resposta unica e RF-03 do PRD de CAP-026 perderia sentido. RN-13b: compra, progresso e marca d agua seguem a conta de aluno. Descartado: conta unica com papel base aluno + papel interno."
+    },
+    {
+      "id": "OD15",
+      "ref": "domains/identidade-e-acesso/domain.md QA-04",
+      "what": "Quem pode convidar ator interno",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Exclusiva do administrador no MVP (RN-14). Delegar a outro papel e mudanca posterior deliberada: delegar depois e facil, recolher e dificil."
+    },
+    {
+      "id": "OD12",
+      "ref": "tasks/prd-notificacao-transacional/prd.md QP-02",
+      "what": "Validade dos links de confirmacao e de recuperacao",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Parametro de operacao, um valor por finalidade (RN-N15), renderizado no modelo a partir do parametro vigente (RN-N14) — nenhum modelo afirma prazo em prosa. Resta escolher os numeros, que nao travam a entrega. Nota de seguranca registrada: o link de recuperacao e credencial temporaria, e igualar seu prazo ao da confirmacao por conveniencia cria uma senha alternativa de vida longa."
+    },
+    {
+      "id": "OD13",
+      "ref": "tasks/prd-notificacao-transacional/prd.md QP-03",
+      "what": "Endereco remetente e dominio de envio",
+      "decided_at": "2026-09-20",
+      "owner": "tasso",
+      "decision": "Parametro de operacao (RN-N13): a aplicacao nao assume remetente nem dominio, e a configuracao vem do time de plataforma. Nao substitui SPF/DKIM/DMARC no ar antes de trafego real, que continua tarefa de plataforma e esta rastreado na fundacao e no ADR-0002."
+    },
+    {
+      "id": "OD4",
+      "ref": "architecture-baseline.md, Dependencias de plataforma",
+      "what": "Esteira de deploy independente por servico, feed NuGet interno, RabbitMQ gerenciado com DLQ, PostgreSQL com banco e credencial por servico",
+      "decided_at": "2026-09-21",
+      "owner": "time de plataforma",
+      "decision": "Fechada na Etapa 3: as dez unidades de deploy estao presentes no monorepo com workflows chamadores proprios, a fundacao local cobre PostgreSQL, RabbitMQ com DLQ, Valkey e OTLP, e o runtime alvo, segredos, ambientes, deploy por digest e rollback estao registrados nos ADRs 0001 e 0002 e em docs/foundation.md. O fechamento registra a plataforma como pronta no fluxo; a comprovacao operacional de cada deploy permanece evidenciada nos respectivos pipelines e ambientes."
+    },
+    {
+      "id": "OD16",
+      "ref": "docs/adr/0001-monorepo-de-codigo.md",
+      "what": "Formato do repositorio para os servicos da plataforma",
+      "decided_at": "2026-09-21",
+      "owner": "tasso",
+      "decision": "Um unico repositorio de codigo. O repositorio e uma unidade de colaboracao e versionamento; cada servico continua sendo unidade de deploy, escala e falha, com imagem, workflow, banco/credencial e rollback proprios."
+    },
+    {
+      "id": "OD17",
+      "ref": "docs/adr/0002-plataforma-de-runtime-coolify.md",
+      "what": "Plataforma de runtime para compute e dados",
+      "decided_at": "2026-09-21",
+      "owner": "tasso",
+      "decision": "Coolify em VPS e a plataforma de runtime para compute, bancos e dependencias operacionais. AWS fica restrita a S3 + CloudFront para armazenamento e distribuicao de midia; segredos, ambientes com reviewers, deploy por digest e rollback seguem as regras do ADR-0002."
     }
   ]
 }

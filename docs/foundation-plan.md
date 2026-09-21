@@ -4,24 +4,25 @@
 > A Fase 0 corre **fora do fluxo TSG**, por decisão registrada em `flow-state.json` (`foundation.nota`).
 > Critério de fechamento: hello-world de cada serviço da Fase 1 passando pela esteira.
 
-**Status:** em andamento · **Criado em:** 2026-09-20
+**Status:** Etapa 3 concluída · **Criado em:** 2026-09-20
 
-**Escopo desta execução:** somente a Etapa 0. A execução técnica dos itens abaixo acontece no
-`template-pipeline`; este arquivo registra a ordem, os gates e as evidências necessárias. Não iniciar
-as Etapas 1–3, nem alterar `flow-state.json`, enquanto o gate de saída da Etapa 0 não estiver aprovado.
+**Escopo desta execução:** somente a Etapa 3. A execução técnica dos itens da Etapa 0 acontece no
+`template-pipeline`; este arquivo registra a ordem, os gates e as evidências necessárias. As Etapas 1 e
+2 já estão registradas como entregues; esta execução fecha a documentação e a transição do fluxo.
 
 ## Context
 
-`context/architecture-baseline.md` v1.1 aceitou microsserviços, mas registrou uma condição estrutural:
+`context/architecture-baseline.md` v1.2 aceitou microsserviços, mas registrou uma condição estrutural:
 **sem esteira de deploy independente por serviço, microsserviços vira monolito distribuído.** O baseline
 declara 7 dependências de plataforma (esteira por serviço com rollback, feed NuGet para `Contracts`,
 RabbitMQ+DLQ, Postgres com banco/credencial por serviço, Valkey, coletor OTLP, secret manager) e as
-deixa fora do próprio escopo (BA14). Elas estão em aberto como **AB05** no baseline e **OD4** no
-`flow-state.json`, bloqueando "Fase 1 em produção".
+deixa fora do próprio escopo (BA14). A Etapa 3 fechou **AB05** no baseline e **OD4** no
+`flow-state.json`, registrando a fundação como pronta para o fluxo.
 
-Hoje `flow-state.json` tem `foundation.status: "pending"`, `platform_ready: false` e os 8 serviços da
-Fase 1 com `path: null`. O repo não tem uma linha de código de aplicação. O fluxo TSG está parado em
-NA1 (aprovar `backlog/capabilities.md` v1.1) e não avança para PRD sem chão onde pisar.
+Hoje `flow-state.json` tem `foundation.status: "done"`, `platform_ready: true` e os 10 serviços da
+Fase 1 com `path` preenchido. O repo já contém o golden path e as réplicas da fundação. O fluxo TSG
+foi retomado e está em NA5 → NA6, depois da aprovação/produção dos artefatos que originalmente ocupavam
+NA1 → NA3 e da aprovação de CAP-026.
 
 `template-pipeline` é a esteira: uma IDP sobre GitHub Actions, com **Fase 1 (CI + segurança) pronta e
 madura** — `ci-dotnet.yml` e `ci-react-ts.yml` cobrem exatamente as duas stacks do produto, com contrato
@@ -29,9 +30,10 @@ madura** — `ci-dotnet.yml` e `ci-react-ts.yml` cobrem exatamente as duas stack
 **Fases 2 (IssueOps), 3 (CD) e 4 (catálogo) não começaram.** Zero IaC, zero publicação de pacote, zero
 deploy. Ou seja: a plataforma cobre hoje a metade de CI da dependência #1 e nenhuma das outras seis.
 
-**Resultado esperado:** `identity` sai do zero e vai até deploy com rollback provado, exercitando as 7
-dependências ponta a ponta; os outros 9 apps são replicados a partir dele; `foundation.platform_ready`
-vira `true` e AB05/OD4 fecham. Tudo que a esteira precisar e não tiver vira issue em `template-pipeline`.
+**Resultado registrado:** `identity` saiu do zero e os outros 9 apps foram replicados a partir dele;
+`foundation.platform_ready` virou `true` e AB05/OD4 foram fechadas. Tudo que a esteira precisar e não
+tiver continua rastreado como issue em `template-pipeline`, com a operação descrita nos ADRs e em
+`docs/foundation.md`.
 
 **Decisões tomadas nesta sessão:** monorepo de código neste repo · golden path `identity` primeiro,
 réplica depois · Coolify em VPS para compute e dados, AWS S3+CloudFront só para mídia.
@@ -40,8 +42,23 @@ réplica depois · Coolify em VPS para compute e dados, AWS S3+CloudFront só pa
 
 ## Etapa 0 — Destravar a esteira (`template-pipeline`)
 
-Abrir **14 issues**. Três são bloqueantes e devem ser implementadas antes da Etapa 1; depois cortar
+Abrir **14 issues** — abertura concluída em 2026-09-20. Três são bloqueantes e devem ser implementadas antes da Etapa 1; depois cortar
 `v1.2.0` movendo a tag `v1` (fluxo do `_release.yml`, que espera o `_selftest.yml` verde no SHA exato).
+
+**Issues abertas em 2026-09-20:** [F0-01](https://github.com/tassosgomes/template-pipeline/issues/3),
+[F0-02](https://github.com/tassosgomes/template-pipeline/issues/4),
+[F0-03](https://github.com/tassosgomes/template-pipeline/issues/5),
+[F0-04](https://github.com/tassosgomes/template-pipeline/issues/6),
+[F0-05](https://github.com/tassosgomes/template-pipeline/issues/7),
+[F0-06](https://github.com/tassosgomes/template-pipeline/issues/8),
+[F0-07](https://github.com/tassosgomes/template-pipeline/issues/9),
+[F0-08](https://github.com/tassosgomes/template-pipeline/issues/10),
+[F0-09](https://github.com/tassosgomes/template-pipeline/issues/11),
+[F0-10](https://github.com/tassosgomes/template-pipeline/issues/12),
+[F0-11](https://github.com/tassosgomes/template-pipeline/issues/13),
+[F0-12](https://github.com/tassosgomes/template-pipeline/issues/14),
+[F0-13](https://github.com/tassosgomes/template-pipeline/issues/15) e
+[F0-14](https://github.com/tassosgomes/template-pipeline/issues/16).
 
 ### Sequenciamento e gates
 
@@ -66,70 +83,71 @@ parte da Etapa 0 e devem permanecer rastreáveis até o fechamento formal. A Eta
 
 ### 0.A Bloqueantes (impedem `identity` de passar na CI)
 
-- [ ] **#1 — `ci-*.yml`: separar o contexto do build de container do `working-directory`**
+- [ ] **F0-01 ([issue #3](https://github.com/tassosgomes/template-pipeline/issues/3)) — `ci-*.yml`: separar o contexto do build de container do `working-directory`**
       `ci-dotnet.yml:280` usa `context: ${{ inputs.working-directory }}`. Num monorepo, o Dockerfile de
       `src/identity` precisa de `Directory.Build.props`, `Directory.Packages.props`, `global.json` e
       `BannedSymbols.txt` da raiz — `dotnet restore` dentro da imagem falha sem eles. Adicionar inputs
       `docker-context` (default: o `working-directory`, preservando o comportamento atual) e `dockerfile`.
       Por ADR 0002, os dois entram nos **seis** `ci-*.yml`, e `scripts/check-contract.sh` valida.
       · label `enhancement`
-- [ ] **#2 — `ci-dotnet.yml`: suportar Microsoft.Testing.Platform (SDK 10)**
+- [ ] **F0-02 ([issue #4](https://github.com/tassosgomes/template-pipeline/issues/4)) — `ci-dotnet.yml`: suportar Microsoft.Testing.Platform (SDK 10)**
       O passo de testes usa `--collect:"XPlat Code Coverage" --results-directory` — sintaxe VSTest. O
       `global.json` do padrão do time fixa `"test": { "runner": "Microsoft.Testing.Platform" }`,
       obrigatório no SDK 10 (`.agents/skills/dotnet/references/testing.md:17-19`). Sob MTP a cobertura
       sai por `--coverage --coverage-output-format cobertura` e o arquivo não se chama
       `coverage.cobertura.xml`, então o passo `coverage` também não acha nada. Detectar o runner pelo
       `global.json` e ramificar. · label `bug`
-- [ ] **#3 — `ci-dotnet.yml`: `--configuration Release` fixo nos testes**
+- [ ] **F0-03 ([issue #5](https://github.com/tassosgomes/template-pipeline/issues/5)) — `ci-dotnet.yml`: `--configuration Release` fixo nos testes**
       `ArchitectureTests` precisa rodar em **Debug** — o ArchUnitNET lê o IL e o Release otimiza
       dependências (`.agents/skills/dotnet/references/testing.md:86-87`). O flag está hardcoded e
       `test-args` só concatena, então passar `--configuration Debug` duplica o flag e quebra. Adicionar
-      input `test-configuration` (default `Release`). · label `bug`
-- [ ] Implementar #1, #2 e #3, `_selftest.yml` verde, cortar `v1.2.0` e mover a tag `v1`
+      input `test-configuration` (default `Release`) aos **seis** `ci-*.yml` por causa do ADR 0002;
+      só o workflow .NET precisa usá-lo efetivamente. · label `bug`
+- [ ] Implementar F0-01, F0-02 e F0-03, `_selftest.yml` verde, cortar `v1.2.0` e mover a tag `v1`
 
 ### 0.B Plataforma — CD (fecha a dependência #1 do baseline)
 
-- [ ] **#4 — Fase 3: `cd-coolify.yml` reusável.** Deploy por serviço a partir de `image-digest`,
+- [ ] **F0-04 ([issue #6](https://github.com/tassosgomes/template-pipeline/issues/6)) — Fase 3: `cd-coolify.yml` reusável.** Deploy por serviço a partir de `image-digest`,
       ambientes `dev`/`staging`/`prod` com reviewers, **rollback por redeploy do digest anterior**.
       Consome os outputs `image-digest`/`version` que os `ci-*.yml` já expõem esperando exatamente isso.
       Épico. · label `enhancement`
-- [ ] **#5 — Migration como step de deploy.** Regra 9 de Propriedade dos Dados: *"Migration é step de
+- [ ] **F0-05 ([issue #7](https://github.com/tassosgomes/template-pipeline/issues/7)) — Migration como step de deploy.** Regra 9 de Propriedade dos Dados: *"Migration é step de
       deploy, nunca no boot, e cada tabela tem exatamente um serviço que a migra."* Job `migrate` no CD
       antes do rollout (EF bundle), e action de CI envolvendo
       `.agents/skills/dotnet/assets/ci/check-migrations-immutable.sh`. · label `enhancement`
-- [ ] **#6 — Ambientes e segredos (dependência #7).** GitHub Environments com reviewers + integração com
+- [ ] **F0-06 ([issue #8](https://github.com/tassosgomes/template-pipeline/issues/8)) — Ambientes e segredos (dependência #7).** GitHub Environments com reviewers + integração com
       o secret manager do Coolify; nenhuma credencial em repositório ou imagem. · label `enhancement`
-- [ ] **#7 — Provisionamento das dependências de runtime no Coolify (#3, #4, #5, #6 do baseline).**
+- [ ] **F0-07 ([issue #9](https://github.com/tassosgomes/template-pipeline/issues/9)) — Provisionamento das dependências de runtime no Coolify (#3, #4, #5, #6 do baseline).**
       Postgres com **banco e credencial por serviço** (mecanismo de G04; a permissão sem `UPDATE`/`DELETE`
       é o de G13), RabbitMQ com quorum queues + DLX/DLQ e retenção, Valkey, coletor OTLP com backend de
       traces, métricas e logs. · label `enhancement`
 
 ### 0.C Contratos (dependência #2 e guardrail G14)
 
-- [ ] **#8 — Publicar o pacote NuGet interno `Contracts`.** Workflow `publish-nuget.yml` para GitHub
+- [ ] **F0-08 ([issue #10](https://github.com/tassosgomes/template-pipeline/issues/10)) — Publicar o pacote NuGet interno `Contracts`.** Workflow `publish-nuget.yml` para GitHub
       Packages (BA13: *"nunca em projeto referenciado entre solutions"*) e consumo autenticado nos
       serviços. · label `enhancement`
-- [ ] **#9 — G14: gate de compatibilidade de contrato.** *"Mudança de contrato é aditiva; incompatível
+- [ ] **F0-09 ([issue #11](https://github.com/tassosgomes/template-pipeline/issues/11)) — G14: gate de compatibilidade de contrato.** *"Mudança de contrato é aditiva; incompatível
       exige nova versão. Mecanismo: diff de OpenAPI e do pacote `Contracts` na CI."* Action com `oasdiff`
       para o OpenAPI e comparação de API pública para o pacote. · label `enhancement`
-- [ ] **#10 — Lint de contrato OpenAPI (Spectral).** O ruleset já existe em
+- [ ] **F0-10 ([issue #12](https://github.com/tassosgomes/template-pipeline/issues/12)) — Lint de contrato OpenAPI (Spectral).** O ruleset já existe em
       `.agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml`; falta a action. · label `enhancement`
 
 ### 0.D Monorepo
 
-- [ ] **#11 — `platform.yml` / `platform.schema.json` para monorepo.** O schema assume 1 arquivo = 1
+- [ ] **F0-11 ([issue #13](https://github.com/tassosgomes/template-pipeline/issues/13)) — `platform.yml` / `platform.schema.json` para monorepo.** O schema assume 1 arquivo = 1
       serviço (`nome` escalar). Um repo com 10 apps precisa de lista. Insumo da Fase 2/4. · label `enhancement`
-- [ ] **#12 — Versionamento por serviço em monorepo.** `version` sai de `${GITHUB_REF#refs/tags/}`; uma
+- [ ] **F0-12 ([issue #14](https://github.com/tassosgomes/template-pipeline/issues/14)) — Versionamento por serviço em monorepo.** `version` sai de `${GITHUB_REF#refs/tags/}`; uma
       tag `identity/v1.2.3` vira tag Docker inválida (barra). Não bloqueia a Etapa 1 (em branch o valor é
       o SHA curto e o CD é por digest), mas quebra o dia do primeiro release. · label `bug`
 
 ### 0.E Dívida menor e defaults
 
-- [ ] **#13 — Três correções pequenas.** (a) `actions/ephemeral-app/action.yml` cita
+- [ ] **F0-13 ([issue #15](https://github.com/tassosgomes/template-pipeline/issues/15)) — Três correções pequenas.** (a) `actions/ephemeral-app/action.yml` cita
       `actions/ephemeral-app/stop`, que não existe; (b) `scripts/check-pins.sh` tem `docker://*) ;;` sem
       `continue`, então reprovaria uma referência `docker://`; (c) README/ADR 0001 afirmam que o CodeQL do
       próprio repo roda, mas não há workflow que o acione. · labels `bug`, `good first issue`
-- [ ] **#14 — `setup-toolchain`: default .NET 8.0.x → 10.0.x e respeitar `global.json`.**
+- [ ] **F0-14 ([issue #16](https://github.com/tassosgomes/template-pipeline/issues/16)) — `setup-toolchain`: default .NET 8.0.x → 10.0.x e respeitar `global.json`.**
       `actions/setup-toolchain/action.yml:37`. Não bloqueia (passamos `version: '10.0.x'` explícito), mas
       o default da plataforma está uma major atrás do padrão do time. · label `enhancement`
 
@@ -150,7 +168,7 @@ parte da Etapa 0 e devem permanecer rastreáveis até o fechamento formal. A Eta
 ### 1.2 `src/identity/` — solution .NET 10 em Clean Architecture
 
 - [x] Camadas `Domain`, `Application`, `Infra.Data.EF`, `Infra.Messaging`, `Api` + `Contracts` como
-      projeto próprio (futuro pacote da issue #8); `ProjectName` → `CodeForCoders.Identity`
+      projeto próprio (futuro pacote da F0-08); `ProjectName` → `CodeForCoders.Identity`
 - [x] Módulo único `IdentityAccess` com schema próprio
 - [x] `tenant_id` em toda entidade + global query filter (BA10, G07)
 - [x] Outbox; caso de uso nunca publica no broker (G06)
@@ -172,7 +190,7 @@ parte da Etapa 0 e devem permanecer rastreáveis até o fechamento formal. A Eta
 ### 1.4 Container
 
 - [x] `src/identity/Dockerfile` multi-stage `mcr.microsoft.com/dotnet/sdk:10.0` → `aspnet:10.0`, conforme
-      `.agents/skills/dotnet/references/operations.md`. **Contexto de build é a raiz do repo** (issue #1)
+      `.agents/skills/dotnet/references/operations.md`. **Contexto de build é a raiz do repo** (F0-01)
 
 ### 1.5 `.github/workflows/identity.yml`
 
@@ -196,10 +214,10 @@ jobs:
     uses: tassosgomes/template-pipeline/.github/workflows/ci-dotnet.yml@v1
     with:
       working-directory: src/identity
-      docker-context: .                        # issue #1
-      dockerfile: src/identity/Dockerfile      # issue #1
+      docker-context: .                        # F0-01
+      dockerfile: src/identity/Dockerfile      # F0-01
       version: '10.0.x'
-      test-configuration: Debug                # issue #3 (ArchitectureTests lêem IL)
+      test-configuration: Debug                # F0-03 (ArchitectureTests lêem IL)
       coverage-threshold: 70
       build-container: true
       image-name: code-4-coders-identity
@@ -208,7 +226,7 @@ jobs:
 
 ### 1.6 CD
 
-- [ ] Deploy via `cd-coolify.yml` (issue #4): `dev` automático, `staging` e `prod` com reviewer
+- [ ] Deploy via `cd-coolify.yml` (F0-04): `dev` automático, `staging` e `prod` com reviewer
 - [ ] **Rollback provado**, não presumido: redeploy do digest anterior e `curl` confirmando
 
 ### 1.7 Fechar a etapa
@@ -239,20 +257,20 @@ chamador com `paths:` próprio, `image-name` próprio e entrada em `foundation.s
 
 ## Etapa 3 — Registrar e fechar o fluxo
 
-- [ ] **`docs/adr/0001-monorepo-de-codigo.md`** — por que um repo e não dez, e por que isso **não** viola
+- [x] **[`docs/adr/0001-monorepo-de-codigo.md`](adr/0001-monorepo-de-codigo.md)** — por que um repo e não dez, e por que isso **não** viola
       BA01: serviço continua sendo unidade de deploy, escala e falha; cada um tem imagem, deploy e
       rollback próprios
-- [ ] **`docs/adr/0002-plataforma-de-runtime-coolify.md`** — registra uma divergência que precisa ser
+- [x] **[`docs/adr/0002-plataforma-de-runtime-coolify.md`](adr/0002-plataforma-de-runtime-coolify.md)** — registra uma divergência que precisa ser
       explícita: `vision.md` §Restrições Técnicas diz *"Infraestrutura: nuvem AWS, com S3 + CloudFront"*.
       Coolify em VPS para compute e dados diverge disso
-- [ ] **`vision.md` → v1.2** restringindo a exigência de AWS a armazenamento e distribuição de mídia. O
+- [x] **`vision.md` → v1.2** restringindo a exigência de AWS a armazenamento e distribuição de mídia. O
       ADR sozinho não basta: o validador de fluxo compara versão e origem entre níveis
-- [ ] **`docs/foundation.md`** — o que a Fase 0 entregou, como subir o ambiente local, como um serviço
+- [x] **`docs/foundation.md`** — o que a Fase 0 entregou, como subir o ambiente local, como um serviço
       novo nasce
-- [ ] **`flow-state.json`** — `foundation.status: "done"`, `platform_ready: true`, todos os `path`
+- [x] **`flow-state.json`** — `foundation.status: "done"`, `platform_ready: true`, todos os `path`
       preenchidos; fechar `OD4` movendo-a para `decisions`; registrar as decisões novas (monorepo, Coolify)
-- [ ] **`context/architecture-baseline.md` → v1.2** fechando **AB05**
-- [ ] Retomar o fluxo TSG em NA1 → NA2 → NA3
+- [x] **`context/architecture-baseline.md` → v1.2** fechando **AB05**
+- [x] Retomar o fluxo TSG em NA1 → NA2 → NA3; o estado atual já avançou para NA5 → NA6
 
 ---
 
@@ -281,7 +299,7 @@ docker build -f src/identity/Dockerfile .     # contexto na raiz
 gh run watch                                  # jobs build / security / (dast)
 gh run view --json jobs                        # cobertura ≥ 70, findings, image-digest
 ```
-Esperado: `build` e `security` verdes, cobertura apurada (não "não apurada" — é o sintoma da issue #2),
+Esperado: `build` e `security` verdes, cobertura apurada (não "não apurada" — é o sintoma da F0-02),
 imagem no GHCR com digest.
 
 **Imagem**
