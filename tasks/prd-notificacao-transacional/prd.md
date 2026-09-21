@@ -2,10 +2,10 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-026
-version: 1.0
+version: 1.1
 status: approved
 updated: 2026-09-21
-sources: backlog/capabilities.md@1.3, vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.0
+sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
 
 # Notificação transacional por e-mail — fatia de fundação
@@ -51,7 +51,7 @@ capacidade consumidora precisa e nada além.
   - **Notificação** — domínio principal. **Não tem domain doc**: `CAP-027` está na Fase 4, então o
     domínio rende um único PRD no horizonte visível. As regras do ciclo transacional nascem aqui
     (RN-N01…RN-N12) e serão absorvidas pelo domain doc quando ele existir, em D15.
-  - **Identidade e Acesso** — `domains/identidade-e-acesso/domain.md` (v1.0). É a origem dos dois
+  - **Identidade e Acesso** — `domains/identidade-e-acesso/domain.md` (v1.1). É a origem dos dois
     pedidos de envio desta fatia.
 - **Junta entre os domínios:** decidida em OD9 e registrada em §5 do domain doc de Identidade e
   Acesso. **Identidade dita o quê e o quando; Notificação dita como aquilo se parece e entrega.**
@@ -561,7 +561,7 @@ estes números serão reconciliados quando ela fechar.
 - [x] **QP-03 — Remetente e domínio de envio. Resolvida em 2026-09-20 como parâmetro.** A aplicação
       não assume remetente nem domínio (RN-N13); a configuração é entregue pelo time de plataforma.
       **O que continua sendo tarefa da plataforma, e não é parametrização:** SPF, DKIM e DMARC no ar
-      antes de tráfego real. Rastreado junto de OD4 e da Fase 0.
+      antes de tráfego real. Rastreado na fundação e no ADR-0002.
 - [ ] **QP-04 — Alerta de pedido em tratamento manual: para quem?** RN-N12 exige alertar a operação,
       mas a operação ainda não existe como papel definido (`CAP-002` é o passo 4). **Dono:** time.
       **Impacto:** no passo 1 o destinatário do alerta é o próprio time; formalizar quando `CAP-002`
@@ -573,4 +573,3 @@ estes números serão reconciliados quando ela fechar.
 Próximo passo depois da aprovação: `tsg-flow-contract-creator`, porque a junta com Identidade e
 Acesso é um contrato de mensagem compartilhado entre dois serviços e `CAP-001` será escrita contra
 ele.*
-

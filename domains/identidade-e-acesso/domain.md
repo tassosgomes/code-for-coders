@@ -1,10 +1,10 @@
 ---
 tsg_artifact: domain
 product: code-4-coders
-version: 1.0
+version: 1.1
 status: approved
 updated: 2026-09-21
-sources: vision.md@1.1, context/domain-map.md@1.1, backlog/capabilities.md@1.3
+sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4
 ---
 
 # Domain Document — Identidade e Acesso
@@ -248,7 +248,7 @@ ele não depende do fato consumado de ninguém.
 | RF-03 | **`identity` virar gargalo do caminho quente** se cada serviço perguntar quem é o ator a cada requisição | Média | Alto | BA06: JWT interno de vida curta validado localmente via JWKS, sem round-trip; a junta transversal não consome salto síncrono |
 | RF-04 | **O e-mail do aluno vazar por um caminho legítimo** — ele é dado pessoal que, por decisão de proteção de conteúdo, precisa chegar ao cliente do player | Média | Alto | RN-21 delimita a única exposição permitida; todo o resto é mascarado (G10 · G23) |
 | RF-05 | **Consentimento de comunicação migrar para cá** porque a confirmação de conta e a recuperação de senha nascem aqui | Média | Médio | Fora do Escopo explícito: Notificação é dona única do consentimento (DE12); este domínio fornece conteúdo, não decide envio |
-| RF-06 | **Restrição de sessão simultânea entrar por engano em um PRD** — a proteção de conteúdo é tema recorrente e a trava parece barata | Média | Alto | RN-09 e G24, confirmados pelo time em 2026-09-20: a medição é observatória e a restrição só se justifica com dado, para não cobrar do aluno pagante o erro. Resta corrigir o texto de BA15 no baseline (OD8) |
+| RF-06 | **Restrição de sessão simultânea entrar por engano em um PRD** — a proteção de conteúdo é tema recorrente e a trava parece barata | Média | Alto | RN-09 e G24, confirmados pelo time em 2026-09-20: a medição é observatória e a restrição só se justifica com dado, para não cobrar do aluno pagante o erro. BA15 foi alinhada a essa decisão no baseline v1.2; OD8 permanece como registro histórico |
 
 ---
 
@@ -261,9 +261,9 @@ ele não depende do fato consumado de ninguém.
       Notificação a conhecer as regras de identidade.
 - [x] **QA-02 — Sessões simultâneas. Confirmada em 2026-09-20.** A medição é observatória, para
       indicar desvio e decidir depois com dado; a linha foi escolhida para não prejudicar a
-      experiência do aluno pagante. RN-09 e RF-06 já refletem isso. **Pendência que não é deste
-      documento:** o texto de BA15 no `architecture-baseline.md` ainda lista "limite de sessões
-      simultâneas" na pilha de proteção e contradiz BA16/G24. Rastreada como **OD8**, dono: time.
+      experiência do aluno pagante. RN-09 e RF-06 já refletem isso. O baseline v1.2 corrigiu BA15
+      para ficar alinhado a BA16/G24; **OD8** permanece no `flow-state.json` como decisão registrada,
+      não como pendência deste documento.
 - [x] **QA-03 — Conta única para quem acumula papéis. Fechada em 2026-09-20: contas separadas.**
       Formalizada em RN-13, RN-13a e RN-13b. A consequência que decorre de RN-01 e precisa ser dita:
       como o e-mail identifica a conta unicamente, **as duas contas exigem endereços distintos**.
@@ -277,6 +277,12 @@ ele não depende do fato consumado de ninguém.
       declarada.
 
 ---
+
+## Histórico de Revisões
+
+| Versão | Data | Autor | Alterações |
+|---|---|---|---|
+| 1.1 | 2026-09-21 | Tasso Gomes | Revalidado contra as origens v1.2/v1.4 e contra o baseline v1.2; nenhuma fronteira ou regra do domínio foi alterada |
 
 *Domain Doc gerado com a skill `tsg-flow-domain-creator`. Para criar o PRD de uma capacidade que
 toca este domínio, use `tsg-flow-prd-creator` fornecendo o `vision.md`, este arquivo, os demais

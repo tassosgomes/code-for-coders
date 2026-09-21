@@ -1,9 +1,9 @@
 ---
 tsg_artifact: vision
 product: code-4-coders
-version: 1.1
+version: 1.2
 status: approved
-updated: 2026-09-20
+updated: 2026-09-21
 sources:
 ---
 
@@ -11,7 +11,7 @@ sources:
 
 > **Nível 0 da hierarquia de documentação.** Este documento é a âncora de contexto para todos os Domain Docs, PRDs, Tech Specs e Tasks do projeto. Sempre que iniciar uma nova sessão com a IA, forneça este arquivo como contexto.
 
-**Status:** aprovado (v1.1) · **Fonte primária:** `docs/draft.md` · **Data:** 2026-09-20
+**Status:** aprovado (v1.2) · **Fonte primária:** `docs/draft.md` · **Data:** 2026-09-21
 
 ---
 
@@ -103,7 +103,7 @@ Como insumo para esse passo, as **capacidades de negócio** que a visão reconhe
 |---|---|---|
 | Gateway de pagamento com cartão recorrente, PIX e boleto | C08, C09 | Alto — define o que é possível em cobrança e inadimplência |
 | Provedor de emissão de NFS-e | C10 | Médio — varia por município |
-| AWS (S3 + CloudFront ou equivalente) | C04 | Médio — custo cresce com audiência; é também o que sustenta a proteção de vídeo depois da decisão de não contratar DRM |
+| AWS S3 + CloudFront para armazenamento e distribuição de vídeo e materiais | C04 | Médio — custo cresce com audiência; é também o que sustenta a proteção de vídeo depois da decisão de não contratar DRM |
 | WhatsApp Business API (provedor oficial) | C14 | Médio — aprovação de templates e custo por conversa |
 | Provedor de e-mail transacional | C14 | Baixo |
 | Identidade visual (time de design) | Frontend de vitrine, player e certificado | Médio — define quando a vitrine pode ir a público |
@@ -145,7 +145,7 @@ Como insumo para esse passo, as **capacidades de negócio** que a visão reconhe
 
 ### Restrições Técnicas (Technical Constraints)
 - **Stack obrigatória:** backend .NET / ASP.NET Core (C#) e frontend React + Vite + TypeScript — padrão do time, já vigente neste repositório.
-- **Infraestrutura:** nuvem AWS, com S3 + CloudFront para armazenamento e distribuição de vídeo e materiais.
+- **Mídia:** armazenamento e distribuição de vídeo e materiais devem usar AWS S3 + CloudFront. A visão não fixa AWS para compute ou dados; a divergência de runtime é registrada no ADR 0002.
 - **Integrações obrigatórias:** gateway de pagamento com suporte a cartão recorrente, PIX e boleto; serviço de emissão de NFS-e; canal WhatsApp.
 - **Autenticação:** autenticação própria da plataforma, com RBAC para papéis internos (suporte, financeiro, professor, admin). Sem SSO corporativo.
 - **Proteção de vídeo sem DRM:** não haverá provedor de DRM — decisão de custo. A proteção é construída pela
@@ -273,6 +273,7 @@ Como insumo para esse passo, as **capacidades de negócio** que a visão reconhe
 | 0.3 | 2026-09-19 | Tasso Gomes | Pré-requisito definido como recomendação pedagógica informativa, sem gate de acesso entre cursos |
 | 1.0 | 2026-09-19 | Tasso Gomes | Visão aprovada |
 | 1.1 | 2026-09-20 | Tasso Gomes | Decisão de não contratar DRM: proteção de vídeo passa a ser própria (marca d'água com e-mail do aluno, URL assinada, HLS AES-128) e de medir — em vez de bloquear — indício de compartilhamento de conta. DRM removido das dependências externas, risco de pirataria reescrito e nova restrição técnica em §5 |
+| 1.2 | 2026-09-21 | Tasso Gomes | Exigência de AWS restrita ao armazenamento e à distribuição de vídeo e materiais com S3 + CloudFront; compute e dados não ficam vinculados à AWS, conforme ADR 0002 |
 
 ---
 

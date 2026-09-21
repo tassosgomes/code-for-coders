@@ -1,20 +1,20 @@
 ---
 tsg_artifact: capability-backlog
 product: code-4-coders
-version: 1.3
+version: 1.4
 status: approved
-updated: 2026-09-20
-sources: vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline.md@1.2
+updated: 2026-09-21
+sources: vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2
 ---
 
 # Backlog de Capacidades
 
-> **Nível 3 da hierarquia de documentação.** Deriva de `vision.md` (v1.1), `context/domain-map.md` (v1.1) e
+> **Nível 3 da hierarquia de documentação.** Deriva de `vision.md` (v1.2), `context/domain-map.md` (v1.2) e
 > `context/architecture-baseline.md` (v1.2). Traduz domínios e fronteiras em **capacidades de negócio** —
 > unidades de valor que podem originar um PRD independente. Não decide feature, tela, endpoint ou tabela:
 > isso é escopo do PRD e da TechSpec.
 
-**Versão:** 1.3 (aprovado) · **Data:** 2026-09-20 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
+**Versão:** 1.4 (aprovado) · **Data:** 2026-09-21 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
 
 Cada capacidade tem **ID estável** (`CAP-001`…). Domain Docs e PRDs referenciam o ID, nunca o título.
 IDs são preservados em atualizações deste documento; capacidade descartada fica registrada como
@@ -916,6 +916,7 @@ Dois **ciclos aparentes** foram resolvidos por direção de dependência, não p
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-20 | Tasso Gomes | Backlog inicial: 31 capacidades em 16 domínios, 11 no MVP. Em revisão — não integrado |
+| 1.4 | 2026-09-21 | Tasso Gomes | Revalidado contra `vision.md` v1.2 e `context/domain-map.md` v1.2 após a restrição de AWS à mídia. Nenhuma capacidade, fase, dependência ou ordem foi alterada |
 | 1.3 | 2026-09-20 | Tasso Gomes | Revisitado contra `architecture-baseline.md` v1.2 (correção de BA15). Nenhuma capacidade, fase, dependência ou ordem foi alterada: a citação a BA15 neste backlog já descrevia a proteção sem trava de concorrência |
 | 1.2 | 2026-09-20 | Tasso Gomes | **Aprovado e integrado.** Acrescentado o rastro de origem na visão (`CAP-XXX ← CNN`) nas 31 capacidades e a tabela de reconciliação `C01`…`C16` → `CAP-XXX` com as três divergências de fase (R5, R9, R11). Nenhuma capacidade, dependência, fase ou ordem foi alterada |
 | 1.1 | 2026-09-20 | Tasso Gomes | Revalidado contra `architecture-baseline.md` v1.1: a divergência de Notificação deixa de ser proposta e passa a decisão registrada, e a citação a BA02 acompanha o agrupamento inicial de 6 serviços. Nenhuma capacidade, dependência ou fase foi alterada |

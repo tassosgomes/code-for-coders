@@ -3,18 +3,18 @@ tsg_artifact: architecture-baseline
 product: code-4-coders
 version: 1.2
 status: approved
-updated: 2026-09-20
-sources: vision.md@1.1, context/domain-map.md@1.1
+updated: 2026-09-21
+sources: vision.md@1.2, context/domain-map.md@1.2
 ---
 
 # Baseline Arquitetural
 
-> **Nível 2 da hierarquia de documentação.** Deriva de `vision.md` (v1.1) e `context/domain-map.md` (v1.1).
+> **Nível 2 da hierarquia de documentação.** Deriva de `vision.md` (v1.2) e `context/domain-map.md` (v1.2).
 > Traduz fronteiras conceituais em **regras estruturais de implementação**. Não projeta funcionalidade:
 > nenhuma feature, tela, endpoint ou tabela é decidida aqui. TechSpecs consomem este documento; PRDs e
 > backlog herdam as restrições aplicáveis.
 
-**Versão:** 1.1 · **Data:** 2026-09-20 · **Origem:** `vision.md` v1.1, `context/domain-map.md` v1.1 · **Produto:** code-4-coders
+**Versão:** 1.2 · **Data:** 2026-09-21 · **Origem:** `vision.md` v1.2, `context/domain-map.md` v1.2 · **Produto:** code-4-coders
 **Padrões herdados:** skills `dotnet` (.NET 10 / ASP.NET Core) e `react` (React + Vite + TS) — são a
 decisão de stack e de convenção do time; este baseline **não as repete**, só define o que elas não cobrem:
 a fronteira entre serviços.
@@ -31,7 +31,7 @@ autorização, observabilidade, escalabilidade, guardrails — backend **e** a p
 
 | Fora | Dono | Consequência aqui |
 |---|---|---|
-| CI/CD, provisionamento AWS, orquestrador de containers, malha de rede, secret manager | Time de plataforma | O baseline declara o que **exige** da plataforma (abaixo) e não decide como será entregue |
+| CI/CD, provisionamento do runtime, orquestrador de containers, malha de rede, secret manager | Time de plataforma | O baseline declara o que **exige** da plataforma (abaixo) e não decide como será entregue |
 | Identidade visual, design system, layout de tela | Time de design | O frontend é tratado aqui só na dimensão técnica; nenhum agente inventa visual |
 | Modelagem de features, entidades e endpoints | TechSpec / PRD | O baseline define a regra, não a instância |
 
@@ -40,8 +40,9 @@ autorização, observabilidade, escalabilidade, guardrails — backend **e** a p
 Microsserviços é determinação de cima para baixo e está aceita. Registrada uma condição estrutural, não
 um veto: **sem esteira de deploy independente por serviço, microsserviços vira monolito distribuído** —
 o pior dos dois mundos (acoplamento de monólito com latência e falha parcial de distribuído). O baseline
-foi desenhado para reduzir esse risco (poucos serviços, cadeia síncrona curta, banco por serviço), mas a
-condição precisa ser atendida pelo time de plataforma antes da Fase 1 ir a produção:
+foi desenhado para reduzir esse risco (poucos serviços, cadeia síncrona curta, banco por serviço), e a
+fundação registra essa condição como entregue ou assumida como pronta antes da Fase 1 ir a produção.
+Esta lista permanece como contrato arquitetural; este baseline não é um runbook de infraestrutura.
 
 1. Pipeline de build, teste e deploy **independente por serviço**, com rollback próprio.
 2. Feed NuGet interno privado para o pacote de contratos (`Contracts`).
@@ -50,6 +51,15 @@ condição precisa ser atendida pelo time de plataforma antes da Fase 1 ir a pro
 5. Valkey (cache e sessão de BFF).
 6. Coletor OTLP e backend de traces, métricas e logs.
 7. Secret manager; nenhuma credencial em repositório ou imagem.
+
+### Estado da fundação
+
+**AB05 está fechada.** `docs/foundation.md` registra a entrega da fundação e `docs/adr/0002-plataforma-de-runtime-coolify.md`
+registra a adoção de Coolify para compute e dados, mantendo AWS restrita a S3 + CloudFront para armazenamento e
+distribuição de mídia conforme `vision.md` v1.2. Para este baseline, as sete dependências acima estão entregues e
+prontas para o produto — ou assumidas como prontas quando a responsabilidade permanece no time de plataforma.
+Detalhes de provisionamento, configuração operacional e evidências de execução pertencem à fundação e à plataforma;
+este registro preserva a exigência arquitetural sem transformar o baseline em runbook de infraestrutura.
 
 ---
 
@@ -491,7 +501,7 @@ Guardrail que depende de alguém lembrar não é guardrail. A coluna **Mecanismo
 | BA11 | Fiscal como módulo de `billing`, consumido por evento | Assimetria de criticidade preservada sem serviço extra | DE06 + candidato a fusão do Domain Map |
 | BA12 | Avaliação como módulo de `learning`; `certification` como serviço | Avaliação compartilha ciclo com progresso; certificação tem consumidor público não autenticado | Domain Map (candidatos a fusão) |
 | BA13 | Contratos em pacote NuGet interno versionado, evolução aditiva | Evitar acoplamento de build entre serviços e quebra silenciosa | Skill `dotnet` |
-| BA14 | CI/CD, infra AWS e design visual fora deste baseline | Donos são time de plataforma e time de design | Decisão do time |
+| BA14 | CI/CD, infraestrutura de runtime e design visual fora deste baseline; AWS é dependência de mídia (S3 + CloudFront) | Donos são time de plataforma e time de design | Decisão do time + `vision.md` v1.2 + ADR 0002 |
 | BA16 | Nenhuma restrição de login ou de reprodução na Fase 1. Medir a sobreposição de **aulas distintas** por aluno e decidir depois com dado. **Sessão única, lease de reprodução e limite por IP rejeitados** | Concorrência é majoritariamente comportamento legítimo; restringi-la cobra o erro do aluno pagante em troca de dissuasão marginal sobre a marca d'água. O sinal de compartilhamento não é concorrência, é incoerência de estudo — e ele é derivável do avanço de reprodução que já será coletado, sem mecanismo novo | Decisão do time (2026-09-20) |
 | BA15 | Sem provedor de DRM. Proteção = URL assinada + HLS AES-128 + marca d'água com e-mail do aluno no cliente. **Nenhuma trava de concorrência** — sessão única, lease de reprodução e limite por IP foram rejeitados em BA16 | Restrição de custo declarada. Mantém a proteção como dissuasão, que é o que a visão já assumia, sem criar transcodificação por aluno. A pilha é composta só de medidas que não cobram do aluno legítimo o erro de quem compartilha | Decisão do time (2026-09-20) |
 
@@ -509,7 +519,6 @@ TechSpecs já escritas.
 | AB02 | Valores de SLO dos dois caminhos críticos | Negócio (junto de A1 da visão) | Alertas com limiar; não bloqueia a Fase 1 |
 | AB03 | Política de retenção e anonimização de dado de aluno (LGPD) | Negócio + Auditoria | Fase que tratar dado em escala; não a Fase 1 |
 | AB04 | Limiar de sobreposição que caracteriza compartilhamento, e **que ação tomar** ao encontrá-lo (nada, aviso ao aluno, contato do suporte, restrição) | Negócio, com a métrica de BA16 em mãos | Nada na Fase 1 — é o que a medição existe para responder. Definir a ação **antes** de materializar caso individual, por causa de G25. Se a restrição voltar à mesa, o sinal é contagem de dispositivos, nunca IP |
-| AB05 | Confirmação das dependências de plataforma listadas no início | Time de plataforma | Ir a produção na Fase 1 |
 
 ---
 
@@ -526,3 +535,4 @@ Revisar este documento apenas quando uma premissa estrutural mudar.*
 | 1.0 | 2026-09-20 | Tasso Gomes | Baseline inicial (BA01–BA16, G01–G26) sobre `vision.md` v1.1 e `context/domain-map.md` v1.1 |
 | 1.2 | 2026-09-20 | Tasso Gomes | Correção de contradição interna: BA15 listava "limite de sessões simultâneas" na pilha de proteção, enquanto BA16 rejeita sessão única e lease de reprodução e G24 proíbe restrição de concorrência sem decisão com dado. BA15 passa a declarar a ausência de trava e a remeter a BA16. A prosa de "Proteção de conteúdo" já estava correta; a divergência era só da tabela. Nenhuma decisão de mérito mudou — achado do domain doc de Identidade e Acesso (QA-02) |
 | 1.1 | 2026-09-20 | Tasso Gomes | O roadmap de serviços por fase vira agrupamento em unidades de deploy: o baseline decide agrupamento e gatilho de extração, não sequência — ele é escrito antes do backlog e não enxerga dependência entre capacidades. `notification` passa ao grupo inicial (BA02: 6 serviços), porque `CAP-001` e `CAP-011` não fecham ciclo sem e-mail transacional |
+| 1.2 | 2026-09-21 | Tasso Gomes | Revisão de trabalho: preserva a correção de BA15 sobre a ausência de trava de concorrência, atualiza a procedência para `vision.md` v1.2, alinha BA14 à restrição de AWS para mídia e ao runtime Coolify registrado no ADR 0002, e fecha AB05 com a fundação entregue/assumida como pronta conforme `docs/foundation.md`. Nenhuma decisão BA01–BA16 foi alterada além do texto necessário em BA14 |

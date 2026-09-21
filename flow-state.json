@@ -230,15 +230,6 @@
       ]
     },
     {
-      "id": "OD4",
-      "ref": "architecture-baseline.md, Dependencias de plataforma",
-      "what": "Esteira de deploy independente por servico, feed NuGet interno, RabbitMQ gerenciado com DLQ, PostgreSQL com banco e credencial por servico",
-      "owner": "time de plataforma",
-      "blocks": [
-        "Fase 1 em producao"
-      ]
-    },
-    {
       "id": "OD5",
       "ref": "capabilities.md R3",
       "what": "Contratar gateway de pagamento",
@@ -256,8 +247,8 @@
     }
   ],
   "foundation": {
-    "status": "pending",
-    "nota": "Fase 0 conduzida fora do fluxo TSG (PRD standalone ou plan mode). O fluxo nao a executa: detecta o que e detectavel (projeto existe no caminho declarado) e repete o que foi declarado (esteira, broker, banco). Criterio de fechamento: hello-world de cada servico da Fase 1 passando pela esteira, conforme as dependencias de plataforma do baseline.",
+    "status": "done",
+    "nota": "Fase 0 conduzida fora do fluxo TSG (PRD standalone ou plan mode). A Etapa 3 registrou a evidencia em docs/foundation.md e as decisoes de repositorio e runtime em docs/adr/. Os dez servicos da Fase 1 estao declarados com caminho preenchido; o fluxo TSG segue apenas com o progresso das capacidades.",
     "services": [
       {
         "name": "identity",
@@ -311,7 +302,7 @@
         "phase": 1
       }
     ],
-    "platform_ready": false
+    "platform_ready": true
   },
   "decisions": [
     {
@@ -392,7 +383,31 @@
       "what": "Endereco remetente e dominio de envio",
       "decided_at": "2026-09-20",
       "owner": "tasso",
-      "decision": "Parametro de operacao (RN-N13): a aplicacao nao assume remetente nem dominio, e a configuracao vem do time de plataforma. Nao substitui SPF/DKIM/DMARC no ar antes de trafego real, que continua tarefa de plataforma e esta rastreado em OD4 junto da Fase 0."
+      "decision": "Parametro de operacao (RN-N13): a aplicacao nao assume remetente nem dominio, e a configuracao vem do time de plataforma. Nao substitui SPF/DKIM/DMARC no ar antes de trafego real, que continua tarefa de plataforma e esta rastreado na fundacao e no ADR-0002."
+    },
+    {
+      "id": "OD4",
+      "ref": "architecture-baseline.md, Dependencias de plataforma",
+      "what": "Esteira de deploy independente por servico, feed NuGet interno, RabbitMQ gerenciado com DLQ, PostgreSQL com banco e credencial por servico",
+      "decided_at": "2026-09-21",
+      "owner": "time de plataforma",
+      "decision": "Fechada na Etapa 3: as dez unidades de deploy estao presentes no monorepo com workflows chamadores proprios, a fundacao local cobre PostgreSQL, RabbitMQ com DLQ, Valkey e OTLP, e o runtime alvo, segredos, ambientes, deploy por digest e rollback estao registrados nos ADRs 0001 e 0002 e em docs/foundation.md. O fechamento registra a plataforma como pronta no fluxo; a comprovacao operacional de cada deploy permanece evidenciada nos respectivos pipelines e ambientes."
+    },
+    {
+      "id": "OD16",
+      "ref": "docs/adr/0001-monorepo-de-codigo.md",
+      "what": "Formato do repositorio para os servicos da plataforma",
+      "decided_at": "2026-09-21",
+      "owner": "tasso",
+      "decision": "Um unico repositorio de codigo. O repositorio e uma unidade de colaboracao e versionamento; cada servico continua sendo unidade de deploy, escala e falha, com imagem, workflow, banco/credencial e rollback proprios."
+    },
+    {
+      "id": "OD17",
+      "ref": "docs/adr/0002-plataforma-de-runtime-coolify.md",
+      "what": "Plataforma de runtime para compute e dados",
+      "decided_at": "2026-09-21",
+      "owner": "tasso",
+      "decision": "Coolify em VPS e a plataforma de runtime para compute, bancos e dependencias operacionais. AWS fica restrita a S3 + CloudFront para armazenamento e distribuicao de midia; segredos, ambientes com reviewers, deploy por digest e rollback seguem as regras do ADR-0002."
     }
   ]
 }

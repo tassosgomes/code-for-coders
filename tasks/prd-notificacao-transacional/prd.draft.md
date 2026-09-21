@@ -2,10 +2,10 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-026
-version: 1.0
+version: 1.1
 status: draft
-updated: 2026-09-20
-sources: backlog/capabilities.md@1.3, vision.md@1.1, context/domain-map.md@1.1, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.0
+updated: 2026-09-21
+sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
 
 # Notificação transacional por e-mail — fatia de fundação
@@ -561,7 +561,7 @@ estes números serão reconciliados quando ela fechar.
 - [x] **QP-03 — Remetente e domínio de envio. Resolvida em 2026-09-20 como parâmetro.** A aplicação
       não assume remetente nem domínio (RN-N13); a configuração é entregue pelo time de plataforma.
       **O que continua sendo tarefa da plataforma, e não é parametrização:** SPF, DKIM e DMARC no ar
-      antes de tráfego real. Rastreado junto de OD4 e da Fase 0.
+      antes de tráfego real. Rastreado na fundação e no ADR-0002.
 - [ ] **QP-04 — Alerta de pedido em tratamento manual: para quem?** RN-N12 exige alertar a operação,
       mas a operação ainda não existe como papel definido (`CAP-002` é o passo 4). **Dono:** time.
       **Impacto:** no passo 1 o destinatário do alerta é o próprio time; formalizar quando `CAP-002`

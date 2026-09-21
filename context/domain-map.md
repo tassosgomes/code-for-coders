@@ -1,17 +1,17 @@
 ---
 tsg_artifact: domain-map
 product: code-4-coders
-version: 1.1
+version: 1.2
 status: approved
-updated: 2026-09-20
-sources: vision.md@1.1
+updated: 2026-09-21
+sources: vision.md@1.2
 ---
 
 # Domain Map
 
-> **Nível 1 da hierarquia de documentação.** Deriva de `vision.md` (v1.1, aprovado). Este documento define fronteiras conceituais — não arquitetura, não serviços, não contratos. A decisão de como isso vira sistema físico é do Architecture Baseline.
+> **Nível 1 da hierarquia de documentação.** Deriva de `vision.md` (v1.2, aprovado). Este documento define fronteiras conceituais — não arquitetura, não serviços, não contratos. A decisão de como isso vira sistema físico é do Architecture Baseline.
 
-**Versão:** 1.1 · **Data:** 2026-09-20 · **Origem:** `vision.md` v1.1 · **Produto:** code-4-coders
+**Versão:** 1.2 · **Data:** 2026-09-21 · **Origem:** `vision.md` v1.2 · **Produto:** code-4-coders
 
 ---
 
@@ -84,7 +84,7 @@ São **16 domínios conceituais**. Isso não significa 16 serviços, 16 bancos o
   - *Marca d'água dinâmica* — identificação do aluno sobreposta ao vídeo durante a reprodução.
   - *Proteção* — conjunto de medidas que dissuade a cópia; dissuasão, não garantia.
 - **Interações:** consulta Matrícula e Direito de Acesso antes de liberar reprodução. Recebe de Conteúdo e Currículo a mídia a preparar. Informa Aprendizagem e Progresso sobre o avanço da reprodução.
-- **Justificativa:** este é o domínio que concentra o custo de infraestrutura (armazenamento e CDN) e a estratégia de proteção — que, sem DRM contratado (vision.md v1.1), é própria e tende a mudar com o tempo. Isolá-lo permite trocar de provedor, mudar a estratégia de proteção ou renegociar custo sem tocar em regra pedagógica ou comercial. É também o único domínio cujo comportamento é ditado por restrições técnicas externas.
+- **Justificativa:** este é o domínio que concentra o custo de infraestrutura (armazenamento e CDN) e a estratégia de proteção — que, sem DRM contratado (vision.md v1.2), é própria e tende a mudar com o tempo. Isolá-lo permite trocar de provedor, mudar a estratégia de proteção ou renegociar custo sem tocar em regra pedagógica ou comercial. É também o único domínio cujo comportamento é ditado por restrições técnicas externas.
 
 ### 5. Matrícula e Direito de Acesso
 
@@ -328,3 +328,4 @@ São **16 domínios conceituais**. Isso não significa 16 serviços, 16 bancos o
 |---|---|---|---|
 | 1.0 | 2026-09-19 | Tasso Gomes | Decomposição inicial em 16 domínios conceituais a partir de `vision.md` v1.0 |
 | 1.1 | 2026-09-20 | Tasso Gomes | Incorpora `vision.md` v1.1: a estratégia de proteção do domínio Entrega de Mídia e Proteção passa a ser própria, sem DRM contratado |
+| 1.2 | 2026-09-21 | Tasso Gomes | Revisitado contra `vision.md` v1.2: AWS fica restrita a armazenamento e distribuição de mídia; as fronteiras conceituais não mudam |

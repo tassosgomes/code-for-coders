@@ -4,24 +4,25 @@
 > A Fase 0 corre **fora do fluxo TSG**, por decisão registrada em `flow-state.json` (`foundation.nota`).
 > Critério de fechamento: hello-world de cada serviço da Fase 1 passando pela esteira.
 
-**Status:** em andamento · **Criado em:** 2026-09-20
+**Status:** Etapa 3 concluída · **Criado em:** 2026-09-20
 
-**Escopo desta execução:** somente a Etapa 0. A execução técnica dos itens abaixo acontece no
-`template-pipeline`; este arquivo registra a ordem, os gates e as evidências necessárias. Não iniciar
-as Etapas 1–3, nem alterar `flow-state.json`, enquanto o gate de saída da Etapa 0 não estiver aprovado.
+**Escopo desta execução:** somente a Etapa 3. A execução técnica dos itens da Etapa 0 acontece no
+`template-pipeline`; este arquivo registra a ordem, os gates e as evidências necessárias. As Etapas 1 e
+2 já estão registradas como entregues; esta execução fecha a documentação e a transição do fluxo.
 
 ## Context
 
-`context/architecture-baseline.md` v1.1 aceitou microsserviços, mas registrou uma condição estrutural:
+`context/architecture-baseline.md` v1.2 aceitou microsserviços, mas registrou uma condição estrutural:
 **sem esteira de deploy independente por serviço, microsserviços vira monolito distribuído.** O baseline
 declara 7 dependências de plataforma (esteira por serviço com rollback, feed NuGet para `Contracts`,
 RabbitMQ+DLQ, Postgres com banco/credencial por serviço, Valkey, coletor OTLP, secret manager) e as
-deixa fora do próprio escopo (BA14). Elas estão em aberto como **AB05** no baseline e **OD4** no
-`flow-state.json`, bloqueando "Fase 1 em produção".
+deixa fora do próprio escopo (BA14). A Etapa 3 fechou **AB05** no baseline e **OD4** no
+`flow-state.json`, registrando a fundação como pronta para o fluxo.
 
-Hoje `flow-state.json` tem `foundation.status: "pending"`, `platform_ready: false` e os 8 serviços da
-Fase 1 com `path: null`. O repo não tem uma linha de código de aplicação. O fluxo TSG está parado em
-NA1 (aprovar `backlog/capabilities.md` v1.1) e não avança para PRD sem chão onde pisar.
+Hoje `flow-state.json` tem `foundation.status: "done"`, `platform_ready: true` e os 10 serviços da
+Fase 1 com `path` preenchido. O repo já contém o golden path e as réplicas da fundação. O fluxo TSG
+foi retomado e está em NA5 → NA6, depois da aprovação/produção dos artefatos que originalmente ocupavam
+NA1 → NA3 e da aprovação de CAP-026.
 
 `template-pipeline` é a esteira: uma IDP sobre GitHub Actions, com **Fase 1 (CI + segurança) pronta e
 madura** — `ci-dotnet.yml` e `ci-react-ts.yml` cobrem exatamente as duas stacks do produto, com contrato
@@ -29,9 +30,10 @@ madura** — `ci-dotnet.yml` e `ci-react-ts.yml` cobrem exatamente as duas stack
 **Fases 2 (IssueOps), 3 (CD) e 4 (catálogo) não começaram.** Zero IaC, zero publicação de pacote, zero
 deploy. Ou seja: a plataforma cobre hoje a metade de CI da dependência #1 e nenhuma das outras seis.
 
-**Resultado esperado:** `identity` sai do zero e vai até deploy com rollback provado, exercitando as 7
-dependências ponta a ponta; os outros 9 apps são replicados a partir dele; `foundation.platform_ready`
-vira `true` e AB05/OD4 fecham. Tudo que a esteira precisar e não tiver vira issue em `template-pipeline`.
+**Resultado registrado:** `identity` saiu do zero e os outros 9 apps foram replicados a partir dele;
+`foundation.platform_ready` virou `true` e AB05/OD4 foram fechadas. Tudo que a esteira precisar e não
+tiver continua rastreado como issue em `template-pipeline`, com a operação descrita nos ADRs e em
+`docs/foundation.md`.
 
 **Decisões tomadas nesta sessão:** monorepo de código neste repo · golden path `identity` primeiro,
 réplica depois · Coolify em VPS para compute e dados, AWS S3+CloudFront só para mídia.
@@ -255,20 +257,20 @@ chamador com `paths:` próprio, `image-name` próprio e entrada em `foundation.s
 
 ## Etapa 3 — Registrar e fechar o fluxo
 
-- [ ] **`docs/adr/0001-monorepo-de-codigo.md`** — por que um repo e não dez, e por que isso **não** viola
+- [x] **[`docs/adr/0001-monorepo-de-codigo.md`](adr/0001-monorepo-de-codigo.md)** — por que um repo e não dez, e por que isso **não** viola
       BA01: serviço continua sendo unidade de deploy, escala e falha; cada um tem imagem, deploy e
       rollback próprios
-- [ ] **`docs/adr/0002-plataforma-de-runtime-coolify.md`** — registra uma divergência que precisa ser
+- [x] **[`docs/adr/0002-plataforma-de-runtime-coolify.md`](adr/0002-plataforma-de-runtime-coolify.md)** — registra uma divergência que precisa ser
       explícita: `vision.md` §Restrições Técnicas diz *"Infraestrutura: nuvem AWS, com S3 + CloudFront"*.
       Coolify em VPS para compute e dados diverge disso
-- [ ] **`vision.md` → v1.2** restringindo a exigência de AWS a armazenamento e distribuição de mídia. O
+- [x] **`vision.md` → v1.2** restringindo a exigência de AWS a armazenamento e distribuição de mídia. O
       ADR sozinho não basta: o validador de fluxo compara versão e origem entre níveis
-- [ ] **`docs/foundation.md`** — o que a Fase 0 entregou, como subir o ambiente local, como um serviço
+- [x] **`docs/foundation.md`** — o que a Fase 0 entregou, como subir o ambiente local, como um serviço
       novo nasce
-- [ ] **`flow-state.json`** — `foundation.status: "done"`, `platform_ready: true`, todos os `path`
+- [x] **`flow-state.json`** — `foundation.status: "done"`, `platform_ready: true`, todos os `path`
       preenchidos; fechar `OD4` movendo-a para `decisions`; registrar as decisões novas (monorepo, Coolify)
-- [ ] **`context/architecture-baseline.md` → v1.2** fechando **AB05**
-- [ ] Retomar o fluxo TSG em NA1 → NA2 → NA3
+- [x] **`context/architecture-baseline.md` → v1.2** fechando **AB05**
+- [x] Retomar o fluxo TSG em NA1 → NA2 → NA3; o estado atual já avançou para NA5 → NA6
 
 ---
 
