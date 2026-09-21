@@ -6,6 +6,8 @@ const EnvSchema = z.object({
 });
 
 declare global {
+  // Declaration merging is required to extend the DOM Window interface.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface Window {
     RUNTIME_ENV?: Record<string, string | undefined>;
   }
