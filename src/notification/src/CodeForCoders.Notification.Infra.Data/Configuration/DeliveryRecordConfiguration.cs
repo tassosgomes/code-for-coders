@@ -64,6 +64,21 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
         builder.Property(record => record.DeliveredOn)
             .HasColumnName("delivered_on")
             .HasColumnType("timestamp with time zone");
+        builder.Property(record => record.FailedOn)
+            .HasColumnName("failed_on")
+            .HasColumnType("timestamp with time zone");
+        builder.Property(record => record.ProviderAttemptCount)
+            .HasColumnName("provider_attempt_count")
+            .IsRequired();
+        builder.Property(record => record.LastProviderAttemptOn)
+            .HasColumnName("last_provider_attempt_on")
+            .HasColumnType("timestamp with time zone");
+        builder.Property(record => record.NextAttemptOn)
+            .HasColumnName("next_attempt_on")
+            .HasColumnType("timestamp with time zone");
+        builder.Property(record => record.ExhaustedAttempts)
+            .HasColumnName("exhausted_attempts")
+            .IsRequired();
 
         builder.HasIndex(record => new { record.TenantId, record.RequestId })
             .IsUnique()

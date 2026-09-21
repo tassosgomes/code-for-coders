@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/CodeForCoders.Notification.Application/CodeForCoders.Notification.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Notification.Domain/CodeForCoders.Notification.Domain.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Notification.Infra.Data/CodeForCoders.Notification.Infra.Data.csproj" />
     <ProjectReference Include="../CodeForCoders.Notification.Tests.Common/CodeForCoders.Notification.Tests.Common.csproj" />
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

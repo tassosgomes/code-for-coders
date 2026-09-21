@@ -17,3 +17,14 @@ public static class NotificationRefusalReasons
 
     public const string MissingData = "dado faltante";
 }
+
+public static class NotificationFailureReasons
+{
+    public const string ProviderUnavailable = "provedor-indisponivel";
+
+    public const string ProviderTimeout = "timeout-do-provedor";
+
+    public const string PermanentProviderFailure = "recusa-permanente-do-provedor";
+
+    public const string AttemptsExhausted = "tentativas-esgotadas";
+}

@@ -17,7 +17,7 @@ public sealed class TransactionalEmailDeliveryWorker(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.Value.PollingIntervalSeconds));
+        using var timer = new PeriodicTimer(options.Value.GetPollingInterval());
         try
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
@@ -53,16 +53,24 @@ public sealed class TransactionalEmailDeliveryWorker(
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var repository = scope.ServiceProvider.GetRequiredService<IDeliveryRecordRepository>();
-        var pending = await repository.GetNextAcceptedAsync(cancellationToken);
-        if (pending is null)
+
+        // The claim is a single atomic UPDATE ... RETURNING statement (see
+        // DeliveryRecordRepository.ClaimNextAcceptedAsync); no explicit transaction is opened here,
+        // so the call to the email provider below never runs inside one (baseline G17).
+        var now = DateTimeOffset.UtcNow;
+        var claimed = await repository.ClaimNextAcceptedAsync(
+            now,
+            now.Add(options.Value.GetClaimLease()),
+            cancellationToken);
+        if (claimed is null)
         {
             return;
         }
 
-        scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(pending.TenantId);
+        scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(claimed.TenantId);
         var useCase = scope.ServiceProvider.GetRequiredService<IDeliverAcceptedNotification>();
         await useCase.ExecuteAsync(
-            new DeliverAcceptedNotificationInput(pending.Id),
+            new DeliverAcceptedNotificationInput(claimed.Id),
             cancellationToken);
     }
 }

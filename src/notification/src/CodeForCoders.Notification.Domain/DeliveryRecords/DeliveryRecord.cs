@@ -46,6 +46,16 @@ public sealed class DeliveryRecord
 
     public DateTimeOffset? DeliveredOn { get; private set; }
 
+    public DateTimeOffset? FailedOn { get; private set; }
+
+    public int ProviderAttemptCount { get; private set; }
+
+    public DateTimeOffset? LastProviderAttemptOn { get; private set; }
+
+    public DateTimeOffset? NextAttemptOn { get; private set; }
+
+    public bool ExhaustedAttempts { get; private set; }
+
     public static DeliveryRecord Create(
         Guid tenantId,
         Guid requestId,
@@ -80,6 +90,7 @@ public sealed class DeliveryRecord
             Status = DeliveryStatus.Accepted,
             RequestedOn = requestedOn,
             AcceptedOn = acceptedOn,
+            NextAttemptOn = acceptedOn,
         };
     }
 
@@ -132,6 +143,47 @@ public sealed class DeliveryRecord
 
         Status = DeliveryStatus.Delivered;
         DeliveredOn = deliveredOn;
+        NextAttemptOn = null;
+    }
+
+    public void RegisterProviderAttempt(DateTimeOffset attemptedOn)
+    {
+        EnsureAccepted();
+
+        ProviderAttemptCount++;
+        LastProviderAttemptOn = attemptedOn;
+    }
+
+    public void ScheduleRetry(string reason, DateTimeOffset nextAttemptOn)
+    {
+        EnsureAccepted();
+        ValidateRequiredText(reason, ReasonMaxLength, "Reason");
+
+        Reason = reason;
+        NextAttemptOn = nextAttemptOn;
+    }
+
+    public void MarkFailed(
+        string reason,
+        bool exhaustedAttempts,
+        DateTimeOffset failedOn)
+    {
+        EnsureAccepted();
+        ValidateRequiredText(reason, ReasonMaxLength, "Reason");
+
+        Status = DeliveryStatus.Failed;
+        Reason = reason;
+        ExhaustedAttempts = exhaustedAttempts;
+        FailedOn = failedOn;
+        NextAttemptOn = null;
+    }
+
+    private void EnsureAccepted()
+    {
+        if (Status != DeliveryStatus.Accepted)
+        {
+            throw new EntityValidationException("Only an accepted delivery can be changed.");
+        }
     }
 
     private static void ValidateIdentity(Guid tenantId, Guid requestId)

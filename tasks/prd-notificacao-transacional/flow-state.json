@@ -4,10 +4,10 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": null,
-  "last_checkpoint": "4.0",
+  "last_checkpoint": "5.0",
   "phase": "checkpoint-task",
-  "active_task": "4.0",
-  "attempt": 2,
+  "active_task": "5.0",
+  "attempt": 3,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 5,
@@ -19,9 +19,9 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "4.0",
-    "attempt": 2,
-    "run_id": "run.zieCMt35",
+    "task": "5.0",
+    "attempt": 3,
+    "run_id": "run.HWn5jq85",
     "gate": "passed"
   },
   "history": [
@@ -298,6 +298,134 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.zieCMt35",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.YYNWlrOl",
+      "reason": "timeout_or_blocked: wrapper timeout de 900s matou o processo (exit 143) antes de result.json; work in progress (varios arquivos modificados, TransactionalEmailRetryPolicy.cs, ITransactionalEmailRetryPolicy.cs, TransactionalEmailSendException.cs) mas RetryProviderTransientFailureTests.cs ainda nao existe; nao consome tentativa (falha de transporte)"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "note": "retry com timeout maior (task complexa, muitos arquivos)"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.eBhCelvD",
+      "reason": "agent_pane_busy: pane transitoriamente indisponivel logo apos encerramento do run anterior; sem efeitos (3s), retry seguro"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.lRVC0P45",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "rejected",
+      "run_id": "run.0act8OXT",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md",
+      "blocker": "HttpTransactionalEmailSender (classificacao transitorio/definitivo) sem cobertura de teste unitario, incluindo cenario critico de timeout nomeado na TechSpec"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.zGYScLTD",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "rejected",
+      "run_id": "run.NzMWU4wP",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md",
+      "blocker": "TransactionalEmailDeliveryWorker abre transacao Postgres (FOR UPDATE) antes de chamar ITransactionalEmailSender.SendAsync via DeliverAcceptedNotification, mantendo lock/transacao aberta durante chamada HTTP externa - viola techspec:81-86 e baseline G17 (nenhuma chamada de rede dentro de transacao)"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.1CZsVcPT",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.x5k8P8pa",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.HWn5jq85",
       "gate": "passed"
     }
   ]

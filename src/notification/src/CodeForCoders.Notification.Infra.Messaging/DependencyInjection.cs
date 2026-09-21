@@ -1,3 +1,4 @@
+using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Infra.Messaging.Configuration;
 using CodeForCoders.Notification.Infra.Messaging.Health;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +26,7 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddSingleton<RabbitMqPublisher>();
+        services.AddSingleton<ITransactionalEmailRetryPolicy, TransactionalEmailRetryPolicy>();
         services.AddSingleton<HeartbeatReceiptStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();

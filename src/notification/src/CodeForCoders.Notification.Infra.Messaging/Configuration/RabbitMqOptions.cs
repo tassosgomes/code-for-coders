@@ -41,4 +41,7 @@ public sealed class RabbitMqOptions
 
     [Range(1, 100)]
     public int DeliveryLimit { get; set; } = 5;
+
+    [Range(1, 100)]
+    public int ProviderDeliveryLimit { get; set; } = 3;
 }

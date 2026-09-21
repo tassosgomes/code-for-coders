@@ -1,5 +1,8 @@
+using System.Net;
 using System.Net.Http.Json;
 using CodeForCoders.Notification.Application.Interfaces;
+using CodeForCoders.Notification.Application.Common;
+using CodeForCoders.Notification.Application.Exceptions;
 using CodeForCoders.Notification.Infra.Data.Configuration;
 using Microsoft.Extensions.Options;
 
@@ -17,8 +20,17 @@ public sealed class HttpTransactionalEmailSender(
         TransactionalEmail email,
         CancellationToken cancellationToken)
     {
-        var settings = options.Value;
-        using var response = await httpClient.PostAsJsonAsync(
+        await SendRequestAsync(email, options.Value, cancellationToken);
+    }
+
+    private async Task SendRequestAsync(
+        TransactionalEmail email,
+        EmailOptions settings,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var response = await httpClient.PostAsJsonAsync(
                 settings.Endpoint,
                 new EmailProviderRequest(
                     settings.FromAddress,
@@ -28,7 +40,32 @@ public sealed class HttpTransactionalEmailSender(
                     email.HtmlBody),
                 cancellationToken);
 
-        response.EnsureSuccessStatusCode();
+            if (response.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var isTransient = response.StatusCode == HttpStatusCode.TooManyRequests
+                || (int)response.StatusCode >= 500;
+            var reason = isTransient
+                ? NotificationFailureReasons.ProviderUnavailable
+                : NotificationFailureReasons.PermanentProviderFailure;
+            throw new TransactionalEmailSendException(reason, isTransient);
+        }
+        catch (HttpRequestException exception)
+        {
+            throw new TransactionalEmailSendException(
+                NotificationFailureReasons.ProviderUnavailable,
+                isTransient: true,
+                exception);
+        }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TransactionalEmailSendException(
+                NotificationFailureReasons.ProviderTimeout,
+                isTransient: true,
+                exception);
+        }
     }
 
     private sealed record EmailProviderRequest(

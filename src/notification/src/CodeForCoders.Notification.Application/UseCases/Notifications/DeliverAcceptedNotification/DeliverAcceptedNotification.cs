@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using CodeForCoders.Notification.Application.Common;
+using CodeForCoders.Notification.Application.Exceptions;
 using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Contracts;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
@@ -13,7 +14,8 @@ public sealed class DeliverAcceptedNotification(
     IMessageTemplateRenderer messageTemplateRenderer,
     ITransactionalEmailSender emailSender,
     IOutboxMessageWriter outboxMessageWriter,
-    IUnitOfWork unitOfWork) : IDeliverAcceptedNotification
+    IUnitOfWork unitOfWork,
+    ITransactionalEmailRetryPolicy retryPolicy) : IDeliverAcceptedNotification
 {
     public async Task<DeliverAcceptedNotificationOutput> ExecuteAsync(
         DeliverAcceptedNotificationInput input,
@@ -39,7 +41,20 @@ public sealed class DeliverAcceptedNotification(
             record.Recipient,
             record.RecipientName!,
             record.Link!);
-        await emailSender.SendAsync(email, cancellationToken);
+        var attemptedOn = DateTimeOffset.UtcNow;
+        record.RegisterProviderAttempt(attemptedOn);
+        try
+        {
+            await emailSender.SendAsync(email, cancellationToken);
+        }
+        catch (TransactionalEmailSendException exception)
+        {
+            return await HandleProviderFailureAsync(
+                record,
+                exception,
+                attemptedOn,
+                cancellationToken);
+        }
 
         var deliveredOn = DateTimeOffset.UtcNow;
         record.MarkDelivered(deliveredOn);
@@ -67,5 +82,54 @@ public sealed class DeliverAcceptedNotification(
         NotificationTelemetry.NotificationsDelivered.Add(1);
 
         return new DeliverAcceptedNotificationOutput(true, eventId, deliveredOn);
+    }
+
+    private async Task<DeliverAcceptedNotificationOutput> HandleProviderFailureAsync(
+        DeliveryRecord record,
+        TransactionalEmailSendException exception,
+        DateTimeOffset failedOn,
+        CancellationToken cancellationToken)
+    {
+        var exhaustedAttempts = exception.IsTransient
+            && record.ProviderAttemptCount >= retryPolicy.MaxAttempts;
+        if (!exception.IsTransient || exhaustedAttempts)
+        {
+            var reason = exhaustedAttempts
+                ? NotificationFailureReasons.AttemptsExhausted
+                : exception.Reason;
+            record.MarkFailed(reason, exhaustedAttempts, failedOn);
+            var eventId = Guid.CreateVersion7();
+            var payload = new NotificationDeliveryFailedV1(
+                record.RequestId,
+                record.TenantId,
+                record.Purpose!,
+                reason,
+                exhaustedAttempts,
+                failedOn);
+            await outboxMessageWriter.AppendAsync(
+                new OutboxMessageDraft(
+                    eventId,
+                    record.TenantId,
+                    "NotificationDeliveryFailedV1",
+                    "notificacao.entrega-falhou.v1",
+                    payload,
+                    failedOn,
+                    Activity.Current?.Id,
+                    record.CorrelationId),
+                cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
+            if (exhaustedAttempts)
+            {
+                NotificationTelemetry.NotificationsManualTreatmentRequired.Add(1);
+            }
+
+            return new DeliverAcceptedNotificationOutput(false, eventId, null);
+        }
+
+        record.ScheduleRetry(
+            exception.Reason,
+            failedOn.Add(retryPolicy.GetBackoff(record.ProviderAttemptCount)));
+        await unitOfWork.CommitAsync(cancellationToken);
+        return new DeliverAcceptedNotificationOutput(false, null, null);
     }
 }

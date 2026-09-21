@@ -20,3 +20,11 @@ public sealed record NotificationMessageDeliveredV1(
     string Destinatario,
     string Canal,
     DateTimeOffset EntregueEm);
+
+public sealed record NotificationDeliveryFailedV1(
+    Guid PedidoId,
+    Guid TenantId,
+    string Finalidade,
+    string Motivo,
+    bool EsgotouTentativas,
+    DateTimeOffset FalhouEm);

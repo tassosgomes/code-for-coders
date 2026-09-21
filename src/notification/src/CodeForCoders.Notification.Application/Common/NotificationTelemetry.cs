@@ -26,4 +26,7 @@ public static class NotificationTelemetry
     public static readonly Counter<long> NotificationsDelivered = Meter.CreateCounter<long>(
         "notification.message.delivered",
         unit: "{message}");
+    public static readonly Counter<long> NotificationsManualTreatmentRequired = Meter.CreateCounter<long>(
+        "notification.delivery.manual_treatment_required",
+        unit: "{request}");
 }
