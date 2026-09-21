@@ -1,7 +1,7 @@
 ---
 tsg_artifact: architecture-baseline
 product: code-4-coders
-version: 1.1
+version: 1.2
 status: approved
 updated: 2026-09-20
 sources: vision.md@1.1, context/domain-map.md@1.1
@@ -493,7 +493,7 @@ Guardrail que depende de alguém lembrar não é guardrail. A coluna **Mecanismo
 | BA13 | Contratos em pacote NuGet interno versionado, evolução aditiva | Evitar acoplamento de build entre serviços e quebra silenciosa | Skill `dotnet` |
 | BA14 | CI/CD, infra AWS e design visual fora deste baseline | Donos são time de plataforma e time de design | Decisão do time |
 | BA16 | Nenhuma restrição de login ou de reprodução na Fase 1. Medir a sobreposição de **aulas distintas** por aluno e decidir depois com dado. **Sessão única, lease de reprodução e limite por IP rejeitados** | Concorrência é majoritariamente comportamento legítimo; restringi-la cobra o erro do aluno pagante em troca de dissuasão marginal sobre a marca d'água. O sinal de compartilhamento não é concorrência, é incoerência de estudo — e ele é derivável do avanço de reprodução que já será coletado, sem mecanismo novo | Decisão do time (2026-09-20) |
-| BA15 | Sem provedor de DRM. Proteção = URL assinada + HLS AES-128 + marca d'água com e-mail do aluno no cliente + limite de sessões simultâneas | Restrição de custo declarada. Mantém a proteção como dissuasão, que é o que a visão já assumia, sem criar transcodificação por aluno | Decisão do time (2026-09-20) |
+| BA15 | Sem provedor de DRM. Proteção = URL assinada + HLS AES-128 + marca d'água com e-mail do aluno no cliente. **Nenhuma trava de concorrência** — sessão única, lease de reprodução e limite por IP foram rejeitados em BA16 | Restrição de custo declarada. Mantém a proteção como dissuasão, que é o que a visão já assumia, sem criar transcodificação por aluno. A pilha é composta só de medidas que não cobram do aluno legítimo o erro de quem compartilha | Decisão do time (2026-09-20) |
 
 Nenhuma destas exigiu ADR: todas nascem aqui com racional autocontido e sem decisão anterior a substituir.
 **Alterar BA01, BA05, BA06, BA07, BA08 ou BA15 exige ADR em `docs/adr/`** — são as que, mudadas depois, invalidam
@@ -524,4 +524,5 @@ Revisar este documento apenas quando uma premissa estrutural mudar.*
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-20 | Tasso Gomes | Baseline inicial (BA01–BA16, G01–G26) sobre `vision.md` v1.1 e `context/domain-map.md` v1.1 |
+| 1.2 | 2026-09-20 | Tasso Gomes | Correção de contradição interna: BA15 listava "limite de sessões simultâneas" na pilha de proteção, enquanto BA16 rejeita sessão única e lease de reprodução e G24 proíbe restrição de concorrência sem decisão com dado. BA15 passa a declarar a ausência de trava e a remeter a BA16. A prosa de "Proteção de conteúdo" já estava correta; a divergência era só da tabela. Nenhuma decisão de mérito mudou — achado do domain doc de Identidade e Acesso (QA-02) |
 | 1.1 | 2026-09-20 | Tasso Gomes | O roadmap de serviços por fase vira agrupamento em unidades de deploy: o baseline decide agrupamento e gatilho de extração, não sequência — ele é escrito antes do backlog e não enxerga dependência entre capacidades. `notification` passa ao grupo inicial (BA02: 6 serviços), porque `CAP-001` e `CAP-011` não fecham ciclo sem e-mail transacional |
