@@ -36,6 +36,12 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, NotificationUnitOfWork>();
         services.AddScoped<IDeliveryRecordRepository, DeliveryRecordRepository>();
+        services.AddScoped<IDeliveryOutcomeCounterRepository, DeliveryOutcomeCounterRepository>();
+        services.AddOptions<DeliveryRecordRetentionOptions>()
+            .Bind(configuration.GetSection(DeliveryRecordRetentionOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddHostedService<DeliveryRecordPurgeWorker>();
         services.AddScoped<IEmailTemplateSettings, EmailTemplateSettings>();
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName))

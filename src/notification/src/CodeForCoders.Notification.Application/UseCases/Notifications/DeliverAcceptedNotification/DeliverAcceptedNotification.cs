@@ -14,6 +14,7 @@ public sealed class DeliverAcceptedNotification(
     IMessageTemplateRenderer messageTemplateRenderer,
     ITransactionalEmailSender emailSender,
     IOutboxMessageWriter outboxMessageWriter,
+    IDeliveryOutcomeCounterRepository deliveryOutcomeCounterRepository,
     IUnitOfWork unitOfWork,
     ITransactionalEmailRetryPolicy retryPolicy) : IDeliverAcceptedNotification
 {
@@ -22,14 +23,22 @@ public sealed class DeliverAcceptedNotification(
         CancellationToken cancellationToken)
     {
         var record = await deliveryRecordRepository.GetAsync(input.DeliveryRecordId, cancellationToken);
-        if (record is null || record.Status != DeliveryStatus.Accepted)
+        if (record is null
+            || record.Status != DeliveryStatus.Accepted
+            || record.Recipient is null
+            || record.RecipientName is null
+            || record.Link is null
+            || record.Purpose is null
+            || record.Model is null)
         {
             return new DeliverAcceptedNotificationOutput(false, null, null);
         }
 
+        var recipient = record.Recipient;
+
         var allowed = await consentService.AllowsAsync(
-            record.Recipient,
-            record.Purpose!,
+            recipient,
+            record.Purpose,
             cancellationToken);
         if (!allowed)
         {
@@ -37,10 +46,10 @@ public sealed class DeliverAcceptedNotification(
         }
 
         var email = messageTemplateRenderer.Render(
-            record.Model!,
-            record.Recipient,
-            record.RecipientName!,
-            record.Link!);
+            record.Model,
+            recipient,
+            record.RecipientName,
+            record.Link);
         var attemptedOn = DateTimeOffset.UtcNow;
         record.RegisterProviderAttempt(attemptedOn);
         try
@@ -58,12 +67,16 @@ public sealed class DeliverAcceptedNotification(
 
         var deliveredOn = DateTimeOffset.UtcNow;
         record.MarkDelivered(deliveredOn);
+        await deliveryOutcomeCounterRepository.IncrementAsync(
+            record,
+            deliveredOn,
+            cancellationToken);
         var eventId = Guid.CreateVersion7();
         var payload = new NotificationMessageDeliveredV1(
             record.RequestId,
             record.TenantId,
-            record.Purpose!,
-            record.Recipient,
+            record.Purpose,
+            recipient,
             NotificationChannels.Email,
             deliveredOn);
 
@@ -98,6 +111,10 @@ public sealed class DeliverAcceptedNotification(
                 ? NotificationFailureReasons.AttemptsExhausted
                 : exception.Reason;
             record.MarkFailed(reason, exhaustedAttempts, failedOn);
+            await deliveryOutcomeCounterRepository.IncrementAsync(
+                record,
+                failedOn,
+                cancellationToken);
             var eventId = Guid.CreateVersion7();
             var payload = new NotificationDeliveryFailedV1(
                 record.RequestId,

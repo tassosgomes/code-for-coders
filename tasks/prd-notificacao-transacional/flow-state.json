@@ -4,10 +4,10 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": null,
-  "last_checkpoint": "6.0",
+  "last_checkpoint": "7.0",
   "phase": "checkpoint-task",
-  "active_task": "6.0",
-  "attempt": 1,
+  "active_task": "7.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 5,
@@ -19,9 +19,9 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "6.0",
-    "attempt": 1,
-    "run_id": "run.uIKX3pun",
+    "task": "7.0",
+    "attempt": 2,
+    "run_id": "run.nu1pBpNx",
     "gate": "passed"
   },
   "history": [
@@ -475,6 +475,83 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.uIKX3pun",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.6lz8gIHb",
+      "reason": "timeout_or_blocked: wrapper timeout matou o processo antes de result.json; sem entrada no ledger"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "7.0",
+      "attempt": 1,
+      "outcome": "effects_present_gate_passed",
+      "evidence": "build ok; gate declarado (filter-class PurgeDeliveryRecordPersonalDataTests) executado pelo orquestrador -> 1/1 passed, gate_expect atendido",
+      "note": "efeitos preservados: DeliveryOutcomeCounter, DeliveryRecordPurgeWorker, migration AddDeliveryOutcomeCounters, teste novo; tratado como implementation_complete apesar da falha de transporte"
+    },
+    {
+      "phase": "validating",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "rejected",
+      "run_id": "run.uJsdQTCB",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/7.0_task_review.md",
+      "blocker": "DeliveryOutcomeCounterRepository.IncrementAsync e check-then-act sem upsert atomico; corrida entre instancias concorrentes de TransactionalEmailDeliveryWorker pode gerar DbUpdateException nao tratada, derrubando o SaveChangesAsync que marca a entrega como Delivered e paralisando o worker inteiro"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.XtBWX7hr",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.KM89Y38G",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/7.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.nu1pBpNx",
       "gate": "passed"
     }
   ]

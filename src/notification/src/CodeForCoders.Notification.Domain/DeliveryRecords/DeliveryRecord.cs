@@ -22,7 +22,7 @@ public sealed class DeliveryRecord
 
     public Guid RequestId { get; private set; }
 
-    public string Recipient { get; private set; } = string.Empty;
+    public string? Recipient { get; private set; }
 
     public string? RecipientName { get; private set; }
 
@@ -176,6 +176,19 @@ public sealed class DeliveryRecord
         ExhaustedAttempts = exhaustedAttempts;
         FailedOn = failedOn;
         NextAttemptOn = null;
+    }
+
+    public void PurgePersonalData()
+    {
+        if (Status == DeliveryStatus.Accepted)
+        {
+            throw new EntityValidationException("Only a final delivery can have personal data purged.");
+        }
+
+        Recipient = null;
+        RecipientName = null;
+        Link = null;
+        Reason = null;
     }
 
     private void EnsureAccepted()

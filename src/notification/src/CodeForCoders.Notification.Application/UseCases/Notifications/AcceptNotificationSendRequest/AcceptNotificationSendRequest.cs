@@ -8,6 +8,7 @@ namespace CodeForCoders.Notification.Application.UseCases.Notifications.AcceptNo
 
 public sealed class AcceptNotificationSendRequest(
     IDeliveryRecordRepository deliveryRecordRepository,
+    IDeliveryOutcomeCounterRepository deliveryOutcomeCounterRepository,
     IUnitOfWork unitOfWork,
     ITenantContext tenantContext,
     IValidator<AcceptNotificationSendRequestInput> validator) : IAcceptNotificationSendRequest
@@ -46,6 +47,10 @@ public sealed class AcceptNotificationSendRequest(
                 input.CorrelationId);
 
             await deliveryRecordRepository.AddAsync(refusedRecord, cancellationToken);
+            await deliveryOutcomeCounterRepository.IncrementAsync(
+                refusedRecord,
+                transitionOn,
+                cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
             NotificationTelemetry.NotificationsRefused.Add(1);
 

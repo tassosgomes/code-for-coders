@@ -3,17 +3,19 @@ using System;
 using CodeForCoders.Notification.Infra.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CodeForCoders.Notification.Infra.Data.Migrations
-{
+namespace CodeForCoders.Notification.Infra.Data.Migrations;
     [DbContext(typeof(NotificationDbContext))]
-    partial class NotificationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260921225912_AddDeliveryOutcomeCounters")]
+    partial class AddDeliveryOutcomeCounters
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -224,4 +226,3 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
 #pragma warning restore 612, 618
         }
     }
-}

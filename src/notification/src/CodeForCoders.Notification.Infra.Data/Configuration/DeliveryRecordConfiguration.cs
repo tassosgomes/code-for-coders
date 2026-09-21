@@ -24,8 +24,7 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
             .IsRequired();
         builder.Property(record => record.Recipient)
             .HasColumnName("recipient")
-            .HasMaxLength(DeliveryRecord.RecipientMaxLength)
-            .IsRequired();
+            .HasMaxLength(DeliveryRecord.RecipientMaxLength);
         builder.Property(record => record.RecipientName)
             .HasColumnName("recipient_name")
             .HasMaxLength(DeliveryRecord.RecipientNameMaxLength);
