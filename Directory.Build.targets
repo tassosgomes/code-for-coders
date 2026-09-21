@@ -1,5 +1,10 @@
 <Project>
 
+  <!-- Keep xUnit v3 test projects on the Microsoft Testing Platform selected by global.json. -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+  </PropertyGroup>
+
   <!--
     Deterministic gate for the forbidden-package list: a PackageReference to any of these
     fails the build with its reason, instead of relying on review.
