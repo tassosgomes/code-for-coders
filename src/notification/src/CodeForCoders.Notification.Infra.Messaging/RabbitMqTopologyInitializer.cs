@@ -28,7 +28,30 @@ public sealed class RabbitMqTopologyInitializer(
             arguments: null,
             cancellationToken: cancellationToken);
 
-        var deadLetterQueue = $"{settings.HeartbeatQueue}.dlq";
+        await DeclareQueueAsync(
+            channel,
+            settings,
+            settings.HeartbeatQueue,
+            "notification.platform.heartbeat.v1",
+            cancellationToken);
+        await DeclareQueueAsync(
+            channel,
+            settings,
+            settings.SendRequestQueue,
+            settings.SendRequestRoutingKey,
+            cancellationToken);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static async Task DeclareQueueAsync(
+        IChannel channel,
+        RabbitMqOptions settings,
+        string queue,
+        string routingKey,
+        CancellationToken cancellationToken)
+    {
+        var deadLetterQueue = $"{queue}.dlq";
         await channel.QueueDeclareAsync(
             deadLetterQueue,
             durable: true,
@@ -42,12 +65,12 @@ public sealed class RabbitMqTopologyInitializer(
         await channel.QueueBindAsync(
             deadLetterQueue,
             settings.DeadLetterExchange,
-            settings.HeartbeatQueue,
+            queue,
             arguments: null,
             cancellationToken: cancellationToken);
 
         await channel.QueueDeclareAsync(
-            settings.HeartbeatQueue,
+            queue,
             durable: true,
             exclusive: false,
             autoDelete: false,
@@ -55,17 +78,15 @@ public sealed class RabbitMqTopologyInitializer(
             {
                 ["x-queue-type"] = "quorum",
                 ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
-                ["x-dead-letter-routing-key"] = settings.HeartbeatQueue,
+                ["x-dead-letter-routing-key"] = queue,
                 ["x-delivery-limit"] = settings.DeliveryLimit,
             },
             cancellationToken: cancellationToken);
         await channel.QueueBindAsync(
-            settings.HeartbeatQueue,
+            queue,
             settings.Exchange,
-            "notification.platform.heartbeat.v1",
+            routingKey,
             arguments: null,
             cancellationToken: cancellationToken);
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

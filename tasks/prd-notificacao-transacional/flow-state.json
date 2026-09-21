@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "branch": "feature/notificacao-transacional",
+  "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+  "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+  "target_ref": null,
+  "last_checkpoint": "1.0",
+  "phase": "checkpoint-task",
+  "active_task": "1.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 4,
+  "specs": ["techspec.md"],
+  "delivery": "branch",
+  "validated_commit": null,
+  "validated_tree": null,
+  "last_result": {
+    "outcome": "checkpoint_ok",
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "1.0",
+    "attempt": 1,
+    "run_id": "run.VoaT7yjw",
+    "gate": "passed"
+  },
+  "history": [
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "branch_ready",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "run_id": "01a0c532-aec8-7581-b4e0-97aa57644c25"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "1.0",
+      "attempt": 1,
+      "outcome": "pending_run_absent",
+      "run_id": "01a0c532-aec8-7581-b4e0-97aa57644c25",
+      "evidence": "Nenhum resultado, ledger, pane ou agente correspondente; diff local preservado"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.bLqgcEq9",
+      "reason": "agent_start_failed: pane was not an available shell"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.5NlrbOnc",
+      "reason": "timeout_or_blocked after implementation and gate evidence; result envelope absent"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.DRaAPyhq",
+      "gate": "passed",
+      "result": ".tsg-flow/delegate-logs/run.DRaAPyhq/result.json"
+    },
+    {
+      "phase": "validating",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.z543C6ld",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/1.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "transport_failure",
+      "run_id": "run.6klpTtiF",
+      "reason": "agent_prompt_stalled: opencode did not enter working state"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "transport_failure",
+      "run_id": "run.D3k43BYc",
+      "reason": "agent_prompt_stalled: opencode did not enter working state"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.VoaT7yjw"
+    }
+  ]
+}

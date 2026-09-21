@@ -11,4 +11,13 @@ public sealed class EmailOptions
 
     [Required, EmailAddress]
     public string FromAddress { get; set; } = "notifications@example.invalid";
+
+    [Required]
+    public string SendingDomain { get; set; } = "example.invalid";
+
+    public Dictionary<string, int> ValidityHoursByPurpose { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["confirmacao-de-conta"] = 24,
+        ["recuperacao-de-senha"] = 1,
+    };
 }

@@ -28,6 +28,8 @@ public sealed class OutboxMessage
 
     public string? TraceParent { get; private set; }
 
+    public string? CorrelationId { get; private set; }
+
     public static OutboxMessage Create(OutboxMessageDraft draft, string payload)
     {
         return new OutboxMessage
@@ -39,6 +41,7 @@ public sealed class OutboxMessage
             Payload = payload,
             OccurredOn = draft.OccurredOn,
             TraceParent = draft.TraceParent,
+            CorrelationId = draft.CorrelationId,
         };
     }
 

@@ -46,6 +46,9 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.TraceParent)
             .HasColumnName("trace_parent")
             .HasMaxLength(55);
+        builder.Property(message => message.CorrelationId)
+            .HasColumnName("correlation_id")
+            .HasMaxLength(200);
 
         builder.HasIndex(message => message.Id)
             .HasDatabaseName("ix_outbox_messages_pending")

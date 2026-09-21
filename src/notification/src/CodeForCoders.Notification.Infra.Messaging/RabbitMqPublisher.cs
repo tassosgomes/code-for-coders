@@ -22,6 +22,7 @@ public sealed class RabbitMqPublisher(
                 DeliveryMode = DeliveryModes.Persistent,
                 MessageId = message.Id.ToString(),
                 Type = message.Type,
+                CorrelationId = message.CorrelationId,
                 Headers = string.IsNullOrWhiteSpace(message.TraceParent)
                     ? null
                     : new Dictionary<string, object?>

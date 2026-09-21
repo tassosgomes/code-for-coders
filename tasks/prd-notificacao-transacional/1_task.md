@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: []
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests\" --minimum-expected-tests 1"
@@ -74,10 +74,10 @@ expurgo de dado pessoal (V-07). A porta de consentimento nasce aqui só com a re
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests" --minimum-expected-tests 1`
-- [ ] Pedido de confirmação de conta publicado no broker termina com Registro de Entrega "entregue",
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests" --minimum-expected-tests 1`
+- [x] Pedido de confirmação de conta publicado no broker termina com Registro de Entrega "entregue",
       timestamps de cada transição, e requisição chegou ao fake do provedor com o texto do modelo de
       confirmação (sem link de descadastro)
-- [ ] Evento `notificacao.mensagem-entregue.v1` publicado sem o corpo da mensagem, com `destinatario`
+- [x] Evento `notificacao.mensagem-entregue.v1` publicado sem o corpo da mensagem, com `destinatario`
       em claro e `canal: email`
-- [ ] Nenhum e-mail em claro aparece em log, span ou métrica emitidos durante o fluxo
+- [x] Nenhum e-mail em claro aparece em log, span ou métrica emitidos durante o fluxo

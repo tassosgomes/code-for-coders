@@ -19,12 +19,18 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(OutboxOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.AddOptions<DeliveryOptions>()
+            .Bind(configuration.GetSection(DeliveryOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<HeartbeatReceiptStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
         services.AddHostedService<HeartbeatConsumerWorker>();
+        services.AddHostedService<NotificationSendRequestConsumerWorker>();
+        services.AddHostedService<TransactionalEmailDeliveryWorker>();
 
         return services;
     }

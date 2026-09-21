@@ -17,4 +17,10 @@ public static class NotificationTelemetry
     public static readonly Counter<long> HeartbeatsConsumed = Meter.CreateCounter<long>(
         "notification.platform.heartbeat.consumed",
         unit: "{heartbeat}");
+    public static readonly Counter<long> NotificationsAccepted = Meter.CreateCounter<long>(
+        "notification.send_request.accepted",
+        unit: "{request}");
+    public static readonly Counter<long> NotificationsDelivered = Meter.CreateCounter<long>(
+        "notification.message.delivered",
+        unit: "{message}");
 }
