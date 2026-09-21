@@ -4,10 +4,10 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": null,
-  "last_checkpoint": "5.0",
+  "last_checkpoint": "6.0",
   "phase": "checkpoint-task",
-  "active_task": "5.0",
-  "attempt": 3,
+  "active_task": "6.0",
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 5,
@@ -19,9 +19,9 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "5.0",
-    "attempt": 3,
-    "run_id": "run.HWn5jq85",
+    "task": "6.0",
+    "attempt": 1,
+    "run_id": "run.uIKX3pun",
     "gate": "passed"
   },
   "history": [
@@ -426,6 +426,55 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.HWn5jq85",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.s3SoGXLm",
+      "reason": "agent_pane_busy: sem efeitos (3s), retry seguro"
+    },
+    {
+      "phase": "implement",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.aLwREnIs",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.ElNGPCGN",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/6.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.uIKX3pun",
       "gate": "passed"
     }
   ]
