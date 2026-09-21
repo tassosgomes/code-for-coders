@@ -3,11 +3,11 @@
   "branch": "feature/notificacao-transacional",
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-  "target_ref": null,
+  "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "last_checkpoint": "7.0",
-  "phase": "checkpoint-task",
-  "active_task": "7.0",
-  "attempt": 2,
+  "phase": "prepare-integration",
+  "active_task": null,
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 5,
@@ -16,13 +16,14 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "outcome": "checkpoint_ok",
+    "outcome": "integration_ready",
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "7.0",
-    "attempt": 2,
-    "run_id": "run.nu1pBpNx",
-    "gate": "passed"
+    "mode": "prepare-integration",
+    "run_id": "run.lYPjsZWw",
+    "gate": "passed",
+    "branch": "feature/notificacao-transacional",
+    "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+    "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
   },
   "history": [
     {
@@ -553,6 +554,17 @@
       "outcome": "checkpoint_ok",
       "run_id": "run.nu1pBpNx",
       "gate": "passed"
+    },
+    {
+      "phase": "prepare-integration",
+      "role": "integrator",
+      "mode": "prepare-integration",
+      "outcome": "integration_ready",
+      "run_id": "run.lYPjsZWw",
+      "gate": "passed",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95e9f7585ed4",
+      "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
     }
   ]
 }
