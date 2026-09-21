@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.Notification.Api/CodeForCoders.Notification.Api.csproj" />
+    <Project Path="src/CodeForCoders.Notification.Application/CodeForCoders.Notification.Application.csproj" />
+    <Project Path="src/CodeForCoders.Notification.Contracts/CodeForCoders.Notification.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.Notification.Domain/CodeForCoders.Notification.Domain.csproj" />
+    <Project Path="src/CodeForCoders.Notification.Infra.Data/CodeForCoders.Notification.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.Notification.Infra.Messaging/CodeForCoders.Notification.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.Notification.ArchitectureTests/CodeForCoders.Notification.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.Notification.EndToEndTests/CodeForCoders.Notification.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.Notification.Tests.Common/CodeForCoders.Notification.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.Notification.UnitTests/CodeForCoders.Notification.UnitTests.csproj" />
+  </Folder>
+</Solution>

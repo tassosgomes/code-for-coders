@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.Commerce.Api/CodeForCoders.Commerce.Api.csproj" />
+    <Project Path="src/CodeForCoders.Commerce.Application/CodeForCoders.Commerce.Application.csproj" />
+    <Project Path="src/CodeForCoders.Commerce.Contracts/CodeForCoders.Commerce.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.Commerce.Domain/CodeForCoders.Commerce.Domain.csproj" />
+    <Project Path="src/CodeForCoders.Commerce.Infra.Data/CodeForCoders.Commerce.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.Commerce.Infra.Messaging/CodeForCoders.Commerce.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.Commerce.ArchitectureTests/CodeForCoders.Commerce.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.Commerce.EndToEndTests/CodeForCoders.Commerce.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.Commerce.Tests.Common/CodeForCoders.Commerce.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.Commerce.UnitTests/CodeForCoders.Commerce.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../CodeForCoders.Learning.Contracts/CodeForCoders.Learning.Contracts.csproj" />
+    <ProjectReference Include="../CodeForCoders.Learning.Domain/CodeForCoders.Learning.Domain.csproj" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Scrutor" />
+  </ItemGroup>
+</Project>

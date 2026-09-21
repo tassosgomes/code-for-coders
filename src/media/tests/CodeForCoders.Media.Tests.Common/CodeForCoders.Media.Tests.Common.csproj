@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Media.Application/CodeForCoders.Media.Application.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Media.Domain/CodeForCoders.Media.Domain.csproj" />
+    <PackageReference Include="Bogus" />
+  </ItemGroup>
+</Project>

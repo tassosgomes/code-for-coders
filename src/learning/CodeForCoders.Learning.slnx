@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.Learning.Api/CodeForCoders.Learning.Api.csproj" />
+    <Project Path="src/CodeForCoders.Learning.Application/CodeForCoders.Learning.Application.csproj" />
+    <Project Path="src/CodeForCoders.Learning.Contracts/CodeForCoders.Learning.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.Learning.Domain/CodeForCoders.Learning.Domain.csproj" />
+    <Project Path="src/CodeForCoders.Learning.Infra.Data/CodeForCoders.Learning.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.Learning.Infra.Messaging/CodeForCoders.Learning.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.Learning.ArchitectureTests/CodeForCoders.Learning.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.Learning.EndToEndTests/CodeForCoders.Learning.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.Learning.Tests.Common/CodeForCoders.Learning.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.Learning.UnitTests/CodeForCoders.Learning.UnitTests.csproj" />
+  </Folder>
+</Solution>

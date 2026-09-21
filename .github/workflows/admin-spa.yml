@@ -1,0 +1,29 @@
+name: admin-spa
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/admin-spa/**'
+      - '.github/workflows/admin-spa.yml'
+  pull_request:
+    paths:
+      - 'src/admin-spa/**'
+      - '.github/workflows/admin-spa.yml'
+
+permissions:
+  contents: read
+  security-events: write
+  packages: write
+
+jobs:
+  ci:
+    uses: tassosgomes/template-pipeline/.github/workflows/ci-react-ts.yml@v1
+    with:
+      working-directory: src/admin-spa
+      version: '24'
+      build-args: '--base=/admin/'
+      coverage-threshold: 70
+      build-container: true
+      image-name: code-4-coders-admin-spa
+      security-mode: observe

@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.BffStudent.Api/CodeForCoders.BffStudent.Api.csproj" />
+    <Project Path="src/CodeForCoders.BffStudent.Application/CodeForCoders.BffStudent.Application.csproj" />
+    <Project Path="src/CodeForCoders.BffStudent.Contracts/CodeForCoders.BffStudent.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.BffStudent.Domain/CodeForCoders.BffStudent.Domain.csproj" />
+    <Project Path="src/CodeForCoders.BffStudent.Infra.Data/CodeForCoders.BffStudent.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.BffStudent.Infra.Messaging/CodeForCoders.BffStudent.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.BffStudent.ArchitectureTests/CodeForCoders.BffStudent.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.BffStudent.Tests.Common/CodeForCoders.BffStudent.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.BffStudent.UnitTests/CodeForCoders.BffStudent.UnitTests.csproj" />
+  </Folder>
+</Solution>

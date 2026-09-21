@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CodeForCoders.Media.Api/CodeForCoders.Media.Api.csproj" />
+    <Project Path="src/CodeForCoders.Media.Application/CodeForCoders.Media.Application.csproj" />
+    <Project Path="src/CodeForCoders.Media.Contracts/CodeForCoders.Media.Contracts.csproj" />
+    <Project Path="src/CodeForCoders.Media.Domain/CodeForCoders.Media.Domain.csproj" />
+    <Project Path="src/CodeForCoders.Media.Infra.Data/CodeForCoders.Media.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.Media.Infra.Messaging/CodeForCoders.Media.Infra.Messaging.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CodeForCoders.Media.ArchitectureTests/CodeForCoders.Media.ArchitectureTests.csproj" />
+    <Project Path="tests/CodeForCoders.Media.EndToEndTests/CodeForCoders.Media.EndToEndTests.csproj" />
+    <Project Path="tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj" />
+    <Project Path="tests/CodeForCoders.Media.Tests.Common/CodeForCoders.Media.Tests.Common.csproj" />
+    <Project Path="tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj" />
+  </Folder>
+</Solution>
