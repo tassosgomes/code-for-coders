@@ -4,10 +4,10 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": null,
-  "last_checkpoint": "3.0",
+  "last_checkpoint": "4.0",
   "phase": "checkpoint-task",
-  "active_task": "3.0",
-  "attempt": 1,
+  "active_task": "4.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 5,
@@ -19,9 +19,9 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "3.0",
-    "attempt": 1,
-    "run_id": "run.30isLJtu",
+    "task": "4.0",
+    "attempt": 2,
+    "run_id": "run.zieCMt35",
     "gate": "passed"
   },
   "history": [
@@ -212,6 +212,92 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.30isLJtu",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.lxGKirHa",
+      "reason": "timeout_or_blocked: wrapper timeout de 900s matou o processo (exit 143) antes de result.json; sem entrada no ledger"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "4.0",
+      "attempt": 1,
+      "outcome": "effects_present_gate_passed",
+      "evidence": "declared gate (filter-class DeliverPasswordRecoveryEmailTests) passa isolado (1/1), build ok; tratado como implementation_complete apesar da falha de transporte (mesmo padrao das tasks 2.0/4.0-attempt1)",
+      "note": "observacao do orquestrador ao reconciliar (nao e veredito de revisao): suite completa do projeto falhou 3/8 numa execucao exploratoria (PasswordRecoveryRequestIsDeliveredWithItsOwnValidity, AccountConfirmationRequestIsAcceptedDeliveredAndPublished, HeartbeatFlowsThroughOutboxRabbitMqAndConsumer). Revisao semantica e do validator, nao do orquestrador; encaminhado para validating normalmente."
+    },
+    {
+      "phase": "validating",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "rejected",
+      "run_id": "run.7hWjlaTo",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/4.0_task_review.md",
+      "blocker": "NotificationSendRequestRules.cs (RF-01) alterado fora do escopo declarado, expondo desenho da Task 1.0 travado a um unico modelo fixo; suite completa intermitente ja na baseline (checkpoint 3.0), confirmado por isolamento em worktree limpo"
+    },
+    {
+      "phase": "human-decision",
+      "task": "4.0",
+      "outcome": "resolved",
+      "decisions": [
+        "RF-01: aceitar a generalizacao em NotificationSendRequestRules.cs como correcao necessaria desta fatia (nao reabrir Task 1.0); documentado em 4_task.md (Decisoes fechadas + Modificar/Referenciar)",
+        "Flakiness pre-existente da suite completa (confirmada no checkpoint 3.0, fora do escopo desta task/PRD): registrar como divida tecnica conhecida, nao bloquear"
+      ]
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.3PEjTfzi",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.iyh7Nbmu",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/4.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.zieCMt35",
       "gate": "passed"
     }
   ]

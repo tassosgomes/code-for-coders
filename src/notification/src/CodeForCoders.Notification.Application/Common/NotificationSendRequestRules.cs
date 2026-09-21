@@ -17,7 +17,10 @@ public static class NotificationSendRequestRules
             return NotificationRefusalReasons.UnknownPurpose;
         }
 
-        if (request.Modelo != NotificationPurposes.AccountConfirmation)
+        if (request.Modelo is not (
+                NotificationPurposes.AccountConfirmation
+                or NotificationPurposes.PasswordRecovery)
+            || request.Modelo != request.Finalidade)
         {
             return NotificationRefusalReasons.UnknownModel;
         }
