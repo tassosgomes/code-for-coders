@@ -5,6 +5,10 @@
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+  </ItemGroup>
+
   <!--
     Deterministic gate for the forbidden-package list: a PackageReference to any of these
     fails the build with its reason, instead of relying on review.
