@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests\" --minimum-expected-tests 3"
@@ -49,12 +49,12 @@ que independe da finalidade.
 
 ## Pronto quando
 
-- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests" --minimum-expected-tests 3`
-- [x] Pedido sem `finalidade` → Registro de Entrega "recusado" com motivo "finalidade ausente",
+- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests" --minimum-expected-tests 3`
+- [ ] Pedido sem `finalidade` → Registro de Entrega "recusado" com motivo "finalidade ausente",
       nenhuma chamada ao fake do provedor
-- [x] Pedido com `modelo` desconhecido → Registro de Entrega "recusado" com motivo "modelo
+- [ ] Pedido com `modelo` desconhecido → Registro de Entrega "recusado" com motivo "modelo
       desconhecido", nenhuma chamada ao fake do provedor
-- [x] Pedido com `dados` faltando `nome` ou `link` → Registro de Entrega "recusado" com motivo "dado
+- [ ] Pedido com `dados` faltando `nome` ou `link` → Registro de Entrega "recusado" com motivo "dado
       faltante", nenhuma chamada ao fake do provedor e nenhum outbox de `mensagem-entregue` gravado
 
 ## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
