@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests\" --minimum-expected-tests 1"
@@ -56,13 +56,13 @@ uma lacuna a compensar.
 
 ## Pronto quando
 
-- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1`
-- [x] Registro de Entrega criado com data de corte já vencida: após rodar o job de expurgo,
+- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1`
+- [ ] Registro de Entrega criado com data de corte já vencida: após rodar o job de expurgo,
       `destinatario` e o motivo detalhado ficam nulos, e `finalidade`/situação/timestamps agregados
       permanecem
-- [x] O contador agregado por `tenant_id + finalidade + situação + dia` está incrementado antes do
+- [ ] O contador agregado por `tenant_id + finalidade + situação + dia` está incrementado antes do
       expurgo e permanece com o mesmo valor depois — o expurgo não o altera nem o duplica
-- [x] Os gates das Tasks 1.0, 4.0, 5.0 e 6.0 continuam passando sem alteração de comportamento
+- [ ] Os gates das Tasks 1.0, 4.0, 5.0 e 6.0 continuam passando sem alteração de comportamento
       observável
 
 ## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
