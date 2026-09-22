@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests\" --minimum-expected-tests 2"
@@ -65,10 +65,53 @@ introduzida aqui); expurgo do dado pessoal do Registro de Entrega que ficou "fal
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests" --minimum-expected-tests 2`
-- [ ] Fake do provedor configurado para falhar transitoriamente N vezes seguidas: espaçamento
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests" --minimum-expected-tests 2`
+- [x] Fake do provedor configurado para falhar transitoriamente N vezes seguidas: espaçamento
       crescente entre tentativas observado, estado final "falhou" com `esgotouTentativas: true`,
       evento `notificacao.entrega-falhou.v1` publicado, e sinal de "tratamento manual" emitido
       exatamente uma vez
-- [ ] Um segundo pedido publicado durante a janela de indisponibilidade do provedor é aceito
+- [x] Um segundo pedido publicado durante a janela de indisponibilidade do provedor é aceito
       normalmente (Registro de Entrega "aceito"), não recusado
+
+## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
+
+A revisão full sobre o PRD inteiro encontrou bloqueantes atribuídos a esta task. Corrigir sem alterar
+o comportamento já provado pelo gate acima:
+
+- **B1 (lint):** `dotnet format` falha na migration
+  `20260921213348_AddTransactionalEmailRetryState.cs` (BOM UTF-8 contra `charset=utf-8`). Rodar
+  `dotnet format` nesse arquivo.
+- **B2 (arquitetura, parcial):** `TransactionalEmailDeliveryWorker`
+  (`Infra.Messaging/TransactionalEmailDeliveryWorker.cs`) chama `IDeliverAcceptedNotification`
+  diretamente, violando `LayerDependencyTest.InfraDoesNotUseApiNorUseCases`. Mesma correção
+  arquitetural já aplicada em `NotificationSendRequestConsumerWorker` pela Task 1.0: mover a chamada
+  ao caso de uso para um handler/orquestrador na camada `Api`, mantendo `Infra.Messaging` só com
+  responsabilidade de transporte/claim. Não alterar o comportamento observável do gate desta task
+  nem da 6.0 (que depende deste worker).
+- **B3 (crítico, produção):** com o pipeline real de resiliência
+  (`ServiceConfigurationExtensions.cs:19-25`, `AddStandardResilienceHandler`, timeout total 20s), um
+  timeout do provedor chega como `Polly.Timeout.TimeoutRejectedException` — tipo não capturado por
+  `HttpTransactionalEmailSender.cs:55-68` (que só trata `OperationCanceledException`/
+  `HttpRequestException`), nem por `DeliverAcceptedNotification.cs:59` (só captura
+  `TransactionalEmailSendException`), nem por `TransactionalEmailDeliveryWorker.cs:29-44` (só captura
+  `NpgsqlException`, `HttpRequestException`, `InvalidOperationException`). A exceção escapa do
+  `BackgroundService` inteiro e derruba o host (`BackgroundServiceExceptionBehavior.StopHost`).
+  Também por inspeção: `DbUpdateException` do EF Core (ex. violação de unicidade em concorrência) não
+  é capturada em `TransactionalEmailDeliveryWorker.ExecuteAsync` e teria o mesmo efeito. Corrigir:
+  `HttpTransactionalEmailSender` deve classificar `TimeoutRejectedException`/
+  `ExecutionRejectedException` do Polly como transitório (mesmo tratamento de timeout já previsto na
+  TechSpec §Verificação); o laço do worker deve capturar por ciclo sem derrubar o `BackgroundService`
+  inteiro — "falha de um ciclo é logada e o worker continua" (padrão do time). O teste existente de
+  timeout usa `HttpClient` sem o handler de resiliência real; adicionar cobertura que exercite a
+  composição real (`AddStandardResilienceHandler`) ou, no mínimo, o tipo `TimeoutRejectedException`
+  explicitamente.
+- **B6 (mutante sobrevivente):** `TransactionalEmailRetryPolicy.cs:18` calcula backoff com
+  `Math.Pow(m, 0 * exponent)` — sempre a mesma base, não cresce entre tentativas.
+  `RetryProviderTransientFailureTests` só falhou em 2 de 6 execuções porque os limites do teste
+  (25/50ms, backoff inicial 40ms) são absolutos e a sobrecarga do polling mascara o erro. Corrigir o
+  cálculo do backoff para de fato crescer a cada tentativa, e fortalecer o teste (comparar
+  crescimento relativo entre intervalos, ou testar `GetBackoff`/método equivalente diretamente,
+  isolado do polling) para que o mutante morra de forma determinística.
+
+Evidência de todos os pontos acima está em `prd_review.md` (B1, B2, B3, B6). Corrigir sem regredir os
+gates das Tasks 1.0 (checkpoint pós-full já aplicado) e 6.0.

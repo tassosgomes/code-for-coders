@@ -5,6 +5,9 @@ using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Infra.Data.Adapters;
 using CodeForCoders.Notification.Infra.Data.Configuration;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Timeout;
 using Xunit;
 
 namespace CodeForCoders.Notification.UnitTests;
@@ -85,6 +88,35 @@ public sealed class HttpTransactionalEmailSenderTests
 
         Assert.True(exception.IsTransient);
         Assert.Equal(NotificationFailureReasons.ProviderTimeout, exception.Reason);
+    }
+
+    [Fact]
+    public async Task SendAsync_PollyTimeoutRejectedException_ThrowsTransientProviderTimeout()
+    {
+        var resilienceException = new TimeoutRejectedException(TimeSpan.FromSeconds(1));
+        var sender = CreateSender((_, _) => Task.FromException<HttpResponseMessage>(resilienceException));
+
+        var exception = await Assert.ThrowsAsync<TransactionalEmailSendException>(
+            () => sender.SendAsync(Email, CancellationToken.None));
+
+        Assert.True(exception.IsTransient);
+        Assert.Equal(NotificationFailureReasons.ProviderTimeout, exception.Reason);
+        Assert.Same(resilienceException, exception.InnerException);
+    }
+
+    [Fact]
+    public async Task SendAsync_PollyExecutionRejectedException_ThrowsTransientProviderUnavailable()
+    {
+        ExecutionRejectedException resilienceException = new BrokenCircuitException(
+            "resilience rejected the request");
+        var sender = CreateSender((_, _) => Task.FromException<HttpResponseMessage>(resilienceException));
+
+        var exception = await Assert.ThrowsAsync<TransactionalEmailSendException>(
+            () => sender.SendAsync(Email, CancellationToken.None));
+
+        Assert.True(exception.IsTransient);
+        Assert.Equal(NotificationFailureReasons.ProviderUnavailable, exception.Reason);
+        Assert.Same(resilienceException, exception.InnerException);
     }
 
     private static HttpTransactionalEmailSender CreateSender(

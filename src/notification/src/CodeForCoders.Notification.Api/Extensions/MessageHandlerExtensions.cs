@@ -9,6 +9,9 @@ public static class MessageHandlerExtensions
     public static IServiceCollection AddNotificationMessageHandlers(this IServiceCollection services)
     {
         services.AddScoped<INotificationSendRequestMessageHandler, NotificationSendRequestedMessageHandler>();
+        services.AddScoped<
+            ITransactionalEmailDeliveryMessageHandler,
+            TransactionalEmailDeliveryMessageHandler>();
         return services;
     }
 }

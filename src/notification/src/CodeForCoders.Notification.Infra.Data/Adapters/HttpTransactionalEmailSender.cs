@@ -5,6 +5,8 @@ using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Application.Exceptions;
 using CodeForCoders.Notification.Infra.Data.Configuration;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Timeout;
 
 namespace CodeForCoders.Notification.Infra.Data.Adapters;
 
@@ -53,6 +55,20 @@ public sealed class HttpTransactionalEmailSender(
             throw new TransactionalEmailSendException(reason, isTransient);
         }
         catch (HttpRequestException exception)
+        {
+            throw new TransactionalEmailSendException(
+                NotificationFailureReasons.ProviderUnavailable,
+                isTransient: true,
+                exception);
+        }
+        catch (TimeoutRejectedException exception)
+        {
+            throw new TransactionalEmailSendException(
+                NotificationFailureReasons.ProviderTimeout,
+                isTransient: true,
+                exception);
+        }
+        catch (ExecutionRejectedException exception)
         {
             throw new TransactionalEmailSendException(
                 NotificationFailureReasons.ProviderUnavailable,

@@ -10,10 +10,12 @@ using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Infra.Data;
 using CodeForCoders.Notification.Infra.Data.Outbox;
 using CodeForCoders.Notification.Infra.Messaging;
+using CodeForCoders.Notification.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using Xunit;
 
@@ -23,6 +25,26 @@ namespace CodeForCoders.Notification.IntegrationTests;
 public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFixture fixture)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    [Fact(DisplayName = nameof(RetryPolicyUsesIncreasingExponentialBackoff))]
+    public void RetryPolicyUsesIncreasingExponentialBackoff()
+    {
+        var policy = new TransactionalEmailRetryPolicy(
+            Options.Create(new RabbitMqOptions
+            {
+                ProviderDeliveryLimit = 3,
+            }),
+            Options.Create(new DeliveryOptions
+            {
+                InitialBackoffMilliseconds = 40,
+                BackoffMultiplier = 2,
+                MaximumBackoffMilliseconds = 500,
+            }));
+
+        Assert.Equal(TimeSpan.FromMilliseconds(40), policy.GetBackoff(1));
+        Assert.Equal(TimeSpan.FromMilliseconds(80), policy.GetBackoff(2));
+        Assert.Equal(TimeSpan.FromMilliseconds(160), policy.GetBackoff(3));
+    }
 
     [Fact(DisplayName = nameof(TransientProviderFailureIsRetriedWithIncreasingBackoff))]
     public async Task TransientProviderFailureIsRetriedWithIncreasingBackoff()

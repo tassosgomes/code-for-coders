@@ -1,12 +1,14 @@
 using CodeForCoders.Notification.Application.Common;
-using CodeForCoders.Notification.Application.UseCases.Notifications.DeliverAcceptedNotification;
+using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Domain.Repositories;
 using CodeForCoders.Notification.Infra.Messaging.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using Polly;
 
 namespace CodeForCoders.Notification.Infra.Messaging;
 
@@ -38,6 +40,14 @@ public sealed class TransactionalEmailDeliveryWorker(
                 {
                     logger.LogWarning(exception, "Transactional email delivery failed and will be retried.");
                 }
+                catch (DbUpdateException exception)
+                {
+                    logger.LogWarning(exception, "Notification delivery state could not be committed; the worker will continue.");
+                }
+                catch (ExecutionRejectedException exception)
+                {
+                    logger.LogWarning(exception, "Transactional email delivery was rejected by the resilience pipeline; the worker will continue.");
+                }
                 catch (InvalidOperationException exception)
                 {
                     logger.LogWarning(exception, "Notification delivery worker is not configured correctly.");
@@ -68,9 +78,7 @@ public sealed class TransactionalEmailDeliveryWorker(
         }
 
         scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(claimed.TenantId);
-        var useCase = scope.ServiceProvider.GetRequiredService<IDeliverAcceptedNotification>();
-        await useCase.ExecuteAsync(
-            new DeliverAcceptedNotificationInput(claimed.Id),
-            cancellationToken);
+        var handler = scope.ServiceProvider.GetRequiredService<ITransactionalEmailDeliveryMessageHandler>();
+        await handler.HandleAsync(claimed.Id, cancellationToken);
     }
 }
