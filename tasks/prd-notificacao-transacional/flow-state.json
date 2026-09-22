@@ -4,8 +4,8 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-  "last_checkpoint": "7.0",
-  "phase": "implement",
+  "last_checkpoint": "2.0",
+  "phase": "checkpoint-task",
   "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -16,13 +16,13 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "outcome": "task_reopened",
+    "outcome": "checkpoint_ok",
     "role": "integrator",
-    "mode": "reopen-task",
+    "mode": "checkpoint-task",
     "task": "2.0",
     "attempt": 1,
-    "run_id": "run.ZjeuvL8k",
-    "gate": "not_run"
+    "run_id": "run.z0f48gH6",
+    "gate": "passed"
   },
   "history": [
     {
@@ -701,6 +701,16 @@
       "outcome": "task_reopened",
       "run_id": "run.ZjeuvL8k",
       "gate": "not_run"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.z0f48gH6",
+      "gate": "passed"
     }
   ]
 }
