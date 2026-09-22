@@ -1,5 +1,38 @@
 name: code-for-coders
 
+x-api-environment: &api-environment
+  ASPNETCORE_ENVIRONMENT: Development
+  ASPNETCORE_HTTP_PORTS: "8080"
+  RabbitMq__Host: rabbitmq
+  RabbitMq__Username: code_for_coders
+  RabbitMq__Password: code-for-coders-local
+  Valkey__ConnectionString: valkey:6379,abortConnect=false
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+
+x-api-dependencies: &api-dependencies
+  postgres:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+  valkey:
+    condition: service_healthy
+  otel-collector:
+    condition: service_started
+
+x-api-healthcheck: &api-healthcheck
+  test: ["CMD-SHELL", "kill -0 1"]
+  interval: 10s
+  timeout: 3s
+  retries: 12
+  start_period: 30s
+
+x-spa-healthcheck: &spa-healthcheck
+  test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+  interval: 10s
+  timeout: 3s
+  retries: 6
+  start_period: 10s
+
 services:
   postgres:
     image: postgres:18
@@ -63,6 +96,156 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  identity:
+    image: code-for-coders-identity:local
+    build:
+      context: .
+      dockerfile: src/identity/Dockerfile
+    container_name: code-for-coders-identity
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=code-for-coders-local
+    ports:
+      - "5101:8080"
+    depends_on: *api-dependencies
+    healthcheck: *api-healthcheck
+
+  learning:
+    image: code-for-coders-learning:local
+    build:
+      context: .
+      dockerfile: src/learning/Dockerfile
+    container_name: code-for-coders-learning
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=code-for-coders-local
+    ports:
+      - "5102:8080"
+    depends_on: *api-dependencies
+    healthcheck: *api-healthcheck
+
+  media:
+    image: code-for-coders-media:local
+    build:
+      context: .
+      dockerfile: src/media/Dockerfile
+    container_name: code-for-coders-media
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
+    ports:
+      - "5103:8080"
+    depends_on: *api-dependencies
+    healthcheck: *api-healthcheck
+
+  commerce:
+    image: code-for-coders-commerce:local
+    build:
+      context: .
+      dockerfile: src/commerce/Dockerfile
+    container_name: code-for-coders-commerce
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=code-for-coders-local
+    ports:
+      - "5104:8080"
+    depends_on: *api-dependencies
+    healthcheck: *api-healthcheck
+
+  notification:
+    image: code-for-coders-notification:local
+    build:
+      context: .
+      dockerfile: src/notification/Dockerfile
+    container_name: code-for-coders-notification
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=code-for-coders-local
+    ports:
+      - "5105:8080"
+    depends_on: *api-dependencies
+    healthcheck: *api-healthcheck
+
+  audit:
+    image: code-for-coders-audit:local
+    build:
+      context: .
+      dockerfile: src/audit/Dockerfile
+    container_name: code-for-coders-audit
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit;Password=code-for-coders-local
+    ports:
+      - "5106:8080"
+    depends_on: *api-dependencies
+    healthcheck: *api-healthcheck
+
+  bff-admin:
+    image: code-for-coders-bff-admin:local
+    build:
+      context: .
+      dockerfile: src/bff-admin/Dockerfile
+    container_name: code-for-coders-bff-admin
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=code-for-coders-local
+      ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
+    ports:
+      - "5107:8080"
+    depends_on:
+      <<: *api-dependencies
+      learning:
+        condition: service_healthy
+    healthcheck: *api-healthcheck
+
+  bff-student:
+    image: code-for-coders-bff-student:local
+    build:
+      context: .
+      dockerfile: src/bff-student/Dockerfile
+    container_name: code-for-coders-bff-student
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=code-for-coders-local
+      ReverseProxy__Clusters__student-backend__Destinations__destination__Address: http://identity:8080/
+    ports:
+      - "5108:8080"
+    depends_on:
+      <<: *api-dependencies
+      identity:
+        condition: service_healthy
+    healthcheck: *api-healthcheck
+
+  admin-spa:
+    image: code-for-coders-admin-spa:local
+    build:
+      context: ./src/admin-spa
+      dockerfile: Dockerfile
+    container_name: code-for-coders-admin-spa
+    environment:
+      API_URL: http://localhost:8081
+    ports:
+      - "8081:80"
+    depends_on:
+      bff-admin:
+        condition: service_healthy
+    healthcheck: *spa-healthcheck
+
+  student-spa:
+    image: code-for-coders-student-spa:local
+    build:
+      context: ./src/student-spa
+      dockerfile: Dockerfile
+    container_name: code-for-coders-student-spa
+    environment:
+      API_URL: http://localhost:8082
+    ports:
+      - "8082:80"
+    depends_on:
+      bff-student:
+        condition: service_healthy
+    healthcheck: *spa-healthcheck
 
 volumes:
   code-for-coders-postgres:
