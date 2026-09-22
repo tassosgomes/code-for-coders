@@ -1,9 +1,12 @@
+using CodeForCoders.Notification.Application.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace CodeForCoders.Notification.Infra.Data.Health;
 
-public sealed class OutboxHealthCheck(NotificationDbContext dbContext) : IHealthCheck
+public sealed class OutboxHealthCheck(
+    NotificationDbContext dbContext,
+    ITenantContext tenantContext) : IHealthCheck
 {
     private static readonly TimeSpan MaximumPendingAge = TimeSpan.FromMinutes(5);
     private const int MaximumAttempts = 10;
@@ -13,8 +16,8 @@ public sealed class OutboxHealthCheck(NotificationDbContext dbContext) : IHealth
         CancellationToken cancellationToken = default)
     {
         var pending = dbContext.OutboxMessages
-            .IgnoreQueryFilters()
-            .Where(message => message.ProcessedOn == null);
+            .Where(message => message.Namespace == tenantContext.Namespace
+                && message.ProcessedOn == null);
         var exhausted = await pending.CountAsync(message => message.Attempts >= MaximumAttempts, cancellationToken);
         var oldest = await pending
             .Select(message => (DateTimeOffset?)message.OccurredOn)

@@ -1,3 +1,4 @@
+using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Infra.Messaging.Configuration;
 using CodeForCoders.Notification.Infra.Messaging.Health;
 using Microsoft.Extensions.Configuration;
@@ -19,12 +20,20 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(OutboxOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.AddOptions<DeliveryOptions>()
+            .Bind(configuration.GetSection(DeliveryOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
         services.AddSingleton<RabbitMqConnectionProvider>();
+        services.AddSingleton<RabbitMqResourceNames>();
         services.AddSingleton<RabbitMqPublisher>();
+        services.AddSingleton<ITransactionalEmailRetryPolicy, TransactionalEmailRetryPolicy>();
         services.AddSingleton<HeartbeatReceiptStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
         services.AddHostedService<HeartbeatConsumerWorker>();
+        services.AddHostedService<NotificationSendRequestConsumerWorker>();
+        services.AddHostedService<TransactionalEmailDeliveryWorker>();
 
         return services;
     }

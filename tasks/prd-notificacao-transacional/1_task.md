@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: []
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests\" --minimum-expected-tests 1"
@@ -74,10 +74,48 @@ expurgo de dado pessoal (V-07). A porta de consentimento nasce aqui só com a re
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests" --minimum-expected-tests 1`
-- [ ] Pedido de confirmação de conta publicado no broker termina com Registro de Entrega "entregue",
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests" --minimum-expected-tests 1`
+- [x] Pedido de confirmação de conta publicado no broker termina com Registro de Entrega "entregue",
       timestamps de cada transição, e requisição chegou ao fake do provedor com o texto do modelo de
       confirmação (sem link de descadastro)
-- [ ] Evento `notificacao.mensagem-entregue.v1` publicado sem o corpo da mensagem, com `destinatario`
+- [x] Evento `notificacao.mensagem-entregue.v1` publicado sem o corpo da mensagem, com `destinatario`
       em claro e `canal: email`
-- [ ] Nenhum e-mail em claro aparece em log, span ou métrica emitidos durante o fluxo
+- [x] Nenhum e-mail em claro aparece em log, span ou métrica emitidos durante o fluxo
+
+## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
+
+A revisão full sobre o PRD inteiro encontrou bloqueantes atribuídos a esta task. Corrigir sem alterar
+o comportamento já provado pelo gate acima:
+
+- **B1 (lint):** `dotnet format` falha em `NotificationSendRequestConsumerWorker.cs:122-124` e na
+  migration `20260921184003_AddDeliveryRecords.cs` (BOM UTF-8 contra `charset=utf-8`, recuo pós
+  file-scoped namespace). Rodar `dotnet format` nesses arquivos; `dotnet format --verify-no-changes`
+  deve sair 0 no CI (`notification.yml`).
+- **B2 (arquitetura, parcial):** `NotificationSendRequestConsumerWorker`
+  (`Infra.Messaging/NotificationSendRequestConsumerWorker.cs`) chama `IAcceptNotificationSendRequest`
+  diretamente, violando `LayerDependencyTest.InfraDoesNotUseApiNorUseCases` — Infra não pode depender
+  de `Application.UseCases`. Padrão do time (`dotnet` skill, `references/messaging.md`): a chamada ao
+  caso de uso fica em `Api/MessageHandlers/{Evento}MessageHandler.cs`; o worker de `Infra.Messaging`
+  só deve cuidar do transporte (consumir, decodificar, `ack`/`nack`), delegando o processamento da
+  mensagem para um handler na camada `Api`. Mover a chamada ao caso de uso para esse handler sem
+  alterar o comportamento observável (gate desta task e da 2.0/3.0/4.0 continuam passando).
+- **B4 (RN-N10, bloqueante de produto):** hoje, um pedido que deserializa mas falha na validação de
+  forma (`AcceptNotificationSendRequestInputValidator`, ex.: link não-absoluto) lança
+  `ValidationException`, que o consumidor trata como `ack` com log `Information` — a mensagem some sem
+  nenhum Registro de Entrega, sem DLQ, sem e-mail. Isso viola RN-N10 ("não existe pedido que
+  simplesmente some") e é diferente de payload malformado (não deserializa → `nack(requeue:false)` →
+  DLQ nativa, esse caminho já está correto e não deve mudar). Corrigir: falha de validação de forma
+  deve gerar um Registro de Entrega "recusado" (mesmo padrão da V-02, reaproveitando
+  `NotificationSendRequestRules`/`DeliveryRecord.CreateRefused` se fizer sentido) com motivo
+  identificável, e a mensagem é confirmada (`ack`) — é desfecho de negócio, não falha de transporte,
+  mesmo critério já fechado para V-02. Adicionar teste cobrindo esse caminho.
+- **B5 (RN-N08/DP-06, retenção de dado sensível):** `DeliveryRecord.Link` não é limpo em
+  `MarkDelivered`/`MarkFailed` — o token de recuperação/confirmação fica legível no Registro de
+  Entrega durante toda a validade, só é zerado no expurgo de 30 dias (Task 7.0). Corrigir: zerar
+  `Link` nas transições finais (`MarkDelivered`, `MarkFailed`) assim como já acontece para outros
+  campos transitórios; a task 7.0 será revisada separadamente para o expurgo em si (B7/B8), mas a
+  gravação do link em "recusado"/"entregue"/"falhou" pertence a esta task. Adicionar teste
+  confirmando que `Link` fica nulo após a transição final.
+
+Evidência de todos os pontos acima está em `prd_review.md` (B1, B2, B4, B5). Corrigir sem regredir os
+gates das Tasks 2.0, 3.0, 4.0 (que dependem do comportamento desta task).

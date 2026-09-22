@@ -30,9 +30,18 @@ public sealed class RabbitMqOptions
     [Required]
     public string HeartbeatQueue { get; set; } = "notification.platform-heartbeat";
 
+    [Required]
+    public string SendRequestQueue { get; set; } = "notification.envio-solicitado";
+
+    [Required]
+    public string SendRequestRoutingKey { get; set; } = "notificacao.envio-solicitado.v1";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 
     [Range(1, 100)]
     public int DeliveryLimit { get; set; } = 5;
+
+    [Range(1, 100)]
+    public int ProviderDeliveryLimit { get; set; } = 3;
 }

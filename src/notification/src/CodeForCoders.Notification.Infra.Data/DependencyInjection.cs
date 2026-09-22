@@ -1,8 +1,10 @@
 using CodeForCoders.Notification.Application.Interfaces;
+using CodeForCoders.Notification.Domain.Repositories;
 using CodeForCoders.Notification.Infra.Data.Adapters;
 using CodeForCoders.Notification.Infra.Data.Configuration;
 using CodeForCoders.Notification.Infra.Data.Health;
 using CodeForCoders.Notification.Infra.Data.Outbox;
+using CodeForCoders.Notification.Infra.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,9 +35,21 @@ public static class DependencyInjection
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, NotificationUnitOfWork>();
+        services.AddScoped<IDeliveryRecordRepository, DeliveryRecordRepository>();
+        services.AddScoped<IDeliveryOutcomeCounterRepository, DeliveryOutcomeCounterRepository>();
+        services.AddOptions<DeliveryRecordRetentionOptions>()
+            .Bind(configuration.GetSection(DeliveryRecordRetentionOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddHostedService<DeliveryRecordPurgeWorker>();
+        services.AddScoped<IEmailTemplateSettings, EmailTemplateSettings>();
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(
+                options => options.ValidityHoursByPurpose.TryGetValue("confirmacao-de-conta", out var accountValidity)
+                    && accountValidity > 0,
+                "Email validity for account confirmation is required.")
             .ValidateOnStart();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))

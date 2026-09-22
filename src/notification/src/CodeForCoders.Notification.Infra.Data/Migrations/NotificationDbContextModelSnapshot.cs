@@ -8,7 +8,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CodeForCoders.Notification.Infra.Data.Migrations;
+namespace CodeForCoders.Notification.Infra.Data.Migrations
+{
     [DbContext(typeof(NotificationDbContext))]
     partial class NotificationDbContextModelSnapshot : ModelSnapshot
     {
@@ -22,6 +23,150 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations;
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CodeForCoders.Notification.Domain.DeliveryRecords.DeliveryOutcomeCounter", b =>
+                {
+                    b.Property<string>("Namespace")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("namespace");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("Status")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<DateOnly>("OutcomeDay")
+                        .HasColumnType("date")
+                        .HasColumnName("outcome_day");
+
+                    b.Property<long>("Count")
+                        .HasColumnType("bigint")
+                        .HasColumnName("count");
+
+                    b.HasKey("Namespace", "TenantId", "Purpose", "Status", "OutcomeDay")
+                        .HasName("pk_delivery_outcome_counters");
+
+                    b.ToTable("delivery_outcome_counters", "notification_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Notification.Domain.DeliveryRecords.DeliveryRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcceptedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_on");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<DateTimeOffset?>("DeliveredOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("delivered_on");
+
+                    b.Property<bool>("ExhaustedAttempts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("exhausted_attempts");
+
+                    b.Property<DateTimeOffset?>("FailedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("failed_on");
+
+                    b.Property<DateTimeOffset?>("LastProviderAttemptOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_provider_attempt_on");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("link");
+
+                    b.Property<string>("Model")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("model");
+
+                    b.Property<string>("Namespace")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("namespace");
+
+                    b.Property<DateTimeOffset?>("NextAttemptOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_on");
+
+                    b.Property<int>("ProviderAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("provider_attempt_count");
+
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("Recipient")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("recipient");
+
+                    b.Property<string>("RecipientName")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("recipient_name");
+
+                    b.Property<DateTimeOffset?>("RefusedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("refused_on");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<DateTimeOffset>("RequestedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_on");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Namespace", "Status", "AcceptedOn")
+                        .HasDatabaseName("ix_delivery_records_namespace_status_accepted_on");
+
+                    b.HasIndex("Namespace", "TenantId", "RequestId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_delivery_records_namespace_tenant_id_request_id");
+
+                    b.ToTable("delivery_records", "notification_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Notification.Infra.Data.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -32,10 +177,21 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations;
                         .HasColumnType("integer")
                         .HasColumnName("attempts");
 
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("correlation_id");
+
                     b.Property<string>("LastError")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("last_error");
+
+                    b.Property<string>("Namespace")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("namespace");
 
                     b.Property<DateTimeOffset>("OccurredOn")
                         .HasColumnType("timestamp with time zone")
@@ -77,11 +233,12 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations;
                         .HasDatabaseName("ix_outbox_messages_pending")
                         .HasFilter("processed_on IS NULL");
 
-                    b.HasIndex("TenantId")
-                        .HasDatabaseName("ix_outbox_messages_tenant_id");
+                    b.HasIndex("Namespace", "TenantId")
+                        .HasDatabaseName("ix_outbox_messages_namespace_tenant_id");
 
                     b.ToTable("outbox_messages", "notification_access");
                 });
 #pragma warning restore 612, 618
         }
     }
+}

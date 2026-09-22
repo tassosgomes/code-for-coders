@@ -14,6 +14,7 @@ namespace CodeForCoders.Notification.Infra.Messaging;
 public sealed class HeartbeatConsumerWorker(
     RabbitMqConnectionProvider connectionProvider,
     HeartbeatReceiptStore receiptStore,
+    RabbitMqResourceNames resourceNames,
     IOptions<RabbitMqOptions> options,
     ILogger<HeartbeatConsumerWorker> logger) : BackgroundService
 {
@@ -23,7 +24,7 @@ public sealed class HeartbeatConsumerWorker(
         await channel.BasicQosAsync(0, options.Value.PrefetchCount, global: false, cancellationToken: stoppingToken);
         var consumer = new HeartbeatConsumer(channel, receiptStore, logger);
         await channel.BasicConsumeAsync(
-            queue: options.Value.HeartbeatQueue,
+            queue: resourceNames.HeartbeatQueue,
             autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken);

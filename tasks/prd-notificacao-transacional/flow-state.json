@@ -1,0 +1,1002 @@
+{
+  "schema_version": 1,
+  "branch": "feature/notificacao-transacional",
+  "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+  "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+  "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+  "last_checkpoint": "3711d12da0a1a69a693d05f14030c56eb78fc8cb",
+  "phase": "full-approved",
+  "active_task": "8.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 1,
+  "transport_retries": 9,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "validated_commit": "a3869da6015085b427c5c94d8d7f2f2bcf96b91c",
+  "validated_tree": "983872c2d365f49321bc039200bd27e70e9d8403",
+  "last_result": {
+    "outcome": "approved",
+    "role": "validator",
+    "mode": "full",
+    "attempt": 1,
+    "run_id": "run.118db6",
+    "transport": "subagent",
+    "gate": "passed",
+    "report": "tasks/prd-notificacao-transacional/prd_review.md",
+    "evidence": "gate 43/43 exit 0 em 5 execucoes (1 falha de ambiente em Docker frio, nao reproduzida); sensor de mutacao 5/5 mortos (claim outbox, claim delivery, query filters, Compose, writer namespace); format/EF/publish/gate-8.0 todos 0; B1 nao recorreu",
+    "blockers": [],
+    "recommendations": 6,
+    "limitation": "worker de contexto fresco no mesmo runtime/agente do implementer (subagent); diversidade de provedor nao garantida",
+    "next": "checkpoint-task 8.0 done (3711d12) -> complete-prd (delivery=pr, autorizado pelo usuario)"
+  },
+  "human_intervention": {
+    "date": "2026-09-22",
+    "type": "structural_namespace_isolation",
+    "decision": "Corrigir o bloqueio de estado compartilhado implementando isolamento lógico por namespace como solução estrutural de médio prazo.",
+    "scope": [
+      "persistência",
+      "outbox",
+      "workers",
+      "filas",
+      "exchanges",
+      "routing keys",
+      "consumidores"
+    ],
+    "constraint": "Workers não podem buscar ou reivindicar dados globalmente.",
+    "preserve": [
+      "full 3/3 rejeitada em run.2GpfB0px",
+      "bloqueio B1 e histórico anterior"
+    ],
+    "ownership": "Nenhuma task existente é dona da mudança transversal; não criar/reabrir task no orquestrador.",
+    "next_delegation": "Task Creator deve criar uma task enabling explícita para namespace isolation, com gate e gate_expect, antes de retomar o orquestrador.",
+    "transport": "herdr",
+    "transport_status": "worker fresco não iniciado: a lacuna não tem task dona e a sessão Herdr retornou PermissionDenied ao controlar panes"
+  },
+  "history": [
+    {
+      "phase": "prepare-prd-branch",
+      "task": "8.0",
+      "outcome": "transport_failure",
+      "run_id": "run.hE7G65q8",
+      "reason": "Retry Codex do integrator iniciou o pane, mas o agente encerrou antes do prompt; resultado ausente, sem efeitos, não consome tentativa."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "task": "8.0",
+      "outcome": "transport_failure",
+      "run_id": "run.wSbjeCKy",
+      "reason": "OpenCode ficou sem receber a solicitação; resultado ausente, sem efeitos, não consome tentativa."
+    },
+    {
+      "phase": "task-creator",
+      "task": "8.0",
+      "outcome": "task_created",
+      "task_kind": "enabling",
+      "gate": "dotnet build src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj --no-restore -warnaserror",
+      "gate_expect": "build sem erros e sem warnings",
+      "validation": "validate_plan.py exit 0",
+      "note": "Habilitador transversal de isolamento por namespace criado após o bloqueio B1; full 3/3 e histórico preservados."
+    },
+    {
+      "phase": "human-intervention",
+      "outcome": "blocked_planning_gap",
+      "date": "2026-09-22",
+      "decision": "Isolamento lógico por namespace atravessando persistência, outbox, workers, filas/exchanges/routing keys e consumidores; workers não podem buscar/reivindicar globalmente.",
+      "preserved": [
+        "full 3/3 rejeitada run.2GpfB0px",
+        "bloqueio B1 e histórico anterior"
+      ],
+      "ownership": "lacuna sem task dona",
+      "next_delegation": "Task Creator: criar task enabling de namespace isolation fora do orquestrador; depois retomar com worker Herdr fresco.",
+      "herdr": "PermissionDenied ao consultar/controlar a sessão; não tratado como veredito"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 3,
+      "outcome": "rejected",
+      "run_id": "run.2GpfB0px",
+      "gate": "failed",
+      "validated_commit": "a3869da6015085b427c5c94d8d7f2f2bcf96b91c",
+      "validated_tree": "5f022502fffd8154fd016fcae4ebb360a260a7c9",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "blocker": "Gate full intermitente: uma execução 39/41 por vazamento de estado/outbox entre hosts de teste; o relatório não atribui a lacuna a uma única task.",
+      "sensor": "7/7 mutações detectadas"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 3,
+      "outcome": "transport_failure",
+      "run_id": "run.wXmw9k05",
+      "reason": "Claude weekly limit, revisão não iniciada, nenhum resultado. Retry seguro com worker Codex fresco já configurado; sem consumir tentativa de convergência. Limitação: sem diversidade de provedor frente ao implementer."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "branch_ready",
+      "run_id": "run.YJeKQUOU",
+      "commit": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d",
+      "result": ".tsg-flow/delegate-logs/run.YJeKQUOU/result.json"
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "transport_failure",
+      "run_id": "run.x9F7mcDb",
+      "reason": "Segundo agent_prompt_stalled no OpenCode, sem worker remanescente nem resultado. Último retry de infraestrutura 2/2 com kind codex configurado; full_attempt preservado."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "transport_failure",
+      "run_id": "run.3HiuzTTy",
+      "reason": "agent_prompt_stalled; terminal permaneceu na tela inicial, sem resultado; pane encerrado pelo transporte. Retry de infraestrutura 1/2, sem consumir full_attempt."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "branch_ready",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "01a0c532-aec8-7581-b4e0-97aa57644c25"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "1.0",
+      "attempt": 1,
+      "outcome": "pending_run_absent",
+      "run_id": "01a0c532-aec8-7581-b4e0-97aa57644c25",
+      "evidence": "Nenhum resultado, ledger, pane ou agente correspondente; diff local preservado"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.bLqgcEq9",
+      "reason": "agent_start_failed: pane was not an available shell"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.5NlrbOnc",
+      "reason": "timeout_or_blocked after implementation and gate evidence; result envelope absent"
+    },
+    {
+      "phase": "implement",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.DRaAPyhq",
+      "gate": "passed",
+      "result": ".tsg-flow/delegate-logs/run.DRaAPyhq/result.json"
+    },
+    {
+      "phase": "validating",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.z543C6ld",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/1.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "transport_failure",
+      "run_id": "run.6klpTtiF",
+      "reason": "agent_prompt_stalled: opencode did not enter working state"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "transport_failure",
+      "run_id": "run.D3k43BYc",
+      "reason": "agent_prompt_stalled: opencode did not enter working state"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.VoaT7yjw"
+    },
+    {
+      "phase": "implement",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "note": "herdr transport iniciado em background apos reconciliacao (nenhum run anterior para 2.0 no ledger)"
+    },
+    {
+      "phase": "implement",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.EgYUVA3z",
+      "reason": "timeout_or_blocked: wrapper timeout de 900s matou o processo (exit 143) antes de result.json; sem entrada no ledger"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "2.0",
+      "attempt": 1,
+      "outcome": "effects_present_gate_passed",
+      "evidence": "build ok (Application + IntegrationTests); gate do orquestrador executado diretamente: dotnet test ... RejectInvalidSendRequestTests -> 3/3 passed, gate_expect atendido",
+      "note": "efeitos preservados: novos arquivos (NotificationSendRequestRules.cs, RejectInvalidSendRequestTests.cs, migration AddDeliveryRecordRefusal) e alteracoes na Task 1.0; tratado como implementation_complete apesar da falha de transporte"
+    },
+    {
+      "phase": "validating",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.zcTAElRa",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/2.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.hlbIrKyo",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.JRIJYDfY",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.InjnhLBF",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/3.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.30isLJtu",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.lxGKirHa",
+      "reason": "timeout_or_blocked: wrapper timeout de 900s matou o processo (exit 143) antes de result.json; sem entrada no ledger"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "4.0",
+      "attempt": 1,
+      "outcome": "effects_present_gate_passed",
+      "evidence": "declared gate (filter-class DeliverPasswordRecoveryEmailTests) passa isolado (1/1), build ok; tratado como implementation_complete apesar da falha de transporte (mesmo padrao das tasks 2.0/4.0-attempt1)",
+      "note": "observacao do orquestrador ao reconciliar (nao e veredito de revisao): suite completa do projeto falhou 3/8 numa execucao exploratoria (PasswordRecoveryRequestIsDeliveredWithItsOwnValidity, AccountConfirmationRequestIsAcceptedDeliveredAndPublished, HeartbeatFlowsThroughOutboxRabbitMqAndConsumer). Revisao semantica e do validator, nao do orquestrador; encaminhado para validating normalmente."
+    },
+    {
+      "phase": "validating",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "rejected",
+      "run_id": "run.7hWjlaTo",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/4.0_task_review.md",
+      "blocker": "NotificationSendRequestRules.cs (RF-01) alterado fora do escopo declarado, expondo desenho da Task 1.0 travado a um unico modelo fixo; suite completa intermitente ja na baseline (checkpoint 3.0), confirmado por isolamento em worktree limpo"
+    },
+    {
+      "phase": "human-decision",
+      "task": "4.0",
+      "outcome": "resolved",
+      "decisions": [
+        "RF-01: aceitar a generalizacao em NotificationSendRequestRules.cs como correcao necessaria desta fatia (nao reabrir Task 1.0); documentado em 4_task.md (Decisoes fechadas + Modificar/Referenciar)",
+        "Flakiness pre-existente da suite completa (confirmada no checkpoint 3.0, fora do escopo desta task/PRD): registrar como divida tecnica conhecida, nao bloquear"
+      ]
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.3PEjTfzi",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.iyh7Nbmu",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/4.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "4.0",
+      "attempt": 2,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.zieCMt35",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.YYNWlrOl",
+      "reason": "timeout_or_blocked: wrapper timeout de 900s matou o processo (exit 143) antes de result.json; work in progress (varios arquivos modificados, TransactionalEmailRetryPolicy.cs, ITransactionalEmailRetryPolicy.cs, TransactionalEmailSendException.cs) mas RetryProviderTransientFailureTests.cs ainda nao existe; nao consome tentativa (falha de transporte)"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "note": "retry com timeout maior (task complexa, muitos arquivos)"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.eBhCelvD",
+      "reason": "agent_pane_busy: pane transitoriamente indisponivel logo apos encerramento do run anterior; sem efeitos (3s), retry seguro"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.lRVC0P45",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "rejected",
+      "run_id": "run.0act8OXT",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md",
+      "blocker": "HttpTransactionalEmailSender (classificacao transitorio/definitivo) sem cobertura de teste unitario, incluindo cenario critico de timeout nomeado na TechSpec"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.zGYScLTD",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "rejected",
+      "run_id": "run.NzMWU4wP",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md",
+      "blocker": "TransactionalEmailDeliveryWorker abre transacao Postgres (FOR UPDATE) antes de chamar ITransactionalEmailSender.SendAsync via DeliverAcceptedNotification, mantendo lock/transacao aberta durante chamada HTTP externa - viola techspec:81-86 e baseline G17 (nenhuma chamada de rede dentro de transacao)"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.1CZsVcPT",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.x5k8P8pa",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.HWn5jq85",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.s3SoGXLm",
+      "reason": "agent_pane_busy: sem efeitos (3s), retry seguro"
+    },
+    {
+      "phase": "implement",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "run.aLwREnIs",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "approved",
+      "run_id": "run.ElNGPCGN",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/6.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "6.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.uIKX3pun",
+      "gate": "passed"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "transport_failure",
+      "run_id": "run.6lz8gIHb",
+      "reason": "timeout_or_blocked: wrapper timeout matou o processo antes de result.json; sem entrada no ledger"
+    },
+    {
+      "phase": "transport-reconcile",
+      "task": "7.0",
+      "attempt": 1,
+      "outcome": "effects_present_gate_passed",
+      "evidence": "build ok; gate declarado (filter-class PurgeDeliveryRecordPersonalDataTests) executado pelo orquestrador -> 1/1 passed, gate_expect atendido",
+      "note": "efeitos preservados: DeliveryOutcomeCounter, DeliveryRecordPurgeWorker, migration AddDeliveryOutcomeCounters, teste novo; tratado como implementation_complete apesar da falha de transporte"
+    },
+    {
+      "phase": "validating",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "focused",
+      "outcome": "rejected",
+      "run_id": "run.uJsdQTCB",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/7.0_task_review.md",
+      "blocker": "DeliveryOutcomeCounterRepository.IncrementAsync e check-then-act sem upsert atomico; corrida entre instancias concorrentes de TransactionalEmailDeliveryWorker pode gerar DbUpdateException nao tratada, derrubando o SaveChangesAsync que marca a entrega como Delivered e paralisando o worker inteiro"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "delegation_pending"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.XtBWX7hr",
+      "gate": "passed"
+    },
+    {
+      "phase": "validating",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.KM89Y38G",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/7.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "7.0",
+      "attempt": 2,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.nu1pBpNx",
+      "gate": "passed"
+    },
+    {
+      "phase": "prepare-integration",
+      "role": "integrator",
+      "mode": "prepare-integration",
+      "outcome": "integration_ready",
+      "run_id": "run.lYPjsZWw",
+      "gate": "passed",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95e9f7585ed4",
+      "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "rejected",
+      "run_id": "run.kgdLCoEc",
+      "gate": "failed",
+      "validated_commit": "c9988d65e7e4110195b8706ef0d2d2032eae146f",
+      "validated_tree": "dbf1e053a78766d87695469bc850914f74e750eb",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "blockers": [
+        "B1: dotnet format --verify-no-changes falha (BOM/whitespace) em migrations de 1.0/2.0/5.0/7.0 e NotificationSendRequestConsumerWorker.cs (1.0)",
+        "B2: LayerDependencyTest.InfraDoesNotUseApiNorUseCases falha - TransactionalEmailDeliveryWorker (5.0) e NotificationSendRequestConsumerWorker (1.0) dependem de Application.UseCases diretamente, contra padrao do time (handler deveria ficar em Api/MessageHandlers)",
+        "B3: TimeoutRejectedException real (pipeline de resiliencia de producao) nao e capturado por HttpTransactionalEmailSender/DeliverAcceptedNotification/TransactionalEmailDeliveryWorker (5.0) - derruba o host inteiro (BackgroundServiceExceptionBehavior.StopHost)",
+        "B4: payload com forma invalida (link nao-absoluto) e ack'd como ValidationException e vai para DLQ sem registro (1.0) - viola RN-N10",
+        "B5: DeliveryRecord.Link (token) nao e limpo em MarkDelivered/MarkFailed (1.0), so no expurgo de 30 dias (7.0) - token de recuperacao de senha fica legivel por toda a validade",
+        "B6: mutante sobrevive 4/6 - TransactionalEmailRetryPolicy usa backoff constante, nao crescente (5.0)",
+        "B7: mutante sobrevive - DeliveryRecordPurgeWorker so testado com registro recusado, ramo Delivered nao coberto (7.0)",
+        "B8: mutante sobrevive - contador agregado incrementado na entrega/falha (DeliverAcceptedNotification) sem nenhum teste que o verifique (7.0)"
+      ],
+      "note": "8 bloqueantes reais + 16 recomendacoes; revisao full nao executada por task (gates filtrados nao cobriam lint, teste arquitetural, timeout real de producao nem mutantes). Reportado ao usuario antes de reabrir tasks."
+    },
+    {
+      "phase": "reopen-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.9aDDs9Or",
+      "gate": "not_run"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.R1qTkQOY",
+      "gate": "passed"
+    },
+    {
+      "phase": "reopen-task",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.GBA0uOQI",
+      "gate": "not_run"
+    },
+    {
+      "phase": "implement",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.xVA52nmg",
+      "gate": "passed",
+      "result": ".tsg-flow/delegate-logs/run.xVA52nmg/result.json"
+    },
+    {
+      "phase": "validating",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.x1Z2rQJj",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/5.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "5.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.ZTtQdBIQ",
+      "gate": "passed"
+    },
+    {
+      "phase": "reopen-task",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.jRxknAxM",
+      "gate": "not_run"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.vlGlCuSw",
+      "gate": "passed",
+      "result": ".tsg-flow/delegate-logs/run.vlGlCuSw/result.json"
+    },
+    {
+      "phase": "validating",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.uU80mDiF",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/7.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.Gn0HUOs0",
+      "gate": "passed"
+    },
+    {
+      "phase": "reopen-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.ZjeuvL8k",
+      "gate": "not_run"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.z0f48gH6",
+      "gate": "passed"
+    },
+    {
+      "phase": "prepare-integration",
+      "role": "integrator",
+      "mode": "prepare-integration",
+      "outcome": "integration_ready",
+      "run_id": "run.sLgkSSZX",
+      "gate": "passed",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+      "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "transport_failure",
+      "run_id": "run.muBbUst3",
+      "reason": "timeout_or_blocked apos 1597s (timeout de espera de status do agente); sem efeitos, retry seguro"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 2,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "rejected",
+      "run_id": "run.Ul8nMYpY",
+      "gate": "failed",
+      "validated_commit": "da383cb8bf61170d330d41919f1bce50d8023238",
+      "validated_tree": "f3f5c058e7f71c6ca39cde4fe5dc753738dd65b0",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "blockers": [
+        "B1: vazamento de estado entre testes de integracao - PurgeDeliveryRecordPersonalDataTests (casos entregue/falhou de 7.0) e SendRequestIdempotencyTests (3.0) entregam sem ligar fila a routing key mensagem-entregue.v1; outbox fica com NO_ROUTE e trava OutboxPublisherWorker, cruzando PedidoId entre testes seguintes (1.0/4.0 delivery tests, heartbeat test)",
+        "B2: mutante M12 sobrevive - recusa por forma invalida (correcao do B4 da tentativa 1, em AcceptNotificationSendRequest.cs) sem nenhum teste que a discrimine; RejectInvalidSendRequestTests (2.0) nao cobre destinatario malformado nem campo acima do limite"
+      ],
+      "note": "as 7 correcoes anteriores (B1lint/B2camadas/B3timeout/B5token/B6backoff/B7purge/B8contador da tentativa 1) foram confirmadas resolvidas nesta rodada. full_attempt 2/3 usado; proxima e a ultima tentativa permitida (3/3)."
+    },
+    {
+      "phase": "reopen-task",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.Y5NhCLek",
+      "gate": "not_run"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "3.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.tEO8KH5G",
+      "gate": "passed"
+    },
+    {
+      "phase": "reopen-task",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.RlvFikmA",
+      "gate": "not_run"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.RYtl7dxE",
+      "gate": "passed"
+    },
+    {
+      "phase": "reopen-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.5sMb3flO",
+      "gate": "not_run"
+    },
+    {
+      "phase": "validating",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.uu6kRfH1",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/2.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.wPMncTSz",
+      "gate": "passed"
+    },
+    {
+      "phase": "prepare-integration",
+      "role": "integrator",
+      "mode": "prepare-integration",
+      "outcome": "integration_ready",
+      "run_id": "run.r4vBqYAl",
+      "gate": "passed",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+      "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "implement",
+      "task": "8.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "run_id": "run.O5DCNora",
+      "gate": "not_run",
+      "reason": "timeout_or_blocked",
+      "transport_retry": 1,
+      "next": "retry-safe-new-worker",
+      "preserved": [
+        "run.2GpfB0px",
+        "B1",
+        "run.wSbjeCKy",
+        "run.hE7G65q8"
+      ]
+    },
+    {
+      "phase": "implement",
+      "task": "8.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "in-session-opencode",
+      "gate": "passed",
+      "reconciled_from": "run.O5DCNora",
+      "scope": "NotificationNamespace (Domain), NotificationProcessingOptions + TenantContext.Namespace (Application), namespace em delivery_records/outbox_messages/delivery_outcome_counters + migration AddProcessingNamespace + claims/filtros/purge delimitados (Infra.Data), RabbitMqResourceNames + topologia/publisher/consumers/outbox worker com nomes compostos por namespace (Infra.Messaging), Notification:Namespace no appsettings (Api), testes atualizados + ConcurrentNamespaceIsolationTests (2 testes de hosts concorrentes)",
+      "pending_intervention_resolved": "task_created",
+      "note": "Intervencao humana (isolamento estrutural por namespace) satisfeita; nova rodada de full validation registrada preservando o historico anterior."
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "transport_failure",
+      "transport": "herdr",
+      "kind": "opencode",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+      "note": "Full review re-delegado por decisao explicita do usuario, com kind=opencode (roteamento explicito); mudancas de 8.0 ainda nao com checkpoint — diff inclui working tree.",
+      "reason": "3 tentativas de transporte herdr/kind=opencode sem entrega do prompt: run.MtKCOiRd (agent_start_failed/pane_busy), run.gOVPdyGu e run.XFcsXwDy (agent_prompt_stalled: TUI na tela inicial, sem result.json). Sem efeitos: nenhum result.json, prd_review.md preservado (run.2GpfB0px), working tree inalterada pela delegacao.",
+      "retries": 3,
+      "next": "retry-safe-new-worker ou kind alternativo; decisao do usuario"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "approved",
+      "run_id": "run.118db6",
+      "transport": "subagent",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "sensor": "5/5 mutacoes mortas; controle 2/2",
+      "blockers": [],
+      "note": "Nova rodada pos-intervencao (task 8.0): B1 resolvido estruturalmente pelo isolamento por namespace. Herdr/kind=opencode falhou 3x (agent_prompt_stalled, sem efeitos); revisao delegada via subagent com contexto fresco. Limitacao: mesmo provedor do implementer. Relatorio anterior (run.2GpfB0px) preservado em .tsg-flow/delegate-logs/run.2GpfB0px/report.bak.md."
+    }
+  ]
+}

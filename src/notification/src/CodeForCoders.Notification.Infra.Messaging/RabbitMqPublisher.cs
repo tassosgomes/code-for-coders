@@ -1,7 +1,5 @@
 using System.Text;
 using CodeForCoders.Notification.Infra.Data.Outbox;
-using CodeForCoders.Notification.Infra.Messaging.Configuration;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
@@ -9,7 +7,7 @@ namespace CodeForCoders.Notification.Infra.Messaging;
 
 public sealed class RabbitMqPublisher(
     RabbitMqConnectionProvider connectionProvider,
-    IOptions<RabbitMqOptions> options)
+    RabbitMqResourceNames resourceNames)
 {
     public async Task PublishAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
@@ -22,6 +20,7 @@ public sealed class RabbitMqPublisher(
                 DeliveryMode = DeliveryModes.Persistent,
                 MessageId = message.Id.ToString(),
                 Type = message.Type,
+                CorrelationId = message.CorrelationId,
                 Headers = string.IsNullOrWhiteSpace(message.TraceParent)
                     ? null
                     : new Dictionary<string, object?>
@@ -30,7 +29,7 @@ public sealed class RabbitMqPublisher(
                     },
             };
             await channel.BasicPublishAsync(
-                exchange: options.Value.Exchange,
+                exchange: resourceNames.Exchange,
                 routingKey: message.RoutingKey,
                 mandatory: true,
                 basicProperties: properties,

@@ -1,0 +1,3 @@
+namespace CodeForCoders.Notification.Application.UseCases.Notifications.DeliverAcceptedNotification;
+
+public sealed record DeliverAcceptedNotificationInput(Guid DeliveryRecordId);
