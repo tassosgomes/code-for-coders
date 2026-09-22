@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests\" --minimum-expected-tests 1"
@@ -56,11 +56,40 @@ uma lacuna a compensar.
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1`
-- [ ] Registro de Entrega criado com data de corte já vencida: após rodar o job de expurgo,
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1`
+- [x] Registro de Entrega criado com data de corte já vencida: após rodar o job de expurgo,
       `destinatario` e o motivo detalhado ficam nulos, e `finalidade`/situação/timestamps agregados
       permanecem
-- [ ] O contador agregado por `tenant_id + finalidade + situação + dia` está incrementado antes do
+- [x] O contador agregado por `tenant_id + finalidade + situação + dia` está incrementado antes do
       expurgo e permanece com o mesmo valor depois — o expurgo não o altera nem o duplica
-- [ ] Os gates das Tasks 1.0, 4.0, 5.0 e 6.0 continuam passando sem alteração de comportamento
+- [x] Os gates das Tasks 1.0, 4.0, 5.0 e 6.0 continuam passando sem alteração de comportamento
       observável
+
+## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
+
+A revisão full sobre o PRD inteiro encontrou bloqueantes e mutantes sobreviventes atribuídos a esta
+task. Corrigir sem alterar o comportamento já provado pelo gate acima:
+
+- **B1 (lint):** `dotnet format` falha na migration `20260921225912_AddDeliveryOutcomeCounters.cs`
+  (BOM UTF-8 contra `charset=utf-8`). Rodar `dotnet format` nesse arquivo.
+- **B5 (parcial, RN-N08/DP-06):** a Task 1.0 já zera `DeliveryRecord.Link` em `MarkDelivered`/
+  `MarkFailed`/`CreateRefused` (corrigido na reabertura dela). Confirmar aqui que
+  `DeliveryRecordPurgeWorker` continua consistente com isso (não precisa reexpurgar um campo que já
+  nasce nulo) e que nenhum teste desta task depende do valor antigo de `Link` sobrevivendo até o
+  expurgo.
+- **B7 (mutante sobrevivente — cobertura insuficiente):** remover o ramo `Delivered` de
+  `DeliveryRecordPurgeWorker.cs:66` (a condição que seleciona quais desfechos são elegíveis ao
+  expurgo) não quebra nenhum teste hoje — `PurgeDeliveryRecordPersonalDataTests` só expurga um
+  registro **recusado**. Na prática, nenhum registro "entregue" seria expurgado em produção sem que
+  isso apareça em teste. Estender `PurgeDeliveryRecordPersonalDataTests` (ou adicionar teste irmão)
+  cobrindo também os desfechos "entregue" e "falhou", garantindo que cada um perde os campos pessoais
+  após a janela de retenção.
+- **B8 (mutante sobrevivente — cobertura insuficiente):** remover o incremento do contador agregado em
+  `DeliverAcceptedNotification.cs:70-73` (transição para "entregue") não quebra nenhum teste hoje —
+  nenhum teste lê o contador após uma entrega bem-sucedida. Por inspeção, o mesmo vale para o
+  incremento no caminho de falha (`:114-117`). Adicionar teste (em V-01/V-04/V-06, ou no próprio teste
+  de expurgo desta task) que afirme o valor do contador `tenant_id+purpose+status+outcome_day` **após**
+  uma entrega e **após** uma falha, não só após uma recusa.
+
+Evidência de todos os pontos acima está em `prd_review.md` (B1, B5, B7, B8, mutantes M10/M11). Corrigir
+sem regredir os gates das Tasks 1.0, 4.0, 5.0 e 6.0.

@@ -61,7 +61,7 @@ há contrato comum que precise nascer fora de uma fatia (ver `references/vertica
 - [x] 4.0 Entregar recuperação de senha com o mesmo mecanismo
 - [x] 5.0 Reentregar ao provedor em falha transitória até esgotar tentativas
 - [x] 6.0 Falhar imediatamente em erro definitivo do provedor
-- [ ] 7.0 Expurgar dado pessoal do Registro de Entrega após a retenção
+- [x] 7.0 Expurgar dado pessoal do Registro de Entrega após a retenção
 
 ## Cobertura
 

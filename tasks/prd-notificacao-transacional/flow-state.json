@@ -4,8 +4,8 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-  "last_checkpoint": "5.0",
-  "phase": "implement",
+  "last_checkpoint": "7.0",
+  "phase": "checkpoint-task",
   "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -16,13 +16,13 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "outcome": "task_reopened",
+    "outcome": "checkpoint_ok",
     "role": "integrator",
-    "mode": "reopen-task",
+    "mode": "checkpoint-task",
     "task": "7.0",
     "attempt": 1,
-    "run_id": "run.jRxknAxM",
-    "gate": "not_run"
+    "run_id": "run.Gn0HUOs0",
+    "gate": "passed"
   },
   "history": [
     {
@@ -659,6 +659,38 @@
       "outcome": "task_reopened",
       "run_id": "run.jRxknAxM",
       "gate": "not_run"
+    },
+    {
+      "phase": "implement",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "fix",
+      "outcome": "implementation_complete",
+      "run_id": "run.vlGlCuSw",
+      "gate": "passed",
+      "result": ".tsg-flow/delegate-logs/run.vlGlCuSw/result.json"
+    },
+    {
+      "phase": "validating",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "revalidation",
+      "outcome": "approved",
+      "run_id": "run.uU80mDiF",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/7.0_task_review.md"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.Gn0HUOs0",
+      "gate": "passed"
     }
   ]
 }

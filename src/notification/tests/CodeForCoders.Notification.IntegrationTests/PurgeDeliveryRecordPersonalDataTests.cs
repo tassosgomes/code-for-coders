@@ -1,6 +1,9 @@
 using CodeForCoders.Notification.Application;
 using CodeForCoders.Notification.Application.Common;
+using CodeForCoders.Notification.Application.Exceptions;
+using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Application.UseCases.Notifications.AcceptNotificationSendRequest;
+using CodeForCoders.Notification.Application.UseCases.Notifications.DeliverAcceptedNotification;
 using CodeForCoders.Notification.Contracts;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Infra.Data;
@@ -94,7 +97,183 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         }
     }
 
-    private IHost CreateHost()
+    [Fact(DisplayName = nameof(PurgeRemovesDeliveredRecordPersonalDataAndPreservesOutcomeCounter))]
+    public async Task PurgeRemovesDeliveredRecordPersonalDataAndPreservesOutcomeCounter()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        var requestId = Guid.CreateVersion7();
+        using var host = CreateHost(new SuccessfulEmailSender());
+
+        await host.StartAsync(cancellationToken);
+        try
+        {
+            Guid deliveryRecordId;
+            DateTimeOffset deliveredOn;
+            await using (var scope = host.Services.CreateAsyncScope())
+            {
+                var request = CreateAcceptedRequest(tenantId, requestId);
+                var accept = scope.ServiceProvider.GetRequiredService<IAcceptNotificationSendRequest>();
+                var accepted = await accept.ExecuteAsync(
+                    new AcceptNotificationSendRequestInput(request, "integration-purge-delivered"),
+                    cancellationToken);
+                Assert.Equal(DeliveryStatus.Accepted, accepted.Status);
+
+                var deliver = scope.ServiceProvider.GetRequiredService<IDeliverAcceptedNotification>();
+                var delivered = await deliver.ExecuteAsync(
+                    new DeliverAcceptedNotificationInput(accepted.DeliveryRecordId),
+                    cancellationToken);
+                Assert.True(delivered.Delivered);
+
+                deliveryRecordId = accepted.DeliveryRecordId;
+                deliveredOn = delivered.DeliveredOn!.Value;
+                var record = await scope.ServiceProvider
+                    .GetRequiredService<NotificationDbContext>()
+                    .DeliveryRecords
+                    .AsNoTracking()
+                    .SingleAsync(item => item.Id == deliveryRecordId, cancellationToken);
+                Assert.Equal(DeliveryStatus.Delivered, record.Status);
+                Assert.Null(record.Link);
+            }
+
+            var outcomeDay = DateOnly.FromDateTime(deliveredOn.UtcDateTime);
+            var counterBeforePurge = await ReadCounterAsync(
+                tenantId,
+                NotificationPurposes.AccountConfirmation,
+                DeliveryStatus.Delivered,
+                outcomeDay,
+                cancellationToken);
+            Assert.Equal(1, counterBeforePurge.Count);
+
+            var expiredOn = DateTimeOffset.UtcNow.AddDays(-2);
+            await MoveFinalOutcomeBeforeCutoffAsync(
+                deliveryRecordId,
+                DeliveryStatus.Delivered,
+                expiredOn,
+                cancellationToken);
+
+            var purgedRecord = await WaitForPurgedRecordAsync(
+                tenantId,
+                deliveryRecordId,
+                cancellationToken);
+
+            Assert.Equal(DeliveryStatus.Delivered, purgedRecord.Status);
+            Assert.Equal(NotificationPurposes.AccountConfirmation, purgedRecord.Purpose);
+            Assert.NotNull(purgedRecord.DeliveredOn);
+            Assert.InRange(
+                purgedRecord.DeliveredOn!.Value,
+                expiredOn - TimeSpan.FromMilliseconds(1),
+                expiredOn + TimeSpan.FromMilliseconds(1));
+            Assert.Null(purgedRecord.Recipient);
+            Assert.Null(purgedRecord.RecipientName);
+            Assert.Null(purgedRecord.Link);
+            Assert.Null(purgedRecord.Reason);
+
+            var counterAfterPurge = await ReadCounterAsync(
+                tenantId,
+                NotificationPurposes.AccountConfirmation,
+                DeliveryStatus.Delivered,
+                outcomeDay,
+                cancellationToken);
+            Assert.Equal(counterBeforePurge.Count, counterAfterPurge.Count);
+        }
+        finally
+        {
+            await host.StopAsync(CancellationToken.None);
+        }
+    }
+
+    [Fact(DisplayName = nameof(PurgeRemovesFailedRecordPersonalDataAndPreservesOutcomeCounter))]
+    public async Task PurgeRemovesFailedRecordPersonalDataAndPreservesOutcomeCounter()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        var requestId = Guid.CreateVersion7();
+        using var host = CreateHost(new PermanentFailureEmailSender());
+
+        await host.StartAsync(cancellationToken);
+        try
+        {
+            Guid deliveryRecordId;
+            DateTimeOffset failedOn;
+            await using (var scope = host.Services.CreateAsyncScope())
+            {
+                var request = CreateAcceptedRequest(tenantId, requestId);
+                var accept = scope.ServiceProvider.GetRequiredService<IAcceptNotificationSendRequest>();
+                var accepted = await accept.ExecuteAsync(
+                    new AcceptNotificationSendRequestInput(request, "integration-purge-failed"),
+                    cancellationToken);
+                Assert.Equal(DeliveryStatus.Accepted, accepted.Status);
+
+                var deliver = scope.ServiceProvider.GetRequiredService<IDeliverAcceptedNotification>();
+                var failed = await deliver.ExecuteAsync(
+                    new DeliverAcceptedNotificationInput(accepted.DeliveryRecordId),
+                    cancellationToken);
+                Assert.False(failed.Delivered);
+
+                deliveryRecordId = accepted.DeliveryRecordId;
+                var record = await scope.ServiceProvider
+                    .GetRequiredService<NotificationDbContext>()
+                    .DeliveryRecords
+                    .AsNoTracking()
+                    .SingleAsync(item => item.Id == deliveryRecordId, cancellationToken);
+                Assert.Equal(DeliveryStatus.Failed, record.Status);
+                Assert.NotNull(record.FailedOn);
+                Assert.Equal(
+                    NotificationFailureReasons.PermanentProviderFailure,
+                    record.Reason);
+                Assert.Null(record.Link);
+                failedOn = record.FailedOn!.Value;
+            }
+
+            var outcomeDay = DateOnly.FromDateTime(failedOn.UtcDateTime);
+            var counterBeforePurge = await ReadCounterAsync(
+                tenantId,
+                NotificationPurposes.AccountConfirmation,
+                DeliveryStatus.Failed,
+                outcomeDay,
+                cancellationToken);
+            Assert.Equal(1, counterBeforePurge.Count);
+
+            var expiredOn = DateTimeOffset.UtcNow.AddDays(-2);
+            await MoveFinalOutcomeBeforeCutoffAsync(
+                deliveryRecordId,
+                DeliveryStatus.Failed,
+                expiredOn,
+                cancellationToken);
+
+            var purgedRecord = await WaitForPurgedRecordAsync(
+                tenantId,
+                deliveryRecordId,
+                cancellationToken);
+
+            Assert.Equal(DeliveryStatus.Failed, purgedRecord.Status);
+            Assert.Equal(NotificationPurposes.AccountConfirmation, purgedRecord.Purpose);
+            Assert.NotNull(purgedRecord.FailedOn);
+            Assert.InRange(
+                purgedRecord.FailedOn!.Value,
+                expiredOn - TimeSpan.FromMilliseconds(1),
+                expiredOn + TimeSpan.FromMilliseconds(1));
+            Assert.Null(purgedRecord.Recipient);
+            Assert.Null(purgedRecord.RecipientName);
+            Assert.Null(purgedRecord.Link);
+            Assert.Null(purgedRecord.Reason);
+
+            var counterAfterPurge = await ReadCounterAsync(
+                tenantId,
+                NotificationPurposes.AccountConfirmation,
+                DeliveryStatus.Failed,
+                outcomeDay,
+                cancellationToken);
+            Assert.Equal(counterBeforePurge.Count, counterAfterPurge.Count);
+        }
+        finally
+        {
+            await host.StopAsync(CancellationToken.None);
+        }
+    }
+
+    private IHost CreateHost(ITransactionalEmailSender? emailSender = null)
     {
         var configurationValues = new Dictionary<string, string?>
         {
@@ -113,9 +292,26 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
             {
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
+                if (emailSender is not null)
+                {
+                    services.AddSingleton(emailSender);
+                }
+                services.AddSingleton<ITransactionalEmailRetryPolicy, TestRetryPolicy>();
             })
             .Build();
     }
+
+    private static NotificationSendRequestedV1 CreateAcceptedRequest(Guid tenantId, Guid requestId)
+        => new(
+            requestId,
+            tenantId,
+            "student@example.com",
+            NotificationPurposes.AccountConfirmation,
+            NotificationPurposes.AccountConfirmation,
+            new NotificationTemplateDataV1(
+                "Ana Souza",
+                $"https://accounts.example.invalid/confirm?token={requestId:N}"),
+            DateTimeOffset.UtcNow);
 
     private async Task MoveRefusalBeforeCutoffAsync(
         Guid deliveryRecordId,
@@ -129,6 +325,33 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         await using var dbContext = new NotificationDbContext(options, tenantContext);
         await dbContext.Database.ExecuteSqlRawAsync(
             $"UPDATE {NotificationSchema.Name}.delivery_records SET refused_on = @p0 WHERE id = @p1",
+            [expiredOn, deliveryRecordId],
+            cancellationToken);
+    }
+
+    private async Task MoveFinalOutcomeBeforeCutoffAsync(
+        Guid deliveryRecordId,
+        DeliveryStatus status,
+        DateTimeOffset expiredOn,
+        CancellationToken cancellationToken)
+    {
+        var updateSql = status switch
+        {
+            DeliveryStatus.Refused
+                => $"UPDATE {NotificationSchema.Name}.delivery_records SET refused_on = @p0 WHERE id = @p1",
+            DeliveryStatus.Delivered
+                => $"UPDATE {NotificationSchema.Name}.delivery_records SET delivered_on = @p0 WHERE id = @p1",
+            DeliveryStatus.Failed
+                => $"UPDATE {NotificationSchema.Name}.delivery_records SET failed_on = @p0 WHERE id = @p1",
+            _ => throw new Xunit.Sdk.XunitException($"Unsupported final status: {status}"),
+        };
+        var tenantContext = new TenantContext();
+        var options = new DbContextOptionsBuilder<NotificationDbContext>()
+            .UseNpgsql(fixture.PostgreSql.GetConnectionString())
+            .Options;
+        await using var dbContext = new NotificationDbContext(options, tenantContext);
+        await dbContext.Database.ExecuteSqlRawAsync(
+            updateSql,
             [expiredOn, deliveryRecordId],
             cancellationToken);
     }
@@ -189,5 +412,28 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         return counter
             ?? throw new Xunit.Sdk.XunitException(
                 $"No outcome counter exists for {purpose}/{status}/{outcomeDay}.");
+    }
+
+    private sealed class SuccessfulEmailSender : ITransactionalEmailSender
+    {
+        public Task SendAsync(TransactionalEmail email, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+    }
+
+    private sealed class TestRetryPolicy : ITransactionalEmailRetryPolicy
+    {
+        public int MaxAttempts => 3;
+
+        public TimeSpan GetBackoff(int attemptNumber)
+            => TimeSpan.Zero;
+    }
+
+    private sealed class PermanentFailureEmailSender : ITransactionalEmailSender
+    {
+        public Task SendAsync(TransactionalEmail email, CancellationToken cancellationToken)
+            => Task.FromException(
+                new TransactionalEmailSendException(
+                    NotificationFailureReasons.PermanentProviderFailure,
+                    isTransient: false));
     }
 }
