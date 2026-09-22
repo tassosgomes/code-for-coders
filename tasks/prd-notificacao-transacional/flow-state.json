@@ -4,27 +4,33 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-  "last_checkpoint": "2.0",
-  "phase": "checkpoint-task",
-  "active_task": "2.0",
+  "last_checkpoint": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d",
+  "phase": "prepare-integration",
+  "active_task": null,
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 2,
-  "transport_retries": 5,
+  "transport_retries": 7,
   "specs": ["techspec.md"],
   "delivery": "branch",
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "outcome": "checkpoint_ok",
+    "outcome": "integration_ready",
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "2.0",
+    "mode": "prepare-integration",
+    "task": null,
     "attempt": 1,
-    "run_id": "run.wPMncTSz",
-    "gate": "passed"
+    "run_id": "run.r4vBqYAl",
+    "gate": "passed",
+    "branch": "feature/notificacao-transacional",
+    "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+    "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
   },
   "history": [
+    {"phase": "prepare-prd-branch", "outcome": "branch_ready", "run_id": "run.YJeKQUOU", "commit": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d", "result": ".tsg-flow/delegate-logs/run.YJeKQUOU/result.json"},
+    {"phase": "prepare-prd-branch", "outcome": "transport_failure", "run_id": "run.x9F7mcDb", "reason": "Segundo agent_prompt_stalled no OpenCode, sem worker remanescente nem resultado. Último retry de infraestrutura 2/2 com kind codex configurado; full_attempt preservado."},
+    {"phase": "prepare-prd-branch", "outcome": "transport_failure", "run_id": "run.3HiuzTTy", "reason": "agent_prompt_stalled; terminal permaneceu na tela inicial, sem resultado; pane encerrado pelo transporte. Retry de infraestrutura 1/2, sem consumir full_attempt."},
     {
       "phase": "prepare-prd-branch",
       "outcome": "branch_ready",
@@ -819,6 +825,17 @@
       "outcome": "checkpoint_ok",
       "run_id": "run.wPMncTSz",
       "gate": "passed"
+    },
+    {
+      "phase": "prepare-integration",
+      "role": "integrator",
+      "mode": "prepare-integration",
+      "outcome": "integration_ready",
+      "run_id": "run.r4vBqYAl",
+      "gate": "passed",
+      "branch": "feature/notificacao-transacional",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+      "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
     }
   ]
 }
