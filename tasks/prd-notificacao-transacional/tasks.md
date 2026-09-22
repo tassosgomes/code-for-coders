@@ -56,7 +56,7 @@ há contrato comum que precise nascer fora de uma fatia (ver `references/vertica
 ## Tasks
 
 - [x] 1.0 Aceitar e entregar confirmação de conta (caminho feliz)
-- [x] 2.0 Recusar pedido de envio inválido
+- [ ] 2.0 Recusar pedido de envio inválido
 - [x] 3.0 Garantir idempotência entre reentrega e reenvio
 - [x] 4.0 Entregar recuperação de senha com o mesmo mecanismo
 - [x] 5.0 Reentregar ao provedor em falha transitória até esgotar tentativas
