@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests\" --minimum-expected-tests 2"
@@ -65,10 +65,10 @@ introduzida aqui); expurgo do dado pessoal do Registro de Entrega que ficou "fal
 
 ## Pronto quando
 
-- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests" --minimum-expected-tests 2`
-- [x] Fake do provedor configurado para falhar transitoriamente N vezes seguidas: espaçamento
+- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests" --minimum-expected-tests 2`
+- [ ] Fake do provedor configurado para falhar transitoriamente N vezes seguidas: espaçamento
       crescente entre tentativas observado, estado final "falhou" com `esgotouTentativas: true`,
       evento `notificacao.entrega-falhou.v1` publicado, e sinal de "tratamento manual" emitido
       exatamente uma vez
-- [x] Um segundo pedido publicado durante a janela de indisponibilidade do provedor é aceito
+- [ ] Um segundo pedido publicado durante a janela de indisponibilidade do provedor é aceito
       normalmente (Registro de Entrega "aceito"), não recusado
