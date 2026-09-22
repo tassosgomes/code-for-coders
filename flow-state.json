@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-21",
+  "updated": "2026-09-22",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo e nunca sao duplicados aqui. Escrito pelas skills TSG Flow ao concluir uma etapa; validado por .tsg/validate_state.py.",
   "artifacts": {
     "vision": "vision.md",
@@ -22,9 +22,10 @@
   "capabilities": [
     {
       "id": "CAP-001",
-      "stage": "domain",
+      "stage": "prd",
       "artifacts": {
-        "domain": "domains/identidade-e-acesso/domain.md"
+        "domain": "domains/identidade-e-acesso/domain.md",
+        "prd": "tasks/prd-conta-aluno/prd.md"
       },
       "mvp_order": 1
     },
@@ -160,7 +161,7 @@
     },
     {
       "id": "CAP-026",
-      "stage": "prd",
+      "stage": "done",
       "artifacts": {
         "prd": "tasks/prd-notificacao-transacional/prd.md"
       },
@@ -195,18 +196,10 @@
   ],
   "next_actions": [
     {
-      "id": "NA5",
-      "what": "Criar o contrato da mensagem notificacao.envio-solicitado a partir de tasks/prd-notificacao-transacional/prd.md. Depois: PRD de CAP-001, que vai consumir o contrato",
+      "id": "NA6",
+      "what": "Criar o contrato de identidade e autenticacao consumido pelo BFF do aluno a partir de tasks/prd-conta-aluno/prd.md",
       "skill": "tsg-flow-contract-creator",
       "blocked_by": []
-    },
-    {
-      "id": "NA6",
-      "what": "PRD de CAP-001 (consumidor), depois do contrato",
-      "skill": "tsg-flow-prd-creator",
-      "blocked_by": [
-        "NA5"
-      ]
     }
   ],
   "open_decisions": [
@@ -408,6 +401,14 @@
       "decided_at": "2026-09-21",
       "owner": "tasso",
       "decision": "Coolify em VPS e a plataforma de runtime para compute, bancos e dependencias operacionais. AWS fica restrita a S3 + CloudFront para armazenamento e distribuicao de midia; segredos, ambientes com reviewers, deploy por digest e rollback seguem as regras do ADR-0002."
+    },
+    {
+      "id": "OD18",
+      "ref": "CAP-001; tasks/prd-conta-aluno/prd.draft.md DP-01",
+      "what": "Recorte do primeiro PRD de CAP-001",
+      "decided_at": "2026-09-22",
+      "owner": "tasso",
+      "decision": "Ciclo completo da conta do aluno no MVP: cadastro, confirmacao de e-mail, login, sessao, logout e recuperacao de senha. Fatia menor foi considerada e descartada porque confirmacao e recuperacao fecham o uso autonomo da conta e ja contam com a fatia de CAP-026 integrada. Convites e papeis internos permanecem em CAP-002."
     }
   ]
 }
