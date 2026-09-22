@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests\" --minimum-expected-tests 1"
@@ -56,13 +56,13 @@ uma lacuna a compensar.
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1`
-- [ ] Registro de Entrega criado com data de corte já vencida: após rodar o job de expurgo,
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1`
+- [x] Registro de Entrega criado com data de corte já vencida: após rodar o job de expurgo,
       `destinatario` e o motivo detalhado ficam nulos, e `finalidade`/situação/timestamps agregados
       permanecem
-- [ ] O contador agregado por `tenant_id + finalidade + situação + dia` está incrementado antes do
+- [x] O contador agregado por `tenant_id + finalidade + situação + dia` está incrementado antes do
       expurgo e permanece com o mesmo valor depois — o expurgo não o altera nem o duplica
-- [ ] Os gates das Tasks 1.0, 4.0, 5.0 e 6.0 continuam passando sem alteração de comportamento
+- [x] Os gates das Tasks 1.0, 4.0, 5.0 e 6.0 continuam passando sem alteração de comportamento
       observável
 
 ## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
@@ -93,3 +93,19 @@ task. Corrigir sem alterar o comportamento já provado pelo gate acima:
 
 Evidência de todos os pontos acima está em `prd_review.md` (B1, B5, B7, B8, mutantes M10/M11). Corrigir
 sem regredir os gates das Tasks 1.0, 4.0, 5.0 e 6.0.
+
+## Reabertura pós-full #2 (2026-09-22, ver `prd_review.md`, run.Ul8nMYpY)
+
+- **B1 (parcial, vazamento de estado entre testes):** os testes de expurgo adicionados nesta task para
+  os desfechos "entregue" e "falhou" (fechamento de B7 na reabertura anterior) entregam a notificação
+  com sucesso antes de expurgar, mas não ligam fila alguma à routing key
+  `notificacao.mensagem-entregue.v1` para consumir/confirmar esse evento. A linha de outbox
+  correspondente fica pendente com `NO_ROUTE` (publish `mandatory` sem fila vinculada), e o
+  `OutboxPublisherWorker` trava atrás dela — o próximo teste que liga fila de entrega acaba lendo o
+  evento órfão deste teste em vez do seu próprio (mesmo mecanismo já corrigido na Task 3.0 nesta
+  mesma reabertura). Corrigir seguindo o mesmo padrão: declarar e vincular uma fila exclusiva à
+  routing key `mensagem-entregue.v1` no host de cada teste de expurgo que gera uma entrega, e
+  consumi-la/confirmá-la antes do expurgo rodar. Sem alterar as asserções de negócio já existentes.
+
+Verificar, junto com a Task 3.0, que a suíte completa do projeto de integração não regride mais por
+esse mecanismo (evidência: `dotnet test` sem filtro).

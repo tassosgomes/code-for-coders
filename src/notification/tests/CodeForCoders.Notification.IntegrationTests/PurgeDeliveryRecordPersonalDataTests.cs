@@ -8,10 +8,13 @@ using CodeForCoders.Notification.Contracts;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Infra.Data;
 using CodeForCoders.Notification.Infra.Data.Configuration;
+using CodeForCoders.Notification.Infra.Messaging;
+using CodeForCoders.Notification.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RabbitMQ.Client;
 using Xunit;
 
 namespace CodeForCoders.Notification.IntegrationTests;
@@ -19,6 +22,8 @@ namespace CodeForCoders.Notification.IntegrationTests;
 [Collection(NotificationIntegrationCollection.Name)]
 public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegrationFixture fixture)
 {
+    private const string EventsExchange = "notification.integration.events";
+
     [Fact(DisplayName = nameof(PurgeRemovesPersonalDataAndPreservesOutcomeCounter))]
     public async Task PurgeRemovesPersonalDataAndPreservesOutcomeCounter()
     {
@@ -103,11 +108,20 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         var cancellationToken = TestContext.Current.CancellationToken;
         var tenantId = Guid.CreateVersion7();
         var requestId = Guid.CreateVersion7();
+        var outputQueue = CreateOutputQueueName();
         using var host = CreateHost(new SuccessfulEmailSender());
 
         await host.StartAsync(cancellationToken);
         try
         {
+            var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
+            await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
+            await ConfigureOutputQueueAsync(
+                channel,
+                outputQueue,
+                "notificacao.mensagem-entregue.v1",
+                cancellationToken);
+
             Guid deliveryRecordId;
             DateTimeOffset deliveredOn;
             await using (var scope = host.Services.CreateAsyncScope())
@@ -135,6 +149,8 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
                 Assert.Equal(DeliveryStatus.Delivered, record.Status);
                 Assert.Null(record.Link);
             }
+
+            await AcknowledgePublishedMessageAsync(channel, outputQueue, cancellationToken);
 
             var outcomeDay = DateOnly.FromDateTime(deliveredOn.UtcDateTime);
             var counterBeforePurge = await ReadCounterAsync(
@@ -189,11 +205,20 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         var cancellationToken = TestContext.Current.CancellationToken;
         var tenantId = Guid.CreateVersion7();
         var requestId = Guid.CreateVersion7();
+        var outputQueue = CreateOutputQueueName();
         using var host = CreateHost(new PermanentFailureEmailSender());
 
         await host.StartAsync(cancellationToken);
         try
         {
+            var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
+            await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
+            await ConfigureOutputQueueAsync(
+                channel,
+                outputQueue,
+                "notificacao.entrega-falhou.v1",
+                cancellationToken);
+
             Guid deliveryRecordId;
             DateTimeOffset failedOn;
             await using (var scope = host.Services.CreateAsyncScope())
@@ -225,6 +250,8 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
                 Assert.Null(record.Link);
                 failedOn = record.FailedOn!.Value;
             }
+
+            await AcknowledgePublishedMessageAsync(channel, outputQueue, cancellationToken);
 
             var outcomeDay = DateOnly.FromDateTime(failedOn.UtcDateTime);
             var counterBeforePurge = await ReadCounterAsync(
@@ -282,6 +309,18 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
             ["Retention:PollingIntervalMilliseconds"] = "5",
             ["Retention:BatchSize"] = "10",
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
+            ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
+            ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
+            ["RabbitMq:Username"] = "code_for_coders",
+            ["RabbitMq:Password"] = "code_for_coders",
+            ["RabbitMq:Exchange"] = EventsExchange,
+            ["RabbitMq:DeadLetterExchange"] = $"{EventsExchange}.dlx",
+            ["RabbitMq:HeartbeatQueue"] = $"notification.integration.purge.heartbeat.{Guid.CreateVersion7():N}",
+            ["RabbitMq:SendRequestQueue"] = $"notification.integration.purge.send-request.{Guid.CreateVersion7():N}",
+            ["RabbitMq:SendRequestRoutingKey"] = "notificacao.envio-solicitado.v1",
+            ["Outbox:PollingIntervalSeconds"] = "1",
+            ["Outbox:BatchSize"] = "10",
+            ["Outbox:MaxAttempts"] = "3",
         };
 
         return Host.CreateDefaultBuilder()
@@ -292,6 +331,17 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
             {
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
+                services.AddOptions<RabbitMqOptions>()
+                    .Bind(context.Configuration.GetSection(RabbitMqOptions.SectionName))
+                    .ValidateDataAnnotations()
+                    .ValidateOnStart();
+                services.AddOptions<OutboxOptions>()
+                    .Bind(context.Configuration.GetSection(OutboxOptions.SectionName))
+                    .ValidateDataAnnotations()
+                    .ValidateOnStart();
+                services.AddSingleton<RabbitMqConnectionProvider>();
+                services.AddSingleton<RabbitMqPublisher>();
+                services.AddHostedService<OutboxPublisherWorker>();
                 if (emailSender is not null)
                 {
                     services.AddSingleton(emailSender);
@@ -312,6 +362,73 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
                 "Ana Souza",
                 $"https://accounts.example.invalid/confirm?token={requestId:N}"),
             DateTimeOffset.UtcNow);
+
+    private static string CreateOutputQueueName()
+        => $"notification.integration.purge.{Guid.CreateVersion7():N}";
+
+    private static async Task ConfigureOutputQueueAsync(
+        IChannel channel,
+        string outputQueue,
+        string routingKey,
+        CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(
+            EventsExchange,
+            ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(
+            outputQueue,
+            durable: false,
+            exclusive: true,
+            autoDelete: true,
+            arguments: null,
+            cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(
+            outputQueue,
+            EventsExchange,
+            routingKey,
+            arguments: null,
+            cancellationToken: cancellationToken);
+    }
+
+    private static async Task AcknowledgePublishedMessageAsync(
+        IChannel channel,
+        string outputQueue,
+        CancellationToken cancellationToken)
+    {
+        var published = await WaitForPublishedMessageAsync(channel, outputQueue, cancellationToken);
+        await channel.BasicAckAsync(
+            published.DeliveryTag,
+            multiple: false,
+            cancellationToken: cancellationToken);
+    }
+
+    private static async Task<BasicGetResult> WaitForPublishedMessageAsync(
+        IChannel channel,
+        string outputQueue,
+        CancellationToken cancellationToken)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            var result = await channel.BasicGetAsync(
+                outputQueue,
+                autoAck: false,
+                cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(25), cancellationToken);
+        }
+
+        throw new Xunit.Sdk.XunitException(
+            $"No published event was received on queue {outputQueue}.");
+    }
 
     private async Task MoveRefusalBeforeCutoffAsync(
         Guid deliveryRecordId,
