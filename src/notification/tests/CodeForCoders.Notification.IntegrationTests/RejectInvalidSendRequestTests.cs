@@ -59,6 +59,14 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
         await AssertRequestIsRefusedAsync(request, NotificationRefusalReasons.MissingData);
     }
 
+    [Fact(DisplayName = nameof(RequestWithInvalidRecipientIsRefusedWithSpecificReason))]
+    public async Task RequestWithInvalidRecipientIsRefusedWithSpecificReason()
+    {
+        var request = CreateRequest(destinatario: "student.example.com");
+
+        await AssertRequestIsRefusedAsync(request, NotificationRefusalReasons.InvalidFormat);
+    }
+
     private async Task AssertRequestIsRefusedAsync(
         NotificationSendRequestedV1 request,
         string expectedReason)
@@ -147,13 +155,14 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
     }
 
     private static NotificationSendRequestedV1 CreateRequest(
+        string destinatario = "student@example.com",
         string? finalidade = "confirmacao-de-conta",
         string? modelo = "confirmacao-de-conta",
         NotificationTemplateDataV1? dados = null)
         => new(
             Guid.CreateVersion7(),
             Guid.CreateVersion7(),
-            "student@example.com",
+            destinatario,
             finalidade,
             modelo,
             dados ?? new NotificationTemplateDataV1(

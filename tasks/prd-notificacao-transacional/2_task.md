@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests\" --minimum-expected-tests 3"
@@ -49,12 +49,12 @@ que independe da finalidade.
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests" --minimum-expected-tests 3`
-- [ ] Pedido sem `finalidade` → Registro de Entrega "recusado" com motivo "finalidade ausente",
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests" --minimum-expected-tests 3`
+- [x] Pedido sem `finalidade` → Registro de Entrega "recusado" com motivo "finalidade ausente",
       nenhuma chamada ao fake do provedor
-- [ ] Pedido com `modelo` desconhecido → Registro de Entrega "recusado" com motivo "modelo
+- [x] Pedido com `modelo` desconhecido → Registro de Entrega "recusado" com motivo "modelo
       desconhecido", nenhuma chamada ao fake do provedor
-- [ ] Pedido com `dados` faltando `nome` ou `link` → Registro de Entrega "recusado" com motivo "dado
+- [x] Pedido com `dados` faltando `nome` ou `link` → Registro de Entrega "recusado" com motivo "dado
       faltante", nenhuma chamada ao fake do provedor e nenhum outbox de `mensagem-entregue` gravado
 
 ## Reabertura pós-full (2026-09-21, ver `prd_review.md`, run.kgdLCoEc)
@@ -63,3 +63,20 @@ que independe da finalidade.
   `20260921194427_AddDeliveryRecordRefusal.cs` (BOM UTF-8 contra `charset=utf-8`, recuo pós
   file-scoped namespace). Rodar `dotnet format` só nesse arquivo. Sem alteração de comportamento —
   puramente formatação.
+
+## Reabertura pós-full #2 (2026-09-22, ver `prd_review.md`, run.Ul8nMYpY)
+
+- **B2 (mutante sobrevivente — cobertura insuficiente, RN-N10/RF-01 c4):** a recusa por "forma
+  inválida" (corrigida na Task 1.0 como B4 da primeira reabertura, em
+  `AcceptNotificationSendRequest.cs`, chamando `validator.ValidateAsync` antes das regras de negócio)
+  não tem nenhum teste que a discrimine. Removendo a condição `!validationResult.IsValid` do código
+  (mutação), nenhum teste falha — todos os cenários existentes usam destinatário/nome/link dentro dos
+  limites válidos. Adicionar em `RejectInvalidSendRequestTests` (ou classe irmã) um cenário com
+  destinatário malformado (ex.: `student.example.com`, sem `@`) e/ou campo `nome`/`link` acima do
+  limite de validação, afirmando: Registro de Entrega "recusado" com motivo "forma inválida" (ajustar
+  o motivo usado para bater com o que `AcceptNotificationSendRequestInputValidator` de fato produz),
+  nenhuma chamada ao fake do provedor, e `Link` nulo. Não confundir com o cenário já coberto de "dado
+  faltante" (`nome`/`link` ausentes) nem com o de payload malformado que não deserializa (V-01,
+  `nack`).
+
+Evidência completa em `prd_review.md` (B2, mutante M12).
