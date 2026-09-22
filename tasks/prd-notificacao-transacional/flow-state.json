@@ -5,32 +5,132 @@
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "last_checkpoint": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d",
-  "phase": "prepare-integration",
-  "active_task": null,
+  "phase": "full-approved",
+  "active_task": "8.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 2,
-  "transport_retries": 7,
-  "specs": ["techspec.md"],
+  "full_attempt": 1,
+  "transport_retries": 9,
+  "specs": [
+    "techspec.md"
+  ],
   "delivery": "branch",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "a3869da6015085b427c5c94d8d7f2f2bcf96b91c",
+  "validated_tree": "983872c2d365f49321bc039200bd27e70e9d8403",
   "last_result": {
-    "outcome": "integration_ready",
-    "role": "integrator",
-    "mode": "prepare-integration",
-    "task": null,
+    "outcome": "approved",
+    "role": "validator",
+    "mode": "full",
     "attempt": 1,
-    "run_id": "run.r4vBqYAl",
+    "run_id": "run.118db6",
+    "transport": "subagent",
     "gate": "passed",
-    "branch": "feature/notificacao-transacional",
-    "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-    "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    "report": "tasks/prd-notificacao-transacional/prd_review.md",
+    "evidence": "gate 43/43 exit 0 em 5 execucoes (1 falha de ambiente em Docker frio, nao reproduzida); sensor de mutacao 5/5 mortos (claim outbox, claim delivery, query filters, Compose, writer namespace); format/EF/publish/gate-8.0 todos 0; B1 nao recorreu",
+    "blockers": [],
+    "recommendations": 6,
+    "limitation": "worker de contexto fresco no mesmo runtime/agente do implementer (subagent); diversidade de provedor nao garantida",
+    "next": "checkpoint-task 8.0 -> complete-prd (delivery=branch); decisao do usuario"
+  },
+  "human_intervention": {
+    "date": "2026-09-22",
+    "type": "structural_namespace_isolation",
+    "decision": "Corrigir o bloqueio de estado compartilhado implementando isolamento lógico por namespace como solução estrutural de médio prazo.",
+    "scope": [
+      "persistência",
+      "outbox",
+      "workers",
+      "filas",
+      "exchanges",
+      "routing keys",
+      "consumidores"
+    ],
+    "constraint": "Workers não podem buscar ou reivindicar dados globalmente.",
+    "preserve": [
+      "full 3/3 rejeitada em run.2GpfB0px",
+      "bloqueio B1 e histórico anterior"
+    ],
+    "ownership": "Nenhuma task existente é dona da mudança transversal; não criar/reabrir task no orquestrador.",
+    "next_delegation": "Task Creator deve criar uma task enabling explícita para namespace isolation, com gate e gate_expect, antes de retomar o orquestrador.",
+    "transport": "herdr",
+    "transport_status": "worker fresco não iniciado: a lacuna não tem task dona e a sessão Herdr retornou PermissionDenied ao controlar panes"
   },
   "history": [
-    {"phase": "prepare-prd-branch", "outcome": "branch_ready", "run_id": "run.YJeKQUOU", "commit": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d", "result": ".tsg-flow/delegate-logs/run.YJeKQUOU/result.json"},
-    {"phase": "prepare-prd-branch", "outcome": "transport_failure", "run_id": "run.x9F7mcDb", "reason": "Segundo agent_prompt_stalled no OpenCode, sem worker remanescente nem resultado. Último retry de infraestrutura 2/2 com kind codex configurado; full_attempt preservado."},
-    {"phase": "prepare-prd-branch", "outcome": "transport_failure", "run_id": "run.3HiuzTTy", "reason": "agent_prompt_stalled; terminal permaneceu na tela inicial, sem resultado; pane encerrado pelo transporte. Retry de infraestrutura 1/2, sem consumir full_attempt."},
+    {
+      "phase": "prepare-prd-branch",
+      "task": "8.0",
+      "outcome": "transport_failure",
+      "run_id": "run.hE7G65q8",
+      "reason": "Retry Codex do integrator iniciou o pane, mas o agente encerrou antes do prompt; resultado ausente, sem efeitos, não consome tentativa."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "task": "8.0",
+      "outcome": "transport_failure",
+      "run_id": "run.wSbjeCKy",
+      "reason": "OpenCode ficou sem receber a solicitação; resultado ausente, sem efeitos, não consome tentativa."
+    },
+    {
+      "phase": "task-creator",
+      "task": "8.0",
+      "outcome": "task_created",
+      "task_kind": "enabling",
+      "gate": "dotnet build src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj --no-restore -warnaserror",
+      "gate_expect": "build sem erros e sem warnings",
+      "validation": "validate_plan.py exit 0",
+      "note": "Habilitador transversal de isolamento por namespace criado após o bloqueio B1; full 3/3 e histórico preservados."
+    },
+    {
+      "phase": "human-intervention",
+      "outcome": "blocked_planning_gap",
+      "date": "2026-09-22",
+      "decision": "Isolamento lógico por namespace atravessando persistência, outbox, workers, filas/exchanges/routing keys e consumidores; workers não podem buscar/reivindicar globalmente.",
+      "preserved": [
+        "full 3/3 rejeitada run.2GpfB0px",
+        "bloqueio B1 e histórico anterior"
+      ],
+      "ownership": "lacuna sem task dona",
+      "next_delegation": "Task Creator: criar task enabling de namespace isolation fora do orquestrador; depois retomar com worker Herdr fresco.",
+      "herdr": "PermissionDenied ao consultar/controlar a sessão; não tratado como veredito"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 3,
+      "outcome": "rejected",
+      "run_id": "run.2GpfB0px",
+      "gate": "failed",
+      "validated_commit": "a3869da6015085b427c5c94d8d7f2f2bcf96b91c",
+      "validated_tree": "5f022502fffd8154fd016fcae4ebb360a260a7c9",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "blocker": "Gate full intermitente: uma execução 39/41 por vazamento de estado/outbox entre hosts de teste; o relatório não atribui a lacuna a uma única task.",
+      "sensor": "7/7 mutações detectadas"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 3,
+      "outcome": "transport_failure",
+      "run_id": "run.wXmw9k05",
+      "reason": "Claude weekly limit, revisão não iniciada, nenhum resultado. Retry seguro com worker Codex fresco já configurado; sem consumir tentativa de convergência. Limitação: sem diversidade de provedor frente ao implementer."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "branch_ready",
+      "run_id": "run.YJeKQUOU",
+      "commit": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d",
+      "result": ".tsg-flow/delegate-logs/run.YJeKQUOU/result.json"
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "transport_failure",
+      "run_id": "run.x9F7mcDb",
+      "reason": "Segundo agent_prompt_stalled no OpenCode, sem worker remanescente nem resultado. Último retry de infraestrutura 2/2 com kind codex configurado; full_attempt preservado."
+    },
+    {
+      "phase": "prepare-prd-branch",
+      "outcome": "transport_failure",
+      "run_id": "run.3HiuzTTy",
+      "reason": "agent_prompt_stalled; terminal permaneceu na tela inicial, sem resultado; pane encerrado pelo transporte. Retry de infraestrutura 1/2, sem consumir full_attempt."
+    },
     {
       "phase": "prepare-prd-branch",
       "outcome": "branch_ready",
@@ -43,7 +143,7 @@
       "attempt": 1,
       "role": "implementer",
       "mode": "implement",
-      "outcome": "delegation_pending",
+      "outcome": "transport_failure",
       "run_id": "01a0c532-aec8-7581-b4e0-97aa57644c25"
     },
     {
@@ -836,6 +936,67 @@
       "branch": "feature/notificacao-transacional",
       "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
       "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "implement",
+      "task": "8.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "delegation_pending",
+      "run_id": "run.O5DCNora",
+      "gate": "not_run",
+      "reason": "timeout_or_blocked",
+      "transport_retry": 1,
+      "next": "retry-safe-new-worker",
+      "preserved": [
+        "run.2GpfB0px",
+        "B1",
+        "run.wSbjeCKy",
+        "run.hE7G65q8"
+      ]
+    },
+    {
+      "phase": "implement",
+      "task": "8.0",
+      "attempt": 1,
+      "role": "implementer",
+      "mode": "implement",
+      "outcome": "implementation_complete",
+      "run_id": "in-session-opencode",
+      "gate": "passed",
+      "reconciled_from": "run.O5DCNora",
+      "scope": "NotificationNamespace (Domain), NotificationProcessingOptions + TenantContext.Namespace (Application), namespace em delivery_records/outbox_messages/delivery_outcome_counters + migration AddProcessingNamespace + claims/filtros/purge delimitados (Infra.Data), RabbitMqResourceNames + topologia/publisher/consumers/outbox worker com nomes compostos por namespace (Infra.Messaging), Notification:Namespace no appsettings (Api), testes atualizados + ConcurrentNamespaceIsolationTests (2 testes de hosts concorrentes)",
+      "pending_intervention_resolved": "task_created",
+      "note": "Intervencao humana (isolamento estrutural por namespace) satisfeita; nova rodada de full validation registrada preservando o historico anterior."
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "transport_failure",
+      "transport": "herdr",
+      "kind": "opencode",
+      "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
+      "note": "Full review re-delegado por decisao explicita do usuario, com kind=opencode (roteamento explicito); mudancas de 8.0 ainda nao com checkpoint — diff inclui working tree.",
+      "reason": "3 tentativas de transporte herdr/kind=opencode sem entrega do prompt: run.MtKCOiRd (agent_start_failed/pane_busy), run.gOVPdyGu e run.XFcsXwDy (agent_prompt_stalled: TUI na tela inicial, sem result.json). Sem efeitos: nenhum result.json, prd_review.md preservado (run.2GpfB0px), working tree inalterada pela delegacao.",
+      "retries": 3,
+      "next": "retry-safe-new-worker ou kind alternativo; decisao do usuario"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "approved",
+      "run_id": "run.118db6",
+      "transport": "subagent",
+      "gate": "passed",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "sensor": "5/5 mutacoes mortas; controle 2/2",
+      "blockers": [],
+      "note": "Nova rodada pos-intervencao (task 8.0): B1 resolvido estruturalmente pelo isolamento por namespace. Herdr/kind=opencode falhou 3x (agent_prompt_stalled, sem efeitos); revisao delegada via subagent com contexto fresco. Limitacao: mesmo provedor do implementer. Relatorio anterior (run.2GpfB0px) preservado em .tsg-flow/delegate-logs/run.2GpfB0px/report.bak.md."
     }
   ]
 }

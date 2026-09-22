@@ -14,6 +14,10 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.Id)
             .HasColumnName("id")
             .ValueGeneratedNever();
+        builder.Property(message => message.Namespace)
+            .HasColumnName("namespace")
+            .HasMaxLength(OutboxMessage.NamespaceMaxLength)
+            .IsRequired();
         builder.Property(message => message.TenantId)
             .HasColumnName("tenant_id")
             .ValueGeneratedNever()
@@ -53,7 +57,7 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.HasIndex(message => message.Id)
             .HasDatabaseName("ix_outbox_messages_pending")
             .HasFilter("processed_on IS NULL");
-        builder.HasIndex(message => message.TenantId)
-            .HasDatabaseName("ix_outbox_messages_tenant_id");
+        builder.HasIndex(message => new { message.Namespace, message.TenantId })
+            .HasDatabaseName("ix_outbox_messages_namespace_tenant_id");
     }
 }

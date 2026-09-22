@@ -11,12 +11,15 @@ public sealed class DeliveryRecord
     public const int LinkMaxLength = 2048;
     public const int CorrelationIdMaxLength = 200;
     public const int ReasonMaxLength = 2000;
+    public const int NamespaceMaxLength = NotificationNamespace.MaxLength;
 
     private DeliveryRecord()
     {
     }
 
     public Guid Id { get; private set; }
+
+    public string Namespace { get; private set; } = string.Empty;
 
     public Guid TenantId { get; private set; }
 
@@ -57,6 +60,7 @@ public sealed class DeliveryRecord
     public bool ExhaustedAttempts { get; private set; }
 
     public static DeliveryRecord Create(
+        string processingNamespace,
         Guid tenantId,
         Guid requestId,
         string recipient,
@@ -68,6 +72,7 @@ public sealed class DeliveryRecord
         DateTimeOffset acceptedOn,
         string? correlationId)
     {
+        var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         ValidateIdentity(tenantId, requestId);
         ValidateRecipient(recipient);
         ValidateRequiredText(recipientName, RecipientNameMaxLength, "Recipient name");
@@ -79,6 +84,7 @@ public sealed class DeliveryRecord
         return new DeliveryRecord
         {
             Id = Guid.CreateVersion7(),
+            Namespace = normalizedNamespace,
             TenantId = tenantId,
             RequestId = requestId,
             Recipient = recipient,
@@ -95,6 +101,7 @@ public sealed class DeliveryRecord
     }
 
     public static DeliveryRecord CreateRefused(
+        string processingNamespace,
         Guid tenantId,
         Guid requestId,
         string recipient,
@@ -107,6 +114,7 @@ public sealed class DeliveryRecord
         DateTimeOffset refusedOn,
         string? correlationId)
     {
+        var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         ValidateIdentity(tenantId, requestId);
         ValidateRecipient(recipient);
         ValidateOptionalText(recipientName, RecipientNameMaxLength, "Recipient name");
@@ -119,6 +127,7 @@ public sealed class DeliveryRecord
         return new DeliveryRecord
         {
             Id = Guid.CreateVersion7(),
+            Namespace = normalizedNamespace,
             TenantId = tenantId,
             RequestId = requestId,
             Recipient = recipient,

@@ -25,6 +25,7 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<RabbitMqConnectionProvider>();
+        services.AddSingleton<RabbitMqResourceNames>();
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<ITransactionalEmailRetryPolicy, TransactionalEmailRetryPolicy>();
         services.AddSingleton<HeartbeatReceiptStore>();

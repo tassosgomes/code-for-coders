@@ -26,6 +26,12 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
+    private static string ExchangeBase => "notification.integration.events";
+
+    private string Exchange => RabbitMqResourceNames.Compose(ExchangeBase, processingNamespace);
+
     [Fact(DisplayName = nameof(RetryPolicyUsesIncreasingExponentialBackoff))]
     public void RetryPolicyUsesIncreasingExponentialBackoff()
     {
@@ -52,7 +58,6 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         var cancellationToken = TestContext.Current.CancellationToken;
         var tenantId = Guid.CreateVersion7();
         var requestId = Guid.CreateVersion7();
-        var exchange = $"notification.integration.events.{Guid.CreateVersion7():N}";
         var outputQueue = $"notification.integration.delivery-failed.{Guid.CreateVersion7():N}";
         var emailSender = new TransientFailureEmailSender(
             transientFailureCount: 3,
@@ -60,7 +65,7 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         using var manualTreatmentListener = CreateManualTreatmentListener(out var manualTreatmentSignals);
         using var host = CreateHost(
             emailSender,
-            exchange,
+            ExchangeBase,
             providerDeliveryLimit: 3,
             pollingIntervalMilliseconds: 5,
             initialBackoffMilliseconds: 40,
@@ -71,10 +76,10 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
-            await DeclareOutputQueueAsync(channel, exchange, outputQueue, cancellationToken);
+            await DeclareOutputQueueAsync(channel, Exchange, outputQueue, cancellationToken);
 
             var request = CreateRequest(tenantId, requestId);
-            await PublishRequestAsync(channel, exchange, request, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, request, cancellationToken);
 
             await emailSender.AttemptsReached.Task.WaitAsync(
                 TimeSpan.FromSeconds(15),
@@ -142,13 +147,12 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         var firstRequestId = Guid.CreateVersion7();
         var secondTenantId = Guid.CreateVersion7();
         var secondRequestId = Guid.CreateVersion7();
-        var exchange = $"notification.integration.events.{Guid.CreateVersion7():N}";
         var emailSender = new TransientFailureEmailSender(
             transientFailureCount: 100,
             signalAfterAttempt: 1);
         using var host = CreateHost(
             emailSender,
-            exchange,
+            ExchangeBase,
             providerDeliveryLimit: 100,
             pollingIntervalMilliseconds: 5,
             initialBackoffMilliseconds: 500,
@@ -162,12 +166,12 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
             var firstRequest = CreateRequest(firstTenantId, firstRequestId);
             var secondRequest = CreateRequest(secondTenantId, secondRequestId);
 
-            await PublishRequestAsync(channel, exchange, firstRequest, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, firstRequest, cancellationToken);
             await emailSender.AttemptsReached.Task.WaitAsync(
                 TimeSpan.FromSeconds(15),
                 cancellationToken);
 
-            await PublishRequestAsync(channel, exchange, secondRequest, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, secondRequest, cancellationToken);
 
             var secondDeliveryRecord = await WaitForDeliveryRecordAsync(
                 secondTenantId,
@@ -186,7 +190,7 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
 
     private IHost CreateHost(
         TransientFailureEmailSender emailSender,
-        string exchange,
+        string exchangeBase,
         int providerDeliveryLimit,
         int pollingIntervalMilliseconds,
         int initialBackoffMilliseconds,
@@ -195,14 +199,15 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
             ["RabbitMq:Password"] = "code_for_coders",
-            ["RabbitMq:Exchange"] = exchange,
-            ["RabbitMq:DeadLetterExchange"] = $"{exchange}.dlx",
-            ["RabbitMq:HeartbeatQueue"] = $"{exchange}.heartbeat",
-            ["RabbitMq:SendRequestQueue"] = $"{exchange}.send-request",
+            ["RabbitMq:Exchange"] = exchangeBase,
+            ["RabbitMq:DeadLetterExchange"] = $"{exchangeBase}.dlx",
+            ["RabbitMq:HeartbeatQueue"] = $"{exchangeBase}.heartbeat",
+            ["RabbitMq:SendRequestQueue"] = $"{exchangeBase}.send-request",
             ["RabbitMq:SendRequestRoutingKey"] = "notificacao.envio-solicitado.v1",
             ["RabbitMq:ProviderDeliveryLimit"] = providerDeliveryLimit.ToString(),
             ["Outbox:PollingIntervalSeconds"] = "1",
@@ -294,7 +299,7 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
@@ -323,7 +328,7 @@ public sealed class RetryProviderTransientFailureTests(NotificationIntegrationFi
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())

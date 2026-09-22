@@ -13,4 +13,5 @@ public sealed record OutboxMessageDraft(
     object Payload,
     DateTimeOffset OccurredOn,
     string? TraceParent,
-    string? CorrelationId = null);
+    string? CorrelationId = null,
+    string? Namespace = null);

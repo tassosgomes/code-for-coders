@@ -1,3 +1,4 @@
+using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Infra.Data;
 using CodeForCoders.Notification.Infra.Data.Configuration;
 using CodeForCoders.Notification.Infra.Data.Outbox;
@@ -15,6 +16,7 @@ public sealed class OutboxPublisherWorker(
     IServiceScopeFactory scopeFactory,
     RabbitMqPublisher publisher,
     IOptions<OutboxOptions> options,
+    IOptions<NotificationProcessingOptions> processingOptions,
     ILogger<OutboxPublisherWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -65,16 +67,18 @@ public sealed class OutboxPublisherWorker(
         var maxAttempts = options.Value.MaxAttempts;
         // The schema is an identifier and cannot be sent as a database parameter. Both values
         // interpolated below are constants or validated numeric options, so the raw SQL stays
-        // bounded to this module's outbox table.
+        // bounded to this module's outbox table. The namespace keeps the claim inside the
+        // boundary of this execution: no host publishes another execution's messages.
         var query = $"""
             SELECT * FROM {NotificationSchema.Name}.outbox_messages
             WHERE processed_on IS NULL AND attempts < {maxAttempts}
+              AND namespace = @processingNamespace
             ORDER BY id
             LIMIT 1
             FOR UPDATE SKIP LOCKED
             """;
         var message = await dbContext.OutboxMessages
-            .FromSqlRaw(query)
+            .FromSqlRaw(query, new NpgsqlParameter("processingNamespace", processingOptions.Value.Namespace))
             .IgnoreQueryFilters()
             .SingleOrDefaultAsync(cancellationToken);
 

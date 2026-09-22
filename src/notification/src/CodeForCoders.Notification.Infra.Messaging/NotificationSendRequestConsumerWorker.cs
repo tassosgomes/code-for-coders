@@ -19,6 +19,7 @@ namespace CodeForCoders.Notification.Infra.Messaging;
 public sealed class NotificationSendRequestConsumerWorker(
     RabbitMqConnectionProvider connectionProvider,
     IServiceScopeFactory scopeFactory,
+    RabbitMqResourceNames resourceNames,
     IOptions<RabbitMqOptions> options,
     ILogger<NotificationSendRequestConsumerWorker> logger) : BackgroundService
 {
@@ -34,7 +35,7 @@ public sealed class NotificationSendRequestConsumerWorker(
             cancellationToken: stoppingToken);
         var consumer = new SendRequestConsumer(channel, scopeFactory, logger);
         await channel.BasicConsumeAsync(
-            queue: options.Value.SendRequestQueue,
+            queue: resourceNames.SendRequestQueue,
             autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken);

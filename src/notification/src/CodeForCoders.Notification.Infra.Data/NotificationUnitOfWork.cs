@@ -26,9 +26,9 @@ public sealed class NotificationUnitOfWork(NotificationDbContext dbContext) : IU
         // OutboxPublisherWorker); the {0}-{3} placeholders below are still bound as real
         // parameters by ExecuteSqlRawAsync.
         var sql = $"INSERT INTO {NotificationSchema.Name}.delivery_outcome_counters "
-            + "(tenant_id, purpose, status, outcome_day, count) "
-            + "VALUES ({0}, {1}, {2}, {3}, 1) "
-            + "ON CONFLICT (tenant_id, purpose, status, outcome_day) "
+            + "(namespace, tenant_id, purpose, status, outcome_day, count) "
+            + "VALUES ({0}, {1}, {2}, {3}, {4}, 1) "
+            + "ON CONFLICT (namespace, tenant_id, purpose, status, outcome_day) "
             + "DO UPDATE SET count = delivery_outcome_counters.count + 1";
         foreach (var increment in pendingIncrements)
         {
@@ -36,6 +36,7 @@ public sealed class NotificationUnitOfWork(NotificationDbContext dbContext) : IU
                 sql,
                 new object[]
                 {
+                    increment.Namespace,
                     increment.TenantId,
                     increment.Purpose,
                     increment.Status.ToString().ToLowerInvariant(),

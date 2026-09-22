@@ -35,6 +35,7 @@ public sealed class AcceptNotificationSendRequest(
         if (refusalReason is not null)
         {
             var refusedRecord = DeliveryRecord.CreateRefused(
+                tenantContext.Namespace,
                 input.Request.TenantId,
                 input.Request.PedidoId,
                 input.Request.Destinatario!,
@@ -61,6 +62,7 @@ public sealed class AcceptNotificationSendRequest(
         var acceptedOn = transitionOn;
         var data = input.Request.Dados!;
         var record = DeliveryRecord.Create(
+            tenantContext.Namespace,
             input.Request.TenantId,
             input.Request.PedidoId,
             input.Request.Destinatario!,

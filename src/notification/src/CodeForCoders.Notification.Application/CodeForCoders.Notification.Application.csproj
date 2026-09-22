@@ -9,6 +9,8 @@
     <ProjectReference Include="../CodeForCoders.Notification.Contracts/CodeForCoders.Notification.Contracts.csproj" />
     <ProjectReference Include="../CodeForCoders.Notification.Domain/CodeForCoders.Notification.Domain.csproj" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     <PackageReference Include="Scrutor" />
   </ItemGroup>
 </Project>

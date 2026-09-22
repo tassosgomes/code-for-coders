@@ -14,6 +14,10 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
         builder.Property(record => record.Id)
             .HasColumnName("id")
             .ValueGeneratedNever();
+        builder.Property(record => record.Namespace)
+            .HasColumnName("namespace")
+            .HasMaxLength(DeliveryRecord.NamespaceMaxLength)
+            .IsRequired();
         builder.Property(record => record.TenantId)
             .HasColumnName("tenant_id")
             .ValueGeneratedNever()
@@ -79,10 +83,10 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
             .HasColumnName("exhausted_attempts")
             .IsRequired();
 
-        builder.HasIndex(record => new { record.TenantId, record.RequestId })
+        builder.HasIndex(record => new { record.Namespace, record.TenantId, record.RequestId })
             .IsUnique()
-            .HasDatabaseName("ux_delivery_records_tenant_id_request_id");
-        builder.HasIndex(record => new { record.Status, record.AcceptedOn })
-            .HasDatabaseName("ix_delivery_records_status_accepted_on");
+            .HasDatabaseName("ux_delivery_records_namespace_tenant_id_request_id");
+        builder.HasIndex(record => new { record.Namespace, record.Status, record.AcceptedOn })
+            .HasDatabaseName("ix_delivery_records_namespace_status_accepted_on");
     }
 }

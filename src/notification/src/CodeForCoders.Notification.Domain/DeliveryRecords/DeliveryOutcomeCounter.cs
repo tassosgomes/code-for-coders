@@ -10,6 +10,8 @@ public sealed class DeliveryOutcomeCounter
     {
     }
 
+    public string Namespace { get; private set; } = string.Empty;
+
     public Guid TenantId { get; private set; }
 
     public string Purpose { get; private set; } = string.Empty;
@@ -21,11 +23,13 @@ public sealed class DeliveryOutcomeCounter
     public long Count { get; private set; }
 
     public static DeliveryOutcomeCounter Create(
+        string processingNamespace,
         Guid tenantId,
         string? purpose,
         DeliveryStatus status,
         DateOnly outcomeDay)
     {
+        var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         if (tenantId == Guid.Empty)
         {
             throw new EntityValidationException("Tenant id must not be empty.");
@@ -48,6 +52,7 @@ public sealed class DeliveryOutcomeCounter
 
         return new DeliveryOutcomeCounter
         {
+            Namespace = normalizedNamespace,
             TenantId = tenantId,
             Purpose = purposeKey,
             Status = status,

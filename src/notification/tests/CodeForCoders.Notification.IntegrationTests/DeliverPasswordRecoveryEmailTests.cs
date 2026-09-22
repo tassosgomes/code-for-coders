@@ -22,6 +22,10 @@ public sealed class DeliverPasswordRecoveryEmailTests(NotificationIntegrationFix
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
+    private static string ExchangeBase => "notification.integration.events";
+
     [Fact(DisplayName = nameof(PasswordRecoveryRequestIsDeliveredWithItsOwnValidity))]
     public async Task PasswordRecoveryRequestIsDeliveredWithItsOwnValidity()
     {
@@ -40,9 +44,9 @@ public sealed class DeliverPasswordRecoveryEmailTests(NotificationIntegrationFix
                 "https://accounts.example.invalid/recover?token=abc123"),
             DateTimeOffset.UtcNow);
         var emailSender = new FakeTransactionalEmailSender();
-        var exchange = $"notification.integration.events.{Guid.CreateVersion7():N}";
+        var exchange = RabbitMqResourceNames.Compose(ExchangeBase, processingNamespace);
         var outputQueue = $"notification.integration.delivered.{Guid.CreateVersion7():N}";
-        using var host = CreateHost(emailSender, exchange, outputQueue);
+        using var host = CreateHost(emailSender, ExchangeBase, outputQueue);
 
         await host.StartAsync(cancellationToken);
         try
@@ -128,19 +132,20 @@ public sealed class DeliverPasswordRecoveryEmailTests(NotificationIntegrationFix
 
     private IHost CreateHost(
         FakeTransactionalEmailSender emailSender,
-        string exchange,
+        string exchangeBase,
         string outputQueue)
     {
         var sendRequestQueue = $"notification.integration.send-request.{Guid.CreateVersion7():N}";
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
             ["RabbitMq:Password"] = "code_for_coders",
-            ["RabbitMq:Exchange"] = exchange,
-            ["RabbitMq:DeadLetterExchange"] = $"{exchange}.dlx",
+            ["RabbitMq:Exchange"] = exchangeBase,
+            ["RabbitMq:DeadLetterExchange"] = $"{exchangeBase}.dlx",
             ["RabbitMq:HeartbeatQueue"] = $"notification.integration.platform-heartbeat.{Guid.CreateVersion7():N}",
             ["RabbitMq:SendRequestQueue"] = sendRequestQueue,
             ["RabbitMq:SendRequestRoutingKey"] = "notificacao.envio-solicitado.v1",
@@ -199,7 +204,7 @@ public sealed class DeliverPasswordRecoveryEmailTests(NotificationIntegrationFix
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
@@ -226,7 +231,7 @@ public sealed class DeliverPasswordRecoveryEmailTests(NotificationIntegrationFix
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())

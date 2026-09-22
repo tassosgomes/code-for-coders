@@ -89,7 +89,8 @@ public sealed class DeliverAcceptedNotification(
                 payload,
                 deliveredOn,
                 Activity.Current?.Id,
-                record.CorrelationId),
+                record.CorrelationId,
+                record.Namespace),
             cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
         NotificationTelemetry.NotificationsDelivered.Add(1);
@@ -132,7 +133,8 @@ public sealed class DeliverAcceptedNotification(
                     payload,
                     failedOn,
                     Activity.Current?.Id,
-                    record.CorrelationId),
+                    record.CorrelationId,
+                    record.Namespace),
                 cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
             if (exhaustedAttempts)

@@ -41,17 +41,18 @@ agregado que a operação consulta. Task 7.0.
 
 | Fatia | Task | Comportamento observável | Gate | Bloqueado por |
 |---|---|---|---|---|
-| V-01 | 1.0 | Pedido de confirmação de conta aceito, entregue e registrado; evento publicado sem corpo | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests" --minimum-expected-tests 1` | Nenhum |
-| V-02 | 2.0 | Pedido inválido (sem finalidade, modelo desconhecido, dado faltante) recusado com motivo, sem envio parcial | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests" --minimum-expected-tests 3` | 1.0 |
-| V-03 | 3.0 | Redelivery do mesmo `pedidoId` não duplica entrega; reenvio com `pedidoId` novo gera segundo registro e segundo e-mail | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests" --minimum-expected-tests 2` | 1.0 |
-| V-04 | 4.0 | Pedido de recuperação de senha entregue pelo mesmo mecanismo, com validade própria | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.DeliverPasswordRecoveryEmailTests" --minimum-expected-tests 1` | 1.0 |
-| V-05 | 5.0 | Falha transitória do provedor reentrega com backoff até esgotar; pedidos novos continuam aceitos durante a indisponibilidade | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests" --minimum-expected-tests 2` | 1.0 |
-| V-06 | 6.0 | Falha definitiva imediata do provedor vai a "falhou" sem reentrega | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.FailImmediatelyOnPermanentProviderErrorTests" --minimum-expected-tests 1` | 5.0 |
-| V-07 | 7.0 | Campo pessoal do Registro de Entrega expurgado após a janela, contador agregado preservado | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1` | 1.0 |
+| E-01 | 8.0 | Hosts concorrentes processam apenas dados, outbox e mensagens do próprio namespace | `dotnet build src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj --no-restore -warnaserror` | Nenhum |
+| V-01 | 1.0 | Pedido de confirmação de conta aceito, entregue e registrado; evento publicado sem corpo | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.AcceptAndDeliverAccountConfirmationTests" --minimum-expected-tests 1` | 8.0 |
+| V-02 | 2.0 | Pedido inválido (sem finalidade, modelo desconhecido, dado faltante) recusado com motivo, sem envio parcial | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RejectInvalidSendRequestTests" --minimum-expected-tests 3` | 1.0, 8.0 |
+| V-03 | 3.0 | Redelivery do mesmo `pedidoId` não duplica entrega; reenvio com `pedidoId` novo gera segundo registro e segundo e-mail | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests" --minimum-expected-tests 2` | 1.0, 8.0 |
+| V-04 | 4.0 | Pedido de recuperação de senha entregue pelo mesmo mecanismo, com validade própria | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.DeliverPasswordRecoveryEmailTests" --minimum-expected-tests 1` | 1.0, 8.0 |
+| V-05 | 5.0 | Falha transitória do provedor reentrega com backoff até esgotar; pedidos novos continuam aceitos durante a indisponibilidade | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.RetryProviderTransientFailureTests" --minimum-expected-tests 2` | 1.0, 8.0 |
+| V-06 | 6.0 | Falha definitiva imediata do provedor vai a "falhou" sem reentrega | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.FailImmediatelyOnPermanentProviderErrorTests" --minimum-expected-tests 1` | 5.0, 8.0 |
+| V-07 | 7.0 | Campo pessoal do Registro de Entrega expurgado após a janela, contador agregado preservado | `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.PurgeDeliveryRecordPersonalDataTests" --minimum-expected-tests 1` | 1.0, 8.0 |
 
-Nenhum habilitador horizontal: a TechSpec já resolve a topologia compartilhada (fila, migration,
-DbContext) dentro da própria Task 1.0, que as demais fatias estendem por dependência declarada — não
-há contrato comum que precise nascer fora de uma fatia (ver `references/vertical-slicing.md`).
+O habilitador E-01 estabelece o namespace comum de persistência e mensageria antes da revalidação das
+fatias. Ele foi criado após a revisão full identificar que a topologia compartilhada da TechSpec não
+isolava hosts concorrentes; as tasks 1.0–7.0 continuam sendo as fatias comportamentais.
 
 ## Tasks
 
@@ -62,6 +63,7 @@ há contrato comum que precise nascer fora de uma fatia (ver `references/vertica
 - [x] 5.0 Reentregar ao provedor em falha transitória até esgotar tentativas
 - [x] 6.0 Falhar imediatamente em erro definitivo do provedor
 - [x] 7.0 Expurgar dado pessoal do Registro de Entrega após a retenção
+- [x] 8.0 Isolar o processamento transacional por namespace
 
 ## Cobertura
 

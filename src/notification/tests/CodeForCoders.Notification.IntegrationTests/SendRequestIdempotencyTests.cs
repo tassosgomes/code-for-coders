@@ -21,6 +21,11 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
+    private string Exchange
+        => RabbitMqResourceNames.Compose("notification.integration.events", processingNamespace);
+
     [Fact(DisplayName = nameof(RedeliveryOfTheSameRequestDoesNotDeliverTwice))]
     public async Task RedeliveryOfTheSameRequestDoesNotDeliverTwice()
     {
@@ -37,16 +42,16 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
-            await ConfigureOutputQueueAsync(channel, outputQueue, cancellationToken);
+            await ConfigureOutputQueueAsync(channel, outputQueue, Exchange, cancellationToken);
 
-            await PublishRequestAsync(channel, request, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, request, cancellationToken);
             await WaitForDeliveredRecordsAsync(
                 tenantId,
                 [request.PedidoId],
                 cancellationToken);
             await AcknowledgePublishedMessageAsync(channel, outputQueue, cancellationToken);
 
-            await PublishRequestAsync(channel, request, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, request, cancellationToken);
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
 
             var records = await ReadDeliveryRecordsAsync(
@@ -80,10 +85,10 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
-            await ConfigureOutputQueueAsync(channel, outputQueue, cancellationToken);
+            await ConfigureOutputQueueAsync(channel, outputQueue, Exchange, cancellationToken);
 
-            await PublishRequestAsync(channel, firstRequest, cancellationToken);
-            await PublishRequestAsync(channel, secondRequest, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, firstRequest, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, secondRequest, cancellationToken);
 
             var records = await WaitForDeliveredRecordsAsync(
                 tenantId,
@@ -108,6 +113,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
@@ -163,6 +169,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
     private static async Task ConfigureOutputQueueAsync(
         IChannel channel,
         string outputQueue,
+        string exchange,
         CancellationToken cancellationToken)
     {
         await channel.QueueDeclareAsync(
@@ -174,7 +181,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
             cancellationToken: cancellationToken);
         await channel.QueueBindAsync(
             outputQueue,
-            "notification.integration.events",
+            exchange,
             "notificacao.mensagem-entregue.v1",
             arguments: null,
             cancellationToken: cancellationToken);
@@ -214,6 +221,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
 
     private static async Task PublishRequestAsync(
         IChannel channel,
+        string exchange,
         NotificationSendRequestedV1 request,
         CancellationToken cancellationToken)
     {
@@ -224,7 +232,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
             CorrelationId = $"integration-idempotency-{request.PedidoId:N}",
         };
         await channel.BasicPublishAsync(
-            exchange: "notification.integration.events",
+            exchange: exchange,
             routingKey: "notificacao.envio-solicitado.v1",
             mandatory: true,
             basicProperties: properties,
@@ -258,7 +266,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         IReadOnlyCollection<Guid> requestIds,
         CancellationToken cancellationToken)
     {
-        var tenantContext = new TenantContext();
+        var tenantContext = new TenantContext(processingNamespace);
         tenantContext.Set(tenantId);
         var dbOptions = new DbContextOptionsBuilder<NotificationDbContext>()
             .UseNpgsql(fixture.PostgreSql.GetConnectionString())

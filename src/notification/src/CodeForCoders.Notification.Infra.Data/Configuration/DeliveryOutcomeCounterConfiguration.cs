@@ -11,12 +11,17 @@ public sealed class DeliveryOutcomeCounterConfiguration : IEntityTypeConfigurati
         builder.ToTable("delivery_outcome_counters", NotificationSchema.Name);
         builder.HasKey(counter => new
         {
+            counter.Namespace,
             counter.TenantId,
             counter.Purpose,
             counter.Status,
             counter.OutcomeDay,
         }).HasName("pk_delivery_outcome_counters");
 
+        builder.Property(counter => counter.Namespace)
+            .HasColumnName("namespace")
+            .HasMaxLength(DeliveryRecord.NamespaceMaxLength)
+            .IsRequired();
         builder.Property(counter => counter.TenantId)
             .HasColumnName("tenant_id")
             .ValueGeneratedNever()

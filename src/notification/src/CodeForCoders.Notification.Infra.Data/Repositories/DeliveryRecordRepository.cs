@@ -1,3 +1,4 @@
+using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,9 @@ using Npgsql;
 
 namespace CodeForCoders.Notification.Infra.Data.Repositories;
 
-public sealed class DeliveryRecordRepository(NotificationDbContext dbContext) : IDeliveryRecordRepository
+public sealed class DeliveryRecordRepository(
+    NotificationDbContext dbContext,
+    ITenantContext tenantContext) : IDeliveryRecordRepository
 {
     public Task AddAsync(DeliveryRecord record, CancellationToken cancellationToken)
     {
@@ -37,13 +40,17 @@ public sealed class DeliveryRecordRepository(NotificationDbContext dbContext) : 
         // An UPDATE ... RETURNING statement is not composable, so the result is materialized with
         // ToListAsync instead of SingleOrDefaultAsync, which would make EF Core try to wrap it in
         // a subquery; the WHERE id = (... LIMIT 1) subquery already guarantees at most one row.
+        // ...The namespace filter is explicit in the statement itself, so global query
+        // filters must stay off here: composing them over UPDATE ... RETURNING would make
+        // EF wrap a non-composable statement in a subquery.
         var claimed = await dbContext.DeliveryRecords
             .FromSqlRaw($"""
                 UPDATE {NotificationSchema.Name}.delivery_records
                 SET next_attempt_on = @leaseUntil
                 WHERE id = (
                     SELECT id FROM {NotificationSchema.Name}.delivery_records
-                    WHERE status = 'accepted'
+                    WHERE namespace = @processingNamespace
+                      AND status = 'accepted'
                       AND (next_attempt_on IS NULL OR next_attempt_on <= @now)
                     ORDER BY accepted_on, id
                     LIMIT 1
@@ -52,7 +59,8 @@ public sealed class DeliveryRecordRepository(NotificationDbContext dbContext) : 
                 RETURNING *
                 """,
                 new NpgsqlParameter("leaseUntil", leaseUntil),
-                new NpgsqlParameter("now", now))
+                new NpgsqlParameter("now", now),
+                new NpgsqlParameter("processingNamespace", tenantContext.Namespace))
             .IgnoreQueryFilters()
             .ToListAsync(cancellationToken);
         return claimed.SingleOrDefault();

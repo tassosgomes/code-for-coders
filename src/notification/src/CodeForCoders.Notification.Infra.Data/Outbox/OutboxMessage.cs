@@ -1,14 +1,19 @@
 using CodeForCoders.Notification.Application.Interfaces;
+using CodeForCoders.Notification.Domain.SeedWork;
 
 namespace CodeForCoders.Notification.Infra.Data.Outbox;
 
 public sealed class OutboxMessage
 {
+    public const int NamespaceMaxLength = NotificationNamespace.MaxLength;
+
     private OutboxMessage()
     {
     }
 
     public Guid Id { get; private set; }
+
+    public string Namespace { get; private set; } = string.Empty;
 
     public Guid TenantId { get; private set; }
 
@@ -30,11 +35,15 @@ public sealed class OutboxMessage
 
     public string? CorrelationId { get; private set; }
 
-    public static OutboxMessage Create(OutboxMessageDraft draft, string payload)
+    public static OutboxMessage Create(
+        OutboxMessageDraft draft,
+        string payload,
+        string processingNamespace)
     {
         return new OutboxMessage
         {
             Id = draft.Id,
+            Namespace = NotificationNamespace.Validate(processingNamespace),
             TenantId = draft.TenantId,
             Type = draft.Type,
             RoutingKey = draft.RoutingKey,

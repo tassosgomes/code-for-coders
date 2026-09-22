@@ -1,3 +1,4 @@
+using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Infra.Data.Configuration;
 using Microsoft.EntityFrameworkCore;
@@ -58,13 +59,14 @@ public sealed class DeliveryRecordPurgeWorker(
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+        var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
         var cutoff = DateTimeOffset.UtcNow.AddDays(-options.Value.RetentionDays);
         var records = await dbContext.DeliveryRecords
-            .IgnoreQueryFilters()
             .Where(record =>
-                (record.Status == DeliveryStatus.Refused && record.RefusedOn <= cutoff)
-                || (record.Status == DeliveryStatus.Delivered && record.DeliveredOn <= cutoff)
-                || (record.Status == DeliveryStatus.Failed && record.FailedOn <= cutoff))
+                record.Namespace == tenantContext.Namespace
+                && ((record.Status == DeliveryStatus.Refused && record.RefusedOn <= cutoff)
+                    || (record.Status == DeliveryStatus.Delivered && record.DeliveredOn <= cutoff)
+                    || (record.Status == DeliveryStatus.Failed && record.FailedOn <= cutoff)))
             .Where(record =>
                 record.Recipient != null
                 || record.RecipientName != null

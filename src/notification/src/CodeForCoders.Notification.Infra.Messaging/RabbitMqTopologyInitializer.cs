@@ -1,27 +1,25 @@
 using CodeForCoders.Notification.Infra.Messaging.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 
 namespace CodeForCoders.Notification.Infra.Messaging;
 
 public sealed class RabbitMqTopologyInitializer(
     RabbitMqConnectionProvider connectionProvider,
-    IOptions<RabbitMqOptions> options) : IHostedService
+    RabbitMqResourceNames resourceNames) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var settings = options.Value;
         await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
         await channel.ExchangeDeclareAsync(
-            settings.Exchange,
+            resourceNames.Exchange,
             ExchangeType.Topic,
             durable: true,
             autoDelete: false,
             arguments: null,
             cancellationToken: cancellationToken);
         await channel.ExchangeDeclareAsync(
-            settings.DeadLetterExchange,
+            resourceNames.DeadLetterExchange,
             ExchangeType.Direct,
             durable: true,
             autoDelete: false,
@@ -30,15 +28,15 @@ public sealed class RabbitMqTopologyInitializer(
 
         await DeclareQueueAsync(
             channel,
-            settings,
-            settings.HeartbeatQueue,
+            resourceNames,
+            resourceNames.HeartbeatQueue,
             "notification.platform.heartbeat.v1",
             cancellationToken);
         await DeclareQueueAsync(
             channel,
-            settings,
-            settings.SendRequestQueue,
-            settings.SendRequestRoutingKey,
+            resourceNames,
+            resourceNames.SendRequestQueue,
+            resourceNames.SendRequestRoutingKey,
             cancellationToken);
     }
 
@@ -46,7 +44,7 @@ public sealed class RabbitMqTopologyInitializer(
 
     private static async Task DeclareQueueAsync(
         IChannel channel,
-        RabbitMqOptions settings,
+        RabbitMqResourceNames resourceNames,
         string queue,
         string routingKey,
         CancellationToken cancellationToken)
@@ -64,7 +62,7 @@ public sealed class RabbitMqTopologyInitializer(
             cancellationToken: cancellationToken);
         await channel.QueueBindAsync(
             deadLetterQueue,
-            settings.DeadLetterExchange,
+            resourceNames.DeadLetterExchange,
             queue,
             arguments: null,
             cancellationToken: cancellationToken);
@@ -77,14 +75,14 @@ public sealed class RabbitMqTopologyInitializer(
             arguments: new Dictionary<string, object?>
             {
                 ["x-queue-type"] = "quorum",
-                ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+                ["x-dead-letter-exchange"] = resourceNames.DeadLetterExchange,
                 ["x-dead-letter-routing-key"] = queue,
-                ["x-delivery-limit"] = settings.DeliveryLimit,
+                ["x-delivery-limit"] = resourceNames.DeliveryLimit,
             },
             cancellationToken: cancellationToken);
         await channel.QueueBindAsync(
             queue,
-            settings.Exchange,
+            resourceNames.Exchange,
             routingKey,
             arguments: null,
             cancellationToken: cancellationToken);

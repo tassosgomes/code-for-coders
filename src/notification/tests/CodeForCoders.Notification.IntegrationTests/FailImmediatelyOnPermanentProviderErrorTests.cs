@@ -22,18 +22,23 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
+    private static string ExchangeBase => "notification.integration.events";
+
+    private string Exchange => RabbitMqResourceNames.Compose(ExchangeBase, processingNamespace);
+
     [Fact(DisplayName = nameof(PermanentProviderFailureStopsWithoutRetry))]
     public async Task PermanentProviderFailureStopsWithoutRetry()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var tenantId = Guid.CreateVersion7();
         var requestId = Guid.CreateVersion7();
-        var exchange = $"notification.integration.events.{Guid.CreateVersion7():N}";
         var outputQueue = $"notification.integration.delivery-failed.{Guid.CreateVersion7():N}";
         var emailSender = new PermanentFailureEmailSender();
         using var host = CreateHost(
             emailSender,
-            exchange,
+            ExchangeBase,
             providerDeliveryLimit: 3,
             pollingIntervalMilliseconds: 5,
             initialBackoffMilliseconds: 25,
@@ -44,10 +49,10 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
-            await DeclareOutputQueueAsync(channel, exchange, outputQueue, cancellationToken);
+            await DeclareOutputQueueAsync(channel, Exchange, outputQueue, cancellationToken);
 
             var request = CreateRequest(tenantId, requestId);
-            await PublishRequestAsync(channel, exchange, request, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, request, cancellationToken);
 
             await emailSender.FirstAttempt.Task.WaitAsync(
                 TimeSpan.FromSeconds(15),
@@ -107,7 +112,7 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
 
     private IHost CreateHost(
         PermanentFailureEmailSender emailSender,
-        string exchange,
+        string exchangeBase,
         int providerDeliveryLimit,
         int pollingIntervalMilliseconds,
         int initialBackoffMilliseconds,
@@ -116,14 +121,15 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
             ["RabbitMq:Password"] = "code_for_coders",
-            ["RabbitMq:Exchange"] = exchange,
-            ["RabbitMq:DeadLetterExchange"] = $"{exchange}.dlx",
-            ["RabbitMq:HeartbeatQueue"] = $"{exchange}.heartbeat",
-            ["RabbitMq:SendRequestQueue"] = $"{exchange}.send-request",
+            ["RabbitMq:Exchange"] = exchangeBase,
+            ["RabbitMq:DeadLetterExchange"] = $"{exchangeBase}.dlx",
+            ["RabbitMq:HeartbeatQueue"] = $"{exchangeBase}.heartbeat",
+            ["RabbitMq:SendRequestQueue"] = $"{exchangeBase}.send-request",
             ["RabbitMq:SendRequestRoutingKey"] = "notificacao.envio-solicitado.v1",
             ["RabbitMq:ProviderDeliveryLimit"] = providerDeliveryLimit.ToString(),
             ["Outbox:PollingIntervalSeconds"] = "1",
@@ -215,7 +221,7 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
@@ -244,7 +250,7 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())

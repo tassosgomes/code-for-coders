@@ -23,12 +23,18 @@ public sealed class NotificationDbContext(
     // transaction as the surrounding SaveChangesAsync, instead of a tracked read-then-write that
     // races under concurrent delivery workers (see DeliveryOutcomeCounterRepository).
     internal void EnqueuePendingDeliveryOutcomeCounterIncrement(
+        string processingNamespace,
         Guid tenantId,
         string purpose,
         DeliveryStatus status,
         DateOnly outcomeDay)
         => _pendingDeliveryOutcomeCounterIncrements.Add(
-            new PendingDeliveryOutcomeCounterIncrement(tenantId, purpose, status, outcomeDay));
+            new PendingDeliveryOutcomeCounterIncrement(
+                processingNamespace,
+                tenantId,
+                purpose,
+                status,
+                outcomeDay));
 
     internal IReadOnlyList<PendingDeliveryOutcomeCounterIncrement> DequeuePendingDeliveryOutcomeCounterIncrements()
     {
@@ -46,11 +52,17 @@ public sealed class NotificationDbContext(
     {
         modelBuilder.HasDefaultSchema(NotificationSchema.Name);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(NotificationDbContext).Assembly);
+        // Query filters must keep member access on tenantContext in the expression tree:
+        // locals captured here would be frozen when EF caches the model (the first context
+        // to build it), and Nullable.Value must not be evaluated while TenantId is unset.
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
-            message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
+            message => message.Namespace == tenantContext.Namespace
+                && (tenantContext.TenantId == null || message.TenantId == tenantContext.TenantId));
         modelBuilder.Entity<DeliveryRecord>().HasQueryFilter(
-            record => tenantContext.TenantId.HasValue && record.TenantId == tenantContext.TenantId.Value);
+            record => record.Namespace == tenantContext.Namespace
+                && (tenantContext.TenantId == null || record.TenantId == tenantContext.TenantId));
         modelBuilder.Entity<DeliveryOutcomeCounter>().HasQueryFilter(
-            counter => tenantContext.TenantId.HasValue && counter.TenantId == tenantContext.TenantId.Value);
+            counter => counter.Namespace == tenantContext.Namespace
+                && (tenantContext.TenantId == null || counter.TenantId == tenantContext.TenantId));
     }
 }

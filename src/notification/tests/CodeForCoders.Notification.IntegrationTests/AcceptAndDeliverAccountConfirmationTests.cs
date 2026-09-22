@@ -22,6 +22,11 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
+    private string Exchange
+        => RabbitMqResourceNames.Compose("notification.integration.events", processingNamespace);
+
     [Fact(DisplayName = nameof(AccountConfirmationRequestIsAcceptedDeliveredAndPublished))]
     public async Task AccountConfirmationRequestIsAcceptedDeliveredAndPublished()
     {
@@ -44,6 +49,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
@@ -91,12 +97,12 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
                 cancellationToken: cancellationToken);
             await channel.QueueBindAsync(
                 outputQueue,
-                "notification.integration.events",
+                Exchange,
                 "notificacao.mensagem-entregue.v1",
                 arguments: null,
                 cancellationToken: cancellationToken);
 
-            await PublishRequestAsync(channel, request, correlationId, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, request, correlationId, cancellationToken);
 
             var email = await emailSender.SentEmail.Task.WaitAsync(
                 TimeSpan.FromSeconds(15),
@@ -161,6 +167,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
 
     private static async Task PublishRequestAsync(
         IChannel channel,
+        string exchange,
         NotificationSendRequestedV1 request,
         string correlationId,
         CancellationToken cancellationToken)
@@ -172,7 +179,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
             CorrelationId = correlationId,
         };
         await channel.BasicPublishAsync(
-            exchange: "notification.integration.events",
+            exchange: exchange,
             routingKey: "notificacao.envio-solicitado.v1",
             mandatory: true,
             basicProperties: properties,
@@ -188,7 +195,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
@@ -215,7 +222,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())

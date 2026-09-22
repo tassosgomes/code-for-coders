@@ -21,9 +21,15 @@ public sealed class DeliveryOutcomeCounterRepository(NotificationDbContext dbCon
         // NotificationUnitOfWork.CommitAsync, which applies an atomic SQL upsert instead of a
         // tracked read-then-write, so two concurrent delivery workers incrementing the same
         // tenant/purpose/status/day never lose an update or fail on a primary-key violation.
-        DeliveryOutcomeCounter.Create(record.TenantId, purpose, record.Status, outcomeDay);
+        DeliveryOutcomeCounter.Create(
+            record.Namespace,
+            record.TenantId,
+            purpose,
+            record.Status,
+            outcomeDay);
 
         dbContext.EnqueuePendingDeliveryOutcomeCounterIncrement(
+            record.Namespace,
             record.TenantId,
             purpose,
             record.Status,

@@ -14,6 +14,7 @@ namespace CodeForCoders.Notification.IntegrationTests;
 [Collection(NotificationIntegrationCollection.Name)]
 public sealed class NotificationInfrastructureTests(NotificationIntegrationFixture fixture)
 {
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
     [Fact]
     public async Task HeartbeatFlowsThroughOutboxRabbitMqAndConsumer()
     {
@@ -21,6 +22,7 @@ public sealed class NotificationInfrastructureTests(NotificationIntegrationFixtu
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",

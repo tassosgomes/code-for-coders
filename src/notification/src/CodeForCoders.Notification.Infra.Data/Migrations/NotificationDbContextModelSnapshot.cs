@@ -25,6 +25,11 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
 
             modelBuilder.Entity("CodeForCoders.Notification.Domain.DeliveryRecords.DeliveryOutcomeCounter", b =>
                 {
+                    b.Property<string>("Namespace")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("namespace");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -47,7 +52,7 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("count");
 
-                    b.HasKey("TenantId", "Purpose", "Status", "OutcomeDay")
+                    b.HasKey("Namespace", "TenantId", "Purpose", "Status", "OutcomeDay")
                         .HasName("pk_delivery_outcome_counters");
 
                     b.ToTable("delivery_outcome_counters", "notification_access");
@@ -93,6 +98,12 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("model");
+
+                    b.Property<string>("Namespace")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("namespace");
 
                     b.Property<DateTimeOffset?>("NextAttemptOn")
                         .HasColumnType("timestamp with time zone")
@@ -146,12 +157,12 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Status", "AcceptedOn")
-                        .HasDatabaseName("ix_delivery_records_status_accepted_on");
+                    b.HasIndex("Namespace", "Status", "AcceptedOn")
+                        .HasDatabaseName("ix_delivery_records_namespace_status_accepted_on");
 
-                    b.HasIndex("TenantId", "RequestId")
+                    b.HasIndex("Namespace", "TenantId", "RequestId")
                         .IsUnique()
-                        .HasDatabaseName("ux_delivery_records_tenant_id_request_id");
+                        .HasDatabaseName("ux_delivery_records_namespace_tenant_id_request_id");
 
                     b.ToTable("delivery_records", "notification_access");
                 });
@@ -175,6 +186,12 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("last_error");
+
+                    b.Property<string>("Namespace")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("namespace");
 
                     b.Property<DateTimeOffset>("OccurredOn")
                         .HasColumnType("timestamp with time zone")
@@ -216,8 +233,8 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
                         .HasDatabaseName("ix_outbox_messages_pending")
                         .HasFilter("processed_on IS NULL");
 
-                    b.HasIndex("TenantId")
-                        .HasDatabaseName("ix_outbox_messages_tenant_id");
+                    b.HasIndex("Namespace", "TenantId")
+                        .HasDatabaseName("ix_outbox_messages_namespace_tenant_id");
 
                     b.ToTable("outbox_messages", "notification_access");
                 });

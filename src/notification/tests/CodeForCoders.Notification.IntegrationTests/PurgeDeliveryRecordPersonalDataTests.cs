@@ -22,8 +22,12 @@ namespace CodeForCoders.Notification.IntegrationTests;
 [Collection(NotificationIntegrationCollection.Name)]
 public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegrationFixture fixture)
 {
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
     private const string EventsExchange = "notification.integration.events";
 
+    private string ComposedExchange
+        => RabbitMqResourceNames.Compose(EventsExchange, processingNamespace);
     [Fact(DisplayName = nameof(PurgeRemovesPersonalDataAndPreservesOutcomeCounter))]
     public async Task PurgeRemovesPersonalDataAndPreservesOutcomeCounter()
     {
@@ -305,6 +309,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["Retention:RetentionDays"] = "1",
             ["Retention:PollingIntervalMilliseconds"] = "5",
             ["Retention:BatchSize"] = "10",
@@ -340,6 +345,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
                     .ValidateDataAnnotations()
                     .ValidateOnStart();
                 services.AddSingleton<RabbitMqConnectionProvider>();
+                services.AddSingleton<RabbitMqResourceNames>();
                 services.AddSingleton<RabbitMqPublisher>();
                 services.AddHostedService<OutboxPublisherWorker>();
                 if (emailSender is not null)
@@ -366,14 +372,14 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
     private static string CreateOutputQueueName()
         => $"notification.integration.purge.{Guid.CreateVersion7():N}";
 
-    private static async Task ConfigureOutputQueueAsync(
+    private async Task ConfigureOutputQueueAsync(
         IChannel channel,
         string outputQueue,
         string routingKey,
         CancellationToken cancellationToken)
     {
         await channel.ExchangeDeclareAsync(
-            EventsExchange,
+            ComposedExchange,
             ExchangeType.Topic,
             durable: true,
             autoDelete: false,
@@ -388,7 +394,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
             cancellationToken: cancellationToken);
         await channel.QueueBindAsync(
             outputQueue,
-            EventsExchange,
+            ComposedExchange,
             routingKey,
             arguments: null,
             cancellationToken: cancellationToken);
@@ -435,7 +441,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         DateTimeOffset expiredOn,
         CancellationToken cancellationToken)
     {
-        var tenantContext = new TenantContext();
+        var tenantContext = new TenantContext(processingNamespace);
         var options = new DbContextOptionsBuilder<NotificationDbContext>()
             .UseNpgsql(fixture.PostgreSql.GetConnectionString())
             .Options;
@@ -462,7 +468,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
                 => $"UPDATE {NotificationSchema.Name}.delivery_records SET failed_on = @p0 WHERE id = @p1",
             _ => throw new Xunit.Sdk.XunitException($"Unsupported final status: {status}"),
         };
-        var tenantContext = new TenantContext();
+        var tenantContext = new TenantContext(processingNamespace);
         var options = new DbContextOptionsBuilder<NotificationDbContext>()
             .UseNpgsql(fixture.PostgreSql.GetConnectionString())
             .Options;
@@ -481,7 +487,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var options = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
@@ -513,7 +519,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         DateOnly outcomeDay,
         CancellationToken cancellationToken)
     {
-        var tenantContext = new TenantContext();
+        var tenantContext = new TenantContext(processingNamespace);
         tenantContext.Set(tenantId);
         var options = new DbContextOptionsBuilder<NotificationDbContext>()
             .UseNpgsql(fixture.PostgreSql.GetConnectionString())

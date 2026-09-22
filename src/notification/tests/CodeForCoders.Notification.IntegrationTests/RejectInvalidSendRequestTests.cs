@@ -21,6 +21,11 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    private readonly string processingNamespace = $"it-{Guid.CreateVersion7():N}";
+
+    private string Exchange
+        => RabbitMqResourceNames.Compose("notification.integration.events", processingNamespace);
+
     [Fact(DisplayName = nameof(RequestWithoutPurposeIsRefusedWithSpecificReason))]
     public async Task RequestWithoutPurposeIsRefusedWithSpecificReason()
     {
@@ -81,7 +86,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
-            await PublishRequestAsync(channel, request, cancellationToken);
+            await PublishRequestAsync(channel, Exchange, request, cancellationToken);
 
             var deliveryRecord = await WaitForRefusedRecordAsync(
                 request.TenantId,
@@ -96,7 +101,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
             await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
             Assert.Empty(emailSender.SentEmails);
 
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(request.TenantId);
             var dbOptions = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
@@ -120,6 +125,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
         var configurationValues = new Dictionary<string, string?>
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["Notification:Namespace"] = processingNamespace,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
@@ -172,6 +178,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
 
     private static async Task PublishRequestAsync(
         IChannel channel,
+        string exchange,
         NotificationSendRequestedV1 request,
         CancellationToken cancellationToken)
     {
@@ -182,7 +189,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
             CorrelationId = $"integration-reject-{request.PedidoId:N}",
         };
         await channel.BasicPublishAsync(
-            exchange: "notification.integration.events",
+            exchange: exchange,
             routingKey: "notificacao.envio-solicitado.v1",
             mandatory: true,
             basicProperties: properties,
@@ -198,7 +205,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
         var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
         while (DateTimeOffset.UtcNow < deadline)
         {
-            var tenantContext = new TenantContext();
+            var tenantContext = new TenantContext(processingNamespace);
             tenantContext.Set(tenantId);
             var dbOptions = new DbContextOptionsBuilder<NotificationDbContext>()
                 .UseNpgsql(fixture.PostgreSql.GetConnectionString())
