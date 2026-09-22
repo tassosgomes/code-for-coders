@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: "dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class \"CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests\" --minimum-expected-tests 2"
@@ -54,8 +54,25 @@ modelo, não esta task).
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests" --minimum-expected-tests 2`
-- [ ] Publicar o mesmo `pedidoId` duas vezes em sequência resulta em uma única chamada ao fake do
+- [x] Gate passa (exit 0): `dotnet test src/notification/tests/CodeForCoders.Notification.IntegrationTests/CodeForCoders.Notification.IntegrationTests.csproj -- --filter-class "CodeForCoders.Notification.IntegrationTests.SendRequestIdempotencyTests" --minimum-expected-tests 2`
+- [x] Publicar o mesmo `pedidoId` duas vezes em sequência resulta em uma única chamada ao fake do
       provedor e um único Registro de Entrega
-- [ ] Publicar dois `pedidoId`s distintos com a mesma finalidade e destinatário resulta em dois
+- [x] Publicar dois `pedidoId`s distintos com a mesma finalidade e destinatário resulta em dois
       Registros de Entrega e duas chamadas ao fake do provedor
+
+## Reabertura pós-full (2026-09-22, ver `prd_review.md`, run.Ul8nMYpY)
+
+- **B1 (parcial, vazamento de estado entre testes):** `SendRequestIdempotencyTests` entrega uma
+  notificação com sucesso (o cenário de reenvio, `pedidoId` novo, gera um segundo e-mail/registro)
+  mas não liga fila alguma à routing key `notificacao.mensagem-entregue.v1` para consumir/confirmar
+  esse evento. A linha de outbox correspondente fica pendente com `NO_ROUTE` (publish `mandatory`
+  sem fila vinculada), e o `OutboxPublisherWorker` (que sempre processa o menor id pendente e para o
+  lote na primeira falha) trava atrás dela — o teste seguinte que liga fila de entrega acaba lendo o
+  evento órfão deste teste em vez do seu próprio. Corrigir seguindo o mesmo padrão já usado pelos
+  testes de entrega (`AcceptAndDeliverAccountConfirmationTests`,
+  `DeliverPasswordRecoveryEmailTests`): declarar e vincular uma fila exclusiva (nome único por teste)
+  à routing key `mensagem-entregue.v1` no host de teste e consumi-la (ou pelo menos confirmá-la),
+  para que o outbox não fique pendente. Sem alterar as asserções de negócio já existentes.
+
+Evidência completa em `prd_review.md` (B1). Verificar após a correção, isolado e em conjunto com
+7.0, que a suíte completa do projeto de integração não regride (mecanismo compartilhado).

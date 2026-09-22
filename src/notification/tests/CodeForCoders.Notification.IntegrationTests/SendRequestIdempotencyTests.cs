@@ -29,6 +29,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         var request = CreateRequest(tenantId, Guid.CreateVersion7());
         var emailSender = new FakeTransactionalEmailSender();
         var queue = CreateQueueName();
+        var outputQueue = CreateOutputQueueName();
         using var host = CreateHost(emailSender, queue);
 
         await host.StartAsync(cancellationToken);
@@ -36,12 +37,14 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
+            await ConfigureOutputQueueAsync(channel, outputQueue, cancellationToken);
 
             await PublishRequestAsync(channel, request, cancellationToken);
             await WaitForDeliveredRecordsAsync(
                 tenantId,
                 [request.PedidoId],
                 cancellationToken);
+            await AcknowledgePublishedMessageAsync(channel, outputQueue, cancellationToken);
 
             await PublishRequestAsync(channel, request, cancellationToken);
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
@@ -69,6 +72,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         var secondRequest = CreateRequest(tenantId, Guid.CreateVersion7());
         var emailSender = new FakeTransactionalEmailSender();
         var queue = CreateQueueName();
+        var outputQueue = CreateOutputQueueName();
         using var host = CreateHost(emailSender, queue);
 
         await host.StartAsync(cancellationToken);
@@ -76,6 +80,7 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
         {
             var connectionProvider = host.Services.GetRequiredService<RabbitMqConnectionProvider>();
             await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
+            await ConfigureOutputQueueAsync(channel, outputQueue, cancellationToken);
 
             await PublishRequestAsync(channel, firstRequest, cancellationToken);
             await PublishRequestAsync(channel, secondRequest, cancellationToken);
@@ -89,6 +94,8 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
             Assert.Equal(2, emailSender.SentEmails.Count);
             Assert.NotEqual(records[0].Id, records[1].Id);
             Assert.All(records, record => Assert.Equal(DeliveryStatus.Delivered, record.Status));
+            await AcknowledgePublishedMessageAsync(channel, outputQueue, cancellationToken);
+            await AcknowledgePublishedMessageAsync(channel, outputQueue, cancellationToken);
         }
         finally
         {
@@ -149,6 +156,61 @@ public sealed class SendRequestIdempotencyTests(NotificationIntegrationFixture f
 
     private static string CreateQueueName()
         => $"notification.integration.send-request.{Guid.CreateVersion7():N}";
+
+    private static string CreateOutputQueueName()
+        => $"notification.integration.delivered.{Guid.CreateVersion7():N}";
+
+    private static async Task ConfigureOutputQueueAsync(
+        IChannel channel,
+        string outputQueue,
+        CancellationToken cancellationToken)
+    {
+        await channel.QueueDeclareAsync(
+            outputQueue,
+            durable: false,
+            exclusive: true,
+            autoDelete: true,
+            arguments: null,
+            cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(
+            outputQueue,
+            "notification.integration.events",
+            "notificacao.mensagem-entregue.v1",
+            arguments: null,
+            cancellationToken: cancellationToken);
+    }
+
+    private static async Task AcknowledgePublishedMessageAsync(
+        IChannel channel,
+        string outputQueue,
+        CancellationToken cancellationToken)
+    {
+        var published = await WaitForPublishedMessageAsync(channel, outputQueue, cancellationToken);
+        await channel.BasicAckAsync(
+            published.DeliveryTag,
+            multiple: false,
+            cancellationToken: cancellationToken);
+    }
+
+    private static async Task<BasicGetResult> WaitForPublishedMessageAsync(
+        IChannel channel,
+        string queue,
+        CancellationToken cancellationToken)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            var result = await channel.BasicGetAsync(queue, autoAck: false, cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+        }
+
+        throw new Xunit.Sdk.XunitException("The delivered notification was not published.");
+    }
 
     private static async Task PublishRequestAsync(
         IChannel channel,
