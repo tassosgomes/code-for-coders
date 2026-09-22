@@ -5,8 +5,8 @@
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "last_checkpoint": "5.0",
-  "phase": "checkpoint-task",
-  "active_task": "5.0",
+  "phase": "implement",
+  "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -16,13 +16,13 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "outcome": "checkpoint_ok",
+    "outcome": "task_reopened",
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "5.0",
+    "mode": "reopen-task",
+    "task": "7.0",
     "attempt": 1,
-    "run_id": "run.ZTtQdBIQ",
-    "gate": "passed"
+    "run_id": "run.jRxknAxM",
+    "gate": "not_run"
   },
   "history": [
     {
@@ -649,6 +649,16 @@
       "outcome": "checkpoint_ok",
       "run_id": "run.ZTtQdBIQ",
       "gate": "passed"
+    },
+    {
+      "phase": "reopen-task",
+      "task": "7.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.jRxknAxM",
+      "gate": "not_run"
     }
   ]
 }
