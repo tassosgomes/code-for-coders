@@ -5,25 +5,24 @@
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "last_checkpoint": "7.0",
-  "phase": "prepare-integration",
-  "active_task": null,
+  "phase": "implement",
+  "active_task": "1.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 5,
   "specs": ["techspec.md"],
   "delivery": "branch",
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "outcome": "integration_ready",
+    "outcome": "task_reopened",
     "role": "integrator",
-    "mode": "prepare-integration",
-    "run_id": "run.lYPjsZWw",
-    "gate": "passed",
-    "branch": "feature/notificacao-transacional",
-    "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-    "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    "mode": "reopen-task",
+    "task": "1.0",
+    "attempt": 1,
+    "run_id": "run.9aDDs9Or",
+    "gate": "not_run"
   },
   "history": [
     {
@@ -565,6 +564,39 @@
       "branch": "feature/notificacao-transacional",
       "base_ref": "83978baf6dc03c47aa5a8a593edc95e9f7585ed4",
       "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4"
+    },
+    {
+      "phase": "validating-full",
+      "attempt": 1,
+      "role": "validator",
+      "mode": "full",
+      "outcome": "rejected",
+      "run_id": "run.kgdLCoEc",
+      "gate": "failed",
+      "validated_commit": "c9988d65e7e4110195b8706ef0d2d2032eae146f",
+      "validated_tree": "dbf1e053a78766d87695469bc850914f74e750eb",
+      "report": "tasks/prd-notificacao-transacional/prd_review.md",
+      "blockers": [
+        "B1: dotnet format --verify-no-changes falha (BOM/whitespace) em migrations de 1.0/2.0/5.0/7.0 e NotificationSendRequestConsumerWorker.cs (1.0)",
+        "B2: LayerDependencyTest.InfraDoesNotUseApiNorUseCases falha - TransactionalEmailDeliveryWorker (5.0) e NotificationSendRequestConsumerWorker (1.0) dependem de Application.UseCases diretamente, contra padrao do time (handler deveria ficar em Api/MessageHandlers)",
+        "B3: TimeoutRejectedException real (pipeline de resiliencia de producao) nao e capturado por HttpTransactionalEmailSender/DeliverAcceptedNotification/TransactionalEmailDeliveryWorker (5.0) - derruba o host inteiro (BackgroundServiceExceptionBehavior.StopHost)",
+        "B4: payload com forma invalida (link nao-absoluto) e ack'd como ValidationException e vai para DLQ sem registro (1.0) - viola RN-N10",
+        "B5: DeliveryRecord.Link (token) nao e limpo em MarkDelivered/MarkFailed (1.0), so no expurgo de 30 dias (7.0) - token de recuperacao de senha fica legivel por toda a validade",
+        "B6: mutante sobrevive 4/6 - TransactionalEmailRetryPolicy usa backoff constante, nao crescente (5.0)",
+        "B7: mutante sobrevive - DeliveryRecordPurgeWorker so testado com registro recusado, ramo Delivered nao coberto (7.0)",
+        "B8: mutante sobrevive - contador agregado incrementado na entrega/falha (DeliverAcceptedNotification) sem nenhum teste que o verifique (7.0)"
+      ],
+      "note": "8 bloqueantes reais + 16 recomendacoes; revisao full nao executada por task (gates filtrados nao cobriam lint, teste arquitetural, timeout real de producao nem mutantes). Reportado ao usuario antes de reabrir tasks."
+    },
+    {
+      "phase": "reopen-task",
+      "task": "1.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "reopen-task",
+      "outcome": "task_reopened",
+      "run_id": "run.9aDDs9Or",
+      "gate": "not_run"
     }
   ]
 }
