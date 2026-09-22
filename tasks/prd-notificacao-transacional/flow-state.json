@@ -4,7 +4,7 @@
   "original_base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "base_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
   "target_ref": "83978baf6dc03c47aa5a8a593edc95f9e7585ed4",
-  "last_checkpoint": "d4c2d1412c3eb22c79eecc01ea331ace65891f1d",
+  "last_checkpoint": "3711d12da0a1a69a693d05f14030c56eb78fc8cb",
   "phase": "full-approved",
   "active_task": "8.0",
   "attempt": 1,
@@ -14,7 +14,7 @@
   "specs": [
     "techspec.md"
   ],
-  "delivery": "branch",
+  "delivery": "pr",
   "validated_commit": "a3869da6015085b427c5c94d8d7f2f2bcf96b91c",
   "validated_tree": "983872c2d365f49321bc039200bd27e70e9d8403",
   "last_result": {
@@ -30,7 +30,7 @@
     "blockers": [],
     "recommendations": 6,
     "limitation": "worker de contexto fresco no mesmo runtime/agente do implementer (subagent); diversidade de provedor nao garantida",
-    "next": "checkpoint-task 8.0 -> complete-prd (delivery=branch); decisao do usuario"
+    "next": "checkpoint-task 8.0 done (3711d12) -> complete-prd (delivery=pr, autorizado pelo usuario)"
   },
   "human_intervention": {
     "date": "2026-09-22",
