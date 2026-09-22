@@ -43,6 +43,7 @@ public sealed class NotificationInfrastructureTests(NotificationIntegrationFixtu
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
+                services.AddNotificationMessageHandlers();
             })
             .Build();
 

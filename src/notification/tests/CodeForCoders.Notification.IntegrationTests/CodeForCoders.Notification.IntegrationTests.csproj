@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Notification.Api/CodeForCoders.Notification.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Notification.Application/CodeForCoders.Notification.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Notification.Contracts/CodeForCoders.Notification.Contracts.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Notification.Infra.Data/CodeForCoders.Notification.Infra.Data.csproj" />

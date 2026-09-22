@@ -64,6 +64,7 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
                 NotificationFailureReasons.PermanentProviderFailure,
                 deliveryRecord.Reason);
             Assert.NotNull(deliveryRecord.FailedOn);
+            Assert.Null(deliveryRecord.Link);
 
             var published = await WaitForPublishedMessageAsync(
                 channel,
@@ -146,6 +147,7 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
+                services.AddNotificationMessageHandlers();
                 services.AddSingleton<ITransactionalEmailSender>(emailSender);
             })
             .Build();

@@ -17,7 +17,7 @@ public sealed class AcceptNotificationSendRequest(
         AcceptNotificationSendRequestInput input,
         CancellationToken cancellationToken)
     {
-        await validator.ValidateAndThrowAsync(input, cancellationToken);
+        var validationResult = await validator.ValidateAsync(input, cancellationToken);
         tenantContext.Set(input.Request.TenantId);
 
         var existingRecord = await deliveryRecordRepository.GetByRequestIdAsync(
@@ -29,7 +29,8 @@ public sealed class AcceptNotificationSendRequest(
             return ToOutput(existingRecord);
         }
 
-        var refusalReason = NotificationSendRequestRules.GetRefusalReason(input.Request);
+        var refusalReason = NotificationSendRequestRules.GetRefusalReason(input.Request)
+            ?? (!validationResult.IsValid ? NotificationRefusalReasons.InvalidFormat : null);
         var transitionOn = DateTimeOffset.UtcNow;
         if (refusalReason is not null)
         {
@@ -37,14 +38,14 @@ public sealed class AcceptNotificationSendRequest(
                 input.Request.TenantId,
                 input.Request.PedidoId,
                 input.Request.Destinatario!,
-                input.Request.Dados?.Nome,
-                input.Request.Dados?.Link,
-                input.Request.Finalidade,
-                input.Request.Modelo,
+                OptionalText(input.Request.Dados?.Nome, DeliveryRecord.RecipientNameMaxLength),
+                OptionalText(input.Request.Dados?.Link, DeliveryRecord.LinkMaxLength),
+                OptionalText(input.Request.Finalidade, DeliveryRecord.PurposeMaxLength),
+                OptionalText(input.Request.Modelo, DeliveryRecord.ModelMaxLength),
                 refusalReason,
                 input.Request.SolicitadoEm,
                 transitionOn,
-                input.CorrelationId);
+                OptionalText(input.CorrelationId, DeliveryRecord.CorrelationIdMaxLength));
 
             await deliveryRecordRepository.AddAsync(refusedRecord, cancellationToken);
             await deliveryOutcomeCounterRepository.IncrementAsync(
@@ -77,6 +78,9 @@ public sealed class AcceptNotificationSendRequest(
 
         return ToOutput(record);
     }
+
+    private static string? OptionalText(string? value, int maxLength)
+        => value is not null && value.Length <= maxLength ? value : null;
 
     private static AcceptNotificationSendRequestOutput ToOutput(DeliveryRecord record)
         => new(

@@ -123,7 +123,7 @@ public sealed class DeliveryRecord
             RequestId = requestId,
             Recipient = recipient,
             RecipientName = NullIfWhiteSpace(recipientName),
-            Link = NullIfWhiteSpace(link),
+            Link = null,
             Purpose = NullIfWhiteSpace(purpose),
             Model = NullIfWhiteSpace(model),
             Reason = reason,
@@ -144,6 +144,7 @@ public sealed class DeliveryRecord
         Status = DeliveryStatus.Delivered;
         DeliveredOn = deliveredOn;
         NextAttemptOn = null;
+        Link = null;
     }
 
     public void RegisterProviderAttempt(DateTimeOffset attemptedOn)
@@ -176,6 +177,7 @@ public sealed class DeliveryRecord
         ExhaustedAttempts = exhaustedAttempts;
         FailedOn = failedOn;
         NextAttemptOn = null;
+        Link = null;
     }
 
     public void PurgePersonalData()

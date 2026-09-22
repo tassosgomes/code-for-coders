@@ -48,6 +48,17 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
         await AssertRequestIsRefusedAsync(request, NotificationRefusalReasons.MissingData);
     }
 
+    [Fact(DisplayName = nameof(RequestWithInvalidLinkIsRefusedWithSpecificReason))]
+    public async Task RequestWithInvalidLinkIsRefusedWithSpecificReason()
+    {
+        var request = CreateRequest(
+            dados: new NotificationTemplateDataV1(
+                Nome: "Ana Souza",
+                Link: "accounts.example.invalid/confirm?token=relative"));
+
+        await AssertRequestIsRefusedAsync(request, NotificationRefusalReasons.MissingData);
+    }
+
     private async Task AssertRequestIsRefusedAsync(
         NotificationSendRequestedV1 request,
         string expectedReason)
@@ -72,6 +83,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
             Assert.Equal(expectedReason, deliveryRecord.Reason);
             Assert.Null(deliveryRecord.AcceptedOn);
             Assert.NotNull(deliveryRecord.RefusedOn);
+            Assert.Null(deliveryRecord.Link);
 
             await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
             Assert.Empty(emailSender.SentEmails);
@@ -128,6 +140,7 @@ public sealed class RejectInvalidSendRequestTests(NotificationIntegrationFixture
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
+                services.AddNotificationMessageHandlers();
                 services.AddSingleton<ITransactionalEmailSender>(emailSender);
             })
             .Build();

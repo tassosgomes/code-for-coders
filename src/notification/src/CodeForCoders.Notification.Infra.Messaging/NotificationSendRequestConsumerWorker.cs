@@ -1,12 +1,10 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using CodeForCoders.Notification.Application.Common;
-using CodeForCoders.Notification.Application.UseCases.Notifications.AcceptNotificationSendRequest;
+using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Contracts;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
 using CodeForCoders.Notification.Infra.Messaging.Configuration;
-using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -85,9 +83,10 @@ public sealed class NotificationSendRequestConsumerWorker(
 
                 using var activity = StartConsumerActivity(properties, routingKey, request!.PedidoId);
                 await using var scope = scopeFactory.CreateAsyncScope();
-                var useCase = scope.ServiceProvider.GetRequiredService<IAcceptNotificationSendRequest>();
-                await useCase.ExecuteAsync(
-                    new AcceptNotificationSendRequestInput(request, properties.CorrelationId),
+                var handler = scope.ServiceProvider.GetRequiredService<INotificationSendRequestMessageHandler>();
+                await handler.HandleAsync(
+                    request,
+                    properties.CorrelationId,
                     cancellationToken);
                 await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
             }
@@ -99,11 +98,6 @@ public sealed class NotificationSendRequestConsumerWorker(
                     multiple: false,
                     requeue: false,
                     CancellationToken.None);
-            }
-            catch (ValidationException exception)
-            {
-                logger.LogInformation(exception, "Notification send request was rejected by validation.");
-                await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
             }
             catch (DbUpdateException exception) when (IsDeliveryRecordUniqueViolation(exception))
             {
@@ -119,9 +113,9 @@ public sealed class NotificationSendRequestConsumerWorker(
 
         private static bool IsDeliveryRecordUniqueViolation(DbUpdateException exception)
             => exception.InnerException is PostgresException
-                {
-                    SqlState: PostgresErrorCodes.UniqueViolation,
-                }
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+            }
                 && exception.Entries.Any(entry => entry.Entity is DeliveryRecord);
 
         private static void ValidateEnvelope(NotificationSendRequestedV1? request)
@@ -129,7 +123,8 @@ public sealed class NotificationSendRequestConsumerWorker(
             if (request is null
                 || request.PedidoId == Guid.Empty
                 || request.TenantId == Guid.Empty
-                || string.IsNullOrWhiteSpace(request.Destinatario))
+                || string.IsNullOrWhiteSpace(request.Destinatario)
+                || request.Destinatario.Length > DeliveryRecord.RecipientMaxLength)
             {
                 throw new JsonException("The notification send request payload is invalid.");
             }

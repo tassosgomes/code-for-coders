@@ -163,6 +163,7 @@ public sealed class DeliverPasswordRecoveryEmailTests(NotificationIntegrationFix
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
+                services.AddNotificationMessageHandlers();
                 services.AddSingleton<ITransactionalEmailSender>(emailSender);
             })
             .Build();

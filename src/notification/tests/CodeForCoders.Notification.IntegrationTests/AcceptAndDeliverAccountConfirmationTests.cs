@@ -72,6 +72,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
                 services.AddApplicationConfiguration();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
+                services.AddNotificationMessageHandlers();
                 services.AddSingleton<ITransactionalEmailSender>(emailSender);
             })
             .Build();
@@ -116,6 +117,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
             Assert.True(deliveryRecord.AcceptedOn!.Value >= deliveryRecord.RequestedOn);
             Assert.NotNull(deliveryRecord.DeliveredOn);
             Assert.True(deliveryRecord.DeliveredOn!.Value >= deliveryRecord.AcceptedOn!.Value);
+            Assert.Null(deliveryRecord.Link);
 
             var published = await WaitForPublishedMessageAsync(
                 channel,

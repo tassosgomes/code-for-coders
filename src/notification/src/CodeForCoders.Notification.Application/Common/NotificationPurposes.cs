@@ -16,6 +16,8 @@ public static class NotificationRefusalReasons
     public const string UnknownModel = "modelo desconhecido";
 
     public const string MissingData = "dado faltante";
+
+    public const string InvalidFormat = "forma inválida";
 }
 
 public static class NotificationFailureReasons
