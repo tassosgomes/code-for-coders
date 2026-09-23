@@ -5,9 +5,9 @@
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "target_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
-  "last_checkpoint": "1bcdb48ddbec659ab31f491d6dbadbca8c7683d5",
+  "last_checkpoint": "8f2beeb7ce7fe1cbfd86856c07abacb36ab98760",
   "phase": "checkpoint",
-  "active_task": "2.0",
+  "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -24,12 +24,12 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0",
+    "task": "4.0",
     "attempt": 1,
-    "run_id": "run.0KIpBRsR",
+    "run_id": "run.JWHasUO6",
     "outcome": "checkpoint_ok",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/2.0_task_review.md"
+    "report": "tasks/prd-conta-aluno/4.0_task_review.md"
   },
   "history": [
     {
@@ -410,6 +410,43 @@
       "commits": [
         "1bcdb48ddbec659ab31f491d6dbadbca8c7683d5"
       ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "2.0",
+      "origin": "full",
+      "commits": [
+        "1bcdb48",
+        "ca7b8b6"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "4.0",
+      "origin": "full",
+      "run_id": "run.1nsMhnFs"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.JWHasUO6",
+      "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "4.0",
+      "origin": "full",
+      "run_id": "run.JWHasUO6",
+      "commits": [
+        "8f2beeb7ce7fe1cbfd86856c07abacb36ab98760"
+      ]
     }
   ],
   "open_findings": [
@@ -417,13 +454,9 @@
     "lint react-hooks/refs em registration e confirmation screens",
     "smoke smtp4dev nao executado (1.0/2.0)",
     "SPA confirmacao trata erro transitorio como link invalido (2.0)",
-    "lint react-hooks/refs em student-password-recovery-screen.tsx (4.0)",
-    "links de e-mail sem base path /student/ (confirm-account 1.0, redefinir-senha 4.0) -> 404 no navegador",
     "stack Compose nao aplica migrations automaticamente",
     "possivel falta de teste de contrato interno em 1.0-4.0 (BFF usa stubs)"
   ],
   "fix_policy": "implementer fix com --kind=claude --effort=high (autorizado pelo usuario)",
-  "reopen_queue": [
-    "4.0"
-  ]
+  "reopen_queue": null
 }
