@@ -5,9 +5,9 @@
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "target_ref": null,
-  "last_checkpoint": "2.0",
-  "phase": "checkpoint-task",
-  "active_task": "2.0",
+  "last_checkpoint": "ddd04743cb031caac3e6dc915f860a913d871c3e",
+  "phase": "checkpoint",
+  "active_task": "3.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -22,14 +22,14 @@
   "validated_tree": null,
   "pending_delegation": null,
   "last_result": {
-    "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0",
+    "task": "3.0",
     "attempt": 2,
-    "run_id": "run.Ohhw7GIi",
+    "run_id": "run.gnwufLRb",
+    "outcome": "checkpoint_ok",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/2.0_task_review.md"
+    "report": "tasks/prd-conta-aluno/3.0_task_review.md"
   },
   "history": [
     {
@@ -112,6 +112,71 @@
       "outcome": "checkpoint_ok",
       "run_id": "run.Ohhw7GIi",
       "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "gate_failed",
+      "task": "3.0",
+      "attempt": 1,
+      "run_id": "run.BdKi5aAG"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "gate_failed",
+      "task": "3.0",
+      "attempt": 2,
+      "run_id": "run.Ih9tnGVD"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "gate_failed",
+      "task": "3.0",
+      "attempt": 3,
+      "run_id": "run.CPw874qc"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "blocked",
+      "task": "3.0",
+      "reason": "max_attempts atingido (3/3) por falhas de gate"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "intervention",
+      "task": "3.0",
+      "detail": "Usuario autorizou nova rodada (round 2) com implementer claude effort high; rodada 1 esgotou 3/3 por gate_failed (run.BdKi5aAG, run.Ih9tnGVD, run.CPw874qc)"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "attempt_rejected",
+      "task": "3.0",
+      "round": 2,
+      "attempt": 1,
+      "run_id": "run.KGnJaXuL"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "3.0",
+      "round": 2,
+      "attempt": 2,
+      "run_id": "run.sFXZ5Cid"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "3.0",
+      "run_id": "run.gnwufLRb",
+      "commits": [
+        "ddd04743cb031caac3e6dc915f860a913d871c3e"
+      ]
     }
-  ]
+  ],
+  "open_findings": [
+    "SPA dashboard-screen.test falha (Link sem Router, 1.0)",
+    "lint react-hooks/refs em registration e confirmation screens",
+    "smoke smtp4dev nao executado (1.0/2.0)",
+    "SPA confirmacao trata erro transitorio como link invalido (2.0)"
+  ],
+  "round": 2
 }
