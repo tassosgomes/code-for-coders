@@ -2,7 +2,7 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-001
-version: 1.0
+version: 1.1
 status: approved
 updated: 2026-09-22
 sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1, tasks/prd-notificacao-transacional/prd.md@1.1
@@ -103,6 +103,9 @@ curso.
   **então** ele corresponde à mesma identidade normalizada.
 - **Dado** uma conta de aluno recém-criada, **quando** alguém tenta autenticar antes da
   confirmação, **então** a entrada é negada e a pessoa é orientada a confirmar o e-mail.
+- **Dado** uma senha com menos de oito caracteres ou sem pelo menos uma letra maiúscula, uma
+  minúscula, um dígito e um símbolo, **quando** alguém tenta cadastrar a conta, **então** o
+  cadastro é recusado com orientação de correção e nenhuma Conta é criada.
 
 **Prioridade:** Must Have. **Rastreabilidade:** RN-01, RN-02, RN-06, RN-13, RN-24, RN-26 a RN-28.
 
@@ -191,6 +194,8 @@ indistinguível para e-mail cadastrado e não cadastrado.
   redefinir a senha, **então** a senha não muda e a pessoa pode solicitar nova recuperação.
 - **Dado** uma senha redefinida, **quando** a senha antiga é usada para entrar, **então** a
   autenticação falha.
+- **Dado** uma nova senha que não atende à política aprovada, **quando** alguém tenta concluir a
+  recuperação, **então** a Credencial não muda e o token continua utilizável até seu vencimento.
 
 **Prioridade:** Must Have. **Rastreabilidade:** RN-03 a RN-07, RN-21, RN-26 a RN-28;
 `CAP-026` RF-03.
@@ -209,6 +214,8 @@ Essa mudança tem as mesmas consequências de revogação da redefinição por r
   sessões não mudam.
 - **Dado** outra sessão da mesma Conta, **quando** a troca é concluída, **então** sua próxima
   ação protegida exige nova autenticação.
+- **Dado** uma nova senha que não atende à política aprovada, **quando** o aluno tenta trocá-la,
+  **então** a Credencial e as sessões não mudam.
 
 **Prioridade:** Must Have. **Rastreabilidade:** RN-06, RN-07, RN-08, RN-11.
 
@@ -233,12 +240,17 @@ teclado e tecnologias assistivas; o detalhamento visual cabe ao time de design.
 | DP-02 | Contas de aluno e de ator interno são separadas, inclusive por e-mails distintos (QA-03 do domain doc) | Conta única com papel aluno e interno criaria recuperação ambígua e cruzaria fronteiras de autorização | RF-01, RF-03 |
 | DP-03 | Sessões simultâneas são permitidas (BA16, RN-09) | Sessão única e limite por IP prejudicariam uso legítimo sem evidência de abuso | RF-03, RF-04 |
 | DP-04 | Confirmação e recuperação usam os dois modelos transacionais de `CAP-026` (DP-01 a DP-03 daquele PRD) | Enviar diretamente do domínio de Identidade duplicaria o dono da entrega e do texto | RF-01, RF-02, RF-05 |
+| DP-05 | Senha do aluno tem no mínimo oito caracteres e inclui letra maiúscula, minúscula, dígito e símbolo; espaços não contam como símbolo. Regra confirmada pelo usuário em 2026-09-22 | Deixar a regra em aberto impediria validar cadastro e recuperação de forma consistente | RF-01, RF-05, RF-06 |
+| DP-06 | smtp4dev captura e-mails no ambiente local para testar o fluxo, sem necessidade de provedor ou DNS reais. Escolha confirmada pelo usuário em 2026-09-22 | Exigir provedor de produção antes do teste local atrasaria o aceite funcional | RF-01, RF-02, RF-05 |
 
 ## Restrições Técnicas de Alto Nível
 
 - O canal de e-mail depende da implantação operacional do provedor e do domínio de envio de
   `CAP-026`; a validade dos links é parâmetro configurado e exibido nas mensagens. Não se fixa
   prazo numérico neste PRD.
+- No ambiente local, Notificação envia os dois modelos transacionais ao smtp4dev e o time lê os
+  links na interface dele. Esse teste valida geração, pedido, consumo e renderização do e-mail;
+  o envio a destinatários externos continua dependendo do provedor e DNS de produção.
 - Credenciais e tokens de verificação não são expostos em resposta, log, métrica ou evento
   difundido. O link secreto segue somente no pedido endereçado a Notificação e na mensagem ao
   titular. O e-mail pode constar no pedido de envio, conforme exceção RN-26, e não em telemetria.
@@ -285,10 +297,11 @@ reabrir o ciclo de conta desta entrega.
 
 ## Questões em Aberto
 
-- **QT-01 — Parâmetros de segurança.** Donos: time de segurança e produto; declarar valores
-  antes de operar com alunos reais. Definir o prazo de validade de cada finalidade de link, o
-  prazo de inatividade da sessão e a política de senha. O comportamento de uso único, expiração
-  e revogação já está fechado; a TechSpec deve tratar os valores como configuração explícita.
+- **QT-01 — Prazos de segurança.** Donos: time de segurança e produto; declarar valores
+  antes de operar com alunos reais. Definir o prazo de validade de cada finalidade de link e o
+  prazo de inatividade da sessão. A política de senha está fechada em DP-05; uso único, expiração
+  e revogação já estão fechados. A TechSpec trata os prazos como configuração explícita.
 - **QT-02 — Disponibilidade operacional do e-mail.** Dono: time de plataforma; resolver antes de
   tráfego real. Confirmar provedor, domínio remetente e SPF/DKIM/DMARC da entrega de `CAP-026`.
-  A falta disso impede confirmação e recuperação reais, embora não altere o escopo deste PRD.
+  A falta disso impede confirmação e recuperação com destinatários externos, embora o smtp4dev
+  permita testar o fluxo completo no ambiente local.

@@ -1,0 +1,635 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — conta e autenticação
+  version: 1.0.0
+  description: Recorte de CAP-001, PRD v1.1 de 2026-09-22. Interface SPA → BFF do aluno. O serviço de
+    Identidade decide contas, credenciais e tokens; o BFF mantém sessão opaca.
+  contact:
+    name: Time de Identidade e Acesso
+servers:
+- url: /api/v1
+  description: URL pública versionada do BFF do aluno
+tags:
+- name: Aluno
+  description: Ciclo de conta e sessão do aluno
+paths:
+  /student-accounts:
+    post:
+      tags:
+      - Aluno
+      summary: Cadastrar conta de aluno
+      description: Cria conta não confirmada e pede envio de confirmação. E-mail duplicado de conta não
+        desativada não cria credencial.
+      operationId: registerStudent
+      security: []
+      responses:
+        '202':
+          description: Operação concluída.
+        '400':
+          description: JSON ou campos obrigatórios inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou campos obrigatórios inválidos.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: E-mail já associado a conta não desativada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: E-mail já associado a conta não desativada.
+                    status: 422
+                    code: ACCOUNT_ALREADY_EXISTS
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterStudentRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+  /account-confirmations:
+    post:
+      tags:
+      - Aluno
+      summary: Confirmar e-mail
+      description: Consome token de confirmação de uso único; link de outra finalidade, expirado ou usado
+        não confirma a conta.
+      operationId: confirmStudentAccount
+      security: []
+      responses:
+        '204':
+          description: Operação concluída.
+        '400':
+          description: JSON ou token obrigatório ausente.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou token obrigatório ausente.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: Token inválido, expirado, usado ou de outra finalidade.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Token inválido, expirado, usado ou de outra finalidade.
+                    status: 422
+                    code: CONFIRMATION_LINK_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmAccountRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+  /account-confirmation-requests:
+    post:
+      tags:
+      - Aluno
+      summary: Pedir novo link de confirmação
+      description: Para conta de aluno não confirmada, emite novo pedido de envio. Resposta neutra em
+        qualquer caso para evitar enumeração.
+      operationId: requestAccountConfirmation
+      security: []
+      responses:
+        '202':
+          description: Operação concluída.
+        '400':
+          description: JSON ou e-mail obrigatório inválido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou e-mail obrigatório inválido.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+  /student-sessions:
+    post:
+      tags:
+      - Aluno
+      summary: Entrar como aluno
+      description: Credenciais erradas e e-mail inexistente têm o mesmo erro. Apenas credencial correta
+        de conta não confirmada recebe orientação própria. Cria sessão opaca no BFF; sessões anteriores
+        permanecem ativas.
+      operationId: createStudentSession
+      security: []
+      responses:
+        '200':
+          description: Operação concluída.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentSession'
+          headers:
+            Set-Cookie:
+              description: Cookie de sessão opaco; HttpOnly, Secure, SameSite e Path mínimo.
+              schema:
+                type: string
+        '400':
+          description: JSON ou campos obrigatórios inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou campos obrigatórios inválidos.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '401':
+          description: Credenciais inválidas ou conta desativada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Credenciais inválidas ou conta desativada.
+                    status: 401
+                    code: INVALID_CREDENTIALS
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: E-mail da conta ainda não confirmado.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: E-mail da conta ainda não confirmado.
+                    status: 422
+                    code: EMAIL_NOT_CONFIRMED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStudentSessionRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+  /student-sessions/current:
+    get:
+      tags:
+      - Aluno
+      summary: Consultar sessão atual
+      description: Retorna identidade do aluno e prova CSRF vinculada à sessão; atividade válida renova
+        o prazo de inatividade.
+      operationId: getCurrentStudentSession
+      security:
+      - StudentSessionCookie: []
+      responses:
+        '200':
+          description: Operação concluída.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentSession'
+        '401':
+          description: Sessão ausente, expirada ou revogada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Sessão ausente, expirada ou revogada.
+                    status: 401
+                    code: SESSION_REQUIRED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    delete:
+      tags:
+      - Aluno
+      summary: Sair da sessão atual
+      description: Revoga imediatamente somente a sessão corrente; repetição não reativa sessão.
+      operationId: endCurrentStudentSession
+      security:
+      - StudentSessionCookie: []
+      responses:
+        '204':
+          description: Operação concluída.
+          headers:
+            Set-Cookie:
+              description: Cookie de sessão removido (Max-Age=0), inclusive se a sessão já expirou.
+              schema:
+                type: string
+        '403':
+          description: Prova CSRF ausente ou inválida.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Prova CSRF ausente ou inválida.
+                    status: 403
+                    code: CSRF_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        description: Prova CSRF vinculada à sessão, obtida de GET /student-sessions/current.
+        schema:
+          type: string
+          minLength: 1
+  /password-reset-requests:
+    post:
+      tags:
+      - Aluno
+      summary: Solicitar recuperação de senha
+      description: Resposta 202 e corpo vazio são idênticos para e-mail elegível e inexistente. Só conta
+        elegível gera pedido de envio.
+      operationId: requestPasswordReset
+      security: []
+      responses:
+        '202':
+          description: Operação concluída.
+        '400':
+          description: JSON ou e-mail obrigatório inválido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou e-mail obrigatório inválido.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+  /password-resets:
+    post:
+      tags:
+      - Aluno
+      summary: Redefinir senha por link
+      description: Consome token de recuperação de uso único, invalida demais links pendentes e revoga
+        outras sessões. Conta não confirmada continua não confirmada.
+      operationId: resetStudentPassword
+      security: []
+      responses:
+        '204':
+          description: Operação concluída.
+        '400':
+          description: JSON ou campos obrigatórios inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou campos obrigatórios inválidos.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: Link inválido ou senha fora da política configurada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Link inválido ou senha fora da política configurada.
+                    status: 422
+                    code: PASSWORD_RESET_REJECTED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+  /password-changes:
+    post:
+      tags:
+      - Aluno
+      summary: Trocar senha autenticado
+      description: Confere senha atual, invalida links de recuperação pendentes e revoga todas as outras
+        sessões, preservando a sessão corrente.
+      operationId: changeStudentPassword
+      security:
+      - StudentSessionCookie: []
+      responses:
+        '204':
+          description: Operação concluída.
+        '401':
+          description: Sessão ausente, expirada ou revogada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Sessão ausente, expirada ou revogada.
+                    status: 401
+                    code: SESSION_REQUIRED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '403':
+          description: Prova CSRF ausente ou inválida.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Prova CSRF ausente ou inválida.
+                    status: 403
+                    code: CSRF_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '400':
+          description: JSON ou campos obrigatórios inválidos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: JSON ou campos obrigatórios inválidos.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: Senha atual incorreta ou nova senha fora da política.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                scenario:
+                  value:
+                    type: about:blank
+                    title: Senha atual incorreta ou nova senha fora da política.
+                    status: 422
+                    code: PASSWORD_CHANGE_REJECTED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca única por intenção de escrita. Repetição com mesmo corpo devolve o mesmo
+          resultado na janela de 24 horas; corpo diferente com mesma chave retorna 422.
+        schema:
+          type: string
+          minLength: 1
+      - name: X-CSRF-Token
+        in: header
+        required: true
+        description: Prova CSRF vinculada à sessão, obtida de GET /student-sessions/current.
+        schema:
+          type: string
+          minLength: 1
+components:
+  securitySchemes:
+    StudentSessionCookie:
+      type: apiKey
+      in: cookie
+      name: student_session
+      description: Cookie opaco de sessão, HttpOnly, Secure e SameSite. Clientes não devem ler seu valor.
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+    RegisterStudentRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email: &id001
+          type: string
+          format: email
+          description: E-mail normalizado pelo serviço; nunca aparece em URL ou telemetria.
+        password: &id002
+          type: string
+          format: password
+          minLength: 8
+          description: >-
+            Senha submetida somente sobre TLS. Exige no mínimo oito caracteres e pelo menos
+            uma letra maiúscula, uma minúscula, um dígito e um símbolo; espaço não conta como
+            símbolo. Regra aplicada também a redefinição e troca de senha.
+      required:
+      - name
+      - email
+      - password
+    EmailRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email: *id001
+      required:
+      - email
+    ConfirmAccountRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        token: &id003
+          type: string
+          minLength: 1
+          description: Segredo de uso único recebido no link; enviado no corpo JSON, nunca na URL da API.
+      required:
+      - token
+    CreateStudentSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email: *id001
+        password: *id002
+      required:
+      - email
+      - password
+    StudentSession:
+      type: object
+      additionalProperties: false
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Identidade pública estável da Conta de aluno.
+        name:
+          type: string
+        csrfToken:
+          type: string
+          description: Valor a enviar em X-CSRF-Token nas escritas com sessão. Não é token de autenticação.
+      required:
+      - accountId
+      - name
+      - csrfToken
+      description: A sessão fica no cookie opaco HttpOnly; nenhum bearer token é entregue ao navegador.
+    ResetPasswordRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        token: *id003
+        newPassword: *id002
+      required:
+      - token
+      - newPassword
+    ChangePasswordRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          minLength: 1
+          description: Senha atual; credenciais antigas podem preceder a política vigente.
+        newPassword: *id002
+      required:
+      - currentPassword
+      - newPassword
