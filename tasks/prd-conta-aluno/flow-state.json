@@ -5,13 +5,13 @@
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "target_ref": null,
-  "last_checkpoint": "6127833e2878caea073aae6069607e9a1e50d1f3",
+  "last_checkpoint": "cc7a35cef573b07696b3547c77c6768d25ea3a79",
   "phase": "checkpoint",
-  "active_task": "4.0",
-  "attempt": 2,
+  "active_task": "5.0",
+  "attempt": 3,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 0,
+  "transport_retries": 1,
   "transport": "herdr",
   "specs": [
     "techspec.md",
@@ -24,12 +24,12 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "4.0",
-    "attempt": 2,
-    "run_id": "run.ATSSueoA",
+    "task": "5.0",
+    "attempt": 3,
+    "run_id": "run.hER29Gto",
     "outcome": "checkpoint_ok",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/4.0_task_review.md"
+    "report": "tasks/prd-conta-aluno/5.0_task_review.md"
   },
   "history": [
     {
@@ -258,6 +258,69 @@
       "outcome": "checkpoint_ok",
       "run_id": "run.ATSSueoA",
       "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "4.0",
+      "commits": [
+        "6127833",
+        "991e3e4"
+      ],
+      "note": "reconciliado apos result_invalid"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.dHRKcApP",
+      "reason": "agent_pane_busy",
+      "task": "5.0"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "gate_failed",
+      "task": "5.0",
+      "attempt": 1,
+      "run_id": "run.HmYpTSYS"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "attempt_rejected",
+      "task": "5.0",
+      "attempt": 2,
+      "run_id": "run.wHK7dZBN"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.OUbOOuwz",
+      "reason": "agent_pane_busy",
+      "task": "5.0"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "5.0",
+      "attempt": 3,
+      "run_id": "run.khN344WD"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.gn3NGlGB",
+      "reason": "agent_pane_busy",
+      "task": "5.0",
+      "mode": "checkpoint-task"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "5.0",
+      "attempt": 3,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.hER29Gto",
+      "gate": "passed"
     }
   ],
   "open_findings": [
@@ -267,8 +330,8 @@
     "SPA confirmacao trata erro transitorio como link invalido (2.0)",
     "lint react-hooks/refs em student-password-recovery-screen.tsx (4.0)",
     "links de e-mail sem base path /student/ (confirm-account 1.0, redefinir-senha 4.0) -> 404 no navegador",
-    "stack Compose nao aplica migrations automaticamente"
+    "stack Compose nao aplica migrations automaticamente",
+    "possivel falta de teste de contrato interno em 1.0-4.0 (BFF usa stubs)"
   ],
-  "round": 2,
   "fix_policy": "implementer fix com --kind=claude --effort=high (autorizado pelo usuario)"
 }
