@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router';
 import axios from 'axios';
@@ -58,7 +58,7 @@ export const StudentConfirmationScreen = () => {
       .catch(() => setState('invalid'));
   }, [confirmAsync, navigate, token]);
 
-  const onSubmit = form.handleSubmit(async (input: StudentConfirmationEmailInput) => {
+  const submitConfirmationRequest = async (input: StudentConfirmationEmailInput) => {
     const fingerprint = JSON.stringify(input);
     const attempt = requestAttemptRef.current?.fingerprint === fingerprint
       ? requestAttemptRef.current
@@ -74,7 +74,10 @@ export const StudentConfirmationScreen = () => {
     } catch {
       setState('invalid');
     }
-  });
+  };
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) =>
+    form.handleSubmit(submitConfirmationRequest)(event);
 
   return (
     <main className="page-shell">
