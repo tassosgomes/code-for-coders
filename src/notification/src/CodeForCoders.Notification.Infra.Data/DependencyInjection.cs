@@ -46,6 +46,9 @@ public static class DependencyInjection
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(options => options.Transport is "http" or "smtp", "Email transport must be http or smtp.")
+            .Validate(options => options.Transport != "smtp" || environment.IsDevelopment(), "SMTP transport is only available in Development.")
+            .Validate(options => options.Transport != "smtp" || !string.IsNullOrWhiteSpace(options.SmtpHost), "SMTP host is required.")
             .Validate(
                 options => options.ValidityHoursByPurpose.TryGetValue("confirmacao-de-conta", out var accountValidity)
                     && accountValidity > 0,

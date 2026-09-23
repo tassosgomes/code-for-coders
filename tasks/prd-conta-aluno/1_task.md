@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentRegistrationTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentRegistrationTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentRegistration'
@@ -40,6 +40,6 @@ Consumir o link e reenviá-lo (2.0), entrar (3.0), recuperar ou trocar senha (4.
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
-- [ ] Cadastro válido produz uma Conta não confirmada, um fato e um pedido aceito por Notificação; o link aparece no smtp4dev local e nenhum token/JWT aparece em resposta ou telemetria.
-- [ ] Duplicidade, senha inválida, replay conflitante e corrida não criam Conta, Credencial ou pedido indevidos; retry do outbox mantém `pedidoId`.
+- [x] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
+- [x] Cadastro válido produz uma Conta não confirmada, um fato e um pedido aceito por Notificação; o link aparece no smtp4dev local e nenhum token/JWT aparece em resposta ou telemetria.
+- [x] Duplicidade, senha inválida, replay conflitante e corrida não criam Conta, Credencial ou pedido indevidos; retry do outbox mantém `pedidoId`.

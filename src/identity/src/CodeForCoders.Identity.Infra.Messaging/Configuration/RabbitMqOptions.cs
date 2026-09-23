@@ -25,6 +25,9 @@ public sealed class RabbitMqOptions
     public string Exchange { get; set; } = "identity.events";
 
     [Required]
+    public string NotificationExchange { get; set; } = "notification.events.default";
+
+    [Required]
     public string DeadLetterExchange { get; set; } = "identity.events.dlx";
 
     [Required]

@@ -30,6 +30,7 @@ public sealed class BffSecurityMiddleware(
         }
 
         if (session is not null && IsUnsafeMethod(context.Request.Method)
+            && !IsAnonymousRegistration(context.Request.Path)
             && !CsrfProtection.IsValid(
                 context.Request.Cookies[settings.CsrfCookieName],
                 context.Request.Headers[settings.CsrfHeaderName].FirstOrDefault()))
@@ -46,4 +47,7 @@ public sealed class BffSecurityMiddleware(
             || HttpMethods.IsPut(method)
             || HttpMethods.IsPatch(method)
             || HttpMethods.IsDelete(method);
+
+    private static bool IsAnonymousRegistration(PathString path)
+        => path.Equals("/api/v1/student-accounts", StringComparison.OrdinalIgnoreCase);
 }

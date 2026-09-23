@@ -26,6 +26,11 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
             .HasColumnName("routing_key")
             .HasMaxLength(200)
             .IsRequired();
+        builder.Property(message => message.Exchange)
+            .HasColumnName("exchange")
+            .HasMaxLength(200)
+            .HasDefaultValue("identity.events")
+            .IsRequired();
         builder.Property(message => message.Payload)
             .HasColumnName("payload")
             .HasColumnType("jsonb")
@@ -46,6 +51,9 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.TraceParent)
             .HasColumnName("trace_parent")
             .HasMaxLength(55);
+        builder.Property(message => message.CorrelationId)
+            .HasColumnName("correlation_id")
+            .HasMaxLength(200);
 
         builder.HasIndex(message => message.Id)
             .HasDatabaseName("ix_outbox_messages_pending")

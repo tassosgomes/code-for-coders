@@ -1,5 +1,6 @@
 using CodeForCoders.Identity.Application.Common;
 using CodeForCoders.Identity.Infra.Data;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -13,6 +14,7 @@ namespace CodeForCoders.Identity.EndToEndTests;
 
 public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private static readonly RSA ServiceAssertionKey = RSA.Create(2048);
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_identity")
         .WithUsername("code_for_coders_identity")
@@ -36,6 +38,13 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
+        builder.UseSetting("StudentAccount:ConfirmationBaseUrl", "https://students.example.test/confirm-account");
+        builder.UseSetting("StudentAccount:ConfirmationLifetimeHours", "24");
+        builder.UseSetting("Idempotency:FingerprintKeyBase64", Convert.ToBase64String(new byte[32]));
+        builder.UseSetting("ServiceAssertions:Issuer", "bff-student");
+        builder.UseSetting("ServiceAssertions:Audience", "identity-internal");
+        builder.UseSetting("ServiceAssertions:PublicKeys:test-key", Convert.ToBase64String(ServiceAssertionKey.ExportSubjectPublicKeyInfo()));
+        builder.UseSetting("ServiceAssertions:AllowedTenantIds:0", "00000000-0000-7000-8000-000000000001");
         builder.ConfigureTestServices(services =>
         {
             var hostedServices = services

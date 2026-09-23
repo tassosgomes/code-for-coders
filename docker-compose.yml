@@ -106,6 +106,14 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=code-for-coders-local
+      RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      StudentAccount__ConfirmationBaseUrl: ${STUDENT_ACCOUNT_CONFIRMATION_URL:-http://localhost:8082/confirm-account}
+      StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
+      Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set IDENTITY_IDEMPOTENCY_KEY_B64 for local development}
+      ServiceAssertions__Issuer: bff-student
+      ServiceAssertions__Audience: identity-internal
+      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set BFF_IDENTITY_PUBLIC_KEY_B64 for local development}
+      ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     ports:
       - "5101:8080"
     depends_on: *api-dependencies
@@ -153,6 +161,12 @@ services:
     depends_on: *api-dependencies
     healthcheck: *api-healthcheck
 
+  smtp4dev:
+    image: rnwood/smtp4dev:v3
+    container_name: code-for-coders-smtp4dev
+    ports:
+      - "127.0.0.1:5000:80"
+
   notification:
     image: code-for-coders-notification:local
     build:
@@ -162,9 +176,20 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=code-for-coders-local
+      Email__Transport: smtp
+      Email__FromAddress: no-reply@codeforcoders.local
+      Email__SendingDomain: codeforcoders.local
+      Email__SmtpHost: smtp4dev
+      Email__SmtpPort: 25
+      Email__SmtpEnableSsl: "false"
+      Email__ValidityHoursByPurpose__confirmacao-de-conta: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
+      Notification__Namespace: ${NOTIFICATION_NAMESPACE:-default}
     ports:
       - "5105:8080"
-    depends_on: *api-dependencies
+    depends_on:
+      <<: *api-dependencies
+      smtp4dev:
+        condition: service_started
     healthcheck: *api-healthcheck
 
   audit:
@@ -178,7 +203,8 @@ services:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit;Password=code-for-coders-local
     ports:
       - "5106:8080"
-    depends_on: *api-dependencies
+    depends_on:
+      <<: *api-dependencies
     healthcheck: *api-healthcheck
 
   bff-admin:
@@ -209,6 +235,15 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=code-for-coders-local
       ReverseProxy__Clusters__student-backend__Destinations__destination__Address: http://identity:8080/
+      StudentIdentity__BaseAddress: http://identity:8080/
+      StudentIdentity__Issuer: bff-student
+      StudentIdentity__Audience: identity-internal
+      StudentIdentity__Scope: student-accounts:create
+      StudentIdentity__SigningKeyId: local-dev-1
+      StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set BFF_IDENTITY_PRIVATE_KEY_B64 for local development}
+      StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Cors__AllowedOrigins__0: http://localhost:8082
+      Cors__AllowedOrigins__1: http://localhost:5173
     ports:
       - "5108:8080"
     depends_on:

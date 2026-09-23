@@ -53,6 +53,76 @@ a {
   padding: 0.65rem 0.9rem;
 }
 
+.registration-form,
+.registration-message {
+  background: #ffffff;
+  border: 1px solid #dce4f0;
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2.5rem rgb(23 32 51 / 8%);
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  max-width: 600px;
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.form-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.form-field label {
+  font-weight: 700;
+}
+
+.form-field input {
+  border: 1px solid #aebbd0;
+  border-radius: 0.6rem;
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+  width: 100%;
+}
+
+.form-field input:focus-visible {
+  border-color: #155eef;
+  outline: 3px solid rgb(21 94 239 / 20%);
+}
+
+.form-field input[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.field-error,
+.form-error {
+  color: #b42318;
+  margin: 0;
+}
+
+.password-hint {
+  color: #53627a;
+  font-size: 0.9rem;
+  margin: -0.5rem 0 0;
+}
+
+.primary-button {
+  background: #155eef;
+  border: 1px solid #155eef;
+  border-radius: 0.6rem;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.8rem 1rem;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.registration-message {
+  display: block;
+}
+
 .menu-button:hover,
 .secondary-button:hover {
   border-color: #155eef;

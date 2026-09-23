@@ -1,4 +1,6 @@
 using CodeForCoders.Identity.Application.Interfaces;
+using CodeForCoders.Identity.Application.Common;
+using CodeForCoders.Identity.Infra.Data.Accounts;
 using CodeForCoders.Identity.Infra.Data.Configuration;
 using CodeForCoders.Identity.Infra.Data.Health;
 using CodeForCoders.Identity.Infra.Data.Outbox;
@@ -32,6 +34,24 @@ public static class DependencyInjection
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, IdentityUnitOfWork>();
+        services.AddScoped<IIdentityRegistrationStore, IdentityRegistrationStore>();
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
+        services.AddOptions<RegistrationOptions>()
+            .Bind(configuration.GetSection(RegistrationOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.ConfirmationBaseUrl, UriKind.Absolute, out var uri)
+                && uri.Scheme is "http" or "https", "Student account confirmation URL must be absolute HTTP(S).")
+            .Validate(options => options.ConfirmationLifetimeHours > 0, "Student account confirmation lifetime must be positive.")
+            .ValidateOnStart();
+        services.AddOptions<IdempotencyOptions>()
+            .Bind(configuration.GetSection(IdempotencyOptions.SectionName))
+            .Validate(options => IsStrongKey(options.FingerprintKeyBase64), "Idempotency fingerprint key must contain at least 256 bits.")
+            .ValidateOnStart();
+        services.AddOptions<OutboxDestinationOptions>()
+            .Bind(configuration.GetSection(OutboxDestinationOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Exchange), "Identity exchange is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.NotificationExchange), "Notification exchange is required.")
+            .ValidateOnStart();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Valkey connection string is required.")
@@ -39,5 +59,17 @@ public static class DependencyInjection
         services.AddSingleton<ValkeyConnectionProvider>();
 
         return services;
+    }
+
+    private static bool IsStrongKey(string base64Key)
+    {
+        try
+        {
+            return Convert.FromBase64String(base64Key).Length >= 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

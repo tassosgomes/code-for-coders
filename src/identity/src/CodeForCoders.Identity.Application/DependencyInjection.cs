@@ -1,5 +1,8 @@
 using CodeForCoders.Identity.Application.Common;
+using CodeForCoders.Identity.Application.Interfaces;
+using CodeForCoders.Identity.Application.Services;
 using CodeForCoders.Identity.Application.UseCases;
+using CodeForCoders.Identity.Application.UseCases.Accounts.RegisterStudentAccount;
 using CodeForCoders.Identity.Application.UseCases.Platform.RecordPlatformHeartbeat;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +15,10 @@ public static class DependencyInjection
     {
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
+        services.AddScoped<IValidator<RegisterStudentAccountInput>, RegisterStudentAccountInputValidator>();
+        services.AddScoped<IStudentRegistrationMessageWriter, StudentRegistrationMessageWriter>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.AddSingleton<IIdempotencyFingerprinter, IdempotencyFingerprinter>();
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()
             .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<,>)))

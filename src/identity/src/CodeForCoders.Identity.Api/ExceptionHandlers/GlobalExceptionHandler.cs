@@ -15,28 +15,38 @@ public sealed class GlobalExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
-        var (status, type, title, detail) = exception switch
+        var (status, type, title, detail, code) = exception switch
         {
+            StudentRegistrationException registrationException => (
+                registrationException.StatusCode,
+                "/problems/student-registration",
+                registrationException.Title,
+                registrationException.Message,
+                registrationException.Code),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",
                 "Validation failed",
-                "One or more validation errors occurred."),
+                "One or more validation errors occurred.",
+                "INVALID_REQUEST"),
             NotFoundException => (
                 StatusCodes.Status404NotFound,
                 "/problems/not-found",
                 "Resource not found",
-                exception.Message),
+                exception.Message,
+                "NOT_FOUND"),
             EntityValidationException or RelatedAggregateException => (
                 StatusCodes.Status422UnprocessableEntity,
                 "/problems/business-rule-violation",
                 "Business rule violation",
-                exception.Message),
+                exception.Message,
+                "BUSINESS_RULE_VIOLATION"),
             _ => (
                 StatusCodes.Status500InternalServerError,
                 "/problems/unexpected-error",
                 "Unexpected error",
-                "An unexpected error occurred.")
+                "An unexpected error occurred.",
+                "INTERNAL_ERROR")
         };
 
         if (status >= StatusCodes.Status500InternalServerError)
@@ -58,6 +68,7 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
+        problemDetails.Extensions["code"] = code;
         if (exception is ValidationException validationException)
         {
             problemDetails.Extensions["errors"] = validationException.Errors
