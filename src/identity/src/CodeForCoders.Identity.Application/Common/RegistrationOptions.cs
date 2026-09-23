@@ -7,4 +7,8 @@ public sealed class RegistrationOptions
     public string ConfirmationBaseUrl { get; set; } = string.Empty;
 
     public int ConfirmationLifetimeHours { get; set; } = 24;
+
+    public string PasswordResetBaseUrl { get; set; } = string.Empty;
+
+    public int PasswordResetLifetimeHours { get; set; } = 1;
 }

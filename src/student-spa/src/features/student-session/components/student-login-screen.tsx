@@ -91,6 +91,7 @@ export const StudentLoginScreen = () => {
       )}
 
       <p>Não tem uma conta? <Link className="primary-link" to={paths.studentRegistration.getHref()}>Criar conta</Link></p>
+      <p><Link className="primary-link" to={paths.studentPasswordRecovery.getHref()}>Esqueceu sua senha?</Link></p>
     </main>
   );
 };

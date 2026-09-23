@@ -158,7 +158,7 @@ public sealed class StudentConfirmationTests(IdentityIntegrationFixture fixture)
             .ToListAsync(cancellationToken);
         Assert.Equal(2, requests.Count);
         Assert.Equal("notification.events.default", requests[^1].Exchange);
-        using var payload = JsonDocument.Parse(requests[^1].Payload);
+        using var payload = JsonDocument.Parse(OutboxTestProtection.ReadPayload(requests[^1]));
         Assert.Equal("student@example.com", payload.RootElement.GetProperty("destinatario").GetString());
         Assert.Equal("confirmacao-de-conta", payload.RootElement.GetProperty("finalidade").GetString());
         Assert.Equal("confirmacao-de-conta", payload.RootElement.GetProperty("modelo").GetString());
@@ -182,7 +182,7 @@ public sealed class StudentConfirmationTests(IdentityIntegrationFixture fixture)
         var request = await dbContext.OutboxMessages.SingleAsync(
             message => message.RoutingKey == "notificacao.envio-solicitado.v1",
             cancellationToken);
-        using var payload = JsonDocument.Parse(request.Payload);
+        using var payload = JsonDocument.Parse(OutboxTestProtection.ReadPayload(request));
         var link = payload.RootElement.GetProperty("dados").GetProperty("link").GetString()!;
         return Uri.UnescapeDataString(new Uri(link).Query.TrimStart('?').Split("token=", 2)[1]);
     }
@@ -211,7 +211,7 @@ public sealed class StudentConfirmationTests(IdentityIntegrationFixture fixture)
         var destinations = Destinations();
         return new RegisterStudentAccount(
             new IdentityRegistrationStore(dbContext),
-            new StudentRegistrationMessageWriter(new OutboxMessageWriter(dbContext, destinations), RegistrationOptions(), destinations),
+            new StudentRegistrationMessageWriter(new OutboxMessageWriter(dbContext, destinations, OutboxTestProtection.Protector), RegistrationOptions(), destinations),
             new IdentityUnitOfWork(dbContext),
             new Pbkdf2PasswordHasher(),
             CreateFingerprinter(),
@@ -224,7 +224,7 @@ public sealed class StudentConfirmationTests(IdentityIntegrationFixture fixture)
     {
         var destinations = Destinations();
         return new StudentConfirmationMessageWriter(
-            new OutboxMessageWriter(dbContext, destinations),
+            new OutboxMessageWriter(dbContext, destinations, OutboxTestProtection.Protector),
             RegistrationOptions(),
             destinations);
     }

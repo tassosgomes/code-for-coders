@@ -5,6 +5,8 @@ using CodeForCoders.Identity.Application.UseCases;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RegisterStudentAccount;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ConfirmStudentAccount;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RequestStudentAccountConfirmation;
+using CodeForCoders.Identity.Application.UseCases.Accounts.RequestStudentPasswordReset;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ResetStudentPassword;
 using CodeForCoders.Identity.Application.UseCases.Accounts.AuthenticateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStudentSession;
@@ -23,11 +25,14 @@ public static class DependencyInjection
         services.AddScoped<IValidator<RegisterStudentAccountInput>, RegisterStudentAccountInputValidator>();
         services.AddScoped<IValidator<ConfirmStudentAccountInput>, ConfirmStudentAccountInputValidator>();
         services.AddScoped<IValidator<RequestStudentAccountConfirmationInput>, RequestStudentAccountConfirmationInputValidator>();
+        services.AddScoped<IValidator<RequestStudentPasswordResetInput>, RequestStudentPasswordResetInputValidator>();
+        services.AddScoped<IValidator<ResetStudentPasswordInput>, ResetStudentPasswordInputValidator>();
         services.AddScoped<IValidator<AuthenticateStudentSessionInput>, AuthenticateStudentSessionInputValidator>();
         services.AddScoped<IValidator<ValidateStudentSessionInput>, ValidateStudentSessionInputValidator>();
         services.AddScoped<IValidator<RevokeStudentSessionInput>, RevokeStudentSessionInputValidator>();
         services.AddScoped<IStudentRegistrationMessageWriter, StudentRegistrationMessageWriter>();
         services.AddScoped<IStudentConfirmationMessageWriter, StudentConfirmationMessageWriter>();
+        services.AddScoped<IStudentPasswordRecoveryMessageWriter, StudentPasswordRecoveryMessageWriter>();
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddSingleton<IIdempotencyFingerprinter, IdempotencyFingerprinter>();
         services.Scan(scan => scan

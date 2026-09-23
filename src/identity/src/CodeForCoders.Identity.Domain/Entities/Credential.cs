@@ -39,4 +39,14 @@ public sealed class Credential
             CreatedOn = createdOn,
         };
     }
+
+    public void ReplacePasswordHash(string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash))
+        {
+            throw new EntityValidationException("A derived password is required.");
+        }
+
+        PasswordHash = passwordHash;
+    }
 }

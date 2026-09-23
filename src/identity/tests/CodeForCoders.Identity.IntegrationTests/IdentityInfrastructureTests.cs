@@ -35,7 +35,10 @@ public sealed class IdentityInfrastructureTests(IdentityIntegrationFixture fixtu
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
             ["StudentAccount:ConfirmationBaseUrl"] = "https://students.example.test/confirm-account",
             ["StudentAccount:ConfirmationLifetimeHours"] = "24",
+            ["StudentAccount:PasswordResetBaseUrl"] = "https://students.example.test/redefinir-senha",
+            ["StudentAccount:PasswordResetLifetimeHours"] = "1",
             ["Idempotency:FingerprintKeyBase64"] = Convert.ToBase64String(new byte[32]),
+            ["OutboxProtection:KeyBase64"] = Convert.ToBase64String(new byte[32]),
         };
 
         using var host = Host.CreateDefaultBuilder()

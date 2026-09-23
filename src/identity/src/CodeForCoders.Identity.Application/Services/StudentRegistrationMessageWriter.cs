@@ -57,7 +57,8 @@ public sealed class StudentRegistrationMessageWriter(
                 occurredOn,
                 Activity.Current?.Id,
                 destinationOptions.Value.NotificationExchange,
-                correlationId),
+                correlationId,
+                ProtectPayload: true),
             cancellationToken);
     }
 

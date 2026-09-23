@@ -10,7 +10,7 @@ public sealed class StudentIdentityOptions
 
     public string Audience { get; set; } = "identity-internal";
 
-    public string Scope { get; set; } = "student-accounts:create student-accounts:confirm student-accounts:request-confirmation";
+    public string Scope { get; set; } = "student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke student-password-resets:request student-password-resets:execute";
 
     public string SigningKeyId { get; set; } = string.Empty;
 

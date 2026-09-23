@@ -41,6 +41,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("StudentAccount:ConfirmationBaseUrl", "https://students.example.test/confirm-account");
         builder.UseSetting("StudentAccount:ConfirmationLifetimeHours", "24");
         builder.UseSetting("Idempotency:FingerprintKeyBase64", Convert.ToBase64String(new byte[32]));
+        builder.UseSetting("OutboxProtection:KeyBase64", Convert.ToBase64String(new byte[32]));
         builder.UseSetting("ServiceAssertions:Issuer", "bff-student");
         builder.UseSetting("ServiceAssertions:Audience", "identity-internal");
         builder.UseSetting("ServiceAssertions:PublicKeys:test-key", Convert.ToBase64String(ServiceAssertionKey.ExportSubjectPublicKeyInfo()));

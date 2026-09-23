@@ -56,7 +56,9 @@ public sealed class StudentRegistrationTests(IdentityIntegrationFixture fixture)
 
         var sendRequest = Assert.Single(messages, message => message.RoutingKey == "notificacao.envio-solicitado.v1");
         Assert.Equal("notification.events.default", sendRequest.Exchange);
-        using var payload = JsonDocument.Parse(sendRequest.Payload);
+        Assert.DoesNotContain("student@example.com", sendRequest.Payload, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("token=", sendRequest.Payload, StringComparison.Ordinal);
+        using var payload = JsonDocument.Parse(OutboxTestProtection.ReadPayload(sendRequest));
         Assert.Equal("student@example.com", payload.RootElement.GetProperty("destinatario").GetString());
         Assert.Contains("token=", payload.RootElement.GetProperty("dados").GetProperty("link").GetString(), StringComparison.Ordinal);
 
@@ -100,7 +102,7 @@ public sealed class StudentRegistrationTests(IdentityIntegrationFixture fixture)
             await channel.QueueBindAsync(queue.QueueName, message.Exchange, message.RoutingKey, cancellationToken: cancellationToken);
         }
 
-        var publisher = new RabbitMqPublisher(connectionProvider);
+        var publisher = new RabbitMqPublisher(connectionProvider, OutboxTestProtection.Protector);
         foreach (var message in messages)
         {
             await publisher.PublishAsync(message, cancellationToken);
@@ -249,7 +251,7 @@ public sealed class StudentRegistrationTests(IdentityIntegrationFixture fixture)
         return new RegisterStudentAccount(
             new IdentityRegistrationStore(dbContext),
             new StudentRegistrationMessageWriter(
-                new OutboxMessageWriter(dbContext, destinationOptions),
+                new OutboxMessageWriter(dbContext, destinationOptions, OutboxTestProtection.Protector),
                 Options.Create(new RegistrationOptions
                 {
                     ConfirmationBaseUrl = "https://students.example.test/confirm-account",

@@ -109,7 +109,10 @@ services:
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
       StudentAccount__ConfirmationBaseUrl: ${STUDENT_ACCOUNT_CONFIRMATION_URL:-http://localhost:8082/confirm-account}
       StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
+      StudentAccount__PasswordResetBaseUrl: ${STUDENT_PASSWORD_RESET_URL:-http://localhost:8082/redefinir-senha}
+      StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set IDENTITY_IDEMPOTENCY_KEY_B64 for local development}
+      OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set IDENTITY_OUTBOX_KEY_B64 for local development}
       ServiceAssertions__Issuer: bff-student
       ServiceAssertions__Audience: identity-internal
       ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set BFF_IDENTITY_PUBLIC_KEY_B64 for local development}
@@ -183,6 +186,7 @@ services:
       Email__SmtpPort: 25
       Email__SmtpEnableSsl: "false"
       Email__ValidityHoursByPurpose__confirmacao-de-conta: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
+      Email__ValidityHoursByPurpose__recuperacao-de-senha: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
       Notification__Namespace: ${NOTIFICATION_NAMESPACE:-default}
     ports:
       - "5105:8080"
@@ -238,7 +242,7 @@ services:
       StudentIdentity__BaseAddress: http://identity:8080/
       StudentIdentity__Issuer: bff-student
       StudentIdentity__Audience: identity-internal
-      StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke
+      StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke student-password-resets:request student-password-resets:execute
       StudentIdentity__SigningKeyId: local-dev-1
       StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set BFF_IDENTITY_PRIVATE_KEY_B64 for local development}
       StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}

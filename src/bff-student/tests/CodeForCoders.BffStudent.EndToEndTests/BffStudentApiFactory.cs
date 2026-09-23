@@ -21,6 +21,8 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
 
     public StudentRegistrationIdentityClientStub StudentRegistrationClient { get; } = new();
 
+    public StudentPasswordRecoveryIdentityClientStub StudentPasswordRecoveryClient { get; } = new();
+
     public StudentSessionIdentityClientStub StudentSessionClient { get; } = new();
 
     public InMemoryBffSessionStore SessionStore { get; } = new();
@@ -56,6 +58,8 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
         {
             services.RemoveAll<IStudentRegistrationIdentityClient>();
             services.AddSingleton<IStudentRegistrationIdentityClient>(StudentRegistrationClient);
+            services.RemoveAll<IStudentPasswordRecoveryIdentityClient>();
+            services.AddSingleton<IStudentPasswordRecoveryIdentityClient>(StudentPasswordRecoveryClient);
             services.RemoveAll<IStudentSessionIdentityClient>();
             services.AddSingleton<IStudentSessionIdentityClient>(StudentSessionClient);
             services.RemoveAll<IBffSessionStore>();

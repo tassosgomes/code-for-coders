@@ -1,8 +1,9 @@
 # Local student registration
 
 The local stack signs BFF-to-Identity assertions with an ephemeral RSA key and HMACs idempotency
-keys and request fingerprints. Generate those values in the shell that starts Compose; no key file
-is written into the repository:
+keys and request fingerprints. Identity also encrypts addressed notification requests (recipient and
+tokenized link) in its outbox with a 256-bit key and decrypts them only when publishing. Generate
+those values in the shell that starts Compose; no key file is written into the repository:
 
 ```bash
 set -eu
@@ -14,6 +15,7 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_dir/bff-
 export BFF_IDENTITY_PRIVATE_KEY_B64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$key_dir/bff-private.pem" | base64 | tr -d '\n')"
 export BFF_IDENTITY_PUBLIC_KEY_B64="$(openssl pkey -in "$key_dir/bff-private.pem" -pubout -outform DER | base64 | tr -d '\n')"
 export IDENTITY_IDEMPOTENCY_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
+export IDENTITY_OUTBOX_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
 
 docker compose up --build
 ```

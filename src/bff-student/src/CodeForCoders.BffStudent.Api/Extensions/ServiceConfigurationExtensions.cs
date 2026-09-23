@@ -31,7 +31,20 @@ public static class ServiceConfigurationExtensions
             .Validate(options => IsValidPrivateKey(options.SigningKeyBase64), "Student Identity signing key must be an RSA PKCS#8 key of at least 2048 bits.")
             .ValidateOnStart();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+        builder.Services.AddSingleton<ServiceAssertionTokenFactory>();
         builder.Services.AddHttpClient<IStudentRegistrationIdentityClient, StudentRegistrationIdentityClient>((provider, client) =>
+            {
+                var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StudentIdentityOptions>>().Value;
+                client.BaseAddress = new Uri(options.BaseAddress);
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
+        builder.Services.AddHttpClient<IStudentPasswordRecoveryIdentityClient, StudentPasswordRecoveryIdentityClient>((provider, client) =>
             {
                 var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StudentIdentityOptions>>().Value;
                 client.BaseAddress = new Uri(options.BaseAddress);

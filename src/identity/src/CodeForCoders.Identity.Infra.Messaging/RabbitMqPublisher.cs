@@ -6,10 +6,12 @@ using RabbitMQ.Client.Exceptions;
 namespace CodeForCoders.Identity.Infra.Messaging;
 
 public sealed class RabbitMqPublisher(
-    RabbitMqConnectionProvider connectionProvider)
+    RabbitMqConnectionProvider connectionProvider,
+    OutboxPayloadProtector payloadProtector)
 {
     public async Task PublishAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
+        var body = Encoding.UTF8.GetBytes(payloadProtector.Unprotect(message));
         try
         {
             await using var channel = await connectionProvider.CreatePublisherChannelAsync(cancellationToken);
@@ -27,7 +29,7 @@ public sealed class RabbitMqPublisher(
                 routingKey: message.RoutingKey,
                 mandatory: true,
                 basicProperties: properties,
-                body: Encoding.UTF8.GetBytes(message.Payload),
+                body: body,
                 cancellationToken);
         }
         catch (PublishException exception)

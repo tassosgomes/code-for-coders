@@ -29,6 +29,12 @@ public sealed class GlobalExceptionHandler(
                 confirmationException.Title,
                 confirmationException.Message,
                 confirmationException.Code),
+            StudentPasswordRecoveryException recoveryException => (
+                recoveryException.StatusCode,
+                "/problems/student-password-recovery",
+                recoveryException.Title,
+                recoveryException.Message,
+                recoveryException.Code),
             StudentSessionException sessionException => (
                 sessionException.StatusCode,
                 "/problems/student-session",

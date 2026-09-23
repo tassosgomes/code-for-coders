@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: [3.0]
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentPasswordRecoveryTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentPasswordRecoveryTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentPasswordRecovery'
@@ -41,3 +41,26 @@ Troca com senha atual e preservação da sessão corrente (5.0). Entrega a desti
 - [ ] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
 - [ ] Pedido para conta elegível e inelegível tem resposta pública idêntica; só a elegível gera mensagem capturada no smtp4dev.
 - [ ] Link válido troca a senha uma vez, mantém estado de confirmação e revoga sessões; token inválido ou senha fora da política preserva Credencial e sessões.
+
+## Decisão registrada (intervenção 2026-09-23)
+
+Bloqueante da revisão `run.05m9FlZW`: o token de verificação chegava em claro ao payload JSONB do outbox pelo link do
+pedido `notificacao.envio-solicitado.v1`. Decisão do responsável pelo produto: **cifrar no outbox**. Identity cifra o
+payload dos pedidos endereçados (que carregam link/destinatário) ao gravar a intenção, com chave de proteção
+fornecida por configuração validada na partida e sem segredo versionado, e decifra somente no publisher antes de
+publicar. Entrega e retry mantêm o mesmo `pedidoId`. Fatos difundidos continuam sem segredo e não precisam de cifra.
+A proteção vale para todo pedido endereçado gravado pelo writer compartilhado, incluindo os de confirmação das
+tasks 1.0/2.0. A evidência deve provar que o payload persistido não contém o token em claro e que a mensagem publicada
+ainda carrega o link correto.
+
+## Autorização de ambiente para o smoke (2026-09-23)
+
+O responsável autorizou parar o stack Compose `code-for-coders-*` em execução (de outra checkout) e subir o stack
+desta worktree para o smoke no smtp4dev, com chaves efêmeras geradas localmente conforme
+`docs/student-registration-local-development.md`, sem versionar nenhuma chave. O smoke deve cobrir cadastro →
+e-mail de confirmação, reenvio e pedido de recuperação → e-mail com link de redefinição capturado no smtp4dev.
+Registre a evidência no relatório.
+
+Nota do orquestrador (revisão `run.vWr3VWGi`): o stack desta worktree está em execução com `bff-student` caindo na
+partida por DI ausente de `ServiceAssertionTokenFactory`. Após corrigir, confirme que `bff-student` sobe saudável no
+Compose (a autorização acima vale também para reconstruir esse serviço) e, se possível, capture o smoke no smtp4dev.

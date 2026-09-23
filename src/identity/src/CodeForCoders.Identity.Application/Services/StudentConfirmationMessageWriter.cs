@@ -62,7 +62,8 @@ public sealed class StudentConfirmationMessageWriter(
                 requestedOn,
                 Activity.Current?.Id,
                 destinationOptions.Value.NotificationExchange,
-                ConfirmationCorrelationId(account)),
+                ConfirmationCorrelationId(account),
+                ProtectPayload: true),
             cancellationToken);
     }
 

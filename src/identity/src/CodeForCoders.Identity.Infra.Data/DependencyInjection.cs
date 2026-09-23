@@ -33,9 +33,11 @@ public static class DependencyInjection
             }
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
+        services.AddSingleton<OutboxPayloadProtector>();
         services.AddScoped<IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IIdentityRegistrationStore, IdentityRegistrationStore>();
         services.AddScoped<IIdentityConfirmationStore, IdentityConfirmationStore>();
+        services.AddScoped<IIdentityPasswordRecoveryStore, IdentityPasswordRecoveryStore>();
         services.AddScoped<IIdentitySessionStore, IdentitySessionStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
@@ -44,6 +46,9 @@ public static class DependencyInjection
             .Validate(options => Uri.TryCreate(options.ConfirmationBaseUrl, UriKind.Absolute, out var uri)
                 && uri.Scheme is "http" or "https", "Student account confirmation URL must be absolute HTTP(S).")
             .Validate(options => options.ConfirmationLifetimeHours > 0, "Student account confirmation lifetime must be positive.")
+            .Validate(options => Uri.TryCreate(options.PasswordResetBaseUrl, UriKind.Absolute, out var resetUri)
+                && resetUri.Scheme is "http" or "https", "Student password reset URL must be absolute HTTP(S).")
+            .Validate(options => options.PasswordResetLifetimeHours > 0, "Student password reset lifetime must be positive.")
             .ValidateOnStart();
         services.AddOptions<StudentSessionOptions>()
             .Bind(configuration.GetSection(StudentSessionOptions.SectionName))
@@ -59,6 +64,10 @@ public static class DependencyInjection
             .Validate(options => !string.IsNullOrWhiteSpace(options.Exchange), "Identity exchange is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.NotificationExchange), "Notification exchange is required.")
             .ValidateOnStart();
+        services.AddOptions<OutboxProtectionOptions>()
+            .Bind(configuration.GetSection(OutboxProtectionOptions.SectionName))
+            .Validate(options => IsKeyOfLength(options.KeyBase64, 32), "Outbox protection key must contain exactly 256 bits.")
+            .ValidateOnStart();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Valkey connection string is required.")
@@ -73,6 +82,18 @@ public static class DependencyInjection
         try
         {
             return Convert.FromBase64String(base64Key).Length >= 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsKeyOfLength(string base64Key, int length)
+    {
+        try
+        {
+            return Convert.FromBase64String(base64Key).Length == length;
         }
         catch (FormatException)
         {

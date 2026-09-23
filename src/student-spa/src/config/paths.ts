@@ -15,4 +15,12 @@ export const paths = {
     path: '/entrar',
     getHref: () => '/entrar',
   },
+  studentPasswordRecovery: {
+    path: '/recuperar-senha',
+    getHref: () => '/recuperar-senha',
+  },
+  studentPasswordReset: {
+    path: '/redefinir-senha',
+    getHref: () => '/redefinir-senha',
+  },
 } as const;
