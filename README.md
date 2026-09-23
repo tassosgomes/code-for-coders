@@ -1,5 +1,17 @@
 # Code for Coders
 
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=tassosgomes_code-for-coders&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tassosgomes_code-for-coders)
+[![admin-spa](https://github.com/tassosgomes/code-for-coders/actions/workflows/admin-spa.yml/badge.svg?branch=main)](https://github.com/tassosgomes/code-for-coders/actions/workflows/admin-spa.yml)
+[![student-spa](https://github.com/tassosgomes/code-for-coders/actions/workflows/student-spa.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/student-spa.yml)
+[![audit](https://github.com/tassosgomes/code-for-coders/actions/workflows/audit.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/audit.yml)
+[![bff-admin](https://github.com/tassosgomes/code-for-coders/actions/workflows/bff-admin.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/bff-admin.yml)
+[![bff-student](https://github.com/tassosgomes/code-for-coders/actions/workflows/bff-student.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/bff-student.yml)
+[![commerce](https://github.com/tassosgomes/code-for-coders/actions/workflows/commerce.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/commerce.yml)
+[![identity](https://github.com/tassosgomes/code-for-coders/actions/workflows/identity.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/identity.yml)
+[![learning](https://github.com/tassosgomes/code-for-coders/actions/workflows/learning.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/learning.yml)
+[![media](https://github.com/tassosgomes/code-for-coders/actions/workflows/media.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/media.yml)
+[![notification](https://github.com/tassosgomes/code-for-coders/actions/workflows/notification.yml/badge.svg)](https://github.com/tassosgomes/code-for-coders/actions/workflows/notification.yml)
+
 ## Local application stack
 
 The local stack runs the eight .NET APIs, both SPAs, and their PostgreSQL, RabbitMQ, Valkey, and
