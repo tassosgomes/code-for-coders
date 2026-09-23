@@ -5,9 +5,9 @@
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "target_ref": null,
-  "last_checkpoint": "1.0",
+  "last_checkpoint": "2.0",
   "phase": "checkpoint-task",
-  "active_task": "1.0",
+  "active_task": "2.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -25,11 +25,11 @@
     "outcome": "checkpoint_ok",
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "1.0",
+    "task": "2.0",
     "attempt": 2,
-    "run_id": "run.trZMet6l",
+    "run_id": "run.Ohhw7GIi",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/1.0_task_review.md"
+    "report": "tasks/prd-conta-aluno/2.0_task_review.md"
   },
   "history": [
     {
@@ -71,6 +71,46 @@
       "mode": "checkpoint-task",
       "outcome": "checkpoint_ok",
       "run_id": "run.trZMet6l",
+      "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "1.0",
+      "commits": [
+        "477ca8a",
+        "d17a0e5"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "gate_failed",
+      "task": "2.0",
+      "attempt": 1,
+      "run_id": "run.k1rz31BV"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.l20nAgJP",
+      "reason": "agent_pane_busy",
+      "task": "2.0"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "2.0",
+      "attempt": 2,
+      "run_id": "run.brWRItTC"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 2,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.Ohhw7GIi",
       "gate": "passed"
     }
   ]
