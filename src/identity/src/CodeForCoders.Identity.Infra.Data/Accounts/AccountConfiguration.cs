@@ -17,7 +17,10 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(account => account.Name).HasColumnName("name").HasColumnType("text").IsRequired();
         builder.Property(account => account.Email).HasColumnName("email").HasColumnType("text").IsRequired();
         builder.Property(account => account.NormalizedEmail).HasColumnName("normalized_email").HasColumnType("text").IsRequired();
-        builder.Property(account => account.IsConfirmed).HasColumnName("is_confirmed").IsRequired();
+        builder.Property(account => account.IsConfirmed)
+            .HasColumnName("is_confirmed")
+            .IsRequired()
+            .IsConcurrencyToken();
         builder.Property(account => account.DeactivatedOn).HasColumnName("deactivated_on").HasColumnType("timestamp with time zone");
         builder.HasAlternateKey(account => new { account.TenantId, account.Id })
             .HasName("ak_accounts_tenant_id_id");

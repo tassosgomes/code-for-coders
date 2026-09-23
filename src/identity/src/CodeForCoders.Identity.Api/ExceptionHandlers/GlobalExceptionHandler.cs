@@ -23,6 +23,12 @@ public sealed class GlobalExceptionHandler(
                 registrationException.Title,
                 registrationException.Message,
                 registrationException.Code),
+            StudentConfirmationException confirmationException => (
+                confirmationException.StatusCode,
+                "/problems/student-confirmation",
+                confirmationException.Title,
+                confirmationException.Message,
+                confirmationException.Code),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",

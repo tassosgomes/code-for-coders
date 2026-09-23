@@ -18,8 +18,14 @@ public sealed class IdempotencyFingerprinter : IIdempotencyFingerprinter
     public string HashKey(string keyValue) => Hash($"key:{keyValue}");
 
     public string Fingerprint(string name, string email, string password)
+        => FingerprintValues(name, email, password);
+
+    public string Fingerprint(string value)
+        => FingerprintValues(value);
+
+    private string FingerprintValues(params string[] values)
     {
-        var serialized = JsonSerializer.Serialize(new[] { name, email, password });
+        var serialized = JsonSerializer.Serialize(values);
         return Hash($"fingerprint:{serialized}");
     }
 

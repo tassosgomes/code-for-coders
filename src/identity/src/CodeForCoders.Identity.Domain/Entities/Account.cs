@@ -52,4 +52,14 @@ public sealed class Account
             NormalizedEmail = normalizedEmail,
         };
     }
+
+    public void Confirm()
+    {
+        if (Type != AccountType.Student)
+        {
+            throw new EntityValidationException("Only student accounts can be confirmed through email.");
+        }
+
+        IsConfirmed = true;
+    }
 }

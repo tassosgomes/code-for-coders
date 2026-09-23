@@ -17,7 +17,10 @@ public sealed class VerificationTokenConfiguration : IEntityTypeConfiguration<Ve
         builder.Property(token => token.Purpose).HasColumnName("purpose").HasMaxLength(64).IsRequired();
         builder.Property(token => token.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
         builder.Property(token => token.ExpiresOn).HasColumnName("expires_on").HasColumnType("timestamp with time zone").IsRequired();
-        builder.Property(token => token.ConsumedOn).HasColumnName("consumed_on").HasColumnType("timestamp with time zone");
+        builder.Property(token => token.ConsumedOn)
+            .HasColumnName("consumed_on")
+            .HasColumnType("timestamp with time zone")
+            .IsConcurrencyToken();
         builder.HasIndex(token => new { token.TenantId, token.TokenHash })
             .HasDatabaseName("ux_verification_tokens_tenant_id_token_hash")
             .IsUnique();

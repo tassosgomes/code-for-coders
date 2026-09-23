@@ -46,4 +46,14 @@ public sealed class VerificationToken
             ExpiresOn = expiresOn,
         };
     }
+
+    public void Consume(DateTimeOffset consumedOn)
+    {
+        if (ConsumedOn is not null || consumedOn >= ExpiresOn)
+        {
+            throw new EntityValidationException("Verification token is no longer valid.");
+        }
+
+        ConsumedOn = consumedOn;
+    }
 }

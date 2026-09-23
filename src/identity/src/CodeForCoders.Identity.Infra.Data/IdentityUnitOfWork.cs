@@ -13,6 +13,11 @@ public sealed class IdentityUnitOfWork(IdentityDbContext dbContext) : IUnitOfWor
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            dbContext.ChangeTracker.Clear();
+            throw new ConcurrentWriteException(exception);
+        }
         catch (DbUpdateException exception) when (TryGetRegistrationConstraint(exception, out var constraintName))
         {
             dbContext.ChangeTracker.Clear();

@@ -13,6 +13,10 @@ public sealed class StudentRegistrationIdentityClient(
     HttpClient httpClient,
     ServiceAssertionTokenFactory assertionTokenFactory) : IStudentRegistrationIdentityClient
 {
+    private const string RegistrationScope = "student-accounts:create";
+    private const string ConfirmationScope = "student-accounts:confirm";
+    private const string ConfirmationRequestScope = "student-accounts:request-confirmation";
+
     public async Task<StudentRegistrationResult> RegisterAsync(
         StudentRegistrationRequestV1 request,
         string idempotencyKey,
@@ -22,7 +26,7 @@ public sealed class StudentRegistrationIdentityClient(
         {
             Content = JsonContent.Create(request),
         };
-        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", assertionTokenFactory.Create());
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", assertionTokenFactory.Create(RegistrationScope));
         message.Headers.Add("Idempotency-Key", idempotencyKey);
 
         try
@@ -62,6 +66,85 @@ public sealed class StudentRegistrationIdentityClient(
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return new StudentRegistrationResult(StatusCodes.Status504GatewayTimeout, "IDENTITY_UNAVAILABLE");
+        }
+    }
+
+    public Task<StudentConfirmationResult> ConfirmAsync(
+        StudentAccountConfirmationTokenV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+        => SendConfirmationAsync(
+            "internal/v1/account-confirmations",
+            request,
+            idempotencyKey,
+            ConfirmationScope,
+            HttpStatusCode.NoContent,
+            cancellationToken);
+
+    public Task<StudentConfirmationResult> RequestConfirmationAsync(
+        StudentAccountConfirmationEmailV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+        => SendConfirmationAsync(
+            "internal/v1/account-confirmation-requests",
+            request,
+            idempotencyKey,
+            ConfirmationRequestScope,
+            HttpStatusCode.Accepted,
+            cancellationToken);
+
+    private async Task<StudentConfirmationResult> SendConfirmationAsync<TRequest>(
+        string path,
+        TRequest request,
+        string idempotencyKey,
+        string requiredScope,
+        HttpStatusCode successStatus,
+        CancellationToken cancellationToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, path)
+        {
+            Content = JsonContent.Create(request),
+        };
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", assertionTokenFactory.Create(requiredScope));
+        message.Headers.Add("Idempotency-Key", idempotencyKey);
+
+        try
+        {
+            using var response = await httpClient.SendAsync(message, cancellationToken);
+            if (response.StatusCode == successStatus)
+            {
+                return new StudentConfirmationResult((int)successStatus, null);
+            }
+
+            var code = await ReadCodeAsync(response, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.BadRequest && code == "INVALID_REQUEST")
+            {
+                return new StudentConfirmationResult(StatusCodes.Status400BadRequest, code);
+            }
+
+            if (response.StatusCode == HttpStatusCode.UnprocessableEntity
+                && code is "INVALID_VERIFICATION_TOKEN" or "IDEMPOTENCY_CONFLICT")
+            {
+                return new StudentConfirmationResult(StatusCodes.Status422UnprocessableEntity, code);
+            }
+
+            return new StudentConfirmationResult(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE");
+        }
+        catch (HttpRequestException)
+        {
+            return new StudentConfirmationResult(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE");
+        }
+        catch (TimeoutRejectedException)
+        {
+            return new StudentConfirmationResult(StatusCodes.Status504GatewayTimeout, "IDENTITY_UNAVAILABLE");
+        }
+        catch (ExecutionRejectedException)
+        {
+            return new StudentConfirmationResult(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new StudentConfirmationResult(StatusCodes.Status504GatewayTimeout, "IDENTITY_UNAVAILABLE");
         }
     }
 

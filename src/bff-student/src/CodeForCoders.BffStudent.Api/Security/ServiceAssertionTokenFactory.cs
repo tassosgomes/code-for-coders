@@ -11,9 +11,15 @@ public sealed class ServiceAssertionTokenFactory(
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public string Create()
+    public string Create(string requiredScope)
     {
         var settings = options.Value;
+        if (!settings.Scope.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Contains(requiredScope, StringComparer.Ordinal))
+        {
+            throw new InvalidOperationException("The requested Identity scope is not configured for the BFF.");
+        }
+
         using var rsa = RSA.Create();
         rsa.ImportPkcs8PrivateKey(Convert.FromBase64String(settings.SigningKeyBase64), out _);
         var now = timeProvider.GetUtcNow();
@@ -26,7 +32,7 @@ public sealed class ServiceAssertionTokenFactory(
                 settings.Audience,
                 settings.Issuer,
                 Guid.Parse(settings.TenantId),
-                settings.Scope,
+                requiredScope,
                 Guid.CreateVersion7(now).ToString("D"),
                 now.ToUnixTimeSeconds(),
                 now.AddSeconds(-5).ToUnixTimeSeconds(),

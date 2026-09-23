@@ -3,6 +3,7 @@ using CodeForCoders.BffStudent.Api.Clients;
 using CodeForCoders.BffStudent.Api.Security;
 using CodeForCoders.BffStudent.Infra.Data;
 using CodeForCoders.BffStudent.Infra.Messaging;
+using Microsoft.Extensions.Http.Resilience;
 
 namespace CodeForCoders.BffStudent.Api.Extensions;
 
@@ -40,6 +41,7 @@ public static class ServiceConfigurationExtensions
                 options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
                 options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
                 options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
             });
         var allowedOrigins = builder.Configuration.GetSection(StudentSpaCorsOptions.SectionName)
             .Get<StudentSpaCorsOptions>()?.AllowedOrigins ?? [];

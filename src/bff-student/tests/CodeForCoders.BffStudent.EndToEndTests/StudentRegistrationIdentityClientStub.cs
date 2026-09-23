@@ -12,6 +12,14 @@ public sealed class StudentRegistrationIdentityClientStub : IStudentRegistration
 
     public string? IdempotencyKey { get; private set; }
 
+    public StudentConfirmationResult ConfirmationResult { get; set; } = new(StatusCodes.Status204NoContent, null);
+
+    public StudentConfirmationResult ConfirmationRequestResult { get; set; } = new(StatusCodes.Status202Accepted, null);
+
+    public StudentAccountConfirmationTokenV1? ConfirmationRequest { get; private set; }
+
+    public StudentAccountConfirmationEmailV1? ConfirmationEmailRequest { get; private set; }
+
     public Task<StudentRegistrationResult> RegisterAsync(
         StudentRegistrationRequestV1 request,
         string idempotencyKey,
@@ -20,5 +28,25 @@ public sealed class StudentRegistrationIdentityClientStub : IStudentRegistration
         Request = request;
         IdempotencyKey = idempotencyKey;
         return Task.FromResult(Result);
+    }
+
+    public Task<StudentConfirmationResult> ConfirmAsync(
+        StudentAccountConfirmationTokenV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+    {
+        ConfirmationRequest = request;
+        IdempotencyKey = idempotencyKey;
+        return Task.FromResult(ConfirmationResult);
+    }
+
+    public Task<StudentConfirmationResult> RequestConfirmationAsync(
+        StudentAccountConfirmationEmailV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+    {
+        ConfirmationEmailRequest = request;
+        IdempotencyKey = idempotencyKey;
+        return Task.FromResult(ConfirmationRequestResult);
     }
 }

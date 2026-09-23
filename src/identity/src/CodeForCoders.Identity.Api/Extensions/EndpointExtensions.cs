@@ -8,5 +8,6 @@ public static class EndpointExtensions
     {
         app.MapPlatformEndpoints();
         app.MapStudentAccountEndpoints();
+        app.MapStudentConfirmationEndpoints();
     }
 }

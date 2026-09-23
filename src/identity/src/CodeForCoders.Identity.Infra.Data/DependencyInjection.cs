@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IIdentityRegistrationStore, IdentityRegistrationStore>();
+        services.AddScoped<IIdentityConfirmationStore, IdentityConfirmationStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
         services.AddOptions<RegistrationOptions>()

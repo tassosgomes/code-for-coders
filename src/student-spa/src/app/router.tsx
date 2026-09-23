@@ -6,6 +6,7 @@ import { paths } from '@/config/paths';
 import { DashboardRoute } from '@/app/routes/dashboard-route';
 import { RouteError } from '@/app/routes/route-error';
 import { StudentRegistrationRoute } from '@/app/routes/student-registration-route';
+import { StudentConfirmationRoute } from '@/app/routes/student-confirmation-route';
 
 const routes: RouteObject[] = [
   {
@@ -15,6 +16,7 @@ const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardRoute /> },
       { path: paths.studentRegistration.path.slice(1), element: <StudentRegistrationRoute /> },
+      { path: paths.studentAccountConfirmation.path.slice(1), element: <StudentConfirmationRoute /> },
     ],
   },
 ];
