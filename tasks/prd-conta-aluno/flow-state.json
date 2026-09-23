@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "branch": "feature/conta-aluno",
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-conta-aluno",
+  "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
+  "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
+  "target_ref": null,
+  "last_checkpoint": "1.0",
+  "phase": "checkpoint-task",
+  "active_task": "1.0",
+  "attempt": 2,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "transport": "herdr",
+  "specs": [
+    "techspec.md",
+    "contracts.md"
+  ],
+  "delivery": "branch",
+  "validated_commit": null,
+  "validated_tree": null,
+  "pending_delegation": null,
+  "last_result": {
+    "outcome": "checkpoint_ok",
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "1.0",
+    "attempt": 2,
+    "run_id": "run.trZMet6l",
+    "gate": "passed",
+    "report": "tasks/prd-conta-aluno/1.0_task_review.md"
+  },
+  "history": [
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failures",
+      "detail": "4x opencode agent_prompt_stalled + 1x codex interrupted em prepare-prd-branch; sem efeitos Git. Override local .tsg-flow/routing.json: integrator=codex."
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "branch_ready",
+      "run_id": "run.i53eNEKN"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.G4mGaEY2",
+      "reason": "agent_pane_busy",
+      "task": "1.0"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "attempt_rejected",
+      "task": "1.0",
+      "attempt": 1,
+      "run_id": "run.gTtzh6Nt"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "1.0",
+      "attempt": 2,
+      "run_id": "run.2j7snW9w"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "1.0",
+      "attempt": 2,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.trZMet6l",
+      "gate": "passed"
+    }
+  ]
+}
