@@ -4,14 +4,14 @@
   "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-conta-aluno",
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
-  "target_ref": null,
-  "last_checkpoint": "cc7a35cef573b07696b3547c77c6768d25ea3a79",
+  "target_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
+  "last_checkpoint": "e950a2024aac226581ee317eed0b96ac9785b9a1",
   "phase": "checkpoint",
-  "active_task": "5.0",
-  "attempt": 3,
+  "active_task": "1.0",
+  "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 0,
-  "transport_retries": 1,
+  "full_attempt": 1,
+  "transport_retries": 0,
   "transport": "herdr",
   "specs": [
     "techspec.md",
@@ -24,12 +24,12 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "5.0",
-    "attempt": 3,
-    "run_id": "run.hER29Gto",
+    "task": "1.0",
+    "attempt": 2,
+    "run_id": "run.MdDaF2ux",
     "outcome": "checkpoint_ok",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/5.0_task_review.md"
+    "report": "tasks/prd-conta-aluno/1.0_task_review.md"
   },
   "history": [
     {
@@ -321,6 +321,50 @@
       "outcome": "checkpoint_ok",
       "run_id": "run.hER29Gto",
       "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "5.0",
+      "commits": [
+        "cc7a35c",
+        "e8fff4c"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "integration_ready",
+      "run_id": "run.tsLeyGZF"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "full_rejected",
+      "full_attempt": 1,
+      "run_id": "run.W4iG4XKc"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "attempt_rejected",
+      "task": "1.0",
+      "origin": "full",
+      "attempt": 1,
+      "run_id": "run.fsbkn9Sg"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "1.0",
+      "origin": "full",
+      "run_id": "run.wFAqXFyw"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "1.0",
+      "run_id": "run.MdDaF2ux",
+      "commits": [
+        "e950a2024aac226581ee317eed0b96ac9785b9a1"
+      ]
     }
   ],
   "open_findings": [
@@ -333,5 +377,10 @@
     "stack Compose nao aplica migrations automaticamente",
     "possivel falta de teste de contrato interno em 1.0-4.0 (BFF usa stubs)"
   ],
-  "fix_policy": "implementer fix com --kind=claude --effort=high (autorizado pelo usuario)"
+  "fix_policy": "implementer fix com --kind=claude --effort=high (autorizado pelo usuario)",
+  "reopen_queue": [
+    "1.0",
+    "2.0",
+    "4.0"
+  ]
 }
