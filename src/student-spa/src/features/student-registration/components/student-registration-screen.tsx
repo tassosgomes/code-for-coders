@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { FormProvider } from 'react-hook-form';
 import axios from 'axios';
 import * as z from 'zod';
@@ -34,7 +34,7 @@ export const StudentRegistrationScreen = () => {
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const [registrationStarted, setRegistrationStarted] = useState(false);
 
-  const onSubmit = form.handleSubmit(async (input: RegisterStudentInput) => {
+  const submitRegistration = async (input: RegisterStudentInput) => {
     const fingerprint = JSON.stringify(input);
     const attempt = attemptRef.current?.fingerprint === fingerprint
       ? attemptRef.current
@@ -50,7 +50,10 @@ export const StudentRegistrationScreen = () => {
     } catch {
       setRegistrationStarted(false);
     }
-  });
+  };
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) =>
+    form.handleSubmit(submitRegistration)(event);
 
   return (
     <main className="page-shell">

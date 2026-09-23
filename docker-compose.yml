@@ -107,7 +107,7 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=code-for-coders-local
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
-      StudentAccount__ConfirmationBaseUrl: ${STUDENT_ACCOUNT_CONFIRMATION_URL:-http://localhost:8082/confirm-account}
+      StudentAccount__ConfirmationBaseUrl: ${STUDENT_ACCOUNT_CONFIRMATION_URL:-http://localhost:8082/student/confirm-account}
       StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
       StudentAccount__PasswordResetBaseUrl: ${STUDENT_PASSWORD_RESET_URL:-http://localhost:8082/redefinir-senha}
       StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}

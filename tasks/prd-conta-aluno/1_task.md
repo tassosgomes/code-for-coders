@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentRegistrationTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentRegistrationTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentRegistration'
@@ -43,3 +43,18 @@ Consumir o link e reenviá-lo (2.0), entrar (3.0), recuperar ou trocar senha (4.
 - [x] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
 - [x] Cadastro válido produz uma Conta não confirmada, um fato e um pedido aceito por Notificação; o link aparece no smtp4dev local e nenhum token/JWT aparece em resposta ou telemetria.
 - [x] Duplicidade, senha inválida, replay conflitante e corrida não criam Conta, Credencial ou pedido indevidos; retry do outbox mantém `pedidoId`.
+
+## Reabertura após validação full (run.W4iG4XKc, `prd_review.md`)
+
+Corrigir nesta task:
+- **B1:** `src/student-spa/src/features/student-dashboard/components/dashboard-screen.test.tsx` falha (`Link` sem router).
+  Renderize o teste com contexto de router (ex.: `MemoryRouter`/`createMemoryRouter` em `renderWithProviders`) sem remover
+  nem enfraquecer a asserção.
+- **B2 (parte desta task):** `react-hooks/refs` em `student-registration-screen.tsx:37`. Mova a leitura de ref para
+  handler/efeito; não desabilite a regra.
+Evidência adicional além do gate: `npm --prefix src/student-spa run test` completo com o dashboard passando e
+`npx eslint` limpo no arquivo de cadastro.
+- **B3 (revalidação run.fsbkn9Sg):** o URL padrão do link de confirmação (`docker-compose.yml:110`,
+  `appsettings.json:28`) não inclui o base path `/student/` servido pelo Nginx da SPA. Corrija para
+  `/student/confirm-account` (ou equivalente derivado do base path), confira que a rota da SPA corresponde e
+  alinhe documentação local. Evidência: URL gerada abre a rota de confirmação servida pela SPA.

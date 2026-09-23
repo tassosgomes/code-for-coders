@@ -20,7 +20,9 @@ export IDENTITY_OUTBOX_KEY_B64="$(openssl rand -base64 32 | tr -d '\n')"
 docker compose up --build
 ```
 
-Open the SPA at `http://localhost:8082` and submit the registration form. The message is captured
-in smtp4dev at `http://127.0.0.1:5000`. The Compose configuration uses the same
+Open the SPA at `http://localhost:8082/student/cadastro` and submit the registration form. The message is captured
+in smtp4dev at `http://127.0.0.1:5000`. Its link points to `http://localhost:8082/student/confirm-account?token=...`,
+the confirmation route served under the SPA base path `/student/`; override it with
+`STUDENT_ACCOUNT_CONFIRMATION_URL` if the SPA is served from another origin or base path. The Compose configuration uses the same
 `ACCOUNT_CONFIRMATION_VALIDITY_HOURS` value for Identity and Notification; set it in the shell
 before `docker compose up` if the local link lifetime should differ from 24 hours.
