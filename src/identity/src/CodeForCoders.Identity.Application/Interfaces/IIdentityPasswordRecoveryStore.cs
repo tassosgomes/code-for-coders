@@ -30,6 +30,12 @@ public interface IIdentityPasswordRecoveryStore
         Guid accountId,
         CancellationToken cancellationToken);
 
+    Task<StudentSession?> FindActiveStudentSessionAsync(
+        Guid tenantId,
+        Guid sessionId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken);
+
     Task<List<VerificationToken>> FindUnconsumedVerificationTokensAsync(
         Guid tenantId,
         Guid accountId,

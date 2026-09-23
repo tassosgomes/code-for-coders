@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { paths } from '@/config/paths';
 import {
@@ -45,6 +45,7 @@ export const StudentSessionPanel = () => {
   return (
     <section aria-label="Student session" className="status-card">
       <p>Signed in as <strong>{studentSession.data.name}</strong></p>
+      <p><Link className="primary-link" to={paths.studentPasswordChange.getHref()}>Trocar senha</Link></p>
       {logoutError ? <p className="form-error" role="alert">Não foi possível encerrar sua sessão. Tente novamente.</p> : null}
       <button
         className="secondary-button"

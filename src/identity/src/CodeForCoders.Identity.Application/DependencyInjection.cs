@@ -7,6 +7,7 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.ConfirmStudentAccount
 using CodeForCoders.Identity.Application.UseCases.Accounts.RequestStudentAccountConfirmation;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RequestStudentPasswordReset;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ResetStudentPassword;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ChangeStudentPassword;
 using CodeForCoders.Identity.Application.UseCases.Accounts.AuthenticateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStudentSession;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IValidator<RequestStudentAccountConfirmationInput>, RequestStudentAccountConfirmationInputValidator>();
         services.AddScoped<IValidator<RequestStudentPasswordResetInput>, RequestStudentPasswordResetInputValidator>();
         services.AddScoped<IValidator<ResetStudentPasswordInput>, ResetStudentPasswordInputValidator>();
+        services.AddScoped<IValidator<ChangeStudentPasswordInput>, ChangeStudentPasswordInputValidator>();
         services.AddScoped<IValidator<AuthenticateStudentSessionInput>, AuthenticateStudentSessionInputValidator>();
         services.AddScoped<IValidator<ValidateStudentSessionInput>, ValidateStudentSessionInputValidator>();
         services.AddScoped<IValidator<RevokeStudentSessionInput>, RevokeStudentSessionInputValidator>();

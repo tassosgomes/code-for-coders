@@ -10,6 +10,7 @@ public static class EndpointExtensions
         app.MapStudentAccountEndpoints();
         app.MapStudentConfirmationEndpoints();
         app.MapStudentPasswordRecoveryEndpoints();
+        app.MapStudentPasswordChangeEndpoints();
         app.MapStudentSessionEndpoints();
     }
 }

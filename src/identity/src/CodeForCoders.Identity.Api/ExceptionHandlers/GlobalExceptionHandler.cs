@@ -35,6 +35,12 @@ public sealed class GlobalExceptionHandler(
                 recoveryException.Title,
                 recoveryException.Message,
                 recoveryException.Code),
+            StudentPasswordChangeException passwordChangeException => (
+                passwordChangeException.StatusCode,
+                "/problems/student-password-change",
+                passwordChangeException.Title,
+                passwordChangeException.Message,
+                passwordChangeException.Code),
             StudentSessionException sessionException => (
                 sessionException.StatusCode,
                 "/problems/student-session",

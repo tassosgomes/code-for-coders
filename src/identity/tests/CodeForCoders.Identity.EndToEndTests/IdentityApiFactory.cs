@@ -1,6 +1,8 @@
 using CodeForCoders.Identity.Application.Common;
 using CodeForCoders.Identity.Infra.Data;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -14,6 +16,8 @@ namespace CodeForCoders.Identity.EndToEndTests;
 
 public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    public const string ServiceTenantId = "00000000-0000-7000-8000-000000000001";
+    private const string ServiceAssertionKeyId = "test-key";
     private static readonly RSA ServiceAssertionKey = RSA.Create(2048);
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_identity")
@@ -44,8 +48,8 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("OutboxProtection:KeyBase64", Convert.ToBase64String(new byte[32]));
         builder.UseSetting("ServiceAssertions:Issuer", "bff-student");
         builder.UseSetting("ServiceAssertions:Audience", "identity-internal");
-        builder.UseSetting("ServiceAssertions:PublicKeys:test-key", Convert.ToBase64String(ServiceAssertionKey.ExportSubjectPublicKeyInfo()));
-        builder.UseSetting("ServiceAssertions:AllowedTenantIds:0", "00000000-0000-7000-8000-000000000001");
+        builder.UseSetting($"ServiceAssertions:PublicKeys:{ServiceAssertionKeyId}", Convert.ToBase64String(ServiceAssertionKey.ExportSubjectPublicKeyInfo()));
+        builder.UseSetting("ServiceAssertions:AllowedTenantIds:0", ServiceTenantId);
         builder.ConfigureTestServices(services =>
         {
             var hostedServices = services
@@ -57,6 +61,37 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
             }
         });
     }
+
+    public static string CreateServiceAssertion(string scope)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var header = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            alg = "RS256",
+            typ = "JWT",
+            kid = ServiceAssertionKeyId,
+        }));
+        var claims = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            iss = "bff-student",
+            aud = "identity-internal",
+            sub = "bff-student",
+            tenantId = ServiceTenantId,
+            scope,
+            jti = Guid.CreateVersion7(now).ToString("D"),
+            iat = now.ToUnixTimeSeconds(),
+            nbf = now.AddSeconds(-5).ToUnixTimeSeconds(),
+            exp = now.AddSeconds(30).ToUnixTimeSeconds(),
+        }));
+        var signature = ServiceAssertionKey.SignData(
+            Encoding.ASCII.GetBytes($"{header}.{claims}"),
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+        return $"{header}.{claims}.{Base64UrlEncode(signature)}";
+    }
+
+    private static string Base64UrlEncode(byte[] value)
+        => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     public new async ValueTask DisposeAsync()
     {

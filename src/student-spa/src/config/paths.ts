@@ -23,4 +23,8 @@ export const paths = {
     path: '/redefinir-senha',
     getHref: () => '/redefinir-senha',
   },
+  studentPasswordChange: {
+    path: '/trocar-senha',
+    getHref: () => '/trocar-senha',
+  },
 } as const;

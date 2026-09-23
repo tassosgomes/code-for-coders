@@ -67,6 +67,18 @@ public sealed class IdentityPasswordRecoveryStore(IdentityDbContext dbContext) :
             credential => credential.TenantId == tenantId && credential.AccountId == accountId,
             cancellationToken);
 
+    public Task<StudentSession?> FindActiveStudentSessionAsync(
+        Guid tenantId,
+        Guid sessionId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+        => dbContext.StudentSessions.SingleOrDefaultAsync(
+            session => session.TenantId == tenantId
+                && session.Id == sessionId
+                && session.RevokedOn == null
+                && session.ExpiresOn > now,
+            cancellationToken);
+
     public Task<List<VerificationToken>> FindUnconsumedVerificationTokensAsync(
         Guid tenantId,
         Guid accountId,

@@ -9,6 +9,7 @@ import { StudentRegistrationRoute } from '@/app/routes/student-registration-rout
 import { StudentConfirmationRoute } from '@/app/routes/student-confirmation-route';
 import { StudentLoginRoute } from '@/app/routes/student-login-route';
 import { StudentPasswordRecoveryRoute, StudentPasswordResetRoute } from '@/app/routes/student-password-recovery-route';
+import { StudentPasswordChangeRoute } from '@/app/routes/student-password-change-route';
 
 const routes: RouteObject[] = [
   {
@@ -22,6 +23,7 @@ const routes: RouteObject[] = [
       { path: paths.studentLogin.path.slice(1), element: <StudentLoginRoute /> },
       { path: paths.studentPasswordRecovery.path.slice(1), element: <StudentPasswordRecoveryRoute /> },
       { path: paths.studentPasswordReset.path.slice(1), element: <StudentPasswordResetRoute /> },
+      { path: paths.studentPasswordChange.path.slice(1), loader: requireStudentSession, element: <StudentPasswordChangeRoute /> },
     ],
   },
 ];
