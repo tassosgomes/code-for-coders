@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: [3.0]
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentPasswordRecoveryTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentPasswordRecoveryTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentPasswordRecovery'
@@ -64,3 +64,17 @@ Registre a evidência no relatório.
 Nota do orquestrador (revisão `run.vWr3VWGi`): o stack desta worktree está em execução com `bff-student` caindo na
 partida por DI ausente de `ServiceAssertionTokenFactory`. Após corrigir, confirme que `bff-student` sobe saudável no
 Compose (a autorização acima vale também para reconstruir esse serviço) e, se possível, capture o smoke no smtp4dev.
+
+## Reabertura após validação full (run.W4iG4XKc, `prd_review.md`)
+
+Corrigir nesta task:
+- **B2 (parte desta task):** `react-hooks/refs` em
+  `src/student-spa/src/features/student-password-recovery/components/student-password-recovery-screen.tsx:40,46,67,85`.
+  Tire a leitura de ref do render (inicialização de `useRef` a partir de outro ref e callbacks passados a
+  `form.handleSubmit` durante o render), seguindo o padrão aplicado em cadastro/confirmação; não desabilite a regra.
+- **Base path do link de redefinição:** `docker-compose.yml:112` e `appsettings.json:30` usam
+  `http://localhost:8082/redefinir-senha`, sem o base path `/student/` servido pelo Nginx da SPA (mesmo defeito
+  corrigido na 1.0 para `/student/confirm-account`). Corrija para `/student/redefinir-senha`, confira a rota da SPA e
+  alinhe a documentação local.
+Evidência adicional além do gate: `npm --prefix src/student-spa run lint` limpo (SPA inteira), `npm --prefix src/student-spa run test`
+completo e evidência de que o URL gerado abre a rota servida pela SPA.

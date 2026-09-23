@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router';
 import axios from 'axios';
@@ -36,14 +36,14 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
   const resetForm = useStudentPasswordResetForm();
   const request = useRequestStudentPasswordReset();
   const reset = useResetStudentPassword();
-  const initialTokenRef = useRef<string | null>(new URLSearchParams(location.search).get('token'));
-  const resetTokenRef = useRef<string | null>(initialTokenRef.current);
+  const [initialToken] = useState(() => new URLSearchParams(location.search).get('token'));
+  const resetTokenRef = useRef<string | null>(initialToken);
   const handledTokenRef = useRef(false);
   const requestAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const resetAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const [state, setState] = useState<RecoveryState>(mode === 'request'
     ? 'request-form'
-    : initialTokenRef.current ? 'reset-form' : 'reset-rejected');
+    : initialToken ? 'reset-form' : 'reset-rejected');
 
   useDocumentTitle(mode === 'request' ? 'Recuperar senha' : 'Redefinir senha');
 
@@ -55,16 +55,15 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
     }
 
     handledTokenRef.current = true;
-    const token = initialTokenRef.current;
-    if (!token) {
+    if (!initialToken) {
       return;
     }
 
-    resetTokenRef.current = token;
+    resetTokenRef.current = initialToken;
     navigate(paths.studentPasswordReset.getHref(), { replace: true });
-  }, [mode, navigate]);
+  }, [initialToken, mode, navigate]);
 
-  const submitRequest = requestForm.handleSubmit(async (input: StudentPasswordResetRequestInput) => {
+  const submitResetRequest = async (input: StudentPasswordResetRequestInput) => {
     const fingerprint = JSON.stringify(input);
     const attempt = requestAttemptRef.current?.fingerprint === fingerprint
       ? requestAttemptRef.current
@@ -80,9 +79,12 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
     } catch {
       setState('request-form');
     }
-  });
+  };
 
-  const submitReset = resetForm.handleSubmit(async (input: StudentPasswordResetFormInput) => {
+  const submitRequest = (event: FormEvent<HTMLFormElement>) =>
+    requestForm.handleSubmit(submitResetRequest)(event);
+
+  const submitPasswordReset = async (input: StudentPasswordResetFormInput) => {
     const token = resetTokenRef.current;
     if (!token) {
       setState('reset-rejected');
@@ -105,7 +107,10 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
     } catch (error) {
       setState(getErrorCode(error) === 'PASSWORD_RESET_REJECTED' ? 'reset-rejected' : 'reset-error');
     }
-  });
+  };
+
+  const submitReset = (event: FormEvent<HTMLFormElement>) =>
+    resetForm.handleSubmit(submitPasswordReset)(event);
 
   return (
     <main className="page-shell">

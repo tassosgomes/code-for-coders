@@ -26,3 +26,8 @@ the confirmation route served under the SPA base path `/student/`; override it w
 `STUDENT_ACCOUNT_CONFIRMATION_URL` if the SPA is served from another origin or base path. The Compose configuration uses the same
 `ACCOUNT_CONFIRMATION_VALIDITY_HOURS` value for Identity and Notification; set it in the shell
 before `docker compose up` if the local link lifetime should differ from 24 hours.
+
+Password recovery starts at `http://localhost:8082/student/recuperar-senha`. The captured message links to
+`http://localhost:8082/student/redefinir-senha?token=...`, the reset route under the same base path; override it
+with `STUDENT_PASSWORD_RESET_URL` if the SPA is served from another origin or base path. Identity and Notification
+share `PASSWORD_RESET_VALIDITY_HOURS` (default 1 hour).
