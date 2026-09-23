@@ -5,10 +5,10 @@
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
   "target_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
-  "last_checkpoint": "e950a2024aac226581ee317eed0b96ac9785b9a1",
+  "last_checkpoint": "1bcdb48ddbec659ab31f491d6dbadbca8c7683d5",
   "phase": "checkpoint",
-  "active_task": "1.0",
-  "attempt": 2,
+  "active_task": "2.0",
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 1,
   "transport_retries": 0,
@@ -24,12 +24,12 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "1.0",
-    "attempt": 2,
-    "run_id": "run.MdDaF2ux",
+    "task": "2.0",
+    "attempt": 1,
+    "run_id": "run.0KIpBRsR",
     "outcome": "checkpoint_ok",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/1.0_task_review.md"
+    "report": "tasks/prd-conta-aluno/2.0_task_review.md"
   },
   "history": [
     {
@@ -365,6 +365,51 @@
       "commits": [
         "e950a2024aac226581ee317eed0b96ac9785b9a1"
       ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "1.0",
+      "origin": "full",
+      "commits": [
+        "e950a20",
+        "1193fa9"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.6Kx99bo7",
+      "reason": "agent_start_failed",
+      "task": "2.0",
+      "mode": "reopen-task"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "2.0",
+      "origin": "full",
+      "run_id": "run.fV8uCXFv"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "2.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.0KIpBRsR",
+      "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "2.0",
+      "origin": "full",
+      "run_id": "run.0KIpBRsR",
+      "commits": [
+        "1bcdb48ddbec659ab31f491d6dbadbca8c7683d5"
+      ]
     }
   ],
   "open_findings": [
@@ -379,8 +424,6 @@
   ],
   "fix_policy": "implementer fix com --kind=claude --effort=high (autorizado pelo usuario)",
   "reopen_queue": [
-    "1.0",
-    "2.0",
     "4.0"
   ]
 }
