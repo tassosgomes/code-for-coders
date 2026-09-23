@@ -11,4 +11,8 @@ export const paths = {
     path: '/confirm-account',
     getHref: () => '/confirm-account',
   },
+  studentLogin: {
+    path: '/entrar',
+    getHref: () => '/entrar',
+  },
 } as const;

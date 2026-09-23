@@ -43,6 +43,18 @@ public static class ServiceConfigurationExtensions
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.DisableForUnsafeHttpMethods();
             });
+        builder.Services.AddHttpClient<IStudentSessionIdentityClient, StudentSessionIdentityClient>((provider, client) =>
+            {
+                var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StudentIdentityOptions>>().Value;
+                client.BaseAddress = new Uri(options.BaseAddress);
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         var allowedOrigins = builder.Configuration.GetSection(StudentSpaCorsOptions.SectionName)
             .Get<StudentSpaCorsOptions>()?.AllowedOrigins ?? [];
         builder.Services.AddOptions<StudentSpaCorsOptions>()

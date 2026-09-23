@@ -41,7 +41,7 @@ Nenhum. Migration, autenticação de serviço, roteamento do outbox e SMTP local
 
 - [x] 1.0 Cadastrar aluno e solicitar confirmação
 - [x] 2.0 Confirmar conta e reenviar link
-- [ ] 3.0 Entrar, manter sessão e sair
+- [x] 3.0 Entrar, manter sessão e sair
 - [ ] 4.0 Recuperar senha sem revelar conta
 - [ ] 5.0 Trocar senha com sessão ativa
 

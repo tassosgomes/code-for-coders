@@ -5,6 +5,7 @@ import { env } from '@/config/env';
 
 export const apiClient = axios.create({
   baseURL: env.API_URL,
+  withCredentials: true,
   headers: {
     Accept: 'application/json',
   },
@@ -23,11 +24,22 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response.data,
-  (error: unknown) => {
+  async (error: unknown) => {
     const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    const problemCode = axios.isAxiosError(error)
+      && typeof error.response?.data === 'object'
+      && error.response.data !== null
+      && 'code' in error.response.data
+      ? error.response.data.code
+      : undefined;
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('app:api-error', { detail: { status } }));
+
+      if (status === 403 && problemCode === 'CSRF_INVALID') {
+        const session = await apiClient.get('/api/v1/student-sessions/current');
+        window.dispatchEvent(new CustomEvent('app:csrf-refreshed', { detail: session }));
+      }
 
       if (status === 401) {
         window.dispatchEvent(new Event('app:session-expired'));

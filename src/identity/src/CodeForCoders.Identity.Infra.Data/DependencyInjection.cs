@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, IdentityUnitOfWork>();
         services.AddScoped<IIdentityRegistrationStore, IdentityRegistrationStore>();
         services.AddScoped<IIdentityConfirmationStore, IdentityConfirmationStore>();
+        services.AddScoped<IIdentitySessionStore, IdentitySessionStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
         services.AddOptions<RegistrationOptions>()
@@ -43,6 +44,11 @@ public static class DependencyInjection
             .Validate(options => Uri.TryCreate(options.ConfirmationBaseUrl, UriKind.Absolute, out var uri)
                 && uri.Scheme is "http" or "https", "Student account confirmation URL must be absolute HTTP(S).")
             .Validate(options => options.ConfirmationLifetimeHours > 0, "Student account confirmation lifetime must be positive.")
+            .ValidateOnStart();
+        services.AddOptions<StudentSessionOptions>()
+            .Bind(configuration.GetSection(StudentSessionOptions.SectionName))
+            .Validate(options => options.InactivityTimeoutMinutes is >= 1 and <= 1440,
+                "Student session inactivity timeout must be between 1 and 1440 minutes.")
             .ValidateOnStart();
         services.AddOptions<IdempotencyOptions>()
             .Bind(configuration.GetSection(IdempotencyOptions.SectionName))

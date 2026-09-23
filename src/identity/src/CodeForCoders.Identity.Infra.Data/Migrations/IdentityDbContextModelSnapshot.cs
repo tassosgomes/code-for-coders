@@ -39,6 +39,7 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasColumnName("email");
 
                     b.Property<bool>("IsConfirmed")
+                        .IsConcurrencyToken()
                         .HasColumnType("boolean")
                         .HasColumnName("is_confirmed");
 
@@ -148,6 +149,10 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status_code");
 
+                    b.Property<Guid?>("StudentSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_session_id");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -168,6 +173,50 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                     b.ToTable("idempotency_records", "identity_access");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StudentSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on");
+
+                    b.Property<DateTimeOffset>("ExpiresOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_on");
+
+                    b.Property<DateTimeOffset>("LastActivityOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_activity_on");
+
+                    b.Property<DateTimeOffset?>("RevokedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_on");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_student_sessions_tenant_id_id");
+
+                    b.HasIndex("ExpiresOn")
+                        .HasDatabaseName("ix_student_sessions_expires_on");
+
+                    b.HasIndex("TenantId", "AccountId")
+                        .HasDatabaseName("ix_student_sessions_tenant_id_account_id");
+
+                    b.ToTable("student_sessions", "identity_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.VerificationToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -179,6 +228,7 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasColumnName("account_id");
 
                     b.Property<DateTimeOffset?>("ConsumedOn")
+                        .IsConcurrencyToken()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("consumed_on");
 
@@ -288,6 +338,16 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                 });
 
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.Credential", b =>
+                {
+                    b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "AccountId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StudentSession", b =>
                 {
                     b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
                         .WithMany()

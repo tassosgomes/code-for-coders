@@ -29,6 +29,12 @@ public sealed class GlobalExceptionHandler(
                 confirmationException.Title,
                 confirmationException.Message,
                 confirmationException.Code),
+            StudentSessionException sessionException => (
+                sessionException.StatusCode,
+                "/problems/student-session",
+                sessionException.Title,
+                sessionException.Message,
+                sessionException.Code),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",

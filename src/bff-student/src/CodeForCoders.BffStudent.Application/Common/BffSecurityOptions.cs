@@ -7,7 +7,7 @@ public sealed class BffSecurityOptions
     public const string SectionName = "BffSecurity";
 
     [Required]
-    public string SessionCookieName { get; set; } = "__Host-bff-student-session";
+    public string SessionCookieName { get; set; } = "student_session";
 
     [Required]
     public string CsrfCookieName { get; set; } = "bff-student-csrf";
@@ -20,6 +20,8 @@ public sealed class BffSecurityOptions
 
     [Range(1, 1440)]
     public int SessionTtlMinutes { get; set; } = 60;
+
+    public string ProxyAudience { get; set; } = string.Empty;
 
     public bool SessionCookieHttpOnly { get; set; } = true;
 

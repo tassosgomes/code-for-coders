@@ -20,6 +20,8 @@ public sealed class IdentityDbContext(
 
     public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
+    public DbSet<StudentSession> StudentSessions => Set<StudentSession>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(IdentitySchema.Name);
@@ -34,5 +36,7 @@ public sealed class IdentityDbContext(
             token => tenantContext.TenantId.HasValue && token.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<IdempotencyRecord>().HasQueryFilter(
             record => tenantContext.TenantId.HasValue && record.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<StudentSession>().HasQueryFilter(
+            session => tenantContext.TenantId.HasValue && session.TenantId == tenantContext.TenantId.Value);
     }
 }

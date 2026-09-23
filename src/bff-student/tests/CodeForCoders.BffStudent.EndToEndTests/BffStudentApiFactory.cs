@@ -2,6 +2,7 @@ using CodeForCoders.BffStudent.Api.Clients;
 using CodeForCoders.BffStudent.Application.Common;
 using System.Security.Cryptography;
 using CodeForCoders.BffStudent.Infra.Data;
+using CodeForCoders.BffStudent.Application.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -19,6 +20,10 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
     private static readonly RSA SigningKey = RSA.Create(2048);
 
     public StudentRegistrationIdentityClientStub StudentRegistrationClient { get; } = new();
+
+    public StudentSessionIdentityClientStub StudentSessionClient { get; } = new();
+
+    public InMemoryBffSessionStore SessionStore { get; } = new();
 
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_bff_student")
@@ -51,6 +56,10 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
         {
             services.RemoveAll<IStudentRegistrationIdentityClient>();
             services.AddSingleton<IStudentRegistrationIdentityClient>(StudentRegistrationClient);
+            services.RemoveAll<IStudentSessionIdentityClient>();
+            services.AddSingleton<IStudentSessionIdentityClient>(StudentSessionClient);
+            services.RemoveAll<IBffSessionStore>();
+            services.AddSingleton<IBffSessionStore>(SessionStore);
             var hostedServices = services
                 .Where(descriptor => descriptor.ServiceType == typeof(IHostedService))
                 .ToList();

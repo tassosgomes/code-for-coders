@@ -10,13 +10,17 @@ namespace CodeForCoders.BffStudent.Infra.Data;
 
 public sealed class ValkeyBffSessionStore(
     ValkeyConnectionProvider connectionProvider,
-    IOptions<BffSecurityOptions> securityOptions) : IBffSessionStore
+    IOptions<BffSecurityOptions> securityOptions,
+    TimeProvider timeProvider) : IBffSessionStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task StoreAsync(OpaqueBffSession session, CancellationToken cancellationToken)
+    public async Task StoreAsync(
+        string opaqueCookieValue,
+        OpaqueBffSession session,
+        CancellationToken cancellationToken)
     {
-        var lifetime = session.ExpiresAt - DateTimeOffset.UtcNow;
+        var lifetime = session.ExpiresAt - timeProvider.GetUtcNow();
         if (lifetime <= TimeSpan.Zero)
         {
             return;
@@ -25,7 +29,7 @@ public sealed class ValkeyBffSessionStore(
         var connection = await connectionProvider.GetAsync(cancellationToken);
         var payload = JsonSerializer.Serialize(session, JsonOptions);
         await connection.GetDatabase().StringSetAsync(
-            GetKey(session.SessionId),
+            GetKey(opaqueCookieValue),
             payload,
             lifetime).WaitAsync(cancellationToken);
     }

@@ -238,7 +238,7 @@ services:
       StudentIdentity__BaseAddress: http://identity:8080/
       StudentIdentity__Issuer: bff-student
       StudentIdentity__Audience: identity-internal
-      StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation
+      StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke
       StudentIdentity__SigningKeyId: local-dev-1
       StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set BFF_IDENTITY_PRIVATE_KEY_B64 for local development}
       StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
