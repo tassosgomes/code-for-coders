@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: [1.0]
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentConfirmationTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentConfirmationTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentConfirmation'
@@ -36,6 +36,16 @@ Criar sessão (3.0) e recuperar senha (4.0). Confirmação não autentica automa
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
-- [ ] Link válido confirma uma só vez e publica o fato; token inválido, usado, expirado ou de outra finalidade não confirma.
-- [ ] Reenvio elegível cria novo pedido sem nova Conta, aceito por Notificação e capturado no smtp4dev; a SPA remove o token da URL.
+- [x] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
+- [x] Link válido confirma uma só vez e publica o fato; token inválido, usado, expirado ou de outra finalidade não confirma.
+- [x] Reenvio elegível cria novo pedido sem nova Conta, aceito por Notificação e capturado no smtp4dev; a SPA remove o token da URL.
+
+## Reabertura após validação full (run.W4iG4XKc, `prd_review.md`)
+
+Corrigir nesta task:
+- **B2 (parte desta task):** `react-hooks/refs` em `src/student-spa/src/features/student-confirmation/components/student-confirmation-screen.tsx:61`.
+  Mova a leitura de ref para handler/efeito (padrão já aplicado em `student-registration-screen.tsx` na reabertura da 1.0);
+  não desabilite a regra.
+- Confira também que o link de reenvio/confirmação gerado pelo writer de confirmação usa o mesmo URL com base path
+  `/student/confirm-account` corrigido na 1.0.
+Evidência adicional além do gate: `npm --prefix src/student-spa run test` completo e `npx eslint` limpo no arquivo.

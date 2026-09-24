@@ -39,11 +39,11 @@ Nenhum. Migration, autenticação de serviço, roteamento do outbox e SMTP local
 
 ## Tasks
 
-- [ ] 1.0 Cadastrar aluno e solicitar confirmação
-- [ ] 2.0 Confirmar conta e reenviar link
-- [ ] 3.0 Entrar, manter sessão e sair
-- [ ] 4.0 Recuperar senha sem revelar conta
-- [ ] 5.0 Trocar senha com sessão ativa
+- [x] 1.0 Cadastrar aluno e solicitar confirmação
+- [x] 2.0 Confirmar conta e reenviar link
+- [x] 3.0 Entrar, manter sessão e sair
+- [x] 4.0 Recuperar senha sem revelar conta
+- [x] 5.0 Trocar senha com sessão ativa
 
 ## Rastreabilidade PRD → TechSpec → tasks
 

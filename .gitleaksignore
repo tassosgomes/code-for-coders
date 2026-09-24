@@ -1,0 +1,21 @@
+# Falsos positivos mapeados: routing keys do RabbitMQ (ex.: "identidade.conta-criada.v1",
+# "notificacao.envio-solicitado.v1") casam com a heurística generic-api-key (identificador
+# contendo "Key" + entropia). Não são segredos: são nomes lógicos de roteamento declarados
+# no código/config e nos testes.
+# Formato: <arquivo>:<regra>:<linha> (gitleaks >= 8.19). Se a linha mudar, o fingerprint
+# deixa de valer e o achado reaparece — reavalie antes de atualizar esta lista.
+src/identity/src/CodeForCoders.Identity.Application/Services/StudentConfirmationMessageWriter.cs:generic-api-key:18
+src/identity/src/CodeForCoders.Identity.Application/Services/StudentPasswordRecoveryMessageWriter.cs:generic-api-key:18
+src/identity/src/CodeForCoders.Identity.Application/Services/StudentRegistrationMessageWriter.cs:generic-api-key:16
+src/identity/src/CodeForCoders.Identity.Application/Services/StudentRegistrationMessageWriter.cs:generic-api-key:18
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentConfirmationTests.cs:generic-api-key:156
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentConfirmationTests.cs:generic-api-key:183
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecoveryTests.cs:generic-api-key:343
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecoveryTests.cs:generic-api-key:374
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:52
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:57
+src/notification/src/CodeForCoders.Notification.Api/appsettings.json:generic-api-key:19
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/AcceptAndDeliverAccountConfirmationTests.cs:generic-api-key:183
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/DeliverPasswordRecoveryEmailTests.cs:generic-api-key:192
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/RejectInvalidSendRequestTests.cs:generic-api-key:193
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/SendRequestIdempotencyTests.cs:generic-api-key:236

@@ -33,6 +33,8 @@ export const AppShell = ({ serviceName, title }: AppShellProps) => {
       {menuOpen ? (
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
           <Link to={paths.home.getHref()}>Overview</Link>
+          <Link to={paths.studentRegistration.getHref()}>Criar conta</Link>
+          <Link to={paths.studentLogin.getHref()}>Entrar</Link>
         </nav>
       ) : null}
       <Outlet />

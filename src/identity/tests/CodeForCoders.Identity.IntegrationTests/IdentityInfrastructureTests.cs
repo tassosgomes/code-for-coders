@@ -26,12 +26,19 @@ public sealed class IdentityInfrastructureTests(IdentityIntegrationFixture fixtu
             ["RabbitMq:Username"] = "code_for_coders",
             ["RabbitMq:Password"] = "code_for_coders",
             ["RabbitMq:Exchange"] = "identity.integration.events",
+            ["RabbitMq:NotificationExchange"] = "notification.integration.events.default",
             ["RabbitMq:DeadLetterExchange"] = "identity.integration.events.dlx",
             ["RabbitMq:HeartbeatQueue"] = "identity.integration.platform-heartbeat",
             ["Outbox:PollingIntervalSeconds"] = "5",
             ["Outbox:BatchSize"] = "10",
             ["Outbox:MaxAttempts"] = "3",
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
+            ["StudentAccount:ConfirmationBaseUrl"] = "https://students.example.test/confirm-account",
+            ["StudentAccount:ConfirmationLifetimeHours"] = "24",
+            ["StudentAccount:PasswordResetBaseUrl"] = "https://students.example.test/redefinir-senha",
+            ["StudentAccount:PasswordResetLifetimeHours"] = "1",
+            ["Idempotency:FingerprintKeyBase64"] = Convert.ToBase64String(new byte[32]),
+            ["OutboxProtection:KeyBase64"] = Convert.ToBase64String(new byte[32]),
         };
 
         using var host = Host.CreateDefaultBuilder()

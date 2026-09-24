@@ -15,6 +15,7 @@ public static class PipelineExtensions
         }
 
         app.UseRouting();
+        app.UseCors("StudentSpa");
         app.UseBffSecurity();
         return app;
     }

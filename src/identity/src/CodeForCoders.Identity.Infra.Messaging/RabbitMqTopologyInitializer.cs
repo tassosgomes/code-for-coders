@@ -21,6 +21,13 @@ public sealed class RabbitMqTopologyInitializer(
             arguments: null,
             cancellationToken: cancellationToken);
         await channel.ExchangeDeclareAsync(
+            settings.NotificationExchange,
+            ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
+        await channel.ExchangeDeclareAsync(
             settings.DeadLetterExchange,
             ExchangeType.Direct,
             durable: true,

@@ -1,0 +1,3 @@
+namespace CodeForCoders.Identity.Application.UseCases.Accounts.RequestStudentAccountConfirmation;
+
+public sealed record RequestStudentAccountConfirmationOutput(int StatusCode);

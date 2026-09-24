@@ -7,5 +7,10 @@ public static class EndpointExtensions
     public static void MapApiEndpoints(this WebApplication app)
     {
         app.MapPlatformEndpoints();
+        app.MapStudentAccountEndpoints();
+        app.MapStudentConfirmationEndpoints();
+        app.MapStudentPasswordRecoveryEndpoints();
+        app.MapStudentPasswordChangeEndpoints();
+        app.MapStudentSessionEndpoints();
     }
 }

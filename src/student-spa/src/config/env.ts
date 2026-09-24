@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-const devFallbacks = import.meta.env.DEV ? { API_URL: 'http://localhost:8080' } : {};
+const devFallbacks = import.meta.env.DEV ? { API_URL: 'http://localhost:5108' } : {};
 
 const createEnv = () => {
   const raw = Object.fromEntries(

@@ -17,13 +17,24 @@ public static class ServiceConfigurationExtensions
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);
-        builder.Services.AddHttpClient<ITransactionalEmailSender, HttpTransactionalEmailSender>()
-            .AddStandardResilienceHandler(options =>
-            {
-                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
-                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
-                options.Retry.MaxRetryAttempts = 3;
-            });
+        if (builder.Environment.IsDevelopment()
+            && string.Equals(
+                builder.Configuration[$"{CodeForCoders.Notification.Infra.Data.Configuration.EmailOptions.SectionName}:Transport"],
+                "smtp",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            builder.Services.AddSingleton<ITransactionalEmailSender, SmtpTransactionalEmailSender>();
+        }
+        else
+        {
+            builder.Services.AddHttpClient<ITransactionalEmailSender, HttpTransactionalEmailSender>()
+                .AddStandardResilienceHandler(options =>
+                {
+                    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                    options.Retry.MaxRetryAttempts = 3;
+                });
+        }
         return builder;
     }
 }

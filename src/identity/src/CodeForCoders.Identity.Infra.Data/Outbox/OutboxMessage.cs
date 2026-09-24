@@ -16,6 +16,8 @@ public sealed class OutboxMessage
 
     public string RoutingKey { get; private set; } = string.Empty;
 
+    public string Exchange { get; private set; } = string.Empty;
+
     public string Payload { get; private set; } = string.Empty;
 
     public DateTimeOffset OccurredOn { get; private set; }
@@ -28,6 +30,8 @@ public sealed class OutboxMessage
 
     public string? TraceParent { get; private set; }
 
+    public string? CorrelationId { get; private set; }
+
     public static OutboxMessage Create(OutboxMessageDraft draft, string payload)
     {
         return new OutboxMessage
@@ -36,9 +40,12 @@ public sealed class OutboxMessage
             TenantId = draft.TenantId,
             Type = draft.Type,
             RoutingKey = draft.RoutingKey,
+            Exchange = draft.Exchange
+                ?? throw new ArgumentException("Outbox message exchange is required.", nameof(draft)),
             Payload = payload,
             OccurredOn = draft.OccurredOn,
             TraceParent = draft.TraceParent,
+            CorrelationId = draft.CorrelationId,
         };
     }
 

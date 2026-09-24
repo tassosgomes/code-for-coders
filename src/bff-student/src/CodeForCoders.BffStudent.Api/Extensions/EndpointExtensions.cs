@@ -8,6 +8,10 @@ public static class EndpointExtensions
     {
         app.MapPlatformEndpoints();
         app.MapSessionEndpoints();
+        app.MapStudentRegistrationEndpoints();
+        app.MapStudentConfirmationEndpoints();
+        app.MapStudentPasswordRecoveryEndpoints();
+        app.MapStudentPasswordChangeEndpoints();
         app.MapProxyEndpoints();
     }
 }

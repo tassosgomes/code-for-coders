@@ -33,6 +33,16 @@ public sealed class IdentityIntegrationFixture : IAsyncLifetime
         }
     }
 
+    public IdentityDbContext CreateDbContext(Guid tenantId)
+    {
+        var dbOptions = new DbContextOptionsBuilder<IdentityDbContext>()
+            .UseNpgsql(PostgreSql.GetConnectionString())
+            .Options;
+        var tenantContext = new TenantContext();
+        tenantContext.Set(tenantId);
+        return new IdentityDbContext(dbOptions, tenantContext);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await RabbitMq.DisposeAsync();

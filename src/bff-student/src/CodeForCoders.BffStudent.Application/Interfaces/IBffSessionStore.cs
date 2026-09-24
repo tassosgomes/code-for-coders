@@ -4,7 +4,7 @@ namespace CodeForCoders.BffStudent.Application.Interfaces;
 
 public interface IBffSessionStore
 {
-    Task StoreAsync(OpaqueBffSession session, CancellationToken cancellationToken);
+    Task StoreAsync(string opaqueCookieValue, OpaqueBffSession session, CancellationToken cancellationToken);
 
     Task<OpaqueBffSession?> GetAsync(string sessionId, CancellationToken cancellationToken);
 

@@ -12,15 +12,15 @@ public sealed class BffSessionTransformProvider : ITransformProvider
         context.AddRequestTransform(transformContext =>
         {
             var session = BffSessionContext.Get(transformContext.HttpContext);
-            if (session is null)
+            var accessToken = BffSessionContext.GetAccessToken(transformContext.HttpContext);
+            if (session is null || string.IsNullOrWhiteSpace(accessToken))
             {
-                transformContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return ValueTask.CompletedTask;
             }
 
             transformContext.ProxyRequest.Headers.Remove("Authorization");
             transformContext.ProxyRequest.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", session.UpstreamAccessToken);
+                new AuthenticationHeaderValue("Bearer", accessToken);
             return ValueTask.CompletedTask;
         });
     }

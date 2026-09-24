@@ -12,4 +12,7 @@ public sealed record OutboxMessageDraft(
     string RoutingKey,
     object Payload,
     DateTimeOffset OccurredOn,
-    string? TraceParent);
+    string? TraceParent,
+    string? Exchange = null,
+    string? CorrelationId = null,
+    bool ProtectPayload = false);

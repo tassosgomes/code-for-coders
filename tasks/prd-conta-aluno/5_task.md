@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: [3.0]
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentPasswordChangeTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentPasswordChangeTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentPasswordChange'
@@ -35,6 +35,6 @@ Pedir ou consumir link de recuperação (4.0) e alterar permissões de acesso a 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
-- [ ] Senha correta troca Credencial e mantém sessão corrente, mas outra sessão é negada na próxima ação; token de recuperação pendente deixa de funcionar.
-- [ ] Senha atual errada, nova senha inválida e CSRF inválido não alteram Credencial, sessão ou outbox.
+- [x] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
+- [x] Senha correta troca Credencial e mantém sessão corrente, mas outra sessão é negada na próxima ação; token de recuperação pendente deixa de funcionar.
+- [x] Senha atual errada, nova senha inválida e CSRF inválido não alteram Credencial, sessão ou outbox.
