@@ -40,3 +40,20 @@ cada item traz a evidência para o validator **conferir**. Não é dispensa de v
 - **Spec:** não exige nenhuma das duas formas, segundo a revisão. Cabe à full confirmar contra a
   TechSpec e a QT-02.
 - **Revisão:** `3.0_task_review.md` (run.Hexj6mzl), rec. 1.
+
+## Ajustes pré-full decididos pelo usuário (2026-09-24)
+
+### P-01 — Teste de `CONNECT` que não discrimina a migration (task 5.0, R2)
+
+- **Achado:** `AuditIntegrationFixture` roda `REVOKE CONNECT … FROM PUBLIC` antes de migrar. Com isso,
+  `ProducerServiceRolesCannotConnectToTheAuditDatabase` continuaria verde mesmo se a migration perdesse o
+  revoke.
+- **Resolução:** reabrir a 5.0. O fixture passa a só criar os papéis, e o teste prova o revoke pela
+  migration.
+
+### P-02 — Pré-condição de deploy da migration `SecureAuditRuntimePermissions` (task 5.0, R1)
+
+- **Achado:** a migration exige que o login `code_for_coders_audit_runtime` e o papel
+  `code_for_coders_audit_writer` já existam, e fixa o nome do banco. Essa pré-condição não está documentada.
+- **Resolução:** na mesma reabertura, documentar a pré-condição no guardrail (relacionar com o QT-01) e
+  usar `current_database()` no lugar do nome fixo.

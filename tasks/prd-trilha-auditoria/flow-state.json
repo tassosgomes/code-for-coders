@@ -5,9 +5,9 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "ae02a2bb54d6df592677e9e00879c61748ca880d",
-  "phase": "checkpoint",
-  "active_task": "5.0",
+  "last_checkpoint": "75816c403530bd7691b9fd326810821415fcaf6b",
+  "phase": "reopen",
+  "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -22,19 +22,15 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "5.0"
+    "mode": "reopen-task",
+    "task": "4.0"
   },
   "last_result": {
-    "step": "focused",
+    "step": "checkpoint-task",
     "task": "5.0",
-    "attempt": 1,
-    "run_id": "run.upr4TBZ9",
-    "kind": "claude",
-    "outcome": "approved",
-    "gate": "passed",
-    "report": "tasks/prd-trilha-auditoria/5.0_task_review.md",
-    "recommendations": 4
+    "run_id": "run.aeYcbDlj",
+    "outcome": "checkpoint_ok",
+    "commit": "75816c4"
   },
   "history": [
     {
@@ -115,6 +111,17 @@
       "attempt": 1,
       "impl_run": "run.v9RiPfiu",
       "review_run": "run.upr4TBZ9"
+    },
+    {
+      "event": "checkpoint",
+      "task": "5.0",
+      "commit": "75816c4"
+    },
+    {
+      "event": "intervention-start",
+      "task": "4.0",
+      "round": 2,
+      "reason": "usuário: testes de uuid malformado antes da full"
     }
   ],
   "carry_to_full": [
@@ -128,6 +135,13 @@
       "task": "4.0",
       "after": "checkpoint 5.0",
       "action": "reopen-task + fix: testes de fatoId/tenantId não uuid em AuditDeadLetterTests; revalidation; checkpoint",
+      "authorized_by": "usuário 2026-09-24",
+      "consumes_attempt": false
+    },
+    {
+      "task": "5.0",
+      "after": "intervenção 4.0",
+      "action": "reopen-task + fix: R2 fixture só cria papéis e teste prova REVOKE CONNECT pela migration; R1 documentar pré-condição (login runtime e papel writer existentes) no guardrail e usar current_database() em vez do nome fixo; revalidation; checkpoint",
       "authorized_by": "usuário 2026-09-24",
       "consumes_attempt": false
     }
