@@ -5,9 +5,9 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "5f037d1d12269f1f00eb7b753c2c6c73c69a5894",
+  "last_checkpoint": "ae02a2bb54d6df592677e9e00879c61748ca880d",
   "phase": "checkpoint",
-  "active_task": "4.0",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -23,18 +23,18 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "4.0"
+    "task": "5.0"
   },
   "last_result": {
     "step": "focused",
-    "task": "4.0",
+    "task": "5.0",
     "attempt": 1,
-    "run_id": "run.4SFR2uPp",
+    "run_id": "run.upr4TBZ9",
     "kind": "claude",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-trilha-auditoria/4.0_task_review.md",
-    "recommendations": 3
+    "report": "tasks/prd-trilha-auditoria/5.0_task_review.md",
+    "recommendations": 4
   },
   "history": [
     {
@@ -93,11 +93,43 @@
       "attempt": 1,
       "impl_run": "run.6YAZrWK8",
       "review_run": "run.4SFR2uPp"
+    },
+    {
+      "event": "checkpoint",
+      "task": "4.0",
+      "commit": "ae02a2b"
+    },
+    {
+      "event": "notes-recorded",
+      "file": "implementation-notes.md",
+      "items": [
+        "D-01",
+        "A-01",
+        "A-02"
+      ],
+      "reason": "pedido do usuário: evitar falso positivo na full"
+    },
+    {
+      "event": "task-approved",
+      "task": "5.0",
+      "attempt": 1,
+      "impl_run": "run.v9RiPfiu",
+      "review_run": "run.upr4TBZ9"
     }
   ],
   "carry_to_full": [
     "3.0 rec1: ato não conforme não incrementa audit.acts.recorded (conformity sempre conforming); decisão de métrica a confirmar na full",
     "4.0 rec1: requeue via BasicReject (não basic.nack) por x-delivery-limit no RabbitMQ 4.3 — desvio da techspec não documentado",
     "4.0 rec2: fatoId/tenantId não-uuid contados como reason=body"
+  ],
+  "implementation_notes": "tasks/prd-trilha-auditoria/implementation-notes.md",
+  "planned_interventions": [
+    {
+      "task": "4.0",
+      "after": "checkpoint 5.0",
+      "action": "reopen-task + fix: testes de fatoId/tenantId não uuid em AuditDeadLetterTests; revalidation; checkpoint",
+      "authorized_by": "usuário 2026-09-24",
+      "consumes_attempt": false
+    }
   ]
 }

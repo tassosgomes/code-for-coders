@@ -46,10 +46,28 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'code_for_coders_audit_
 \gexec
 ALTER ROLE code_for_coders_audit_writer NOLOGIN;
 
+SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', 'code_for_coders_audit_runtime', :'app_password')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'code_for_coders_audit_runtime')
+\gexec
+ALTER ROLE code_for_coders_audit_runtime WITH LOGIN PASSWORD :'app_password';
+GRANT code_for_coders_audit_writer TO code_for_coders_audit_runtime;
+
 SELECT format('CREATE DATABASE %I OWNER %I', 'code_for_coders_audit', 'code_for_coders_audit')
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'code_for_coders_audit')
 \gexec
 ALTER DATABASE code_for_coders_audit OWNER TO code_for_coders_audit;
+REVOKE CONNECT ON DATABASE code_for_coders_audit FROM PUBLIC;
+REVOKE CONNECT ON DATABASE code_for_coders_audit FROM
+    code_for_coders_bff_admin,
+    code_for_coders_bff_student,
+    code_for_coders_commerce,
+    code_for_coders_identity,
+    code_for_coders_learning,
+    code_for_coders_media,
+    code_for_coders_notification;
+GRANT CONNECT ON DATABASE code_for_coders_audit TO
+    code_for_coders_audit,
+    code_for_coders_audit_runtime;
 
 SELECT format('CREATE DATABASE %I OWNER %I', 'code_for_coders_bff_admin', 'code_for_coders_bff_admin')
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'code_for_coders_bff_admin')

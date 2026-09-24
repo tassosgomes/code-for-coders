@@ -204,7 +204,7 @@ services:
     container_name: code-for-coders-audit
     environment:
       <<: *api-environment
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit;Password=code-for-coders-local
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=code-for-coders-local
     ports:
       - "5106:8080"
     depends_on:

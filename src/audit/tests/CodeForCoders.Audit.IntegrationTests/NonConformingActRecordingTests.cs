@@ -151,7 +151,7 @@ public sealed class NonConformingActRecordingTests(AuditIntegrationFixture fixtu
     {
         var configurationValues = new Dictionary<string, string?>
         {
-            ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["ConnectionStrings:DefaultConnection"] = fixture.RuntimeConnectionString,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",

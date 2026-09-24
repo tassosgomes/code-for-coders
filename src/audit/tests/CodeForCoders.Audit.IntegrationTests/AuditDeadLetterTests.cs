@@ -243,7 +243,7 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
     {
         var configurationValues = new Dictionary<string, string?>
         {
-            ["ConnectionStrings:DefaultConnection"] = connectionString ?? fixture.PostgreSql.GetConnectionString(),
+            ["ConnectionStrings:DefaultConnection"] = connectionString ?? fixture.RuntimeConnectionString,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
