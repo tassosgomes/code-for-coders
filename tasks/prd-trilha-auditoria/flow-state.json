@@ -5,8 +5,8 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "4c7a2b2a71d463320e8b66a651beaf69a7c1cceb",
-  "phase": "reopen",
+  "last_checkpoint": "47973065304ef23e913023f295f8e5b3dca1b89e",
+  "phase": "checkpoint",
   "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -22,16 +22,18 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "reopen-task",
-    "task": "5.0"
+    "mode": "checkpoint-task",
+    "task": "5.0",
+    "round": 2
   },
   "last_result": {
-    "step": "checkpoint-task",
-    "task": "4.0",
+    "step": "revalidation",
+    "task": "5.0",
     "round": 2,
-    "run_id": "run.AuVHEsfH",
-    "outcome": "checkpoint_ok",
-    "commit": "4c7a2b2"
+    "run_id": "run.uURFBNlF",
+    "kind": "claude",
+    "outcome": "approved",
+    "gate": "passed"
   },
   "history": [
     {
@@ -143,6 +145,13 @@
       "task": "5.0",
       "round": 2,
       "reason": "usuário: R1 e R2 da focused 5.0 antes da full"
+    },
+    {
+      "event": "task-approved",
+      "task": "5.0",
+      "round": 2,
+      "fix_run": "run.8L2NkpFw",
+      "review_run": "run.uURFBNlF"
     }
   ],
   "carry_to_full": [

@@ -87,19 +87,6 @@ public sealed class AuditIntegrationFixture : IAsyncLifetime
             CREATE ROLE code_for_coders_learning LOGIN;
             CREATE ROLE code_for_coders_media LOGIN;
             CREATE ROLE code_for_coders_notification LOGIN;
-
-            REVOKE CONNECT ON DATABASE code_for_coders_audit FROM PUBLIC;
-            REVOKE CONNECT ON DATABASE code_for_coders_audit FROM
-                code_for_coders_bff_admin,
-                code_for_coders_bff_student,
-                code_for_coders_commerce,
-                code_for_coders_identity,
-                code_for_coders_learning,
-                code_for_coders_media,
-                code_for_coders_notification;
-            GRANT CONNECT ON DATABASE code_for_coders_audit TO
-                code_for_coders_audit,
-                code_for_coders_audit_runtime;
             """;
         await command.ExecuteNonQueryAsync();
 

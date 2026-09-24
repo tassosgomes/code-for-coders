@@ -60,3 +60,12 @@ cada item traz a evidência para o validator **conferir**. Não é dispensa de v
   `code_for_coders_audit_writer` já existam, e fixa o nome do banco. Essa pré-condição não está documentada.
 - **Resolução:** na mesma reabertura, documentar a pré-condição no guardrail (relacionar com o QT-01) e
   usar `current_database()` no lugar do nome fixo.
+- **P-01 e P-02 resolvidos (rodada 2):** o fix run.8L2NkpFw e a revalidação run.uURFBNlF aprovaram. A
+  mutação que remove o `REVOKE CONNECT` da migration faz `ProducerServiceRolesCannotConnectToTheAuditDatabase`
+  falhar. A migration usa `current_database()`, e a pré-condição está no guardrail.
+
+## Recomendação remanescente conhecida
+
+- **R3 (5.0):** no Compose local, `code_for_coders_identity` é o superusuário (`POSTGRES_USER`) e mantém
+  `CONNECT` em `code_for_coders_audit`. A causa é anterior a este PRD, não depende de grants e não afeta a CI,
+  que usa Testcontainers. Quem validar localmente a regra "outros serviços sem CONNECT" deve considerar isso.
