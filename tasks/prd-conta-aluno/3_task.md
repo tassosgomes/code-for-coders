@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: [2.0]
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentSessionTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentSessionTests --minimum-expected-tests 4 && npm --prefix src/student-spa run test -- -t StudentSession'
@@ -42,3 +42,23 @@ Redefinição e troca de senha (4.0/5.0). Autorização para assistir a curso pe
 - [ ] Login válido cria sessão opaca; resposta pública nunca inclui JWT; erros genéricos não enumeram conta e conta não confirmada só é distinguida após senha correta.
 - [ ] Atividade válida renova inatividade, expiração e falhas de Identity/Valkey fecham acesso, e CSRF de outra sessão bloqueia escrita.
 - [ ] Logout revoga só a sessão corrente; outra sessão permanece válida e repetição não reativa a encerrada.
+
+## Reabertura após validação full 3/3 (run.oIGrxsd8, `prd_review.md`) — rodada full 2 autorizada
+
+Decisão do responsável: concentrar nesta task as correções de CI abaixo (incluindo a migration criada na 1.0) e
+permitir excluir código gerado do coletor de cobertura, **sem baixar o threshold de 70%**.
+
+- **B1 — `dotnet format --verify-no-changes` (CI identity):** normalize
+  `Migrations/20260923142831_AddStudentRegistration.cs` e `Migrations/20260923162915_AddStudentSessions.cs`
+  (BOM/charset e indentação do namespace file-scoped) via `dotnet format`, sem alterar a lógica da migration.
+  Evidência: `dotnet format src/identity/CodeForCoders.Identity.slnx --verify-no-changes` exit 0 (ou a solução/projeto
+  usado pelo workflow `.github/workflows/identity.yml`).
+- **B2 — cobertura .NET de bff-student ≥ 70% (linhas, como o CI calcula):**
+  - testes dos clientes HTTP reais para Identity (`StudentRegistrationIdentityClient`, `StudentSessionIdentityClient`,
+    `StudentPasswordRecoveryIdentityClient`, `StudentPasswordChangeIdentityClient`) com `HttpMessageHandler` fake:
+    2xx, 401, 409/422, 5xx e timeout, verificando cabeçalho da asserção e escopo por operação;
+  - testes de `ValkeyBffSessionStore` e dos ramos de `GlobalExceptionHandler`;
+  - exclusão do código gerado (`obj/**`, ex. `OpenApiXmlCommentSupport.generated.cs`) do coletor por configuração.
+  Evidência: rodar os passos do workflow `.github/workflows/bff-student.yml` (template `ci-dotnet.yml`: restore, format,
+  test com `--coverage --coverage-output-format cobertura`, gate de cobertura) com resultado ≥ 70%.
+Execute comandos longos em primeiro plano até concluir.

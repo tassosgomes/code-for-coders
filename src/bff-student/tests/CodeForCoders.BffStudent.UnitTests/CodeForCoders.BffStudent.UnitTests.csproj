@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.BffStudent.Api/CodeForCoders.BffStudent.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.BffStudent.Application/CodeForCoders.BffStudent.Application.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.BffStudent.Contracts/CodeForCoders.BffStudent.Contracts.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.BffStudent.Domain/CodeForCoders.BffStudent.Domain.csproj" />
     <ProjectReference Include="../CodeForCoders.BffStudent.Tests.Common/CodeForCoders.BffStudent.Tests.Common.csproj" />
     <PackageReference Include="AwesomeAssertions" />
