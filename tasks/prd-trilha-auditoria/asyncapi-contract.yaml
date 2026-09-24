@@ -1,0 +1,212 @@
+# Acordo de mensageria da fatia mínima de CAP-030 (Trilha de auditoria de atos administrativos).
+# Descreve a aplicação `audit`: o que ela recebe — o ato praticado, endereçado por qualquer domínio
+# com ato administrativo, no envelope cujo dono é Auditoria e Conformidade (RN-A14). Nesta fatia,
+# o único produtor previsto é Identidade e Acesso (CAP-002). Decisões em contracts.md.
+asyncapi: 3.0.0
+id: urn:code-4-coders:audit
+info:
+  title: Auditoria — ato administrativo praticado
+  version: 1.0.1
+  description: >
+    Contrato da fatia mínima de `CAP-030` (PRD `tasks/prd-trilha-auditoria/prd.md`, v1.0, aprovado
+    em 2026-09-24). A Auditoria é dona da forma; o domínio de origem é dono do conteúdo (RN-A14 do
+    domain doc de Auditoria e Conformidade v1.1). A aplicação `audit` só recebe: não publica fato
+    que outro domínio consuma (RN-A10) e nenhum domínio a consulta para decidir.
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: >
+      Broker RabbitMQ do grupo inicial (baseline). Host, vhost, credenciais e topologia física são
+      parâmetro de implantação da plataforma e não são fixados por este contrato. Exchange `topic`,
+      filas quorum, DLX/DLQ por fila e `x-delivery-limit` são convenção do baseline (G06).
+    variables:
+      host:
+        default: localhost
+        description: Resolvido pela configuração de implantação, não por este contrato.
+channels:
+  atoPraticado:
+    address: auditoria.ato-praticado.v1
+    description: >
+      Canal endereçado à Auditoria. Todo domínio com ato administrativo publica aqui, sempre pelo
+      outbox (G06); nesta fatia o produtor previsto é Identidade e Acesso. Routing key versionada
+      pela convenção do baseline (`{servico}.{evento}.v{n}`). O prefixo `auditoria.` indica o dono
+      do contrato, não o produtor — mesmo padrão de `notificacao.envio-solicitado`.
+    messages:
+      atoPraticado:
+        $ref: '#/components/messages/AtoPraticado'
+operations:
+  receberAtoPraticado:
+    action: receive
+    summary: Registrar o ato de forma permanente — conforme, não conforme ou retido como ilegível.
+    channel:
+      $ref: '#/channels/atoPraticado'
+    messages:
+      - $ref: '#/channels/atoPraticado/messages/atoPraticado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: '0.3.0'
+    description: >
+      Compromissos observáveis (o mecanismo fica na TechSpec).
+      (1) Idempotência: a chave é o par (`origem`, `fatoId`). Reentrega gera um único registro; reentrega
+      com conteúdo divergente do registro original não cria registro nem altera o original e é
+      alertada à operação (RF-02).
+      (2) Tolerância a ato incompleto: o schema abaixo é a obrigação do produtor. Uma mensagem legível
+      que viole essa obrigação — sem `autor`, sem `alvo`, sem `motivo` quando o tipo o exige, ou com
+      `tipo` fora dos aceitos — NÃO é recusada: vira registro não conforme com a razão de cada falta,
+      e a operação é alertada uma vez por ato (RF-03, RN-A06, DP-04).
+      (3) Mensagem ilegível: é legível a mensagem JSON que traz `fatoId`, `origem` e `tenantId` válidos
+      (sem tenant não há a quem o registro pertença, RN-A13 — esclarecimento da versão 1.0.1). A que não
+      os traz não vira registro, é retida intacta na fila de erro da Auditoria para investigação e a
+      operação é alertada (RF-04, DP-05).
+      (4) Falha transitória da Auditoria ao gravar: a mensagem não é confirmada e volta a ser
+      entregue; esgotado o limite de entregas, segue para a fila de erro e pode ser reprocessada
+      sem duplicar registro, por (1).
+      (5) Ordenação: não garantida. A trilha é ordenada por `praticadoEm`, não pela chegada (RN-A04).
+      (6) A Auditoria registra o momento do recebimento, que não viaja na mensagem (RN-A04).
+components:
+  messages:
+    AtoPraticado:
+      name: AtoPraticado
+      title: Ato administrativo praticado
+      summary: Comunicação, pelo domínio de origem, de que um ato administrativo aconteceu. É fato consumado, não pedido de autorização.
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        required: [correlationId]
+        properties:
+          correlationId:
+            type: string
+            description: 'Identificador de correlação do fluxo de origem (ex.: a requisição do backoffice que praticou o ato). Não contém dado pessoal.'
+      payload:
+        $ref: '#/components/schemas/AtoPraticadoPayload'
+      examples:
+        - name: papelConcedido
+          headers:
+            correlationId: backoffice-2026-10-02-0042
+          payload:
+            fatoId: 4b0f6a52-5d1e-4a8c-9d7a-2f0c6e1b3a90
+            origem: identidade
+            tipo: papel-concedido
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            praticadoEm: '2026-10-02T14:05:11Z'
+            autor:
+              tipo: conta-interna
+              id: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            alvo:
+              tipo: conta-interna
+              id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+            complemento:
+              papel: professor
+            motivo: Professor contratado para o curso de .NET avançado
+        - name: conviteInternoAceito
+          headers:
+            correlationId: convite-aceite-2026-10-03-0003
+          payload:
+            fatoId: c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f
+            origem: identidade
+            tipo: convite-interno-aceito
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            praticadoEm: '2026-10-03T09:12:40Z'
+            autor:
+              tipo: conta-interna
+              id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+            alvo:
+              tipo: convite-interno
+              id: 5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+  schemas:
+    AtoPraticadoPayload:
+      type: object
+      description: >
+        Obrigação do produtor. A reação da Auditoria a cada violação está em `receberAtoPraticado`:
+        faltas de conteúdo viram registro não conforme; só a falta de `fatoId`, `origem` ou `tenantId` torna a
+        mensagem ilegível.
+      required: [fatoId, origem, tipo, tenantId, praticadoEm, autor, alvo]
+      properties:
+        fatoId:
+          type: string
+          format: uuid
+          description: >
+            Identidade estável do ato, atribuída pela origem. Junto com `origem`, é a chave de
+            idempotência. Um novo ato é sempre um novo `fatoId`; nunca se reenvia um `fatoId` para
+            "corrigir" o anterior (RN-A07).
+        origem:
+          type: string
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: >
+            Domínio de origem do ato, no identificador curto do seu serviço. Nesta fatia: `identidade`.
+            Não é enum para que um domínio novo passe a ser auditado sem mudança no contrato (RN-A14).
+        tipo:
+          type: string
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: >
+            Tipo do ato, no vocabulário do domínio de origem. Aceitos nesta versão (origem `identidade`,
+            RN-19): `convite-interno-emitido`, `convite-interno-aceito`, `papel-concedido`,
+            `papel-revogado`. Outro valor é registrado como não conforme com a razão "tipo desconhecido"
+            (DP-04). Não é enum pelo mesmo motivo de `origem`; aceitar um tipo novo é evolução
+            compatível deste contrato (versão minor).
+        tenantId:
+          type: string
+          format: uuid
+          description: Convenção do baseline (BA10 · G07), identificador do tenant no mesmo formato usado pelos serviços. O registro pertence ao tenant do ato (RN-A13); sem `tenantId` válido a mensagem é ilegível.
+        praticadoEm:
+          type: string
+          format: date-time
+          description: Momento em que o ato foi praticado na origem — não o da publicação. É por ele que a trilha é lida (RN-A04).
+        autor:
+          $ref: '#/components/schemas/ReferenciaDeIdentidade'
+        alvo:
+          $ref: '#/components/schemas/ReferenciaDeIdentidade'
+        complemento:
+          type: object
+          description: >
+            Referências adicionais que qualificam o ato, sem dado pessoal (RN-A08). Nesta fatia, apenas
+            `papel` nos atos `papel-concedido`, `papel-revogado` e `convite-interno-emitido` (papel
+            ofertado). Valores são identificadores, nunca e-mail, nome ou texto livre.
+          additionalProperties:
+            type: string
+            maxLength: 100
+          properties:
+            papel:
+              type: string
+              description: 'Papel envolvido no ato, pelo nome canônico de Identidade e Acesso (ex.: professor, suporte, financeiro, administrador).'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: >
+            Justificativa escrita pelo autor. Obrigatória em `convite-interno-emitido`, `papel-concedido`
+            e `papel-revogado`; não se aplica a `convite-interno-aceito` (RN-A05, Identidade RN-19).
+            Guardada no registro, nunca em log, métrica ou rastreamento. Não deve conter dado pessoal de
+            terceiros além do alvo já referenciado (RN-A08).
+      allOf:
+        - if:
+            properties:
+              tipo:
+                enum: [convite-interno-emitido, papel-concedido, papel-revogado]
+            required: [tipo]
+          then:
+            required: [motivo]
+    ReferenciaDeIdentidade:
+      type: object
+      description: >
+        Referência a quem praticou ou sofreu o ato, por identificador — nunca cópia de e-mail, nome ou
+        outro dado pessoal (RN-A08). É isso que permite a anonimização futura sem alterar o registro
+        (CAP-031).
+      required: [tipo, id]
+      properties:
+        tipo:
+          type: string
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: >
+            Natureza do referenciado. Nesta fatia: `conta-interna` (conta de ator interno) e
+            `convite-interno` (Convite de Acesso Interno — o e-mail convidado é alcançado pelo convite,
+            nunca copiado aqui). Outros domínios acrescentam valores (ex.: `conta-aluno`).
+        id:
+          type: string
+          format: uuid
+          description: Identificador no domínio dono do referenciado.

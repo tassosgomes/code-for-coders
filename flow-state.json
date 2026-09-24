@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-22",
+  "updated": "2026-09-24",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo e nunca sao duplicados aqui. Escrito pelas skills TSG Flow ao concluir uma etapa; validado por .tsg/validate_state.py.",
   "artifacts": {
     "vision": "vision.md",
@@ -22,7 +22,7 @@
   "capabilities": [
     {
       "id": "CAP-001",
-      "stage": "prd",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/identidade-e-acesso/domain.md",
         "prd": "tasks/prd-conta-aluno/prd.md"
@@ -184,8 +184,13 @@
     },
     {
       "id": "CAP-030",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "techspec",
+      "artifacts": {
+        "domain": "domains/auditoria-e-conformidade/domain.md",
+        "prd": "tasks/prd-trilha-auditoria/prd.md",
+        "contract": "tasks/prd-trilha-auditoria/contracts.md",
+        "techspec": "tasks/prd-trilha-auditoria/techspec.md"
+      },
       "mvp_order": 2
     },
     {
@@ -196,9 +201,9 @@
   ],
   "next_actions": [
     {
-      "id": "NA6",
-      "what": "Criar o contrato de identidade e autenticacao consumido pelo BFF do aluno a partir de tasks/prd-conta-aluno/prd.md",
-      "skill": "tsg-flow-contract-creator",
+      "id": "NA16",
+      "what": "Aprovar o plano tasks/prd-trilha-auditoria/tasks.md e iniciar a execucao",
+      "skill": "tsg-flow-orchestrator",
       "blocked_by": []
     }
   ],
@@ -237,6 +242,15 @@
       "what": "Prazo de retencao da camada com dado pessoal do Registro de Entrega. A forma ja esta decidida (RN-N16: duas camadas, parametrizada); falta o numero. Recomendacao a validar: ordem de 90 dias, que e o que cobre a finalidade de diagnostico. Prazo de guarda longo (5-6 anos) vale para documento fiscal e contrato, nao para log de entrega de e-mail",
       "owner": "encarregado de dados + negocio",
       "blocks": []
+    },
+    {
+      "id": "OD22",
+      "owner": "Identidade e Acesso (PRD de CAP-002)",
+      "what": "Alterar papel e ato proprio (identidade.papel-alterado) ou revogar + conceder? RN-19 cita alteracao, mas o domain doc so publica concedido/revogado",
+      "ref": "domains/auditoria-e-conformidade/domain.md QA-A03",
+      "blocks": [
+        "PRD de CAP-002"
+      ]
     }
   ],
   "foundation": {
@@ -409,6 +423,46 @@
       "decided_at": "2026-09-22",
       "owner": "tasso",
       "decision": "Ciclo completo da conta do aluno no MVP: cadastro, confirmacao de e-mail, login, sessao, logout e recuperacao de senha. Fatia menor foi considerada e descartada porque confirmacao e recuperacao fecham o uso autonomo da conta e ja contam com a fatia de CAP-026 integrada. Convites e papeis internos permanecem em CAP-002."
+    },
+    {
+      "id": "OD19",
+      "ref": "backlog/capabilities.md CAP-030 · CAP-002",
+      "what": "Ordem e recorte da rodada 2 (CAP-030 x CAP-002, dependencia circular no backlog)",
+      "decided_at": "2026-09-24",
+      "owner": "tasso",
+      "decision": "CAP-030 sai antes, como provedor. Primeiro PRD de CAP-030: consumir os 4 eventos de ato administrativo de identidade (convite emitido/aceito, papel concedido/revogado) e grava-los append-only, com imutabilidade provada. Fica de fora: consulta no backoffice (segundo PRD de CAP-030, apos CAP-002) e os atos de publicacao de curso e cortesia (entram com CAP-005 e CAP-008/009). Domain doc parcial de Auditoria (D3) justificado: CAP-030 rende dois PRDs no horizonte. Descartado: CAP-030 inteira em um PRD, que exigiria CAP-002 antes ou nasceria sobre papel stub."
+    },
+    {
+      "id": "OD20",
+      "ref": "domains/auditoria-e-conformidade/domain.md QA-A01",
+      "what": "Ato administrativo recebido sem autor, alvo ou motivo obrigatorio",
+      "decided_at": "2026-09-24",
+      "owner": "tasso",
+      "decision": "Registra e marca como nao conforme, com alerta a operacao (RN-A06). Descartado: recusar e mandar para DLQ - o ato sumiria da trilha ate o produtor ser corrigido."
+    },
+    {
+      "id": "OD21",
+      "ref": "domains/auditoria-e-conformidade/domain.md QA-A02",
+      "what": "Quem consulta a trilha de auditoria no MVP",
+      "decided_at": "2026-09-24",
+      "owner": "tasso",
+      "decision": "So o administrador (RN-A09), coerente com Identidade RN-14. Descartado: administrador + financeiro - exigiria recorte por tipo de ato ja no MVP."
+    },
+    {
+      "id": "OD23",
+      "ref": "domains/auditoria-e-conformidade/domain.md RN-A14 · tasks/prd-trilha-auditoria DP-02",
+      "what": "Dono do formato da mensagem que a Auditoria recebe",
+      "decided_at": "2026-09-24",
+      "owner": "tasso",
+      "decision": "Auditoria define o envelope unico auditoria.ato-praticado; todo dominio comunica o ato nele (mesmo padrao de notificacao.envio-solicitado). CAP-030 e construida e testada antes de CAP-002. Descartado: consumir eventos proprios de cada dominio - contrato de Identidade teria de sair antes e cada dominio novo exigiria traducao."
+    },
+    {
+      "id": "OD24",
+      "ref": "tasks/prd-trilha-auditoria/prd.md RF-04 · asyncapi-contract.yaml 1.0.1",
+      "what": "Ato sem tenantId valido",
+      "decided_at": "2026-09-24",
+      "owner": "tasso",
+      "decision": "E ilegivel: retido intacto na DLQ e alertado, como sem fatoId/origem (RN-A13: nenhum registro sem tenant). Contrato 1.0.1 declara tenantId format uuid. Descartado: registrar nao conforme sob tenant padrao - quebra RN-A13 e vira armadilha no multi-tenant."
     }
   ]
 }
