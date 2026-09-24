@@ -1,9 +1,15 @@
 # Audit append-only guardrail
 
-`audit` only records events delivered by RabbitMQ. The writer credential is configured through
-`AuditDatabase:WriterRole` and is provisioned outside the repository with `SELECT` and `INSERT`
-on `audit_access.audit_records`; it has no `UPDATE` or `DELETE` grant. The deploy script
-`AuditDatabasePermissions.sql` documents the grants and revokes.
+`audit` only records events delivered by RabbitMQ. The runtime login configured through
+`ConnectionStrings:DefaultConnection` is a member of `code_for_coders_audit_writer`. That group
+has only `USAGE` on `audit_access` and `SELECT` and `INSERT` on `audit_access.audit_records`; it has
+no `UPDATE`, `DELETE` or `TRUNCATE` grant. The owner login `code_for_coders_audit` is reserved for
+the migration step. `AuditDatabasePermissions.sql` documents the deploy grants and revokes.
+
+Before applying `SecureAuditRuntimePermissions`, platform provisioning (QT-01) must create the
+`code_for_coders_audit_runtime` login and the `code_for_coders_audit_writer` role, and make the login
+a member of that role. Run the migration while connected to the target audit database; its
+`CONNECT` grants and revokes use the connected database name.
 
 The database migration also installs a `BEFORE UPDATE OR DELETE` trigger that raises an error.
 That trigger protects the invariant even if a privileged connection or an accidental ORM mapping

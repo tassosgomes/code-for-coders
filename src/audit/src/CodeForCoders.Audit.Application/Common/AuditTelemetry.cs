@@ -11,10 +11,16 @@ public static class AuditTelemetry
 
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
-    public static readonly Counter<long> EventsRecorded = Meter.CreateCounter<long>(
-        "audit.events.recorded",
-        unit: "{event}");
-    public static readonly Counter<long> EventsConsumed = Meter.CreateCounter<long>(
-        "audit.events.consumed",
-        unit: "{event}");
+    public static readonly Counter<long> ActsRecorded = Meter.CreateCounter<long>(
+        "audit.acts.recorded",
+        unit: "{act}");
+    public static readonly Counter<long> ActsNonconforming = Meter.CreateCounter<long>(
+        "audit.acts.nonconforming",
+        unit: "{act}");
+    public static readonly Counter<long> ActsRedelivered = Meter.CreateCounter<long>(
+        "audit.acts.redelivered",
+        unit: "{act}");
+    public static readonly Counter<long> MessagesIllegible = Meter.CreateCounter<long>(
+        "audit.messages.illegible",
+        unit: "{message}");
 }

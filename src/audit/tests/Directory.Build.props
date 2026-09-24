@@ -1,0 +1,13 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Keep compiler-generated sources out of coverage so the 70% gate measures maintained code. -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)testconfig.json"
+          Link="testconfig.json"
+          TargetPath="$(AssemblyName).testconfig.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

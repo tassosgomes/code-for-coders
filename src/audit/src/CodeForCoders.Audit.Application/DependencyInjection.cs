@@ -1,7 +1,6 @@
 using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Application.UseCases;
-using CodeForCoders.Audit.Application.UseCases.Audit.RecordConsumedAuditEvent;
-using FluentValidation;
+using CodeForCoders.Audit.Application.UseCases.Audit.RecordAdministrativeAct;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CodeForCoders.Audit.Application;
@@ -10,13 +9,15 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
-        services.AddScoped<IValidator<RecordConsumedAuditEventInput>, RecordConsumedAuditEventInputValidator>();
         services.Scan(scan => scan
-            .FromAssemblyOf<IRecordConsumedAuditEvent>()
+            .FromAssemblyOf<IRecordAdministrativeAct>()
             .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<,>)))
+            .AsSelf()
             .AsMatchingInterface()
             .WithScopedLifetime());
-        services.AddScoped<IAuditEventRecorder, RecordConsumedAuditEvent>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.AddScoped<IAuditActRecorder>(serviceProvider =>
+            serviceProvider.GetRequiredService<RecordAdministrativeAct>());
 
         return services;
     }

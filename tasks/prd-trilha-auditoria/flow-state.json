@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "branch": "feature/trilha-auditoria",
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-trilha-auditoria",
+  "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
+  "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
+  "target_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
+  "last_checkpoint": "bc1f9395463d05eeb2e151d8d2008bd9d3e39027",
+  "phase": "complete",
+  "active_task": null,
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 2,
+  "transport_retries": 1,
+  "transport": "herdr",
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "plan_approved": "2026-09-24 (usuário, na sessão do orquestrador)",
+  "validated_commit": "bc1f9395463d05eeb2e151d8d2008bd9d3e39027",
+  "validated_tree": "f0ba0547c7b36e84f06d362aa2bed56425f5a20a",
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "complete-prd",
+    "delivery": "pr"
+  },
+  "last_result": {
+    "step": "full",
+    "full_attempt": 2,
+    "run_id": "run.nt0gsIJS",
+    "kind": "claude",
+    "outcome": "approved",
+    "report": "tasks/prd-trilha-auditoria/prd_review.md",
+    "recommendations": 5
+  },
+  "history": [
+    {
+      "event": "plan-approved",
+      "date": "2026-09-24"
+    },
+    {
+      "event": "branch-ready",
+      "branch": "feature/trilha-auditoria",
+      "base_ref": "ffa246f"
+    },
+    {
+      "event": "moved-to-worktree",
+      "path": "../code-for-coders-trilha-auditoria",
+      "reason": "pedido do usuário"
+    },
+    {
+      "event": "task-approved",
+      "task": "1.0",
+      "attempt": 1,
+      "impl_run": "run.5Ezfkuxi",
+      "review_run": "run.TiT56OCG"
+    },
+    {
+      "event": "checkpoint",
+      "task": "1.0",
+      "commit": "35c28e4"
+    },
+    {
+      "event": "task-approved",
+      "task": "2.0",
+      "attempt": 1,
+      "impl_run": "run.PfRLe422",
+      "review_run": "run.DdNFNIDn"
+    },
+    {
+      "event": "checkpoint",
+      "task": "2.0",
+      "commit": "8897dbf"
+    },
+    {
+      "event": "task-approved",
+      "task": "3.0",
+      "attempt": 1,
+      "impl_run": "run.vHWta4em",
+      "review_run": "run.Hexj6mzl"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "5f037d1"
+    },
+    {
+      "event": "task-approved",
+      "task": "4.0",
+      "attempt": 1,
+      "impl_run": "run.6YAZrWK8",
+      "review_run": "run.4SFR2uPp"
+    },
+    {
+      "event": "checkpoint",
+      "task": "4.0",
+      "commit": "ae02a2b"
+    },
+    {
+      "event": "notes-recorded",
+      "file": "implementation-notes.md",
+      "items": [
+        "D-01",
+        "A-01",
+        "A-02"
+      ],
+      "reason": "pedido do usuário: evitar falso positivo na full"
+    },
+    {
+      "event": "task-approved",
+      "task": "5.0",
+      "attempt": 1,
+      "impl_run": "run.v9RiPfiu",
+      "review_run": "run.upr4TBZ9"
+    },
+    {
+      "event": "checkpoint",
+      "task": "5.0",
+      "commit": "75816c4"
+    },
+    {
+      "event": "intervention-start",
+      "task": "4.0",
+      "round": 2,
+      "reason": "usuário: testes de uuid malformado antes da full"
+    },
+    {
+      "event": "task-approved",
+      "task": "4.0",
+      "round": 2,
+      "fix_run": "run.RONTTrOG",
+      "review_run": "run.Ve5MoN1j",
+      "note": "A-01 retirado"
+    },
+    {
+      "event": "checkpoint",
+      "task": "4.0",
+      "round": 2,
+      "commit": "4c7a2b2"
+    },
+    {
+      "event": "intervention-start",
+      "task": "5.0",
+      "round": 2,
+      "reason": "usuário: R1 e R2 da focused 5.0 antes da full"
+    },
+    {
+      "event": "task-approved",
+      "task": "5.0",
+      "round": 2,
+      "fix_run": "run.8L2NkpFw",
+      "review_run": "run.uURFBNlF"
+    },
+    {
+      "event": "checkpoint",
+      "task": "5.0",
+      "round": 2,
+      "commit": "a759d7b"
+    },
+    {
+      "event": "all-tasks-done"
+    },
+    {
+      "event": "integration-ready",
+      "head": "a759d7b",
+      "target": "origin/main ffa246f",
+      "decided_by": "usuário"
+    },
+    {
+      "event": "full-rejected",
+      "full_attempt": 1,
+      "run_id": "run.Wuikipl6"
+    },
+    {
+      "event": "task-approved",
+      "task": "5.0",
+      "round": 3,
+      "fix_run": "run.3L9XnKW4",
+      "review_run": "run.qTGaj4gk"
+    },
+    {
+      "event": "checkpoint",
+      "task": "5.0",
+      "round": 3,
+      "commit": "bc1f939"
+    },
+    {
+      "event": "integration-ready",
+      "head": "bc1f939",
+      "target": "origin/main ffa246f"
+    },
+    {
+      "event": "transport-failure",
+      "run": "run.nt0gsIJS",
+      "reason": "result_missing (turno encerrado aguardando mutações)",
+      "action": "prompt de continuação no mesmo pane w4:p87"
+    },
+    {
+      "event": "full-approved",
+      "full_attempt": 2,
+      "run_id": "run.nt0gsIJS",
+      "validated_commit": "bc1f939"
+    },
+    {
+      "event": "delivery-chosen",
+      "delivery": "pr",
+      "by": "usuário"
+    }
+  ],
+  "carry_to_full": [
+    "3.0 rec1: ato não conforme não incrementa audit.acts.recorded (conformity sempre conforming); decisão de métrica a confirmar na full",
+    "4.0 rec1: requeue via BasicReject (não basic.nack) por x-delivery-limit no RabbitMQ 4.3 — desvio da techspec não documentado"
+  ],
+  "implementation_notes": "tasks/prd-trilha-auditoria/implementation-notes.md",
+  "planned_interventions": [
+    {
+      "task": "4.0",
+      "after": "checkpoint 5.0",
+      "action": "reopen-task + fix: testes de fatoId/tenantId não uuid em AuditDeadLetterTests; revalidation; checkpoint",
+      "authorized_by": "usuário 2026-09-24",
+      "consumes_attempt": false,
+      "status": "done"
+    },
+    {
+      "task": "5.0",
+      "after": "intervenção 4.0",
+      "action": "reopen-task + fix: R2 fixture só cria papéis e teste prova REVOKE CONNECT pela migration; R1 documentar pré-condição (login runtime e papel writer existentes) no guardrail e usar current_database() em vez do nome fixo; revalidation; checkpoint",
+      "authorized_by": "usuário 2026-09-24",
+      "consumes_attempt": false,
+      "status": "done"
+    }
+  ],
+  "round": 3,
+  "target_ref_name": "origin/main",
+  "full_fix_plan": {
+    "task": "5.0",
+    "round": 3,
+    "items": [
+      "B-01: AuditApiFactory cria papéis runtime/writer antes de migrar",
+      "B-02: excluir código gerado da cobertura na config do projeto (decisão do usuário); se < 70%, testes na Api"
+    ],
+    "decided_by": "usuário 2026-09-24"
+  },
+  "env_notes": [
+    "gitleaks instalado pelo usuário após full 1"
+  ]
+}

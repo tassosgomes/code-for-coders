@@ -29,40 +29,81 @@ namespace CodeForCoders.Audit.Infra.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("event_type");
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("autor_id");
 
-                    b.Property<DateTimeOffset>("OccurredOn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("occurred_on");
+                    b.Property<string>("AuthorType")
+                        .HasColumnType("text")
+                        .HasColumnName("autor_tipo");
 
-                    b.Property<string>("Payload")
-                        .IsRequired()
-                        .HasMaxLength(100000)
+                    b.Property<string>("Complement")
                         .HasColumnType("jsonb")
-                        .HasColumnName("payload");
+                        .HasColumnName("complemento");
 
-                    b.Property<DateTimeOffset>("RecordedOn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("recorded_on");
+                    b.Property<string>("Conformity")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("conformidade");
 
-                    b.Property<string>("SourceService")
+                    b.Property<Guid>("FactId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fato_id");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("impressao_digital");
+
+                    b.Property<string>("Origin")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasColumnName("source_service");
+                        .HasColumnName("origem");
+
+                    b.Property<DateTimeOffset?>("PracticedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("praticado_em");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text")
+                        .HasColumnName("motivo");
+
+                    b.PrimitiveCollection<string[]>("Reasons")
+                        .IsRequired()
+                        .HasColumnType("text[]")
+                        .HasColumnName("razoes");
+
+                    b.Property<DateTimeOffset>("ReceivedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recebido_em");
+
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("alvo_id");
+
+                    b.Property<string>("TargetType")
+                        .HasColumnType("text")
+                        .HasColumnName("alvo_tipo");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
 
+                    b.Property<string>("Type")
+                        .HasColumnType("text")
+                        .HasColumnName("tipo");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "OccurredOn")
-                        .HasDatabaseName("ix_audit_records_tenant_occurred_on");
+                    b.HasIndex("Origin", "FactId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_audit_records_origem_fato_id");
+
+                    b.HasIndex("TenantId", "PracticedOn")
+                        .HasDatabaseName("ix_audit_records_tenant_praticado_em");
 
                     b.ToTable("audit_records", "audit_access", t =>
                         {

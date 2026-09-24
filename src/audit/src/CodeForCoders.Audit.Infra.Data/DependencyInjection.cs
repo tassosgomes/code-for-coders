@@ -15,18 +15,17 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
+        var executionConnectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is required.");
 
         services.AddDbContext<AuditDbContext>(options =>
         {
-            options.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable(
+            options.UseNpgsql(executionConnectionString, npgsql => npgsql.MigrationsHistoryTable(
                 "__ef_migrations_history",
                 AuditSchema.Name));
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
             }
         });
         services.AddScoped<IAuditRecordWriter, AuditRecordWriter>();

@@ -1,4 +1,5 @@
 using CodeForCoders.Audit.Domain.Entities;
+using CodeForCoders.Audit.Domain.ValueObjects;
 using CodeForCoders.Audit.Infra.Data;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -43,11 +44,15 @@ public sealed class AuditAppendOnlyGuardrailTests
 
     private static AuditRecord NewRecord()
         => AuditRecord.Create(
+            new AdministrativeAct(
             Guid.CreateVersion7(),
+            "identidade",
+            "papel-concedido",
             Guid.CreateVersion7(),
-            "smoke-source",
-            "SmokeEventV1",
-            "{}",
-            DateTimeOffset.UtcNow,
-            DateTimeOffset.UtcNow);
+            new DateTimeOffset(2026, 10, 2, 14, 5, 11, TimeSpan.Zero),
+            new AdministrativeActReference("conta-interna", Guid.CreateVersion7()),
+            new AdministrativeActReference("conta-interna", Guid.CreateVersion7()),
+            new Dictionary<string, string> { ["papel"] = "professor" },
+            "reason"),
+            new DateTimeOffset(2026, 10, 4, 12, 0, 0, TimeSpan.Zero));
 }

@@ -3,7 +3,7 @@
 > **TechSpec de origem:** [techspec.md](techspec.md), aprovada em 2026-09-24
 > **Escopo:** Backend (`src/audit`)
 > **ADRs pertinentes:** [0001](../../docs/adr/0001-monorepo-de-codigo.md), [0002](../../docs/adr/0002-plataforma-de-runtime-coolify.md)
-> **Status do plano:** Em revisão
+> **Status do plano:** Aprovado em 2026-09-24
 
 ## Visão Geral
 
@@ -43,11 +43,11 @@ Nenhum. A reconstrução da tabela, a troca de fila e a remoção de `AuditEvent
 
 ## Tasks
 
-- [ ] 1.0 Registrar ato administrativo conforme
-- [ ] 2.0 Não duplicar ato reentregue e alertar divergência
-- [ ] 3.0 Registrar e alertar ato não conforme
-- [ ] 4.0 Reter mensagem ilegível e falha transitória na DLQ sem perda
-- [ ] 5.0 Demonstrar imutabilidade com a credencial de execução
+- [x] 1.0 Registrar ato administrativo conforme
+- [x] 2.0 Não duplicar ato reentregue e alertar divergência
+- [x] 3.0 Registrar e alertar ato não conforme
+- [x] 4.0 Reter mensagem ilegível e falha transitória na DLQ sem perda
+- [x] 5.0 Demonstrar imutabilidade com a credencial de execução
 
 ## Verificação herdada
 
