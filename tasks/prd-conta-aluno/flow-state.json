@@ -17,17 +17,19 @@
     "techspec.md",
     "contracts.md"
   ],
-  "delivery": "branch",
+  "delivery": "pr",
   "validated_commit": "f1cfce51d8c29a89e60d4587bc525ec6eb5e8239",
   "validated_tree": "542ccda7d802b2b7470643e49d58031df5eff76e",
   "pending_delegation": null,
   "last_result": {
     "role": "integrator",
     "mode": "complete-prd",
-    "run_id": "run.cj6Elr7E",
+    "run_id": "run.NhcnTCsU",
     "outcome": "prd_complete",
     "gate": "passed",
-    "report": "tasks/prd-conta-aluno/prd_review.md"
+    "report": "tasks/prd-conta-aluno/prd_review.md",
+    "delivery": "pr",
+    "pull_request": "https://github.com/tassosgomes/code-for-coders/pull/6"
   },
   "history": [
     {
@@ -587,6 +589,14 @@
       "event": "prd_complete",
       "run_id": "run.cj6Elr7E",
       "branch": "feature/conta-aluno"
+    },
+    {
+      "ts": "2026-09-24",
+      "event": "prd_complete",
+      "run_id": "run.NhcnTCsU",
+      "branch": "feature/conta-aluno",
+      "delivery": "pr",
+      "pull_request": "https://github.com/tassosgomes/code-for-coders/pull/6"
     }
   ],
   "open_findings": [],
