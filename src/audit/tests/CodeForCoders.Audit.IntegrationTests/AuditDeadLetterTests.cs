@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
@@ -52,6 +53,32 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
         await AssertDeadLetteredIntactAsync(body, "fatoId");
     }
 
+    [Fact(DisplayName = nameof(SendsMessageWithNonUuidFactIdToTheDeadLetterQueueIntact))]
+    public async Task SendsMessageWithNonUuidFactIdToTheDeadLetterQueueIntact()
+    {
+        var body = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            fatoId = "abc",
+            origem = "identidade",
+            tenantId = Guid.CreateVersion7(),
+        });
+
+        await AssertDeadLetteredIntactAsync(body, "fatoId");
+    }
+
+    [Fact(DisplayName = nameof(SendsMessageWithNonStringFactIdToTheDeadLetterQueueIntact))]
+    public async Task SendsMessageWithNonStringFactIdToTheDeadLetterQueueIntact()
+    {
+        var body = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            fatoId = 123,
+            origem = "identidade",
+            tenantId = Guid.CreateVersion7(),
+        });
+
+        await AssertDeadLetteredIntactAsync(body, "fatoId");
+    }
+
     [Fact(DisplayName = nameof(SendsMessageWithoutOriginToTheDeadLetterQueueIntact))]
     public async Task SendsMessageWithoutOriginToTheDeadLetterQueueIntact()
     {
@@ -87,6 +114,32 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
         {
             fatoId = Guid.CreateVersion7(),
             origem = "identidade",
+        });
+
+        await AssertDeadLetteredIntactAsync(body, "tenantId");
+    }
+
+    [Fact(DisplayName = nameof(SendsMessageWithNonUuidTenantIdToTheDeadLetterQueueIntact))]
+    public async Task SendsMessageWithNonUuidTenantIdToTheDeadLetterQueueIntact()
+    {
+        var body = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            fatoId = Guid.CreateVersion7(),
+            origem = "identidade",
+            tenantId = "abc",
+        });
+
+        await AssertDeadLetteredIntactAsync(body, "tenantId");
+    }
+
+    [Fact(DisplayName = nameof(SendsMessageWithNonStringTenantIdToTheDeadLetterQueueIntact))]
+    public async Task SendsMessageWithNonStringTenantIdToTheDeadLetterQueueIntact()
+    {
+        var body = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            fatoId = Guid.CreateVersion7(),
+            origem = "identidade",
+            tenantId = 123,
         });
 
         await AssertDeadLetteredIntactAsync(body, "tenantId");
@@ -150,12 +203,12 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
             host = await StartHostAsync(logs, cancellationToken, queueName: DatabaseFailureQueue);
             await WaitForConsumerCountAsync(cancellationToken, DatabaseFailureQueue);
 
-            var deadLetterBody = await TakeDeadLetterBodyAsync(
+            var deadLetter = await TakeDeadLetterAsync(
                 cancellationToken,
                 DatabaseFailureDeadLetterQueue);
-            Assert.Equal(body, deadLetterBody);
+            Assert.Equal(body, deadLetter.Body);
 
-            await PublishAsync(deadLetterBody, cancellationToken);
+            await PublishAsync(deadLetter.Body, cancellationToken);
             try
             {
                 await WaitForFactRecordCountAsync(factId, 1, cancellationToken);
@@ -175,7 +228,7 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
                     exception);
             }
 
-            await PublishAsync(deadLetterBody, cancellationToken);
+            await PublishAsync(deadLetter.Body, cancellationToken);
             await metrics.WaitForIdenticalRedeliveryAsync(cancellationToken);
 
             Assert.Equal(1, await GetFactRecordCountAsync(factId, cancellationToken));
@@ -212,13 +265,15 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
         await WaitForConsumerCountAsync(cancellationToken);
 
         await PublishAsync(body, cancellationToken);
-        var deadLetterBody = await TakeDeadLetterBodyAsync(cancellationToken);
+        var deadLetter = await TakeDeadLetterAsync(cancellationToken);
         await metrics.WaitForReasonAsync(expectedReason, cancellationToken);
 
-        Assert.Equal(body, deadLetterBody);
+        Assert.Equal("rejected", deadLetter.Reason);
+        Assert.Equal(body, deadLetter.Body);
         Assert.Equal(originalRecordCount, await GetRecordCountAsync(cancellationToken));
         Assert.Equal(0u, await GetQueueMessageCountAsync(DeadLetterQueue, cancellationToken));
-        Assert.Single(metrics.Events, metric => metric.Tags["reason"] == expectedReason);
+        var metric = Assert.Single(metrics.Events);
+        Assert.Equal(expectedReason, metric.Tags["reason"]);
 
         if (privateText is not null)
         {
@@ -309,7 +364,7 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
             cancellationToken);
     }
 
-    private async Task<byte[]> TakeDeadLetterBodyAsync(
+    private async Task<DeadLetterMessage> TakeDeadLetterAsync(
         CancellationToken cancellationToken,
         string deadLetterQueue = DeadLetterQueue)
     {
@@ -320,15 +375,39 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
             var delivery = await channel.BasicGetAsync(deadLetterQueue, autoAck: false, cancellationToken);
             if (delivery is not null)
             {
-                var body = delivery.Body.ToArray();
+                var message = new DeadLetterMessage(
+                    delivery.Body.ToArray(),
+                    GetDeadLetterReason(delivery.BasicProperties));
                 await channel.BasicAckAsync(delivery.DeliveryTag, multiple: false, cancellationToken);
-                return body;
+                return message;
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(50), cancellationToken);
         }
 
         throw new TimeoutException("The audit message did not reach its dead-letter queue.");
+    }
+
+    private static string? GetDeadLetterReason(IReadOnlyBasicProperties properties)
+    {
+        if (properties.Headers?.TryGetValue("x-death", out var xDeathValue) != true
+            || xDeathValue is not IEnumerable deathEntries)
+        {
+            return null;
+        }
+
+        foreach (var deathEntry in deathEntries)
+        {
+            if (deathEntry is not IDictionary death || !death.Contains("reason"))
+            {
+                continue;
+            }
+
+            var reason = death["reason"];
+            return reason is byte[] bytes ? Encoding.UTF8.GetString(bytes) : reason?.ToString();
+        }
+
+        return null;
     }
 
     private async Task WaitForQueueMessageCountAsync(
@@ -637,4 +716,6 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
     private sealed record LogEntry(LogLevel Level, string Message);
 
     private sealed record MetricEvent(string Name, long Value, IReadOnlyDictionary<string, string?> Tags);
+
+    private sealed record DeadLetterMessage(byte[] Body, string? Reason);
 }

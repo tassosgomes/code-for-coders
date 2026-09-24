@@ -5,8 +5,8 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "75816c403530bd7691b9fd326810821415fcaf6b",
-  "phase": "reopen",
+  "last_checkpoint": "171105aeaddc9e5ba9f7c1052d644abaf4b15d05",
+  "phase": "checkpoint",
   "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -22,15 +22,18 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "reopen-task",
-    "task": "4.0"
+    "mode": "checkpoint-task",
+    "task": "4.0",
+    "round": 2
   },
   "last_result": {
-    "step": "checkpoint-task",
-    "task": "5.0",
-    "run_id": "run.aeYcbDlj",
-    "outcome": "checkpoint_ok",
-    "commit": "75816c4"
+    "step": "revalidation",
+    "task": "4.0",
+    "round": 2,
+    "run_id": "run.Ve5MoN1j",
+    "kind": "claude",
+    "outcome": "approved",
+    "gate": "passed"
   },
   "history": [
     {
@@ -122,12 +125,19 @@
       "task": "4.0",
       "round": 2,
       "reason": "usuário: testes de uuid malformado antes da full"
+    },
+    {
+      "event": "task-approved",
+      "task": "4.0",
+      "round": 2,
+      "fix_run": "run.RONTTrOG",
+      "review_run": "run.Ve5MoN1j",
+      "note": "A-01 retirado"
     }
   ],
   "carry_to_full": [
     "3.0 rec1: ato não conforme não incrementa audit.acts.recorded (conformity sempre conforming); decisão de métrica a confirmar na full",
-    "4.0 rec1: requeue via BasicReject (não basic.nack) por x-delivery-limit no RabbitMQ 4.3 — desvio da techspec não documentado",
-    "4.0 rec2: fatoId/tenantId não-uuid contados como reason=body"
+    "4.0 rec1: requeue via BasicReject (não basic.nack) por x-delivery-limit no RabbitMQ 4.3 — desvio da techspec não documentado"
   ],
   "implementation_notes": "tasks/prd-trilha-auditoria/implementation-notes.md",
   "planned_interventions": [
@@ -145,5 +155,6 @@
       "authorized_by": "usuário 2026-09-24",
       "consumes_attempt": false
     }
-  ]
+  ],
+  "round": 2
 }

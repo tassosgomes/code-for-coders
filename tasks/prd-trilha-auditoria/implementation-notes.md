@@ -31,6 +31,9 @@ cada item traz a evidência para o validator **conferir**. Não é dispensa de v
 - **Resolução decidida pelo usuário em 2026-09-24:** reabrir a 4.0 depois do checkpoint da 5.0 e
   adicionar testes de `fatoId`/`tenantId` inválidos (string e tipo errado), com DLQ intacta e o `reason`
   específico, antes da revisão full.
+- **Resolvido (rodada 2):** o fix run.RONTTrOG adicionou 4 testes em `AuditDeadLetterTests`, sem alterar
+  código de produção. Os testes confirmam `reason=fatoId`/`tenantId`. A revalidação run.Ve5MoN1j aprovou e
+  **retirou** a rec. 2 da focused por estar incorreta.
 
 ### A-02 — Ato não conforme não incrementa `audit.acts.recorded` (task 3.0)
 
