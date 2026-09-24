@@ -13,7 +13,7 @@
       "extra_args": ["--yolo"]
     },
     "opencode": {
-      "model_flag": "--model", "model": "opencode/muse-spark-1.3-contributor-free",
+      "model_flag": "--model", "model": "opencode-go/muse-spark-1.3-contributor",
       "effort_args": [], "effort": null, "extra_args": ["--auto"]
     },
     "cursor": {
