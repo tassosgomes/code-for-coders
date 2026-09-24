@@ -16,7 +16,6 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<RabbitMqConnectionProvider>();
-        services.AddSingleton<AuditReceiptStore>();
         services.AddHostedService<AuditTopologyInitializer>();
         services.AddHostedService<AuditEventConsumerWorker>();
 

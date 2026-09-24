@@ -11,10 +11,7 @@ public static class AuditTelemetry
 
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
-    public static readonly Counter<long> EventsRecorded = Meter.CreateCounter<long>(
-        "audit.events.recorded",
-        unit: "{event}");
-    public static readonly Counter<long> EventsConsumed = Meter.CreateCounter<long>(
-        "audit.events.consumed",
-        unit: "{event}");
+    public static readonly Counter<long> ActsRecorded = Meter.CreateCounter<long>(
+        "audit.acts.recorded",
+        unit: "{act}");
 }

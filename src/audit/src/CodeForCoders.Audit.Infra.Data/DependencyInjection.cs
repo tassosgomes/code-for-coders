@@ -26,7 +26,6 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
             }
         });
         services.AddScoped<IAuditRecordWriter, AuditRecordWriter>();

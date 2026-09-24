@@ -28,10 +28,10 @@ public sealed class RabbitMqOptions
     public string DeadLetterExchange { get; set; } = "audit.events.dlx";
 
     [Required]
-    public string AuditQueue { get; set; } = "audit.audit-event";
+    public string AuditQueue { get; set; } = "audit.acts";
 
     [Required]
-    public string EventRoutingKey { get; set; } = "audit.audit.event.v1";
+    public string EventRoutingKey { get; set; } = "auditoria.ato-praticado.v1";
 
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;

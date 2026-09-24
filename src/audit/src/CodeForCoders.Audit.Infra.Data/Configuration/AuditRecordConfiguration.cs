@@ -21,29 +21,64 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
             .HasColumnName("tenant_id")
             .ValueGeneratedNever()
             .IsRequired();
-        builder.Property(record => record.SourceService)
-            .HasColumnName("source_service")
-            .HasMaxLength(AuditRecord.SourceServiceMaxLength)
+        builder.Property(record => record.Origin)
+            .HasColumnName("origem")
+            .HasMaxLength(AuditRecord.OriginMaxLength)
             .IsRequired();
-        builder.Property(record => record.EventType)
-            .HasColumnName("event_type")
-            .HasMaxLength(AuditRecord.EventTypeMaxLength)
+        builder.Property(record => record.FactId)
+            .HasColumnName("fato_id")
             .IsRequired();
-        builder.Property(record => record.Payload)
-            .HasColumnName("payload")
+        builder.Property(record => record.Type)
+            .HasColumnName("tipo")
+            .HasMaxLength(AuditRecord.TypeMaxLength)
+            .IsRequired();
+        builder.Property(record => record.AuthorType)
+            .HasColumnName("autor_tipo")
+            .HasMaxLength(AuditRecord.ReferenceTypeMaxLength)
+            .IsRequired(false);
+        builder.Property(record => record.AuthorId)
+            .HasColumnName("autor_id")
+            .IsRequired(false);
+        builder.Property(record => record.TargetType)
+            .HasColumnName("alvo_tipo")
+            .HasMaxLength(AuditRecord.ReferenceTypeMaxLength)
+            .IsRequired(false);
+        builder.Property(record => record.TargetId)
+            .HasColumnName("alvo_id")
+            .IsRequired(false);
+        builder.Property(record => record.Complement)
+            .HasColumnName("complemento")
             .HasColumnType("jsonb")
-            .HasMaxLength(AuditRecord.PayloadMaxLength)
-            .IsRequired();
-        builder.Property(record => record.OccurredOn)
-            .HasColumnName("occurred_on")
+            .IsRequired(false);
+        builder.Property(record => record.Reason)
+            .HasColumnName("motivo")
+            .HasMaxLength(AuditRecord.ReasonMaxLength)
+            .IsRequired(false);
+        builder.Property(record => record.PracticedOn)
+            .HasColumnName("praticado_em")
+            .HasColumnType("timestamp with time zone")
+            .IsRequired(false);
+        builder.Property(record => record.ReceivedOn)
+            .HasColumnName("recebido_em")
             .HasColumnType("timestamp with time zone")
             .IsRequired();
-        builder.Property(record => record.RecordedOn)
-            .HasColumnName("recorded_on")
-            .HasColumnType("timestamp with time zone")
+        builder.Property(record => record.Conformity)
+            .HasColumnName("conformidade")
+            .HasMaxLength(32)
+            .IsRequired();
+        builder.Property(record => record.Reasons)
+            .HasColumnName("razoes")
+            .HasColumnType("text[]")
+            .IsRequired();
+        builder.Property(record => record.Fingerprint)
+            .HasColumnName("impressao_digital")
+            .HasMaxLength(AuditRecord.FingerprintLength)
             .IsRequired();
 
-        builder.HasIndex(record => new { record.TenantId, record.OccurredOn })
-            .HasDatabaseName("ix_audit_records_tenant_occurred_on");
+        builder.HasIndex(record => new { record.Origin, record.FactId })
+            .IsUnique()
+            .HasDatabaseName("ux_audit_records_origem_fato_id");
+        builder.HasIndex(record => new { record.TenantId, record.PracticedOn })
+            .HasDatabaseName("ix_audit_records_tenant_praticado_em");
     }
 }

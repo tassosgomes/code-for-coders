@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "branch": "feature/trilha-auditoria",
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-trilha-auditoria",
+  "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
+  "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
+  "target_ref": null,
+  "last_checkpoint": null,
+  "phase": "checkpoint",
+  "active_task": "1.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "transport": "herdr",
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "branch",
+  "plan_approved": "2026-09-24 (usuário, na sessão do orquestrador)",
+  "validated_commit": null,
+  "validated_tree": null,
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "1.0"
+  },
+  "last_result": {
+    "step": "focused",
+    "task": "1.0",
+    "attempt": 1,
+    "run_id": "run.TiT56OCG",
+    "kind": "claude",
+    "outcome": "approved",
+    "gate": "passed",
+    "report": "tasks/prd-trilha-auditoria/1.0_task_review.md",
+    "recommendations": 4
+  },
+  "history": [
+    {
+      "event": "plan-approved",
+      "date": "2026-09-24"
+    },
+    {
+      "event": "branch-ready",
+      "branch": "feature/trilha-auditoria",
+      "base_ref": "ffa246f"
+    },
+    {
+      "event": "moved-to-worktree",
+      "path": "../code-for-coders-trilha-auditoria",
+      "reason": "pedido do usuário"
+    },
+    {
+      "event": "task-approved",
+      "task": "1.0",
+      "attempt": 1,
+      "impl_run": "run.5Ezfkuxi",
+      "review_run": "run.TiT56OCG"
+    }
+  ]
+}
