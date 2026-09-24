@@ -1,0 +1,194 @@
+/* Code4Coders — globals.css
+ * Gerado a partir do arquivo Figma "Code4Coders — Design System" (coleção Theme, modos Light/Dark).
+ * Cada --token aqui = uma variável do Figma com o mesmo nome. NÃO edite valores só aqui: altere no Figma e regenere.
+ * Stack: Tailwind CSS v4 + shadcn/ui (new-york).
+ */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* fontes (definidas via next/font no layout) */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-jakarta), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  /* raios — base 0.75rem */
+  --radius-sm: calc(var(--radius) - 4px);   /* 8px  */
+  --radius-md: calc(var(--radius) - 2px);   /* 10px */
+  --radius-lg: var(--radius);               /* 12px */
+  --radius-xl: calc(var(--radius) + 4px);   /* 16px */
+  --radius-2xl: calc(var(--radius) + 8px);  /* 20px */
+
+  /* sombras (Effect styles do Figma) */
+  --shadow-xs: 0 1px 2px 0 rgb(22 19 31 / 0.06);
+  --shadow-sm: 0 1px 3px 0 rgb(22 19 31 / 0.08), 0 1px 2px 0 rgb(22 19 31 / 0.04);
+  --shadow-md: 0 4px 12px 0 rgb(22 19 31 / 0.08), 0 2px 4px 0 rgb(22 19 31 / 0.04);
+  --shadow-lg: 0 12px 32px 0 rgb(22 19 31 / 0.10), 0 4px 8px 0 rgb(22 19 31 / 0.04);
+  --shadow-brand: 0 8px 24px 0 rgb(124 58 237 / 0.28);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-foreground: var(--success-soft-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-foreground: var(--warning-soft-foreground);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-inverse: var(--inverse);
+  --color-inverse-foreground: var(--inverse-foreground);
+  --color-code: var(--code);
+  --color-code-foreground: var(--code-foreground);
+  --color-code-accent: var(--code-accent);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --foreground: oklch(0.196 0.024 295.6); /* ink/900 #16131F */
+  --card: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --card-foreground: oklch(0.196 0.024 295.6); /* ink/900 #16131F */
+  --popover: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --popover-foreground: oklch(0.196 0.024 295.6); /* ink/900 #16131F */
+  --primary: oklch(0.541 0.247 293.0); /* violet/600 #7C3AED */
+  --primary-foreground: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --secondary: oklch(0.969 0.016 293.8); /* violet/50 #F5F3FF */
+  --secondary-foreground: oklch(0.491 0.241 292.6); /* violet/700 #6D28D9 */
+  --muted: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --muted-foreground: oklch(0.533 0.042 295.1); /* ink/500 #6E6883 */
+  --accent: oklch(0.943 0.028 294.6); /* violet/100 #EDE9FE */
+  --accent-foreground: oklch(0.432 0.211 292.8); /* violet/800 #5B21B6 */
+  --destructive: oklch(0.577 0.215 27.3); /* red/600 #DC2626 */
+  --destructive-foreground: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --success: oklch(0.596 0.127 163.2); /* emerald/600 #059669 */
+  --success-foreground: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --success-soft: oklch(0.979 0.021 166.1); /* emerald/50 #ECFDF5 */
+  --success-soft-foreground: oklch(0.508 0.105 165.6); /* emerald/700 #047857 */
+  --warning: oklch(0.769 0.165 70.1); /* amber/500 #F59E0B */
+  --warning-foreground: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --warning-soft: oklch(0.987 0.021 95.3); /* amber/50 #FFFBEB */
+  --warning-soft-foreground: oklch(0.555 0.146 49.0); /* amber/700 #B45309 */
+  --info: oklch(0.546 0.215 262.9); /* blue/600 #2563EB */
+  --border: oklch(0.916 0.019 295.8); /* ink/200 #E4E1EF */
+  --input: oklch(0.916 0.019 295.8); /* ink/200 #E4E1EF */
+  --ring: oklch(0.606 0.219 292.7); /* violet/500 #8B5CF6 */
+  --inverse: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --inverse-foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --code: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --code-foreground: oklch(0.956 0.012 296.3); /* ink/100 #F1EFF8 */
+  --code-accent: oklch(0.773 0.153 163.2); /* emerald/400 #34D399 */
+  --chart-1: oklch(0.541 0.247 293.0); /* violet/600 #7C3AED */
+  --chart-2: oklch(0.696 0.149 162.5); /* emerald/500 #10B981 */
+  --chart-3: oklch(0.769 0.165 70.1); /* amber/500 #F59E0B */
+  --chart-4: oklch(0.623 0.188 259.8); /* blue/500 #3B82F6 */
+  --chart-5: oklch(0.656 0.212 354.3); /* pink/500 #EC4899 */
+  --sidebar: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --sidebar-foreground: oklch(0.344 0.040 294.2); /* ink/700 #3A354C */
+  --sidebar-primary: oklch(0.541 0.247 293.0); /* violet/600 #7C3AED */
+  --sidebar-primary-foreground: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --sidebar-accent: oklch(0.943 0.028 294.6); /* violet/100 #EDE9FE */
+  --sidebar-accent-foreground: oklch(0.432 0.211 292.8); /* violet/800 #5B21B6 */
+  --sidebar-border: oklch(0.916 0.019 295.8); /* ink/200 #E4E1EF */
+  --sidebar-ring: oklch(0.606 0.219 292.7); /* violet/500 #8B5CF6 */
+}
+
+.dark {
+  --background: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --card: oklch(0.196 0.024 295.6); /* ink/900 #16131F */
+  --card-foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --popover: oklch(0.196 0.024 295.6); /* ink/900 #16131F */
+  --popover-foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --primary: oklch(0.709 0.159 293.5); /* violet/400 #A78BFA */
+  --primary-foreground: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --secondary: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --secondary-foreground: oklch(0.894 0.055 293.3); /* violet/200 #DDD6FE */
+  --muted: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --muted-foreground: oklch(0.680 0.038 295.9); /* ink/400 #9A94AE */
+  --accent: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --accent-foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --destructive: oklch(0.577 0.215 27.3); /* red/600 #DC2626 */
+  --destructive-foreground: oklch(1.000 0 0); /* ink/0 #FFFFFF */
+  --success: oklch(0.773 0.153 163.2); /* emerald/400 #34D399 */
+  --success-foreground: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --success-soft: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --success-soft-foreground: oklch(0.773 0.153 163.2); /* emerald/400 #34D399 */
+  --warning: oklch(0.837 0.164 84.4); /* amber/400 #FBBF24 */
+  --warning-foreground: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --warning-soft: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --warning-soft-foreground: oklch(0.837 0.164 84.4); /* amber/400 #FBBF24 */
+  --info: oklch(0.714 0.143 254.6); /* blue/400 #60A5FA */
+  --border: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --input: oklch(0.344 0.040 294.2); /* ink/700 #3A354C */
+  --ring: oklch(0.709 0.159 293.5); /* violet/400 #A78BFA */
+  --inverse: oklch(0.283 0.135 291.1); /* violet/950 #2E1065 */
+  --inverse-foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --code: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --code-foreground: oklch(0.956 0.012 296.3); /* ink/100 #F1EFF8 */
+  --code-accent: oklch(0.773 0.153 163.2); /* emerald/400 #34D399 */
+  --chart-1: oklch(0.709 0.159 293.5); /* violet/400 #A78BFA */
+  --chart-2: oklch(0.773 0.153 163.2); /* emerald/400 #34D399 */
+  --chart-3: oklch(0.837 0.164 84.4); /* amber/400 #FBBF24 */
+  --chart-4: oklch(0.714 0.143 254.6); /* blue/400 #60A5FA */
+  --chart-5: oklch(0.725 0.175 349.8); /* pink/400 #F472B6 */
+  --sidebar: oklch(0.196 0.024 295.6); /* ink/900 #16131F */
+  --sidebar-foreground: oklch(0.956 0.012 296.3); /* ink/100 #F1EFF8 */
+  --sidebar-primary: oklch(0.709 0.159 293.5); /* violet/400 #A78BFA */
+  --sidebar-primary-foreground: oklch(0.157 0.019 294.3); /* ink/950 #0D0B14 */
+  --sidebar-accent: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --sidebar-accent-foreground: oklch(0.978 0.007 295.5); /* ink/50 #F8F7FC */
+  --sidebar-border: oklch(0.257 0.036 293.4); /* ink/800 #242033 */
+  --sidebar-ring: oklch(0.709 0.159 293.5); /* violet/400 #A78BFA */
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  h1, h2, h3, h4, h5 { @apply font-heading tracking-tight; }
+  code, kbd, pre { @apply font-mono; }
+}
+
+/* ── Tipografia: 1 utility por Text Style do Figma ─────────────────────────── */
+@utility typo-display-2xl { font-family: var(--font-heading); font-weight: 800; font-size: 4rem;    line-height: 4.25rem;  letter-spacing: -0.125rem; }
+@utility typo-display-xl  { font-family: var(--font-heading); font-weight: 800; font-size: 3rem;    line-height: 3.375rem; letter-spacing: -0.094rem; }
+@utility typo-h1          { font-family: var(--font-heading); font-weight: 700; font-size: 2.25rem; line-height: 2.625rem; letter-spacing: -0.0625rem; }
+@utility typo-h2          { font-family: var(--font-heading); font-weight: 700; font-size: 1.875rem;line-height: 2.25rem;  letter-spacing: -0.047rem; }
+@utility typo-h3          { font-family: var(--font-heading); font-weight: 700; font-size: 1.5rem;  line-height: 1.875rem; letter-spacing: -0.031rem; }
+@utility typo-h4          { font-family: var(--font-heading); font-weight: 600; font-size: 1.25rem; line-height: 1.75rem;  letter-spacing: -0.016rem; }
+@utility typo-h5          { font-family: var(--font-heading); font-weight: 600; font-size: 1rem;    line-height: 1.5rem; }
+@utility typo-overline    { font-family: var(--font-sans); font-weight: 600; font-size: 0.75rem; line-height: 1rem; letter-spacing: 0.075rem; text-transform: uppercase; }
+/* Body e Code usam as classes nativas do Tailwind: text-lg | text-base | text-sm | text-xs (+ font-medium / font-semibold) e font-mono */
