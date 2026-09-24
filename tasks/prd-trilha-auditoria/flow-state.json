@@ -5,9 +5,9 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "8897dbffbf7f527fabab9ee1e49715b8a5a207e0",
+  "last_checkpoint": "5f037d1d12269f1f00eb7b753c2c6c73c69a5894",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -23,18 +23,18 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "3.0"
+    "task": "4.0"
   },
   "last_result": {
     "step": "focused",
-    "task": "3.0",
+    "task": "4.0",
     "attempt": 1,
-    "run_id": "run.Hexj6mzl",
+    "run_id": "run.4SFR2uPp",
     "kind": "claude",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-trilha-auditoria/3.0_task_review.md",
-    "recommendations": 4
+    "report": "tasks/prd-trilha-auditoria/4.0_task_review.md",
+    "recommendations": 3
   },
   "history": [
     {
@@ -81,9 +81,23 @@
       "attempt": 1,
       "impl_run": "run.vHWta4em",
       "review_run": "run.Hexj6mzl"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "5f037d1"
+    },
+    {
+      "event": "task-approved",
+      "task": "4.0",
+      "attempt": 1,
+      "impl_run": "run.6YAZrWK8",
+      "review_run": "run.4SFR2uPp"
     }
   ],
   "carry_to_full": [
-    "3.0 rec1: ato não conforme não incrementa audit.acts.recorded (conformity sempre conforming); decisão de métrica a confirmar na full"
+    "3.0 rec1: ato não conforme não incrementa audit.acts.recorded (conformity sempre conforming); decisão de métrica a confirmar na full",
+    "4.0 rec1: requeue via BasicReject (não basic.nack) por x-delivery-limit no RabbitMQ 4.3 — desvio da techspec não documentado",
+    "4.0 rec2: fatoId/tenantId não-uuid contados como reason=body"
   ]
 }

@@ -46,7 +46,7 @@ Nenhum. A reconstrução da tabela, a troca de fila e a remoção de `AuditEvent
 - [x] 1.0 Registrar ato administrativo conforme
 - [x] 2.0 Não duplicar ato reentregue e alertar divergência
 - [x] 3.0 Registrar e alertar ato não conforme
-- [ ] 4.0 Reter mensagem ilegível e falha transitória na DLQ sem perda
+- [x] 4.0 Reter mensagem ilegível e falha transitória na DLQ sem perda
 - [ ] 5.0 Demonstrar imutabilidade com a credencial de execução
 
 ## Verificação herdada

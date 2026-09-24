@@ -20,4 +20,7 @@ public static class AuditTelemetry
     public static readonly Counter<long> ActsRedelivered = Meter.CreateCounter<long>(
         "audit.acts.redelivered",
         unit: "{act}");
+    public static readonly Counter<long> MessagesIllegible = Meter.CreateCounter<long>(
+        "audit.messages.illegible",
+        unit: "{message}");
 }

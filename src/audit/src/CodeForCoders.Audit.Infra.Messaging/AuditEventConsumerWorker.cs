@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CodeForCoders.Audit.Application.Interfaces;
+using CodeForCoders.Audit.Application.Common;
 using CodeForCoders.Audit.Contracts;
 using CodeForCoders.Audit.Infra.Messaging.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,17 +73,20 @@ public sealed class AuditEventConsumerWorker(
             ReadOnlyMemory<byte> body,
             CancellationToken cancellationToken = default)
         {
+            if (!TryDeserializeAct(body, out var act, out var reason))
+            {
+                AuditTelemetry.MessagesIllegible.Add(
+                    1,
+                    new KeyValuePair<string, object?>("reason", reason));
+                logger.LogError(
+                    "Unreadable administrative act sent to the dead-letter queue. Reason {Reason}",
+                    reason);
+                await TryNackAsync(deliveryTag, requeue: false);
+                return;
+            }
+
             try
             {
-                var act = JsonSerializer.Deserialize<AtoPraticado>(body.Span, SerializerOptions);
-                if (act is null
-                    || act.FatoId == Guid.Empty
-                    || act.TenantId == Guid.Empty
-                    || string.IsNullOrWhiteSpace(act.Origem))
-                {
-                    throw new JsonException("The administrative act envelope is invalid.");
-                }
-
                 using var activity = StartConsumerActivity(properties);
                 activity?.SetTag("fatoId", act.FatoId);
                 activity?.SetTag("origem", act.Origem);
@@ -98,18 +103,102 @@ public sealed class AuditEventConsumerWorker(
                     act.Origem,
                     act.Tipo,
                     act.TenantId);
-                await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
             }
-            catch (JsonException exception)
+            catch (Exception exception) when (exception is not OutOfMemoryException
+                and not StackOverflowException
+                and not AccessViolationException)
             {
-                logger.LogError(exception, "Invalid administrative act sent to the dead-letter queue.");
-                await channel.BasicNackAsync(deliveryTag, multiple: false, requeue: false, CancellationToken.None);
+                logger.LogError(
+                    exception,
+                    "Unexpected failure while recording an administrative act; the message will be retried.");
+                await TryNackAsync(deliveryTag, requeue: true);
+                return;
+            }
+
+            try
+            {
+                await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
             }
             catch (AlreadyClosedException exception)
             {
-                logger.LogError(exception, "RabbitMQ channel closed while consuming an administrative act.");
+                logger.LogError(exception, "RabbitMQ channel closed while acknowledging an administrative act.");
             }
         }
+
+        private async Task TryNackAsync(ulong deliveryTag, bool requeue)
+        {
+            try
+            {
+                if (requeue)
+                {
+                    // RabbitMQ 4.3 does not count basic.nack requeues toward x-delivery-limit.
+                    await channel.BasicRejectAsync(deliveryTag, requeue: true, CancellationToken.None);
+                }
+                else
+                {
+                    await channel.BasicNackAsync(
+                        deliveryTag,
+                        multiple: false,
+                        requeue: false,
+                        CancellationToken.None);
+                }
+            }
+            catch (AlreadyClosedException exception)
+            {
+                logger.LogError(exception, "RabbitMQ channel closed while rejecting an administrative act.");
+            }
+        }
+
+        private static bool TryDeserializeAct(
+            ReadOnlyMemory<byte> body,
+            [NotNullWhen(true)] out AtoPraticado? act,
+            [NotNullWhen(false)] out string? reason)
+        {
+            try
+            {
+                act = JsonSerializer.Deserialize<AtoPraticado>(body.Span, SerializerOptions);
+            }
+            catch (JsonException)
+            {
+                act = null;
+                reason = "body";
+                return false;
+            }
+
+            if (act is null)
+            {
+                reason = "body";
+                return false;
+            }
+
+            if (act.FatoId == Guid.Empty)
+            {
+                reason = "fatoId";
+                return false;
+            }
+
+            if (!IsContractOrigin(act.Origem))
+            {
+                reason = "origem";
+                return false;
+            }
+
+            if (act.TenantId == Guid.Empty)
+            {
+                reason = "tenantId";
+                return false;
+            }
+
+            reason = null;
+            return true;
+        }
+
+        private static bool IsContractOrigin(string? origin)
+            => origin is { Length: > 0 and <= 100 }
+                && origin[0] is >= 'a' and <= 'z'
+                && origin.All(static character => character is >= 'a' and <= 'z'
+                    or >= '0' and <= '9'
+                    or '-');
 
         private static Activity? StartConsumerActivity(IReadOnlyBasicProperties properties)
         {
