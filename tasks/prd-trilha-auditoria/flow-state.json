@@ -5,8 +5,8 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
-  "last_checkpoint": "a759d7b2a8ec0567f676b520c72802ef10f52d8d",
-  "phase": "reopen",
+  "last_checkpoint": "2549c20a745b302fe4d95c914364bd849bba1c9d",
+  "phase": "checkpoint",
   "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -22,25 +22,19 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "reopen-task",
+    "mode": "checkpoint-task",
     "task": "5.0",
     "round": 3
   },
   "last_result": {
-    "step": "full",
-    "full_attempt": 1,
-    "run_id": "run.Wuikipl6",
+    "step": "revalidation",
+    "task": "5.0",
+    "round": 3,
+    "run_id": "run.qTGaj4gk",
     "kind": "claude",
-    "outcome": "rejected",
-    "report": "tasks/prd-trilha-auditoria/prd_review.md",
-    "blockers": [
-      "B-01 E2E quebrado pela migration SecureAuditRuntimePermissions (task 5.0)",
-      "B-02 cobertura agregada 64% (68,97% com B-01 corrigido) < 70%; já reprovava na base (53%); sem task dona"
-    ],
-    "missing_evidence": [
-      "gitleaks (enforce) ausente no ambiente",
-      "workflows de outros serviços acionados por Directory.Packages.props"
-    ]
+    "outcome": "approved",
+    "gate": "passed",
+    "ci_repro": "59/59, cobertura 83,45%, publish ok"
   },
   "history": [
     {
@@ -179,6 +173,13 @@
       "event": "full-rejected",
       "full_attempt": 1,
       "run_id": "run.Wuikipl6"
+    },
+    {
+      "event": "task-approved",
+      "task": "5.0",
+      "round": 3,
+      "fix_run": "run.3L9XnKW4",
+      "review_run": "run.qTGaj4gk"
     }
   ],
   "carry_to_full": [
@@ -204,7 +205,7 @@
       "status": "done"
     }
   ],
-  "round": 2,
+  "round": 3,
   "target_ref_name": "origin/main",
   "full_fix_plan": {
     "task": "5.0",

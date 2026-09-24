@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -12,6 +13,9 @@ namespace CodeForCoders.Audit.EndToEndTests;
 
 public sealed class AuditApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private const string RuntimeUsername = "code_for_coders_audit_runtime";
+    private const string RuntimePassword = "audit-runtime-test-password";
+
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_audit")
         .WithUsername("code_for_coders_audit")
@@ -21,6 +25,7 @@ public sealed class AuditApiFactory : WebApplicationFactory<Program>, IAsyncLife
     public async ValueTask InitializeAsync()
     {
         await PostgreSql.StartAsync();
+        await ProvisionRuntimeCredentialsAsync();
 
         var dbOptions = new DbContextOptionsBuilder<AuditDbContext>()
             .UseNpgsql(PostgreSql.GetConnectionString())
@@ -29,10 +34,28 @@ public sealed class AuditApiFactory : WebApplicationFactory<Program>, IAsyncLife
         await dbContext.Database.MigrateAsync();
     }
 
+    private async Task ProvisionRuntimeCredentialsAsync()
+    {
+        await using var connection = new NpgsqlConnection(PostgreSql.GetConnectionString());
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE ROLE code_for_coders_audit_writer NOLOGIN;
+            CREATE ROLE code_for_coders_audit_runtime LOGIN PASSWORD 'audit-runtime-test-password';
+            GRANT code_for_coders_audit_writer TO code_for_coders_audit_runtime;
+            """;
+        await command.ExecuteNonQueryAsync();
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("EndToEndTest");
-        builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
+        var runtimeConnection = new NpgsqlConnectionStringBuilder(PostgreSql.GetConnectionString())
+        {
+            Username = RuntimeUsername,
+            Password = RuntimePassword,
+        };
+        builder.UseSetting("ConnectionStrings:DefaultConnection", runtimeConnection.ConnectionString);
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
         builder.ConfigureTestServices(services =>
