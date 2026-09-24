@@ -9,4 +9,6 @@ public sealed record AdministrativeAct(
     AdministrativeActReference? Author,
     AdministrativeActReference? Target,
     IReadOnlyDictionary<string, string>? Complement,
-    string? Reason);
+    string? Reason,
+    bool ComplementIsInvalid = false,
+    string? InvalidComplementFingerprint = null);

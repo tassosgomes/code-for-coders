@@ -32,18 +32,18 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
             .IsRequired();
         builder.Property(record => record.Type)
             .HasColumnName("tipo")
-            .HasMaxLength(AuditRecord.TypeMaxLength)
-            .IsRequired();
+            .HasColumnType("text")
+            .IsRequired(false);
         builder.Property(record => record.AuthorType)
             .HasColumnName("autor_tipo")
-            .HasMaxLength(AuditRecord.ReferenceTypeMaxLength)
+            .HasColumnType("text")
             .IsRequired(false);
         builder.Property(record => record.AuthorId)
             .HasColumnName("autor_id")
             .IsRequired(false);
         builder.Property(record => record.TargetType)
             .HasColumnName("alvo_tipo")
-            .HasMaxLength(AuditRecord.ReferenceTypeMaxLength)
+            .HasColumnType("text")
             .IsRequired(false);
         builder.Property(record => record.TargetId)
             .HasColumnName("alvo_id")
@@ -54,7 +54,7 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
             .IsRequired(false);
         builder.Property(record => record.Reason)
             .HasColumnName("motivo")
-            .HasMaxLength(AuditRecord.ReasonMaxLength)
+            .HasColumnType("text")
             .IsRequired(false);
         builder.Property(record => record.PracticedOn)
             .HasColumnName("praticado_em")

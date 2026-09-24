@@ -24,7 +24,7 @@ public sealed class RecordAdministrativeAct(
     {
         var administrativeAct = Map(input.Act);
         var receivedOn = timeProvider.GetUtcNow();
-        var record = AuditRecord.CreateConforming(administrativeAct, receivedOn);
+        var record = AuditRecord.Create(administrativeAct, receivedOn);
 
         using var activity = AuditTelemetry.ActivitySource.StartActivity("audit.acts.recorded");
         activity?.SetTag("fatoId", administrativeAct.FactId);
@@ -69,11 +69,27 @@ public sealed class RecordAdministrativeAct(
             return new RecordAdministrativeActOutput(null, null, WasRedelivered: true);
         }
 
-        AuditTelemetry.ActsRecorded.Add(
-            1,
-            new KeyValuePair<string, object?>("origin", record.Origin),
-            new KeyValuePair<string, object?>("type", record.Type),
-            new KeyValuePair<string, object?>("conformity", record.Conformity));
+        if (record.Conformity is AuditRecord.NonConforming)
+        {
+            AuditTelemetry.ActsNonconforming.Add(
+                1,
+                new KeyValuePair<string, object?>("origin", record.Origin),
+                new KeyValuePair<string, object?>("type", record.Type));
+            logger.LogWarning(
+                "Non-conforming administrative act recorded {FatoId} {Origem} {Tipo} {Razoes}",
+                record.FactId,
+                record.Origin,
+                record.Type,
+                string.Join(",", record.Reasons));
+        }
+        else
+        {
+            AuditTelemetry.ActsRecorded.Add(
+                1,
+                new KeyValuePair<string, object?>("origin", record.Origin),
+                new KeyValuePair<string, object?>("type", record.Type),
+                new KeyValuePair<string, object?>("conformity", record.Conformity));
+        }
 
         return new RecordAdministrativeActOutput(record.Id, record.ReceivedOn);
     }
@@ -88,7 +104,9 @@ public sealed class RecordAdministrativeAct(
             MapReference(act.Autor),
             MapReference(act.Alvo),
             act.Complemento,
-            act.Motivo);
+            act.Motivo,
+            act.ComplementoInvalido,
+            act.ComplementoOriginalCanonico);
 
     private static AdministrativeActReference? MapReference(ReferenciaAto? reference)
         => reference is null ? null : new AdministrativeActReference(reference.Tipo, reference.Id);

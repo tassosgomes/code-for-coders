@@ -2,7 +2,6 @@ using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Application.UseCases.Audit.RecordAdministrativeAct;
 using CodeForCoders.Audit.Contracts;
 using CodeForCoders.Audit.Domain.Entities;
-using CodeForCoders.Audit.Domain.SeedWork;
 using Xunit;
 
 namespace CodeForCoders.Audit.UnitTests;
@@ -40,8 +39,8 @@ public sealed class RecordAdministrativeActTests
         Assert.False(output.WasRedelivered);
     }
 
-    [Fact(DisplayName = nameof(ExecuteAsyncRejectsRequiredMissingReasonWithoutCommit))]
-    public async Task ExecuteAsyncRejectsRequiredMissingReasonWithoutCommit()
+    [Fact(DisplayName = nameof(ExecuteAsyncRecordsRequiredMissingReasonAndCommits))]
+    public async Task ExecuteAsyncRecordsRequiredMissingReasonAndCommits()
     {
         var writer = new SpyAuditRecordWriter();
         var unitOfWork = new SpyUnitOfWork(() => writer.Records.Count);
@@ -52,12 +51,16 @@ public sealed class RecordAdministrativeActTests
             Microsoft.Extensions.Logging.Abstractions.NullLogger<RecordAdministrativeAct>.Instance);
         var act = CreateAct() with { Motivo = null };
 
-        await Assert.ThrowsAsync<EntityValidationException>(() => useCase.ExecuteAsync(
+        var output = await useCase.ExecuteAsync(
             new RecordAdministrativeActInput(act),
-            CancellationToken.None));
+            CancellationToken.None);
 
-        Assert.Empty(writer.Records);
-        Assert.Equal(0, unitOfWork.CommitCount);
+        var record = Assert.Single(writer.Records);
+        Assert.Equal(AuditRecord.NonConforming, record.Conformity);
+        Assert.Equal(["motivo-ausente"], record.Reasons);
+        Assert.Null(record.Reason);
+        Assert.Equal(1, unitOfWork.CommitCount);
+        Assert.NotNull(output.RecordId);
     }
 
     private static AtoPraticado CreateAct()

@@ -5,9 +5,9 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "35c28e4f407c2b0a44e4ca324720a77933f1f90b",
+  "last_checkpoint": "8897dbffbf7f527fabab9ee1e49715b8a5a207e0",
   "phase": "checkpoint",
-  "active_task": "2.0",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -23,17 +23,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0"
+    "task": "3.0"
   },
   "last_result": {
     "step": "focused",
-    "task": "2.0",
+    "task": "3.0",
     "attempt": 1,
-    "run_id": "run.DdNFNIDn",
+    "run_id": "run.Hexj6mzl",
     "kind": "claude",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-trilha-auditoria/2.0_task_review.md",
+    "report": "tasks/prd-trilha-auditoria/3.0_task_review.md",
     "recommendations": 4
   },
   "history": [
@@ -69,6 +69,21 @@
       "attempt": 1,
       "impl_run": "run.PfRLe422",
       "review_run": "run.DdNFNIDn"
+    },
+    {
+      "event": "checkpoint",
+      "task": "2.0",
+      "commit": "8897dbf"
+    },
+    {
+      "event": "task-approved",
+      "task": "3.0",
+      "attempt": 1,
+      "impl_run": "run.vHWta4em",
+      "review_run": "run.Hexj6mzl"
     }
+  ],
+  "carry_to_full": [
+    "3.0 rec1: ato não conforme não incrementa audit.acts.recorded (conformity sempre conforming); decisão de métrica a confirmar na full"
   ]
 }

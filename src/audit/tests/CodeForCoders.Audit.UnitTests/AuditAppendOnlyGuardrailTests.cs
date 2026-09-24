@@ -43,7 +43,7 @@ public sealed class AuditAppendOnlyGuardrailTests
     }
 
     private static AuditRecord NewRecord()
-        => AuditRecord.CreateConforming(
+        => AuditRecord.Create(
             new AdministrativeAct(
             Guid.CreateVersion7(),
             "identidade",

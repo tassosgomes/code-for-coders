@@ -14,12 +14,11 @@ namespace CodeForCoders.Audit.Domain.Entities;
 public sealed class AuditRecord
 {
     public const int OriginMaxLength = 100;
-    public const int TypeMaxLength = 200;
-    public const int ReferenceTypeMaxLength = 100;
     public const int ReasonMaxLength = 1000;
     public const int ComplementValueMaxLength = 100;
     public const int FingerprintLength = 64;
     public const string Conforming = "conforming";
+    public const string NonConforming = "non_conforming";
 
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -38,7 +37,7 @@ public sealed class AuditRecord
 
     public Guid FactId { get; private set; }
 
-    public string Type { get; private set; } = string.Empty;
+    public string? Type { get; private set; }
 
     public string? AuthorType { get; private set; }
 
@@ -62,9 +61,10 @@ public sealed class AuditRecord
 
     public string Fingerprint { get; private set; } = string.Empty;
 
-    public static AuditRecord CreateConforming(AdministrativeAct act, DateTimeOffset receivedOn)
+    public static AuditRecord Create(AdministrativeAct act, DateTimeOffset receivedOn)
     {
-        ValidateConformingAct(act);
+        ValidateReadableEnvelope(act);
+        var reasons = AdministrativeActPolicy.GetNonConformityReasons(act);
 
         return new AuditRecord
         {
@@ -72,40 +72,29 @@ public sealed class AuditRecord
             TenantId = act.TenantId,
             Origin = act.Origin,
             FactId = act.FactId,
-            Type = act.Type!,
-            AuthorType = act.Author!.Type,
-            AuthorId = act.Author.Id,
-            TargetType = act.Target!.Type,
-            TargetId = act.Target.Id,
-            Complement = SerializeComplement(act.Complement),
+            Type = act.Type,
+            AuthorType = act.Author?.Type,
+            AuthorId = act.Author?.Id,
+            TargetType = act.Target?.Type,
+            TargetId = act.Target?.Id,
+            Complement = reasons.Contains("complemento-invalido", StringComparer.Ordinal)
+                ? null
+                : SerializeComplement(act.Complement),
             Reason = act.Reason,
-            PracticedOn = act.PracticedOn!.Value.ToUniversalTime(),
+            PracticedOn = act.PracticedOn?.ToUniversalTime(),
             ReceivedOn = receivedOn.ToUniversalTime(),
-            Conformity = Conforming,
-            Reasons = [],
+            Conformity = reasons.Length is 0 ? Conforming : NonConforming,
+            Reasons = reasons,
             Fingerprint = CalculateFingerprint(act),
         };
     }
 
-    private static void ValidateConformingAct(AdministrativeAct act)
+    private static void ValidateReadableEnvelope(AdministrativeAct act)
     {
         if (act.FactId == Guid.Empty || act.TenantId == Guid.Empty
-            || string.IsNullOrWhiteSpace(act.Origin) || act.Origin.Length > OriginMaxLength
-            || string.IsNullOrWhiteSpace(act.Type) || act.Type.Length > TypeMaxLength
-            || !AdministrativeActPolicy.IsAcceptedType(act.Type)
-            || act.PracticedOn is null
-            || act.Author is null || string.IsNullOrWhiteSpace(act.Author.Type)
-            || act.Author.Type.Length > ReferenceTypeMaxLength || act.Author.Id == Guid.Empty
-            || act.Target is null || string.IsNullOrWhiteSpace(act.Target.Type)
-            || act.Target.Type.Length > ReferenceTypeMaxLength || act.Target.Id == Guid.Empty
-            || AdministrativeActPolicy.RequiresReason(act.Type) && string.IsNullOrWhiteSpace(act.Reason)
-            || act.Reason?.Length > ReasonMaxLength
-            || act.Complement?.Any(pair =>
-                string.IsNullOrWhiteSpace(pair.Key)
-                || string.IsNullOrWhiteSpace(pair.Value)
-                || pair.Value.Length > ComplementValueMaxLength) is true)
+            || string.IsNullOrWhiteSpace(act.Origin) || act.Origin.Length > OriginMaxLength)
         {
-            throw new EntityValidationException("Administrative act is not conforming.");
+            throw new EntityValidationException("Administrative act envelope is invalid.");
         }
     }
 
@@ -118,6 +107,11 @@ public sealed class AuditRecord
 
     private static string CalculateFingerprint(AdministrativeAct act)
     {
+        object? complement = act.Complement is null
+            ? act.InvalidComplementFingerprint is null
+                ? null
+                : "invalid:" + act.InvalidComplementFingerprint
+            : SortComplement(act.Complement);
         var canonicalContent = new
         {
             act.TenantId,
@@ -125,9 +119,7 @@ public sealed class AuditRecord
             PracticedOn = act.PracticedOn?.ToUniversalTime(),
             act.Author,
             act.Target,
-            Complement = act.Complement is null
-                ? null
-                : SortComplement(act.Complement),
+            Complement = complement,
             act.Reason,
         };
         var canonicalJson = JsonSerializer.Serialize(canonicalContent, CanonicalJsonOptions);

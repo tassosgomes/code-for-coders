@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace CodeForCoders.Audit.Contracts;
 
 /// <summary>
 /// Integration contract for a completed administrative act.
 /// </summary>
+[JsonConverter(typeof(AtoPraticadoJsonConverter))]
 public sealed record AtoPraticado
 {
     public Guid FatoId { get; init; }
@@ -22,4 +25,10 @@ public sealed record AtoPraticado
     public Dictionary<string, string>? Complemento { get; init; }
 
     public string? Motivo { get; init; }
+
+    [JsonIgnore]
+    public bool ComplementoInvalido { get; internal init; }
+
+    [JsonIgnore]
+    public string? ComplementoOriginalCanonico { get; internal init; }
 }

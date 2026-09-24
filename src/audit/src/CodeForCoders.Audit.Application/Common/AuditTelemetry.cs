@@ -14,6 +14,9 @@ public static class AuditTelemetry
     public static readonly Counter<long> ActsRecorded = Meter.CreateCounter<long>(
         "audit.acts.recorded",
         unit: "{act}");
+    public static readonly Counter<long> ActsNonconforming = Meter.CreateCounter<long>(
+        "audit.acts.nonconforming",
+        unit: "{act}");
     public static readonly Counter<long> ActsRedelivered = Meter.CreateCounter<long>(
         "audit.acts.redelivered",
         unit: "{act}");
