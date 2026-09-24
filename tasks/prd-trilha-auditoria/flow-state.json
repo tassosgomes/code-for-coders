@@ -5,9 +5,9 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": null,
+  "last_checkpoint": "35c28e4f407c2b0a44e4ca324720a77933f1f90b",
   "phase": "checkpoint",
-  "active_task": "1.0",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -23,17 +23,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "1.0"
+    "task": "2.0"
   },
   "last_result": {
     "step": "focused",
-    "task": "1.0",
+    "task": "2.0",
     "attempt": 1,
-    "run_id": "run.TiT56OCG",
+    "run_id": "run.DdNFNIDn",
     "kind": "claude",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-trilha-auditoria/1.0_task_review.md",
+    "report": "tasks/prd-trilha-auditoria/2.0_task_review.md",
     "recommendations": 4
   },
   "history": [
@@ -57,6 +57,18 @@
       "attempt": 1,
       "impl_run": "run.5Ezfkuxi",
       "review_run": "run.TiT56OCG"
+    },
+    {
+      "event": "checkpoint",
+      "task": "1.0",
+      "commit": "35c28e4"
+    },
+    {
+      "event": "task-approved",
+      "task": "2.0",
+      "attempt": 1,
+      "impl_run": "run.PfRLe422",
+      "review_run": "run.DdNFNIDn"
     }
   ]
 }

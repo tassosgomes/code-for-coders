@@ -6,6 +6,8 @@ namespace CodeForCoders.Audit.Infra.Data.Configuration;
 
 public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRecord>
 {
+    public const string UniqueOriginFactIdIndexName = "ux_audit_records_origem_fato_id";
+
     public void Configure(EntityTypeBuilder<AuditRecord> builder)
     {
         builder.ToTable("audit_records", AuditSchema.Name, tableBuilder =>
@@ -77,7 +79,7 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
 
         builder.HasIndex(record => new { record.Origin, record.FactId })
             .IsUnique()
-            .HasDatabaseName("ux_audit_records_origem_fato_id");
+            .HasDatabaseName(UniqueOriginFactIdIndexName);
         builder.HasIndex(record => new { record.TenantId, record.PracticedOn })
             .HasDatabaseName("ix_audit_records_tenant_praticado_em");
     }

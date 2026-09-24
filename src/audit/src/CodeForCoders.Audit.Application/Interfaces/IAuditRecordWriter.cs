@@ -8,4 +8,6 @@ namespace CodeForCoders.Audit.Application.Interfaces;
 public interface IAuditRecordWriter
 {
     Task AppendAsync(AuditRecord record, CancellationToken cancellationToken);
+
+    Task<string?> ReadFingerprintAsync(string origin, Guid factId, CancellationToken cancellationToken);
 }

@@ -2,15 +2,18 @@ using System.Diagnostics;
 using CodeForCoders.Audit.Application.Common;
 using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Domain.Entities;
+using CodeForCoders.Audit.Domain.Exceptions;
 using CodeForCoders.Audit.Domain.ValueObjects;
 using CodeForCoders.Audit.Contracts;
+using Microsoft.Extensions.Logging;
 
 namespace CodeForCoders.Audit.Application.UseCases.Audit.RecordAdministrativeAct;
 
 public sealed class RecordAdministrativeAct(
     IAuditRecordWriter recordWriter,
     IUnitOfWork unitOfWork,
-    TimeProvider timeProvider) : IRecordAdministrativeAct, IAuditActRecorder
+    TimeProvider timeProvider,
+    ILogger<RecordAdministrativeAct> logger) : IRecordAdministrativeAct, IAuditActRecorder
 {
     public Task RecordAsync(AtoPraticado act, CancellationToken cancellationToken)
         => ExecuteAsync(new RecordAdministrativeActInput(act), cancellationToken);
@@ -30,7 +33,41 @@ public sealed class RecordAdministrativeAct(
         activity?.SetTag("tenantId", administrativeAct.TenantId);
 
         await recordWriter.AppendAsync(record, cancellationToken);
-        await unitOfWork.CommitAsync(cancellationToken);
+        try
+        {
+            await unitOfWork.CommitAsync(cancellationToken);
+        }
+        catch (AuditRecordAlreadyExistsException)
+        {
+            var existingFingerprint = await recordWriter.ReadFingerprintAsync(
+                record.Origin,
+                record.FactId,
+                cancellationToken);
+            if (existingFingerprint is null)
+            {
+                throw;
+            }
+
+            var outcome = string.Equals(existingFingerprint, record.Fingerprint, StringComparison.Ordinal)
+                ? "identical"
+                : "divergent";
+            AuditTelemetry.ActsRedelivered.Add(
+                1,
+                new KeyValuePair<string, object?>("outcome", outcome));
+
+            if (outcome == "divergent")
+            {
+                logger.LogWarning(
+                    "Administrative act redelivery has different content {Origem} {FatoId} " +
+                    "{OriginalFingerprint} {ReceivedFingerprint}",
+                    record.Origin,
+                    record.FactId,
+                    existingFingerprint,
+                    record.Fingerprint);
+            }
+
+            return new RecordAdministrativeActOutput(null, null, WasRedelivered: true);
+        }
 
         AuditTelemetry.ActsRecorded.Add(
             1,

@@ -19,7 +19,8 @@ public sealed class RecordAdministrativeActTests
         var useCase = new RecordAdministrativeAct(
             writer,
             unitOfWork,
-            new FixedTimeProvider(ReceivedOn));
+            new FixedTimeProvider(ReceivedOn),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RecordAdministrativeAct>.Instance);
 
         var output = await useCase.ExecuteAsync(
             new RecordAdministrativeActInput(CreateAct()),
@@ -36,6 +37,7 @@ public sealed class RecordAdministrativeActTests
         Assert.Equal(1, unitOfWork.RecordCountAtCommit);
         Assert.Equal(1, unitOfWork.CommitCount);
         Assert.Equal(ReceivedOn, output.ReceivedOn);
+        Assert.False(output.WasRedelivered);
     }
 
     [Fact(DisplayName = nameof(ExecuteAsyncRejectsRequiredMissingReasonWithoutCommit))]
@@ -46,7 +48,8 @@ public sealed class RecordAdministrativeActTests
         var useCase = new RecordAdministrativeAct(
             writer,
             unitOfWork,
-            new FixedTimeProvider(ReceivedOn));
+            new FixedTimeProvider(ReceivedOn),
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<RecordAdministrativeAct>.Instance);
         var act = CreateAct() with { Motivo = null };
 
         await Assert.ThrowsAsync<EntityValidationException>(() => useCase.ExecuteAsync(
@@ -93,6 +96,14 @@ public sealed class RecordAdministrativeActTests
             Records.Add(record);
             return Task.CompletedTask;
         }
+
+        public Task<string?> ReadFingerprintAsync(
+            string origin,
+            Guid factId,
+            CancellationToken cancellationToken)
+            => Task.FromResult(Records
+                .SingleOrDefault(record => record.Origin == origin && record.FactId == factId)
+                ?.Fingerprint);
     }
 
     private sealed class SpyUnitOfWork(Func<int> recordCount) : IUnitOfWork

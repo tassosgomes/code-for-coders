@@ -9,6 +9,7 @@
     <ProjectReference Include="../CodeForCoders.Audit.Contracts/CodeForCoders.Audit.Contracts.csproj" />
     <ProjectReference Include="../CodeForCoders.Audit.Domain/CodeForCoders.Audit.Domain.csproj" />
     <PackageReference Include="FluentValidation" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Scrutor" />
   </ItemGroup>
 </Project>
