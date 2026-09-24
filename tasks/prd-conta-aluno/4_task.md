@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: [3.0]
 gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentPasswordRecoveryTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentPasswordRecoveryTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentPasswordRecovery'
@@ -38,9 +38,9 @@ Troca com senha atual e preservação da sessão corrente (5.0). Entrega a desti
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
-- [ ] Pedido para conta elegível e inelegível tem resposta pública idêntica; só a elegível gera mensagem capturada no smtp4dev.
-- [ ] Link válido troca a senha uma vez, mantém estado de confirmação e revoga sessões; token inválido ou senha fora da política preserva Credencial e sessões.
+- [x] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
+- [x] Pedido para conta elegível e inelegível tem resposta pública idêntica; só a elegível gera mensagem capturada no smtp4dev.
+- [x] Link válido troca a senha uma vez, mantém estado de confirmação e revoga sessões; token inválido ou senha fora da política preserva Credencial e sessões.
 
 ## Decisão registrada (intervenção 2026-09-23)
 
@@ -78,3 +78,18 @@ Corrigir nesta task:
   alinhe a documentação local.
 Evidência adicional além do gate: `npm --prefix src/student-spa run lint` limpo (SPA inteira), `npm --prefix src/student-spa run test`
 completo e evidência de que o URL gerado abre a rota servida pela SPA.
+
+## Reabertura — rodada full 2, tentativa 1 (run.TUd4coLe, `prd_review.md`)
+
+**B1 — token de link em logs/telemetria** (viola `prd.md:254` e `techspec.md:33`). Cobre os links de redefinição e
+de confirmação (`/student/redefinir-senha?token=…`, `/student/confirm-account?token=…`):
+- `src/student-spa/nginx.conf.template:23-25`: o access log padrão grava `$request` com a query. Use um `log_format`
+  que não registre query string (ex.: `$uri` em vez de `$request`/`$request_uri`) ao menos para as rotas com token,
+  sem quebrar o fallback da SPA.
+- Telemetria da SPA (`src/student-spa/src/main.tsx:10`, `telemetry.ts:49-63`): auto-instrumentações (ex.
+  `document-load`) podem registrar `url.full`/`http.url` com a query antes de a tela remover o token. Redija/sanitize
+  atributos de URL (remover `token` da query) ou desative a captura de query nessas instrumentações.
+- Testes: unitário do sanitizador de URL/atributos da telemetria e evidência de que o access log do Nginx da imagem da
+  SPA não contém `token=` após requisição a `/student/redefinir-senha?token=probe` (container isolado, sem tocar no
+  stack `code-for-coders-*` além do necessário).
+Execute comandos longos em primeiro plano e rode também `npm --prefix src/student-spa run lint` e `run test`.

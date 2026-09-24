@@ -12,6 +12,7 @@ import {
 } from '@opentelemetry/semantic-conventions';
 
 import { env } from '@/config/env';
+import { createUrlRedactionSpanProcessor } from '@/lib/telemetry-url-redaction';
 
 let initialized = false;
 
@@ -36,6 +37,7 @@ export const initTelemetry = () => {
       'deployment.environment.name': import.meta.env.MODE,
     }),
     spanProcessors: [
+      createUrlRedactionSpanProcessor(),
       new BatchSpanProcessor(new OTLPTraceExporter({ url: env.OTEL_ENDPOINT }), {
         maxQueueSize: 100,
         maxExportBatchSize: 10,
