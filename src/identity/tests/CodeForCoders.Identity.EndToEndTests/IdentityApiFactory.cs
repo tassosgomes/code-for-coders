@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.PostgreSql;
+using Testcontainers.Redis;
 using Xunit;
 
 namespace CodeForCoders.Identity.EndToEndTests;
@@ -25,9 +26,12 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         .WithPassword("code_for_coders_identity")
         .Build();
 
+    public RedisContainer Valkey { get; } = new RedisBuilder("redis:8.0").Build();
+
     public async ValueTask InitializeAsync()
     {
         await PostgreSql.StartAsync();
+        await Valkey.StartAsync();
 
         var dbOptions = new DbContextOptionsBuilder<IdentityDbContext>()
             .UseNpgsql(PostgreSql.GetConnectionString())
@@ -40,6 +44,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
     {
         builder.UseEnvironment("EndToEndTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
+        builder.UseSetting("Valkey:ConnectionString", $"{Valkey.GetConnectionString()},abortConnect=false");
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
         builder.UseSetting("StudentAccount:ConfirmationBaseUrl", "https://students.example.test/confirm-account");
@@ -97,6 +102,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
     {
         Dispose();
         await PostgreSql.DisposeAsync();
+        await Valkey.DisposeAsync();
     }
 }
 
