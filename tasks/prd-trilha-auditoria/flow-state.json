@@ -5,9 +5,9 @@
   "original_base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "base_ref": "ffa246fdc53acd1b392aab02a3c890f53ac66d01",
   "target_ref": null,
-  "last_checkpoint": "171105aeaddc9e5ba9f7c1052d644abaf4b15d05",
-  "phase": "checkpoint",
-  "active_task": "4.0",
+  "last_checkpoint": "4c7a2b2a71d463320e8b66a651beaf69a7c1cceb",
+  "phase": "reopen",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -22,18 +22,16 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "4.0",
-    "round": 2
+    "mode": "reopen-task",
+    "task": "5.0"
   },
   "last_result": {
-    "step": "revalidation",
+    "step": "checkpoint-task",
     "task": "4.0",
     "round": 2,
-    "run_id": "run.Ve5MoN1j",
-    "kind": "claude",
-    "outcome": "approved",
-    "gate": "passed"
+    "run_id": "run.AuVHEsfH",
+    "outcome": "checkpoint_ok",
+    "commit": "4c7a2b2"
   },
   "history": [
     {
@@ -133,6 +131,18 @@
       "fix_run": "run.RONTTrOG",
       "review_run": "run.Ve5MoN1j",
       "note": "A-01 retirado"
+    },
+    {
+      "event": "checkpoint",
+      "task": "4.0",
+      "round": 2,
+      "commit": "4c7a2b2"
+    },
+    {
+      "event": "intervention-start",
+      "task": "5.0",
+      "round": 2,
+      "reason": "usuário: R1 e R2 da focused 5.0 antes da full"
     }
   ],
   "carry_to_full": [
