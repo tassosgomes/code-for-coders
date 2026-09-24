@@ -10,6 +10,9 @@ aguarda conclusão e valida um JSON em diretório exclusivo por run_id.
 
 Para full, omita task e forneça --base-ref. Integrator aceita todos os modos do seu SKILL.md,
 incluindo prepare-integration. Não há mais dependência de um veredito extraído do terminal.
+Use `--context-file=<path>` para decisões adicionais de uma chamada. O script copia o arquivo
+para o diretório do run antes de iniciar o worker; não misture essas decisões ao plano da task.
+Essa cópia fica retida com os logs, então registre decisões sem credenciais.
 
 ## Roteamento entre agentes
 
@@ -54,7 +57,8 @@ roteamento; o pior caso é consumir uma tentativa.
   anti-afinidade e esforço descartado.
 - VERDICT: outcome do JSON. Resultado de negócio pertence ao orquestrador.
 - RESULT: caminho do JSON, contendo identidade da chamada e resultado final.
-- REPORT: review, para validator; inclui Run da chamada para impedir reutilização de relatório antigo.
+- REPORT: relatório do implementer no diretório do run ou review do validator na task/PRD;
+  inclui Run da chamada para impedir reutilização de relatório antigo.
 - LOG: saída de inicialização/espera e trecho final de diagnóstico do terminal.
 - LEDGER: `runs.jsonl`, uma linha por chamada.
 
@@ -62,10 +66,28 @@ Exit 0 significa envelope válido; 2 é falha de transporte; 3 é erro de uso.
 Outcome gate_error/validation_error é infraestrutura mesmo com exit 0 do transporte.
 Timeout continua sendo falha mesmo se o worker escreveu um resultado parcial ou completo:
 reconcilie seus efeitos antes de repetir. Nunca use TASK READY como implementação concluída.
+`agent start` exige que o pane novo já esteja no prompt do shell interativo. O script repete
+somente `agent_pane_busy`, por até 20 segundos (ajustável com `TSG_START_SHELL_TIMEOUT_S`).
+Se o shell não ficar disponível, registra `pane process-info` e a tela do pane no LOG.
+Outros erros de start não são repetidos: `agent_not_ready`, por exemplo, indica um agente
+iniciado mas bloqueado durante a inicialização.
+
+`agent prompt --wait` aceita os estados padrão do Herdr (`idle`, `done`, `blocked`). Um bloqueio
+é relatado como `agent_blocked`; `agent_prompt_stalled` recebe motivo próprio. Em qualquer falha
+de transporte depois que um agente pode ter iniciado, o script mantém o pane e informa seu ID
+na linha DELEGATE para diagnóstico. Consulte `agent get <pane-id>`, `agent read <pane-id>` e, se a
+detecção estiver errada, `agent explain <pane-id> --json`. Um timeout ou `agent_prompt_stalled`
+não prova que o prompt deixou de chegar: reconcilie arquivos e commits antes de nova delegação.
+Feche o pane preservado
+depois da inspeção com `herdr pane close <id>`.
 
 ## Ambiente e operação
 
-Herdr e jq devem estar disponíveis. Configure o modo não interativo conforme o runtime e autoridade
+Herdr e jq devem estar disponíveis. Execute de dentro de um pane Herdr (`HERDR_ENV=1`), pois
+`pane split --current` usa o pane do chamador. A [skill do Herdr](https://herdr.dev/docs/agent-skill/)
+ensina agentes dentro do Herdr a operar o CLI; o [agent guide](https://herdr.dev/agent-guide.md)
+orienta diagnóstico. Instalar a skill por si só não altera este script.
+Configure o modo não interativo conforme o runtime e autoridade
 já existente; não desligue controles de autorização por conveniência.
 TSG_AGENT_EXTRA_ARGS aceita argumentos simples separados por espaço, sem interpretação de shell.
 Use --model somente para escolhas já configuradas/autorizadas.
@@ -82,6 +104,7 @@ Não aumente --lines para transportar um relatório: leia REPORT/RESULT do disco
 `route_note`, `result`, `outcome`, `gate`, `elapsed_s` e `reason`. Falha ao gravar não derruba a
 delegação, e o ledger nunca decide resultado — ele existe para comparar kind e modelo por entrega
 aprovada, e é a fonte da anti-afinidade.
+Quando `--context-file` é usado, `context_file` aponta para a cópia mantida no diretório do run.
 
 Só é possível comparar provedores com tentativas, gates e retrabalho no mesmo lugar; número de
 linhas de prompt não mede nada. Duas leituras diretas:

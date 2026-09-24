@@ -6,9 +6,10 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 HERDR="${HERDR_BIN_PATH:-herdr}"
-ROLE="" KIND="" PRD_DIR="" TASK="" MODE="" ATTEMPT="" BASE_REF=""
+ROLE="" KIND="" PRD_DIR="" TASK="" MODE="" ATTEMPT="" BASE_REF="" CONTEXT_FILE=""
 MODEL="" TIMEOUT_MS=900000 READ_LINES=200 RATIO=0.4 KEEP_PANE=0
-DELIVERY="" RESULT_FILE="" PANE_ID="" LEDGER=""
+START_SHELL_TIMEOUT_S="${TSG_START_SHELL_TIMEOUT_S:-20}"
+DELIVERY="" RESULT_FILE="" PANE_ID="" LEDGER="" CONTEXT_COPY="" AGENT_STARTED=0
 ROUTE_SOURCE="explicit" ROUTE_NOTE="" ROUTE_MODEL="" ROUTE_EFFORT=""
 EFFORT="" TASK_KIND="" MODEL_FLAG="--model"
 
@@ -17,7 +18,7 @@ usage() {
   printf '%s\n' 'tsg-delegate.sh --role=implementer|validator|integrator [--kind=KIND]' \
     '  --prd-dir=PATH [--task=N] [--mode=MODE] [--attempt=N/MAX] [--base-ref=SHA]' \
     '  [--delivery=branch|pr|merge] [--model=NAME] [--effort=LEVEL]' \
-    '  [--timeout-ms=N] [--lines=N] [--keep-pane]' \
+    '  [--context-file=PATH] [--timeout-ms=N] [--lines=N] [--keep-pane]' \
     '' \
     'Sem --kind, o kind vem da politica de roteamento: TSG_ROUTING_FILE,' \
     '<repo>/.tsg-flow/routing.json ou scripts/routing.default.json, nessa ordem.'
@@ -32,6 +33,7 @@ for arg in "$@"; do
     --mode=*) MODE="${arg#*=}" ;;
     --attempt=*) ATTEMPT="${arg#*=}" ;;
     --base-ref=*) BASE_REF="${arg#*=}" ;;
+    --context-file=*) CONTEXT_FILE="${arg#*=}"; [[ -n "$CONTEXT_FILE" ]] || die "context-file vazio" ;;
     --delivery=*) DELIVERY="${arg#*=}" ;;
     --model=*) MODEL="${arg#*=}" ;;
     --effort=*) EFFORT="${arg#*=}" ;;
@@ -46,6 +48,7 @@ done
 
 [[ -n "$ROLE" && -n "$PRD_DIR" ]] || die "role e prd-dir obrigatorios"
 [[ "$TIMEOUT_MS" =~ ^[1-9][0-9]*$ && "$READ_LINES" =~ ^[1-9][0-9]*$ ]] || die "timeout/lines invalidos"
+[[ "$START_SHELL_TIMEOUT_S" =~ ^[1-9][0-9]*$ ]] || die "TSG_START_SHELL_TIMEOUT_S invalido"
 [[ "$RATIO" =~ ^0\.[0-9]*[1-9][0-9]*$ ]] || die "ratio deve estar entre 0 e 1"
 [[ -z "$KIND" || "$KIND" =~ ^[a-zA-Z0-9_-]+$ ]] || die "kind invalido"
 [[ -z "$EFFORT" || "$EFFORT" =~ ^[a-z][a-z0-9_-]*$ ]] || die "effort invalido"
@@ -79,8 +82,12 @@ esac
 
 command -v "$HERDR" >/dev/null 2>&1 || die "herdr nao encontrado"
 command -v jq >/dev/null 2>&1 || die "jq necessario"
+[[ "${HERDR_ENV:-}" == 1 ]] || die "execute dentro de um pane Herdr (HERDR_ENV=1)"
 [[ -d "$PRD_DIR" ]] || die "prd-dir inexistente"
 PRD_DIR="$(cd "$PRD_DIR" && pwd -P)" || die "prd-dir inacessivel"
+if [[ -n "$CONTEXT_FILE" ]]; then
+  [[ -f "$CONTEXT_FILE" && ! -L "$CONTEXT_FILE" ]] || die "context-file deve ser arquivo regular"
+fi
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "fora de repositorio Git"
 LOG_DIR="${TSG_DELEGATE_LOG_DIR:-$REPO_ROOT/.tsg-flow/delegate-logs}"
 mkdir -p "$LOG_DIR" || die "nao foi possivel criar logs"
@@ -191,10 +198,16 @@ RUN_DIR="$(cd "$RUN_DIR" && pwd -P)"
 RUN_ID="${RUN_DIR##*/}"
 RESULT_FILE="$RUN_DIR/result.json"
 LOG_FILE="$RUN_DIR/transcript.log"
+if [[ -n "$CONTEXT_FILE" ]]; then
+  CONTEXT_COPY="$RUN_DIR/context.txt"
+  cp -- "$CONTEXT_FILE" "$CONTEXT_COPY" || die "falha ao copiar context-file"
+fi
 AGENT_NAME="tsg-$ROLE-$(printf '%s' "$RUN_ID" | tr '[:upper:].' '[:lower:]-')"
 START_TS=$SECONDS
 REPORT_PATH=""
-if [[ "$ROLE" == validator ]]; then
+if [[ "$ROLE" == implementer ]]; then
+  REPORT_PATH="$RUN_DIR/report.md"
+elif [[ "$ROLE" == validator ]]; then
   if [[ "$MODE" == full ]]; then REPORT_PATH="$PRD_DIR/prd_review.md"
   else REPORT_PATH="$PRD_DIR/${TASK}_task_review.md"; fi
 fi
@@ -217,14 +230,14 @@ ledger() {
     --arg mode "$MODE" --arg prd "$PRD_DIR" --arg task "$TASK" --arg attempt "$ATTEMPT" \
     --arg task_kind "$TASK_KIND" --arg kind "$KIND" --arg model "$MODEL" \
     --arg effort "$EFFORT" \
-    --arg route "$ROUTE_SOURCE" --arg note "$ROUTE_NOTE" --arg result "$result" \
+    --arg route "$ROUTE_SOURCE" --arg note "$ROUTE_NOTE" --arg context "$CONTEXT_COPY" --arg result "$result" \
     --arg outcome "$outcome" --arg gate "$gate" --arg reason "$reason" \
     --argjson elapsed "$((SECONDS - START_TS))" '
     def opt: if . == "" then null else . end;
     { ts: $ts, run_id: $run, role: $role, mode: $mode, prd_dir: $prd,
       task: ($task | opt), task_kind: ($task_kind | opt), attempt: ($attempt | opt),
       kind: $kind, model: ($model | opt), effort: ($effort | opt),
-      route: $route, route_note: ($note | opt),
+      route: $route, route_note: ($note | opt), context_file: ($context | opt),
       result: $result, outcome: $outcome, gate: ($gate | opt),
       elapsed_s: $elapsed, reason: ($reason | opt) }' >>"$LEDGER" 2>/dev/null || true
 }
@@ -240,7 +253,13 @@ emit() {
   printf 'LOG: %s\nLEDGER: %s\n' "$LOG_FILE" "$LEDGER"
   ledger "$1" "$2" "${3:-}"
 }
-fail() { emit transport_failure TRANSPORT_FAILURE "$1"; exit 2; }
+fail() {
+  # Depois que um agente pode ter iniciado, a evidencia no pane importa para
+  # reconciliar efeitos antes de repetir a delegacao.
+  ((AGENT_STARTED == 1)) && KEEP_PANE=1
+  emit transport_failure TRANSPORT_FAILURE "$1"
+  exit 2
+}
 
 ARGS=("tsg-flow-$ROLE" "--prd-dir=$PRD_DIR" "--mode=$MODE" "--run-id=$RUN_ID" "--result-file=$RESULT_FILE")
 [[ -n "$TASK" ]] && ARGS+=("--task=$TASK")
@@ -248,6 +267,10 @@ ARGS=("tsg-flow-$ROLE" "--prd-dir=$PRD_DIR" "--mode=$MODE" "--run-id=$RUN_ID" "-
 [[ -n "$BASE_REF" ]] && ARGS+=("--base-ref=$BASE_REF")
 [[ -n "$DELIVERY" ]] && ARGS+=("--delivery=$DELIVERY")
 printf -v INVOCATION '%q ' "${ARGS[@]}"
+CONTEXT_INSTRUCTION=""
+[[ -n "$CONTEXT_COPY" ]] && CONTEXT_INSTRUCTION="- Leia o contexto adicional em $CONTEXT_COPY; ele registra decisoes desta chamada e nao substitui a task aprovada."
+REPORT_INSTRUCTION=""
+[[ -n "$REPORT_PATH" ]] && REPORT_INSTRUCTION="- Grave o relatorio em $REPORT_PATH, com a linha Run: $RUN_ID."
 
 SCHEMA="$(jq -n --arg run "$RUN_ID" --arg role "$ROLE" --arg mode "$MODE" \
   --arg prd "$PRD_DIR" --arg task "$TASK" --arg attempt "$ATTEMPT" --arg report "$REPORT_PATH" \
@@ -257,6 +280,8 @@ PROMPT="$INVOCATION
 
 Transporte desta chamada:
 - Nao faca perguntas; devolva bloqueio operacional se faltar decisao material ou autorizacao.
+$REPORT_INSTRUCTION
+$CONTEXT_INSTRUCTION
 - Grave o resultado final em $RESULT_FILE, somente depois de terminar a etapa e salvar o relatorio.
 - Use exatamente a identidade abaixo; substitua outcome e gate pelos valores correspondentes.
 $SCHEMA
@@ -267,7 +292,7 @@ $SCHEMA
   Qualquer modo pode devolver integration_blocked ou revalidation_required.
 - Gate: passed, static_passed, failed, error ou not_run. Implementacao completa e validator aprovado
   exigem passed/static_passed; gate_failed exige failed; gate_error/validation_error exigem error.
-- Validator: inclua no relatorio a linha exata Run: $RUN_ID.
+- Implementer e validator: inclua no relatorio a linha exata Run: $RUN_ID.
   Full approved tambem exige validated_commit, validated_tree e base_ref como SHAs completos.
 - Integrator: inclua branch e commit em sucesso; branch_ready/integration_ready exigem base_ref;
   integration_ready tambem exige target_ref. Bloqueios incluem reason.
@@ -294,17 +319,60 @@ if [[ -n "${TSG_AGENT_EXTRA_ARGS:-}" ]]; then
 fi
 START_ARGS=(agent start "$AGENT_NAME" --kind "$KIND" --pane "$PANE_ID" --timeout 120000)
 (("${#AGENT_ARGS[@]}" > 0)) && START_ARGS+=(-- "${AGENT_ARGS[@]}")
-"$HERDR" "${START_ARGS[@]}" >"$LOG_FILE" 2>&1 || fail agent_start_failed
+START_LOG="$RUN_DIR/start.log"
+START_DEADLINE=$((SECONDS + START_SHELL_TIMEOUT_S))
+START_TRY=0
+while :; do
+  START_TRY=$((START_TRY + 1))
+  if "$HERDR" "${START_ARGS[@]}" >"$START_LOG" 2>&1; then
+    cat "$START_LOG" >>"$LOG_FILE"
+    AGENT_STARTED=1
+    break
+  fi
+  printf 'agent start attempt %s failed:\n' "$START_TRY" >>"$LOG_FILE"
+  cat "$START_LOG" >>"$LOG_FILE"
+  START_ERROR="$(jq -r '.error.code // empty' "$START_LOG" 2>/dev/null || true)"
+  # Um pane recem-criado pode ainda nao ter o shell no primeiro plano. Apenas
+  # agent_pane_busy garante que o start nao iniciou um agente e pode ser repetido.
+  if [[ "$START_ERROR" != agent_pane_busy ]]; then
+    AGENT_STARTED=1
+    "$HERDR" agent get "$AGENT_NAME" >>"$LOG_FILE" 2>&1 || true
+    "$HERDR" pane read "$PANE_ID" --source visible --lines 40 >>"$LOG_FILE" 2>&1 || true
+    [[ "$START_ERROR" == agent_not_ready ]] && fail agent_not_ready
+    fail agent_start_failed
+  fi
+  if (( SECONDS >= START_DEADLINE )); then
+    "$HERDR" pane process-info --pane "$PANE_ID" >>"$LOG_FILE" 2>&1 || true
+    "$HERDR" pane read "$PANE_ID" --source visible --lines 40 >>"$LOG_FILE" 2>&1 || true
+    fail agent_pane_busy
+  fi
+  sleep 1
+done
 # agent start pode reportar pronto antes do pane aceitar paste+Enter de forma confiavel:
 # um prompt disparado sem intervalo perde o Enter e trava em agent_prompt_stalled.
 sleep 1
 
 PROMPT_RC=0
-"$HERDR" agent prompt "$AGENT_NAME" "$PROMPT" --wait --until idle --until "done" \
-  --timeout "$TIMEOUT_MS" >>"$LOG_FILE" 2>&1 || PROMPT_RC=$?
+PROMPT_LOG="$RUN_DIR/prompt.log"
+"$HERDR" agent prompt "$AGENT_NAME" "$PROMPT" --wait \
+  --timeout "$TIMEOUT_MS" >"$PROMPT_LOG" 2>&1 || PROMPT_RC=$?
+cat "$PROMPT_LOG" >>"$LOG_FILE"
+if ((PROMPT_RC != 0)); then
+  # Timeout/stall nao prova que o prompt nao chegou. Preserve o pane para
+  # reconciliar a execucao antes de qualquer nova delegacao.
+  "$HERDR" agent get "$AGENT_NAME" >>"$LOG_FILE" 2>&1 || true
+  "$HERDR" agent read "$AGENT_NAME" --source visible --lines "$READ_LINES" >>"$LOG_FILE" 2>&1 || true
+  PROMPT_ERROR="$(jq -r '.error.code // empty' "$PROMPT_LOG" 2>/dev/null || true)"
+  [[ "$PROMPT_ERROR" == agent_prompt_stalled ]] && fail agent_prompt_stalled
+  fail timeout_or_blocked
+fi
+PROMPT_STATUS="$(jq -r '.result.agent.agent_status // empty' "$PROMPT_LOG" 2>/dev/null | tail -1)"
+if [[ "$PROMPT_STATUS" == blocked ]]; then
+  "$HERDR" agent read "$AGENT_NAME" --source visible --lines "$READ_LINES" >>"$LOG_FILE" 2>&1 || true
+  fail agent_blocked
+fi
 # Uma leitura para diagnostico; o transcript nunca decide o resultado.
 "$HERDR" agent read "$AGENT_NAME" --source recent-unwrapped --lines "$READ_LINES" >>"$LOG_FILE" 2>&1 || true
-((PROMPT_RC == 0)) || fail timeout_or_blocked
 [[ -f "$RESULT_FILE" && ! -L "$RESULT_FILE" ]] || fail result_missing
 
 jq -e --arg run "$RUN_ID" --arg role "$ROLE" --arg mode "$MODE" --arg prd "$PRD_DIR" \
@@ -315,10 +383,11 @@ jq -e --arg run "$RUN_ID" --arg role "$ROLE" --arg mode "$MODE" --arg prd "$PRD_
   and .prd_dir == $prd and .task == $task and .attempt == $attempt
   and (.gate | IN("passed","static_passed","failed","error","not_run"))
   and (if $role == "implementer" then
+    .report == $report and (
     (.outcome == "implementation_complete" and (.gate | IN("passed","static_passed")))
     or (.outcome == "task_blocked" and .gate == "not_run")
     or (.outcome == "gate_failed" and .gate == "failed")
-    or (.outcome == "gate_error" and .gate == "error")
+    or (.outcome == "gate_error" and .gate == "error"))
   elif $role == "validator" then
     .report == $report and (
       (.outcome == "approved" and (.gate | IN("passed","static_passed"))
