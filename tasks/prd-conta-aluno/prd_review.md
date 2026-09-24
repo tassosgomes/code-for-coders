@@ -1,36 +1,30 @@
 # Revisão full — Conta e autenticação do aluno
 
-Run: run.TUd4coLe
-Data: 2026-09-23
-- modo: full; resultado: `rejected`; gate: `failed`.
-- base_ref: `d1c046564281e7d3d15f57bd7e6d57ffff426a40`
-- validated_commit: `bc636c011fce6c281d4d5d1afa9d01028530bad2`
-- validated_tree: `c4569d6888652f247f34c7814210c68e1202531d`
+Run: run.vynf1sPf
 
-## Revisão e gate
+## Veredito
 
-- Revistos PRD, TechSpec, baseline/ADRs, contratos, tasks V-01–V-05 e o diff completo desde `base_ref`.
-- .NET restore, format e publish passaram em BFF, Identity e Notification. O comando de testes do CI terminou com exit 5 e `Zero tests ran` nos três serviços; cobertura .NET não foi medida. `global.json:6-8` seleciona Microsoft.Testing.Platform e `Directory.Build.targets:3-10` o ativa, mas os projetos usam referências xUnit/Visual Studio; alinhar runner/adapter e repetir o gate.
-- SPA: `npm ci`, lint, typecheck, testes e build passaram; 14 testes/7 arquivos, cobertura de linhas 92,34%. Build em `/student/`; avisos não bloqueantes de chunk de 666,54 kB e `runtime-env.js`.
-- Imagens locais BFF, Identity, Notification e SPA foram reconstruídas. Smoke atual passou cadastro, reenvio e confirmação, duas sessões, recuperação com revogação das duas sessões, troca de senha mantendo a sessão corrente e login com a nova senha.
+**FULL VALIDATION APROVADA** — gate `passed`; 0 bloqueantes e 1 recomendação não bloqueante.
 
-## Bloqueios
+## Escopo e estabilidade
 
-- **B1 — token de recuperação aparece no access log.** PRD: `prd.md:254`; TechSpec: `techspec.md:33`. `nginx.conf.template:23-25` serve as rotas da SPA sem suprimir query string. Na imagem atual, o formato padrão do Nginx grava `$request`; uma requisição de prova a `/student/redefinir-senha?token=review-probe-only` apareceu no log com a query completa. Links reais usam esse mesmo formato. Suprimir/mascarar a query nas rotas de token e remover atributos de URL sensíveis da telemetria.
-- **B1 — risco adicional em telemetria:** `main.tsx:10` inicializa antes do React; `telemetry.ts:49-63` não desativa nem sanitiza auto-instrumentações; as telas só removem o token em `useEffect` (`student-confirmation-screen.tsx:51`, `student-password-recovery-screen.tsx:63`). A instrumentação `document-load` pode registrar `url.full` com a query. Não capturei evento OTLP no smoke; validar e redigir esse atributo antes de aprovar.
-- **B2 — gate .NET não valida testes.** Os três comandos `dotnet test --no-restore --configuration Debug --coverage --coverage-output-format cobertura` saíram com exit 5 e zero testes descobertos. Não há evidência de suíte backend passando; corrigir a configuração MTP/xUnit e repetir CI, incluindo cobertura.
+- `base_ref`: `d1c046564281e7d3d15f57bd7e6d57ffff426a40`
+- `target_ref`: `d1c046564281e7d3d15f57bd7e6d57ffff426a40`
+- `validated_commit`: `f1cfce51d8c29a89e60d4587bc525ec6eb5e8239`
+- `validated_tree`: `542ccda7d802b2b7470643e49d58031df5eff76e`
 
-## Sensor e limitações
+Revisei as specs selecionadas, PRD, cinco tasks verticais, contratos público/interno e AsyncAPI, domínio, baseline e ADRs pertinentes. O HEAD e a árvore permaneceram estáveis; a alteração preexistente em `flow-state.json` foi preservada.
 
-- Em worktree isolada, mutações de rota para V-01 cadastro, V-02 confirmação, V-03 sessão, V-04 recuperação e V-05 troca fizeram seus testes SPA focados falharem (exit 1). Os cinco mutantes foram restaurados; worktree removida com HEAD e status iguais à linha de base. Sensor backend não executável enquanto o runner retorna zero testes.
-- Publish em nível de solução gerou aviso `NETSDK1194`; não bloqueou. Docker push, SAST, scans de dependência e DAST não foram executados nesta validação.
+## Evidências
 
-## Nota do orquestrador sobre run.TUd4coLe (2026-09-23)
+- Suítes completas: Identity 40/40, BFF 131/131, Notification 43/43 e SPA 16/16. Lint, typecheck, format, publish e builds de imagens passaram. Cobertura de linhas: Identity 73,46%, BFF 83,56%, Notification 76,53% e SPA 92,71% (mínimo 70%).
+- Spectral não encontrou erros nos dois OpenAPI; AsyncAPI producer/consumer válidos. Sem mudanças pendentes no modelo EF de Identity; a verificação de imutabilidade das migrations passou.
+- Smoke no Compose atualizado: cadastro 202; dois e-mails de confirmação, incluindo reenvio; caminho `/student/confirm-account`; confirmação 204; pedidos de reset para conta existente e inexistente com resposta igual 202; e-mail de reset em `/student/redefinir-senha`; reset 204 e login com a nova senha 200. A resposta pública de login não contém JWT.
+- O container SPA inicialmente ativo era antigo e registrou a query de uma sonda fictícia. Reconstruí e substituí somente esse serviço pela imagem do HEAD. No smoke final, a sonda retornou 200 sem aparecer no log de acesso; Identity, BFF e Notification registraram zero ocorrências do e-mail ou tokens de teste. SPA e Notification ficaram saudáveis.
+- Sensor em worktree isolada: as cinco mutações comportamentais falharam nas suítes focais — V-01 guarda da política de senha (6/6); V-02 finalidade do token (3/4); V-03 revogação da sessão corrente (1/4); V-04 revogação das sessões no reset (1/6); V-05 seleção da sessão corrente na troca de senha (2/4). A worktree foi removida e nenhum código foi alterado.
 
-- **B2 (zero testes .NET) não reproduz no CI real:** o job `Build & Test` de identity em `main`
-  (GitHub Actions run 35779580543, `dotnet test --no-restore --configuration Debug --coverage ...` em `src/identity`)
-  descobriu e executou os testes ("Test run summary: Passed! total: 12") e falhou apenas no gate de cobertura
-  (55,63% na base). Implementer (run.OIduKadP) e validator (run.Mnk5cooD, run.oIGrxsd8) executaram o mesmo comando com
-  40/40 e 131/131. O "Zero tests ran" é tratado como problema de ambiente do validator; a próxima full deve executar o
-  comando do CI no diretório do serviço, diretamente (sem wrapper `rtk`), e registrar contagem de testes e cobertura.
-- **B1 (token em access log/telemetria)** é tratado reabrindo a task 4.0, cobrindo os links de confirmação e redefinição.
+Os logs detalhados estão em `.tsg-flow/delegate-logs/run.vynf1sPf/`.
+
+## Recomendação não bloqueante
+
+`3_task.md` declara `status: done`, mas mantém desmarcados os quatro itens de conclusão (linhas 41–44). As evidências desta revisão cobrem esses critérios; sincronize os marcadores no estado do fluxo.
