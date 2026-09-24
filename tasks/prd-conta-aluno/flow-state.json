@@ -3,9 +3,9 @@
   "branch": "feature/conta-aluno",
   "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-conta-aluno",
   "original_base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
-  "base_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
-  "target_ref": "856c398ae2df9725de403eddd6351e70dd3d3ddd",
-  "last_checkpoint": "8f2beeb7ce7fe1cbfd86856c07abacb36ab98760",
+  "base_ref": "d1c046564281e7d3d15f57bd7e6d57ffff426a40",
+  "target_ref": "d1c046564281e7d3d15f57bd7e6d57ffff426a40",
+  "last_checkpoint": "c1e59449e283a20dfabe0fc0d4a7abab710ff95c",
   "phase": "checkpoint",
   "active_task": "4.0",
   "attempt": 1,
@@ -26,7 +26,7 @@
     "mode": "checkpoint-task",
     "task": "4.0",
     "attempt": 1,
-    "run_id": "run.JWHasUO6",
+    "run_id": "run.llR5Q4I6",
     "outcome": "checkpoint_ok",
     "gate": "passed",
     "report": "tasks/prd-conta-aluno/4.0_task_review.md"
@@ -447,6 +447,128 @@
       "commits": [
         "8f2beeb7ce7fe1cbfd86856c07abacb36ab98760"
       ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "4.0",
+      "origin": "full",
+      "commits": [
+        "8f2beeb",
+        "285fb7b"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "integration_ready",
+      "run_id": "run.78EVNWk4",
+      "rebased_onto": "d1c0465"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.qXgF0GqH",
+      "reason": "result_missing (validator ocioso aguardando shells em background)",
+      "mode": "full",
+      "partial_findings": [
+        "dotnet format --verify-no-changes falha em 2 migrations novas"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "intervention",
+      "detail": "Usuario pediu revalidacao full com mirror de CI (dotnet format + cobertura .NET); aprovacao run.By9avgXL invalidada"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "full_rejected",
+      "full_attempt": 3,
+      "run_id": "run.oIGrxsd8"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "blocked",
+      "reason": "limite de ciclos full 3/3 atingido"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "intervention",
+      "detail": "Usuario autorizou nova rodada full (round 2) e exclusao de codigo gerado obj/** do coletor de cobertura sem baixar threshold. Correcoes B1+B2 concentradas na 3.0."
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "3.0",
+      "origin": "full-round2",
+      "run_id": "run.Mnk5cooD"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "3.0",
+      "origin": "full-round2",
+      "commits": [
+        "bc636c0"
+      ]
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "integration_ready",
+      "run_id": "run.dj9kgP9Q"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.sdD2xqGg",
+      "reason": "result_missing (validator claude ocioso com CI em background/Monitor)",
+      "mode": "full"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "routing_override",
+      "detail": "full validator --kind=codex nesta repeticao para evitar ociosidade em background"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "full_rejected",
+      "round": 2,
+      "full_attempt": 1,
+      "run_id": "run.TUd4coLe"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "transport_failure",
+      "run_id": "run.xYjOJa5e",
+      "reason": "agent_start_failed",
+      "task": "4.0",
+      "mode": "reopen-task"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "approved",
+      "task": "4.0",
+      "origin": "full-round2",
+      "run_id": "run.gaGPNXO3"
+    },
+    {
+      "phase": "checkpoint-task",
+      "task": "4.0",
+      "attempt": 1,
+      "role": "integrator",
+      "mode": "checkpoint-task",
+      "outcome": "checkpoint_ok",
+      "run_id": "run.llR5Q4I6",
+      "gate": "passed"
+    },
+    {
+      "ts": "2026-09-23",
+      "event": "checkpoint",
+      "task": "4.0",
+      "origin": "full-round2",
+      "run_id": "run.llR5Q4I6",
+      "commits": [
+        "c1e59449e283a20dfabe0fc0d4a7abab710ff95c"
+      ]
     }
   ],
   "open_findings": [
@@ -458,5 +580,6 @@
     "possivel falta de teste de contrato interno em 1.0-4.0 (BFF usa stubs)"
   ],
   "fix_policy": "implementer fix com --kind=claude --effort=high (autorizado pelo usuario)",
-  "reopen_queue": null
+  "reopen_queue": null,
+  "full_round": 2
 }
