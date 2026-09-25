@@ -1,0 +1,66 @@
+# Override that points the local APIs at the shared development infrastructure
+# (PostgreSQL, RabbitMQ, Valkey, OTel Collector, and smtp4dev) instead of local containers.
+# Provision it first with: scripts/remote-infra.sh provision
+# Used by: scripts/apps.sh start --remote
+
+x-remote-environment: &remote-environment
+  RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+  RabbitMq__Username: code_for_coders
+  RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?run scripts/remote-infra.sh provision}
+  RabbitMq__VirtualHost: code-for-coders
+  Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?run scripts/remote-infra.sh provision},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+
+services:
+  identity:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !reset {}
+
+  learning:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !reset {}
+
+  media:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !reset {}
+
+  commerce:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !reset {}
+
+  notification:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      Email__SmtpHost: ${REMOTE_INFRA_HOST:-192.168.0.5}
+    depends_on: !reset {}
+
+  audit:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !reset {}
+
+  bff-admin:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !override
+      learning:
+        condition: service_healthy
+
+  bff-student:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+    depends_on: !override
+      identity:
+        condition: service_healthy

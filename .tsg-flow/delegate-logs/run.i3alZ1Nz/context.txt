@@ -1,0 +1,11 @@
+# Decisões operacionais do orquestrador (prepare-prd-branch)
+
+- O usuário pediu que este PRD rode numa **worktree Git nova**, sem tocar o checkout principal
+  (`/home/tsgomes/github-tassosgomes/code-for-coders`, branch `main`, árvore limpa).
+- Crie a branch `feature/acesso-interno` a partir de `main` (HEAD atual `e515e36`) e a worktree em
+  `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (`git worktree add -b feature/acesso-interno ../code-for-coders-acesso-interno main`).
+  Se branch ou caminho já existirem, reutilize apenas se apontarem para este PRD; senão, bloqueie.
+- Não faça commit, push nem altere `main`. O base_ref é o merge-base com `main`.
+- No resultado, informe o caminho da worktree em notas/evidência além de branch e base_ref.
+- `.tsg-flow/delegate-logs/` são logs do transporte e nunca entram em commits.

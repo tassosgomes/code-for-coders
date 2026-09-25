@@ -1,0 +1,29 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+- Não suba a stack do Docker Compose: ela usa nomes de containers/volumes fixos compartilhados com o
+  checkout principal. Testcontainers (testes) pode ser usado normalmente. Registre o smoke local
+  como não executado no relatório.
+
+## Correção da task 3.0 (tentativa 2/3)
+
+Revisão reprovada: `tasks/prd-acesso-interno/3.0_task_review.md` (run.ciaJ631w). Corrija:
+
+1. **B1 (bloqueante):** `npm --prefix src/admin-spa run test` sai com exit 1 porque
+   `dashboard-screen.tsx` passou a ter dois `role="status"` e `dashboard-screen.test.tsx` usa
+   `getByRole('status')`. Ajuste a tela ou o teste sem enfraquecê-lo e cubra "conta sem papel vê a
+   orientação sem nenhuma área" e "áreas conforme permissions" no SPA (R2).
+2. **Defeito herdado da 2.0, incluído neste fix por decisão do orquestrador:** a suíte completa de
+   Identity IntegrationTests falha em
+   `IdentityInfrastructureTests.HeartbeatFlowsThroughOutboxRabbitMqAndConsumer` com
+   `OptionsValidationException: Staff password reset URL must be absolute HTTP(S).` — a fixture não
+   configura `StaffAccount:PasswordResetBaseUrl`. Corrija a fixture/configuração de teste (sem
+   afrouxar a validação de produção).
+
+Antes de encerrar, rode também as suítes **completas**: `npm --prefix src/admin-spa run test` e
+Identity IntegrationTests inteira, além do gate declarado. As demais recomendações (R3–R5) são
+opcionais; não amplie o escopo além disso.

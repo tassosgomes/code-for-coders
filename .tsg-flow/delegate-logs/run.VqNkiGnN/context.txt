@@ -1,0 +1,20 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revisão focused da task 1.0 (tentativa 1)
+
+- Relatório do implementer (run.ZehMLHWz):
+  `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.ZehMLHWz/report.md`.
+  É alegação do implementer, não evidência: execute o gate e os checks você mesmo.
+- O implementer afirma que `dotnet test --project <csproj>` devolve "Zero tests ran" (exit 5) neste
+  ambiente para todos os projetos, inclusive os intocados, e que rodou os assemblies diretamente.
+  Verifique essa alegação: os gates das tasks 2.0–9.0 dependem de `dotnet test --project ... --
+  --filter-class ... --minimum-expected-tests N`. Registre no review se é defeito do ambiente, do
+  comando ou da mudança.
+- A mudança tocou `docker-compose.yml`, `scripts/generate-local-env.sh` e docs além de Identity;
+  confirme se está dentro do escopo da 1.0.

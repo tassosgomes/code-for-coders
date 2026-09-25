@@ -1,0 +1,15 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Herança da revisão da task 1.0 (checkpoint 5a8172a)
+
+- `docker-compose.yml` já injeta no `bff-admin` a seção `StaffIdentity__*` (Issuer, Audience,
+  SigningKeyId, SigningKeyBase64, TenantId, BaseAddress) para a asserção de serviço, sem consumidor
+  ainda. A fábrica de asserção do `bff-admin` desta task deve consumir exatamente essa seção ou
+  ajustar o Compose de forma coerente (recomendação R3 de `1.0_task_review.md`).
+- Os escopos `staff-*` canônicos estão em `src/identity/src/CodeForCoders.Identity.Api/Security/ServiceAssertionScopes.cs`.

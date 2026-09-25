@@ -1,0 +1,17 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revisão focused da task 3.0 (tentativa 1)
+
+- Relatório do implementer (alegação, não evidência):
+  `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.J6dAvetx/report.md`.
+- Não suba a stack do Docker Compose (nomes/volumes compartilhados com o checkout principal); se o
+  smoke for exigido pelo "Pronto quando", registre como lacuna para a full.
+- A task substitui o CSRF e o `/bff/session` do esqueleto da Fase 0: confira que testes antigos não
+  foram removidos sem substituição equivalente e que o `bff-student` não regrediu.
+- Nova migração `AddStaffSessionIdempotency`: confira que foi gerada pelo EF.

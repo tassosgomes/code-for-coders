@@ -1,0 +1,14 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Checkpoint
+
+- Aprovação focused da task: `tasks/prd-acesso-interno/<task>_task_review.md` (resultado VALIDAÇÃO APROVADA).
+- `tasks/prd-acesso-interno/flow-state.json` é estado autorizado do fluxo: inclua-o no commit do
+  checkpoint como está (não edite o conteúdo). O relatório do implementer fica nos logs, fora do repo.
+- Esta task inclui, por decisão do orquestrador, a correção de teste herdada da 2.0 em IdentityInfrastructureTests.cs; mencione no corpo do commit.

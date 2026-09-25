@@ -5,6 +5,7 @@ set -Eeuo pipefail
 readonly script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
 readonly compose_file="$repository_root/docker-compose.yml"
+readonly remote_compose_file="$repository_root/docker-compose.remote.yml"
 readonly database_bootstrap="$script_directory/init-local-databases.sql"
 readonly infrastructure_services=(postgres rabbitmq valkey otel-collector)
 readonly api_services=(identity learning media commerce notification audit bff-admin bff-student)
@@ -27,9 +28,14 @@ readonly infrastructure_timeout=120
 readonly app_startup_timeout=300
 readonly application_readiness_timeout=120
 readonly local_database_password=code-for-coders-local
+infrastructure_mode=local
 
 compose() {
-  docker compose --project-directory "$repository_root" --file "$compose_file" "$@"
+  local files=(--file "$compose_file")
+  if [[ "$infrastructure_mode" == remote ]]; then
+    files+=(--file "$remote_compose_file")
+  fi
+  docker compose --project-directory "$repository_root" "${files[@]}" "$@"
 }
 
 log() {
@@ -43,12 +49,17 @@ die() {
 
 usage() {
   cat <<'EOF'
-Usage: scripts/apps.sh <start|stop|status>
+Usage: scripts/apps.sh <start|stop|status> [--remote]
 
 Commands:
   start   Build and start infrastructure, APIs, and SPAs; wait for readiness.
   stop    Stop the complete local stack without deleting its data volumes.
   status  Show the state of all local stack containers.
+
+Options:
+  --remote  Use the shared development infrastructure (docker-compose.remote.yml) instead of
+            local PostgreSQL, RabbitMQ, Valkey, OTel Collector, and smtp4dev containers.
+            Prepare it once with: scripts/remote-infra.sh provision && scripts/remote-infra.sh migrate
 EOF
 }
 
@@ -104,18 +115,24 @@ start_stack() {
   command -v curl >/dev/null 2>&1 || die "curl is required to check application readiness."
   validate_compose
 
-  log "Starting PostgreSQL, RabbitMQ, Valkey, and OpenTelemetry Collector..."
-  compose up --detach --wait --wait-timeout "$infrastructure_timeout" "${infrastructure_services[@]}" \
-    || die "Infrastructure did not become healthy. Inspect it with: docker compose logs postgres rabbitmq valkey otel-collector"
+  if [[ "$infrastructure_mode" == remote ]]; then
+    log "Checking the shared development infrastructure..."
+    "$script_directory/remote-infra.sh" check \
+      || die "Remote infrastructure is not ready. Run: scripts/remote-infra.sh provision"
+  else
+    log "Starting PostgreSQL, RabbitMQ, Valkey, and OpenTelemetry Collector..."
+    compose up --detach --wait --wait-timeout "$infrastructure_timeout" "${infrastructure_services[@]}" \
+      || die "Infrastructure did not become healthy. Inspect it with: docker compose logs postgres rabbitmq valkey otel-collector"
 
-  log "Provisioning local databases and application roles..."
-  if ! compose exec -T postgres psql \
-    --set=ON_ERROR_STOP=1 \
-    --set="app_password=$local_database_password" \
-    --username=code_for_coders_identity \
-    --dbname=code_for_coders_identity \
-    < "$database_bootstrap"; then
-    die "Could not provision the local PostgreSQL databases."
+    log "Provisioning local databases and application roles..."
+    if ! compose exec -T postgres psql \
+      --set=ON_ERROR_STOP=1 \
+      --set="app_password=$local_database_password" \
+      --username=code_for_coders_identity \
+      --dbname=code_for_coders_identity \
+      < "$database_bootstrap"; then
+      die "Could not provision the local PostgreSQL databases."
+    fi
   fi
 
   log "Building and starting the eight APIs and two SPAs..."
@@ -149,9 +166,14 @@ show_status() {
   compose ps --all
 }
 
-if (($# != 1)); then
+if (($# < 1 || $# > 2)); then
   usage >&2
   exit 2
+fi
+
+if (($# == 2)); then
+  [[ "$2" == --remote ]] || { usage >&2; exit 2; }
+  infrastructure_mode=remote
 fi
 
 cd "$repository_root"

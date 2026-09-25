@@ -1,0 +1,18 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revisão focused da task 4.0 (tentativa 1)
+
+- Relatório do implementer (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.KqWpvtYb/report.md`.
+- Duas migrações novas: `AddStaffInvitations` e `AddStaffInvitationRole`. Confira em que DbContext cada
+  uma está, que foram geradas pelo EF e que não há mudança pendente no modelo de cada serviço.
+- Confira conformidade com os contratos: `asyncapi-contract-notification.yaml` (Notificação 1.1.0,
+  `convite-interno`) e o ato `auditoria.ato-praticado.v1` exigido pela Auditoria (CAP-030).
+- Rode também as suítes **completas** dos componentes tocados (Identity IntegrationTests,
+  Notification IntegrationTests, BFF-admin EndToEndTests, `npm --prefix src/admin-spa run test`).
+- Não suba a stack do Docker Compose; smoke continua lacuna para a full.
