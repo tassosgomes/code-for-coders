@@ -29,6 +29,7 @@ public sealed class StaffInvitationIdentityClient(
             identitySessionId,
             request,
             idempotencyKey,
+            ReadCreatedAsync,
             cancellationToken);
 
     public Task<StaffInvitationIdentityResult> ListPendingInvitationsAsync(
@@ -43,15 +44,44 @@ public sealed class StaffInvitationIdentityClient(
             identitySessionId,
             null,
             null,
+            ReadPageAsync,
+            cancellationToken);
+
+    public Task<StaffInvitationIdentityResult> LookupInvitationAsync(
+        InvitationTokenRequestV1 request,
+        CancellationToken cancellationToken)
+        => SendAsync(
+            HttpMethod.Post,
+            "internal/v1/staff-invitation-lookups",
+            ReadScope,
+            null,
+            request,
+            null,
+            ReadPreviewAsync,
+            cancellationToken);
+
+    public Task<StaffInvitationIdentityResult> AcceptInvitationAsync(
+        AcceptStaffInvitationRequestV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+        => SendAsync(
+            HttpMethod.Post,
+            "internal/v1/staff-invitation-acceptances",
+            WriteScope,
+            null,
+            request,
+            idempotencyKey,
+            ReadSessionAsync,
             cancellationToken);
 
     private async Task<StaffInvitationIdentityResult> SendAsync(
         HttpMethod method,
         string path,
         string scope,
-        Guid identitySessionId,
-        CreateStaffInvitationRequestV1? body,
+        Guid? identitySessionId,
+        object? body,
         string? idempotencyKey,
+        Func<HttpResponseMessage, CancellationToken, Task<StaffInvitationIdentityResult>> readSuccessAsync,
         CancellationToken cancellationToken)
     {
         using var message = new HttpRequestMessage(method, path);
@@ -63,7 +93,11 @@ public sealed class StaffInvitationIdentityClient(
         message.Headers.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             assertionTokenFactory.Create(scope));
-        message.Headers.Add("X-Staff-Session", identitySessionId.ToString("D"));
+        if (identitySessionId is Guid sessionId)
+        {
+            message.Headers.Add("X-Staff-Session", sessionId.ToString("D"));
+        }
+
         if (idempotencyKey is not null)
         {
             message.Headers.Add("Idempotency-Key", idempotencyKey);
@@ -72,20 +106,9 @@ public sealed class StaffInvitationIdentityClient(
         try
         {
             using var response = await httpClient.SendAsync(message, cancellationToken);
-            if (response.StatusCode == HttpStatusCode.Created)
+            if (response.IsSuccessStatusCode)
             {
-                var created = await response.Content.ReadFromJsonAsync<StaffInvitationCreatedV1>(JsonOptions, cancellationToken);
-                return created is null
-                    ? Unavailable()
-                    : new StaffInvitationIdentityResult(StatusCodes.Status201Created, null, created, null);
-            }
-
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                var page = await response.Content.ReadFromJsonAsync<StaffInvitationPageV1>(JsonOptions, cancellationToken);
-                return page is null
-                    ? Unavailable()
-                    : new StaffInvitationIdentityResult(StatusCodes.Status200OK, null, null, page);
+                return await readSuccessAsync(response, cancellationToken);
             }
 
             var code = await ReadCodeAsync(response, cancellationToken);
@@ -106,7 +129,8 @@ public sealed class StaffInvitationIdentityClient(
 
             if (response.StatusCode == HttpStatusCode.UnprocessableEntity
                 && code is "EMAIL_BELONGS_TO_STAFF" or "EMAIL_BELONGS_TO_STUDENT" or "REASON_REQUIRED"
-                    or "ROLE_NOT_SUPPORTED" or "IDEMPOTENCY_CONFLICT")
+                    or "ROLE_NOT_SUPPORTED" or "IDEMPOTENCY_CONFLICT" or "INVITATION_INVALID"
+                    or "INVITATION_EMAIL_UNAVAILABLE" or "PASSWORD_POLICY_VIOLATION")
             {
                 return new StaffInvitationIdentityResult(StatusCodes.Status422UnprocessableEntity, code, null, null);
             }
@@ -151,4 +175,55 @@ public sealed class StaffInvitationIdentityClient(
 
     private static StaffInvitationIdentityResult Unavailable()
         => new(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE", null, null);
+
+    private static async Task<StaffInvitationIdentityResult> ReadCreatedAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        if (response.StatusCode != HttpStatusCode.Created)
+        {
+            return Unavailable();
+        }
+
+        var created = await response.Content.ReadFromJsonAsync<StaffInvitationCreatedV1>(JsonOptions, cancellationToken);
+        return created is null
+            ? Unavailable()
+            : new StaffInvitationIdentityResult(StatusCodes.Status201Created, null, created, null);
+    }
+
+    private static async Task<StaffInvitationIdentityResult> ReadPageAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var page = response.StatusCode == HttpStatusCode.OK
+            ? await response.Content.ReadFromJsonAsync<StaffInvitationPageV1>(JsonOptions, cancellationToken)
+            : null;
+        return page is null
+            ? Unavailable()
+            : new StaffInvitationIdentityResult(StatusCodes.Status200OK, null, null, page);
+    }
+
+    private static async Task<StaffInvitationIdentityResult> ReadPreviewAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var preview = response.StatusCode == HttpStatusCode.OK
+            ? await response.Content.ReadFromJsonAsync<StaffInvitationPreviewV1>(JsonOptions, cancellationToken)
+            : null;
+        return preview is null
+            ? Unavailable()
+            : new StaffInvitationIdentityResult(StatusCodes.Status200OK, null, null, null, preview);
+    }
+
+    private static async Task<StaffInvitationIdentityResult> ReadSessionAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var session = response.StatusCode == HttpStatusCode.OK
+            ? await response.Content.ReadFromJsonAsync<StaffSessionCreatedV1>(JsonOptions, cancellationToken)
+            : null;
+        return session is null
+            ? Unavailable()
+            : new StaffInvitationIdentityResult(StatusCodes.Status200OK, null, null, null, null, session);
+    }
 }

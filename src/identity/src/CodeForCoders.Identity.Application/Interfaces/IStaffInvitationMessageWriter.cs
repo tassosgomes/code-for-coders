@@ -11,4 +11,10 @@ public interface IStaffInvitationMessageWriter
         string reason,
         DateTimeOffset issuedOn,
         CancellationToken cancellationToken);
+
+    Task AppendInvitationAcceptedAsync(
+        StaffInvitation invitation,
+        Guid accountId,
+        DateTimeOffset acceptedOn,
+        CancellationToken cancellationToken);
 }

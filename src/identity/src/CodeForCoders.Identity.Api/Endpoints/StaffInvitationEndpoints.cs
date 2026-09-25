@@ -4,9 +4,12 @@ using System.Text.Json;
 using CodeForCoders.Identity.Api.ApiModels;
 using CodeForCoders.Identity.Api.Security;
 using CodeForCoders.Identity.Application.Exceptions;
+using CodeForCoders.Identity.Application.UseCases.Accounts.AcceptStaffInvitation;
 using CodeForCoders.Identity.Application.UseCases.Accounts.CreateStaffInvitation;
+using CodeForCoders.Identity.Application.UseCases.Accounts.LookupStaffInvitation;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ListPendingStaffInvitations;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStaffSession;
+using CodeForCoders.Identity.Contracts;
 using CodeForCoders.Identity.Domain.Entities;
 
 namespace CodeForCoders.Identity.Api.Endpoints;
@@ -35,6 +38,24 @@ public static class StaffInvitationEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        endpoints.MapPost("/internal/v1/staff-invitation-lookups", LookupStaffInvitationAsync)
+            .WithName("LookupStaffInvitationInternal")
+            .WithTags("StaffInvitation")
+            .Accepts<InvitationTokenRequestV1>("application/json")
+            .Produces<StaffInvitationPreviewV1>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        endpoints.MapPost("/internal/v1/staff-invitation-acceptances", AcceptStaffInvitationAsync)
+            .WithName("AcceptStaffInvitationInternal")
+            .WithTags("StaffInvitation")
+            .Accepts<AcceptStaffInvitationRequestV1>("application/json")
+            .Produces<StaffSessionCreatedV1>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
 
@@ -154,6 +175,104 @@ public static class StaffInvitationEndpoints
         }
     }
 
+    private static async Task<IResult> LookupStaffInvitationAsync(
+        HttpContext httpContext,
+        ServiceAssertionVerifier assertionVerifier,
+        ILookupStaffInvitation useCase,
+        CancellationToken cancellationToken)
+    {
+        var assertion = await VerifyServiceAsync(httpContext, assertionVerifier, ReadScope, cancellationToken);
+        if (assertion is null)
+        {
+            return Problem(httpContext, StatusCodes.Status401Unauthorized, "SERVICE_UNAUTHORIZED", "Service authentication is invalid.");
+        }
+
+        var request = await ReadRequestAsync<InvitationTokenRequestV1>(httpContext, cancellationToken);
+        if (string.IsNullOrWhiteSpace(request?.Token) || request.Token.Length > 512)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "A token within the supported length is required.");
+        }
+
+        try
+        {
+            var preview = await useCase.ExecuteAsync(
+                new LookupStaffInvitationInput(assertion.TenantId, request.Token),
+                cancellationToken);
+            return Results.Ok(new StaffInvitationPreviewV1(preview.OfferedRole, preview.ExpiresAt));
+        }
+        catch (StaffInvitationException exception)
+        {
+            return Problem(httpContext, exception.StatusCode, exception.Code, InvitationErrorTitle(exception.Code));
+        }
+    }
+
+    private static async Task<IResult> AcceptStaffInvitationAsync(
+        HttpContext httpContext,
+        ServiceAssertionVerifier assertionVerifier,
+        IAcceptStaffInvitation useCase,
+        CancellationToken cancellationToken)
+    {
+        var assertion = await VerifyServiceAsync(httpContext, assertionVerifier, WriteScope, cancellationToken);
+        if (assertion is null)
+        {
+            return Problem(httpContext, StatusCodes.Status401Unauthorized, "SERVICE_UNAUTHORIZED", "Service authentication is invalid.");
+        }
+
+        var request = await ReadRequestAsync<AcceptStaffInvitationRequestV1>(httpContext, cancellationToken);
+        var idempotencyKey = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(request?.Token)
+            || request.Token.Length > 512
+            || string.IsNullOrWhiteSpace(request.Name)
+            || request.Name.Length > 200
+            || string.IsNullOrEmpty(request.Password)
+            || string.IsNullOrWhiteSpace(idempotencyKey)
+            || idempotencyKey.Length > 128)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "Token, name, password, and a valid Idempotency-Key are required.");
+        }
+
+        try
+        {
+            var session = await useCase.ExecuteAsync(
+                new AcceptStaffInvitationInput(
+                    assertion.TenantId,
+                    request.Token,
+                    request.Name.Trim(),
+                    request.Password,
+                    idempotencyKey),
+                cancellationToken);
+            return Results.Ok(new StaffSessionCreatedV1(
+                session.SessionId,
+                session.AccountId,
+                session.Name,
+                session.Roles,
+                session.Permissions,
+                session.ExpiresAt));
+        }
+        catch (StaffInvitationException exception)
+        {
+            var errors = exception.Code == "PASSWORD_POLICY_VIOLATION"
+                ? new Dictionary<string, string[]> { ["password"] = ["A senha não atende à política."] }
+                : null;
+            return Problem(
+                httpContext,
+                exception.StatusCode,
+                exception.Code,
+                InvitationErrorTitle(exception.Code),
+                errors);
+        }
+    }
+
+    private static string InvitationErrorTitle(string code)
+        => code switch
+        {
+            "INVITATION_INVALID" => "Este convite não vale mais. Peça um novo ao administrador.",
+            "INVITATION_EMAIL_UNAVAILABLE" => "Não foi possível ativar este convite. Procure o administrador.",
+            "PASSWORD_POLICY_VIOLATION" => "A senha não atende à política.",
+            "IDEMPOTENCY_CONFLICT" => "Chave de idempotência já usada com outro conteúdo.",
+            _ => "The invitation request was rejected.",
+        };
+
     private static async Task<(ValidateStaffSessionOutput? Session, IResult? Problem)> ResolveActorAsync(
         HttpContext httpContext,
         Guid tenantId,
@@ -216,13 +335,23 @@ public static class StaffInvitationEndpoints
         return await assertionVerifier.VerifyAsync(authorization.Parameter, requiredScope, cancellationToken);
     }
 
-    private static IResult Problem(HttpContext httpContext, int statusCode, string code, string title)
-        => Results.Problem(
-            statusCode: statusCode,
-            title: title,
-            extensions: new Dictionary<string, object?>
-            {
-                ["code"] = code,
-                ["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString() ?? httpContext.TraceIdentifier,
-            });
+    private static IResult Problem(
+        HttpContext httpContext,
+        int statusCode,
+        string code,
+        string title,
+        IReadOnlyDictionary<string, string[]>? errors = null)
+    {
+        var extensions = new Dictionary<string, object?>
+        {
+            ["code"] = code,
+            ["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString() ?? httpContext.TraceIdentifier,
+        };
+        if (errors is not null)
+        {
+            extensions["errors"] = errors;
+        }
+
+        return Results.Problem(statusCode: statusCode, title: title, extensions: extensions);
+    }
 }

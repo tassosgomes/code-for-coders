@@ -22,6 +22,15 @@ public sealed record StaffInvitationIssuedAuditFactV1(
     StaffInvitationAuditComplementV1 Complemento,
     string Motivo);
 
+public sealed record StaffInvitationAcceptedAuditFactV1(
+    Guid FatoId,
+    string Origem,
+    string Tipo,
+    Guid TenantId,
+    DateTimeOffset PraticadoEm,
+    IdentityReferenceV1 Autor,
+    IdentityReferenceV1 Alvo);
+
 public sealed record IdentityReferenceV1(string Tipo, Guid Id);
 
 public sealed record StaffInvitationAuditComplementV1(string Papel);

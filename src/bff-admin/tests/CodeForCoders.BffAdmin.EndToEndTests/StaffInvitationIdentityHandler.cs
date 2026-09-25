@@ -17,9 +17,21 @@ public sealed class StaffInvitationIdentityHandler : HttpMessageHandler
 
     public string? ListCode { get; set; }
 
+    public HttpStatusCode LookupStatus { get; set; } = HttpStatusCode.OK;
+
+    public string? LookupCode { get; set; }
+
+    public HttpStatusCode AcceptStatus { get; set; } = HttpStatusCode.OK;
+
+    public string? AcceptCode { get; set; }
+
     public StaffInvitationCreatedV1 Created { get; set; } = CreateInvitation();
 
     public StaffInvitationPageV1 Page { get; set; } = new([], new InvitationPaginationV1(1, 10, 0, 0));
+
+    public StaffInvitationPreviewV1 Preview { get; set; } = new("professor", DateTimeOffset.UtcNow.AddDays(7));
+
+    public StaffSessionCreatedV1 Session { get; set; } = CreateSession();
 
     public Uri? LastRequestUri { get; private set; }
 
@@ -31,6 +43,10 @@ public sealed class StaffInvitationIdentityHandler : HttpMessageHandler
 
     public CreateStaffInvitationRequestV1? LastRequest { get; private set; }
 
+    public InvitationTokenRequestV1? LastLookupRequest { get; private set; }
+
+    public AcceptStaffInvitationRequestV1? LastAcceptanceRequest { get; private set; }
+
     public int RequestCount { get; private set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -40,7 +56,8 @@ public sealed class StaffInvitationIdentityHandler : HttpMessageHandler
         RequestCount++;
         LastRequestUri = request.RequestUri;
         LastAssertionScope = ReadScope(request.Headers.Authorization?.Parameter);
-        LastStaffSessionId = Guid.TryParse(request.Headers.GetValues("X-Staff-Session").SingleOrDefault(), out var sessionId)
+        LastStaffSessionId = request.Headers.TryGetValues("X-Staff-Session", out var sessionValues)
+            && Guid.TryParse(sessionValues.SingleOrDefault(), out var sessionId)
             ? sessionId
             : null;
         LastIdempotencyKey = request.Headers.TryGetValues("Idempotency-Key", out var keys)
@@ -52,6 +69,22 @@ public sealed class StaffInvitationIdentityHandler : HttpMessageHandler
             return ListStatus == HttpStatusCode.OK
                 ? JsonResponse(ListStatus, Page)
                 : ProblemResponse(ListStatus, ListCode);
+        }
+
+        if (request.RequestUri?.AbsolutePath.EndsWith("/internal/v1/staff-invitation-lookups", StringComparison.Ordinal) == true)
+        {
+            LastLookupRequest = await request.Content!.ReadFromJsonAsync<InvitationTokenRequestV1>(JsonOptions, cancellationToken);
+            return LookupStatus == HttpStatusCode.OK
+                ? JsonResponse(LookupStatus, Preview)
+                : ProblemResponse(LookupStatus, LookupCode);
+        }
+
+        if (request.RequestUri?.AbsolutePath.EndsWith("/internal/v1/staff-invitation-acceptances", StringComparison.Ordinal) == true)
+        {
+            LastAcceptanceRequest = await request.Content!.ReadFromJsonAsync<AcceptStaffInvitationRequestV1>(JsonOptions, cancellationToken);
+            return AcceptStatus == HttpStatusCode.OK
+                ? JsonResponse(AcceptStatus, Session)
+                : ProblemResponse(AcceptStatus, AcceptCode);
         }
 
         LastRequest = await request.Content!.ReadFromJsonAsync<CreateStaffInvitationRequestV1>(JsonOptions, cancellationToken);
@@ -66,13 +99,21 @@ public sealed class StaffInvitationIdentityHandler : HttpMessageHandler
         CreateCode = null;
         ListStatus = HttpStatusCode.OK;
         ListCode = null;
+        LookupStatus = HttpStatusCode.OK;
+        LookupCode = null;
+        AcceptStatus = HttpStatusCode.OK;
+        AcceptCode = null;
         Created = CreateInvitation();
         Page = new StaffInvitationPageV1([], new InvitationPaginationV1(1, 10, 0, 0));
+        Preview = new StaffInvitationPreviewV1("professor", DateTimeOffset.UtcNow.AddDays(7));
+        Session = CreateSession();
         LastRequestUri = null;
         LastStaffSessionId = null;
         LastIdempotencyKey = null;
         LastAssertionScope = null;
         LastRequest = null;
+        LastLookupRequest = null;
+        LastAcceptanceRequest = null;
         RequestCount = 0;
     }
 
@@ -84,6 +125,15 @@ public sealed class StaffInvitationIdentityHandler : HttpMessageHandler
             DateTimeOffset.UtcNow,
             DateTimeOffset.UtcNow.AddDays(7),
             null);
+
+    private static StaffSessionCreatedV1 CreateSession()
+        => new(
+            Guid.CreateVersion7(),
+            Guid.CreateVersion7(),
+            "Marina Alves",
+            ["professor"],
+            ["autoria.ler"],
+            DateTimeOffset.UtcNow.AddMinutes(60));
 
     private static HttpResponseMessage JsonResponse<T>(HttpStatusCode statusCode, T value)
         => new(statusCode) { Content = JsonContent.Create(value, options: JsonOptions) };

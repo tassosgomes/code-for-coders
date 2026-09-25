@@ -6,6 +6,8 @@ public interface IIdentityStaffInvitationStore
 {
     Task<StaffInvitation?> FindByIdAsync(Guid tenantId, Guid invitationId, CancellationToken cancellationToken);
 
+    Task<StaffInvitation?> FindByTokenHashAsync(Guid tenantId, string tokenHash, CancellationToken cancellationToken);
+
     Task<StaffInvitation?> FindUnresolvedByNormalizedEmailAsync(
         Guid tenantId,
         string normalizedEmail,

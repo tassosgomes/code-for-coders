@@ -15,4 +15,13 @@ public interface IStaffInvitationIdentityClient
         int page,
         int size,
         CancellationToken cancellationToken);
+
+    Task<StaffInvitationIdentityResult> LookupInvitationAsync(
+        InvitationTokenRequestV1 request,
+        CancellationToken cancellationToken);
+
+    Task<StaffInvitationIdentityResult> AcceptInvitationAsync(
+        AcceptStaffInvitationRequestV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken);
 }

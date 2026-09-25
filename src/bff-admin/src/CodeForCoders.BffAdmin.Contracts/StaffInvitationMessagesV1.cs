@@ -2,6 +2,12 @@ namespace CodeForCoders.BffAdmin.Contracts;
 
 public sealed record CreateStaffInvitationRequestV1(string? Email, string? Role, string? Reason);
 
+public sealed record InvitationTokenRequestV1(string? Token);
+
+public sealed record AcceptStaffInvitationRequestV1(string? Token, string? Name, string? Password);
+
+public sealed record StaffInvitationPreviewV1(string OfferedRole, DateTimeOffset ExpiresAt);
+
 public sealed record StaffInvitationCreatedV1(
     Guid InvitationId,
     string Email,

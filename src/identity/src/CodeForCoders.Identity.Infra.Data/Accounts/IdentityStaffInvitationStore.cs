@@ -14,6 +14,14 @@ public sealed class IdentityStaffInvitationStore(IdentityDbContext dbContext) : 
             invitation => invitation.TenantId == tenantId && invitation.Id == invitationId,
             cancellationToken);
 
+    public Task<StaffInvitation?> FindByTokenHashAsync(
+        Guid tenantId,
+        string tokenHash,
+        CancellationToken cancellationToken)
+        => dbContext.StaffInvitations.SingleOrDefaultAsync(
+            invitation => invitation.TenantId == tenantId && invitation.TokenHash == tokenHash,
+            cancellationToken);
+
     public Task<StaffInvitation?> FindUnresolvedByNormalizedEmailAsync(
         Guid tenantId,
         string normalizedEmail,

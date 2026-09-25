@@ -73,6 +73,35 @@ public sealed class StaffInvitationMessageWriter(
             cancellationToken);
     }
 
+    public Task AppendInvitationAcceptedAsync(
+        StaffInvitation invitation,
+        Guid accountId,
+        DateTimeOffset acceptedOn,
+        CancellationToken cancellationToken)
+    {
+        var factId = Guid.CreateVersion7(acceptedOn);
+        return outboxMessageWriter.AppendAsync(
+            new OutboxMessageDraft(
+                factId,
+                invitation.TenantId,
+                AuditType,
+                AuditRoutingKey,
+                new StaffInvitationAcceptedAuditFactV1(
+                    factId,
+                    "identidade",
+                    "convite-interno-aceito",
+                    invitation.TenantId,
+                    acceptedOn,
+                    new IdentityReferenceV1("conta-interna", accountId),
+                    new IdentityReferenceV1("convite-interno", invitation.Id)),
+                acceptedOn,
+                Activity.Current?.Id,
+                destinationOptions.Value.AuditExchange,
+                CorrelationId(invitation.Id),
+                ProtectPayload: true),
+            cancellationToken);
+    }
+
     private string AddTokenToLink(string rawToken)
     {
         var baseUrl = invitationOptions.Value.AcceptanceBaseUrl;

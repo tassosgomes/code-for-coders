@@ -80,4 +80,14 @@ public sealed class StaffInvitation
 
         SupersededOn = supersededOn;
     }
+
+    public void Accept(DateTimeOffset acceptedOn)
+    {
+        if (AcceptedOn is not null || SupersededOn is not null || ExpiresOn <= acceptedOn)
+        {
+            throw new EntityValidationException("Only a valid pending staff invitation can be accepted.");
+        }
+
+        AcceptedOn = acceptedOn;
+    }
 }

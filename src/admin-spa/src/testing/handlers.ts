@@ -29,6 +29,17 @@ export const handlers = [
     }),
   ),
   http.post(`${env.API_URL}/api/v1/staff-password-resets`, () => new HttpResponse(null, { status: 204 })),
+  http.post(`${env.API_URL}/api/v1/staff-invitation-lookups`, () => HttpResponse.json({
+    offeredRole: 'professor',
+    expiresAt: '2026-10-09T14:05:11Z',
+  })),
+  http.post(`${env.API_URL}/api/v1/staff-invitation-acceptances`, () => HttpResponse.json({
+    accountId: '7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d',
+    name: 'Marina Alves',
+    roles: ['professor'],
+    permissions: ['autoria.ler'],
+    csrfToken: 'accepted-staff-session-csrf',
+  })),
   http.get(`${env.API_URL}/api/v1/staff-invitations`, () => HttpResponse.json({
     data: [],
     pagination: { page: 1, size: 100, total: 0, totalPages: 0 },

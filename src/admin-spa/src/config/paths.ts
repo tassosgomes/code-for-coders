@@ -19,4 +19,8 @@ export const paths = {
     path: '/redefinir-senha',
     getHref: () => '/redefinir-senha',
   },
+  staffInvitation: {
+    path: '/convite',
+    getHref: () => '/convite',
+  },
 } as const;

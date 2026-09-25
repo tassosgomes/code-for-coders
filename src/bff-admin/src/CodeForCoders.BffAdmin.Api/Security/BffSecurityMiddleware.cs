@@ -20,6 +20,16 @@ public sealed class BffSecurityMiddleware(
         var requiresSession = IsProtectedRequest(context.Request);
         if (!requiresSession && !isLogout)
         {
+            if (RequiresAllowedOrigin(context.Request) && !HasAllowedOrigin(context, settings.AllowedOrigins))
+            {
+                await WriteProblemAsync(
+                    context,
+                    StatusCodes.Status403Forbidden,
+                    "CSRF_INVALID",
+                    "The request origin is missing or invalid.");
+                return;
+            }
+
             await next(context);
             return;
         }
@@ -171,7 +181,13 @@ public sealed class BffSecurityMiddleware(
         => HttpMethods.IsPost(request.Method)
             && (request.Path.Equals("/api/v1/staff-sessions", StringComparison.OrdinalIgnoreCase)
                 || request.Path.Equals("/api/v1/staff-password-resets", StringComparison.OrdinalIgnoreCase)
-                || request.Path.Equals("/api/v1/staff-password-reset-requests", StringComparison.OrdinalIgnoreCase));
+                || request.Path.Equals("/api/v1/staff-password-reset-requests", StringComparison.OrdinalIgnoreCase)
+                || request.Path.Equals("/api/v1/staff-invitation-lookups", StringComparison.OrdinalIgnoreCase)
+                || request.Path.Equals("/api/v1/staff-invitation-acceptances", StringComparison.OrdinalIgnoreCase));
+
+    private static bool RequiresAllowedOrigin(HttpRequest request)
+        => HttpMethods.IsPost(request.Method)
+            && request.Path.Equals("/api/v1/staff-invitation-acceptances", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsUnsafeMethod(string method)
         => HttpMethods.IsPost(method)

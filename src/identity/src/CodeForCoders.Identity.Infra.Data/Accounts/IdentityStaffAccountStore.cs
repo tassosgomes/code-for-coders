@@ -45,6 +45,8 @@ public sealed class IdentityStaffAccountStore(IdentityDbContext dbContext) : IId
 
     public void AddAccount(Account account) => dbContext.Accounts.Add(account);
 
+    public void AddCredential(Credential credential) => dbContext.Credentials.Add(credential);
+
     public void AddRoleAssignment(StaffRoleAssignment assignment)
         => dbContext.StaffRoleAssignments.Add(assignment);
 }

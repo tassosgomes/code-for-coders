@@ -23,5 +23,7 @@ public interface IIdentityStaffAccountStore
 
     void AddAccount(Account account);
 
+    void AddCredential(Credential credential);
+
     void AddRoleAssignment(StaffRoleAssignment assignment);
 }
