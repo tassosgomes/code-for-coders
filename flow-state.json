@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-24",
+  "updated": "2026-09-25",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo e nunca sao duplicados aqui. Escrito pelas skills TSG Flow ao concluir uma etapa; validado por .tsg/validate_state.py.",
   "artifacts": {
     "vision": "vision.md",
@@ -31,9 +31,12 @@
     },
     {
       "id": "CAP-002",
-      "stage": "domain",
+      "stage": "tasks",
       "artifacts": {
-        "domain": "domains/identidade-e-acesso/domain.md"
+        "domain": "domains/identidade-e-acesso/domain.md",
+        "prd": "tasks/prd-acesso-interno/prd.md",
+        "contract": "tasks/prd-acesso-interno/contracts.md",
+        "techspec": "tasks/prd-acesso-interno/techspec.md"
       },
       "mvp_order": 2
     },
@@ -184,7 +187,7 @@
     },
     {
       "id": "CAP-030",
-      "stage": "techspec",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/auditoria-e-conformidade/domain.md",
         "prd": "tasks/prd-trilha-auditoria/prd.md",
@@ -201,10 +204,18 @@
   ],
   "next_actions": [
     {
-      "id": "NA16",
-      "what": "Aprovar o plano tasks/prd-trilha-auditoria/tasks.md e iniciar a execucao",
+      "id": "NA17",
+      "what": "Aprovar o plano tasks/prd-acesso-interno/tasks.md e iniciar a execução",
       "skill": "tsg-flow-orchestrator",
       "blocked_by": []
+    },
+    {
+      "id": "NA18",
+      "what": "Segundo PRD de CAP-030 (ainda MVP): consulta da trilha no backoffice pelo administrador (OD21). Primeiro PRD integrado no PR #56; CAP-030 reabre de done para prd quando esta acao comecar (so apos CAP-002 entregue)",
+      "skill": "tsg-flow-prd-creator",
+      "blocked_by": [
+        "NA17"
+      ]
     }
   ],
   "open_decisions": [
@@ -242,15 +253,6 @@
       "what": "Prazo de retencao da camada com dado pessoal do Registro de Entrega. A forma ja esta decidida (RN-N16: duas camadas, parametrizada); falta o numero. Recomendacao a validar: ordem de 90 dias, que e o que cobre a finalidade de diagnostico. Prazo de guarda longo (5-6 anos) vale para documento fiscal e contrato, nao para log de entrega de e-mail",
       "owner": "encarregado de dados + negocio",
       "blocks": []
-    },
-    {
-      "id": "OD22",
-      "owner": "Identidade e Acesso (PRD de CAP-002)",
-      "what": "Alterar papel e ato proprio (identidade.papel-alterado) ou revogar + conceder? RN-19 cita alteracao, mas o domain doc so publica concedido/revogado",
-      "ref": "domains/auditoria-e-conformidade/domain.md QA-A03",
-      "blocks": [
-        "PRD de CAP-002"
-      ]
     }
   ],
   "foundation": {
@@ -463,6 +465,38 @@
       "decided_at": "2026-09-24",
       "owner": "tasso",
       "decision": "E ilegivel: retido intacto na DLQ e alertado, como sem fatoId/origem (RN-A13: nenhum registro sem tenant). Contrato 1.0.1 declara tenantId format uuid. Descartado: registrar nao conforme sob tenant padrao - quebra RN-A13 e vira armadilha no multi-tenant."
+    },
+    {
+      "id": "OD22",
+      "ref": "domains/auditoria-e-conformidade/domain.md QA-A03 · domains/identidade-e-acesso/domain.md RN-19",
+      "what": "Alterar papel e ato proprio (identidade.papel-alterado) ou revogar + conceder?",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Alterar papel = revogar o papel anterior + conceder o novo: dois atos (papel-revogado, papel-concedido), cada um com autor e motivo, publicados na mesma transacao via outbox. Sem campo de correlacao entre os dois. Serve tanto para conta com um papel quanto com varios. Racional: o contrato auditoria.ato-praticado e o servico de Auditoria entregues em CAP-030 (PR #56) ja aceitam esses tipos, entao o custo de desenvolvimento do lado da Auditoria e zero; a trilha continua legivel. Descartado: tipo proprio identidade.papel-alterado - trilha com um registro por troca, mas reabriria CAP-030 (tipo novo, versao minor do contrato, testes e revisao) e, ate subir, o ato cairia como nao conforme. Consequencia: RN-19 do domain doc de Identidade deve ser ajustada no PRD de CAP-002 para dizer que alterar e a composicao dos dois atos."
+    },
+    {
+      "id": "OD25",
+      "ref": "backlog/capabilities.md CAP-002 · domains/identidade-e-acesso/domain.md",
+      "what": "Fatia do primeiro PRD de CAP-002",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Entra: modelo Papel/Permissao com os quatro papeis internos (RN-12, RN-16, RN-18); seed do primeiro administrador (RN-25); convite interno emitir/aceitar com ativacao da conta interna (RN-14, RN-15); conceder e revogar papel, alterar = revogar + conceder (OD22), revogacao encerra sessoes (RN-17), sem auto-alteracao (RN-20); publicacao dos quatro atos em auditoria.ato-praticado; backoffice minimo (login interno, tela de gestao de acesso, uma rota protegida por permissao que prova que professor nao ve dado financeiro). Fora: telas de trabalho de cada papel (com CAP-005, CAP-011...); consulta da trilha (segundo PRD de CAP-030, NA18); cancelar/reenviar convite (fora do MVP, convite expirado exige novo - RN-15); desativar conta interna (CAP-031). Descartado: CAP-002 inteira com permissoes finas por tela, que dependeria de telas que ainda nao existem."
+    },
+    {
+      "id": "OD26",
+      "ref": "domains/identidade-e-acesso/domain.md RN-13",
+      "what": "Conta interna pode ter mais de um papel ao mesmo tempo?",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Sim, conforme RN-13 do domain doc de Identidade (aprovado): papeis internos acumulam entre si. O convite oferta um papel; o administrador concede ou revoga outros depois; trocar e revogar + conceder (OD22). Registro corrigido em 2026-09-25: a primeira resposta (um papel por conta) partiu da premissa errada de que o domain doc nao tratava o tema. Descartado: um papel por conta - contradiria RN-13 e exigiria revisar documento aprovado sem ganho real, ja que OD22 funciona nos dois casos."
+    },
+    {
+      "id": "OD27",
+      "ref": "docs/adr/0005-sessao-e-servico-do-backoffice.md · tasks/prd-acesso-interno/techspec.md",
+      "what": "Sessao do ator interno e autenticacao de servico do bff-admin",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "ADR-0005 aceita: validacao da sessao interna em Identity a cada acao protegida; emissores de assercao separados por borda com escopos proprios; JWT com claims de papel/permissao validado via JWKS no servico dono (commerce na area financeira). Primeiro admin por comando provision-first-admin com senha definida pelo fluxo de redefinicao. Descartado: permissoes em cache no BFF (viola RN-17), servico consultando Identity para autorizar, chave unica para as duas bordas."
     }
   ]
 }

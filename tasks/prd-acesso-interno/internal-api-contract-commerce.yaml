@@ -1,0 +1,95 @@
+openapi: 3.1.0
+info:
+  title: Commerce — área financeira reservada do backoffice
+  version: 1.0.0
+  description: >-
+    Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, V-07; ADR-0005). Consumidor único
+    conhecido: `bff-admin`. `commerce` valida localmente o JWT de usuário emitido por Identity
+    (assinatura pelo JWKS de Identity, emissor `identity`, audiência `commerce`, validade) e decide pela
+    permissão do claim `permissions`, sem consultar Identity e sem confiar no BFF. A área não tem dado
+    até CAP-011.
+  contact:
+    name: Time de Commerce
+servers:
+  - url: /internal/v1
+    description: Rota privada de Commerce, inacessível ao navegador
+tags:
+  - name: FinanceArea
+    description: Área financeira reservada
+paths:
+  /finance-area:
+    get:
+      tags: [FinanceArea]
+      summary: Abrir a área financeira reservada
+      description: >-
+        Exige `financeiro.ler` em `permissions`. Token ausente, inválido, expirado, com audiência ou
+        emissor errados → 401 TOKEN_INVALID. Token válido sem a permissão → 403 PERMISSION_DENIED.
+      operationId: getFinanceAreaInternal
+      security: [{StaffUserToken: []}]
+      responses:
+        '200':
+          description: Acesso concedido.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FinanceArea' }
+              examples:
+                reservada:
+                  value:
+                    status: reserved
+        '401':
+          description: Token ausente ou inválido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                tokenInvalido:
+                  value:
+                    type: about:blank
+                    title: Token de acesso inválido.
+                    status: 401
+                    code: TOKEN_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '403':
+          description: Token válido sem a permissão.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              examples:
+                semPermissao:
+                  value:
+                    type: about:blank
+                    title: Sem permissão para esta área.
+                    status: 403
+                    code: PERMISSION_DENIED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT RS256 de ator interno emitido por Identity na validação de sessão
+        (`validateStaffSessionInternal` com `audience: commerce`), vida curta, claims iss, aud, sub,
+        tenantId, sessionId, scope, roles, permissions, exp, jti. Chave pública por `kid` no JWKS de
+        Identity (`getUserTokenSigningKeysInternal`).
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        traceId: { type: string }
+    FinanceArea:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [reserved]

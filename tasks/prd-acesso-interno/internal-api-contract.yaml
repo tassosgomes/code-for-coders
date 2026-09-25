@@ -1,0 +1,707 @@
+openapi: 3.1.0
+info:
+  title: Identity — integração com o BFF do backoffice
+  version: 1.0.0
+  description: >-
+    Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, EN-01; ADR-0004 e ADR-0005).
+    Consumidor único conhecido: `bff-admin`. A asserção de serviço do emissor `bff-admin` autentica o
+    BFF inclusive antes da entrada; nunca representa um ator interno. Nas operações de gestão, o ator
+    é resolvido por Identity a partir do identificador opaco da sessão interna informado em
+    `X-Staff-Session` — Identity verifica que a sessão está ativa, é do tenant da asserção e tem a
+    permissão exigida; o BFF não informa conta, papel nem permissão. Toda chamada usa TLS. O tenant é
+    claim da asserção. Idempotência e códigos de CAP-001 se aplicam; o BFF traduz
+    `IDEMPOTENCY_CONFLICT` para `IDEMPOTENCY_KEY_REUSED` no contrato público.
+  contact:
+    name: Time de Identidade e Acesso
+servers:
+  - url: /internal/v1
+    description: Rota privada de Identity, inacessível ao navegador
+tags:
+  - name: StaffSession
+    description: Entrada, validação e revogação da sessão do ator interno
+  - name: StaffCredential
+    description: Recuperação de senha do ator interno
+  - name: StaffInvitation
+    description: Convite de Acesso Interno
+  - name: StaffMembers
+    description: Atores internos e papéis
+  - name: SigningKeys
+    description: Chaves públicas do JWT de usuário (JWKS)
+paths:
+  /staff-sessions:
+    post:
+      tags: [StaffSession]
+      summary: Criar sessão interna
+      description: >-
+        Escopo `staff-sessions:create`. Autentica só conta `InternalActor` não desativada. Credencial
+        errada, e-mail inexistente e conta de aluno respondem o mesmo 401 `INVALID_CREDENTIALS`. Conta
+        sem papel cria sessão com `permissions` vazio.
+      operationId: createStaffSessionInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StaffLogin' }
+      responses:
+        '200':
+          description: Sessão criada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StaffSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-session-validations:
+    post:
+      tags: [StaffSession]
+      summary: Validar e renovar sessão interna
+      description: >-
+        Escopo `staff-sessions:validate`. Valida sessão, tenant e situação da conta e renova a
+        inatividade atomicamente (ADR-0005). Devolve papéis e permissões vigentes agora. Se `audience`
+        for informada e autorizada para o `bff-admin`, emite JWT curto com claims `roles` e
+        `permissions`. Repetição não cria sessão. Sessão revogada ou expirada → 401 `SESSION_REQUIRED`.
+      operationId: validateStaffSessionInternal
+      security: [{BffAdminServiceAssertion: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionValidationInput' }
+      responses:
+        '200':
+          description: Sessão ativa, renovada, com JWT opcional.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionValidated' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /staff-session-revocations:
+    post:
+      tags: [StaffSession]
+      summary: Revogar a sessão interna corrente
+      description: Escopo `staff-sessions:revoke`. Revoga só a sessão informada; repetição não a reativa.
+      operationId: revokeStaffSessionInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionReference' }
+      responses:
+        '204': { description: Sessão revogada ou já inexistente. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+  /staff-password-reset-requests:
+    post:
+      tags: [StaffCredential]
+      summary: Pedir recuperação de senha interna
+      description: >-
+        Escopo `staff-passwords:reset`. Resposta idêntica para conta interna, conta de aluno e e-mail
+        inexistente. Só conta interna grava segredo e pedido `recuperacao-de-senha` com link do
+        backoffice no outbox.
+      operationId: requestStaffPasswordResetInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailInput' }
+      responses:
+        '202': { description: Pedido aceito. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-password-resets:
+    post:
+      tags: [StaffCredential]
+      summary: Redefinir senha interna
+      description: >-
+        Escopo `staff-passwords:reset`. Consome o segredo, grava a credencial com a política de CAP-001,
+        revoga todas as sessões internas da conta e invalida recuperações pendentes no mesmo commit.
+        Serve também ao primeiro administrador provisionado (credencial ainda inexistente).
+      operationId: resetStaffPasswordInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ResetPasswordInput' }
+      responses:
+        '204': { description: Senha definida. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-invitation-lookups:
+    post:
+      tags: [StaffInvitation]
+      summary: Consultar convite pelo segredo
+      description: >-
+        Escopo `staff-invitations:read`. Não altera o convite. Expirado, aceito, substituído ou
+        inexistente respondem o mesmo 422 `INVITATION_INVALID`.
+      operationId: lookupStaffInvitationInternal
+      security: [{BffAdminServiceAssertion: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InvitationTokenInput' }
+      responses:
+        '200':
+          description: Convite pendente.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitationPreview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-invitation-acceptances:
+    post:
+      tags: [StaffInvitation]
+      summary: Aceitar convite
+      description: >-
+        Escopo `staff-invitations:write`. Cria conta interna confirmada, credencial, atribuição do papel
+        ofertado, sessão interna e o ato `convite-interno-aceito` no outbox, num commit. Devolve a sessão
+        criada, como `createStaffSessionInternal`.
+      operationId: acceptStaffInvitationInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcceptInvitationInput' }
+      responses:
+        '200':
+          description: Conta ativada e sessão criada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StaffSession' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-invitations:
+    get:
+      tags: [StaffInvitation]
+      summary: Listar convites pendentes
+      description: Escopo `staff-invitations:read`; ator com `acesso.gerir`. Mais recente primeiro.
+      operationId: listPendingStaffInvitationsInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters:
+        - $ref: '#/components/parameters/StaffSession'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de convites pendentes.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitationPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [StaffInvitation]
+      summary: Emitir convite
+      description: >-
+        Escopo `staff-invitations:write`; ator com `acesso.gerir`. Substitui convite pendente do mesmo
+        e-mail. Grava convite, pedido `convite-interno` e ato `convite-interno-emitido` num commit.
+      operationId: createStaffInvitationInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters:
+        - $ref: '#/components/parameters/StaffSession'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateInvitationInput' }
+      responses:
+        '201':
+          description: Convite emitido.
+          headers:
+            Location:
+              description: Referência interna do convite.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreatedInvitation' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-members:
+    get:
+      tags: [StaffMembers]
+      summary: Listar atores internos
+      description: Escopo `staff-members:read`; ator com `acesso.gerir`. Ordenado por nome; `isSelf` marca o ator.
+      operationId: listStaffMembersInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters:
+        - $ref: '#/components/parameters/StaffSession'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de atores internos.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StaffMemberPage' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /staff-members/{accountId}/role-grants:
+    post:
+      tags: [StaffMembers]
+      summary: Conceder papel
+      description: >-
+        Escopo `staff-members:write`; ator com `acesso.gerir` e diferente do alvo. Sem efeito →
+        `changed: false`, sem ato. Caso contrário grava a atribuição e `papel-concedido` num commit.
+      operationId: grantStaffRoleInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/StaffSession'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoleActionInput' }
+      responses:
+        '200':
+          description: Estado após a concessão.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoleActionResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-members/{accountId}/role-revocations:
+    post:
+      tags: [StaffMembers]
+      summary: Revogar papel
+      description: >-
+        Escopo `staff-members:write`; ator com `acesso.gerir` e diferente do alvo. Com efeito: remove a
+        atribuição, revoga todas as sessões internas do alvo e grava `papel-revogado`, num commit.
+      operationId: revokeStaffRoleInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/StaffSession'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoleActionInput' }
+      responses:
+        '200':
+          description: Estado após a revogação.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoleActionResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /staff-members/{accountId}/role-changes:
+    post:
+      tags: [StaffMembers]
+      summary: Trocar papel
+      description: >-
+        Escopo `staff-members:write`; ator com `acesso.gerir` e diferente do alvo. Um commit: remove
+        `fromRole`, inclui `toRole`, revoga as sessões internas do alvo e grava `papel-revogado` e
+        `papel-concedido` com o mesmo autor, motivo, `praticadoEm` e `correlationId`. `toRole` já
+        presente → só a revogação e um ato. `fromRole` ausente → 422 `ROLE_NOT_HELD`.
+      operationId: changeStaffRoleInternal
+      security: [{BffAdminServiceAssertion: []}]
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/StaffSession'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RoleChangeInput' }
+      responses:
+        '200':
+          description: Estado após a troca.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RoleActionResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /jwks:
+    get:
+      tags: [SigningKeys]
+      summary: Chaves públicas do JWT de usuário
+      description: >-
+        JWKS (RFC 7517) com a chave de assinatura atual e a anterior durante a rotação, por `kid`.
+        Só chaves públicas RSA; nunca material privado. Rede interna; não exposto pelos BFFs.
+        Consumidores: serviços de domínio que validam o JWT localmente (primeiro: `commerce`). Sem
+        autenticação porque o conteúdo é público por natureza.
+      operationId: getUserTokenSigningKeysInternal
+      security: []
+      responses:
+        '200':
+          description: Conjunto de chaves.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/JsonWebKeySet' }
+              examples:
+                chaves:
+                  value:
+                    keys:
+                      - kty: RSA
+                        use: sig
+                        alg: RS256
+                        kid: local-dev-1
+                        n: 0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw
+                        e: AQAB
+components:
+  securitySchemes:
+    BffAdminServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT de serviço assimétrico curto emitido pelo `bff-admin` (emissor e `kid` próprios, ADR-0005).
+        Identity valida assinatura, kid, emissor, audiência, escopo permitido para esse emissor, tenant,
+        validade e jti contra replay. Asserção do `bff-student` é recusada aqui. Não é JWT de usuário.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        Chave pública propagada sem alteração pelo BFF. Isolada por tenant, operationId, ator quando
+        autenticado, e chave. Janela de 24 horas; mesmo corpo → mesmo resultado lógico; corpo diferente
+        → 422 IDEMPOTENCY_CONFLICT.
+      schema: { type: string, minLength: 1, maxLength: 128 }
+    StaffSession:
+      name: X-Staff-Session
+      in: header
+      required: true
+      description: >-
+        Identificador opaco da sessão interna do ator, lido pelo BFF do Valkey. Não é identidade
+        declarada: Identity verifica que a sessão está ativa e é do tenant da asserção e resolve o ator
+        por ela. Sessão inválida → 401 SESSION_REQUIRED; sem permissão → 403 PERMISSION_DENIED.
+      schema: { type: string, format: uuid }
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      description: Conta interna alvo.
+      schema: { type: string, format: uuid }
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, iniciando em 1.
+      schema: { type: integer, minimum: 1, default: 1 }
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+  responses:
+    BadRequest:
+      description: JSON ou campo obrigatório inválido.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ServiceUnauthorized:
+      description: Asserção de serviço ausente, inválida, expirada ou fora de escopo (SERVICE_UNAUTHORIZED).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: >-
+        SERVICE_UNAUTHORIZED, INVALID_CREDENTIALS (entrada) ou SESSION_REQUIRED (sessão do ator ausente,
+        expirada ou revogada); distinguir por code.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: PERMISSION_DENIED (ator sem a permissão) ou AUDIENCE_NOT_ALLOWED (validação).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: STAFF_MEMBER_NOT_FOUND — alvo inexistente no tenant ou conta de aluno.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    BusinessRule:
+      description: >-
+        Regra violada; code inclui REASON_REQUIRED, SELF_ROLE_CHANGE_FORBIDDEN, ROLE_NOT_HELD,
+        EMAIL_BELONGS_TO_STAFF, EMAIL_BELONGS_TO_STUDENT, INVITATION_INVALID,
+        INVITATION_EMAIL_UNAVAILABLE, PASSWORD_POLICY_VIOLATION, RESET_TOKEN_INVALID ou
+        IDEMPOTENCY_CONFLICT.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      description: RFC 9457. Nunca contém e-mail, nome, motivo, senha ou segredo.
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        traceId: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+    Role:
+      type: string
+      enum: [professor, suporte, financeiro, administrador]
+    Permission:
+      type: string
+      enum: [acesso.gerir, financeiro.ler, autoria.ler, suporte.atender]
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+    Reason:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Só espaços → 422 REASON_REQUIRED. Nunca em log, métrica ou rastreamento.
+    SecretToken:
+      type: string
+      minLength: 1
+      maxLength: 512
+    Password:
+      type: string
+      format: password
+      minLength: 8
+      description: Política de CAP-001 (oito caracteres, maiúscula, minúscula, dígito, símbolo).
+    StaffLogin:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+        password: { type: string, format: password, minLength: 1 }
+    StaffSession:
+      type: object
+      additionalProperties: false
+      required: [sessionId, accountId, name, roles, permissions, expiresAt]
+      description: Nunca contém JWT.
+      properties:
+        sessionId: { type: string, format: uuid, description: Identificador opaco que o BFF guarda no Valkey. }
+        accountId: { type: string, format: uuid }
+        name: { type: string }
+        roles:
+          type: array
+          uniqueItems: true
+          maxItems: 4
+          items: { $ref: '#/components/schemas/Role' }
+        permissions:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Permission' }
+        expiresAt: { type: string, format: date-time }
+    SessionValidationInput:
+      type: object
+      additionalProperties: false
+      required: [sessionId]
+      properties:
+        sessionId: { type: string, format: uuid }
+        audience:
+          type: [string, 'null']
+          description: Serviço destino do JWT (ex. commerce). Omitido → sem JWT.
+    SessionValidated:
+      type: object
+      additionalProperties: false
+      required: [accountId, name, roles, permissions, expiresAt]
+      properties:
+        accountId: { type: string, format: uuid }
+        name: { type: string }
+        roles:
+          type: array
+          uniqueItems: true
+          maxItems: 4
+          items: { $ref: '#/components/schemas/Role' }
+        permissions:
+          type: array
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/Permission' }
+        expiresAt: { type: string, format: date-time }
+        accessToken:
+          type: [string, 'null']
+          description: >-
+            JWT RS256 curto (padrão 5 min) para `audience`, com claims iss, aud, sub, tenantId,
+            sessionId, scope, roles, permissions, iat, nbf, exp, jti. Só no lado servidor do BFF.
+    SessionReference:
+      type: object
+      additionalProperties: false
+      required: [sessionId]
+      properties:
+        sessionId: { type: string, format: uuid }
+    EmailInput:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+    ResetPasswordInput:
+      type: object
+      additionalProperties: false
+      required: [token, newPassword]
+      properties:
+        token: { $ref: '#/components/schemas/SecretToken' }
+        newPassword: { $ref: '#/components/schemas/Password' }
+    InvitationTokenInput:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: { $ref: '#/components/schemas/SecretToken' }
+    InvitationPreview:
+      type: object
+      additionalProperties: false
+      required: [offeredRole, expiresAt]
+      properties:
+        offeredRole: { $ref: '#/components/schemas/Role' }
+        expiresAt: { type: string, format: date-time }
+    AcceptInvitationInput:
+      type: object
+      additionalProperties: false
+      required: [token, name, password]
+      properties:
+        token: { $ref: '#/components/schemas/SecretToken' }
+        name: { type: string, minLength: 1, maxLength: 200 }
+        password: { $ref: '#/components/schemas/Password' }
+    CreateInvitationInput:
+      type: object
+      additionalProperties: false
+      required: [email, role, reason]
+      properties:
+        email: { $ref: '#/components/schemas/Email' }
+        role: { $ref: '#/components/schemas/Role' }
+        reason: { $ref: '#/components/schemas/Reason' }
+    PendingInvitation:
+      type: object
+      additionalProperties: false
+      required: [invitationId, email, offeredRole, invitedAt, expiresAt]
+      properties:
+        invitationId: { type: string, format: uuid }
+        email: { $ref: '#/components/schemas/Email' }
+        offeredRole: { $ref: '#/components/schemas/Role' }
+        invitedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+    CreatedInvitation:
+      type: object
+      additionalProperties: false
+      required: [invitationId, email, offeredRole, invitedAt, expiresAt, supersededInvitationId]
+      properties:
+        invitationId: { type: string, format: uuid }
+        email: { $ref: '#/components/schemas/Email' }
+        offeredRole: { $ref: '#/components/schemas/Role' }
+        invitedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        supersededInvitationId: { type: [string, 'null'], format: uuid }
+    InvitationPage:
+      type: object
+      additionalProperties: false
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/PendingInvitation' }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    StaffMember:
+      type: object
+      additionalProperties: false
+      required: [accountId, name, email, roles, isSelf]
+      properties:
+        accountId: { type: string, format: uuid }
+        name: { type: string }
+        email: { $ref: '#/components/schemas/Email' }
+        roles:
+          type: array
+          uniqueItems: true
+          maxItems: 4
+          items: { $ref: '#/components/schemas/Role' }
+        isSelf: { type: boolean }
+    StaffMemberPage:
+      type: object
+      additionalProperties: false
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/StaffMember' }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+    RoleActionInput:
+      type: object
+      additionalProperties: false
+      required: [role, reason]
+      properties:
+        role: { $ref: '#/components/schemas/Role' }
+        reason: { $ref: '#/components/schemas/Reason' }
+    RoleChangeInput:
+      type: object
+      additionalProperties: false
+      required: [fromRole, toRole, reason]
+      properties:
+        fromRole: { $ref: '#/components/schemas/Role' }
+        toRole: { $ref: '#/components/schemas/Role' }
+        reason: { $ref: '#/components/schemas/Reason' }
+    RoleActionResult:
+      type: object
+      additionalProperties: false
+      required: [member, changed, sessionsEnded]
+      properties:
+        member: { $ref: '#/components/schemas/StaffMember' }
+        changed: { type: boolean }
+        sessionsEnded: { type: boolean }
+    Pagination:
+      type: object
+      additionalProperties: false
+      required: [page, size, total, totalPages]
+      properties:
+        page: { type: integer, minimum: 1 }
+        size: { type: integer, minimum: 1 }
+        total: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+    JsonWebKeySet:
+      type: object
+      additionalProperties: false
+      required: [keys]
+      properties:
+        keys:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            type: object
+            additionalProperties: false
+            required: [kty, use, alg, kid, n, e]
+            properties:
+              kty: { type: string, const: RSA }
+              use: { type: string, const: sig }
+              alg: { type: string, const: RS256 }
+              kid: { type: string }
+              n: { type: string }
+              e: { type: string }

@@ -1,0 +1,1211 @@
+openapi: 3.1.0
+info:
+  title: BFF do backoffice — acesso interno por papel e permissão
+  version: 1.0.0
+  description: >
+    Recorte de CAP-002, PRD `tasks/prd-acesso-interno/prd.md` v1.0, aprovado em 2026-09-25.
+    Interface SPA do backoffice (`admin-spa`) → BFF do backoffice (`bff-admin`). O serviço de
+    Identidade decide conta interna, credencial, papel, permissão e convite; o BFF mantém sessão
+    opaca (BA06) e autoriza o grosso — o serviço dono autoriza de novo, sempre (baseline,
+    Autorização). Papéis e permissões usam os nomes canônicos do domínio de Identidade e Acesso.
+  contact:
+    name: Time de Identidade e Acesso
+servers:
+  - url: /api/v1
+    description: URL pública versionada do BFF do backoffice
+tags:
+  - name: Sessão
+    description: Entrada, sessão e saída do ator interno (RF-10)
+  - name: Credencial
+    description: Recuperação de senha do ator interno (RF-11)
+  - name: Convite
+    description: Emissão, consulta e aceite de Convite de Acesso Interno (RF-03, RF-05)
+  - name: Gestão de acesso
+    description: Atores internos, papéis e convites pendentes — somente administrador (RF-06, RF-07, RF-09, RF-12)
+  - name: Área financeira
+    description: Área reservada que prova o menor privilégio (RF-13)
+paths:
+  /staff-sessions:
+    post:
+      tags: [Sessão]
+      summary: Entrar no backoffice
+      description: >
+        Credencial errada, e-mail inexistente e conta de aluno recebem o mesmo erro (RN-05, RN-13).
+        Conta interna sem papel entra, com `permissions` vazio, e o SPA mostra a orientação de conta
+        sem acesso (RF-08). Cria sessão opaca no BFF.
+      operationId: createStaffSession
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStaffSessionRequest'
+            examples:
+              entrada:
+                value:
+                  email: marina.alves@code4coders.com.br
+                  password: 'Tr1lha!Segura'
+      responses:
+        '200':
+          description: Sessão criada.
+          headers:
+            Set-Cookie:
+              description: Cookie de sessão opaco do backoffice; HttpOnly, Secure, SameSite e Path mínimo.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffSession'
+              examples:
+                professor:
+                  $ref: '#/components/examples/StaffSessionProfessor'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          description: Credencial inválida, e-mail inexistente ou conta que não é interna — resposta idêntica.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                credencialInvalida:
+                  value:
+                    type: about:blank
+                    title: E-mail ou senha inválidos.
+                    status: 401
+                    code: INVALID_CREDENTIALS
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          $ref: '#/components/responses/IdempotencyKeyReused'
+  /staff-sessions/current:
+    get:
+      tags: [Sessão]
+      summary: Consultar a sessão atual
+      description: >
+        Retorna o ator, seus papéis, a permissão efetiva (união das permissões dos papéis, RF-01) e a
+        prova CSRF. Atividade válida renova o prazo de inatividade (RN-08). Sessão encerrada por
+        revogação de papel responde 401 (RN-17).
+      operationId: getCurrentStaffSession
+      security:
+        - StaffSessionCookie: []
+      responses:
+        '200':
+          description: Sessão vigente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffSession'
+              examples:
+                professor:
+                  $ref: '#/components/examples/StaffSessionProfessor'
+                semPapel:
+                  summary: Conta interna sem papel (RF-08)
+                  value:
+                    accountId: 3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b
+                    name: Rafael Costa
+                    roles: []
+                    permissions: []
+                    csrfToken: 'k3N9x-2QmT7vLp0a'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+    delete:
+      tags: [Sessão]
+      summary: Sair do backoffice
+      description: Revoga imediatamente a sessão corrente; repetição não reativa sessão.
+      operationId: endCurrentStaffSession
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '204':
+          description: Sessão encerrada.
+          headers:
+            Set-Cookie:
+              description: Cookie de sessão removido (Max-Age=0), inclusive se a sessão já expirou.
+              schema:
+                type: string
+        '403':
+          $ref: '#/components/responses/CsrfInvalid'
+  /staff-password-reset-requests:
+    post:
+      tags: [Credencial]
+      summary: Pedir recuperação de senha do ator interno
+      description: >
+        Resposta 202 sem corpo, idêntica para conta interna, conta de aluno e e-mail inexistente
+        (RN-04). Só conta interna gera pedido de envio, com link para a tela de redefinição do
+        backoffice (RF-11).
+      operationId: requestStaffPasswordReset
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+            examples:
+              pedido:
+                value:
+                  email: marina.alves@code4coders.com.br
+      responses:
+        '202':
+          description: Pedido aceito. Não revela se a conta existe.
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '422':
+          $ref: '#/components/responses/IdempotencyKeyReused'
+  /staff-password-resets:
+    post:
+      tags: [Credencial]
+      summary: Redefinir a senha do ator interno
+      description: >
+        Consome o token de uso único do link, troca a senha, encerra as demais sessões da conta e
+        invalida recuperações pendentes (RN-03, RN-07). Não cria sessão.
+      operationId: resetStaffPassword
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            examples:
+              redefinicao:
+                value:
+                  token: 'rst_7Hq2LmN9pX4vZ1aB'
+                  newPassword: 'N0va!SenhaForte'
+      responses:
+        '204':
+          description: Senha redefinida.
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '422':
+          description: Token inválido, usado, expirado ou de outra finalidade; ou nova senha fora da política.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                tokenInvalido:
+                  value:
+                    type: about:blank
+                    title: Link de redefinição inválido ou expirado.
+                    status: 422
+                    code: RESET_TOKEN_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                senhaFraca:
+                  value:
+                    type: about:blank
+                    title: A nova senha não atende à política.
+                    status: 422
+                    code: PASSWORD_POLICY_VIOLATION
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                    errors:
+                      newPassword:
+                        - Deve conter ao menos um símbolo.
+  /staff-invitation-lookups:
+    post:
+      tags: [Convite]
+      summary: Consultar um convite pelo token do link
+      description: >
+        Usado pela página de aceite para mostrar o papel ofertado e a validade antes de pedir nome e
+        senha. O token vai no corpo, nunca na URL da API. Não altera o convite. Convite expirado,
+        aceito ou substituído responde o mesmo erro, sem revelar dados da conta nem do convite
+        (RF-05).
+      operationId: lookupStaffInvitation
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationTokenRequest'
+            examples:
+              consulta:
+                value:
+                  token: 'inv_Qm4Zt8Lw2Rp6Xa0c'
+      responses:
+        '200':
+          description: Convite pendente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPreview'
+              examples:
+                pendente:
+                  value:
+                    offeredRole: professor
+                    expiresAt: '2026-10-09T14:05:11Z'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '422':
+          $ref: '#/components/responses/InvitationInvalid'
+  /staff-invitation-acceptances:
+    post:
+      tags: [Convite]
+      summary: Aceitar convite e ativar a conta interna
+      description: >
+        Cria a conta interna ativa com o papel ofertado, marca o convite como aceito, comunica
+        `convite-interno-aceito` à Auditoria e já abre a sessão do novo ator (RF-05). Abrir o link
+        comprova o e-mail; não há confirmação separada. Uso único (RN-15).
+      operationId: acceptStaffInvitation
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcceptInvitationRequest'
+            examples:
+              aceite:
+                value:
+                  token: 'inv_Qm4Zt8Lw2Rp6Xa0c'
+                  name: Marina Alves
+                  password: 'Tr1lha!Segura'
+      responses:
+        '200':
+          description: Conta ativada e sessão criada.
+          headers:
+            Set-Cookie:
+              description: Cookie de sessão opaco do backoffice; HttpOnly, Secure, SameSite e Path mínimo.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffSession'
+              examples:
+                professor:
+                  $ref: '#/components/examples/StaffSessionProfessor'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '422':
+          description: >
+            Convite sem validade; e-mail que passou a ter conta entre a emissão e o aceite; senha fora
+            da política; ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                conviteInvalido:
+                  value:
+                    type: about:blank
+                    title: Este convite não vale mais. Peça um novo ao administrador.
+                    status: 422
+                    code: INVITATION_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                emailIndisponivel:
+                  value:
+                    type: about:blank
+                    title: Não foi possível ativar este convite. Procure o administrador.
+                    status: 422
+                    code: INVITATION_EMAIL_UNAVAILABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                senhaFraca:
+                  value:
+                    type: about:blank
+                    title: A senha não atende à política.
+                    status: 422
+                    code: PASSWORD_POLICY_VIOLATION
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                    errors:
+                      password:
+                        - Deve conter ao menos oito caracteres.
+  /staff-invitations:
+    get:
+      tags: [Gestão de acesso]
+      summary: Listar convites pendentes
+      description: >
+        Convites dentro da validade, não aceitos e não substituídos, do tenant do administrador
+        (RF-12, RN-24). Ordenados por emissão, mais recente primeiro.
+      operationId: listPendingStaffInvitations
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de convites pendentes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPage'
+              examples:
+                pagina:
+                  value:
+                    data:
+                      - invitationId: 5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+                        email: marina.alves@code4coders.com.br
+                        offeredRole: professor
+                        invitedAt: '2026-10-02T14:05:11Z'
+                        expiresAt: '2026-10-09T14:05:11Z'
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 1
+                      totalPages: 1
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+    post:
+      tags: [Gestão de acesso]
+      summary: Emitir Convite de Acesso Interno
+      description: >
+        Somente administrador (RN-14). Oferta um papel e exige motivo (RF-03). Normaliza o e-mail
+        (RN-01). Convite pendente para o mesmo e-mail é substituído e deixa de valer (DP-04). Pede o
+        e-mail de convite a Notificação e comunica `convite-interno-emitido` à Auditoria, na mesma
+        transação que grava o convite.
+      operationId: createStaffInvitation
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvitationRequest'
+            examples:
+              convite:
+                value:
+                  email: marina.alves@code4coders.com.br
+                  role: professor
+                  reason: Professora contratada para a trilha de .NET avançado
+      responses:
+        '201':
+          description: Convite emitido.
+          headers:
+            Location:
+              description: URI do convite emitido.
+              schema:
+                type: string
+                examples:
+                  - /api/v1/staff-invitations/5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatedInvitation'
+              examples:
+                emitido:
+                  value:
+                    invitationId: 5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+                    email: marina.alves@code4coders.com.br
+                    offeredRole: professor
+                    invitedAt: '2026-10-02T14:05:11Z'
+                    expiresAt: '2026-10-09T14:05:11Z'
+                    supersededInvitationId: null
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionOrCsrfDenied'
+        '422':
+          description: >
+            Motivo ausente; e-mail que já pertence a conta interna ou a conta de aluno — o motivo é
+            dito ao administrador (DP-05); ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                motivoAusente:
+                  $ref: '#/components/examples/ReasonRequired'
+                contaInterna:
+                  value:
+                    type: about:blank
+                    title: Este e-mail já é de um ator interno. Conceda o papel à conta existente.
+                    status: 422
+                    code: EMAIL_BELONGS_TO_STAFF
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                contaAluno:
+                  value:
+                    type: about:blank
+                    title: Este e-mail pertence a uma conta de aluno. Use o endereço institucional.
+                    status: 422
+                    code: EMAIL_BELONGS_TO_STUDENT
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  /staff-members:
+    get:
+      tags: [Gestão de acesso]
+      summary: Listar atores internos
+      description: >
+        Atores internos do tenant do administrador, com seus papéis, inclusive os sem papel
+        (RF-08, RF-12, RN-24). `isSelf` marca a linha do próprio administrador, sobre a qual nenhuma
+        ação é oferecida (RN-20). Ordenados por nome.
+      operationId: listStaffMembers
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de atores internos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffMemberPage'
+              examples:
+                pagina:
+                  value:
+                    data:
+                      - accountId: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+                        name: Tasso Gomes
+                        email: tasso@code4coders.com.br
+                        roles: [administrador]
+                        isSelf: true
+                      - accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                        name: Marina Alves
+                        email: marina.alves@code4coders.com.br
+                        roles: [professor, suporte]
+                        isSelf: false
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /staff-members/{accountId}/role-grants:
+    post:
+      tags: [Gestão de acesso]
+      summary: Conceder papel
+      description: >
+        Acrescenta um papel à conta interna, com motivo (RF-06). Vale na próxima decisão de
+        autorização do ator. Conceder papel que a conta já tem não muda nada e não comunica ato.
+        Caso contrário comunica `papel-concedido` à Auditoria na mesma transação.
+      operationId: grantStaffRole
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleActionRequest'
+            examples:
+              concessao:
+                value:
+                  role: suporte
+                  reason: Cobertura do atendimento durante as férias do time de suporte
+      responses:
+        '200':
+          description: Estado da conta após a concessão.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleActionResult'
+              examples:
+                concedido:
+                  value:
+                    member:
+                      accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                      name: Marina Alves
+                      email: marina.alves@code4coders.com.br
+                      roles: [professor, suporte]
+                      isSelf: false
+                    changed: true
+                    sessionsEnded: false
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionOrCsrfDenied'
+        '404':
+          $ref: '#/components/responses/StaffMemberNotFound'
+        '422':
+          $ref: '#/components/responses/RoleActionRejected'
+  /staff-members/{accountId}/role-revocations:
+    post:
+      tags: [Gestão de acesso]
+      summary: Revogar papel
+      description: >
+        Retira um papel da conta interna, com motivo (RF-07). Vale na próxima decisão de autorização
+        e encerra todas as sessões do ator, mesmo que ele mantenha outros papéis (RN-17). Revogar
+        papel que a conta não tem não muda nada e não comunica ato. Caso contrário comunica
+        `papel-revogado` à Auditoria na mesma transação. Revogar o último papel deixa a conta sem
+        papel (RF-08).
+      operationId: revokeStaffRole
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleActionRequest'
+            examples:
+              revogacao:
+                value:
+                  role: suporte
+                  reason: Fim da cobertura de férias do suporte
+      responses:
+        '200':
+          description: Estado da conta após a revogação.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleActionResult'
+              examples:
+                revogado:
+                  value:
+                    member:
+                      accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                      name: Marina Alves
+                      email: marina.alves@code4coders.com.br
+                      roles: [professor]
+                      isSelf: false
+                    changed: true
+                    sessionsEnded: true
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionOrCsrfDenied'
+        '404':
+          $ref: '#/components/responses/StaffMemberNotFound'
+        '422':
+          $ref: '#/components/responses/RoleActionRejected'
+  /staff-members/{accountId}/role-changes:
+    post:
+      tags: [Gestão de acesso]
+      summary: Trocar papel
+      description: >
+        Troca `fromRole` por `toRole` numa só ação, com um só motivo (RF-09). Atômica: ou a conta
+        perde `fromRole` e ganha `toRole` e a Auditoria recebe `papel-revogado` e `papel-concedido`
+        com o mesmo autor e motivo (OD22), ou nada muda e nada é comunicado. Encerra as sessões do
+        ator (RN-17). Se a conta já tem `toRole`, equivale a revogar `fromRole`, com um único ato.
+      operationId: changeStaffRole
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleChangeRequest'
+            examples:
+              troca:
+                value:
+                  fromRole: professor
+                  toRole: financeiro
+                  reason: Mudou de função para o time financeiro
+      responses:
+        '200':
+          description: Estado da conta após a troca.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleActionResult'
+              examples:
+                trocado:
+                  value:
+                    member:
+                      accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                      name: Marina Alves
+                      email: marina.alves@code4coders.com.br
+                      roles: [financeiro]
+                      isSelf: false
+                    changed: true
+                    sessionsEnded: true
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionOrCsrfDenied'
+        '404':
+          $ref: '#/components/responses/StaffMemberNotFound'
+        '422':
+          description: >
+            Motivo ausente; ação sobre a própria conta (RN-20); `fromRole` que a conta não tem;
+            `fromRole` igual a `toRole`; ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                motivoAusente:
+                  $ref: '#/components/examples/ReasonRequired'
+                propriaConta:
+                  $ref: '#/components/examples/SelfRoleChange'
+                papelAusente:
+                  value:
+                    type: about:blank
+                    title: A conta não tem o papel de origem da troca.
+                    status: 422
+                    code: ROLE_NOT_HELD
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  /finance-area:
+    get:
+      tags: [Área financeira]
+      summary: Abrir a área financeira reservada
+      description: >
+        Área sem dado nesta entrega; será preenchida por CAP-011. Só abre com a permissão
+        `financeiro.ler` (DP-03). O professor é recusado aqui e também pelo serviço dono, se chamado
+        diretamente (RF-13, RN-16). Revogação do papel vale na próxima chamada (RN-17).
+      operationId: getFinanceArea
+      security:
+        - StaffSessionCookie: []
+      responses:
+        '200':
+          description: Acesso concedido à área reservada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceArea'
+              examples:
+                reservada:
+                  value:
+                    status: reserved
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+components:
+  securitySchemes:
+    StaffSessionCookie:
+      type: apiKey
+      in: cookie
+      name: staff_session
+      description: >
+        Cookie opaco de sessão do backoffice, HttpOnly, Secure e SameSite, distinto do cookie do aluno.
+        Clientes não devem ler seu valor. Nenhum token é entregue ao navegador (BA06).
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >
+        Chave opaca única por intenção de escrita. Repetição com o mesmo corpo devolve o mesmo
+        resultado na janela de 24 horas (ADR-0004 / CAP-001); corpo diferente com a mesma chave
+        retorna 422 `IDEMPOTENCY_KEY_REUSED`.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Prova CSRF vinculada à sessão, obtida de GET /staff-sessions/current (RN-11).
+      schema:
+        type: string
+        minLength: 1
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      description: Identidade pública estável da conta interna.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        marina:
+          value: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, iniciando em 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+  responses:
+    InvalidRequest:
+      description: JSON malformado, campo obrigatório ausente ou valor fora do schema.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: JSON ou campos obrigatórios inválidos.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    SessionRequired:
+      description: Sessão ausente, expirada ou encerrada — inclusive por revogação de papel (RN-17).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semSessao:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou encerrada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CsrfInvalid:
+      description: Prova CSRF ausente ou inválida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            csrf:
+              $ref: '#/components/examples/CsrfInvalid'
+    PermissionDenied:
+      description: Sessão válida sem a permissão exigida pela área ou ação.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              $ref: '#/components/examples/PermissionDenied'
+    PermissionOrCsrfDenied:
+      description: Sessão válida sem a permissão `acesso.gerir`, ou prova CSRF ausente ou inválida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              $ref: '#/components/examples/PermissionDenied'
+            csrf:
+              $ref: '#/components/examples/CsrfInvalid'
+    StaffMemberNotFound:
+      description: Não há conta interna com esse identificador no tenant — inclusive quando é conta de aluno (RN-13).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Ator interno não encontrado.
+                status: 404
+                code: STAFF_MEMBER_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    RoleActionRejected:
+      description: Motivo ausente, ação sobre a própria conta (RN-20) ou chave de idempotência reutilizada com outro corpo.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            motivoAusente:
+              $ref: '#/components/examples/ReasonRequired'
+            propriaConta:
+              $ref: '#/components/examples/SelfRoleChange'
+    InvitationInvalid:
+      description: Convite expirado, aceito, substituído ou inexistente — resposta idêntica.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            conviteInvalido:
+              value:
+                type: about:blank
+                title: Este convite não vale mais. Peça um novo ao administrador.
+                status: 422
+                code: INVITATION_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    IdempotencyKeyReused:
+      description: Chave de idempotência reutilizada com corpo diferente.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            chaveReutilizada:
+              value:
+                type: about:blank
+                title: Chave de idempotência já usada com outro conteúdo.
+                status: 422
+                code: IDEMPOTENCY_KEY_REUSED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  examples:
+    StaffSessionProfessor:
+      summary: Professor
+      value:
+        accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+        name: Marina Alves
+        roles: [professor]
+        permissions: [autoria.ler]
+        csrfToken: 'k3N9x-2QmT7vLp0a'
+    ReasonRequired:
+      value:
+        type: about:blank
+        title: Informe o motivo.
+        status: 422
+        code: REASON_REQUIRED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        errors:
+          reason:
+            - O motivo é obrigatório.
+    SelfRoleChange:
+      value:
+        type: about:blank
+        title: Você não pode alterar o próprio papel.
+        status: 422
+        code: SELF_ROLE_CHANGE_FORBIDDEN
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      value:
+        type: about:blank
+        title: Você não tem permissão para esta área.
+        status: 403
+        code: PERMISSION_DENIED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CsrfInvalid:
+      value:
+        type: about:blank
+        title: Prova CSRF ausente ou inválida.
+        status: 403
+        code: CSRF_INVALID
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      description: RFC 9457. O cliente trata `code`, nunca o texto de `title`/`detail`. Nunca contém dado pessoal.
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required: [type, title, status, code, traceId]
+    Role:
+      type: string
+      enum: [professor, suporte, financeiro, administrador]
+      description: Papel interno, pelo nome canônico de Identidade e Acesso. O mesmo valor viaja em `complemento.papel` na Auditoria.
+    Permission:
+      type: string
+      enum: [acesso.gerir, financeiro.ler, autoria.ler, suporte.atender]
+      description: >
+        Catálogo inicial (DP-03): administrador → acesso.gerir; financeiro → financeiro.ler;
+        professor → autoria.ler; suporte → suporte.atender. Capacidades futuras acrescentam
+        permissões, não papéis; clientes devem ignorar valores que não conhecem.
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+      description: Normalizado pelo serviço (RN-01); nunca aparece em URL, log ou telemetria (RN-21).
+    Password:
+      type: string
+      format: password
+      minLength: 8
+      description: >
+        Senha submetida somente sobre TLS. Mesma política de CAP-001: no mínimo oito caracteres e ao
+        menos uma maiúscula, uma minúscula, um dígito e um símbolo; espaço não conta como símbolo.
+    Reason:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: >
+        Motivo escrito pelo administrador; só espaços é tratado como ausente (422 REASON_REQUIRED).
+        Vai para a trilha de auditoria; nunca para log, métrica ou rastreamento. Não deve citar dado
+        pessoal de terceiros (RN-A08).
+    SecretToken:
+      type: string
+      minLength: 1
+      maxLength: 512
+      description: Segredo de uso único recebido no link; enviado no corpo JSON, nunca na URL da API.
+    CreateStaffSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          type: string
+          format: password
+          minLength: 1
+          description: Senha atual; a política não é reaplicada na entrada.
+    StaffSession:
+      type: object
+      additionalProperties: false
+      required: [accountId, name, roles, permissions, csrfToken]
+      description: A sessão fica no cookie opaco; nenhum bearer token é entregue ao navegador.
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Identidade pública estável da conta interna.
+        name:
+          type: string
+        roles:
+          type: array
+          uniqueItems: true
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Role'
+          description: Papéis vigentes. Vazio para conta sem papel (RF-08).
+        permissions:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Permission'
+          description: Permissão efetiva, união das permissões dos papéis (RF-01). Define o menu; não substitui a autorização no servidor.
+        csrfToken:
+          type: string
+          description: Valor a enviar em X-CSRF-Token nas escritas com sessão. Não é token de autenticação.
+    EmailRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+    ResetPasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [token, newPassword]
+      properties:
+        token:
+          $ref: '#/components/schemas/SecretToken'
+        newPassword:
+          $ref: '#/components/schemas/Password'
+    InvitationTokenRequest:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          $ref: '#/components/schemas/SecretToken'
+    InvitationPreview:
+      type: object
+      additionalProperties: false
+      required: [offeredRole, expiresAt]
+      description: Não inclui o e-mail convidado nem quem convidou.
+      properties:
+        offeredRole:
+          $ref: '#/components/schemas/Role'
+        expiresAt:
+          type: string
+          format: date-time
+    AcceptInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [token, name, password]
+      properties:
+        token:
+          $ref: '#/components/schemas/SecretToken'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        password:
+          $ref: '#/components/schemas/Password'
+    CreateInvitationRequest:
+      type: object
+      additionalProperties: false
+      required: [email, role, reason]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        role:
+          $ref: '#/components/schemas/Role'
+        reason:
+          $ref: '#/components/schemas/Reason'
+    PendingInvitation:
+      type: object
+      additionalProperties: false
+      required: [invitationId, email, offeredRole, invitedAt, expiresAt]
+      properties:
+        invitationId:
+          type: string
+          format: uuid
+        email:
+          $ref: '#/components/schemas/Email'
+        offeredRole:
+          $ref: '#/components/schemas/Role'
+        invitedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+    CreatedInvitation:
+      type: object
+      additionalProperties: false
+      required: [invitationId, email, offeredRole, invitedAt, expiresAt, supersededInvitationId]
+      description: O convite pendente recém-emitido, mais o convite que ele substituiu.
+      properties:
+        invitationId:
+          type: string
+          format: uuid
+        email:
+          $ref: '#/components/schemas/Email'
+        offeredRole:
+          $ref: '#/components/schemas/Role'
+        invitedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        supersededInvitationId:
+          type: [string, 'null']
+          format: uuid
+          description: Convite pendente para o mesmo e-mail que deixou de valer com esta emissão (DP-04); null quando não havia.
+    InvitationPage:
+      type: object
+      additionalProperties: false
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PendingInvitation'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    StaffMember:
+      type: object
+      additionalProperties: false
+      required: [accountId, name, email, roles, isSelf]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          $ref: '#/components/schemas/Email'
+        roles:
+          type: array
+          uniqueItems: true
+          maxItems: 4
+          items:
+            $ref: '#/components/schemas/Role'
+        isSelf:
+          type: boolean
+          description: Verdadeiro na linha do administrador que consulta; nenhuma ação é oferecida nela (RN-20).
+    StaffMemberPage:
+      type: object
+      additionalProperties: false
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StaffMember'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    RoleActionRequest:
+      type: object
+      additionalProperties: false
+      required: [role, reason]
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+        reason:
+          $ref: '#/components/schemas/Reason'
+    RoleChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [fromRole, toRole, reason]
+      properties:
+        fromRole:
+          $ref: '#/components/schemas/Role'
+        toRole:
+          $ref: '#/components/schemas/Role'
+        reason:
+          $ref: '#/components/schemas/Reason'
+    RoleActionResult:
+      type: object
+      additionalProperties: false
+      required: [member, changed, sessionsEnded]
+      properties:
+        member:
+          $ref: '#/components/schemas/StaffMember'
+        changed:
+          type: boolean
+          description: Falso quando a ação não mudou nada (papel já concedido ou já ausente) — nesse caso nenhum ato foi comunicado.
+        sessionsEnded:
+          type: boolean
+          description: Verdadeiro quando houve revogação e as sessões do ator foram encerradas (RN-17).
+    FinanceArea:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [reserved]
+          description: Área sem conteúdo até CAP-011. Existe para provar o menor privilégio (RF-13).
+    Pagination:
+      type: object
+      additionalProperties: false
+      required: [page, size, total, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0

@@ -10,3 +10,4 @@ usado.
 | ADR-0002 | Plataforma de runtime Coolify | Accepted | Compute, dados, segredos e operação da fundação | [0002-plataforma-de-runtime-coolify.md](0002-plataforma-de-runtime-coolify.md) |
 | ADR-0003 | Verificação de vigência da sessão do aluno em Identity | Accepted | Sessão do aluno, BFF e Identity | [0003-verificacao-de-sessao-do-aluno.md](0003-verificacao-de-sessao-do-aluno.md) |
 | ADR-0004 | Autenticação de serviço entre BFF do aluno e Identity | Accepted | Chamada interna pré-login e emissão de JWT | [0004-autenticacao-de-servico-bff-identity.md](0004-autenticacao-de-servico-bff-identity.md) |
+| ADR-0005 | Sessão do ator interno e autenticação de serviço do BFF do backoffice | Accepted | Sessão do backoffice, bff-admin, Identity, JWKS e serviços de domínio | [0005-sessao-e-servico-do-backoffice.md](0005-sessao-e-servico-do-backoffice.md) |
