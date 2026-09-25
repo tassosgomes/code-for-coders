@@ -111,6 +111,8 @@ services:
       StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
       StudentAccount__PasswordResetBaseUrl: ${STUDENT_PASSWORD_RESET_URL:-http://localhost:8082/student/redefinir-senha}
       StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
+      StaffAccount__PasswordResetBaseUrl: ${STAFF_PASSWORD_RESET_URL:-http://localhost:8081/admin/redefinir-senha}
+      StaffAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?run scripts/generate-local-env.sh}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Audience: identity-internal

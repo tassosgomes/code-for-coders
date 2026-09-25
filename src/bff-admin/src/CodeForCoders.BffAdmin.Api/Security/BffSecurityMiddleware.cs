@@ -29,7 +29,7 @@ public sealed class BffSecurityMiddleware(
             return;
         }
 
-        if (session is not null && IsUnsafeMethod(context.Request.Method)
+        if (session is not null && IsUnsafeMethod(context.Request.Method) && !IsStaffPasswordResetRequest(context.Request)
             && !CsrfProtection.IsValid(
                 context.Request.Cookies[settings.CsrfCookieName],
                 context.Request.Headers[settings.CsrfHeaderName].FirstOrDefault()))
@@ -46,4 +46,8 @@ public sealed class BffSecurityMiddleware(
             || HttpMethods.IsPut(method)
             || HttpMethods.IsPatch(method)
             || HttpMethods.IsDelete(method);
+
+    private static bool IsStaffPasswordResetRequest(HttpRequest request)
+        => HttpMethods.IsPost(request.Method)
+            && string.Equals(request.Path.Value, "/api/v1/staff-password-resets", StringComparison.Ordinal);
 }

@@ -43,3 +43,33 @@ docker compose up --build
 
 Without the `BFF_ADMIN_IDENTITY_*` values Identity refuses to start, reporting the missing
 `bff-admin` issuer key.
+
+## First backoffice administrator
+
+With the local stack running, provision the first administrator for the configured tenant. Identity
+stores the account, administrator role, hashed reset token, and protected notification request in one
+commit. The command never prints the email address or reset link.
+
+Apply the Identity schema before provisioning. The local PostgreSQL password below is the Compose
+development password; use the configured database connection if yours differs.
+
+```bash
+dotnet tool restore
+ConnectionStrings__DefaultConnection='Host=localhost;Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=code-for-coders-local' \
+  dotnet ef database update \
+  --project src/identity/src/CodeForCoders.Identity.Infra.Data/CodeForCoders.Identity.Infra.Data.csproj \
+  --startup-project src/identity/src/CodeForCoders.Identity.Api/CodeForCoders.Identity.Api.csproj
+```
+
+```bash
+docker compose exec identity dotnet CodeForCoders.Identity.Api.dll provision-first-admin \
+  --tenant 00000000-0000-7000-8000-000000000001 \
+  --email admin@example.com \
+  --name "Backoffice administrator"
+```
+
+Open the captured message in smtp4dev at `http://127.0.0.1:5000` and follow the link under
+`http://localhost:8081/admin/redefinir-senha`. A second invocation reports that the tenant already
+has an administrator and leaves the data unchanged. The link base can be changed with
+`STAFF_PASSWORD_RESET_URL`. If `.env` changes `STUDENT_TENANT_ID`, pass that same tenant ID to the
+command.

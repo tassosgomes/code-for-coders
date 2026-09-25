@@ -1,6 +1,27 @@
+# Link tokens arrive in query strings. Keep them out of the access log.
+map $request_uri $request_path_without_query {
+    "~^(?<request_path>[^?]*)" $request_path;
+    default                    "-";
+}
+
+log_format admin_spa_no_query '$remote_addr - $remote_user [$time_local] '
+                              '"$request_method $request_path_without_query $server_protocol" '
+                              '$status $body_bytes_sent "$http_user_agent"';
+
 server {
     listen      80;
     server_name _;
+
+    access_log /var/log/nginx/access.log admin_spa_no_query;
+
+    location /api/v1/ {
+        proxy_pass http://bff-admin:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host bff-admin:8080;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     location /v1/admin/ {
         proxy_pass http://bff-admin:8080;

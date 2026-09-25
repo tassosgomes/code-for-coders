@@ -105,5 +105,7 @@ public sealed class IdentityPasswordRecoveryStore(IdentityDbContext dbContext) :
 
     public void AddVerificationToken(VerificationToken token) => dbContext.VerificationTokens.Add(token);
 
+    public void AddCredential(Credential credential) => dbContext.Credentials.Add(credential);
+
     public void AddIdempotencyRecord(IdempotencyRecord record) => dbContext.IdempotencyRecords.Add(record);
 }

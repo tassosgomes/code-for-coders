@@ -173,6 +173,83 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                     b.ToTable("idempotency_records", "identity_access");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffRoleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("AssignedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_on");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_staff_role_assignments_tenant_id_id");
+
+                    b.HasIndex("TenantId", "AccountId", "Role")
+                        .IsUnique()
+                        .HasDatabaseName("ux_staff_role_assignments_tenant_account_role");
+
+                    b.ToTable("staff_role_assignments", "identity_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on");
+
+                    b.Property<DateTimeOffset>("ExpiresOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_on");
+
+                    b.Property<DateTimeOffset?>("RevokedOn")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_on");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_staff_sessions_tenant_id_id");
+
+                    b.HasIndex("ExpiresOn")
+                        .HasDatabaseName("ix_staff_sessions_expires_on");
+
+                    b.HasIndex("TenantId", "AccountId")
+                        .HasDatabaseName("ix_staff_sessions_tenant_id_account_id");
+
+                    b.ToTable("staff_sessions", "identity_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StudentSession", b =>
                 {
                     b.Property<Guid>("Id")
@@ -338,6 +415,26 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                 });
 
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.Credential", b =>
+                {
+                    b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "AccountId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffRoleAssignment", b =>
+                {
+                    b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "AccountId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffSession", b =>
                 {
                     b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
                         .WithMany()

@@ -5,13 +5,13 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": null,
+  "last_checkpoint": "5a8172acc34e3958c91da4fe77b4d80727dd69dc",
   "phase": "checkpoint",
-  "active_task": "1.0",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 0,
+  "transport_retries": 1,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
   "specs": [
@@ -26,17 +26,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "1.0"
+    "task": "2.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "focused",
-    "task": "1.0",
+    "task": "2.0",
     "attempt": 1,
-    "run_id": "run.VqNkiGnN",
+    "run_id": "run.yp6ZUtwK",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/1.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/2.0_task_review.md"
   },
   "history": [
     {
@@ -57,6 +57,31 @@
       "task": "1.0",
       "run_id": "run.VqNkiGnN",
       "note": "0 bloqueantes, 4 recomendações; R3 (seção StaffIdentity__* do Compose) repassada à 2.0"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "1.0",
+      "run_id": "run.Jd4AWOHa",
+      "commit": "5a8172a",
+      "note": "transporte relatou agent_blocked com opencode working (2ª vez; detecção de tela do opencode desligada); resultado e commit reconciliados"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "transport_failure",
+      "task": "2.0",
+      "run_id": "run.7j84uBZY",
+      "note": "codex iniciou mas o Herdr perdeu o agente (agent_not_found); prompt não chegou; worktree sem efeitos; repetição 1/2"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "2.0",
+      "run_id": "run.yp6ZUtwK",
+      "note": "0 bloqueantes, 5 recomendações, lacuna L1 para a full"
     }
+  ],
+  "full_pending_gaps": [
+    "2.0 L1: smoke do Compose (bff-admin real contra Identity real, smtp4dev, nginx sem token no log) não executado; Compose compartilha nomes/volumes com o checkout principal"
   ]
 }

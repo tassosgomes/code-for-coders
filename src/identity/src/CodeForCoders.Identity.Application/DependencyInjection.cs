@@ -11,6 +11,8 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.ChangeStudentPassword
 using CodeForCoders.Identity.Application.UseCases.Accounts.AuthenticateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStudentSession;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ProvisionFirstAdministrator;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ResetStaffPassword;
 using CodeForCoders.Identity.Application.UseCases.Platform.RecordPlatformHeartbeat;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IValidator<RequestStudentAccountConfirmationInput>, RequestStudentAccountConfirmationInputValidator>();
         services.AddScoped<IValidator<RequestStudentPasswordResetInput>, RequestStudentPasswordResetInputValidator>();
         services.AddScoped<IValidator<ResetStudentPasswordInput>, ResetStudentPasswordInputValidator>();
+        services.AddScoped<IValidator<ProvisionFirstAdministratorInput>, ProvisionFirstAdministratorInputValidator>();
+        services.AddScoped<IValidator<ResetStaffPasswordInput>, ResetStaffPasswordInputValidator>();
         services.AddScoped<IValidator<ChangeStudentPasswordInput>, ChangeStudentPasswordInputValidator>();
         services.AddScoped<IValidator<AuthenticateStudentSessionInput>, AuthenticateStudentSessionInputValidator>();
         services.AddScoped<IValidator<ValidateStudentSessionInput>, ValidateStudentSessionInputValidator>();
@@ -35,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IStudentRegistrationMessageWriter, StudentRegistrationMessageWriter>();
         services.AddScoped<IStudentConfirmationMessageWriter, StudentConfirmationMessageWriter>();
         services.AddScoped<IStudentPasswordRecoveryMessageWriter, StudentPasswordRecoveryMessageWriter>();
+        services.AddScoped<IStaffPasswordRecoveryMessageWriter, StaffPasswordRecoveryMessageWriter>();
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddSingleton<IIdempotencyFingerprinter, IdempotencyFingerprinter>();
         services.Scan(scan => scan

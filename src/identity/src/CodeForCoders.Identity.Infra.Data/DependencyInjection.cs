@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityRegistrationStore, IdentityRegistrationStore>();
         services.AddScoped<IIdentityConfirmationStore, IdentityConfirmationStore>();
         services.AddScoped<IIdentityPasswordRecoveryStore, IdentityPasswordRecoveryStore>();
+        services.AddScoped<IIdentityStaffAccountStore, IdentityStaffAccountStore>();
         services.AddScoped<IIdentitySessionStore, IdentitySessionStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
@@ -49,6 +50,12 @@ public static class DependencyInjection
             .Validate(options => Uri.TryCreate(options.PasswordResetBaseUrl, UriKind.Absolute, out var resetUri)
                 && resetUri.Scheme is "http" or "https", "Student password reset URL must be absolute HTTP(S).")
             .Validate(options => options.PasswordResetLifetimeHours > 0, "Student password reset lifetime must be positive.")
+            .ValidateOnStart();
+        services.AddOptions<StaffAccountOptions>()
+            .Bind(configuration.GetSection(StaffAccountOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.PasswordResetBaseUrl, UriKind.Absolute, out var resetUri)
+                && resetUri.Scheme is "http" or "https", "Staff password reset URL must be absolute HTTP(S).")
+            .Validate(options => options.PasswordResetLifetimeHours > 0, "Staff password reset lifetime must be positive.")
             .ValidateOnStart();
         services.AddOptions<StudentSessionOptions>()
             .Bind(configuration.GetSection(StudentSessionOptions.SectionName))

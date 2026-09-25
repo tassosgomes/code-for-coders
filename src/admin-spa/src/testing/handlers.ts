@@ -9,4 +9,5 @@ export const handlers = [
       message: 'The admin workspace service is ready.',
     }),
   ),
+  http.post(`${env.API_URL}/api/v1/staff-password-resets`, () => new HttpResponse(null, { status: 204 })),
 ];

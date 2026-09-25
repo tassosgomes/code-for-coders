@@ -55,7 +55,7 @@ Os gates completos, com `--minimum-expected-tests`, estão no frontmatter de cad
 ## Tasks
 
 - [x] 1.0 Credencial de serviço do bff-admin aceita por Identity sem abrir escopo de aluno
-- [ ] 2.0 Primeiro administrador provisionado define a senha pelo link recebido
+- [x] 2.0 Primeiro administrador provisionado define a senha pelo link recebido
 - [ ] 3.0 Ator interno entra, vê as áreas das suas permissões e sai
 - [ ] 4.0 Administrador convida e o convidado recebe o e-mail
 - [ ] 5.0 Convidado aceita o convite e entra no backoffice

@@ -15,6 +15,7 @@ public static class ServiceConfigurationExtensions
         builder.Services.AddHealthConfiguration();
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddBffProxyConfiguration(builder.Configuration);
+        builder.AddStaffIdentityConfiguration();
         builder.Services.AddHttpClient("bff-admin-outbound")
             .AddStandardResilienceHandler(options =>
             {

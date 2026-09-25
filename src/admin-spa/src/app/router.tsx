@@ -5,6 +5,7 @@ import { paths } from '@/config/paths';
 
 import { DashboardRoute } from '@/app/routes/dashboard-route';
 import { RouteError } from '@/app/routes/route-error';
+import { StaffPasswordResetRoute } from '@/app/routes/staff-password-reset-route';
 
 const routes: RouteObject[] = [
   {
@@ -12,6 +13,11 @@ const routes: RouteObject[] = [
     element: <AppShell serviceName="admin-spa" title="Admin Workspace" />,
     errorElement: <RouteError />,
     children: [{ index: true, element: <DashboardRoute /> }],
+  },
+  {
+    path: paths.staffPasswordReset.path.slice(1),
+    element: <StaffPasswordResetRoute />,
+    errorElement: <RouteError />,
   },
 ];
 

@@ -12,5 +12,6 @@ public static class EndpointExtensions
         app.MapStudentPasswordRecoveryEndpoints();
         app.MapStudentPasswordChangeEndpoints();
         app.MapStudentSessionEndpoints();
+        app.MapStaffPasswordResetEndpoints();
     }
 }

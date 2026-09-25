@@ -50,5 +50,7 @@ public interface IIdentityPasswordRecoveryStore
 
     void AddVerificationToken(VerificationToken token);
 
+    void AddCredential(Credential credential);
+
     void AddIdempotencyRecord(IdempotencyRecord record);
 }
