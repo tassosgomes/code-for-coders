@@ -21,6 +21,7 @@ ARG BASE_PATH=/student/
 ENV BASE_PATH=${BASE_PATH}
 
 COPY --from=build /app/dist /usr/share/nginx/html
+RUN mv /usr/share/nginx/html/runtime-env.template.js /etc/nginx/runtime-env.template.js
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/40-runtime-env.sh /docker-entrypoint.d/40-runtime-env.sh
 RUN chmod +x /docker-entrypoint.d/40-runtime-env.sh
