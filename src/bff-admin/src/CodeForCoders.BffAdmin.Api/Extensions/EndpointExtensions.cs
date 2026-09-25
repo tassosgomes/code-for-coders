@@ -9,6 +9,7 @@ public static class EndpointExtensions
         app.MapPlatformEndpoints();
         app.MapSessionEndpoints();
         app.MapStaffPasswordResetEndpoints();
+        app.MapStaffInvitationEndpoints();
         app.MapProxyEndpoints();
     }
 }

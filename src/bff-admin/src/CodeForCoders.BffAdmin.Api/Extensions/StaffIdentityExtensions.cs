@@ -39,6 +39,19 @@ public static class StaffIdentityExtensions
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.DisableForUnsafeHttpMethods();
             });
+        builder.Services.AddHttpClient<IStaffInvitationIdentityClient, StaffInvitationIdentityClient>(
+                (serviceProvider, client) =>
+                {
+                    var settings = serviceProvider.GetRequiredService<IOptions<StaffIdentityOptions>>().Value;
+                    client.BaseAddress = new Uri(settings.BaseAddress, UriKind.Absolute);
+                })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddHttpClient<IStaffSessionIdentityClient, StaffSessionIdentityClient>(
                 (serviceProvider, client) =>
                 {

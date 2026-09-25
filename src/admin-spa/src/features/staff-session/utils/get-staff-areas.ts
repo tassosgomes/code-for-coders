@@ -1,7 +1,8 @@
 import type { StaffArea } from '@/types/staff-area';
+import { paths } from '@/config/paths';
 
 const staffAreas = [
-  { label: 'Acessos', permission: 'acesso.gerir' },
+  { label: 'Acessos', permission: 'acesso.gerir', href: paths.staffAccess.getHref() },
   { label: 'Financeiro', permission: 'financeiro.ler' },
   { label: 'Autoria', permission: 'autoria.ler' },
   { label: 'Suporte', permission: 'suporte.atender' },

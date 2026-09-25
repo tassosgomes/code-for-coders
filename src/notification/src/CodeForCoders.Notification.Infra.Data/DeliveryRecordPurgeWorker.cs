@@ -70,6 +70,7 @@ public sealed class DeliveryRecordPurgeWorker(
             .Where(record =>
                 record.Recipient != null
                 || record.RecipientName != null
+                || record.RecipientRole != null
                 || record.Link != null
                 || record.Reason != null)
             .OrderBy(record => record.Id)

@@ -16,6 +16,8 @@ public sealed class ServiceAssertionTokenFactory(
         "staff-sessions:create",
         "staff-sessions:validate",
         "staff-sessions:revoke",
+        "staff-invitations:read",
+        "staff-invitations:write",
     ];
 
     public string Create(string requiredScope)

@@ -22,6 +22,8 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public StaffSessionIdentityHandler StaffSessionIdentityHandler { get; } = new();
 
+    public StaffInvitationIdentityHandler StaffInvitationIdentityHandler { get; } = new();
+
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
     public string IdentityPublicKeyBase64 { get; private set; } = string.Empty;
@@ -71,6 +73,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
             services.AddSingleton(IdentityHandler);
             services.AddSingleton(StaffSessionIdentityHandler);
+            services.AddSingleton(StaffInvitationIdentityHandler);
             services.RemoveAll<IBffSessionStore>();
             services.AddSingleton<IBffSessionStore>(SessionStore);
             services.AddHttpClient<IStaffPasswordResetIdentityClient, StaffPasswordResetIdentityClient>()
@@ -79,6 +82,9 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddHttpClient<IStaffSessionIdentityClient, StaffSessionIdentityClient>()
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<StaffSessionIdentityHandler>());
+            services.AddHttpClient<IStaffInvitationIdentityClient, StaffInvitationIdentityClient>()
+                .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+                    serviceProvider.GetRequiredService<StaffInvitationIdentityHandler>());
         });
     }
 

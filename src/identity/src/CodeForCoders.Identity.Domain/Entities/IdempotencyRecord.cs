@@ -28,6 +28,10 @@ public sealed class IdempotencyRecord
 
     public Guid? StaffSessionId { get; private set; }
 
+    public Guid? StaffInvitationId { get; private set; }
+
+    public Guid? SupersededStaffInvitationId { get; private set; }
+
     public DateTimeOffset CreatedOn { get; private set; }
 
     public DateTimeOffset ExpiresOn { get; private set; }
@@ -81,6 +85,8 @@ public sealed class IdempotencyRecord
         Title = title;
         StudentSessionId = null;
         StaffSessionId = null;
+        StaffInvitationId = null;
+        SupersededStaffInvitationId = null;
         CreatedOn = createdOn;
         ExpiresOn = expiresOn;
     }
@@ -103,5 +109,16 @@ public sealed class IdempotencyRecord
         }
 
         StaffSessionId = sessionId;
+    }
+
+    public void SetStaffInvitationResult(Guid invitationId, Guid? supersededInvitationId)
+    {
+        if (invitationId == Guid.Empty || supersededInvitationId == Guid.Empty)
+        {
+            throw new EntityValidationException("The staff invitation result is invalid.");
+        }
+
+        StaffInvitationId = invitationId;
+        SupersededStaffInvitationId = supersededInvitationId;
     }
 }

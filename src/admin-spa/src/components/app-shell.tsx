@@ -51,7 +51,9 @@ export const AppShell = ({
       {menuOpen ? (
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
           <Link to={paths.home.getHref()}>Início</Link>
-          {areas.map((area) => <span key={area.permission}>{area.label}</span>)}
+          {areas.map((area) => area.href
+            ? <Link key={area.permission} to={area.href}>{area.label}</Link>
+            : <span key={area.permission}>{area.label}</span>)}
         </nav>
       ) : null}
       <Outlet context={outletContext} />

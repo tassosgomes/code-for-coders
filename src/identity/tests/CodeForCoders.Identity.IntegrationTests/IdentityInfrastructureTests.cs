@@ -41,6 +41,8 @@ public sealed class IdentityInfrastructureTests(IdentityIntegrationFixture fixtu
             ["StudentAccount:PasswordResetLifetimeHours"] = "1",
             ["StaffAccount:PasswordResetBaseUrl"] = "https://staff.example.test/admin/redefinir-senha",
             ["StaffAccount:PasswordResetLifetimeHours"] = "1",
+            ["StaffInvitation:AcceptanceBaseUrl"] = "https://staff.example.test/admin/convite",
+            ["StaffInvitation:LifetimeHours"] = "168",
             ["Idempotency:FingerprintKeyBase64"] = Convert.ToBase64String(new byte[32]),
             ["OutboxProtection:KeyBase64"] = Convert.ToBase64String(new byte[32]),
         };

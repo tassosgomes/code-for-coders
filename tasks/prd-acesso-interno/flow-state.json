@@ -5,9 +5,9 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "28d50fcd2bd8090bc809bf0985c9806843f207d4",
+  "last_checkpoint": "5d412ec0da25b8b55315c3d6c1c794576a258f19",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "4.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -26,17 +26,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "3.0"
+    "task": "4.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "3.0",
+    "task": "4.0",
     "attempt": 2,
-    "run_id": "run.SCEWavaU",
+    "run_id": "run.mpvAo9ro",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/3.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/4.0_task_review.md"
   },
   "history": [
     {
@@ -102,11 +102,35 @@
       "task": "3.0",
       "attempt": 2,
       "run_id": "run.SCEWavaU"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "3.0",
+      "run_id": "run.ynvulrUo",
+      "commit": "5d412ec",
+      "note": "Fase 1 concluída; falso agent_blocked do opencode reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_rejected",
+      "task": "4.0",
+      "attempt": 1,
+      "run_id": "run.vU1d8ECY",
+      "note": "B-01 maxLength motivo"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "4.0",
+      "attempt": 2,
+      "run_id": "run.mpvAo9ro"
     }
   ],
   "full_pending_gaps": [
     "2.0 L1: smoke do Compose (bff-admin real contra Identity real, smtp4dev, nginx sem token no log) não executado; Compose compartilha nomes/volumes com o checkout principal",
     "3.0: smoke em http://localhost:8081/admin/entrar (checkpoint da Fase 1) não executado",
-    "3.0 R5: login anônimo /api/v1/staff-sessions sem checagem de Origin (login CSRF) — avaliar na full"
+    "3.0 R5: login anônimo /api/v1/staff-sessions sem checagem de Origin (login CSRF) — avaliar na full",
+    "4.0 R1/R2: corrida no índice parcial de convite pendente (500) e ROLE_NOT_SUPPORTED fora do contrato — avaliar na full"
   ]
 }

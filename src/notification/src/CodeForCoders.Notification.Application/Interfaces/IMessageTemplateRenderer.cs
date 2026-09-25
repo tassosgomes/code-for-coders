@@ -5,6 +5,7 @@ public interface IMessageTemplateRenderer
     TransactionalEmail Render(
         string model,
         string recipient,
-        string recipientName,
-        string link);
+        string? recipientName,
+        string link,
+        string? recipientRole = null);
 }

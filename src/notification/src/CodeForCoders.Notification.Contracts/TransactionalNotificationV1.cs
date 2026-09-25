@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace CodeForCoders.Notification.Contracts;
 
 public sealed record NotificationSendRequestedV1(
@@ -10,8 +12,9 @@ public sealed record NotificationSendRequestedV1(
     DateTimeOffset SolicitadoEm);
 
 public sealed record NotificationTemplateDataV1(
-    string? Nome,
-    string? Link);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Nome,
+    string? Link,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Papel = null);
 
 public sealed record NotificationMessageDeliveredV1(
     Guid PedidoId,

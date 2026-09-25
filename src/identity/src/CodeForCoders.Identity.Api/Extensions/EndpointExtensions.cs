@@ -14,5 +14,6 @@ public static class EndpointExtensions
         app.MapStudentSessionEndpoints();
         app.MapStaffSessionEndpoints();
         app.MapStaffPasswordResetEndpoints();
+        app.MapStaffInvitationEndpoints();
     }
 }

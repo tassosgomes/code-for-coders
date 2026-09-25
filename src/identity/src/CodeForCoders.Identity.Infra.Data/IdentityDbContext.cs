@@ -26,6 +26,8 @@ public sealed class IdentityDbContext(
 
     public DbSet<StaffSession> StaffSessions => Set<StaffSession>();
 
+    public DbSet<StaffInvitation> StaffInvitations => Set<StaffInvitation>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(IdentitySchema.Name);
@@ -46,5 +48,7 @@ public sealed class IdentityDbContext(
             assignment => tenantContext.TenantId.HasValue && assignment.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<StaffSession>().HasQueryFilter(
             session => tenantContext.TenantId.HasValue && session.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<StaffInvitation>().HasQueryFilter(
+            invitation => tenantContext.TenantId.HasValue && invitation.TenantId == tenantContext.TenantId.Value);
     }
 }

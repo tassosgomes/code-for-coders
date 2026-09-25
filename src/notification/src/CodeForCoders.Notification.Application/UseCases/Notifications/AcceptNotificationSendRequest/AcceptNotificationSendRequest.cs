@@ -46,7 +46,8 @@ public sealed class AcceptNotificationSendRequest(
                 refusalReason,
                 input.Request.SolicitadoEm,
                 transitionOn,
-                OptionalText(input.CorrelationId, DeliveryRecord.CorrelationIdMaxLength));
+                OptionalText(input.CorrelationId, DeliveryRecord.CorrelationIdMaxLength),
+                OptionalText(input.Request.Dados?.Papel, 32));
 
             await deliveryRecordRepository.AddAsync(refusedRecord, cancellationToken);
             await deliveryOutcomeCounterRepository.IncrementAsync(
@@ -66,13 +67,14 @@ public sealed class AcceptNotificationSendRequest(
             input.Request.TenantId,
             input.Request.PedidoId,
             input.Request.Destinatario!,
-            data.Nome!,
+            data.Nome,
             data.Link!,
             input.Request.Finalidade!,
             input.Request.Modelo!,
             input.Request.SolicitadoEm,
             acceptedOn,
-            input.CorrelationId);
+            input.CorrelationId,
+            data.Papel);
 
         await deliveryRecordRepository.AddAsync(record, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);

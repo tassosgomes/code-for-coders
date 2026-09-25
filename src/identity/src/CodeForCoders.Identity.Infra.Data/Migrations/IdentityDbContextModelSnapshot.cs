@@ -145,6 +145,10 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("operation_id");
 
+                    b.Property<Guid?>("StaffInvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_invitation_id");
+
                     b.Property<Guid?>("StaffSessionId")
                         .HasColumnType("uuid")
                         .HasColumnName("staff_session_id");
@@ -156,6 +160,10 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                     b.Property<Guid?>("StudentSessionId")
                         .HasColumnType("uuid")
                         .HasColumnName("student_session_id");
+
+                    b.Property<Guid?>("SupersededStaffInvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("superseded_staff_invitation_id");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -175,6 +183,72 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasDatabaseName("ux_idempotency_records_scope_key");
 
                     b.ToTable("idempotency_records", "identity_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcceptedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_on");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_on");
+
+                    b.Property<DateTimeOffset>("InvitedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("invited_on");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<string>("OfferedRole")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("offered_role");
+
+                    b.Property<DateTimeOffset?>("SupersededOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("superseded_on");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_staff_invitations_tenant_id_id");
+
+                    b.HasIndex("TenantId", "InvitedOn")
+                        .HasDatabaseName("ix_staff_invitations_tenant_invited_on");
+
+                    b.HasIndex("TenantId", "NormalizedEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ux_staff_invitations_pending_email")
+                        .HasFilter("accepted_on IS NULL AND superseded_on IS NULL");
+
+                    b.ToTable("staff_invitations", "identity_access");
                 });
 
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffRoleAssignment", b =>

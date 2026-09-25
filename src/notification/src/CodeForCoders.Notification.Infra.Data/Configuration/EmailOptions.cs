@@ -34,5 +34,6 @@ public sealed class EmailOptions
     {
         ["confirmacao-de-conta"] = 24,
         ["recuperacao-de-senha"] = 1,
+        ["convite-interno"] = 168,
     };
 }

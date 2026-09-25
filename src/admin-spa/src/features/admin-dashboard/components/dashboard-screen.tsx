@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 import { getAdminWorkspaceStatus, useAdminWorkspaceStatus } from '@/features/admin-dashboard/api/get-admin-workspace-status';
 import type { StaffArea } from '@/types/staff-area';
 import { getErrorMessage } from '@/utils/get-error-message';
@@ -27,7 +29,11 @@ export const DashboardScreen = ({ areas = [] }: DashboardScreenProps) => {
           <p>Sua conta ainda não tem acesso a nenhuma área do backoffice.</p>
         ) : (
           <ul>
-            {areas.map((area) => <li key={area.permission}>{area.label}</li>)}
+            {areas.map((area) => (
+              <li key={area.permission}>
+                {area.href ? <Link to={area.href}>{area.label}</Link> : area.label}
+              </li>
+            ))}
           </ul>
         )}
       </section>

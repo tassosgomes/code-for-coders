@@ -59,6 +59,11 @@ public static class DependencyInjection
                     out var recoveryValidity)
                 && recoveryValidity > 0,
                 "Email validity for password recovery is required.")
+            .Validate(options => options.ValidityHoursByPurpose.TryGetValue(
+                    "convite-interno",
+                    out var invitationValidity)
+                && invitationValidity > 0,
+                "Email validity for staff invitations is required.")
             .ValidateOnStart();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))

@@ -8,6 +8,7 @@ import { RouteError } from '@/app/routes/route-error';
 import { StaffPasswordResetRoute } from '@/app/routes/staff-password-reset-route';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { StaffLoginRoute } from '@/app/routes/staff-login-route';
+import { StaffAccessRoute } from '@/app/routes/staff-access-route';
 
 const routes: RouteObject[] = [
   {
@@ -16,7 +17,10 @@ const routes: RouteObject[] = [
     loader: loadStaffSession,
     element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
     errorElement: <RouteError />,
-    children: [{ index: true, element: <DashboardRoute /> }],
+    children: [
+      { index: true, element: <DashboardRoute /> },
+      { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
+    ],
   },
   {
     path: paths.staffLogin.path.slice(1),
