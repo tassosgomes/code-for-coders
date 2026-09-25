@@ -5,13 +5,13 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "5a8172acc34e3958c91da4fe77b4d80727dd69dc",
+  "last_checkpoint": "28d50fcd2bd8090bc809bf0985c9806843f207d4",
   "phase": "checkpoint",
-  "active_task": "2.0",
-  "attempt": 1,
+  "active_task": "3.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 1,
+  "transport_retries": 0,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
   "specs": [
@@ -26,17 +26,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0"
+    "task": "3.0"
   },
   "last_result": {
     "role": "validator",
-    "mode": "focused",
-    "task": "2.0",
-    "attempt": 1,
-    "run_id": "run.yp6ZUtwK",
+    "mode": "revalidation",
+    "task": "3.0",
+    "attempt": 2,
+    "run_id": "run.SCEWavaU",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/2.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/3.0_task_review.md"
   },
   "history": [
     {
@@ -79,9 +79,34 @@
       "task": "2.0",
       "run_id": "run.yp6ZUtwK",
       "note": "0 bloqueantes, 5 recomendações, lacuna L1 para a full"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "2.0",
+      "run_id": "run.raxxVRjA",
+      "commit": "28d50fc",
+      "note": "falso agent_blocked do opencode (3ª vez), reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_rejected",
+      "task": "3.0",
+      "attempt": 1,
+      "run_id": "run.ciaJ631w",
+      "note": "B1 admin-spa suite; R1 = defeito da 2.0 (fixture Heartbeat sem StaffAccount:PasswordResetBaseUrl) incluído no fix da 3.0 por decisão do orquestrador para não deixar CI obrigatório quebrado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "3.0",
+      "attempt": 2,
+      "run_id": "run.SCEWavaU"
     }
   ],
   "full_pending_gaps": [
-    "2.0 L1: smoke do Compose (bff-admin real contra Identity real, smtp4dev, nginx sem token no log) não executado; Compose compartilha nomes/volumes com o checkout principal"
+    "2.0 L1: smoke do Compose (bff-admin real contra Identity real, smtp4dev, nginx sem token no log) não executado; Compose compartilha nomes/volumes com o checkout principal",
+    "3.0: smoke em http://localhost:8081/admin/entrar (checkpoint da Fase 1) não executado",
+    "3.0 R5: login anônimo /api/v1/staff-sessions sem checagem de Origin (login CSRF) — avaliar na full"
   ]
 }

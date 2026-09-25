@@ -1,18 +1,27 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
-import { AppShell } from '@/components/app-shell';
+import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
 import { paths } from '@/config/paths';
 
 import { DashboardRoute } from '@/app/routes/dashboard-route';
 import { RouteError } from '@/app/routes/route-error';
 import { StaffPasswordResetRoute } from '@/app/routes/staff-password-reset-route';
+import { loadStaffSession } from '@/app/routes/staff-session-loader';
+import { StaffLoginRoute } from '@/app/routes/staff-login-route';
 
 const routes: RouteObject[] = [
   {
     path: paths.home.path,
-    element: <AppShell serviceName="admin-spa" title="Admin Workspace" />,
+    id: 'admin-root',
+    loader: loadStaffSession,
+    element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
     errorElement: <RouteError />,
     children: [{ index: true, element: <DashboardRoute /> }],
+  },
+  {
+    path: paths.staffLogin.path.slice(1),
+    element: <StaffLoginRoute />,
+    errorElement: <RouteError />,
   },
   {
     path: paths.staffPasswordReset.path.slice(1),

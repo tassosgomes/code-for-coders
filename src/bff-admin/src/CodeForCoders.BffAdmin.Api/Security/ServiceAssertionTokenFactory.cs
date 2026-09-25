@@ -10,11 +10,17 @@ public sealed class ServiceAssertionTokenFactory(
     TimeProvider timeProvider)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private const string StaffPasswordResetScope = "staff-passwords:reset";
+    private static readonly string[] AllowedScopes =
+    [
+        "staff-passwords:reset",
+        "staff-sessions:create",
+        "staff-sessions:validate",
+        "staff-sessions:revoke",
+    ];
 
     public string Create(string requiredScope)
     {
-        if (!string.Equals(requiredScope, StaffPasswordResetScope, StringComparison.Ordinal))
+        if (!AllowedScopes.Contains(requiredScope, StringComparer.Ordinal))
         {
             throw new InvalidOperationException("The requested Identity scope is not configured for the BFF.");
         }

@@ -145,6 +145,10 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("operation_id");
 
+                    b.Property<Guid?>("StaffSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_session_id");
+
                     b.Property<int>("StatusCode")
                         .HasColumnType("integer")
                         .HasColumnName("status_code");

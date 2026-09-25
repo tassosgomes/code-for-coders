@@ -3,13 +3,27 @@ import { Link, Outlet } from 'react-router';
 import { paths } from '@/config/paths';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useShellStore } from '@/stores/use-shell-store';
+import type { StaffArea } from '@/types/staff-area';
 
 type AppShellProps = {
   serviceName: string;
   title: string;
+  areas: readonly StaffArea[];
+  outletContext: unknown;
+  isLoggingOut: boolean;
+  logoutError: string | null;
+  onLogout: () => void;
 };
 
-export const AppShell = ({ serviceName, title }: AppShellProps) => {
+export const AppShell = ({
+  serviceName,
+  title,
+  areas,
+  outletContext,
+  isLoggingOut,
+  logoutError,
+  onLogout,
+}: AppShellProps) => {
   useDocumentTitle(title);
   const menuOpen = useShellStore((state) => state.menuOpen);
   const toggleMenu = useShellStore((state) => state.toggleMenu);
@@ -29,13 +43,18 @@ export const AppShell = ({ serviceName, title }: AppShellProps) => {
         >
           {menuOpen ? 'Close menu' : 'Open menu'}
         </button>
+        <button disabled={isLoggingOut} type="button" onClick={onLogout}>
+          {isLoggingOut ? 'Saindo…' : 'Sair'}
+        </button>
       </header>
+      {logoutError ? <p role="alert">{logoutError}</p> : null}
       {menuOpen ? (
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
-          <Link to={paths.home.getHref()}>Overview</Link>
+          <Link to={paths.home.getHref()}>Início</Link>
+          {areas.map((area) => <span key={area.permission}>{area.label}</span>)}
         </nav>
       ) : null}
-      <Outlet />
+      <Outlet context={outletContext} />
     </div>
   );
 };

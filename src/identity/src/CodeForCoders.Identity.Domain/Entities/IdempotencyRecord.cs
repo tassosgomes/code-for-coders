@@ -26,6 +26,8 @@ public sealed class IdempotencyRecord
 
     public Guid? StudentSessionId { get; private set; }
 
+    public Guid? StaffSessionId { get; private set; }
+
     public DateTimeOffset CreatedOn { get; private set; }
 
     public DateTimeOffset ExpiresOn { get; private set; }
@@ -78,6 +80,7 @@ public sealed class IdempotencyRecord
         Code = code;
         Title = title;
         StudentSessionId = null;
+        StaffSessionId = null;
         CreatedOn = createdOn;
         ExpiresOn = expiresOn;
     }
@@ -90,5 +93,15 @@ public sealed class IdempotencyRecord
         }
 
         StudentSessionId = sessionId;
+    }
+
+    public void SetStaffSessionId(Guid sessionId)
+    {
+        if (sessionId == Guid.Empty)
+        {
+            throw new EntityValidationException("The staff session identifier is required.");
+        }
+
+        StaffSessionId = sessionId;
     }
 }

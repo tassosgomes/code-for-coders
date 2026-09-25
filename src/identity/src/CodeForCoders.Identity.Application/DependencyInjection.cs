@@ -13,6 +13,9 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStudentSessio
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ProvisionFirstAdministrator;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ResetStaffPassword;
+using CodeForCoders.Identity.Application.UseCases.Accounts.AuthenticateStaffSession;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStaffSession;
+using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStaffSession;
 using CodeForCoders.Identity.Application.UseCases.Platform.RecordPlatformHeartbeat;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +35,9 @@ public static class DependencyInjection
         services.AddScoped<IValidator<ResetStudentPasswordInput>, ResetStudentPasswordInputValidator>();
         services.AddScoped<IValidator<ProvisionFirstAdministratorInput>, ProvisionFirstAdministratorInputValidator>();
         services.AddScoped<IValidator<ResetStaffPasswordInput>, ResetStaffPasswordInputValidator>();
+        services.AddScoped<IValidator<AuthenticateStaffSessionInput>, AuthenticateStaffSessionInputValidator>();
+        services.AddScoped<IValidator<ValidateStaffSessionInput>, ValidateStaffSessionInputValidator>();
+        services.AddScoped<IValidator<RevokeStaffSessionInput>, RevokeStaffSessionInputValidator>();
         services.AddScoped<IValidator<ChangeStudentPasswordInput>, ChangeStudentPasswordInputValidator>();
         services.AddScoped<IValidator<AuthenticateStudentSessionInput>, AuthenticateStudentSessionInputValidator>();
         services.AddScoped<IValidator<ValidateStudentSessionInput>, ValidateStudentSessionInputValidator>();

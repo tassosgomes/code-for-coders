@@ -20,6 +20,7 @@ public sealed class IdempotencyRecordConfiguration : IEntityTypeConfiguration<Id
         builder.Property(record => record.Code).HasColumnName("code").HasMaxLength(64);
         builder.Property(record => record.Title).HasColumnName("title").HasColumnType("text");
         builder.Property(record => record.StudentSessionId).HasColumnName("student_session_id").HasColumnType("uuid");
+        builder.Property(record => record.StaffSessionId).HasColumnName("staff_session_id").HasColumnType("uuid");
         builder.Property(record => record.CreatedOn).HasColumnName("created_on").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(record => record.ExpiresOn).HasColumnName("expires_on").HasColumnType("timestamp with time zone").IsRequired();
         builder.HasIndex(record => new { record.TenantId, record.OperationId, record.KeyHash })

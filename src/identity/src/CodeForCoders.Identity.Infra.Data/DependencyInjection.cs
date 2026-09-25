@@ -62,6 +62,11 @@ public static class DependencyInjection
             .Validate(options => options.InactivityTimeoutMinutes is >= 1 and <= 1440,
                 "Student session inactivity timeout must be between 1 and 1440 minutes.")
             .ValidateOnStart();
+        services.AddOptions<StaffSessionOptions>()
+            .Bind(configuration.GetSection(StaffSessionOptions.SectionName))
+            .Validate(options => options.InactivityTimeoutMinutes is >= 1 and <= 1440,
+                "Staff session inactivity timeout must be between 1 and 1440 minutes.")
+            .ValidateOnStart();
         services.AddOptions<IdempotencyOptions>()
             .Bind(configuration.GetSection(IdempotencyOptions.SectionName))
             .Validate(options => IsStrongKey(options.FingerprintKeyBase64), "Idempotency fingerprint key must contain at least 256 bits.")

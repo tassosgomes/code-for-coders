@@ -53,6 +53,12 @@ public sealed class GlobalExceptionHandler(
                 sessionException.Title,
                 sessionException.Message,
                 sessionException.Code),
+            StaffSessionException staffSessionException => (
+                staffSessionException.StatusCode,
+                "/problems/staff-session",
+                staffSessionException.Title,
+                staffSessionException.Message,
+                staffSessionException.Code),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",

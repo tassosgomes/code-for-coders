@@ -7,6 +7,14 @@ export const paths = {
     path: '/entrar',
     getHref: () => '/entrar',
   },
+  staffAccess: {
+    path: '/acessos',
+    getHref: () => '/acessos',
+  },
+  staffFinance: {
+    path: '/financeiro',
+    getHref: () => '/financeiro',
+  },
   staffPasswordReset: {
     path: '/redefinir-senha',
     getHref: () => '/redefinir-senha',

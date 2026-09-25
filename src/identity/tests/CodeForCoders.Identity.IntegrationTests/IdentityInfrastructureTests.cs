@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Npgsql;
 using Xunit;
 
 namespace CodeForCoders.Identity.IntegrationTests;
@@ -18,9 +19,10 @@ public sealed class IdentityInfrastructureTests(IdentityIntegrationFixture fixtu
     public async Task HeartbeatFlowsThroughOutboxRabbitMqAndConsumer()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        var connectionString = await CreateIsolatedDatabaseAsync(cancellationToken);
         var configurationValues = new Dictionary<string, string?>
         {
-            ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["ConnectionStrings:DefaultConnection"] = connectionString,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
@@ -37,6 +39,8 @@ public sealed class IdentityInfrastructureTests(IdentityIntegrationFixture fixtu
             ["StudentAccount:ConfirmationLifetimeHours"] = "24",
             ["StudentAccount:PasswordResetBaseUrl"] = "https://students.example.test/redefinir-senha",
             ["StudentAccount:PasswordResetLifetimeHours"] = "1",
+            ["StaffAccount:PasswordResetBaseUrl"] = "https://staff.example.test/admin/redefinir-senha",
+            ["StaffAccount:PasswordResetLifetimeHours"] = "1",
             ["Idempotency:FingerprintKeyBase64"] = Convert.ToBase64String(new byte[32]),
             ["OutboxProtection:KeyBase64"] = Convert.ToBase64String(new byte[32]),
         };
@@ -84,6 +88,21 @@ public sealed class IdentityInfrastructureTests(IdentityIntegrationFixture fixtu
         }
 
         await host.StopAsync(cancellationToken);
+    }
+
+    // The outbox worker drains every pending message; other tests leave messages in the shared database.
+    private async Task<string> CreateIsolatedDatabaseAsync(CancellationToken cancellationToken)
+    {
+        var connectionString = new NpgsqlConnectionStringBuilder(fixture.PostgreSql.GetConnectionString())
+        {
+            Database = $"identity_heartbeat_{Guid.CreateVersion7():N}",
+        }.ConnectionString;
+        var dbOptions = new DbContextOptionsBuilder<IdentityDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+        await using var dbContext = new IdentityDbContext(dbOptions, new TenantContext());
+        await dbContext.Database.MigrateAsync(cancellationToken);
+        return connectionString;
     }
 
     private static async Task AssertProcessedAsync(

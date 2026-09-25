@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
-using CodeForCoders.BffAdmin.Application.Interfaces;
-using Yarp.ReverseProxy.Transforms.Builder;
 using Yarp.ReverseProxy.Transforms;
+using Yarp.ReverseProxy.Transforms.Builder;
 
 namespace CodeForCoders.BffAdmin.Api.Security;
 
@@ -11,16 +10,16 @@ public sealed class BffSessionTransformProvider : ITransformProvider
     {
         context.AddRequestTransform(transformContext =>
         {
-            var session = BffSessionContext.Get(transformContext.HttpContext);
-            if (session is null)
+            var accessToken = BffSessionContext.GetValidatedSession(transformContext.HttpContext)?.AccessToken;
+            transformContext.ProxyRequest.Headers.Remove("Authorization");
+            if (string.IsNullOrWhiteSpace(accessToken))
             {
-                transformContext.HttpContext.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                transformContext.HttpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return ValueTask.CompletedTask;
             }
 
-            transformContext.ProxyRequest.Headers.Remove("Authorization");
             transformContext.ProxyRequest.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", session.UpstreamAccessToken);
+                new AuthenticationHeaderValue("Bearer", accessToken);
             return ValueTask.CompletedTask;
         });
     }
