@@ -47,6 +47,19 @@ public static class StaffMemberEndpoints
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+
+        app.MapPost("/api/v1/staff-members/{accountId:guid}/role-changes", ChangeStaffRoleAsync)
+            .WithName("ChangeStaffRole")
+            .WithTags("StaffMembers")
+            .Accepts<StaffRoleChangeRequestV1>("application/json")
+            .Produces<StaffRoleActionResultV1>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status504GatewayTimeout);
     }
 
     private static async Task<IResult> ListStaffMembersAsync(
@@ -91,6 +104,13 @@ public static class StaffMemberEndpoints
         IStaffMemberIdentityClient identityClient,
         CancellationToken cancellationToken)
         => ExecuteRoleActionAsync(httpContext, accountId, identityClient, revoke: true, cancellationToken);
+
+    private static Task<IResult> ChangeStaffRoleAsync(
+        HttpContext httpContext,
+        Guid accountId,
+        IStaffMemberIdentityClient identityClient,
+        CancellationToken cancellationToken)
+        => ExecuteRoleChangeAsync(httpContext, accountId, identityClient, cancellationToken);
 
     private static async Task<IResult> ExecuteRoleActionAsync(
         HttpContext httpContext,
@@ -139,6 +159,57 @@ public static class StaffMemberEndpoints
             : ToProblem(httpContext, result);
     }
 
+    private static async Task<IResult> ExecuteRoleChangeAsync(
+        HttpContext httpContext,
+        Guid accountId,
+        IStaffMemberIdentityClient identityClient,
+        CancellationToken cancellationToken)
+    {
+        var permission = CheckPermission(httpContext);
+        if (permission is not null)
+        {
+            return permission;
+        }
+
+        StaffRoleChangeRequestV1? request;
+        try
+        {
+            request = await JsonSerializer.DeserializeAsync<StaffRoleChangeRequestV1>(
+                httpContext.Request.Body,
+                JsonOptions,
+                cancellationToken);
+        }
+        catch (JsonException)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "A valid JSON request is required.");
+        }
+
+        var idempotencyKey = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        if (accountId == Guid.Empty
+            || request?.FromRole is null
+            || !SupportedRoles.Contains(request.FromRole, StringComparer.Ordinal)
+            || request.ToRole is null
+            || !SupportedRoles.Contains(request.ToRole, StringComparer.Ordinal)
+            || request.Reason is null
+            || request.Reason.Length > 1000
+            || string.IsNullOrWhiteSpace(idempotencyKey)
+            || idempotencyKey.Length > 128)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "Source and destination roles, a reason within the supported length, and a valid Idempotency-Key are required.");
+        }
+
+        var session = BffSessionContext.Get(httpContext)!;
+        var result = await identityClient.ChangeRoleAsync(
+            accountId,
+            request,
+            session.IdentitySessionId,
+            idempotencyKey,
+            cancellationToken);
+        return result.StatusCode == StatusCodes.Status200OK && result.Action is not null
+            ? Results.Ok(result.Action)
+            : ToProblem(httpContext, result);
+    }
+
     private static IResult? CheckPermission(HttpContext httpContext)
     {
         var session = BffSessionContext.Get(httpContext);
@@ -180,6 +251,8 @@ public static class StaffMemberEndpoints
             "STAFF_MEMBER_NOT_FOUND" => "A conta interna não foi encontrada.",
             "REASON_REQUIRED" => "Informe o motivo da alteração.",
             "SELF_ROLE_CHANGE_FORBIDDEN" => "Você não pode alterar os próprios papéis.",
+            "ROLE_NOT_HELD" => "A conta não tem o papel que você escolheu remover.",
+            "ROLE_CHANGE_INVALID" => "Escolha papéis de origem e destino diferentes.",
             "IDEMPOTENCY_KEY_REUSED" => "Chave de idempotência já usada com outro conteúdo.",
             "PERMISSION_DENIED" => "O ator não tem permissão para gerenciar acessos.",
             "IDENTITY_UNAVAILABLE" => "Identity is temporarily unavailable.",

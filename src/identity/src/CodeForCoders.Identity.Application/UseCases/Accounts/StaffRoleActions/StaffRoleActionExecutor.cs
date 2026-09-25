@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
 using CodeForCoders.Identity.Application.Common;
@@ -19,7 +20,8 @@ public sealed class StaffRoleActionExecutor(
     IUnitOfWork unitOfWork,
     IIdempotencyFingerprinter fingerprinter,
     TimeProvider timeProvider,
-    IValidator<StaffRoleActionCommand> validator)
+    IValidator<StaffRoleActionCommand> validator,
+    IValidator<StaffRoleChangeCommand> changeValidator)
 {
     private const int OkStatusCode = 200;
     private const int NotFoundStatusCode = 404;
@@ -31,6 +33,9 @@ public sealed class StaffRoleActionExecutor(
 
     public Task<StaffRoleActionOutput> RevokeAsync(StaffRoleActionCommand input, CancellationToken cancellationToken)
         => ExecuteAsync(input, revoke: true, cancellationToken);
+
+    public Task<StaffRoleActionOutput> ChangeAsync(StaffRoleChangeCommand input, CancellationToken cancellationToken)
+        => ExecuteChangeAsync(input, cancellationToken, retryWriteConflict: true);
 
     private async Task<StaffRoleActionOutput> ExecuteAsync(
         StaffRoleActionCommand input,
@@ -108,6 +113,7 @@ public sealed class StaffRoleActionExecutor(
                     input.Role,
                     input.Reason,
                     now,
+                    correlationId: null,
                     cancellationToken);
             }
             else
@@ -125,6 +131,7 @@ public sealed class StaffRoleActionExecutor(
                     input.Role,
                     input.Reason,
                     now,
+                    correlationId: null,
                     cancellationToken);
             }
         }
@@ -132,7 +139,14 @@ public sealed class StaffRoleActionExecutor(
         var output = changed
             ? await BuildChangedOutputAsync(target, input, revoke, cancellationToken)
             : await BuildOutputAsync(target, input.ActorAccountId, changed, revoke, cancellationToken);
-        var record = PrepareIdempotencyRecord(existingRecord, input, operationId, keyHash, fingerprint, now, changed);
+        var record = PrepareIdempotencyRecord(
+            existingRecord,
+            input.TenantId,
+            operationId,
+            keyHash,
+            fingerprint,
+            now,
+            changed);
         if (existingRecord is null)
         {
             sessionStore.AddIdempotencyRecord(record);
@@ -185,6 +199,181 @@ public sealed class StaffRoleActionExecutor(
         return output;
     }
 
+    private async Task<StaffRoleActionOutput> ExecuteChangeAsync(
+        StaffRoleChangeCommand input,
+        CancellationToken cancellationToken,
+        bool retryWriteConflict)
+    {
+        await changeValidator.ValidateAndThrowAsync(input, cancellationToken);
+        if (input.ActorAccountId == input.TargetAccountId)
+        {
+            throw Failure(UnprocessableEntityStatusCode, "SELF_ROLE_CHANGE_FORBIDDEN", "An actor cannot change their own roles.");
+        }
+
+        if (!StaffRoleCatalog.Contains(input.FromRole) || !StaffRoleCatalog.Contains(input.ToRole))
+        {
+            throw Failure(UnprocessableEntityStatusCode, "ROLE_NOT_SUPPORTED", "The requested role is not supported.");
+        }
+
+        if (string.Equals(input.FromRole, input.ToRole, StringComparison.Ordinal))
+        {
+            throw Failure(UnprocessableEntityStatusCode, "ROLE_CHANGE_INVALID", "The source and destination roles must be different.");
+        }
+
+        if (string.IsNullOrWhiteSpace(input.Reason))
+        {
+            throw Failure(UnprocessableEntityStatusCode, "REASON_REQUIRED", "A reason is required for staff role changes.");
+        }
+
+        var now = timeProvider.GetUtcNow();
+        var operationId = "changeStaffRoleInternal";
+        var keyHash = fingerprinter.HashKey($"{input.ActorAccountId:D}:{input.IdempotencyKey}");
+        var fingerprint = fingerprinter.Fingerprint(JsonSerializer.Serialize(new
+        {
+            input.TargetAccountId,
+            input.FromRole,
+            input.ToRole,
+            input.Reason,
+        }));
+        var existingRecord = await sessionStore.FindIdempotencyAsync(
+            input.TenantId,
+            operationId,
+            keyHash,
+            cancellationToken);
+        var replayInput = ToRoleActionCommand(input);
+        if (existingRecord is not null && !existingRecord.IsExpired(now))
+        {
+            return await ReplayOrConflictAsync(existingRecord, replayInput, fingerprint, revoke: true, cancellationToken);
+        }
+
+        var target = await staffAccountStore.FindInternalAccountAsync(
+            input.TenantId,
+            input.TargetAccountId,
+            cancellationToken);
+        if (target is null)
+        {
+            throw Failure(NotFoundStatusCode, "STAFF_MEMBER_NOT_FOUND", "The staff member was not found.");
+        }
+
+        var fromAssignment = await staffAccountStore.FindRoleAssignmentAsync(
+            input.TenantId,
+            input.TargetAccountId,
+            input.FromRole,
+            cancellationToken);
+        if (fromAssignment is null)
+        {
+            throw Failure(UnprocessableEntityStatusCode, "ROLE_NOT_HELD", "The staff member does not hold the source role.");
+        }
+
+        var toAssignment = await staffAccountStore.FindRoleAssignmentAsync(
+            input.TenantId,
+            input.TargetAccountId,
+            input.ToRole,
+            cancellationToken);
+        staffAccountStore.RemoveRoleAssignment(fromAssignment);
+        if (toAssignment is null)
+        {
+            staffAccountStore.AddRoleAssignment(StaffRoleAssignment.Create(
+                Guid.CreateVersion7(now),
+                input.TenantId,
+                input.TargetAccountId,
+                input.ToRole,
+                now));
+        }
+
+        var sessions = await staffAccountStore.FindUnrevokedStaffSessionsAsync(
+            input.TenantId,
+            input.TargetAccountId,
+            cancellationToken);
+        foreach (var session in sessions)
+        {
+            session.Revoke(now);
+        }
+
+        var correlationId = Activity.Current?.Id ?? Guid.CreateVersion7(now).ToString("D");
+        await messageWriter.AppendRoleRevokedAsync(
+            input.TenantId,
+            input.ActorAccountId,
+            input.TargetAccountId,
+            input.FromRole,
+            input.Reason,
+            now,
+            correlationId,
+            cancellationToken);
+        if (toAssignment is null)
+        {
+            await messageWriter.AppendRoleGrantedAsync(
+                input.TenantId,
+                input.ActorAccountId,
+                input.TargetAccountId,
+                input.ToRole,
+                input.Reason,
+                now,
+                correlationId,
+                cancellationToken);
+        }
+
+        var currentOutput = await BuildOutputAsync(
+            target,
+            input.ActorAccountId,
+            changed: true,
+            revoke: true,
+            cancellationToken);
+        var roles = currentOutput.Member.Roles
+            .Where(role => !string.Equals(role, input.FromRole, StringComparison.Ordinal))
+            .Append(input.ToRole)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        var output = currentOutput with
+        {
+            Member = currentOutput.Member with { Roles = roles },
+        };
+        var record = PrepareIdempotencyRecord(
+            existingRecord,
+            input.TenantId,
+            operationId,
+            keyHash,
+            fingerprint,
+            now,
+            changed: true);
+        if (existingRecord is null)
+        {
+            sessionStore.AddIdempotencyRecord(record);
+        }
+
+        try
+        {
+            await unitOfWork.CommitAsync(cancellationToken);
+        }
+        catch (RegistrationWriteConflictException exception)
+            when (exception.ConstraintName == "ux_idempotency_records_scope_key")
+        {
+            var winner = await sessionStore.FindIdempotencyAsync(
+                input.TenantId,
+                operationId,
+                keyHash,
+                cancellationToken);
+            if (winner is not null && !winner.IsExpired(now))
+            {
+                return await ReplayOrConflictAsync(winner, replayInput, fingerprint, revoke: true, cancellationToken);
+            }
+
+            throw;
+        }
+        catch (RegistrationWriteConflictException exception)
+            when (exception.ConstraintName == "ux_staff_role_assignments_tenant_account_role" && retryWriteConflict)
+        {
+            return await ExecuteChangeAsync(input, cancellationToken, retryWriteConflict: false);
+        }
+        catch (ConcurrentWriteException) when (retryWriteConflict)
+        {
+            return await ExecuteChangeAsync(input, cancellationToken, retryWriteConflict: false);
+        }
+
+        return output;
+    }
+
     private async Task<StaffRoleActionOutput> ResolveConcurrentNoChangeAsync(
         StaffRoleActionCommand input,
         string operationId,
@@ -224,7 +413,14 @@ public sealed class StaffRoleActionExecutor(
             return await ReplayOrConflictAsync(existingRecord, input, fingerprint, revoke, cancellationToken);
         }
 
-        var record = PrepareIdempotencyRecord(existingRecord, input, operationId, keyHash, fingerprint, now, changed: false);
+        var record = PrepareIdempotencyRecord(
+            existingRecord,
+            input.TenantId,
+            operationId,
+            keyHash,
+            fingerprint,
+            now,
+            changed: false);
         if (existingRecord is null)
         {
             sessionStore.AddIdempotencyRecord(record);
@@ -309,7 +505,7 @@ public sealed class StaffRoleActionExecutor(
 
     private static IdempotencyRecord PrepareIdempotencyRecord(
         IdempotencyRecord? existingRecord,
-        StaffRoleActionCommand input,
+        Guid tenantId,
         string operationId,
         string keyHash,
         string fingerprint,
@@ -317,7 +513,7 @@ public sealed class StaffRoleActionExecutor(
         bool changed)
     {
         var record = existingRecord ?? IdempotencyRecord.Create(
-            input.TenantId,
+            tenantId,
             operationId,
             keyHash,
             fingerprint,
@@ -334,6 +530,15 @@ public sealed class StaffRoleActionExecutor(
         record.SetStaffRoleActionResult(changed);
         return record;
     }
+
+    private static StaffRoleActionCommand ToRoleActionCommand(StaffRoleChangeCommand input)
+        => new(
+            input.TenantId,
+            input.ActorAccountId,
+            input.TargetAccountId,
+            input.FromRole,
+            input.Reason,
+            input.IdempotencyKey);
 
     private static StaffRoleActionException Failure(int statusCode, string code, string title)
         => new(statusCode, code, title);

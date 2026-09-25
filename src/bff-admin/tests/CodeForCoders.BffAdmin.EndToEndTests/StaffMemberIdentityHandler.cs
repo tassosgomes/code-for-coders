@@ -31,6 +31,8 @@ public sealed class StaffMemberIdentityHandler : HttpMessageHandler
 
     public StaffRoleActionRequestV1? LastRequest { get; private set; }
 
+    public StaffRoleChangeRequestV1? LastChangeRequest { get; private set; }
+
     public int RequestCount { get; private set; }
 
     protected override async Task<HttpResponseMessage> SendAsync(
@@ -55,7 +57,15 @@ public sealed class StaffMemberIdentityHandler : HttpMessageHandler
                 : ProblemResponse(ListStatus, ListCode);
         }
 
-        LastRequest = await request.Content!.ReadFromJsonAsync<StaffRoleActionRequestV1>(JsonOptions, cancellationToken);
+        if (request.RequestUri!.AbsolutePath.EndsWith("/role-changes", StringComparison.Ordinal))
+        {
+            LastChangeRequest = await request.Content!.ReadFromJsonAsync<StaffRoleChangeRequestV1>(JsonOptions, cancellationToken);
+        }
+        else
+        {
+            LastRequest = await request.Content!.ReadFromJsonAsync<StaffRoleActionRequestV1>(JsonOptions, cancellationToken);
+        }
+
         return ActionStatus == HttpStatusCode.OK
             ? JsonResponse(ActionStatus, Action)
             : ProblemResponse(ActionStatus, ActionCode);
@@ -74,6 +84,7 @@ public sealed class StaffMemberIdentityHandler : HttpMessageHandler
         LastIdempotencyKey = null;
         LastAssertionScope = null;
         LastRequest = null;
+        LastChangeRequest = null;
         RequestCount = 0;
     }
 

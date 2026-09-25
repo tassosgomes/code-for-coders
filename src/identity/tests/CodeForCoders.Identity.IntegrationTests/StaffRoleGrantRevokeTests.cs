@@ -355,7 +355,8 @@ public sealed class StaffRoleGrantRevokeTests(IdentityIntegrationFixture fixture
                     Enumerable.Range(0, 32).Select(value => (byte)value).ToArray()),
             })),
             TimeProvider.System,
-            new StaffRoleActionCommandValidator());
+            new StaffRoleActionCommandValidator(),
+            new StaffRoleChangeCommandValidator());
     }
 
     private static GrantStaffRoleInput GrantInput(

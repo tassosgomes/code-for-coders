@@ -13,12 +13,15 @@ import {
 import {
   getStaffRoleActionRequestError,
   staffRoleActionSchema,
+  staffRoleChangeSchema,
+  useChangeStaffRole,
   useGrantStaffRole,
   useRevokeStaffRole,
   useStaffMembers,
   type StaffMember,
   type StaffRoleActionInput,
   type StaffRoleActionKind,
+  type StaffRoleChangeInput,
 } from '@/features/staff-access/api/staff-members';
 
 export const StaffAccessScreen = () => {
@@ -30,6 +33,7 @@ export const StaffAccessScreen = () => {
   const createInvitation = useCreateStaffInvitation();
   const grantRole = useGrantStaffRole();
   const revokeRole = useRevokeStaffRole();
+  const changeRole = useChangeStaffRole();
   const form = useForm<CreateStaffInvitationInput>({
     defaultValues: { email: '', role: 'professor', reason: '' },
     resolver: zodResolver(createStaffInvitationSchema),
@@ -75,6 +79,29 @@ export const StaffAccessScreen = () => {
     }
   };
 
+  const submitRoleChange = async (
+    member: StaffMember,
+    input: StaffRoleChangeInput,
+    idempotencyKey: string,
+  ): Promise<boolean> => {
+    setRoleActionError(null);
+    setRoleActionStatus(null);
+    try {
+      const result = await changeRole.mutateAsync({
+        accountId: member.accountId,
+        input,
+        idempotencyKey,
+      });
+      setRoleActionStatus(result.changed
+        ? `${input.fromRole} substituído por ${input.toRole}; ${member.name} foi desconectada agora.`
+        : `Nenhuma alteração de papel foi necessária para ${member.name}.`);
+      return true;
+    } catch (error: unknown) {
+      setRoleActionError(getStaffRoleActionRequestError(error));
+      return false;
+    }
+  };
+
   return (
     <main className="page-shell staff-access-page">
       <p className="eyebrow">Gestão de acesso</p>
@@ -82,7 +109,7 @@ export const StaffAccessScreen = () => {
 
       <section aria-labelledby="staff-members-title" className="status-card">
         <h2 id="staff-members-title">Pessoas com acesso</h2>
-        <p>Ao revogar um papel, a pessoa será desconectada agora.</p>
+        <p>Ao revogar ou trocar um papel, a pessoa será desconectada agora.</p>
         {roleActionError ? <p role="alert">{roleActionError}</p> : null}
         {roleActionStatus ? <p role="status">{roleActionStatus}</p> : null}
         {members.isPending ? <p role="status">Carregando pessoas…</p> : null}
@@ -97,11 +124,19 @@ export const StaffAccessScreen = () => {
                 <span> · {member.email}</span>
                 <p>Papéis: {member.roles.length > 0 ? member.roles.join(', ') : 'Sem papel'}</p>
                 {!member.isSelf ? (
-                  <StaffMemberActions
-                    disabled={grantRole.isPending || revokeRole.isPending}
-                    member={member}
-                    onAction={submitRoleAction}
-                  />
+                  <>
+                    <StaffMemberActions
+                      disabled={grantRole.isPending || revokeRole.isPending || changeRole.isPending}
+                      member={member}
+                      onAction={submitRoleAction}
+                    />
+                    <StaffRoleChangeActions
+                      disabled={grantRole.isPending || revokeRole.isPending || changeRole.isPending}
+                      key={`${member.accountId}:${member.roles.join('|')}`}
+                      member={member}
+                      onAction={submitRoleChange}
+                    />
+                  </>
                 ) : null}
               </li>
             ))}
@@ -227,6 +262,78 @@ const StaffMemberActions = ({ disabled, member, onAction }: StaffMemberActionsPr
       </button>
       <button disabled={disabled} onClick={() => void execute('revoke')} type="button">
         Revogar
+      </button>
+    </form>
+  );
+};
+
+type StaffRoleChangeActionsProps = {
+  disabled: boolean;
+  member: StaffMember;
+  onAction: (
+    member: StaffMember,
+    input: StaffRoleChangeInput,
+    idempotencyKey: string,
+  ) => Promise<boolean>;
+};
+
+const StaffRoleChangeActions = ({ disabled, member, onAction }: StaffRoleChangeActionsProps) => {
+  const idempotency = useRef<{ fingerprint: string; key: string } | null>(null);
+  const initialFromRole = member.roles[0] ?? 'professor';
+  const initialToRole = staffInvitationRoles.find((role) => role !== initialFromRole) ?? initialFromRole;
+  const form = useForm<StaffRoleChangeInput>({
+    defaultValues: { fromRole: initialFromRole, toRole: initialToRole, reason: '' },
+    resolver: zodResolver(staffRoleChangeSchema),
+  });
+
+  const execute = async () => {
+    await form.handleSubmit(async (input) => {
+      const fingerprint = JSON.stringify([input.fromRole, input.toRole, input.reason]);
+      if (idempotency.current?.fingerprint !== fingerprint) {
+        idempotency.current = { fingerprint, key: crypto.randomUUID() };
+      }
+
+      const succeeded = await onAction(member, input, idempotency.current.key);
+      if (succeeded) {
+        idempotency.current = null;
+        const nextToRole = staffInvitationRoles.find((role) => role !== input.toRole) ?? input.toRole;
+        form.reset({ fromRole: input.toRole, toRole: nextToRole, reason: '' });
+      }
+    })();
+  };
+
+  return (
+    <form noValidate onSubmit={(event) => event.preventDefault()}>
+      <label htmlFor={`staff-role-from-${member.accountId}`}>Papel atual para trocar de {member.name}</label>
+      <select id={`staff-role-from-${member.accountId}`} {...form.register('fromRole')}>
+        {member.roles.length === 0
+          ? <option value="">Sem papel atual</option>
+          : member.roles.map((role) => <option key={role} value={role}>{role}</option>)}
+      </select>
+      {form.formState.errors.fromRole ? <p role="alert">{form.formState.errors.fromRole.message}</p> : null}
+
+      <label htmlFor={`staff-role-to-${member.accountId}`}>Novo papel para {member.name}</label>
+      <select id={`staff-role-to-${member.accountId}`} {...form.register('toRole')}>
+        {staffInvitationRoles.map((role) => <option key={role} value={role}>{role}</option>)}
+      </select>
+      {form.formState.errors.toRole ? <p role="alert">{form.formState.errors.toRole.message}</p> : null}
+
+      <label htmlFor={`staff-role-change-reason-${member.accountId}`}>Motivo para trocar o papel de {member.name}</label>
+      <textarea
+        id={`staff-role-change-reason-${member.accountId}`}
+        maxLength={1000}
+        rows={2}
+        {...form.register('reason')}
+        aria-invalid={Boolean(form.formState.errors.reason)}
+      />
+      {form.formState.errors.reason ? <p role="alert">{form.formState.errors.reason.message}</p> : null}
+
+      <button
+        disabled={disabled || member.roles.length === 0}
+        onClick={() => void execute()}
+        type="button"
+      >
+        Trocar papel
       </button>
     </form>
   );

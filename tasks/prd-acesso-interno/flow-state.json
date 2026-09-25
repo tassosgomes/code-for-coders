@@ -5,10 +5,10 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "cc581e2ca6df3fcd47b5d9ccccf57c3f9a6c62af",
+  "last_checkpoint": "ba346b8ad4ae1e76d10330592204de9cd3667ee4",
   "phase": "checkpoint",
-  "active_task": "6.0",
-  "attempt": 1,
+  "active_task": "7.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 0,
@@ -17,7 +17,9 @@
   "specs": [
     "prd.md",
     "techspec.md",
-    "contracts.md"
+    "contracts.md",
+    "api-contract.yaml 1.0.1",
+    "internal-api-contract.yaml 1.0.1"
   ],
   "delivery": null,
   "plan_approval": "Plano validado (validate_plan APROVADO) e execução autorizada pelo usuário ao invocar o orquestrador em 2026-09-25",
@@ -26,17 +28,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "6.0"
+    "task": "7.0"
   },
   "last_result": {
     "role": "validator",
-    "mode": "focused",
-    "task": "6.0",
-    "attempt": 1,
-    "run_id": "run.NCVira28",
+    "mode": "revalidation",
+    "task": "7.0",
+    "attempt": 2,
+    "run_id": "run.jJ8QwFTY",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/6.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/7.0_task_review.md"
   },
   "history": [
     {
@@ -151,6 +153,41 @@
       "event": "focused_approved",
       "task": "6.0",
       "run_id": "run.NCVira28"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "6.0",
+      "run_id": "run.JHNrocSH",
+      "commit": "ba346b8",
+      "note": "falso agent_blocked do opencode reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_rejected",
+      "task": "7.0",
+      "attempt": 1,
+      "run_id": "run.U8XX8u3R",
+      "note": "aguardando decisão do usuário sobre o código de erro de fromRole=toRole"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "user_decision",
+      "task": "7.0",
+      "note": "usuário aprovou ROLE_CHANGE_INVALID (422) para fromRole=toRole; contract-creator formaliza contratos e techspec; transporte herdr não suporta contract-creator, delegado via subagente"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "contract_formalized",
+      "task": "7.0",
+      "note": "contract-creator (subagente): api/internal 1.0.1, contracts.md 1.2 C-11, techspec linha ROLE_CHANGE_INVALID; Spectral sem erros"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "7.0",
+      "attempt": 2,
+      "run_id": "run.jJ8QwFTY"
     }
   ],
   "full_pending_gaps": [

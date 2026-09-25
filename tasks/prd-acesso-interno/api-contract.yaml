@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: BFF do backoffice — acesso interno por papel e permissão
-  version: 1.0.0
+  version: 1.0.1
   description: >
     Recorte de CAP-002, PRD `tasks/prd-acesso-interno/prd.md` v1.0, aprovado em 2026-09-25.
     Interface SPA do backoffice (`admin-spa`) → BFF do backoffice (`bff-admin`). O serviço de
@@ -652,7 +652,7 @@ paths:
         '422':
           description: >
             Motivo ausente; ação sobre a própria conta (RN-20); `fromRole` que a conta não tem;
-            `fromRole` igual a `toRole`; ou chave de idempotência reutilizada com outro corpo.
+            `fromRole` igual a `toRole` (`ROLE_CHANGE_INVALID`); ou chave de idempotência reutilizada com outro corpo.
           content:
             application/problem+json:
               schema:
@@ -668,6 +668,13 @@ paths:
                     title: A conta não tem o papel de origem da troca.
                     status: 422
                     code: ROLE_NOT_HELD
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                papeisIguais:
+                  value:
+                    type: about:blank
+                    title: Os papéis de origem e destino devem ser diferentes.
+                    status: 422
+                    code: ROLE_CHANGE_INVALID
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   /finance-area:
     get:

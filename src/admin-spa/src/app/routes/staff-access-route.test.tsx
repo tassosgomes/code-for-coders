@@ -20,11 +20,13 @@ type StaffMemberFixture = {
 };
 
 type RoleActionFixture = { role: string; reason: string };
+type RoleChangeFixture = { fromRole: string; toRole: string; reason: string };
 
 const renderStaffAccess = (
   createCode?: string,
   staffMembers: StaffMemberFixture[] = [],
   onRoleAction?: (action: 'grant' | 'revoke', request: Request, body: RoleActionFixture) => void,
+  onRoleChange?: (request: Request, body: RoleChangeFixture) => void,
 ) => {
   server.use(
     http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () => HttpResponse.json({
@@ -58,6 +60,21 @@ const renderStaffAccess = (
       const member = staffMembers.find((candidate) => candidate.accountId === params.accountId);
       return HttpResponse.json({
         member: { ...member, roles: (member?.roles ?? []).filter((role) => role !== body.role) },
+        changed: true,
+        sessionsEnded: true,
+      });
+    }),
+    http.post(`${env.API_URL}/api/v1/staff-members/:accountId/role-changes`, async ({ params, request }) => {
+      const body = await request.json() as RoleChangeFixture;
+      onRoleChange?.(request, body);
+      const member = staffMembers.find((candidate) => candidate.accountId === params.accountId);
+      const roles = (member?.roles ?? []).filter((role) => role !== body.fromRole);
+      if (!roles.includes(body.toRole)) {
+        roles.push(body.toRole);
+      }
+
+      return HttpResponse.json({
+        member: { ...member, roles },
         changed: true,
         sessionsEnded: true,
       });
@@ -169,7 +186,7 @@ describe('StaffMembers', () => {
     expect(await screen.findByRole('heading', { name: 'Pessoas com acesso' })).toBeInTheDocument();
     expect(await screen.findByText('Papéis: administrador')).toBeInTheDocument();
     expect(screen.getByText('Papéis: professor')).toBeInTheDocument();
-    expect(screen.getByText('Ao revogar um papel, a pessoa será desconectada agora.')).toBeInTheDocument();
+    expect(screen.getByText('Ao revogar ou trocar um papel, a pessoa será desconectada agora.')).toBeInTheDocument();
     const selfRow = screen.getByText('Marina Alves').closest('li');
     expect(selfRow).not.toBeNull();
     expect(within(selfRow!).queryByRole('button')).not.toBeInTheDocument();
@@ -244,5 +261,88 @@ describe('StaffMembers', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Informe o motivo da alteração.');
     expect(requestCount).toBe(0);
+  });
+});
+
+describe('StaffRoleChange', () => {
+  afterEach(cleanup);
+
+  it('changes one role in one request with a reason and idempotency key', async () => {
+    const user = userEvent.setup();
+    let requestCount = 0;
+    let idempotencyKey: string | null = null;
+    let submittedInput: RoleChangeFixture | null = null;
+    renderStaffAccess(undefined, [{
+      accountId: '7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d',
+      name: 'Rafaela Lima',
+      email: 'rafaela@example.com',
+      roles: ['professor'],
+      isSelf: false,
+    }], undefined, (request, body) => {
+      requestCount += 1;
+      idempotencyKey = request.headers.get('Idempotency-Key');
+      submittedInput = body;
+    });
+
+    await user.selectOptions(await screen.findByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
+    await user.selectOptions(screen.getByLabelText('Novo papel para Rafaela Lima'), 'financeiro');
+    await user.type(screen.getByLabelText('Motivo para trocar o papel de Rafaela Lima'), 'Mudou para o time financeiro.');
+    await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'professor substituído por financeiro; Rafaela Lima foi desconectada agora.',
+    );
+    expect(requestCount).toBe(1);
+    expect(idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(submittedInput).toEqual({
+      fromRole: 'professor',
+      toRole: 'financeiro',
+      reason: 'Mudou para o time financeiro.',
+    });
+  });
+
+  it('rejects the same source and destination role before submitting', async () => {
+    const user = userEvent.setup();
+    let requestCount = 0;
+    renderStaffAccess(undefined, [{
+      accountId: '7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d',
+      name: 'Rafaela Lima',
+      email: 'rafaela@example.com',
+      roles: ['professor'],
+      isSelf: false,
+    }], undefined, () => { requestCount += 1; });
+
+    await user.selectOptions(await screen.findByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
+    await user.selectOptions(screen.getByLabelText('Novo papel para Rafaela Lima'), 'professor');
+    await user.type(screen.getByLabelText('Motivo para trocar o papel de Rafaela Lima'), 'Motivo informado.');
+    await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Escolha papéis de origem e destino diferentes.');
+    expect(requestCount).toBe(0);
+  });
+
+  it('shows the role not held rejection from the server', async () => {
+    const user = userEvent.setup();
+    renderStaffAccess(undefined, [{
+      accountId: '7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d',
+      name: 'Rafaela Lima',
+      email: 'rafaela@example.com',
+      roles: ['professor'],
+      isSelf: false,
+    }]);
+    server.use(
+      http.post(`${env.API_URL}/api/v1/staff-members/:accountId/role-changes`, () => HttpResponse.json(
+        { code: 'ROLE_NOT_HELD' },
+        { status: 422 },
+      )),
+    );
+
+    await user.selectOptions(await screen.findByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
+    await user.selectOptions(screen.getByLabelText('Novo papel para Rafaela Lima'), 'financeiro');
+    await user.type(screen.getByLabelText('Motivo para trocar o papel de Rafaela Lima'), 'Mudou para o time financeiro.');
+    await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('A pessoa não tem mais o papel de origem selecionado.');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

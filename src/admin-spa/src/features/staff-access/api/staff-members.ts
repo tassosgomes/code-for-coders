@@ -13,7 +13,20 @@ export const staffRoleActionSchema = z.object({
     .refine((reason) => reason.trim().length > 0, 'Informe o motivo da alteração.'),
 });
 
+export const staffRoleChangeSchema = z.object({
+  fromRole: z.enum(staffInvitationRoles),
+  toRole: z.enum(staffInvitationRoles),
+  reason: z.string()
+    .min(1, 'Informe o motivo da alteração.')
+    .max(1000, 'O motivo deve ter no máximo 1000 caracteres.')
+    .refine((reason) => reason.trim().length > 0, 'Informe o motivo da alteração.'),
+}).refine((change) => change.fromRole !== change.toRole, {
+  path: ['toRole'],
+  message: 'Escolha papéis de origem e destino diferentes.',
+});
+
 export type StaffRoleActionInput = z.infer<typeof staffRoleActionSchema>;
+export type StaffRoleChangeInput = z.infer<typeof staffRoleChangeSchema>;
 export type StaffRoleActionKind = 'grant' | 'revoke';
 
 export type StaffMember = {
@@ -38,6 +51,12 @@ export type StaffRoleActionResult = {
 export type StaffRoleActionCommand = {
   accountId: string;
   input: StaffRoleActionInput;
+  idempotencyKey: string;
+};
+
+export type StaffRoleChangeCommand = {
+  accountId: string;
+  input: StaffRoleChangeInput;
   idempotencyKey: string;
 };
 
@@ -119,6 +138,24 @@ export const useRevokeStaffRole = () => {
   });
 };
 
+export const changeStaffRole = async (command: StaffRoleChangeCommand): Promise<StaffRoleActionResult> => {
+  const request = staffRoleChangeSchema.parse(command.input);
+  const response = await apiClient.post<StaffRoleActionResult>(
+    `/api/v1/staff-members/${command.accountId}/role-changes`,
+    request,
+    { headers: { 'Idempotency-Key': command.idempotencyKey } },
+  );
+  return staffRoleActionResultSchema.parse(response);
+};
+
+export const useChangeStaffRole = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: changeStaffRole,
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: staffMemberQueryKeys.all }),
+  });
+};
+
 export const getStaffRoleActionRequestError = (error: unknown): string => {
   if (axios.isAxiosError<{ code?: unknown }>(error)) {
     switch (error.response?.data?.code) {
@@ -126,6 +163,10 @@ export const getStaffRoleActionRequestError = (error: unknown): string => {
         return 'Informe o motivo da alteração.';
       case 'SELF_ROLE_CHANGE_FORBIDDEN':
         return 'Você não pode alterar os próprios papéis.';
+      case 'ROLE_NOT_HELD':
+        return 'A pessoa não tem mais o papel de origem selecionado.';
+      case 'ROLE_CHANGE_INVALID':
+        return 'Escolha papéis de origem e destino diferentes.';
       case 'STAFF_MEMBER_NOT_FOUND':
         return 'A conta interna não foi encontrada.';
       case 'IDEMPOTENCY_KEY_REUSED':

@@ -64,6 +64,22 @@ public sealed class StaffMemberIdentityClient(
             ReadActionAsync,
             cancellationToken);
 
+    public Task<StaffMemberIdentityResult> ChangeRoleAsync(
+        Guid accountId,
+        StaffRoleChangeRequestV1 request,
+        Guid identitySessionId,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+        => SendAsync(
+            HttpMethod.Post,
+            $"internal/v1/staff-members/{accountId:D}/role-changes",
+            WriteScope,
+            identitySessionId,
+            request,
+            idempotencyKey,
+            ReadActionAsync,
+            cancellationToken);
+
     private async Task<StaffMemberIdentityResult> SendAsync(
         HttpMethod method,
         string path,
@@ -102,7 +118,8 @@ public sealed class StaffMemberIdentityClient(
                 || response.StatusCode == HttpStatusCode.Forbidden && code == "PERMISSION_DENIED"
                 || response.StatusCode == HttpStatusCode.NotFound && code == "STAFF_MEMBER_NOT_FOUND"
                 || response.StatusCode == HttpStatusCode.UnprocessableEntity
-                    && code is "REASON_REQUIRED" or "SELF_ROLE_CHANGE_FORBIDDEN" or "ROLE_NOT_SUPPORTED" or "IDEMPOTENCY_CONFLICT")
+                    && code is "REASON_REQUIRED" or "SELF_ROLE_CHANGE_FORBIDDEN" or "ROLE_NOT_SUPPORTED"
+                        or "ROLE_NOT_HELD" or "ROLE_CHANGE_INVALID" or "IDEMPOTENCY_CONFLICT")
             {
                 return new StaffMemberIdentityResult(statusCode, code);
             }

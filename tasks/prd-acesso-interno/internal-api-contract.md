@@ -1,6 +1,6 @@
 # API interna — backoffice → Identity e Commerce
 
-> Derivado de [internal-api-contract.yaml](internal-api-contract.yaml) e [internal-api-contract-commerce.yaml](internal-api-contract-commerce.yaml), versão 1.0.0, OpenAPI 3.1.0. EN-01 da [TechSpec](techspec.md) de `CAP-002`. Estado: Aprovado para implementação em 2026-09-25.
+> Derivado de [internal-api-contract.yaml](internal-api-contract.yaml) e [internal-api-contract-commerce.yaml](internal-api-contract-commerce.yaml), versões 1.0.1 e 1.0.0, OpenAPI 3.1.0. EN-01 da [TechSpec](techspec.md) de `CAP-002`. Estado: Aprovado para implementação em 2026-09-25.
 
 Rotas privadas em `/internal/v1`, inacessíveis ao navegador. O `bff-admin` é o único consumidor. Campos, respostas e erros têm como fonte os YAML.
 
@@ -36,4 +36,5 @@ Rotas privadas em `/internal/v1`, inacessíveis ao navegador. O `bff-admin` é o
 - **Validação por ação:** antes de toda ação protegida o BFF chama `validateStaffSessionInternal`; a resposta traz papéis e permissões vigentes e, com `audience`, o JWT para o serviço destino. Falha fecha o acesso.
 - **JWT de usuário:** RS256, vida curta, claims `roles` e `permissions`; nunca sai do lado servidor do BFF. `commerce` valida pelo JWKS de Identity.
 - **Idempotência:** `Idempotency-Key` propagada sem alteração; conflito interno `IDEMPOTENCY_CONFLICT` vira `IDEMPOTENCY_KEY_REUSED` na borda pública.
+- **Troca de papel:** `fromRole` ausente → 422 `ROLE_NOT_HELD`; `fromRole` igual a `toRole` → 422 `ROLE_CHANGE_INVALID`, código repassado sem tradução na borda pública.
 - **Erros:** RFC 9457 com `code`; nenhum erro carrega e-mail, nome, motivo, senha ou segredo.

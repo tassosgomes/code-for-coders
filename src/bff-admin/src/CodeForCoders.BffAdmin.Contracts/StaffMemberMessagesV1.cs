@@ -2,6 +2,8 @@ namespace CodeForCoders.BffAdmin.Contracts;
 
 public sealed record StaffRoleActionRequestV1(string? Role, string? Reason);
 
+public sealed record StaffRoleChangeRequestV1(string? FromRole, string? ToRole, string? Reason);
+
 public sealed record StaffMemberV1(
     Guid AccountId,
     string Name,

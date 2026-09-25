@@ -20,6 +20,7 @@ public sealed class StaffRoleMessageWriter(
         string role,
         string reason,
         DateTimeOffset practicedOn,
+        string? correlationId,
         CancellationToken cancellationToken)
         => AppendAsync(
             tenantId,
@@ -29,6 +30,7 @@ public sealed class StaffRoleMessageWriter(
             reason,
             "papel-concedido",
             practicedOn,
+            correlationId,
             cancellationToken);
 
     public Task AppendRoleRevokedAsync(
@@ -38,6 +40,7 @@ public sealed class StaffRoleMessageWriter(
         string role,
         string reason,
         DateTimeOffset practicedOn,
+        string? correlationId,
         CancellationToken cancellationToken)
         => AppendAsync(
             tenantId,
@@ -47,6 +50,7 @@ public sealed class StaffRoleMessageWriter(
             reason,
             "papel-revogado",
             practicedOn,
+            correlationId,
             cancellationToken);
 
     private Task AppendAsync(
@@ -57,6 +61,7 @@ public sealed class StaffRoleMessageWriter(
         string reason,
         string actType,
         DateTimeOffset practicedOn,
+        string? correlationId,
         CancellationToken cancellationToken)
     {
         var factId = Guid.CreateVersion7(practicedOn);
@@ -79,7 +84,7 @@ public sealed class StaffRoleMessageWriter(
                 practicedOn,
                 Activity.Current?.Id,
                 destinationOptions.Value.AuditExchange,
-                $"identidade-papel-{factId:D}",
+                correlationId ?? $"identidade-papel-{factId:D}",
                 ProtectPayload: true),
             cancellationToken);
     }

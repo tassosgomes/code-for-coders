@@ -1,6 +1,6 @@
 # API HTTP — acesso interno ao backoffice
 
-> Derivado de [api-contract.yaml](api-contract.yaml), versão 1.0.0, OpenAPI 3.1.0. Recorte do PRD de `CAP-002` v1.0 (2026-09-25). Estado: Aprovado para implementação em 2026-09-25.
+> Derivado de [api-contract.yaml](api-contract.yaml), versão 1.0.1, OpenAPI 3.1.0. Recorte do PRD de `CAP-002` v1.0 (2026-09-25). Estado: Aprovado para implementação em 2026-09-25.
 
 O SPA do backoffice usa apenas o BFF do backoffice em `/api/v1`. Sessão por cookie opaco `staff_session`, separado do cookie do aluno; o BFF não entrega token ao navegador. Campos, respostas, erros e exemplos têm como fonte o YAML.
 
@@ -27,6 +27,7 @@ O SPA do backoffice usa apenas o BFF do backoffice em `/api/v1`. Sessão por coo
 - **Entrada:** credencial errada, e-mail inexistente e conta de aluno respondem o mesmo `INVALID_CREDENTIALS`. Conta interna sem papel entra com `permissions: []`, e o SPA mostra a orientação de conta sem acesso.
 - **Revogação e troca** encerram todas as sessões do ator afetado (`sessionsEnded: true`); a próxima chamada dele responde 401 `SESSION_REQUIRED`.
 - **Ação sem efeito** (conceder papel já concedido, revogar papel ausente) responde 200 com `changed: false` e não comunica ato à Auditoria.
+- **Troca de papel** com `fromRole` que a conta não tem responde 422 `ROLE_NOT_HELD`; com `fromRole` igual a `toRole`, 422 `ROLE_CHANGE_INVALID`.
 - **Ação sobre a própria conta** responde 422 `SELF_ROLE_CHANGE_FORBIDDEN`; a listagem marca a própria linha com `isSelf: true` para o SPA não oferecer ação.
 - **Motivo** é obrigatório em convite, concessão, revogação e troca; ausente ou só com espaços responde 422 `REASON_REQUIRED`.
 - **Convite:** e-mail de conta interna responde `EMAIL_BELONGS_TO_STAFF`, de conta de aluno `EMAIL_BELONGS_TO_STUDENT` (DP-05). Novo convite para e-mail com convite pendente substitui o anterior e devolve `supersededInvitationId` (DP-04). Convite expirado, aceito, substituído ou inexistente responde sempre `INVITATION_INVALID`.

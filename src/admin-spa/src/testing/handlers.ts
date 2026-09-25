@@ -48,6 +48,20 @@ export const handlers = [
     data: [],
     pagination: { page: 1, size: 100, total: 0, totalPages: 0 },
   })),
+  http.post(`${env.API_URL}/api/v1/staff-members/:accountId/role-changes`, async ({ params, request }) => {
+    const body = await request.json() as { fromRole: string; toRole: string };
+    return HttpResponse.json({
+      member: {
+        accountId: params.accountId,
+        name: 'Marina Alves',
+        email: 'marina@example.com',
+        roles: [body.toRole],
+        isSelf: false,
+      },
+      changed: true,
+      sessionsEnded: true,
+    });
+  }),
   http.post(`${env.API_URL}/api/v1/staff-invitations`, async ({ request }) => {
     const body = await request.json() as { email: string; role: string };
     return HttpResponse.json({

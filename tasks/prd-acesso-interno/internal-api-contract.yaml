@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Identity — integração com o BFF do backoffice
-  version: 1.0.0
+  version: 1.0.1
   description: >-
     Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, EN-01; ADR-0004 e ADR-0005).
     Consumidor único conhecido: `bff-admin`. A asserção de serviço do emissor `bff-admin` autentica o
@@ -319,7 +319,8 @@ paths:
         Escopo `staff-members:write`; ator com `acesso.gerir` e diferente do alvo. Um commit: remove
         `fromRole`, inclui `toRole`, revoga as sessões internas do alvo e grava `papel-revogado` e
         `papel-concedido` com o mesmo autor, motivo, `praticadoEm` e `correlationId`. `toRole` já
-        presente → só a revogação e um ato. `fromRole` ausente → 422 `ROLE_NOT_HELD`.
+        presente → só a revogação e um ato. `fromRole` ausente → 422 `ROLE_NOT_HELD`; `fromRole` igual a
+        `toRole` → 422 `ROLE_CHANGE_INVALID`.
       operationId: changeStaffRoleInternal
       security: [{BffAdminServiceAssertion: []}]
       parameters:
@@ -447,7 +448,7 @@ components:
     BusinessRule:
       description: >-
         Regra violada; code inclui REASON_REQUIRED, SELF_ROLE_CHANGE_FORBIDDEN, ROLE_NOT_HELD,
-        EMAIL_BELONGS_TO_STAFF, EMAIL_BELONGS_TO_STUDENT, INVITATION_INVALID,
+        ROLE_CHANGE_INVALID, EMAIL_BELONGS_TO_STAFF, EMAIL_BELONGS_TO_STUDENT, INVITATION_INVALID,
         INVITATION_EMAIL_UNAVAILABLE, PASSWORD_POLICY_VIOLATION, RESET_TOKEN_INVALID ou
         IDEMPOTENCY_CONFLICT.
       content:

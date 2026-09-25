@@ -4,6 +4,7 @@ using CodeForCoders.Identity.Api.ApiModels;
 using CodeForCoders.Identity.Api.Security;
 using CodeForCoders.Identity.Application.Exceptions;
 using CodeForCoders.Identity.Application.UseCases.Accounts.Common;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ChangeStaffRole;
 using CodeForCoders.Identity.Application.UseCases.Accounts.GrantStaffRole;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ListStaffMembers;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStaffRole;
@@ -43,6 +44,17 @@ public static class StaffMemberEndpoints
             .WithName("RevokeStaffRoleInternal")
             .WithTags("StaffMembers")
             .Accepts<StaffMemberRoleActionRequestV1>("application/json")
+            .Produces<StaffRoleActionResultV1>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        endpoints.MapPost("/internal/v1/staff-members/{accountId:guid}/role-changes", ChangeStaffRoleAsync)
+            .WithName("ChangeStaffRoleInternal")
+            .WithTags("StaffMembers")
+            .Accepts<StaffMemberRoleChangeRequestV1>("application/json")
             .Produces<StaffRoleActionResultV1>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -140,6 +152,30 @@ public static class StaffMemberEndpoints
                 cancellationToken),
             cancellationToken);
 
+    private static Task<IResult> ChangeStaffRoleAsync(
+        HttpContext httpContext,
+        Guid accountId,
+        ServiceAssertionVerifier assertionVerifier,
+        IValidateStaffSession sessionValidator,
+        IChangeStaffRole useCase,
+        CancellationToken cancellationToken)
+        => ExecuteRoleChangeAsync(
+            httpContext,
+            accountId,
+            assertionVerifier,
+            sessionValidator,
+            request => useCase.ExecuteAsync(
+                new ChangeStaffRoleInput(
+                    request.TenantId,
+                    request.ActorAccountId,
+                    accountId,
+                    request.FromRole,
+                    request.ToRole,
+                    request.Reason,
+                    request.IdempotencyKey),
+                cancellationToken),
+            cancellationToken);
+
     private static async Task<IResult> ExecuteRoleActionAsync(
         HttpContext httpContext,
         Guid accountId,
@@ -188,6 +224,70 @@ public static class StaffMemberEndpoints
                 assertion.TenantId,
                 actor.Session.Session.AccountId,
                 body.Role,
+                body.Reason,
+                idempotencyKey));
+            return Results.Ok(new StaffRoleActionResultV1(
+                ToApiModel(result.Member),
+                result.Changed,
+                result.SessionsEnded));
+        }
+        catch (StaffRoleActionException exception)
+        {
+            return Problem(httpContext, exception.StatusCode, exception.Code, exception.Title);
+        }
+    }
+
+    private static async Task<IResult> ExecuteRoleChangeAsync(
+        HttpContext httpContext,
+        Guid accountId,
+        ServiceAssertionVerifier assertionVerifier,
+        IValidateStaffSession sessionValidator,
+        Func<RoleChangeRequest, Task<StaffRoleActionOutput>> executeAsync,
+        CancellationToken cancellationToken)
+    {
+        var assertion = await VerifyServiceAsync(httpContext, assertionVerifier, WriteScope, cancellationToken);
+        if (assertion is null)
+        {
+            return Problem(httpContext, StatusCodes.Status401Unauthorized, "SERVICE_UNAUTHORIZED", "Service authentication is invalid.");
+        }
+
+        if (accountId == Guid.Empty)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "A staff member account id is required.");
+        }
+
+        var actor = await ResolveActorAsync(httpContext, assertion.TenantId, sessionValidator, cancellationToken);
+        if (actor.Problem is not null)
+        {
+            return actor.Problem;
+        }
+
+        if (!actor.Session!.Session.Permissions.Contains(StaffRoleCatalog.ManageAccess, StringComparer.Ordinal))
+        {
+            return Problem(httpContext, StatusCodes.Status403Forbidden, "PERMISSION_DENIED", "The current staff session cannot manage access.");
+        }
+
+        var body = await ReadRequestAsync<StaffMemberRoleChangeRequestV1>(httpContext, cancellationToken);
+        var idempotencyKey = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        if (body?.FromRole is null
+            || !StaffRoleCatalog.Contains(body.FromRole)
+            || body.ToRole is null
+            || !StaffRoleCatalog.Contains(body.ToRole)
+            || body.Reason is null
+            || body.Reason.Length > 1000
+            || string.IsNullOrWhiteSpace(idempotencyKey)
+            || idempotencyKey.Length > 128)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "Source and destination roles, a reason within the supported length, and a valid Idempotency-Key are required.");
+        }
+
+        try
+        {
+            var result = await executeAsync(new RoleChangeRequest(
+                assertion.TenantId,
+                actor.Session.Session.AccountId,
+                body.FromRole,
+                body.ToRole,
                 body.Reason,
                 idempotencyKey));
             return Results.Ok(new StaffRoleActionResultV1(
@@ -280,6 +380,14 @@ public static class StaffMemberEndpoints
         Guid TenantId,
         Guid ActorAccountId,
         string Role,
+        string Reason,
+        string IdempotencyKey);
+
+    private sealed record RoleChangeRequest(
+        Guid TenantId,
+        Guid ActorAccountId,
+        string FromRole,
+        string ToRole,
         string Reason,
         string IdempotencyKey);
 }

@@ -23,4 +23,11 @@ public interface IStaffMemberIdentityClient
         Guid identitySessionId,
         string idempotencyKey,
         CancellationToken cancellationToken);
+
+    Task<StaffMemberIdentityResult> ChangeRoleAsync(
+        Guid accountId,
+        StaffRoleChangeRequestV1 request,
+        Guid identitySessionId,
+        string idempotencyKey,
+        CancellationToken cancellationToken);
 }

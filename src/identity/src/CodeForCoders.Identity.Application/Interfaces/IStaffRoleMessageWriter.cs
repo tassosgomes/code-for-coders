@@ -9,6 +9,7 @@ public interface IStaffRoleMessageWriter
         string role,
         string reason,
         DateTimeOffset practicedOn,
+        string? correlationId,
         CancellationToken cancellationToken);
 
     Task AppendRoleRevokedAsync(
@@ -18,5 +19,6 @@ public interface IStaffRoleMessageWriter
         string role,
         string reason,
         DateTimeOffset practicedOn,
+        string? correlationId,
         CancellationToken cancellationToken);
 }
