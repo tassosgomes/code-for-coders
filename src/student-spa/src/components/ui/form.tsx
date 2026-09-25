@@ -1,5 +1,8 @@
 import { Controller, useFormContext, type FieldValues, type Path } from 'react-hook-form';
 
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
 type FormTextFieldProps<T extends FieldValues> = {
   autoComplete: string;
   label: string;
@@ -22,9 +25,9 @@ export function FormTextField<T extends FieldValues>({
       control={control}
       name={name}
       render={({ field, fieldState }) => (
-        <div className="form-field">
-          <label htmlFor={fieldId}>{label}</label>
-          <input
+        <div className="grid gap-2">
+          <Label htmlFor={fieldId}>{label}</Label>
+          <Input
             {...field}
             autoComplete={autoComplete}
             aria-describedby={fieldState.error ? errorId : undefined}
@@ -34,7 +37,7 @@ export function FormTextField<T extends FieldValues>({
             value={String(field.value ?? '')}
           />
           {fieldState.error?.message ? (
-            <p className="field-error" id={errorId} role="alert">
+            <p className="text-sm text-destructive" id={errorId} role="alert">
               {fieldState.error.message}
             </p>
           ) : null}

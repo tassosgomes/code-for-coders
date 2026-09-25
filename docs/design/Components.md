@@ -194,6 +194,20 @@ Base: `rounded-xl border bg-card shadow-sm`. Em código, use `Card`, `CardHeader
 
 Figma: `Sidebar Item` · `state` = default | active. Use o bloco **shadcn Sidebar** (`SidebarProvider`, `SidebarMenuButton isActive`). Largura via `--sidebar-width: 16.5rem`. Grupos com `SidebarGroupLabel` (visual `typo-overline`). O card "Plano Pro" fica no `SidebarFooter` com `className="dark bg-inverse"`.
 
+### Conta do aluno
+
+`AppShell` combina o `Sidebar` no desktop com `Sheet` no mobile. A composição de domínio fica em `app/`: o `StudentSessionPanel` usa `Avatar`, `DropdownMenu` e `Sonner` para exibir a identidade, trocar senha e sair. O contrato atual da sessão fornece o nome, mas não o e-mail; não complete essa informação por inferência nem altere o contrato visualmente sem uma fonte de dados aprovada.
+
+`ThemeMenu` fica na Topbar e oferece Claro, Escuro e Sistema. As rotas públicas seguem a preferência de tema do sistema.
+
+### PasswordField
+
+Use `PasswordField` nos formulários de conta para mostrar/ocultar o valor. `showRequirements` exibe a lista derivada de `passwordPolicySchema` e `passwordPolicyRequirements`; não repita as regras de senha no componente de tela. `action` aceita uma ação contextual ao lado do rótulo, como um link de recuperação.
+
+### StatusTile
+
+Use `StatusTile` para destacar confirmação, conclusão ou estado neutro de um fluxo. Mantenha o título, a descrição e as ações da própria tela; o tile é uma apresentação acessível e não deve introduzir novos estados de domínio.
+
 ---
 
 ## 4. Blocks (composições da plataforma)

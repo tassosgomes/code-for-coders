@@ -1,6 +1,6 @@
 # Plano de refatoração — Conta do aluno
 
-> **Status:** planejamento atualizado com o Figma aprovado em 2026-09-24; pronto para detalhar e executar as fatias.  
+> **Status:** T1–T8 e E1/E2 implementados; gates da SPA e Notification verificados em 2026-09-24. Revisão de telas feita em cenários representativos desktop/mobile e Light/Dark.
 > **Data:** 2026-09-24  
 > **Referências:** [Figma — Screens · Conta do aluno](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-Design-System?node-id=33-2&m=dev), [`wireframes-conta-aluno.md`](wireframes-conta-aluno.md), [`DESIGN.md`](../../DESIGN.md), [`Components.md`](Components.md).
 
@@ -26,8 +26,9 @@ A página [Screens — Conta do aluno](https://www.figma.com/design/kKNfxTqSFT5I
 
 - `src/student-spa` já implementa os fluxos e as rotas, com features isoladas, React Router, React Hook Form, Zod, React Query e Vite. A refatoração deve preservar APIs, schemas, hooks de formulário, tokens de idempotência e semântica dos tokens de confirmação/redefinição.
 - `RootRoute` atualmente envolve todas as rotas em `AppShell`; `AppShell` exibe a marca técnica `student-spa`, menu em inglês e navegação horizontal. Isso não separa os layouts público e autenticado.
-- `src/student-spa/src/assets/app.css` ainda contém cores, raios, sombras e layout antigos hardcoded. Os tokens do DS estão em `docs/design/globals.css`, mas esse arquivo não é importado pelo SPA.
+- `src/student-spa/src/assets/globals.css` contém os tokens do DS e é importado por `app.css`; os estilos específicos da aplicação ficam no SPA, junto de quem os consome.
 - `student-spa` usa CSS convencional e não tem Tailwind, shadcn/ui ou lucide-react nas dependências. `DESIGN.md` e `Components.md` descrevem Tailwind v4 + shadcn e usam instruções específicas do Next.js. Recomenda-se manter Vite/React e adaptar essa configuração ao Vite; não migrar o SPA para Next.js. A adoção de Tailwind v4 + componentes shadcn deve ser a escolha de implementação, pois é a convenção expressa nos documentos de design.
+- O contrato atual de sessão fornece `accountId`, `name` e `csrfToken`, mas não e-mail nem endpoint de perfil. Para preservar os contratos, a identidade no dashboard e no menu usa o nome; e-mail/perfil dependem de uma evolução futura da API.
 - `DashboardScreen` ainda apresenta o health-check técnico do workspace; `RouteError` contém texto em inglês; a tela de troca de senha ainda usa uma página de sucesso em vez do retorno ao início com toast.
 - A renderização de e-mail em `src/notification/.../MessageTemplateRenderer.cs` hoje gera somente texto em inglês. O modelo `TransactionalEmail` já aceita `HtmlBody`, e os adapters SMTP/HTTP já transmitem texto e HTML.
 
@@ -50,7 +51,7 @@ A página [Screens — Conta do aluno](https://www.figma.com/design/kKNfxTqSFT5I
 
 ### Reaproveitar ou adaptar
 
-- Tokens semânticos de `docs/design/globals.css` e regras de cor, tipografia, espaçamento, raio, dark mode e acessibilidade de `DESIGN.md`.
+- Tokens semânticos de `src/student-spa/src/assets/globals.css` e regras de cor, tipografia, espaçamento, raio, dark mode e acessibilidade de `DESIGN.md`.
 - `FormTextField` em `src/student-spa/src/components/ui/form.tsx`, integrado a React Hook Form. Adaptar a apresentação mantendo os schemas Zod como fonte de validação.
 - `passwordPolicySchema` e `studentPasswordSchema` existentes para os requisitos ao vivo; não criar uma segunda política no componente visual.
 - Rotas e APIs/hook existentes nas features de cadastro, sessão, confirmação, recuperação, dashboard e troca de senha.
@@ -98,7 +99,7 @@ O componente de UI compartilhado deve permanecer sem conhecimento de domínio. A
 
 ### Etapa 3 — Área logada e estados globais
 
-1. Implementar Sidebar/Topbar e composição do menu de conta (perfil, e-mail, Trocar senha, Sair); usar Sheet em viewport mobile.
+1. Implementar Sidebar/Topbar e composição do menu de conta (nome, Trocar senha, Sair); usar Sheet em viewport mobile. E-mail/perfil ficam fora da UI enquanto não houver fonte de dados no contrato atual.
 2. Refatorar T6 para boas-vindas, empty state e card de conta; remover o health-check da UI do aluno, sem remover a API operacional se ainda for usada em outro contexto.
 3. Refatorar T7, incluindo política de senha, aviso de sessões e retorno ao início com toast após sucesso.
 4. Preservar a diferença entre expiração e saída voluntária e implementar T8 para 404 deslogado, 404 logado e falha inesperada em pt-BR.
@@ -116,10 +117,18 @@ O componente de UI compartilhado deve permanecer sem conhecimento de domínio. A
 
 ### Etapa 5 — Revisão visual e gate de entrega
 
-- Conferir cada estado implementado contra seu frame aprovado em 1440 px e 390 px; rever Light/Dark nos frames definidos.
+- Conferir as telas representativas contra os frames aprovados em 1440 px e 390 px; rever Light/Dark nos frames definidos. Os testes de integração cobrem os estados de fluxo sem frame mobile próprio.
 - Fazer revisão de teclado, foco, leitor de tela, mensagens de status, alvos de toque e contraste conforme `DESIGN.md`.
 - Rodar no `student-spa`: lint, build/typecheck e testes Vitest afetados; rodar os testes do serviço Notification alterado. Revisar screenshots e registrar exceções antes do merge.
 - Atualizar `docs/design/Components.md` para `PasswordField`, layouts e demais blocos realmente adicionados; manter Figma e documentação alinhados.
+
+## Registro da execução
+
+- Base SPA: Tailwind v4 pelo plugin Vite, tokens canônicos em `src/student-spa/src/assets/globals.css`, componentes shadcn gerados pelo CLI e layouts `AuthLayout`/`AppShell`.
+- Fluxos: cadastro, confirmação e reenvio, login, recuperação e redefinição, dashboard, troca de senha, limites de rota, sessão expirada e logout.
+- Blocos e documentação: `BrandLogo`, `CodeWindow`, `StatusTile`, `PasswordField`, seletor de tema, Sidebar/Sheet, Sonner e correção do caminho de `Components.md`.
+- Conta: o menu e o card mostram o nome disponível na sessão; e-mail e perfil não foram inventados nem adicionados ao contrato.
+- Revisão visual: login em 1440 px e 390 px, dashboard autenticado simulado em 1440 px e 390 px, Light e Dark. A validação foi visual/manual e não adicionou screenshots ao repositório.
 
 ## Gates de aceite
 
@@ -145,4 +154,4 @@ O componente de UI compartilhado deve permanecer sem conhecimento de domínio. A
 - SPA: `src/student-spa/src/app/router.tsx`, `app/routes/*`, `components/app-shell.tsx`, `components/ui/form.tsx`, `assets/app.css`.
 - Features: `features/student-registration/components/student-registration-screen.tsx`, `features/student-confirmation/components/student-confirmation-screen.tsx`, `features/student-session/components/student-login-screen.tsx`, `features/student-session/components/student-session-panel.tsx`, `features/student-password-recovery/components/student-password-recovery-screen.tsx`, `features/student-dashboard/components/dashboard-screen.tsx` e `features/student-password-change/components/student-password-change-screen.tsx`.
 - Notificações: `src/notification/src/CodeForCoders.Notification.Application/Services/MessageTemplateRenderer.cs` e testes relacionados.
-- Design docs: `DESIGN.md`, `docs/design/Components.md`, `docs/design/globals.css` e `docs/design/wireframes-conta-aluno.md`.
+- Design docs: `DESIGN.md`, `docs/design/Components.md` e `docs/design/wireframes-conta-aluno.md`. Os tokens CSS ficam em `src/student-spa/src/assets/globals.css`, dentro do SPA consumidor.

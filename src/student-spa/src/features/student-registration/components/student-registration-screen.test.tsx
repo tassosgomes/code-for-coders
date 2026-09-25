@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
@@ -22,15 +23,19 @@ describe('StudentRegistration', () => {
       }),
     );
 
-    renderWithProviders(<StudentRegistrationScreen />);
+    renderWithProviders(
+      <MemoryRouter>
+        <StudentRegistrationScreen />
+      </MemoryRouter>,
+    );
 
     await user.type(screen.getByRole('textbox', { name: 'Nome' }), 'Ana Souza');
     await user.type(screen.getByRole('textbox', { name: 'E-mail' }), 'ANA@example.com');
     await user.type(screen.getByLabelText('Senha'), 'SenhaForte1!');
     await user.click(screen.getByRole('button', { name: 'Criar conta' }));
 
-    expect(await screen.findByRole('heading', { name: 'Cadastro iniciado' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Confira seu e-mail para confirmar sua conta.');
+    expect(await screen.findByRole('heading', { name: 'Confira seu e-mail' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Enviamos um link de confirmação');
     await waitFor(() => expect(idempotencyKey).toBeTruthy());
     expect(requestBody).toEqual({
       name: 'Ana Souza',

@@ -1,10 +1,22 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FormProvider } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import axios from 'axios';
 import * as z from 'zod';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { StatusTile } from '@/components/blocks/status-tile';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { FormTextField } from '@/components/ui/form';
+import { Skeleton } from '@/components/ui/skeleton';
 import { paths } from '@/config/paths';
 import {
   useConfirmStudentAccount,
@@ -12,6 +24,7 @@ import {
   type StudentConfirmationEmailInput,
 } from '@/features/student-confirmation/api/student-confirmation';
 import { useStudentConfirmationRequestForm } from '@/features/student-confirmation/hooks/use-student-confirmation-request-form';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const confirmationProblemSchema = z.object({ code: z.string().optional() }).passthrough();
 
@@ -24,7 +37,7 @@ const getRequestErrorMessage = (error: unknown) => {
     : 'Não foi possível solicitar outro link agora. Tente novamente em instantes.';
 };
 
-type ConfirmationState = 'checking' | 'confirmed' | 'invalid' | 'request-sent';
+type ConfirmationState = 'checking' | 'confirmed' | 'invalid' | 'request-form' | 'request-sent';
 
 export const StudentConfirmationScreen = () => {
   const location = useLocation();
@@ -36,7 +49,10 @@ export const StudentConfirmationScreen = () => {
   const handledTokenRef = useRef<string | null>(null);
   const confirmationKeyRef = useRef<string | null>(null);
   const requestAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
-  const [state, setState] = useState<ConfirmationState>(token ? 'checking' : 'invalid');
+  const [state, setState] = useState<ConfirmationState>(token ? 'checking' : 'request-form');
+  const [submittedEmail, setSubmittedEmail] = useState('');
+
+  useDocumentTitle('Confirmar e-mail');
 
   const confirmAsync = confirmation.mutateAsync;
 
@@ -69,61 +85,110 @@ export const StudentConfirmationScreen = () => {
     try {
       await requestConfirmation.mutateAsync({ input, idempotencyKey: attempt.key });
       requestAttemptRef.current = null;
+      setSubmittedEmail(input.email);
       form.reset();
       setState('request-sent');
     } catch {
-      setState('invalid');
+      // Keep the email in the form so the student can retry without retyping it.
     }
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) =>
     form.handleSubmit(submitConfirmationRequest)(event);
 
+  if (state === 'checking') {
+    return (
+      <Card aria-live="polite" aria-busy="true" role="status">
+        <CardHeader>
+          <Skeleton aria-hidden="true" className="h-7 w-3/4" />
+          <Skeleton aria-hidden="true" className="h-4 w-full" />
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Confirmando seu e-mail…</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (state === 'confirmed') {
+    return (
+      <StatusTile
+        description="Tudo certo. Sua conta está pronta para entrar."
+        title="E-mail confirmado"
+        tone="success"
+      >
+          <Button asChild className="w-full">
+            <Link to={paths.studentLogin.getHref()}>Entrar na plataforma</Link>
+          </Button>
+      </StatusTile>
+    );
+  }
+
+  if (state === 'request-sent') {
+    return (
+      <StatusTile
+        description={(
+          <>
+            Se houver uma conta pendente para <strong className="font-medium text-foreground">{submittedEmail}</strong>,
+            o novo link já está a caminho.
+          </>
+        )}
+        title="Verifique seu e-mail"
+      >
+          <Button asChild variant="outline">
+            <Link to={paths.studentLogin.getHref()}>Ir para a entrada</Link>
+          </Button>
+      </StatusTile>
+    );
+  }
+
+  const isResendEntry = state === 'request-form';
+
   return (
-    <main className="page-shell">
-      <p className="eyebrow">Conta do aluno</p>
-      {state === 'checking' ? (
-        <section aria-live="polite" className="registration-message" role="status">
-          <h1>Confirmando conta</h1>
-          <p>Aguarde enquanto validamos seu link.</p>
-        </section>
-      ) : null}
-      {state === 'confirmed' ? (
-        <section aria-live="polite" className="registration-message" role="status">
-          <h1>Conta confirmada</h1>
-          <p>Seu e-mail foi confirmado. Você já pode entrar na sua conta.</p>
-        </section>
-      ) : null}
-      {state === 'request-sent' ? (
-        <section aria-live="polite" className="registration-message" role="status">
-          <h1>Verifique seu e-mail</h1>
-          <p>Se houver uma conta pendente para esse e-mail, enviaremos um novo link de confirmação.</p>
-        </section>
-      ) : null}
-      {state === 'invalid' ? (
-        <>
-          <h1>Link de confirmação indisponível</h1>
-          <p className="lead">Este link não é válido ou expirou. Você pode solicitar um novo link.</p>
-          <FormProvider {...form}>
-            <form className="registration-form" noValidate onSubmit={onSubmit}>
-              <FormTextField<StudentConfirmationEmailInput>
-                autoComplete="email"
-                label="E-mail"
-                name="email"
-                type="email"
-              />
-              {requestConfirmation.isError ? (
-                <p className="form-error" role="alert">
-                  {getRequestErrorMessage(requestConfirmation.error)}
-                </p>
-              ) : null}
-              <button className="primary-button" disabled={requestConfirmation.isPending} type="submit">
-                {requestConfirmation.isPending ? 'Enviando…' : 'Enviar novo link'}
-              </button>
-            </form>
-          </FormProvider>
-        </>
-      ) : null}
-    </main>
+    <Card>
+      <CardHeader>
+        <p className="typo-overline text-muted-foreground">Conta do aluno</p>
+        <CardTitle className="text-2xl">
+          <h1>{isResendEntry ? 'Reenviar confirmação' : 'Este link não vale mais'}</h1>
+        </CardTitle>
+        <CardDescription>
+          {isResendEntry
+            ? 'Informe o e-mail do cadastro. Se houver uma conta pendente, enviaremos um novo link.'
+            : 'Este link expirou ou já foi usado. Sua conta continua salva; peça um novo link para confirmar o e-mail.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!isResendEntry ? (
+          <Alert className="mb-5">
+            <AlertTitle>Este link não vale mais</AlertTitle>
+            <AlertDescription>Você pode pedir outro link de confirmação abaixo.</AlertDescription>
+          </Alert>
+        ) : null}
+        <FormProvider {...form}>
+          <form className="grid gap-5" noValidate onSubmit={onSubmit}>
+            <FormTextField<StudentConfirmationEmailInput>
+              autoComplete="email"
+              label="E-mail"
+              name="email"
+              type="email"
+            />
+            {requestConfirmation.isError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Não foi possível enviar o pedido</AlertTitle>
+                <AlertDescription>{getRequestErrorMessage(requestConfirmation.error)}</AlertDescription>
+              </Alert>
+            ) : null}
+            <Button className="w-full" disabled={requestConfirmation.isPending} type="submit">
+              {requestConfirmation.isPending ? 'Enviando…' : 'Receber novo link'}
+            </Button>
+          </form>
+        </FormProvider>
+      </CardContent>
+      <CardFooter>
+        <Button asChild className="px-0" variant="link">
+          <Link to={paths.studentLogin.getHref()}>Voltar para a entrada</Link>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

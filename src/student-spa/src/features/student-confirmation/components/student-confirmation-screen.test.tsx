@@ -46,7 +46,7 @@ describe('StudentConfirmation', () => {
 
     renderConfirmationRoute('/confirm-account?token=one-time-secret');
 
-    expect(await screen.findByRole('heading', { name: 'Conta confirmada' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'E-mail confirmado' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId('current-url')).toHaveTextContent('/confirm-account'));
     expect(screen.getByTestId('current-url')).not.toHaveTextContent('one-time-secret');
     expect(requestBody).toEqual({ token: 'one-time-secret' });
@@ -76,12 +76,12 @@ describe('StudentConfirmation', () => {
 
     renderConfirmationRoute('/confirm-account?token=expired-token');
 
-    expect(await screen.findByRole('heading', { name: 'Link de confirmação indisponível' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Este link não vale mais' })).toBeInTheDocument();
     await user.type(screen.getByRole('textbox', { name: 'E-mail' }), 'ANA@example.com');
-    await user.click(screen.getByRole('button', { name: 'Enviar novo link' }));
+    await user.click(screen.getByRole('button', { name: 'Receber novo link' }));
 
     expect(await screen.findByRole('heading', { name: 'Verifique seu e-mail' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Se houver uma conta pendente para esse e-mail');
+    expect(screen.getByRole('status')).toHaveTextContent('Se houver uma conta pendente para ana@example.com');
     expect(requestBody).toEqual({ email: 'ana@example.com' });
     expect(idempotencyKey).toBeTruthy();
     expect(screen.getByTestId('current-url')).toHaveTextContent('/confirm-account');

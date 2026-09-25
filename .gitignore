@@ -1,5 +1,7 @@
 .idea/
 .vs/
+/.env
+/.env.tmp.*
 **/bin/
 **/obj/
 **/TestResults/

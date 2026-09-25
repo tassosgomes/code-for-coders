@@ -4,7 +4,19 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import axios from 'axios';
 import * as z from 'zod';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { StatusTile } from '@/components/blocks/status-tile';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { FormTextField } from '@/components/ui/form';
+import { PasswordField } from '@/components/ui/password-field';
 import { paths } from '@/config/paths';
 import {
   useRequestStudentPasswordReset,
@@ -29,6 +41,14 @@ const getErrorCode = (error: unknown) => {
 type StudentPasswordRecoveryScreenProps = { mode: 'request' | 'reset' };
 type RecoveryState = 'request-form' | 'request-sent' | 'reset-form' | 'reset-done' | 'reset-rejected' | 'reset-error';
 
+const resetErrorMessage = (error: unknown) => {
+  if (getErrorCode(error) === 'PASSWORD_POLICY_VIOLATION') {
+    return 'A senha ainda não atende aos requisitos. Confira os itens e tente novamente.';
+  }
+
+  return 'Não foi possível redefinir sua senha agora. Tente novamente em instantes.';
+};
+
 export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryScreenProps) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,13 +61,12 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
   const handledTokenRef = useRef(false);
   const requestAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const resetAttemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const [state, setState] = useState<RecoveryState>(mode === 'request'
     ? 'request-form'
     : initialToken ? 'reset-form' : 'reset-rejected');
 
   useDocumentTitle(mode === 'request' ? 'Recuperar senha' : 'Redefinir senha');
-
-  const resetAsync = reset.mutateAsync;
 
   useEffect(() => {
     if (mode !== 'reset' || handledTokenRef.current) {
@@ -74,10 +93,11 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
     try {
       await request.mutateAsync({ input, idempotencyKey: attempt.key });
       requestAttemptRef.current = null;
+      setSubmittedEmail(input.email);
       requestForm.reset();
       setState('request-sent');
     } catch {
-      setState('request-form');
+      // Keep the submitted email in the form so a network failure is easy to retry.
     }
   };
 
@@ -99,28 +119,41 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
     reset.reset();
 
     try {
-      await resetAsync({ token, input, idempotencyKey: attempt.key });
+      await reset.mutateAsync({ token, input, idempotencyKey: attempt.key });
       resetAttemptRef.current = null;
       resetForm.reset();
       resetTokenRef.current = null;
       setState('reset-done');
     } catch (error) {
-      setState(getErrorCode(error) === 'PASSWORD_RESET_REJECTED' ? 'reset-rejected' : 'reset-error');
+      if (getErrorCode(error) === 'PASSWORD_RESET_REJECTED') {
+        resetTokenRef.current = null;
+        setState('reset-rejected');
+        return;
+      }
+
+      // A password policy or network failure does not consume or discard the token.
+      setState('reset-error');
     }
   };
 
   const submitReset = (event: FormEvent<HTMLFormElement>) =>
     resetForm.handleSubmit(submitPasswordReset)(event);
 
-  return (
-    <main className="page-shell">
-      <p className="eyebrow">Conta do aluno</p>
-      {mode === 'request' && state === 'request-form' ? (
-        <>
-          <h1>Recuperar senha</h1>
-          <p className="lead">Informe o e-mail da sua conta. Se houver uma conta elegível, enviaremos um link para criar outra senha.</p>
+  if (mode === 'request' && state === 'request-form') {
+    return (
+      <Card>
+        <CardHeader>
+          <p className="typo-overline text-muted-foreground">Conta do aluno</p>
+          <CardTitle className="typo-h3">
+            <h1>Recuperar senha</h1>
+          </CardTitle>
+          <CardDescription>
+            Informe o e-mail da conta. Se ela existir, enviaremos um link para criar uma nova senha.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <FormProvider {...requestForm}>
-            <form className="registration-form" noValidate onSubmit={submitRequest}>
+            <form className="grid gap-5" noValidate onSubmit={submitRequest}>
               <FormTextField<StudentPasswordResetRequestInput>
                 autoComplete="email"
                 label="E-mail"
@@ -128,61 +161,105 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
                 type="email"
               />
               {request.isError ? (
-                <p className="form-error" role="alert">Não foi possível solicitar a recuperação agora. Tente novamente em instantes.</p>
+                <Alert variant="destructive">
+                  <AlertTitle>Não foi possível enviar o pedido</AlertTitle>
+                  <AlertDescription>
+                    Não conseguimos solicitar a recuperação agora. Tente novamente em instantes.
+                  </AlertDescription>
+                </Alert>
               ) : null}
-              <button className="primary-button" disabled={request.isPending} type="submit">
-                {request.isPending ? 'Enviando…' : 'Enviar link de recuperação'}
-              </button>
+              <Button className="w-full" disabled={request.isPending} type="submit">
+                {request.isPending ? 'Enviando…' : 'Receber link de recuperação'}
+              </Button>
             </form>
           </FormProvider>
-        </>
-      ) : null}
-      {mode === 'request' && state === 'request-sent' ? (
-        <section aria-live="polite" className="registration-message" role="status">
-          <h1>Verifique seu e-mail</h1>
-          <p>Se houver uma conta de aluno elegível para esse e-mail, enviaremos um link para redefinir sua senha.</p>
-        </section>
-      ) : null}
-      {mode === 'reset' && (state === 'reset-form' || state === 'reset-error') ? (
-        <>
-          <h1>Crie uma nova senha</h1>
-          <p className="lead">Escolha uma senha que você ainda não usa nesta conta.</p>
+        </CardContent>
+        <CardFooter>
+          <Button asChild className="px-0" variant="link">
+            <Link to={paths.studentLogin.getHref()}>Voltar para a entrada</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
+  if (mode === 'request' && state === 'request-sent') {
+    return (
+      <StatusTile
+        description={(
+          <>
+            Se houver uma conta de aluno com <strong className="font-medium text-foreground">{submittedEmail}</strong>,
+            enviamos um link para criar uma nova senha. Ele vale por tempo limitado.
+          </>
+        )}
+        title="Verifique seu e-mail"
+      >
+          <Button asChild variant="outline">
+            <Link to={paths.studentLogin.getHref()}>Voltar para a entrada</Link>
+          </Button>
+      </StatusTile>
+    );
+  }
+
+  if (mode === 'reset' && (state === 'reset-form' || state === 'reset-error')) {
+    return (
+      <Card>
+        <CardHeader>
+          <p className="typo-overline text-muted-foreground">Conta do aluno</p>
+          <CardTitle className="typo-h3">
+            <h1>Crie uma nova senha</h1>
+          </CardTitle>
+          <CardDescription>Escolha uma senha que você ainda não usa nesta conta.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <FormProvider {...resetForm}>
-            <form className="registration-form" noValidate onSubmit={submitReset}>
-              <FormTextField<StudentPasswordResetFormInput>
+            <form className="grid gap-5" noValidate onSubmit={submitReset}>
+              <PasswordField<StudentPasswordResetFormInput>
                 autoComplete="new-password"
                 label="Nova senha"
                 name="newPassword"
-                type="password"
+                showRequirements
               />
-              <p className="password-hint">Use oito ou mais caracteres, com maiúscula, minúscula, número e símbolo.</p>
-              {reset.isError ? (
-                <p className="form-error" role="alert">{getErrorCode(reset.error) === 'PASSWORD_RESET_REJECTED'
-                  ? 'O link expirou ou a senha não atende à política. Solicite outro link ou revise a senha.'
-                  : 'Não foi possível redefinir sua senha agora. Tente novamente em instantes.'}</p>
+              {state === 'reset-error' ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Não foi possível redefinir a senha</AlertTitle>
+                  <AlertDescription>{resetErrorMessage(reset.error)}</AlertDescription>
+                </Alert>
               ) : null}
-              <button className="primary-button" disabled={reset.isPending} type="submit">
+              <Button className="w-full" disabled={reset.isPending} type="submit">
                 {reset.isPending ? 'Salvando…' : 'Redefinir senha'}
-              </button>
+              </Button>
             </form>
           </FormProvider>
-        </>
-      ) : null}
-      {mode === 'reset' && state === 'reset-done' ? (
-        <section aria-live="polite" className="registration-message" role="status">
-          <h1>Senha redefinida</h1>
-          <p>Sua senha foi alterada. Entre usando a nova senha.</p>
-          <Link className="primary-link" to={paths.studentLogin.getHref()}>Entrar</Link>
-        </section>
-      ) : null}
-      {mode === 'reset' && state === 'reset-rejected' ? (
-        <section aria-live="polite" className="registration-message" role="alert">
-          <h1>Link de recuperação indisponível</h1>
-          <p>Este link não é válido ou expirou. Você pode solicitar um novo.</p>
-          <Link className="primary-link" to={paths.studentPasswordRecovery.getHref()}>Solicitar novo link</Link>
-        </section>
-      ) : null}
-      {mode === 'request' ? <p><Link className="primary-link" to={paths.studentLogin.getHref()}>Voltar para entrar</Link></p> : null}
-    </main>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (mode === 'reset' && state === 'reset-done') {
+    return (
+      <StatusTile
+        description="Pronto. Por segurança, encerramos as outras sessões da sua conta."
+        title="Senha redefinida"
+        tone="success"
+      >
+          <Button asChild className="w-full">
+            <Link to={paths.studentLogin.getHref()}>Entrar com a nova senha</Link>
+          </Button>
+      </StatusTile>
+    );
+  }
+
+  return (
+    <StatusTile
+      announceAs="alert"
+      description="Este link expirou ou já foi usado. Peça um novo link para criar outra senha."
+      title="Este link não vale mais"
+      tone="warning"
+    >
+        <Button asChild className="w-full">
+          <Link to={paths.studentPasswordRecovery.getHref()}>Pedir novo link</Link>
+        </Button>
+    </StatusTile>
   );
 };

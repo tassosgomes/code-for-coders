@@ -48,10 +48,10 @@ describe('StudentPasswordRecovery', () => {
     renderRecoveryRoute(paths.studentPasswordRecovery.getHref(), 'request');
 
     await user.type(screen.getByRole('textbox', { name: 'E-mail' }), 'ANA@example.com');
-    await user.click(screen.getByRole('button', { name: 'Enviar link de recuperação' }));
+    await user.click(screen.getByRole('button', { name: 'Receber link de recuperação' }));
 
     expect(await screen.findByRole('heading', { name: 'Verifique seu e-mail' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Se houver uma conta de aluno elegível');
+    expect(screen.getByRole('status')).toHaveTextContent('Se houver uma conta de aluno com ana@example.com');
     expect(requestBody).toEqual({ email: 'ana@example.com' });
     expect(idempotencyKey).toBeTruthy();
   });
@@ -95,9 +95,9 @@ describe('StudentPasswordRecovery', () => {
     await user.type(screen.getByLabelText('Nova senha'), 'SenhaNova2!');
     await user.click(screen.getByRole('button', { name: 'Redefinir senha' }));
 
-    expect(await screen.findByRole('heading', { name: 'Link de recuperação indisponível' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Este link não vale mais' })).toBeInTheDocument();
     expect(screen.getByTestId('current-url')).not.toHaveTextContent('expired-token');
-    expect(screen.getByRole('link', { name: 'Solicitar novo link' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Pedir novo link' })).toHaveAttribute(
       'href',
       paths.studentPasswordRecovery.getHref(),
     );

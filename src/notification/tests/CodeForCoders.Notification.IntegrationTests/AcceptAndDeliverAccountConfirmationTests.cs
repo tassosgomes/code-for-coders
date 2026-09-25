@@ -108,12 +108,23 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
                 TimeSpan.FromSeconds(15),
                 cancellationToken);
             Assert.Equal(request.Destinatario, email.To);
-            Assert.Equal("Confirm your account", email.Subject);
-            Assert.Contains(request.Dados!.Nome!, email.TextBody, StringComparison.Ordinal);
-            Assert.Contains(request.Dados.Link!, email.TextBody, StringComparison.Ordinal);
-            Assert.Contains("24 hours", email.TextBody, StringComparison.Ordinal);
+            Assert.Equal("Confirme seu cadastro na Code4Coders", email.Subject);
+            Assert.Contains("Oi, Ana!", email.TextBody, StringComparison.Ordinal);
+            Assert.Contains(request.Dados!.Link!, email.TextBody, StringComparison.Ordinal);
+            Assert.Contains("O link vale por 24 horas e só funciona uma vez.", email.TextBody, StringComparison.Ordinal);
+            Assert.DoesNotContain("student@example.com", email.TextBody, StringComparison.Ordinal);
+            Assert.DoesNotContain("Souza", email.TextBody, StringComparison.Ordinal);
             Assert.DoesNotContain("unsubscribe", email.TextBody, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("descadastro", email.TextBody, StringComparison.OrdinalIgnoreCase);
+
+            var htmlBody = Assert.IsType<string>(email.HtmlBody);
+            Assert.Contains("<html lang=\"pt-BR\">", htmlBody, StringComparison.Ordinal);
+            Assert.Contains("max-width:600px", htmlBody, StringComparison.Ordinal);
+            Assert.Contains("Confirmar meu e-mail", htmlBody, StringComparison.Ordinal);
+            Assert.Contains("Ou copie este link no navegador:", htmlBody, StringComparison.Ordinal);
+            Assert.Contains("O link vale por 24 horas e só funciona uma vez.", htmlBody, StringComparison.Ordinal);
+            Assert.DoesNotContain("student@example.com", htmlBody, StringComparison.Ordinal);
+            Assert.DoesNotContain("Souza", htmlBody, StringComparison.Ordinal);
 
             var deliveryRecord = await WaitForDeliveryRecordAsync(
                 tenantId,

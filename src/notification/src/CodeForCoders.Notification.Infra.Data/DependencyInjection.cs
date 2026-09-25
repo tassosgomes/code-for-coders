@@ -49,10 +49,16 @@ public static class DependencyInjection
             .Validate(options => options.Transport is "http" or "smtp", "Email transport must be http or smtp.")
             .Validate(options => options.Transport != "smtp" || environment.IsDevelopment(), "SMTP transport is only available in Development.")
             .Validate(options => options.Transport != "smtp" || !string.IsNullOrWhiteSpace(options.SmtpHost), "SMTP host is required.")
-            .Validate(
-                options => options.ValidityHoursByPurpose.TryGetValue("confirmacao-de-conta", out var accountValidity)
-                    && accountValidity > 0,
+            .Validate(options => options.ValidityHoursByPurpose.TryGetValue(
+                    "confirmacao-de-conta",
+                    out var accountValidity)
+                && accountValidity > 0,
                 "Email validity for account confirmation is required.")
+            .Validate(options => options.ValidityHoursByPurpose.TryGetValue(
+                    "recuperacao-de-senha",
+                    out var recoveryValidity)
+                && recoveryValidity > 0,
+                "Email validity for password recovery is required.")
             .ValidateOnStart();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))

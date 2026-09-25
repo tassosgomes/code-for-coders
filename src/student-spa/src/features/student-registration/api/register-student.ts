@@ -2,14 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import * as z from 'zod';
 
 import { apiClient } from '@/lib/api-client';
+import { passwordPolicySchema } from '@/utils/password-policy-schema';
 
-export const studentPasswordSchema = z
-  .string()
-  .min(8, 'Use pelo menos oito caracteres.')
-  .regex(/[A-Z]/, 'Inclua uma letra maiúscula.')
-  .regex(/[a-z]/, 'Inclua uma letra minúscula.')
-  .regex(/\d/, 'Inclua um número.')
-  .regex(/[^\p{L}\p{N}\s]/u, 'Inclua um símbolo que não seja espaço.');
+export const studentPasswordSchema = passwordPolicySchema;
 
 export const registerStudentSchema = z.object({
   name: z.string().trim().min(1, 'Informe seu nome.'),

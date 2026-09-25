@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Application.Exceptions;
 using CodeForCoders.Notification.Application.Interfaces;
@@ -25,6 +26,32 @@ public sealed class HttpTransactionalEmailSenderTests
         var sender = CreateSender((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Accepted)));
 
         await sender.SendAsync(Email, CancellationToken.None);
+    }
+
+    [Fact(DisplayName = nameof(SendAsync_WithHtmlAlternate_MapsBothBodiesToProviderPayload))]
+    [Trait("Unit", "HttpTransactionalEmailSender - Provider payload")]
+    public async Task SendAsync_WithHtmlAlternate_MapsBothBodiesToProviderPayload()
+    {
+        string? capturedBody = null;
+        var sender = CreateSender(
+            async (request, cancellationToken) =>
+            {
+                capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+                return new HttpResponseMessage(HttpStatusCode.Accepted);
+            });
+        var email = new TransactionalEmail(
+            "destinatario@example.invalid",
+            "Assunto",
+            "Alternativa em texto",
+            "<html><body>Alternativa HTML</body></html>");
+
+        await sender.SendAsync(email, TestContext.Current.CancellationToken);
+
+        using var payload = JsonDocument.Parse(Assert.IsType<string>(capturedBody));
+        Assert.Equal("Alternativa em texto", payload.RootElement.GetProperty("text").GetString());
+        Assert.Equal(
+            "<html><body>Alternativa HTML</body></html>",
+            payload.RootElement.GetProperty("html").GetString());
     }
 
     [Theory]

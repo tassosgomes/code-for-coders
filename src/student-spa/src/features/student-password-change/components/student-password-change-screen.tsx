@@ -1,10 +1,14 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { FormProvider } from 'react-hook-form';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import axios from 'axios';
 import * as z from 'zod';
 
-import { FormTextField } from '@/components/ui/form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { PasswordField } from '@/components/ui/password-field';
 import { paths } from '@/config/paths';
 import {
   useChangeStudentPassword,
@@ -28,8 +32,8 @@ type StudentPasswordChangeScreenProps = {
 export const StudentPasswordChangeScreen = ({ csrfToken }: StudentPasswordChangeScreenProps) => {
   const form = useStudentPasswordChangeForm();
   const change = useChangeStudentPassword();
+  const navigate = useNavigate();
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
-  const [changed, setChanged] = useState(false);
 
   useDocumentTitle('Trocar senha');
 
@@ -45,59 +49,69 @@ export const StudentPasswordChangeScreen = ({ csrfToken }: StudentPasswordChange
       await change.mutateAsync({ input, csrfToken, idempotencyKey: attempt.key });
       attemptRef.current = null;
       form.reset();
-      setChanged(true);
+      toast.success('Senha trocada. Encerramos as outras sessões.');
+      await navigate(paths.home.getHref(), { replace: true });
     } catch {
-      setChanged(false);
+      // The mutation error is rendered below while preserving the entered values.
     }
   };
 
-  if (changed) {
-    return (
-      <main className="page-shell">
-        <p className="eyebrow">Conta do aluno</p>
-        <section aria-live="polite" className="registration-message" role="status">
-          <h1>Senha alterada</h1>
-          <p>Sua senha foi alterada. Esta sessão continua ativa.</p>
-          <Link className="primary-link" to={paths.home.getHref()}>Voltar ao início</Link>
-        </section>
-      </main>
-    );
-  }
-
   const errorCode = change.isError ? getErrorCode(change.error) : undefined;
   return (
-    <main className="page-shell">
-      <p className="eyebrow">Conta do aluno</p>
-      <h1>Trocar senha</h1>
-      <p className="lead">Confirme sua senha atual e escolha uma nova senha.</p>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <Link className="inline-flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground" to={paths.home.getHref()}>
+        ← Início
+      </Link>
+      <header className="space-y-2">
+        <p className="typo-overline text-primary">Conta</p>
+        <h2 className="typo-h2" id="student-password-change-title">Trocar senha</h2>
+      </header>
       <FormProvider {...form}>
-        <form className="registration-form" noValidate onSubmit={(event) => void form.handleSubmit(changePassword)(event)}>
-          <FormTextField<StudentPasswordChangeInput>
-            autoComplete="current-password"
-            label="Senha atual"
-            name="currentPassword"
-            type="password"
-          />
-          <FormTextField<StudentPasswordChangeInput>
-            autoComplete="new-password"
-            label="Nova senha"
-            name="newPassword"
-            type="password"
-          />
-          <p className="password-hint">Use oito ou mais caracteres, com maiúscula, minúscula, número e símbolo.</p>
-          {change.isError ? (
-            <p className="form-error" role="alert">
-              {errorCode === 'PASSWORD_CHANGE_REJECTED'
-                ? 'A senha atual está incorreta ou a nova senha não atende à política.'
-                : 'Não foi possível trocar sua senha agora. Tente novamente em instantes.'}
-            </p>
-          ) : null}
-          <button className="primary-button" disabled={change.isPending} type="submit">
-            {change.isPending ? 'Salvando…' : 'Trocar senha'}
-          </button>
+        <form
+          aria-labelledby="student-password-change-title"
+          className="w-full max-w-xl"
+          noValidate
+          onSubmit={(event) => void form.handleSubmit(changePassword)(event)}
+        >
+          <Card>
+            <CardContent className="grid gap-6">
+              <PasswordField<StudentPasswordChangeInput>
+                autoComplete="current-password"
+                label="Senha atual"
+                name="currentPassword"
+              />
+              <PasswordField<StudentPasswordChangeInput>
+                autoComplete="new-password"
+                label="Nova senha"
+                name="newPassword"
+                showRequirements
+              />
+              <Alert className="border-primary/30 bg-primary/5 text-foreground" role="note">
+                <AlertDescription>
+                  Ao trocar, as outras sessões da sua conta serão encerradas. Esta sessão continua ativa.
+                </AlertDescription>
+              </Alert>
+              {change.isError ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    {errorCode === 'PASSWORD_CHANGE_REJECTED'
+                      ? 'A senha atual não confere ou a nova senha não cumpre os requisitos. Confira e tente de novo.'
+                      : 'Não foi possível trocar sua senha agora. Tente novamente em instantes.'}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+              <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
+                <Button asChild variant="outline">
+                  <Link to={paths.home.getHref()}>Cancelar</Link>
+                </Button>
+                <Button disabled={change.isPending} type="submit">
+                  {change.isPending ? 'Salvando…' : 'Trocar senha'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </form>
       </FormProvider>
-      <p><Link className="primary-link" to={paths.home.getHref()}>Voltar ao início</Link></p>
-    </main>
+    </div>
   );
 };

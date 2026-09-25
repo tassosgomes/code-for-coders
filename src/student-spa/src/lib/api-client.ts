@@ -2,6 +2,7 @@ import { context, propagation } from '@opentelemetry/api';
 import axios from 'axios';
 
 import { env } from '@/config/env';
+import { activeStudentSessionMarker, expiredStudentSessionMarker } from '@/config/session-markers';
 
 export const apiClient = axios.create({
   baseURL: env.API_URL,
@@ -42,6 +43,15 @@ apiClient.interceptors.response.use(
       }
 
       if (status === 401) {
+        if (
+          axios.isAxiosError(error)
+          && error.config?.url?.includes('/student-sessions/current')
+          && window.localStorage.getItem(activeStudentSessionMarker) === 'true'
+        ) {
+          window.sessionStorage.setItem(expiredStudentSessionMarker, 'true');
+          window.localStorage.removeItem(activeStudentSessionMarker);
+        }
+
         window.dispatchEvent(new Event('app:session-expired'));
       }
     }

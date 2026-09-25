@@ -1,8 +1,8 @@
 # Code4Coders — DESIGN.md
 
 > Fonte da verdade visual da plataforma Code4Coders.
-> **Figma:** [Code4Coders — Design System](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn) · **Stack:** Next.js + Tailwind CSS v4 + shadcn/ui
-> **Arquivos irmãos:** `globals.css` (tokens em código) · `COMPONENTS.md` (guia de componentes)
+> **Figma:** [Code4Coders — Design System](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn) · **Stack de referência:** Next.js + Tailwind CSS v4 + shadcn/ui
+> **Implementação SPA:** `src/student-spa/src/assets/globals.css` (tokens em código) · `docs/design/Components.md` (guia de componentes)
 
 ---
 
@@ -12,7 +12,7 @@
 2. **Claro, arejado, uma cor de marca.** A base é neutra com leve toque violeta (`ink`). O violeta (`primary`) é reservado para ação e destaque. Se tudo é roxo, nada é importante.
 3. **Verde = funcionou.** O verde (`success` / `code-accent`) comunica teste passando, aula concluída e deploy ok. Não use verde como decoração.
 4. **Tokens, nunca valores.** Nenhum hex, px arbitrário ou `bg-violet-600` em componente. Sempre token semântico (`bg-primary`, `text-muted-foreground`, `rounded-xl`).
-5. **shadcn primeiro.** Antes de criar qualquer componente, verifique se ele existe em [ui.shadcn.com](https://ui.shadcn.com). Componente custom só para composições recorrentes da plataforma (ver `COMPONENTS.md`).
+5. **shadcn primeiro.** Antes de criar qualquer componente, verifique se ele existe em [ui.shadcn.com](https://ui.shadcn.com). Componente custom só para composições recorrentes da plataforma (ver `docs/design/Components.md`).
 
 ---
 
@@ -43,6 +43,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **Dark mode:** `next-themes` com `attribute="class"` e `defaultTheme="system"`. O CSS já traz o bloco `.dark`.
+
+**React + Vite existente:** mantenha o Vite, instale `@tailwindcss/vite` e mantenha os tokens CSS dentro do projeto consumidor, importados pela folha principal da aplicação. No SPA de aluno, o arquivo está em `src/student-spa/src/assets/globals.css` e é importado por `app.css`. Carregue as mesmas fontes por `<link>` no HTML; `next/font` se aplica apenas a projetos Next.js. Não edite os valores gerados em `globals.css`.
 
 ---
 

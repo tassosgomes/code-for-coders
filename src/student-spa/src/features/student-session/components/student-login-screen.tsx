@@ -1,11 +1,17 @@
 import { useRef, useState } from 'react';
 import { FormProvider } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import axios from 'axios';
 import * as z from 'zod';
+import { InfoIcon } from 'lucide-react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormTextField } from '@/components/ui/form';
+import { PasswordField } from '@/components/ui/password-field';
 import { paths } from '@/config/paths';
+import { activeStudentSessionMarker, expiredStudentSessionMarker } from '@/config/session-markers';
 import {
   useCreateStudentSession,
   type CreateStudentSessionInput,
@@ -22,13 +28,33 @@ const getLoginErrorCode = (error: unknown) => {
   return problem.success ? problem.data.code : undefined;
 };
 
+const isSessionExpiredState = (state: unknown) =>
+  typeof state === 'object'
+  && state !== null
+  && 'sessionExpired' in state
+  && state.sessionExpired === true;
+
 export const StudentLoginScreen = () => {
   useDocumentTitle('Entrar');
   const form = useStudentLoginForm();
   const login = useCreateStudentSession();
   const navigate = useNavigate();
+  const location = useLocation();
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const [notConfirmed, setNotConfirmed] = useState(false);
+  const [showSessionExpired, setShowSessionExpired] = useState(() => {
+    const fromStorage = window.sessionStorage.getItem(expiredStudentSessionMarker) === 'true';
+    return isSessionExpiredState(location.state) || fromStorage;
+  });
+
+  const clearSessionExpiredNotice = () => {
+    if (!showSessionExpired) {
+      return;
+    }
+
+    setShowSessionExpired(false);
+    window.sessionStorage.removeItem(expiredStudentSessionMarker);
+  };
 
   const submitLogin = async (input: CreateStudentSessionInput) => {
     const fingerprint = JSON.stringify(input);
@@ -41,8 +67,10 @@ export const StudentLoginScreen = () => {
 
     try {
       await login.mutateAsync({ input, idempotencyKey: attempt.key });
+      window.localStorage.setItem(activeStudentSessionMarker, 'true');
       attemptRef.current = null;
       form.reset();
+      clearSessionExpiredNotice();
       await navigate(paths.home.getHref(), { replace: true });
     } catch (error) {
       setNotConfirmed(getLoginErrorCode(error) === 'EMAIL_NOT_CONFIRMED');
@@ -54,44 +82,70 @@ export const StudentLoginScreen = () => {
     : 'Não foi possível entrar agora. Tente novamente em instantes.';
 
   return (
-    <main className="page-shell">
-      <p className="eyebrow">Conta do aluno</p>
-      <h1>Entrar</h1>
-      <p className="lead">Entre para acessar seu espaço de aprendizagem.</p>
-
-      {notConfirmed ? (
-        <section aria-live="polite" className="registration-message" role="alert">
-          <h2>Confirme seu e-mail</h2>
-          <p>Confirme o endereço de e-mail da conta antes de entrar.</p>
-          <Link className="primary-link" to={paths.studentAccountConfirmation.getHref()}>
-            Solicitar novo link de confirmação
-          </Link>
-        </section>
-      ) : (
-        <FormProvider {...form}>
-          <form className="registration-form" noValidate onSubmit={(event) => void form.handleSubmit(submitLogin)(event)}>
-            <FormTextField<CreateStudentSessionInput>
-              autoComplete="email"
-              label="E-mail"
-              name="email"
-              type="email"
-            />
-            <FormTextField<CreateStudentSessionInput>
-              autoComplete="current-password"
-              label="Senha"
-              name="password"
-              type="password"
-            />
-            {login.isError ? <p className="form-error" role="alert">{errorMessage}</p> : null}
-            <button className="primary-button" disabled={login.isPending} type="submit">
-              {login.isPending ? 'Entrando…' : 'Entrar'}
-            </button>
-          </form>
-        </FormProvider>
-      )}
-
-      <p>Não tem uma conta? <Link className="primary-link" to={paths.studentRegistration.getHref()}>Criar conta</Link></p>
-      <p><Link className="primary-link" to={paths.studentPasswordRecovery.getHref()}>Esqueceu sua senha?</Link></p>
-    </main>
+    <Card>
+      <CardHeader>
+        <p className="typo-overline text-primary">Conta do aluno</p>
+        <CardTitle className="typo-h3"><h1>Entrar</h1></CardTitle>
+        <CardDescription>Entre para acessar seu espaço de aprendizagem.</CardDescription>
+      </CardHeader>
+      {showSessionExpired ? (
+        <CardContent className="pb-0">
+          <Alert aria-live="polite" role="status">
+            <InfoIcon aria-hidden="true" />
+            <AlertTitle>Sua sessão expirou</AlertTitle>
+            <AlertDescription>Entre de novo para continuar no seu espaço de aprendizagem.</AlertDescription>
+          </Alert>
+        </CardContent>
+      ) : null}
+      <CardContent>
+        {notConfirmed ? (
+          <Alert aria-live="polite" role="alert">
+            <AlertTitle>Confirme seu e-mail para entrar</AlertTitle>
+            <AlertDescription>
+              <p>Confirme o endereço de e-mail da conta antes de entrar.</p>
+              <Button asChild className="mt-2 px-0" variant="link">
+                <Link to={paths.studentAccountConfirmation.getHref()}>Solicitar novo link de confirmação</Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <FormProvider {...form}>
+            <form className="grid gap-5" noValidate onSubmit={(event) => void form.handleSubmit(submitLogin)(event)}>
+              <FormTextField<CreateStudentSessionInput>
+                autoComplete="email"
+                label="E-mail"
+                name="email"
+                type="email"
+              />
+              <PasswordField<CreateStudentSessionInput>
+                autoComplete="current-password"
+                label="Senha"
+                name="password"
+              />
+              {login.isError ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Não foi possível entrar</AlertTitle>
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+              <Button className="w-full" disabled={login.isPending} type="submit">
+                {login.isPending ? 'Entrando…' : 'Entrar'}
+              </Button>
+            </form>
+          </FormProvider>
+        )}
+      </CardContent>
+      <CardFooter className="flex-col items-start gap-3 text-sm">
+        <p className="text-muted-foreground">
+          Não tem uma conta?{' '}
+          <Button asChild className="h-auto p-0" variant="link">
+            <Link to={paths.studentRegistration.getHref()}>Criar conta</Link>
+          </Button>
+        </p>
+        <Button asChild className="h-auto p-0" variant="link">
+          <Link to={paths.studentPasswordRecovery.getHref()}>Esqueceu sua senha?</Link>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };

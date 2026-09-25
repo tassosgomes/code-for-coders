@@ -111,11 +111,11 @@ services:
       StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
       StudentAccount__PasswordResetBaseUrl: ${STUDENT_PASSWORD_RESET_URL:-http://localhost:8082/student/redefinir-senha}
       StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
-      Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set IDENTITY_IDEMPOTENCY_KEY_B64 for local development}
-      OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set IDENTITY_OUTBOX_KEY_B64 for local development}
+      Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?run scripts/generate-local-env.sh}
+      OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuer: bff-student
       ServiceAssertions__Audience: identity-internal
-      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set BFF_IDENTITY_PUBLIC_KEY_B64 for local development}
+      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     ports:
       - "5101:8080"
@@ -244,7 +244,7 @@ services:
       StudentIdentity__Audience: identity-internal
       StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke student-password-resets:request student-password-resets:execute student-password-changes:execute
       StudentIdentity__SigningKeyId: local-dev-1
-      StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set BFF_IDENTITY_PRIVATE_KEY_B64 for local development}
+      StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       Cors__AllowedOrigins__0: http://localhost:8082
       Cors__AllowedOrigins__1: http://localhost:5173

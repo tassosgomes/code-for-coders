@@ -2,15 +2,21 @@ import axios from 'axios';
 import { redirect } from 'react-router';
 
 import { paths } from '@/config/paths';
+import { activeStudentSessionMarker } from '@/config/session-markers';
 import { DashboardScreen } from '@/features/student-dashboard/components/dashboard-screen';
-import { getCurrentStudentSession, studentSessionQueryKey } from '@/features/student-session/api/student-session';
-import { StudentSessionPanel } from '@/features/student-session/components/student-session-panel';
+import {
+  getCurrentStudentSession,
+  studentSessionQueryKey,
+  useStudentSession,
+} from '@/features/student-session/api/student-session';
+import { StudentAccountCard } from '@/features/student-session/components/student-session-panel';
 import { queryClient } from '@/lib/query-client';
 
 export const requireStudentSession = async () => {
   try {
     const session = await getCurrentStudentSession();
     queryClient.setQueryData(studentSessionQueryKey, session);
+    window.localStorage.setItem(activeStudentSessionMarker, 'true');
     return null;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -21,4 +27,14 @@ export const requireStudentSession = async () => {
   }
 };
 
-export const DashboardRoute = () => <DashboardScreen session={<StudentSessionPanel />} />;
+export const DashboardRoute = () => {
+  const studentSession = useStudentSession();
+
+  return (
+    <DashboardScreen
+      account={<StudentAccountCard name={studentSession.data?.name ?? ''} />}
+      isSessionLoading={studentSession.isPending}
+      studentName={studentSession.data?.name}
+    />
+  );
+};

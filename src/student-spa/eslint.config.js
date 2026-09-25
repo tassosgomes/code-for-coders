@@ -84,4 +84,18 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ['src/components/ui/sidebar.tsx'],
+    rules: {
+      // Current shadcn registry output uses Math.random only for optional sidebar skeleton width.
+      'react-hooks/purity': 'off',
+    },
+  },
+  {
+    files: ['src/hooks/use-mobile.ts'],
+    rules: {
+      // Current shadcn registry output initializes its media query state inside an effect.
+      'react-hooks/set-state-in-effect': 'off',
+    },
+  },
 );
