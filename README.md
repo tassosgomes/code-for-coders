@@ -66,3 +66,29 @@ API settings; `scripts/remote-infra.sh` prepares the server and requires SSH acc
 `scripts/remote-infra.sh check` verifies connectivity. The project uses the RabbitMQ vhost
 `code-for-coders` and Valkey database `1` (`REMOTE_VALKEY_DATABASE`). Emails land in the shared
 smtp4dev at <https://smtp.tasso.dev.br> and telemetry in Kibana at <https://kibana.tasso.dev.br>.
+
+### Coolify development environment
+
+The whole stack (six APIs, both BFFs, both SPAs) is deployed on Coolify (project `code4coders`,
+environment `development`, server `192.168.0.11`) from `docker-compose.coolify.yml`. Builds run on
+the Coolify server itself; services keep talking to each other by compose service name (`bff-*`,
+`identity`, `learning`), and only the domains below are public through the Coolify proxy
+(Traefik, wildcard TLS `*.lab.tasso.dev.br`):
+
+| Application | URL |
+| --- | --- |
+| Admin SPA | <https://c4c-admin.lab.tasso.dev.br/admin/> |
+| Student SPA | <https://c4c-student.lab.tasso.dev.br/student/> |
+| Identity API | <https://c4c-identity.lab.tasso.dev.br> |
+| Learning API | <https://c4c-learning.lab.tasso.dev.br> |
+| Media API | <https://c4c-media.lab.tasso.dev.br> |
+| Commerce API | <https://c4c-commerce.lab.tasso.dev.br> |
+| Notification API | <https://c4c-notification.lab.tasso.dev.br> |
+| Audit API | <https://c4c-audit.lab.tasso.dev.br> |
+| Admin BFF | <https://c4c-bff-admin.lab.tasso.dev.br> |
+| Student BFF | <https://c4c-bff-student.lab.tasso.dev.br> |
+
+Secrets (`REMOTE_*`, `*_KEY_B64`) live only in the Coolify environment variables — never in the
+repository. Pushes to `main` under the watched paths redeploy automatically. The local stack and
+the Coolify stack share the same PostgreSQL/RabbitMQ/Valkey on `192.168.0.5`; avoid running both
+at the same time against the same databases.
