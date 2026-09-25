@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: []
 gate: 'dotnet build src/identity/CodeForCoders.Identity.slnx'

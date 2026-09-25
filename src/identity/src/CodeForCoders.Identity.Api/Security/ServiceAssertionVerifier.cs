@@ -28,8 +28,18 @@ public sealed class ServiceAssertionVerifier(
         }
 
         var segments = token.Split('.');
-        if (segments.Length != 3 || !TryReadHeader(segments[0], out var keyId)
-            || !settings.PublicKeys.TryGetValue(keyId, out var encodedPublicKey))
+        if (segments.Length != 3 || !TryReadHeader(segments[0], out var keyId))
+        {
+            return null;
+        }
+
+        if (!TryReadClaims(segments[1], out var claims))
+        {
+            return null;
+        }
+
+        if (!settings.GetEffectiveIssuers().TryGetValue(claims.Issuer, out var issuer)
+            || !issuer.PublicKeys.TryGetValue(keyId, out var encodedPublicKey))
         {
             return null;
         }
@@ -54,21 +64,16 @@ public sealed class ServiceAssertionVerifier(
             return null;
         }
 
-        if (!TryReadClaims(segments[1], out var claims))
-        {
-            return null;
-        }
-
         var now = timeProvider.GetUtcNow();
-        if (claims.Issuer != settings.Issuer
-            || claims.Audience != settings.Audience
-            || claims.Subject != settings.Issuer
+        if (claims.Audience != settings.Audience
+            || claims.Subject != claims.Issuer
             || !claims.Scopes.Contains(requiredScope, StringComparer.Ordinal)
+            || !issuer.AllowedScopes.Contains(requiredScope, StringComparer.Ordinal)
             || claims.NotBefore > now + AllowedClockSkew
             || claims.IssuedAt > now + AllowedClockSkew
             || claims.ExpiresOn <= now
             || claims.ExpiresOn - claims.IssuedAt > MaximumLifetime
-            || !settings.AllowedTenantIds.Any(value => Guid.TryParse(value, out var allowedTenant) && allowedTenant == claims.TenantId))
+            || !issuer.AllowedTenantIds.Any(value => Guid.TryParse(value, out var allowedTenant) && allowedTenant == claims.TenantId))
         {
             return null;
         }

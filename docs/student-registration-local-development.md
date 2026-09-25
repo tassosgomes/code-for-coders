@@ -24,3 +24,22 @@ Password recovery starts at `http://localhost:8082/student/recuperar-senha`. The
 `http://localhost:8082/student/redefinir-senha?token=...`, the reset route under the same base path; override it
 with `STUDENT_PASSWORD_RESET_URL` if the SPA is served from another origin or base path. Identity and Notification
 share `PASSWORD_RESET_VALIDITY_HOURS` (default 1 hour); edit `.env` to change it.
+
+## Backoffice service credential (CAP-002)
+
+Identity also trusts service assertions from the `bff-admin` edge, each edge with its own key pair and
+allowed scopes: `bff-student` keeps the `student-*` scopes, `bff-admin` receives the `staff-*` scopes.
+The generator creates both pairs (`BFF_IDENTITY_*` and `BFF_ADMIN_IDENTITY_*`); the Compose file injects
+the `bff-admin` public key into Identity and the private key into `bff-admin`.
+
+The generator preserves an existing `.env` rather than replacing local configuration. If your `.env`
+was created before the `bff-admin` keys existed, delete it (or append the missing keys) and regenerate:
+
+```bash
+rm .env
+scripts/generate-local-env.sh
+docker compose up --build
+```
+
+Without the `BFF_ADMIN_IDENTITY_*` values Identity refuses to start, reporting the missing
+`bff-admin` issuer key.

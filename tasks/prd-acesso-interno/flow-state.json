@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno",
+  "branch": "feature/acesso-interno",
+  "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
+  "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
+  "target_ref": null,
+  "last_checkpoint": null,
+  "phase": "checkpoint",
+  "active_task": "1.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "transport": "herdr",
+  "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
+  "specs": [
+    "prd.md",
+    "techspec.md",
+    "contracts.md"
+  ],
+  "delivery": null,
+  "plan_approval": "Plano validado (validate_plan APROVADO) e execução autorizada pelo usuário ao invocar o orquestrador em 2026-09-25",
+  "validated_commit": null,
+  "validated_tree": null,
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "1.0"
+  },
+  "last_result": {
+    "role": "validator",
+    "mode": "focused",
+    "task": "1.0",
+    "attempt": 1,
+    "run_id": "run.VqNkiGnN",
+    "outcome": "approved",
+    "gate": "passed",
+    "report": "tasks/prd-acesso-interno/1.0_task_review.md"
+  },
+  "history": [
+    {
+      "ts": "2026-09-25",
+      "event": "branch_ready",
+      "run_id": "run.i3alZ1Nz",
+      "note": "worktree nova criada a partir de main e515e36"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "transport_failure_reconciled",
+      "run_id": "run.ZehMLHWz",
+      "note": "tsg-delegate reportou agent_blocked aos 1501s com o opencode ainda working; o worker gravou result.json válido depois (implementation_complete, gate passed). Diff da worktree confere com o relatório; sem repetição, tentativa não consumida pela falha de transporte."
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "1.0",
+      "run_id": "run.VqNkiGnN",
+      "note": "0 bloqueantes, 4 recomendações; R3 (seção StaffIdentity__* do Compose) repassada à 2.0"
+    }
+  ]
+}

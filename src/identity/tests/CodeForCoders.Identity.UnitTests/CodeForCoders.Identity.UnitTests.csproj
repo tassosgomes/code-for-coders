@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Identity.Api/CodeForCoders.Identity.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Identity.Application/CodeForCoders.Identity.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Identity.Domain/CodeForCoders.Identity.Domain.csproj" />
     <ProjectReference Include="../CodeForCoders.Identity.Tests.Common/CodeForCoders.Identity.Tests.Common.csproj" />

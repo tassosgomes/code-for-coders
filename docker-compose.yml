@@ -113,10 +113,28 @@ services:
       StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?run scripts/generate-local-env.sh}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
-      ServiceAssertions__Issuer: bff-student
       ServiceAssertions__Audience: identity-internal
-      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
-      ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      ServiceAssertions__Issuers__bff-student__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__0: student-accounts:create
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__1: student-accounts:confirm
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__2: student-accounts:request-confirmation
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__3: student-sessions:create
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__4: student-sessions:validate
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__5: student-sessions:revoke
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__6: student-password-resets:request
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__7: student-password-resets:execute
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__8: student-password-changes:execute
+      ServiceAssertions__Issuers__bff-student__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      ServiceAssertions__Issuers__bff-admin__PublicKeys__local-dev-1: ${BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__0: staff-sessions:create
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__1: staff-sessions:validate
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__2: staff-sessions:revoke
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__3: staff-passwords:reset
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__4: staff-invitations:read
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__5: staff-invitations:write
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__6: staff-members:read
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__7: staff-members:write
+      ServiceAssertions__Issuers__bff-admin__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     ports:
       - "5101:8080"
     depends_on: *api-dependencies
@@ -221,6 +239,12 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=code-for-coders-local
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
+      StaffIdentity__BaseAddress: http://identity:8080/
+      StaffIdentity__Issuer: bff-admin
+      StaffIdentity__Audience: identity-internal
+      StaffIdentity__SigningKeyId: local-dev-1
+      StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     ports:
       - "5107:8080"
     depends_on:

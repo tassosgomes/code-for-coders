@@ -31,10 +31,15 @@ trap cleanup EXIT
 
 env_temp_file="$(mktemp "$repository_root/.env.tmp.XXXXXX")"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/bff-private.pem"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/bff-admin-private.pem"
 
 private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
   -in "$key_material_dir/bff-private.pem" | base64 | tr -d '\n')"
 public_key_b64="$(openssl pkey -in "$key_material_dir/bff-private.pem" -pubout \
+  -outform DER | base64 | tr -d '\n')"
+admin_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+  -in "$key_material_dir/bff-admin-private.pem" | base64 | tr -d '\n')"
+admin_public_key_b64="$(openssl pkey -in "$key_material_dir/bff-admin-private.pem" -pubout \
   -outform DER | base64 | tr -d '\n')"
 idempotency_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
@@ -50,6 +55,8 @@ outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
   printf 'IDENTITY_OUTBOX_KEY_B64=%s\n' "$outbox_key_b64"
   printf 'BFF_IDENTITY_PUBLIC_KEY_B64=%s\n' "$public_key_b64"
   printf 'BFF_IDENTITY_PRIVATE_KEY_B64=%s\n' "$private_key_b64"
+  printf 'BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64=%s\n' "$admin_public_key_b64"
+  printf 'BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64=%s\n' "$admin_private_key_b64"
 } > "$env_temp_file"
 
 chmod 600 "$env_temp_file"
