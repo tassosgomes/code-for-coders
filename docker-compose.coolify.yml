@@ -1,0 +1,243 @@
+# Stack deployed by Coolify (project code4coders, environment development) on 192.168.0.11.
+# Builds every service from this repository and points them at the shared development
+# infrastructure on 192.168.0.5 (PostgreSQL, RabbitMQ, Valkey, OTel Collector, smtp4dev).
+# Provision/credentials: scripts/remote-infra.sh provision (values live in Coolify env vars).
+# The PostgreSQL server is shared (max_connections=200), so every pool is capped via
+# REMOTE_DB_MAX_POOL_SIZE (default 10) and idle connections are released after 60 s.
+
+services:
+  identity:
+    build:
+      context: .
+      dockerfile: src/identity/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      StudentAccount__ConfirmationBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/confirm-account
+      StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
+      StudentAccount__PasswordResetBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/redefinir-senha
+      StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
+      Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set in Coolify}
+      OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuer: bff-student
+      ServiceAssertions__Audience: identity-internal
+      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  learning:
+    build:
+      context: .
+      dockerfile: src/learning/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  media:
+    build:
+      context: .
+      dockerfile: src/media/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  commerce:
+    build:
+      context: .
+      dockerfile: src/commerce/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  notification:
+    build:
+      context: .
+      dockerfile: src/notification/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      Email__Transport: smtp
+      Email__FromAddress: no-reply@codeforcoders.local
+      Email__SendingDomain: codeforcoders.local
+      Email__SmtpHost: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      Email__SmtpPort: 25
+      Email__SmtpEnableSsl: "false"
+      Email__ValidityHoursByPurpose__confirmacao-de-conta: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
+      Email__ValidityHoursByPurpose__recuperacao-de-senha: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
+      Notification__Namespace: ${NOTIFICATION_NAMESPACE:-default}
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  audit:
+    build:
+      context: .
+      dockerfile: src/audit/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  bff-admin:
+    build:
+      context: .
+      dockerfile: src/bff-admin/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
+    depends_on:
+      learning:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  bff-student:
+    build:
+      context: .
+      dockerfile: src/bff-student/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      ReverseProxy__Clusters__student-backend__Destinations__destination__Address: http://identity:8080/
+      StudentIdentity__BaseAddress: http://identity:8080/
+      StudentIdentity__Issuer: bff-student
+      StudentIdentity__Audience: identity-internal
+      StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke student-password-resets:request student-password-resets:execute student-password-changes:execute
+      StudentIdentity__SigningKeyId: local-dev-1
+      StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set in Coolify}
+      StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Cors__AllowedOrigins__0: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
+    depends_on:
+      identity:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  admin-spa:
+    build:
+      context: ./src/admin-spa
+      dockerfile: Dockerfile
+    environment:
+      API_URL: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}
+    depends_on:
+      bff-admin:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+
+  student-spa:
+    build:
+      context: ./src/student-spa
+      dockerfile: Dockerfile
+    environment:
+      API_URL: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
+    depends_on:
+      bff-student:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
