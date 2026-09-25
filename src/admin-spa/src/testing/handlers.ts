@@ -44,6 +44,10 @@ export const handlers = [
     data: [],
     pagination: { page: 1, size: 100, total: 0, totalPages: 0 },
   })),
+  http.get(`${env.API_URL}/api/v1/staff-members`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 100, total: 0, totalPages: 0 },
+  })),
   http.post(`${env.API_URL}/api/v1/staff-invitations`, async ({ request }) => {
     const body = await request.json() as { email: string; role: string };
     return HttpResponse.json({

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -10,11 +10,26 @@ import {
   usePendingStaffInvitations,
   type CreateStaffInvitationInput,
 } from '@/features/staff-access/api/staff-invitations';
+import {
+  getStaffRoleActionRequestError,
+  staffRoleActionSchema,
+  useGrantStaffRole,
+  useRevokeStaffRole,
+  useStaffMembers,
+  type StaffMember,
+  type StaffRoleActionInput,
+  type StaffRoleActionKind,
+} from '@/features/staff-access/api/staff-members';
 
 export const StaffAccessScreen = () => {
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [roleActionError, setRoleActionError] = useState<string | null>(null);
+  const [roleActionStatus, setRoleActionStatus] = useState<string | null>(null);
   const invitations = usePendingStaffInvitations();
+  const members = useStaffMembers();
   const createInvitation = useCreateStaffInvitation();
+  const grantRole = useGrantStaffRole();
+  const revokeRole = useRevokeStaffRole();
   const form = useForm<CreateStaffInvitationInput>({
     defaultValues: { email: '', role: 'professor', reason: '' },
     resolver: zodResolver(createStaffInvitationSchema),
@@ -30,10 +45,69 @@ export const StaffAccessScreen = () => {
     }
   };
 
+  const submitRoleAction = async (
+    member: StaffMember,
+    action: StaffRoleActionKind,
+    input: StaffRoleActionInput,
+    idempotencyKey: string,
+  ): Promise<boolean> => {
+    setRoleActionError(null);
+    setRoleActionStatus(null);
+    try {
+      const command = { accountId: member.accountId, input, idempotencyKey };
+      const result = action === 'grant'
+        ? await grantRole.mutateAsync(command)
+        : await revokeRole.mutateAsync(command);
+      if (!result.changed) {
+        setRoleActionStatus(action === 'grant'
+          ? `${input.role} já estava concedido a ${member.name}.`
+          : `${input.role} já estava ausente de ${member.name}.`);
+      } else if (action === 'revoke') {
+        setRoleActionStatus(`${input.role} revogado; ${member.name} foi desconectada agora.`);
+      } else {
+        setRoleActionStatus(`${input.role} concedido a ${member.name}.`);
+      }
+
+      return true;
+    } catch (error: unknown) {
+      setRoleActionError(getStaffRoleActionRequestError(error));
+      return false;
+    }
+  };
+
   return (
     <main className="page-shell staff-access-page">
       <p className="eyebrow">Gestão de acesso</p>
       <h1>Acessos</h1>
+
+      <section aria-labelledby="staff-members-title" className="status-card">
+        <h2 id="staff-members-title">Pessoas com acesso</h2>
+        <p>Ao revogar um papel, a pessoa será desconectada agora.</p>
+        {roleActionError ? <p role="alert">{roleActionError}</p> : null}
+        {roleActionStatus ? <p role="status">{roleActionStatus}</p> : null}
+        {members.isPending ? <p role="status">Carregando pessoas…</p> : null}
+        {members.isError ? <p role="alert">Não foi possível carregar as pessoas com acesso.</p> : null}
+        {members.data?.data.length === 0 ? <p>Nenhuma conta interna.</p> : null}
+        {members.data && members.data.data.length > 0 ? (
+          <ul>
+            {members.data.data.map((member) => (
+              <li key={member.accountId}>
+                <strong>{member.name}</strong>
+                {member.isSelf ? <span> (você)</span> : null}
+                <span> · {member.email}</span>
+                <p>Papéis: {member.roles.length > 0 ? member.roles.join(', ') : 'Sem papel'}</p>
+                {!member.isSelf ? (
+                  <StaffMemberActions
+                    disabled={grantRole.isPending || revokeRole.isPending}
+                    member={member}
+                    onAction={submitRoleAction}
+                  />
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
 
       <section aria-labelledby="staff-invitation-title" className="status-card">
         <h2 id="staff-invitation-title">Convidar pessoa</h2>
@@ -96,5 +170,64 @@ export const StaffAccessScreen = () => {
         ) : null}
       </section>
     </main>
+  );
+};
+
+type StaffMemberActionsProps = {
+  disabled: boolean;
+  member: StaffMember;
+  onAction: (
+    member: StaffMember,
+    action: StaffRoleActionKind,
+    input: StaffRoleActionInput,
+    idempotencyKey: string,
+  ) => Promise<boolean>;
+};
+
+const StaffMemberActions = ({ disabled, member, onAction }: StaffMemberActionsProps) => {
+  const idempotency = useRef<{ fingerprint: string; key: string } | null>(null);
+  const form = useForm<StaffRoleActionInput>({
+    defaultValues: { role: staffInvitationRoles.find((role) => !member.roles.includes(role)) ?? 'professor', reason: '' },
+    resolver: zodResolver(staffRoleActionSchema),
+  });
+  const execute = async (action: StaffRoleActionKind) => {
+    await form.handleSubmit(async (input) => {
+      const fingerprint = JSON.stringify([action, input.role, input.reason]);
+      if (idempotency.current?.fingerprint !== fingerprint) {
+        idempotency.current = { fingerprint, key: crypto.randomUUID() };
+      }
+
+      const succeeded = await onAction(member, action, input, idempotency.current.key);
+      if (succeeded) {
+        idempotency.current = null;
+        form.reset({ role: input.role, reason: '' });
+      }
+    })();
+  };
+
+  return (
+    <form noValidate onSubmit={(event) => event.preventDefault()}>
+      <label htmlFor={`staff-role-${member.accountId}`}>Papel para {member.name}</label>
+      <select id={`staff-role-${member.accountId}`} {...form.register('role')}>
+        {staffInvitationRoles.map((role) => <option key={role} value={role}>{role}</option>)}
+      </select>
+
+      <label htmlFor={`staff-reason-${member.accountId}`}>Motivo para {member.name}</label>
+      <textarea
+        id={`staff-reason-${member.accountId}`}
+        maxLength={1000}
+        rows={2}
+        {...form.register('reason')}
+        aria-invalid={Boolean(form.formState.errors.reason)}
+      />
+      {form.formState.errors.reason ? <p role="alert">{form.formState.errors.reason.message}</p> : null}
+
+      <button disabled={disabled} onClick={() => void execute('grant')} type="button">
+        Conceder
+      </button>
+      <button disabled={disabled} onClick={() => void execute('revoke')} type="button">
+        Revogar
+      </button>
+    </form>
   );
 };

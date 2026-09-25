@@ -15,5 +15,6 @@ public static class EndpointExtensions
         app.MapStaffSessionEndpoints();
         app.MapStaffPasswordResetEndpoints();
         app.MapStaffInvitationEndpoints();
+        app.MapStaffMemberEndpoints();
     }
 }

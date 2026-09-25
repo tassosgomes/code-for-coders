@@ -5,9 +5,9 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "bbe4eff97ce2e54e7960060543a8664010380fb7",
+  "last_checkpoint": "cc581e2ca6df3fcd47b5d9ccccf57c3f9a6c62af",
   "phase": "checkpoint",
-  "active_task": "5.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -26,17 +26,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "5.0"
+    "task": "6.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "focused",
-    "task": "5.0",
+    "task": "6.0",
     "attempt": 1,
-    "run_id": "run.OqoExtC1",
+    "run_id": "run.NCVira28",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/5.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/6.0_task_review.md"
   },
   "history": [
     {
@@ -138,6 +138,19 @@
       "event": "focused_approved",
       "task": "5.0",
       "run_id": "run.OqoExtC1"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "5.0",
+      "run_id": "run.9TdqnyCG",
+      "commit": "cc581e2"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "6.0",
+      "run_id": "run.NCVira28"
     }
   ],
   "full_pending_gaps": [
@@ -145,6 +158,8 @@
     "3.0: smoke em http://localhost:8081/admin/entrar (checkpoint da Fase 1) não executado",
     "3.0 R5: login anônimo /api/v1/staff-sessions sem checagem de Origin (login CSRF) — avaliar na full",
     "4.0 R1/R2: corrida no índice parcial de convite pendente (500) e ROLE_NOT_SUPPORTED fora do contrato — avaliar na full",
-    "5.0 R1: Idempotency-Key do aceite gerada a cada envio no SPA (reenvio após falha de rede vira INVITATION_INVALID)"
+    "5.0 R1: Idempotency-Key do aceite gerada a cada envio no SPA (reenvio após falha de rede vira INVITATION_INVALID)",
+    "6.0 R1: desconexão pós-revogação BFF+Identity só provada por composição — confirmar no smoke com dois navegadores",
+    "6.0 R3: listStaffMembersInternal devolve 400 não declarado no internal-api-contract.yaml"
   ]
 }

@@ -10,6 +10,7 @@ public static class EndpointExtensions
         app.MapSessionEndpoints();
         app.MapStaffPasswordResetEndpoints();
         app.MapStaffInvitationEndpoints();
+        app.MapStaffMemberEndpoints();
         app.MapProxyEndpoints();
     }
 }

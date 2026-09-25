@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../../audit/src/CodeForCoders.Audit.Contracts/CodeForCoders.Audit.Contracts.csproj" />
+    <ProjectReference Include="../../../audit/src/CodeForCoders.Audit.Domain/CodeForCoders.Audit.Domain.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Identity.Application/CodeForCoders.Identity.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Identity.Contracts/CodeForCoders.Identity.Contracts.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Identity.Infra.Data/CodeForCoders.Identity.Infra.Data.csproj" />

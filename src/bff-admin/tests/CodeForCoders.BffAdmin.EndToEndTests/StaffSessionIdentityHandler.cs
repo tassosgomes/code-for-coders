@@ -25,6 +25,8 @@ public sealed class StaffSessionIdentityHandler : HttpMessageHandler
 
     public StaffSessionValidatedV1 ValidatedSession { get; set; } = CreateValidatedSession();
 
+    public HashSet<Guid> RevokedSessionIds { get; } = [];
+
     public Uri? LastRequestUri { get; private set; }
 
     public StaffSessionLoginV1? LastLoginRequest { get; private set; }
@@ -62,6 +64,11 @@ public sealed class StaffSessionIdentityHandler : HttpMessageHandler
                 ValidationCount++;
                 var validation = await request.Content!.ReadFromJsonAsync<StaffSessionValidationV1>(JsonOptions, cancellationToken);
                 LastValidationAudience = validation?.Audience;
+                if (validation is not null && RevokedSessionIds.Contains(validation.SessionId))
+                {
+                    return ProblemResponse(HttpStatusCode.Unauthorized, "SESSION_REQUIRED");
+                }
+
                 return ValidateStatus == HttpStatusCode.OK
                     ? JsonResponse(ValidateStatus, ValidatedSession)
                     : ProblemResponse(ValidateStatus, ValidateCode);
@@ -87,6 +94,7 @@ public sealed class StaffSessionIdentityHandler : HttpMessageHandler
         RevokeCode = null;
         CreatedSession = CreateSession();
         ValidatedSession = CreateValidatedSession();
+        RevokedSessionIds.Clear();
         LastRequestUri = null;
         LastLoginRequest = null;
         LastIdempotencyKey = null;

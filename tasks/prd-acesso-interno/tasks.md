@@ -59,7 +59,7 @@ Os gates completos, com `--minimum-expected-tests`, estão no frontmatter de cad
 - [x] 3.0 Ator interno entra, vê as áreas das suas permissões e sai
 - [x] 4.0 Administrador convida e o convidado recebe o e-mail
 - [x] 5.0 Convidado aceita o convite e entra no backoffice
-- [ ] 6.0 Administrador concede e revoga papel, e a revogação desconecta na hora
+- [x] 6.0 Administrador concede e revoga papel, e a revogação desconecta na hora
 - [ ] 7.0 Administrador troca o papel numa ação só
 - [ ] 8.0 Professor não abre a área financeira por nenhuma via
 - [ ] 9.0 Ator interno recupera a senha sozinho

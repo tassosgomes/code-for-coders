@@ -20,6 +20,10 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.CreateStaffInvitation
 using CodeForCoders.Identity.Application.UseCases.Accounts.ListPendingStaffInvitations;
 using CodeForCoders.Identity.Application.UseCases.Accounts.LookupStaffInvitation;
 using CodeForCoders.Identity.Application.UseCases.Accounts.AcceptStaffInvitation;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ListStaffMembers;
+using CodeForCoders.Identity.Application.UseCases.Accounts.GrantStaffRole;
+using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStaffRole;
+using CodeForCoders.Identity.Application.UseCases.Accounts.StaffRoleActions;
 using CodeForCoders.Identity.Application.UseCases.Platform.RecordPlatformHeartbeat;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +50,8 @@ public static class DependencyInjection
         services.AddScoped<IValidator<ListPendingStaffInvitationsInput>, ListPendingStaffInvitationsInputValidator>();
         services.AddScoped<IValidator<LookupStaffInvitationInput>, LookupStaffInvitationInputValidator>();
         services.AddScoped<IValidator<AcceptStaffInvitationInput>, AcceptStaffInvitationInputValidator>();
+        services.AddScoped<IValidator<ListStaffMembersInput>, ListStaffMembersInputValidator>();
+        services.AddScoped<IValidator<StaffRoleActionCommand>, StaffRoleActionCommandValidator>();
         services.AddScoped<IValidator<ChangeStudentPasswordInput>, ChangeStudentPasswordInputValidator>();
         services.AddScoped<IValidator<AuthenticateStudentSessionInput>, AuthenticateStudentSessionInputValidator>();
         services.AddScoped<IValidator<ValidateStudentSessionInput>, ValidateStudentSessionInputValidator>();
@@ -55,6 +61,8 @@ public static class DependencyInjection
         services.AddScoped<IStudentPasswordRecoveryMessageWriter, StudentPasswordRecoveryMessageWriter>();
         services.AddScoped<IStaffPasswordRecoveryMessageWriter, StaffPasswordRecoveryMessageWriter>();
         services.AddScoped<IStaffInvitationMessageWriter, StaffInvitationMessageWriter>();
+        services.AddScoped<IStaffRoleMessageWriter, StaffRoleMessageWriter>();
+        services.AddScoped<StaffRoleActionExecutor>();
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddSingleton<IIdempotencyFingerprinter, IdempotencyFingerprinter>();
         services.Scan(scan => scan

@@ -32,6 +32,8 @@ public sealed class IdempotencyRecord
 
     public Guid? SupersededStaffInvitationId { get; private set; }
 
+    public bool? StaffRoleActionChanged { get; private set; }
+
     public DateTimeOffset CreatedOn { get; private set; }
 
     public DateTimeOffset ExpiresOn { get; private set; }
@@ -87,6 +89,7 @@ public sealed class IdempotencyRecord
         StaffSessionId = null;
         StaffInvitationId = null;
         SupersededStaffInvitationId = null;
+        StaffRoleActionChanged = null;
         CreatedOn = createdOn;
         ExpiresOn = expiresOn;
     }
@@ -120,5 +123,10 @@ public sealed class IdempotencyRecord
 
         StaffInvitationId = invitationId;
         SupersededStaffInvitationId = supersededInvitationId;
+    }
+
+    public void SetStaffRoleActionResult(bool changed)
+    {
+        StaffRoleActionChanged = changed;
     }
 }

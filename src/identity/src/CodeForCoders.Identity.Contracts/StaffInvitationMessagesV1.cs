@@ -34,3 +34,16 @@ public sealed record StaffInvitationAcceptedAuditFactV1(
 public sealed record IdentityReferenceV1(string Tipo, Guid Id);
 
 public sealed record StaffInvitationAuditComplementV1(string Papel);
+
+public sealed record StaffRoleAuditFactV1(
+    Guid FatoId,
+    string Origem,
+    string Tipo,
+    Guid TenantId,
+    DateTimeOffset PraticadoEm,
+    IdentityReferenceV1 Autor,
+    IdentityReferenceV1 Alvo,
+    StaffRoleAuditComplementV1 Complemento,
+    string Motivo);
+
+public sealed record StaffRoleAuditComplementV1(string Papel);
