@@ -116,6 +116,11 @@ services:
       StaffAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
       StaffInvitation__AcceptanceBaseUrl: ${STAFF_INVITATION_ACCEPTANCE_URL:-http://localhost:8081/admin/convite}
       StaffInvitation__LifetimeHours: ${STAFF_INVITATION_VALIDITY_HOURS:-168}
+      StaffSessionTokens__Issuer: identity
+      StaffSessionTokens__SigningKeyId: local-dev-1
+      StaffSessionTokens__SigningKeyBase64: ${IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StaffSessionTokens__LifetimeMinutes: "5"
+      StaffSessionTokens__AudienceScopes__commerce: finance-area:read
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?run scripts/generate-local-env.sh}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Audience: identity-internal
@@ -182,6 +187,9 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=code-for-coders-local
+      FinanceAreaTokens__Issuer: identity
+      FinanceAreaTokens__Audience: commerce
+      FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
     ports:
       - "5104:8080"
     depends_on: *api-dependencies
@@ -251,6 +259,7 @@ services:
       StaffIdentity__SigningKeyId: local-dev-1
       StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Commerce__BaseAddress: http://commerce:8080/
     ports:
       - "5107:8080"
     depends_on:

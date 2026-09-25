@@ -3,7 +3,7 @@ import { paths } from '@/config/paths';
 
 const staffAreas = [
   { label: 'Acessos', permission: 'acesso.gerir', href: paths.staffAccess.getHref() },
-  { label: 'Financeiro', permission: 'financeiro.ler' },
+  { label: 'Financeiro', permission: 'financeiro.ler', href: paths.staffFinance.getHref() },
   { label: 'Autoria', permission: 'autoria.ler' },
   { label: 'Suporte', permission: 'suporte.atender' },
 ] satisfies readonly StaffArea[];

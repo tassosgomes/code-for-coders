@@ -26,6 +26,8 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public StaffMemberIdentityHandler StaffMemberIdentityHandler { get; } = new();
 
+    public CommerceFinanceAreaHandler CommerceFinanceAreaHandler { get; } = new();
+
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
     public string IdentityPublicKeyBase64 { get; private set; } = string.Empty;
@@ -58,6 +60,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("StaffIdentity:Audience", "identity-internal");
         builder.UseSetting("StaffIdentity:SigningKeyId", "e2e-test");
         builder.UseSetting("StaffIdentity:TenantId", "00000000-0000-7000-8000-000000000001");
+        builder.UseSetting("Commerce:BaseAddress", "http://commerce.test/");
         builder.UseSetting("BffSecurity:AllowedOrigins:0", "http://localhost:8081");
         using var rsa = RSA.Create(2048);
         var privateKey = rsa.ExportPkcs8PrivateKey();
@@ -77,6 +80,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddSingleton(StaffSessionIdentityHandler);
             services.AddSingleton(StaffInvitationIdentityHandler);
             services.AddSingleton(StaffMemberIdentityHandler);
+            services.AddSingleton(CommerceFinanceAreaHandler);
             services.RemoveAll<IBffSessionStore>();
             services.AddSingleton<IBffSessionStore>(SessionStore);
             services.AddHttpClient<IStaffPasswordResetIdentityClient, StaffPasswordResetIdentityClient>()
@@ -91,6 +95,10 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddHttpClient<IStaffMemberIdentityClient, StaffMemberIdentityClient>()
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<StaffMemberIdentityHandler>());
+            services.RemoveAll<ICommerceFinanceAreaClient>();
+            services.AddHttpClient<ICommerceFinanceAreaClient, CommerceFinanceAreaClient>()
+                .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+                    serviceProvider.GetRequiredService<CommerceFinanceAreaHandler>());
         });
     }
 

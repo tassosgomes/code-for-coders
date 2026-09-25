@@ -13,6 +13,7 @@ public static class EndpointExtensions
         app.MapStudentPasswordChangeEndpoints();
         app.MapStudentSessionEndpoints();
         app.MapStaffSessionEndpoints();
+        app.MapSigningKeyEndpoints();
         app.MapStaffPasswordResetEndpoints();
         app.MapStaffInvitationEndpoints();
         app.MapStaffMemberEndpoints();

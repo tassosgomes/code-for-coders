@@ -5,10 +5,10 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "ba346b8ad4ae1e76d10330592204de9cd3667ee4",
+  "last_checkpoint": "122902b3798043f4d8da8de65cc77f5033d4c6f7",
   "phase": "checkpoint",
-  "active_task": "7.0",
-  "attempt": 2,
+  "active_task": "8.0",
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 0,
@@ -28,17 +28,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "7.0"
+    "task": "8.0"
   },
   "last_result": {
     "role": "validator",
-    "mode": "revalidation",
-    "task": "7.0",
-    "attempt": 2,
-    "run_id": "run.jJ8QwFTY",
+    "mode": "focused",
+    "task": "8.0",
+    "attempt": 1,
+    "run_id": "run.wwrLb1lH",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/7.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/8.0_task_review.md"
   },
   "history": [
     {
@@ -188,6 +188,20 @@
       "task": "7.0",
       "attempt": 2,
       "run_id": "run.jJ8QwFTY"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "7.0",
+      "run_id": "run.J3yCruqY",
+      "commit": "122902b",
+      "note": "Fase 2 concluída; inclui contratos 1.0.1; falso agent_blocked reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "8.0",
+      "run_id": "run.wwrLb1lH"
     }
   ],
   "full_pending_gaps": [
@@ -197,6 +211,9 @@
     "4.0 R1/R2: corrida no índice parcial de convite pendente (500) e ROLE_NOT_SUPPORTED fora do contrato — avaliar na full",
     "5.0 R1: Idempotency-Key do aceite gerada a cada envio no SPA (reenvio após falha de rede vira INVITATION_INVALID)",
     "6.0 R1: desconexão pós-revogação BFF+Identity só provada por composição — confirmar no smoke com dois navegadores",
-    "6.0 R3: listStaffMembersInternal devolve 400 não declarado no internal-api-contract.yaml"
+    "6.0 R3: listStaffMembersInternal devolve 400 não declarado no internal-api-contract.yaml",
+    "8.0 R1: sem teste da emissão de JWT com audience commerce no Identity",
+    "8.0 R2: JWKS não respeita minItems 1 / maxItems 2 do contrato",
+    "8.0 R3/R4: BFF propaga 401 TOKEN_INVALID não previsto e pode devolver 500 genérico em falha do Commerce"
   ]
 }

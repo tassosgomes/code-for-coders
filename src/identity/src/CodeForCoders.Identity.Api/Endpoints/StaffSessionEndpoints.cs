@@ -109,7 +109,7 @@ public static class StaffSessionEndpoints
 
         if (!string.IsNullOrWhiteSpace(request.Audience) && !tokenIssuer.CanIssueFor(request.Audience))
         {
-            return Problem(httpContext, StatusCodes.Status403Forbidden, "SERVICE_SCOPE_FORBIDDEN", "The requested token audience is not allowed.");
+            return Problem(httpContext, StatusCodes.Status403Forbidden, "AUDIENCE_NOT_ALLOWED", "The requested token audience is not allowed.");
         }
 
         var validation = await useCase.ExecuteAsync(

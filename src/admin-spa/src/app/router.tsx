@@ -10,6 +10,7 @@ import { StaffInvitationAcceptanceRoute } from '@/app/routes/staff-invitation-ac
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { StaffLoginRoute } from '@/app/routes/staff-login-route';
 import { StaffAccessRoute } from '@/app/routes/staff-access-route';
+import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 
 const routes: RouteObject[] = [
   {
@@ -21,6 +22,7 @@ const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardRoute /> },
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
+      { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
     ],
   },
   {

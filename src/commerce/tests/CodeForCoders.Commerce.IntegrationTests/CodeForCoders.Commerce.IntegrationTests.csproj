@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Commerce.Api/CodeForCoders.Commerce.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Commerce.Application/CodeForCoders.Commerce.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Commerce.Contracts/CodeForCoders.Commerce.Contracts.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Commerce.Infra.Data/CodeForCoders.Commerce.Infra.Data.csproj" />
@@ -15,6 +16,7 @@
     <ProjectReference Include="../CodeForCoders.Commerce.Tests.Common/CodeForCoders.Commerce.Tests.Common.csproj" />
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Testcontainers.PostgreSql" />

@@ -14,6 +14,7 @@
        raise minor/patch freely, treat a major as a decision. Microsoft.*, EF Core, the
        provider and dotnet-ef stay on the same major. -->
   <ItemGroup Label="Runtime">
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.6" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />
@@ -41,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
