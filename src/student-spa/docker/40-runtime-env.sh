@@ -5,7 +5,5 @@ set -eu
 export OTEL_ENDPOINT="${OTEL_ENDPOINT:-}"
 
 envsubst '${API_URL} ${OTEL_ENDPOINT}' \
-  < /usr/share/nginx/html/runtime-env.template.js \
+  < /etc/nginx/runtime-env.template.js \
   > /usr/share/nginx/html/runtime-env.js
-
-rm -f /usr/share/nginx/html/runtime-env.template.js
