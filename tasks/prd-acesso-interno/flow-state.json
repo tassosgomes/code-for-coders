@@ -6,11 +6,11 @@
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "last_checkpoint": "80e92af0c63acc8ab52341bd67b6babc1e189b41",
-  "phase": "prepare_integration",
+  "phase": "complete",
   "active_task": null,
   "attempt": 0,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 1,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
@@ -21,21 +21,22 @@
     "api-contract.yaml 1.0.1",
     "internal-api-contract.yaml 1.0.1"
   ],
-  "delivery": null,
+  "delivery": "pr",
   "plan_approval": "Plano validado (validate_plan APROVADO) e execução autorizada pelo usuário ao invocar o orquestrador em 2026-09-25",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "0ddfa16c23995a0d0b184ac4610457aaec7874a9",
+  "validated_tree": "ad68fcb283f8d82ced18972e4ab8e6ad4e7ecde7",
   "pending_delegation": {
     "role": "integrator",
-    "mode": "prepare-integration"
+    "mode": "complete-prd",
+    "delivery": "pr"
   },
   "last_result": {
     "role": "validator",
-    "mode": "revalidation",
-    "task": "8.0",
+    "mode": "full",
     "attempt": 2,
-    "run_id": "run.p28zrsdg",
-    "outcome": "approved"
+    "run_id": "run.IYwr3d1R",
+    "outcome": "approved",
+    "report": "tasks/prd-acesso-interno/prd_review.md"
   },
   "history": [
     {
@@ -350,6 +351,24 @@
       "task": "8.0",
       "commit": "80e92af",
       "note": "pós-full B2/B3; todos os bloqueantes da full 1 fechados"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "integration_ready",
+      "run_id": "run.0zorb0vs",
+      "note": "main inalterada f7bda4f; sem rebase"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "full_approved",
+      "full_attempt": 2,
+      "run_id": "run.IYwr3d1R",
+      "note": "5 bloqueantes do ciclo 1 resolvidos; 12/12 mutantes mortos; matriz CI verde; 10 recomendações"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "user_decision",
+      "note": "entrega autorizada: pr"
     }
   ],
   "full_pending_gaps": [
@@ -367,7 +386,7 @@
     "9.0 R2: neutralidade de tempo na recuperação (conta interna grava token/outbox)"
   ],
   "smoke_authorization": "Usuário autorizou (2026-09-25) subir a stack Docker Compose a partir da worktree para o smoke da validação full; nada rodando no ambiente principal",
-  "integration_head": "893b8be61fea5a4849be8f8f60e22b82347e8032",
+  "integration_head": "0ddfa16c23995a0d0b184ac4610457aaec7874a9",
   "full_fix_plan": [
     {
       "task": "2.0",

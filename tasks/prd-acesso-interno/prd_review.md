@@ -1,5 +1,180 @@
 # Validação full — PRD Acesso interno por papel e permissão (CAP-002)
 
+## Ciclo 2
+
+Run: run.IYwr3d1R
+Modo: full · Tentativa: 2/3 · Data: 2026-09-26
+
+**Resultado: FULL VALIDATION APROVADA.** Os 5 bloqueantes do ciclo 1 foram resolvidos e não há bloqueante
+novo. Ficam 10 recomendações: R1–R9 do ciclo 1, reavaliadas, e R10, nova.
+
+| Referência | SHA |
+|---|---|
+| base_ref (`main`, alvo) | `f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c` |
+| validated_commit (HEAD `feature/acesso-interno`) | `0ddfa16c23995a0d0b184ac4610457aaec7874a9` |
+| validated_tree | `ad68fcb283f8d82ced18972e4ab8e6ad4e7ecde7` |
+
+- **Estabilidade:** HEAD e árvore foram os mesmos no início e no fim da revisão. `merge-base == base_ref`,
+  e `main` não se moveu.
+- **Árvore real:** o único arquivo alterado é `flow-state.json`, que é do orquestrador e já estava alterado
+  antes da revisão.
+- **Isolamento:** toda execução rodou em worktrees temporários no commit validado. Todos foram removidos no
+  fim, junto com as imagens `c4c-validate-*`.
+
+### C2.1 Escopo desde a full 1 (`893b8be..0ddfa16`)
+
+O diff contém apenas testes, configuração de teste e artefatos do fluxo. **Nenhum código de produção mudou.**
+Isso inclui `docker-compose.yml`, os scripts e a documentação: `git diff --name-only 893b8be..HEAD -- src ':!src/*/tests/**'`
+sai vazio.
+
+- **B4:** `StaffPasswordResetTests.ResetStaffPassword_RejectsAnAlreadyUsedLinkWithAnotherIdempotencyKey`
+  prova o `RESET_TOKEN_INVALID` e que a senha fica inalterada.
+- **B5:** `Identity.EndToEndTests/StaffInvitationIssuingEndpointTests` prova, por HTTP real no Identity, que
+  uma sessão de professor recebe 403 `PERMISSION_DENIED` e que não há convite, outbox nem registro de
+  idempotência. Traz também o caso positivo (201 com 2 mensagens na outbox).
+- **B1, B2 e B3:**
+  - `tests/Directory.Build.props` e `tests/testconfig.json` foram adicionados em bff-admin, identity,
+    notification, commerce, learning e media.
+  - São idênticos ao precedente do `bff-student` (só muda o nome do componente no comentário).
+  - Excluem `obj/**` e `*.g.cs`/`*.generated.cs` da coleta de cobertura do MTP. Nenhum teste foi removido
+    ou enfraquecido.
+  - Nenhum relatório Cobertura gerado contém fonte gerada (`reportsWithGenerated=0` em todos os componentes).
+    A decisão foi tomada pelo usuário (context.txt).
+
+### C2.2 Matriz de CI
+
+- **Fonte:** `.github/workflows/<componente>.yml` → `tassosgomes/template-pipeline` `ci-dotnet.yml@v1` e
+  `ci-react-ts.yml@v1`, lidos via `gh api` (ref `v1`).
+- **Passos .NET:** mesmos comandos e parâmetros do workflow:
+  - `dotnet restore`
+  - `dotnet format --verify-no-changes --no-restore`
+  - `dotnet test --no-restore --configuration Debug --coverage --coverage-output-format cobertura`
+  - cobertura por união de linhas de **todos** os relatórios `*.xml` com `<coverage`, usando o script Python
+    extraído literalmente do workflow, com limite de 70
+  - `dotnet publish --configuration Release --no-restore --output ./publish`
+  - `docker build` com o contexto `.` e o Dockerfile do workflow
+- **Passos SPA:**
+  - `npm ci`
+  - `npm run lint`
+  - `npx --no-install tsc --noEmit`
+  - `npm test`
+  - `.total.lines.pct` de `coverage/coverage-summary.json` ≥ 70
+  - `npm run build -- --base=/admin/`
+  - imagem com o contexto `src/admin-spa`
+- **Workflows acionados:**
+  - `Directory.Packages.props` foi alterado desde a base e aciona todos os workflows .NET.
+  - `src/admin-spa` aciona o `admin-spa`.
+  - `student-spa` não é acionado.
+
+| Componente | restore | format | test | cobertura (≥70) | publish | imagem | Ciclo 1 |
+|---|---|---|---|---|---|---|---|
+| identity | 0 | 0 | 0 | 79.25 ✅ | 0 | 0 | 75.92 |
+| bff-admin | 0 | 0 | 0 | **78.01 ✅** | 0 | 0 | 67.95 ❌ |
+| admin-spa | `npm ci` 0 | lint 0 · tsc 0 | 0 (26/26) | 88.51 ✅ | build 0 | 0 | 88.51 |
+| notification | 0 | 0 | 0 (51/51)¹ | 85.45 ✅ | 0 | 0 | 78.21 |
+| commerce | 0 | 0 | 0 | **78.41 ✅** | 0 | 0 | 59.87 ❌ |
+| bff-student | 0 | 0 | 0 | 83.56 ✅ | 0 | 0 | 83.56 |
+| audit | 0 | 0 | 0 | 83.45 ✅ | 0 | 0 | 83.45 |
+| learning | 0 | 0 | 0 | **76.09 ✅** | 0 | 0 | 55.69 ❌ |
+| media | 0 | 0 | 0 | **77.03 ✅** | 0 | 0 | 56.98 ❌ |
+
+¹ **Notification e a execução descartada por ambiente:**
+- A primeira execução, no worktree em `scratchpad/wt-ci`, saiu com exit 134. Os testes de ArchitectureTests e
+  IntegrationTests abortaram com `PAL_SEHException` e 0 testes executados nesses dois projetos; os demais
+  passaram (21/21).
+- **Causa diagnosticada** com `--diagnostic`: o host de teste morre em 0,3 s ao carregar o profiler de
+  cobertura. O caminho do profiler tinha 274 caracteres
+  (`…/CodeForCoders.Notification.ArchitectureTests/bin/Debug/net10.0/runtimes/linux-x64/native/libInstrumentationEngine.so`),
+  e o de `Cov_x64.config`, 261 — acima do limite de 260 do Instrumentation Engine. O controlador então espera
+  300 s pela conexão e aborta.
+- **Provas de que é ambiente:**
+  - O mesmo projeto passa sem `--coverage`.
+  - Ele trava igualmente no commit `893b8be`, que passou na full 1.
+  - Ele trava igualmente sem o `testconfig.json`.
+  - O identity, cujo caminho é 4 caracteres mais curto, passa com cobertura no mesmo worktree.
+- **Reexecução válida:** num worktree de caminho curto (`/tmp/claude-1000/c4v2`) no mesmo commit, restore,
+  format e test deram 0, com 51/51, 4 relatórios e 85.45%. Publish e imagem já tinham saído 0 no primeiro
+  worktree. Os runners do GitHub usam caminhos curtos (`/home/runner/work/...`), então isso não afeta o CI
+  (ver R10).
+
+**Passos não reproduzidos:**
+- `resolve-version`, upload de artefato e push de imagem são passos de plataforma, sem veredito sobre o
+  código.
+- SAST, secret scan, dependency scan, container scan e DAST estão com `security-mode: observe` nos
+  chamadores: observam e não reprovam.
+
+Esta execução reproduz os passos que determinam o veredito; não é um espelho integral do CI.
+
+### C2.3 Sensor de discriminação
+
+- **Execução:** num worktree temporário no commit validado.
+  - Linha de base: HEAD `0ddfa16`, `status` vazio.
+  - Cada mutante foi aplicado, a suíte da fatia rodou com `--filter-class` e o arquivo foi restaurado com
+    `git checkout --`.
+  - Ao final, HEAD `0ddfa16` e `status` vazio, iguais à linha de base. O worktree foi removido.
+- **Mutantes refeitos:** três mutantes com `if (false)` não compilaram (CS0162 com warnings-as-errors) e não
+  contaram. Eles foram refeitos acrescentando `&& DateTime.UtcNow.Year < 2000` à guarda, o que a neutraliza
+  e ainda compila.
+
+| Fatia | Mutação (arquivo:linha) | Critério | Teste que falhou | Resultado |
+|---|---|---|---|---|
+| 1.0 | `ServiceAssertionVerifier.cs:71`: ignora `AllowedScopes` do emissor | RN-18 | `ServiceAssertionVerifierTests` (2/6) | morto |
+| 2.0 | `ProvisionFirstAdministrator.cs:26`: provisiona com administrador existente | RN-25 | `…IsIdempotentWhenTenantAlreadyHasAdministrator` | morto |
+| **2.0 (B4)** | `ResetStaffPassword.cs:51`: remove `ConsumedOn is not null` | RF-11, RN-06/07 | `ResetStaffPassword_RejectsAnAlreadyUsedLinkWithAnotherIdempotencyKey` | **morto** (sobrevivia no ciclo 1) |
+| 3.0 | `IdentitySessionStore.cs:126` e `:142`: sessão revogada continua válida | RF-08, RN-13 | `StaffSession_LogoutRevokesOnlyTheRequestedSession…` | morto |
+| **4.0 (B5)** | `StaffInvitationEndpoints.cs:136`: emite convite sem `acesso.gerir` | RF-03, RN-14 | `StaffInvitationIssuingEndpointTests.…RejectsASessionWithoutManageAccessWithoutWrites` | **morto** (sobrevivia no ciclo 1) |
+| 5.0 | `AcceptStaffInvitation.cs:249`: aceita convite já aceito | RF-05, RN-06 | `…RejectsASecondUseWithTheGenericInvalidInvitationError` | morto |
+| 6.0 | `StaffRoleActionExecutor.cs:106`: revogar não encerra sessões | RF-07/08 | `StaffRoleGrantRevoke_RevokesRoleAndAllSessionsInTheAuditedCommit` | morto |
+| 7.0 | `StaffRoleActionExecutor.cs:303`: troca sem gravar `papel-concedido` | RF-09, DP-01 | `StaffRoleChangeTests` (3/7) | morto |
+| 8.0 | Commerce `ServiceConfigurationExtensions.cs:40`: policy sem `RequireClaim(financeiro.ler)` | RF-13, RN-18 | `FinanceArea_RejectsValidTokenWithoutFinancePermission` | morto |
+| 8.0 | BFF `FinanceAreaEndpoints.cs:34`: não confere `financeiro.ler` | RF-13 | `FinanceArea_RefusesProfessorBeforeCallingCommerce` | morto |
+| 9.0 | `IdentityPasswordRecoveryStore.cs:50`: recuperação aceita conta que não é interna | RN-03/04 | `StaffPasswordRecoveryRequest_ReturnsNeutralResponsesAndEmailsOnlyInternalAccounts` | morto |
+| 3.0 (SPA) | `get-staff-areas.ts:12`: menu não filtra por permissão | RF-10 | `admin-layout-route` (2) e `finance-area-route` (1) | morto |
+
+Resultado: 12 mutantes mortos e nenhum sobrevivente.
+
+### C2.4 Smoke
+
+**Não repetido, por decisão justificada.**
+- O smoke da full 1 passou 36/36 sobre `893b8be`.
+- Desde então não mudou nenhum código de produção, nem `docker-compose.yml`, `scripts/`, `docs/` ou
+  Dockerfiles.
+- As imagens foram reconstruídas com sucesso nesta matriz.
+- A mudança de B1/B2/B3 só afeta a coleta de cobertura dos projetos de teste, e a de B4/B5 só acrescenta
+  testes.
+
+Um novo smoke exercitaria exatamente os mesmos binários de produção.
+
+### C2.5 Bloqueantes do ciclo 1
+
+| Bloqueante | Task | Situação | Evidência |
+|---|---|---|---|
+| B1: cobertura bff-admin | 3.0 | Resolvido | 78.01% ≥ 70 |
+| B2: cobertura commerce | 8.0 | Resolvido | 78.41% ≥ 70 |
+| B3: learning e media herdados | 8.0 | Resolvido | 76.09% e 77.03% ≥ 70 |
+| B4: mutante de reuso do token | 2.0 | Resolvido | mutante morto |
+| B5: mutante de autorização do convite | 4.0 | Resolvido | mutante morto |
+
+Bloqueantes novos: nenhum.
+
+### C2.6 Recomendações (não bloqueiam)
+
+- **R1–R9 do ciclo 1:** reavaliadas e mantidas sem mudança.
+  - Nenhum código de produção mudou, então o impacto continua o mesmo.
+  - Nenhuma quebra jornada do PRD, contrato ou CI.
+  - R8 (sensibilidade do fixture do notification) não se manifestou nesta rodada.
+- **R10 (nova, ambiente):**
+  - Com `--coverage`, o MTP falha de forma opaca quando o caminho do binário de teste deixa o profiler do
+    Instrumentation Engine acima de 260 caracteres: exit 134 depois de 300 s de espera.
+  - Isso não afeta o CI nem o desenvolvimento em `/home/tsgomes/github-tassosgomes/...`, mas atinge
+    validações em diretórios temporários longos.
+  - Recomendação para o fluxo: usar worktrees de caminho curto nas execuções com cobertura.
+
+---
+
+# Ciclo 1 (histórico)
+
+
 Run: run.QeuEMpDO
 Modo: full · Tentativa: 1/3 · Data: 2026-09-25
 
