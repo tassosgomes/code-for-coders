@@ -5,9 +5,9 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
-  "last_checkpoint": "1e43a53ffca5192716b24ac08dbefec14b408d65",
-  "phase": "checkpoint",
-  "active_task": "2.0",
+  "last_checkpoint": "d7a87abc9b9737cddf18d156a328f0a8d5cf8dec",
+  "phase": "reopen",
+  "active_task": "3.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -32,12 +32,12 @@
     "attempt": 2
   },
   "last_result": {
-    "role": "validator",
-    "mode": "revalidation",
+    "role": "integrator",
+    "mode": "checkpoint-task",
     "task": "2.0",
-    "attempt": 2,
-    "run_id": "run.DqJr4MKt",
-    "outcome": "approved"
+    "run_id": "run.m9RYh6lB",
+    "outcome": "checkpoint_ok",
+    "commit": "d7a87abc9b9737cddf18d156a328f0a8d5cf8dec"
   },
   "history": [
     {
@@ -285,6 +285,13 @@
       "task": "2.0",
       "run_id": "run.DqJr4MKt",
       "note": "B4 fechado; mutante morto"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "2.0",
+      "commit": "d7a87ab",
+      "note": "pós-full B4"
     }
   ],
   "full_pending_gaps": [
