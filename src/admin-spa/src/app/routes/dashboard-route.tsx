@@ -6,5 +6,5 @@ import { DashboardScreen } from '@/features/admin-dashboard/components/dashboard
 
 export const DashboardRoute = () => {
   const session = useOutletContext<StaffSession>();
-  return <DashboardScreen areas={getStaffAreas(session.permissions)} />;
+  return <DashboardScreen areas={getStaffAreas(session.permissions)} name={session.name} roles={session.roles} />;
 };

@@ -1,0 +1,22 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## complete-prd (entrega autorizada pelo usuário: `pr`)
+
+- Full aprovada: `tasks/prd-acesso-interno/prd_review.md` (Ciclo 2, run.IYwr3d1R), validated_commit
+  `0ddfa16c23995a0d0b184ac4610457aaec7874a9`, validated_tree `ad68fcb283f8d82ced18972e4ab8e6ad4e7ecde7`,
+  target_ref `f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c` (`main`). Não rebaseie.
+- Depois da revisão só mudaram `prd_review.md` e `flow-state.json` (autorizados): commit final só deles.
+- Push de `feature/acesso-interno` para `origin` e abra o PR para `main` com `gh pr create` (em português).
+  Título: `feat: acesso interno por papel e permissão (CAP-002)`. Corpo: resumo das 9 fatias, contratos
+  1.0.1 (C-11 `ROLE_CHANGE_INVALID`), decisão de cobertura (testconfig.json do precedente), resultado da
+  full (matriz CI verde, 12/12 mutantes mortos, smoke 36/36) e as recomendações R1–R10 como follow-up.
+  Termine o corpo do PR com a linha:
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+- Commit final termina com: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
+- Retorne a URL do PR.

@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { paths } from '@/config/paths';
+import { AuthLayout } from '@/components/auth-layout';
 import {
   staffPasswordRecoveryRequestSchema,
   useRequestStaffPasswordReset,
@@ -30,23 +31,23 @@ export const StaffPasswordRecoveryScreen = () => {
 
   if (requestPasswordReset.isSuccess) {
     return (
-      <main className="password-reset-page">
+      <AuthLayout>
         <section aria-labelledby="password-recovery-title" className="password-reset-card">
-          <p className="eyebrow">Acesso interno</p>
+          <p className="eyebrow">Backoffice</p>
           <h1 id="password-recovery-title">Confira seu e-mail</h1>
-          <p role="status">Se houver uma conta interna associada a este e-mail, enviaremos as instruções para redefinir sua senha.</p>
+          <p role="status">Se esse e-mail for de uma conta da equipe, enviamos um link para criar uma nova senha. Ele vale por tempo limitado.</p>
           <Link className="primary-link" to={paths.staffLogin.getHref()}>Voltar para entrar</Link>
         </section>
-      </main>
+      </AuthLayout>
     );
   }
 
   return (
-    <main className="password-reset-page">
+    <AuthLayout>
       <section aria-labelledby="password-recovery-title" className="password-reset-card">
-        <p className="eyebrow">Acesso interno</p>
+        <p className="eyebrow">Backoffice</p>
         <h1 id="password-recovery-title">Recuperar senha</h1>
-        <p>Informe o e-mail usado para acessar o backoffice.</p>
+        <p>Informe o e-mail da sua conta da equipe. Se ela existir, enviamos um link para criar uma nova senha.</p>
         {requestError ? <p role="alert">{requestError}</p> : null}
         <form noValidate onSubmit={(event) => void form.handleSubmit(submitEmail)(event)}>
           <label htmlFor="email">E-mail</label>
@@ -68,6 +69,6 @@ export const StaffPasswordRecoveryScreen = () => {
         </form>
         <Link className="primary-link" to={paths.staffLogin.getHref()}>Voltar para entrar</Link>
       </section>
-    </main>
+    </AuthLayout>
   );
 };

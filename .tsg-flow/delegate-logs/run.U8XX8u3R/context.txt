@@ -1,0 +1,19 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revisão focused da task 7.0 (tentativa 1)
+
+- Relatório do implementer (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.bBCyATEl/report.md`.
+- Confira conformidade com os contratos em todas as camadas (maxLength, enums, códigos de erro) e que o
+  ato de aceite valida contra `AtoPraticadoPayload` da Auditoria.
+- Rode gate e as suítes completas dos componentes tocados. Não suba o Docker Compose (smoke fica para a full).
+- **Atenção:** o implementer alterou `tasks/prd-acesso-interno/api-contract.yaml` e
+  `internal-api-contract.yaml` (documentou `ROLE_CHANGE_INVALID`). Contratos são aprovados e pertencem ao
+  contract-creator. Verifique no `git diff` o que mudou, se a task/techspec previa essa alteração e se
+  ela mantém o contrato compatível; mudança não prevista em contrato aprovado é bloqueante.
+- Confira os dois atos da troca (fatoIds distintos, mesma correlação) contra `AtoPraticadoPayload`.

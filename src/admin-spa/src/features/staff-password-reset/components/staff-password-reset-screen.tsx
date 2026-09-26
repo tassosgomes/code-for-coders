@@ -1,10 +1,13 @@
 import { useLayoutEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link } from 'react-router';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { paths } from '@/config/paths';
+import { AuthLayout } from '@/components/auth-layout';
+import { PasswordRequirements } from '@/components/password-requirements';
 import {
   useResetStaffPassword,
   staffPasswordResetFormSchema,
@@ -14,11 +17,13 @@ import {
 export const StaffPasswordResetScreen = () => {
   const [token] = useState(() => new URLSearchParams(window.location.search).get('token'));
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const resetPassword = useResetStaffPassword();
   const form = useForm<StaffPasswordResetFormInput>({
     defaultValues: { newPassword: '' },
     resolver: zodResolver(staffPasswordResetFormSchema),
   });
+  const password = useWatch({ control: form.control, name: 'newPassword', defaultValue: '' });
 
   useLayoutEffect(() => {
     const currentUrl = new URL(window.location.href);
@@ -45,48 +50,46 @@ export const StaffPasswordResetScreen = () => {
 
   if (resetPassword.isSuccess) {
     return (
-      <main className="password-reset-page">
+      <AuthLayout>
         <section aria-labelledby="password-reset-title" className="password-reset-card">
-          <p className="eyebrow">Acesso interno</p>
+          <p className="eyebrow">Backoffice</p>
           <h1 id="password-reset-title">Senha definida</h1>
-          <p role="status">Sua senha foi definida. Agora você pode entrar no backoffice.</p>
+          <p role="status">Pronto. Por segurança, encerramos as outras sessões da sua conta.</p>
           <Link className="primary-link" to={paths.staffLogin.getHref()}>Ir para entrar</Link>
         </section>
-      </main>
+      </AuthLayout>
     );
   }
 
   return (
-    <main className="password-reset-page">
+    <AuthLayout>
       <section aria-labelledby="password-reset-title" className="password-reset-card">
-        <p className="eyebrow">Acesso interno</p>
+        <p className="eyebrow">Backoffice</p>
         <h1 id="password-reset-title">Defina sua senha</h1>
-        <p>Escolha uma senha para acessar o backoffice.</p>
+        <p>Escolha uma senha que você ainda não usa nesta conta.</p>
         {!token ? <p role="alert">Este link de redefinição não é válido. Peça um novo link.</p> : null}
         {requestError ? <p role="alert">{requestError}</p> : null}
         {token ? (
           <form noValidate onSubmit={(event) => void form.handleSubmit(submitPassword)(event)}>
             <label htmlFor="newPassword">Nova senha</label>
-            <input
+            <div className="password-input"><input
               autoComplete="new-password"
               id="newPassword"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               {...form.register('newPassword')}
               aria-invalid={Boolean(form.formState.errors.newPassword)}
               aria-describedby={form.formState.errors.newPassword ? 'newPassword-error' : undefined}
-            />
+            /><button aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} className="visibility-button" onClick={() => setShowPassword(!showPassword)} type="button">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
             {form.formState.errors.newPassword ? (
               <p id="newPassword-error" role="alert">{form.formState.errors.newPassword.message}</p>
             ) : null}
-            <p className="password-reset-hint">
-              Use 8 caracteres ou mais, com letra maiúscula, minúscula, número e símbolo.
-            </p>
+            <PasswordRequirements password={password} />
             <button disabled={resetPassword.isPending} type="submit">
               {resetPassword.isPending ? 'Salvando senha…' : 'Definir senha'}
             </button>
           </form>
         ) : null}
       </section>
-    </main>
+    </AuthLayout>
   );
 };

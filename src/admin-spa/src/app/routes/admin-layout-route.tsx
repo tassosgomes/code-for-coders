@@ -38,6 +38,8 @@ export const AdminLayoutRoute = ({ serviceName, title }: AdminLayoutRouteProps) 
   return (
     <AppShell
       areas={getStaffAreas(session.permissions)}
+      name={session.name}
+      roles={session.roles}
       outletContext={session}
       isLoggingOut={endSession.isPending}
       logoutError={logoutError}

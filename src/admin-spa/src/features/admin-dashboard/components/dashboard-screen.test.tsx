@@ -1,18 +1,14 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 
 import { DashboardScreen } from '@/features/admin-dashboard/components/dashboard-screen';
 import { renderWithProviders } from '@/testing/test-utils';
 
 describe('admin dashboard route', () => {
-  it('shows the workspace service status returned by the API', async () => {
-    renderWithProviders(<DashboardScreen />);
-
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent(
-        'The admin workspace service is ready.',
-      ),
-    );
-    expect(screen.getByRole('heading', { name: 'Operations overview' })).toBeInTheDocument();
+  it('shows the areas granted to a member', () => {
+    renderWithProviders(<MemoryRouter><DashboardScreen name="Marina Alves" roles={['administrador']} areas={[{ label: 'Acessos', permission: 'acesso.gerir', href: '/acessos' }]} /></MemoryRouter>);
+    expect(screen.getByRole('heading', { name: 'Olá, Marina' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Abrir acessos/ })).toHaveAttribute('href', '/acessos');
   });
 });

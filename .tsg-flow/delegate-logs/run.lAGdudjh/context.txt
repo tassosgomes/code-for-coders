@@ -1,0 +1,17 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revisão focused da task 9.0 (tentativa 1)
+
+- Relatório do implementer (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.sx6ueL80/report.md`.
+- Confira conformidade com os contratos em todas as camadas (maxLength, enums, códigos de erro) e que o
+  ato de aceite valida contra `AtoPraticadoPayload` da Auditoria.
+- Rode gate e as suítes completas dos componentes tocados. Não suba o Docker Compose (smoke fica para a full).
+- Neutralidade (RN-03/RN-04): resposta indistinguível (status, corpo, tempo razoável) para conta interna,
+  aluno e e-mail inexistente; só conta interna ativa gera token e mensagem.
+- Contratos aprovados não podem ter sido editados pelo implementer.

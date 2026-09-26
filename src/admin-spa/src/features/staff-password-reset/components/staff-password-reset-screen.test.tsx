@@ -34,7 +34,7 @@ describe('StaffPasswordReset', () => {
     await user.type(screen.getByLabelText('Nova senha'), 'SenhaForte1!');
     await user.click(screen.getByRole('button', { name: 'Definir senha' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Sua senha foi definida.');
+    expect(await screen.findByRole('status')).toHaveTextContent('Pronto. Por segurança, encerramos as outras sessões da sua conta.');
     expect(requestBody).toEqual({ token: 'staff-secret', newPassword: 'SenhaForte1!' });
     expect(idempotencyKey).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Ir para entrar' })).toHaveAttribute('href', paths.staffLogin.getHref());

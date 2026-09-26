@@ -24,6 +24,7 @@ const routes: RouteObject[] = [
       { index: true, element: <DashboardRoute /> },
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
       { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
+      { path: '*', element: <RouteError notFound /> },
     ],
   },
   {

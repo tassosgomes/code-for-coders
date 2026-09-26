@@ -2,6 +2,8 @@
 # (PostgreSQL, RabbitMQ, Valkey, OTel Collector, and smtp4dev) instead of local containers.
 # Provision it first with: scripts/remote-infra.sh provision
 # Used by: scripts/apps.sh start --remote
+# The PostgreSQL server is shared (max_connections=200), so every pool is capped via
+# REMOTE_DB_MAX_POOL_SIZE (default 10) and idle connections are released after 60 s.
 
 x-remote-environment: &remote-environment
   RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
@@ -15,44 +17,44 @@ services:
   identity:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
   learning:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
   media:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
   commerce:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
   notification:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Email__SmtpHost: ${REMOTE_INFRA_HOST:-192.168.0.5}
     depends_on: !reset {}
 
   audit:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
   bff-admin:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !override
       learning:
         condition: service_healthy
@@ -60,7 +62,7 @@ services:
   bff-student:
     environment:
       <<: *remote-environment
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision}
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !override
       identity:
         condition: service_healthy

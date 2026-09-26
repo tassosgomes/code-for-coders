@@ -38,21 +38,19 @@ describe('StaffSession areas', () => {
   it('shows only the areas granted by the session permissions', async () => {
     renderAdminHome(['financeiro.ler', 'suporte.atender']);
 
-    const areas = within(await screen.findByRole('region', { name: 'Áreas disponíveis' }));
-    expect(areas.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'Financeiro',
-      'Suporte',
-    ]);
-    expect(areas.queryByText('Acessos')).not.toBeInTheDocument();
-    expect(areas.queryByText('Sua conta ainda não tem acesso a nenhuma área do backoffice.')).not.toBeInTheDocument();
+    const navigation = within(await screen.findByRole('navigation', { name: 'admin-spa navigation' }));
+    expect(navigation.getByRole('link', { name: 'Financeiro' })).toBeInTheDocument();
+    expect(navigation.queryByRole('link', { name: 'Acessos' })).not.toBeInTheDocument();
+    expect(navigation.queryByRole('link', { name: 'Suporte' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Olá, Marina' })).toBeInTheDocument();
   });
 
   it('shows the no-access guidance without any area when the account has no role', async () => {
     renderAdminHome([]);
 
-    const areas = within(await screen.findByRole('region', { name: 'Áreas disponíveis' }));
-    expect(areas.getByText('Sua conta ainda não tem acesso a nenhuma área do backoffice.')).toBeInTheDocument();
-    expect(areas.queryByRole('list')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Você ainda não tem acesso a uma área' })).toBeInTheDocument();
+    const navigation = within(screen.getByRole('navigation', { name: 'admin-spa navigation' }));
+    expect(navigation.queryByRole('link', { name: 'Acessos' })).not.toBeInTheDocument();
+    expect(navigation.queryByRole('link', { name: 'Financeiro' })).not.toBeInTheDocument();
   });
 });

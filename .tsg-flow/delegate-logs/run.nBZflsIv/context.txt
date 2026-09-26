@@ -1,0 +1,30 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+- Não suba a stack do Docker Compose: ela usa nomes de containers/volumes fixos compartilhados com o
+  checkout principal. Testcontainers (testes) pode ser usado normalmente. Registre o smoke local
+  como não executado no relatório.
+- Lição das tasks anteriores: o gate usa filtros; antes de encerrar, rode também as suítes
+  **completas** dos componentes tocados (Identity IntegrationTests, Notification IntegrationTests,
+  BFF-admin EndToEndTests e `npm --prefix src/admin-spa run test`), que são passos obrigatórios do CI.
+- Lição da 4.0: respeite os limites (`maxLength`, enums, códigos de erro) declarados nos contratos
+  (`internal-api-contract.yaml`, `api-contract.yaml`, `asyncapi-contract.yaml`) em todas as camadas, e
+  cubra-os com teste; o ato para a Auditoria deve validar contra `AtoPraticadoPayload`.
+
+## Correção da task 7.0 (tentativa 2/3)
+
+Revisão reprovada: `tasks/prd-acesso-interno/7.0_task_review.md` (run.U8XX8u3R), B1 — contratos editados
+pelo implementer. **Resolvido pelo dono:** o usuário aprovou `ROLE_CHANGE_INVALID` (422, `fromRole` =
+`toRole`) e o contract-creator formalizou em `api-contract.yaml`/`internal-api-contract.yaml` 1.0.1,
+`contracts.md` 1.2 (C-11) e na tabela de erros da `techspec.md`.
+
+- **Não edite** nenhum YAML/MD de contrato nem a techspec.
+- Confirme que Identity, BFF e SPA usam exatamente o código e o status formalizados; ajuste só se divergir.
+- Recomendação 3 da revisão (fazer): adicione testes do SPA para exibição de `ROLE_NOT_HELD` e para a
+  validação local de papéis iguais.
+- Recomendações 1–2 são opcionais; não amplie escopo.
+- Rode gate + suítes completas dos componentes tocados.

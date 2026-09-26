@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "run_id": "run.Q7HJ4OU3",
+  "role": "integrator",
+  "mode": "checkpoint-task",
+  "prd_dir": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno/tasks/prd-acesso-interno",
+  "task": "4.0",
+  "attempt": "",
+  "outcome": "checkpoint_ok",
+  "gate": "passed",
+  "report": {
+    "summary": "CHECKPOINT OK: task 4.0 com revalidacao aprovada run.gWMl0Sfm (VALIDACAO APROVADA, 0 bloqueantes B5, gate passed 19 testes); commit c72399bcd27420494c08f507c98087110ffd3f6c na branch feature/acesso-interno com 5 arquivos autorizados.",
+    "approval": "tasks/prd-acesso-interno/4.0_task_review.md (revalidation tentativa 3/3, run.gWMl0Sfm, VALIDAÇÃO APROVADA, gate passed, HEAD 986d740edda6bf11bfb337ad1aba5343b9ea9881)",
+    "state": "4_task.md status validating -> done; tasks.md checkbox 4.0 marcado; sem alteracao em ADRs; flow-state.json incluido como esta, sem edicao",
+    "files": [
+      "src/identity/tests/CodeForCoders.Identity.EndToEndTests/StaffInvitationIssuingEndpointTests.cs",
+      "tasks/prd-acesso-interno/4.0_task_review.md",
+      "tasks/prd-acesso-interno/4_task.md (status: done)",
+      "tasks/prd-acesso-interno/flow-state.json (incluido como esta, sem edicao)",
+      "tasks/prd-acesso-interno/tasks.md (checkbox 4.0 marcado)"
+    ],
+    "evidence": {
+      "staged_before_commit": "4 tracked M + 1 untracked, todos autorizados; nenhum .tsg-flow na worktree; sem mudancas alheias",
+      "status_after": "worktree limpa (git status --porcelain vazio apos o commit)",
+      "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno"
+    }
+  },
+  "branch": "feature/acesso-interno",
+  "commit": "c72399bcd27420494c08f507c98087110ffd3f6c",
+  "base_ref": null,
+  "target_ref": null,
+  "reason": null
+}

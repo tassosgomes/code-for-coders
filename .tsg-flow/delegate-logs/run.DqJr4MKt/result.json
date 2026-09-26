@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "run_id": "run.DqJr4MKt",
+  "role": "validator",
+  "mode": "revalidation",
+  "prd_dir": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno/tasks/prd-acesso-interno",
+  "task": "2.0",
+  "attempt": "2/3",
+  "outcome": "approved",
+  "gate": "passed",
+  "report": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno/tasks/prd-acesso-interno/2.0_task_review.md"
+}

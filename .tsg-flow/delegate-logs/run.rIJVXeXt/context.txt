@@ -1,0 +1,18 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revalidação pós-full da task 3.0 (tentativa 3/3)
+
+- Bloqueante a revalidar: **B1** de `tasks/prd-acesso-interno/prd_review.md` (cobertura CI bff-admin < 70%).
+- Decisão do usuário: seguir o precedente de `src/audit/tests` e `src/bff-student/tests`
+  (`Directory.Build.props` + `testconfig.json` excluindo `obj/` e `*.generated.cs`), aplicado a bff-admin,
+  identity e notification. Confira que é cópia fiel do precedente (diff contra bff-student).
+- Relatório do fix (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.xN4jyqaC/report.md`.
+- Meça você mesmo a cobertura como o CI (restore; test `--coverage --coverage-output-format cobertura`;
+  união de linhas pelo script do `ci-dotnet.yml@v1`) em bff-admin, identity e notification.
+- Grave o resultado numa seção nova de `tasks/prd-acesso-interno/3.0_task_review.md`.

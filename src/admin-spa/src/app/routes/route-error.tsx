@@ -2,20 +2,22 @@ import { isRouteErrorResponse, Link, useRouteError } from 'react-router';
 
 import { paths } from '@/config/paths';
 
-export const RouteError = () => {
+export const RouteError = ({ notFound: explicitNotFound = false }: { notFound?: boolean }) => {
   const error = useRouteError();
-  const message = isRouteErrorResponse(error)
-    ? `The requested route returned ${error.status}.`
-    : 'The admin workspace could not render this route.';
+  const notFound = explicitNotFound || (isRouteErrorResponse(error) && error.status === 404);
+  const title = notFound ? 'Página não encontrada' : 'Algo saiu do esperado';
+  const message = notFound
+    ? 'Não encontramos esta página do backoffice.'
+    : 'Não foi possível abrir esta página agora. Tente novamente em instantes.';
 
   return (
-    <main className="page-shell" role="alert">
-      <p className="eyebrow">Admin Workspace</p>
-      <h1>Something needs attention</h1>
-      <p>{message}</p>
-      <Link className="primary-link" to={paths.home.getHref()}>
-        Return to overview
-      </Link>
+    <main className="page-shell error-page" role="alert">
+      <section className="empty-state">
+        <p className="eyebrow">Backoffice · {notFound ? '404' : 'Erro'}</p>
+        <h1>{title}</h1>
+        <p>{message}</p>
+        <Link className="outline-button" to={paths.home.getHref()}>Voltar para o início</Link>
+      </section>
     </main>
   );
 };

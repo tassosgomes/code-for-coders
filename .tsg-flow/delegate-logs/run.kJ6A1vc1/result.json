@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "run.kJ6A1vc1",
+  "role": "integrator",
+  "mode": "prepare-integration",
+  "prd_dir": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno/tasks/prd-acesso-interno",
+  "task": "",
+  "attempt": "",
+  "outcome": "integration_ready",
+  "gate": "not_run",
+  "report": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.kJ6A1vc1/report.md",
+  "branch": "feature/acesso-interno",
+  "commit": "893b8be61fea5a4849be8f8f60e22b82347e8032",
+  "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
+  "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
+  "reason": null
+}

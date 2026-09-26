@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "run_id": "run.iuSBM1mk",
+  "role": "integrator",
+  "mode": "reopen-task",
+  "prd_dir": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno/tasks/prd-acesso-interno",
+  "task": "8.0",
+  "attempt": "",
+  "outcome": "task_reopened",
+  "gate": "not_run",
+  "report": null,
+  "branch": "feature/acesso-interno",
+  "commit": "3422698bf338fc8b1379b7bbb8045ba6f6e1479e",
+  "base_ref": null,
+  "target_ref": null,
+  "reason": null
+}

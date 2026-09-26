@@ -43,7 +43,7 @@ describe('FinanceArea', () => {
     let financeRequests = 0;
     renderFinanceArea(['autoria.ler'], () => { financeRequests += 1; });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Você não tem permissão para esta área.');
+    expect(await screen.findByRole('heading', { name: 'Esta área não é do seu papel' })).toBeInTheDocument();
     await openNavigation();
     expect(screen.queryByRole('link', { name: 'Financeiro' })).not.toBeInTheDocument();
     expect(financeRequests).toBe(0);
@@ -54,7 +54,7 @@ describe('FinanceArea', () => {
     renderFinanceArea(['financeiro.ler'], () => undefined);
 
     expect(await screen.findByRole('heading', { name: 'Financeiro' })).toBeInTheDocument();
-    expect(await screen.findByText('Área financeira reservada.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Área reservada' })).toBeInTheDocument();
     await openNavigation(user);
     expect(screen.getByRole('link', { name: 'Financeiro' })).toHaveAttribute('href', '/financeiro');
   });

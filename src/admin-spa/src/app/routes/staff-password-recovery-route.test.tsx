@@ -14,7 +14,7 @@ describe('StaffPasswordRecovery navigation', () => {
     );
     renderWithProviders(<RouterProvider router={router} />);
 
-    expect(screen.getByRole('link', { name: 'Esqueci a senha' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Esqueceu a senha?' })).toHaveAttribute(
       'href',
       paths.staffPasswordRecovery.getHref(),
     );

@@ -1,0 +1,985 @@
+openapi: 3.1.0
+info:
+  title: Media — vídeos do backoffice (interno)
+  version: 1.0.0
+  description: 'Recorte interno de CAP-006, PRD `tasks/prd-ingestao-midia/prd.md` v1.0. Consumidor único conhecido:
+    `bff-admin`. `media` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity,
+    emissor `identity`, audiência `media`, validade) e exige `midia.enviar` no claim `permissions`, sem consultar
+    Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações espelham
+    1:1 o contrato público do BFF (`api-contract.yaml` 1.1.0); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID`
+    em vez de `SESSION_REQUIRED`, e `uploaderName` no início do envio.'
+  contact:
+    name: Time de Entrega de Mídia
+servers:
+- url: /internal/v1
+  description: Rota privada de Media, inacessível ao navegador
+tags:
+- name: Envio
+  description: Envio em partes (RF-02, RF-03)
+- name: Vídeos
+  description: Biblioteca de vídeos da escola (RF-05 a RF-08)
+paths:
+  /video-uploads:
+    post:
+      tags:
+      - Envio
+      summary: Iniciar ou retomar o envio de um vídeo
+      description: 'Verifica formato e tamanho **antes** de qualquer byte ser transferido (RF-02). Se o mesmo ator
+        já tem um envio pendente e não expirado com a mesma `fingerprint`, devolve esse envio (200), com as partes
+        já recebidas, em vez de criar outro (RF-03). Fingerprint igual de outro ator não retoma nada: cada ator
+        só vê os próprios envios pendentes.
+
+        '
+      operationId: createVideoUploadInternal
+      security:
+      - &id001
+        StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVideoUploadRequest'
+            examples:
+              aula:
+                value:
+                  title: Aula 3 — Injeção de dependência
+                  fileName: aula-3-injecao-de-dependencia.mp4
+                  fileSize: 3221225472
+                  contentType: video/mp4
+                  fingerprint: 6c1f0b9e2d7a4e53a1c8f4d2b9e07a31
+                  uploaderName: Marina Alves
+      responses:
+        '201':
+          description: Envio novo criado.
+          headers:
+            Location:
+              description: Endereço do envio criado.
+              schema:
+                type: string
+                examples:
+                - /internal/v1/video-uploads/3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUpload'
+              examples:
+                novo:
+                  $ref: '#/components/examples/VideoUploadNew'
+        '200':
+          description: Envio pendente do mesmo ator com a mesma fingerprint — retomada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUpload'
+              examples:
+                retomada:
+                  $ref: '#/components/examples/VideoUploadResumed'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '422':
+          description: Arquivo acima de 5 GB, formato não aceito, título em branco ou chave de idempotência reutilizada
+            com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                grandeDemais:
+                  value:
+                    type: about:blank
+                    title: O arquivo passa do limite de 5 GB.
+                    status: 422
+                    code: FILE_TOO_LARGE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                formato:
+                  value:
+                    type: about:blank
+                    title: Formato não aceito. Envie MP4, MOV ou MKV.
+                    status: 422
+                    code: FORMAT_NOT_SUPPORTED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                semTitulo:
+                  $ref: '#/components/examples/TitleRequired'
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+    get:
+      tags:
+      - Envio
+      summary: Listar os envios pendentes do próprio ator
+      description: 'Só os envios do ator corrente que ainda não foram concluídos nem expiraram (RF-03). Serve para
+        a tela avisar que há um envio a retomar. Nunca lista envios de outros atores.
+
+        '
+      operationId: listPendingVideoUploadsInternal
+      security:
+      - *id001
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de envios pendentes; `data` vazio quando não há nenhum.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUploadPage'
+              examples:
+                umPendente:
+                  value:
+                    data:
+                    - uploadId: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+                      title: Aula 3 — Injeção de dependência
+                      fileName: aula-3-injecao-de-dependencia.mp4
+                      fileSize: 3221225472
+                      partSize: 67108864
+                      partCount: 48
+                      receivedParts:
+                      - 1
+                      - 2
+                      - 3
+                      - 4
+                      - 5
+                      - 6
+                      - 7
+                      - 8
+                      - 9
+                      - 10
+                      expiresAt: '2026-09-27T09:12:00Z'
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 1
+                      totalPages: 1
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /video-uploads/{uploadId}:
+    get:
+      tags:
+      - Envio
+      summary: Consultar um envio pendente
+      description: 'Devolve as partes que o armazenamento já confirmou, para o cliente enviar só as que faltam.
+        Envio de outro ator, expirado ou já concluído responde o mesmo 404.
+
+        '
+      operationId: getVideoUploadInternal
+      security:
+      - *id001
+      parameters:
+      - $ref: '#/components/parameters/UploadId'
+      responses:
+        '200':
+          description: Envio pendente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUpload'
+              examples:
+                retomada:
+                  $ref: '#/components/examples/VideoUploadResumed'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/UploadNotFound'
+  /video-uploads/{uploadId}/part-urls:
+    post:
+      tags:
+      - Envio
+      summary: Obter URLs assinadas para enviar partes
+      description: 'Emite uma URL opaca, de vida curta e de escrita única para cada parte pedida (até 100 por chamada).
+        O cliente envia os bytes da parte com `PUT` direto nessa URL, sem cookie e sem cabeçalho do BFF. A URL não
+        serve para ler nada. Cada emissão renova `expiresAt` do envio. Não altera estado de negócio; repetir o pedido
+        emite URLs novas para as mesmas partes.
+
+        '
+      operationId: createVideoUploadPartUrlsInternal
+      security:
+      - *id001
+      parameters:
+      - $ref: '#/components/parameters/UploadId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartUrlsRequest'
+            examples:
+              proximas:
+                value:
+                  partNumbers:
+                  - 11
+                  - 12
+                  - 13
+      responses:
+        '200':
+          description: URLs emitidas, na ordem pedida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartUrls'
+              examples:
+                emitidas:
+                  value:
+                    parts:
+                    - partNumber: 11
+                      url: https://upload.midia.code4coders.com.br/p/3f6d2c1a/11?sig=Q2xhdWRl
+                      expiresAt: '2026-09-26T10:12:00Z'
+                    - partNumber: 12
+                      url: https://upload.midia.code4coders.com.br/p/3f6d2c1a/12?sig=T3B1cw
+                      expiresAt: '2026-09-26T10:12:00Z'
+                    uploadExpiresAt: '2026-09-27T10:12:00Z'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/UploadNotFound'
+        '422':
+          description: Número de parte fora de 1..partCount.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                parteInvalida:
+                  value:
+                    type: about:blank
+                    title: Parte fora do intervalo deste envio.
+                    status: 422
+                    code: PART_OUT_OF_RANGE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  /video-uploads/{uploadId}/complete:
+    post:
+      tags:
+      - Envio
+      summary: Concluir o envio
+      description: 'O serviço de mídia confere no armazenamento que **todas** as partes chegaram, e só então cria
+        o vídeo no estado `received`, com o ator como autor. A preparação começa sozinha (RF-04). Repetir a conclusão
+        do mesmo envio devolve o mesmo vídeo, nunca um segundo (RF-02), mesmo com outra `Idempotency-Key`.
+
+        '
+      operationId: completeVideoUploadInternal
+      security:
+      - *id001
+      parameters:
+      - $ref: '#/components/parameters/UploadId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Vídeo criado a partir do envio, ou o mesmo vídeo de uma conclusão anterior.
+          headers:
+            Location:
+              description: Endereço do vídeo.
+              schema:
+                type: string
+                examples:
+                - /internal/v1/videos/0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                recebido:
+                  $ref: '#/components/examples/VideoReceived'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/UploadNotFound'
+        '422':
+          description: Ainda faltam partes, ou chave de idempotência reutilizada com outro envio.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                incompleto:
+                  value:
+                    type: about:blank
+                    title: Ainda faltam partes deste envio.
+                    status: 422
+                    code: UPLOAD_INCOMPLETE
+                    detail: Faltam 38 de 48 partes.
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+  /videos:
+    get:
+      tags:
+      - Vídeos
+      summary: Listar os vídeos da escola
+      description: 'Todos os vídeos da escola do ator, de qualquer autor (DP-03), do mais recente ao mais antigo.
+        Filtro por estado e busca por trecho do título, sem diferenciar maiúsculas nem acento. A tela consulta de
+        novo enquanto houver vídeo em `received` ou `preparing` (DP-04). Serve também ao seletor de vídeo pronto
+        da tela de aula (RF-08), com `status=ready`.
+
+        '
+      operationId: listVideosInternal
+      security:
+      - *id001
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Estados a incluir; repetível. Ausente → todos.
+        style: form
+        explode: true
+        schema:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/VideoStatus'
+        examples:
+          falhou:
+            value:
+            - failed
+      - name: q
+        in: query
+        required: false
+        description: Trecho do título.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 120
+        examples:
+          injecao:
+            value: injeção
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de vídeos; `data` vazio quando nenhum atende ao filtro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoPage'
+              examples:
+                variados:
+                  value:
+                    data:
+                    - videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                      title: Aula 3 — Injeção de dependência
+                      status: ready
+                      uploadedBy:
+                        accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                        name: Marina Alves
+                      uploadedAt: '2026-09-26T09:40:00Z'
+                      durationSeconds: 2415
+                      failureReason: null
+                    - videoId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
+                      title: Aula 4 — Testes de integração
+                      status: failed
+                      uploadedBy:
+                        accountId: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        name: Rafael Costa
+                      uploadedAt: '2026-09-26T08:05:00Z'
+                      durationSeconds: null
+                      failureReason: unreadable-file
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /videos/{videoId}:
+    get:
+      tags:
+      - Vídeos
+      summary: Consultar um vídeo
+      description: 'Existência, estado, título e duração de um vídeo da escola do ator (RF-08). Vídeo de outra escola
+        responde o mesmo 404 de vídeo inexistente. Nunca devolve endereço, chave nem nome de arquivo guardado.
+
+        '
+      operationId: getVideoInternal
+      security:
+      - *id001
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      responses:
+        '200':
+          description: Vídeo encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                pronto:
+                  $ref: '#/components/examples/VideoReady'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+    patch:
+      tags:
+      - Vídeos
+      summary: Corrigir o título de um vídeo
+      description: 'Qualquer ator com `midia.enviar` corrige o título de qualquer vídeo da escola, em qualquer estado
+        (RF-07). Não muda nada além do título.
+
+        '
+      operationId: updateVideoTitleInternal
+      security:
+      - *id001
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVideoTitleRequest'
+            examples:
+              titulo:
+                value:
+                  title: Aula 3 — Injeção de dependência
+      responses:
+        '200':
+          description: Título atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                pronto:
+                  $ref: '#/components/examples/VideoReady'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '422':
+          description: Título em branco, ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                semTitulo:
+                  $ref: '#/components/examples/TitleRequired'
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT RS256 de ator interno emitido por Identity na validação de sessão (`validateStaffSessionInternal`
+        com `audience: media`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions,
+        exp, jti. Chave pública por `kid` no JWKS de Identity.'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Chave propagada sem alteração pelo BFF. Isolada por tenant, operationId e ator; mesma janela
+        e regra do contrato público.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    UploadId:
+      name: uploadId
+      in: path
+      required: true
+      description: Identificador opaco do envio.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        envio:
+          value: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+    VideoId:
+      name: videoId
+      in: path
+      required: true
+      description: Identificador opaco do vídeo, o mesmo usado nos fatos `midia.*`.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        video:
+          value: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, iniciando em 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+  responses:
+    InvalidRequest:
+      description: JSON malformado, campo obrigatório ausente ou valor fora do schema.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: JSON ou campos obrigatórios inválidos.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: Token válido sem `midia.enviar`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              $ref: '#/components/examples/PermissionDenied'
+    UploadNotFound:
+      description: Envio inexistente, de outro ator, expirado ou já concluído — resposta idêntica.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Envio não encontrado ou expirado.
+                status: 404
+                code: UPLOAD_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    VideoNotFound:
+      description: Vídeo inexistente ou de outra escola — resposta idêntica.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Vídeo não encontrado.
+                status: 404
+                code: VIDEO_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TokenInvalid:
+      description: Token ausente, inválido, expirado, com audiência ou emissor errados.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tokenInvalido:
+              value:
+                type: about:blank
+                title: Token de acesso inválido.
+                status: 401
+                code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  examples:
+    PermissionDenied:
+      value:
+        type: about:blank
+        title: Sem permissão para esta área.
+        status: 403
+        code: PERMISSION_DENIED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TitleRequired:
+      value:
+        type: about:blank
+        title: O título é obrigatório.
+        status: 422
+        code: TITLE_REQUIRED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    IdempotencyKeyReused:
+      value:
+        type: about:blank
+        title: Chave de idempotência já usada com outro pedido.
+        status: 422
+        code: IDEMPOTENCY_KEY_REUSED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    VideoUploadNew:
+      value:
+        uploadId: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+        title: Aula 3 — Injeção de dependência
+        fileName: aula-3-injecao-de-dependencia.mp4
+        fileSize: 3221225472
+        partSize: 67108864
+        partCount: 48
+        receivedParts: []
+        expiresAt: '2026-09-27T09:12:00Z'
+    VideoUploadResumed:
+      value:
+        uploadId: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+        title: Aula 3 — Injeção de dependência
+        fileName: aula-3-injecao-de-dependencia.mp4
+        fileSize: 3221225472
+        partSize: 67108864
+        partCount: 48
+        receivedParts:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        expiresAt: '2026-09-27T09:12:00Z'
+    VideoReceived:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        status: received
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: null
+        failureReason: null
+    VideoReady:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        status: ready
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: 2415
+        failureReason: null
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+    Title:
+      type: string
+      minLength: 1
+      maxLength: 200
+      description: 'Nome do vídeo para reconhecê-lo no vínculo à aula. Não é título de aula. Só espaços é recusado
+        com `TITLE_REQUIRED`.
+
+        '
+      examples:
+      - Aula 3 — Injeção de dependência
+    VideoStatus:
+      type: string
+      enum:
+      - received
+      - preparing
+      - ready
+      - failed
+      description: '`received` recebido e aguardando preparação; `preparing` em preparação; `ready` pronto para
+        vínculo e reprodução; `failed` a preparação esgotou as tentativas. Só anda para frente; `ready` e `failed`
+        são finais (RN-M05).
+
+        '
+    FailureReason:
+      type: string
+      enum:
+      - unreadable-file
+      - unsupported-format
+      - duration-exceeded
+      - preparation-failed
+      description: 'Categoria do motivo da falha. O SPA mostra o texto do PRD (RF-05): "arquivo de vídeo ilegível",
+        "formato de vídeo não suportado", "duração acima de 3 horas", "não foi possível preparar este vídeo — envie
+        novamente".
+
+        '
+    CreateVideoUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      - fileName
+      - fileSize
+      - contentType
+      - fingerprint
+      - uploaderName
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Nome do arquivo no computador do professor. Só para exibição; não vira nome de objeto.
+        fileSize:
+          type: integer
+          minimum: 1
+          description: Tamanho em bytes. Acima de 5368709120 (5 GiB) → 422 `FILE_TOO_LARGE`.
+        contentType:
+          type: string
+          minLength: 1
+          description: 'Tipo declarado pelo navegador. Aceitos: `video/mp4`, `video/quicktime`, `video/x-matroska`,
+            conferidos junto com a extensão de `fileName` (`.mp4`, `.mov`, `.mkv`). Outro → 422 `FORMAT_NOT_SUPPORTED`.
+            A leitura real do conteúdo acontece na preparação (RF-04).
+
+            '
+          examples:
+          - video/mp4
+        fingerprint:
+          type: string
+          minLength: 16
+          maxLength: 128
+          description: 'Impressão opaca do arquivo calculada pelo cliente (nome, tamanho e data de modificação).
+            Só serve para reconhecer o mesmo arquivo na retomada (RF-03).
+
+            '
+        uploaderName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Nome do ator no momento do envio, obtido pelo BFF da validação de sessão (`SessionValidated.name`).
+            Só para exibição em `uploadedBy.name`; a identidade do autor vem de `sub` do token, nunca deste campo
+            (C-13). Não vai para log, métrica nem fato publicado.
+    VideoUpload:
+      type: object
+      additionalProperties: false
+      required:
+      - uploadId
+      - title
+      - fileName
+      - fileSize
+      - partSize
+      - partCount
+      - receivedParts
+      - expiresAt
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        title:
+          $ref: '#/components/schemas/Title'
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        partSize:
+          type: integer
+          description: Tamanho de cada parte em bytes; a última pode ser menor. Definido pelo serviço.
+        partCount:
+          type: integer
+          minimum: 1
+        receivedParts:
+          type: array
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+          description: Partes que o armazenamento confirmou, em ordem crescente; `[]` quando nenhuma.
+        expiresAt:
+          type: string
+          format: date-time
+          description: 'Até quando o envio pode ser retomado. Pelo menos 24 horas depois da validade da última URL
+            de parte emitida (RF-03); depois disso o envio e as partes são descartados.
+
+            '
+    VideoUploadPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/VideoUpload'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    PartUrlsRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - partNumbers
+      properties:
+        partNumbers:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+    PartUrls:
+      type: object
+      additionalProperties: false
+      required:
+      - parts
+      - uploadExpiresAt
+      properties:
+        parts:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - partNumber
+            - url
+            - expiresAt
+            properties:
+              partNumber:
+                type: integer
+                minimum: 1
+              url:
+                type: string
+                format: uri
+                description: 'URL opaca de escrita de uma única parte. O cliente não interpreta host nem parâmetros;
+                  só envia `PUT` com os bytes da parte até `expiresAt`.
+
+                  '
+              expiresAt:
+                type: string
+                format: date-time
+        uploadExpiresAt:
+          type: string
+          format: date-time
+    UploadedBy:
+      type: object
+      additionalProperties: false
+      required:
+      - accountId
+      - name
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nome do autor no momento do envio. Continua exibido mesmo se o papel dele for revogado.
+    Video:
+      type: object
+      additionalProperties: false
+      required:
+      - videoId
+      - title
+      - status
+      - uploadedBy
+      - uploadedAt
+      - durationSeconds
+      - failureReason
+      properties:
+        videoId:
+          type: string
+          format: uuid
+        title:
+          $ref: '#/components/schemas/Title'
+        status:
+          $ref: '#/components/schemas/VideoStatus'
+        uploadedBy:
+          $ref: '#/components/schemas/UploadedBy'
+        uploadedAt:
+          type: string
+          format: date-time
+        durationSeconds:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+          description: Duração em segundos; preenchida só em `ready`.
+        failureReason:
+          oneOf:
+          - $ref: '#/components/schemas/FailureReason'
+          - type: 'null'
+          description: Preenchido só em `failed`.
+    VideoPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    UpdateVideoTitleRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+    Pagination:
+      type: object
+      additionalProperties: false
+      required:
+      - page
+      - size
+      - total
+      - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0

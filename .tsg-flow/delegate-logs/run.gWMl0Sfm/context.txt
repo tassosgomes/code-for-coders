@@ -1,0 +1,16 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revalidação pós-full da task 4.0 (tentativa 3/3)
+
+- Bloqueante a revalidar: **B5** de `tasks/prd-acesso-interno/prd_review.md` — mutante que neutraliza a
+  checagem de `acesso.gerir` em `StaffInvitationEndpoints.cs:136` (Identity) sobrevivia.
+- Relatório do fix (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.aygEKCKb/report.md`.
+- Aplique a mutação você mesmo num `git worktree` temporário (não na árvore real), confirme que o novo teste
+  E2E a mata e remova o worktree. Rode gate e suítes completas do Identity (IntegrationTests e EndToEndTests).
+- Grave o resultado numa seção nova de `tasks/prd-acesso-interno/4.0_task_review.md`.

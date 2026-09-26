@@ -1,0 +1,19 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revalidação pós-full da task 8.0 (tentativa 2/3)
+
+- Bloqueantes a revalidar: **B2** (commerce < 70%) e **B3** (learning e media < 70%) de
+  `tasks/prd-acesso-interno/prd_review.md`.
+- Decisão do usuário: seguir o precedente `src/bff-student/tests` (`Directory.Build.props` + `testconfig.json`
+  excluindo `obj/` e `*.generated.cs`), agora em commerce, learning e media. Confira cópia fiel (diff contra
+  bff-student).
+- Relatório do fix (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.wRIryWs6/report.md`.
+- Meça você mesmo como o CI (restore; test `--coverage --coverage-output-format cobertura`; união de linhas
+  pelo script do `ci-dotnet.yml@v1`) em commerce, learning e media, usando só relatórios recém-gerados.
+- Grave o resultado numa seção nova de `tasks/prd-acesso-interno/8.0_task_review.md`.

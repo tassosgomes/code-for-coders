@@ -115,13 +115,16 @@ describe('StaffInvitationIssuing', () => {
     const user = userEvent.setup();
     renderStaffAccess();
 
-    await user.type(await screen.findByLabelText('E-mail'), 'convidada@example.com');
-    await user.selectOptions(screen.getByLabelText('Papel'), 'suporte');
+    await user.click(await screen.findByRole('button', { name: 'Convidar' }));
+    await user.type(screen.getByLabelText('E-mail'), 'convidada@example.com');
+    await user.click(screen.getByRole('radio', { name: /suporte/i }));
     await user.type(screen.getByLabelText('Motivo'), 'Vai atuar no suporte interno.');
-    await user.click(screen.getByRole('button', { name: 'Convidar' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar convite' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Convite enviado para convidada@example.com.');
-    expect(screen.getByRole('heading', { name: 'Convites pendentes' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Convite enviado' })).toBeInTheDocument();
+    expect(screen.getByText(/convidada@example.com/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Concluir' }));
+    await user.click(screen.getByRole('tab', { name: /Convites pendentes/ }));
     expect(screen.getByText('Nenhum convite pendente.')).toBeInTheDocument();
   });
 
@@ -133,14 +136,15 @@ describe('StaffInvitationIssuing', () => {
     const user = userEvent.setup();
     renderStaffAccess(code);
 
-    await user.type(await screen.findByLabelText('E-mail'), 'convidada@example.com');
+    await user.click(await screen.findByRole('button', { name: 'Convidar' }));
+    await user.type(screen.getByLabelText('E-mail'), 'convidada@example.com');
     await user.type(screen.getByLabelText('Motivo'), 'Motivo informado.');
-    await user.click(screen.getByRole('button', { name: 'Convidar' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar convite' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message);
   });
 
-  it('refuses a reason longer than 1000 characters without sending the invitation', async () => {
+  it('limits the invitation reason to 500 characters before sending', async () => {
     const user = userEvent.setup();
     let invitationRequests = 0;
     server.events.on('request:start', ({ request }) => {
@@ -150,12 +154,12 @@ describe('StaffInvitationIssuing', () => {
     });
     renderStaffAccess();
 
-    await user.type(await screen.findByLabelText('E-mail'), 'convidada@example.com');
+    await user.click(await screen.findByRole('button', { name: 'Convidar' }));
+    await user.type(screen.getByLabelText('E-mail'), 'convidada@example.com');
     await user.click(screen.getByLabelText('Motivo'));
     await user.paste('m'.repeat(1001));
-    await user.click(screen.getByRole('button', { name: 'Convidar' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('O motivo deve ter no máximo 1000 caracteres.');
+    expect(screen.getByLabelText('Motivo')).toHaveValue('m'.repeat(500));
+    expect(screen.getByText('500/500')).toBeInTheDocument();
     expect(invitationRequests).toBe(0);
     server.events.removeAllListeners('request:start');
   });
@@ -183,16 +187,17 @@ describe('StaffMembers', () => {
       },
     ]);
 
-    expect(await screen.findByRole('heading', { name: 'Pessoas com acesso' })).toBeInTheDocument();
-    expect(await screen.findByText('Papéis: administrador')).toBeInTheDocument();
-    expect(screen.getByText('Papéis: professor')).toBeInTheDocument();
-    expect(screen.getByText('Ao revogar ou trocar um papel, a pessoa será desconectada agora.')).toBeInTheDocument();
-    const selfRow = screen.getByText('Marina Alves').closest('li');
-    expect(selfRow).not.toBeNull();
-    expect(within(selfRow!).queryByRole('button')).not.toBeInTheDocument();
-    const memberRow = screen.getByText('Rafaela Lima').closest('li');
-    expect(memberRow).not.toBeNull();
-    expect(within(memberRow!).getByRole('button', { name: 'Conceder' })).toBeInTheDocument();
+    expect(await screen.findByRole('tabpanel', { name: 'Pessoas com acesso' })).toBeInTheDocument();
+    expect(await screen.findByText('administrador', { selector: '.role-badge' })).toBeInTheDocument();
+    expect(screen.getByText('professor', { selector: '.role-badge' })).toBeInTheDocument();
+    const selfRow = within(screen.getByRole('tabpanel', { name: 'Pessoas com acesso' })).getByText('Marina Alves').closest('.access-row');
+    if (!(selfRow instanceof HTMLElement)) throw new Error('Current member row missing');
+    expect(within(selfRow).queryByRole('button')).not.toBeInTheDocument();
+    const memberRow = screen.getByText('Rafaela Lima').closest('.access-row');
+    if (!(memberRow instanceof HTMLElement)) throw new Error('Member row missing');
+    expect(within(memberRow).getByRole('button', { name: 'Ações para Rafaela Lima' })).toBeInTheDocument();
+    await user.click(within(memberRow).getByRole('button', { name: 'Ações para Rafaela Lima' }));
+    await user.click(screen.getByRole('button', { name: 'Conceder papel' }));
     await user.selectOptions(screen.getByLabelText('Papel para Rafaela Lima'), 'suporte');
   });
 
@@ -214,9 +219,11 @@ describe('StaffMembers', () => {
       submittedInput = body;
     });
 
-    await user.type(await screen.findByLabelText('Motivo para Rafaela Lima'), 'Cobertura do suporte.');
+    await user.click(await screen.findByRole('button', { name: 'Ações para Rafaela Lima' }));
+    await user.click(screen.getByRole('button', { name: 'Conceder papel' }));
+    await user.type(screen.getByLabelText('Motivo para Rafaela Lima'), 'Cobertura do suporte.');
     await user.selectOptions(screen.getByLabelText('Papel para Rafaela Lima'), 'suporte');
-    await user.click(screen.getByRole('button', { name: 'Conceder' }));
+    await user.click(screen.getByRole('button', { name: 'Conceder papel' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('suporte concedido a Rafaela Lima.');
     expect(requestCount).toBe(1);
@@ -238,9 +245,11 @@ describe('StaffMembers', () => {
       requestCount += 1;
     });
 
-    await user.selectOptions(await screen.findByLabelText('Papel para Rafaela Lima'), 'professor');
+    await user.click(await screen.findByRole('button', { name: 'Ações para Rafaela Lima' }));
+    await user.click(screen.getByRole('button', { name: 'Revogar papel' }));
+    await user.selectOptions(screen.getByLabelText('Papel para Rafaela Lima'), 'professor');
     await user.type(screen.getByLabelText('Motivo para Rafaela Lima'), 'Fim da cobertura.');
-    await user.click(screen.getByRole('button', { name: 'Revogar' }));
+    await user.click(screen.getByRole('button', { name: 'Revogar papel' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('professor revogado; Rafaela Lima foi desconectada agora.');
     expect(requestCount).toBe(1);
@@ -257,7 +266,9 @@ describe('StaffMembers', () => {
       isSelf: false,
     }], () => { requestCount += 1; });
 
-    await user.click(await screen.findByRole('button', { name: 'Conceder' }));
+    await user.click(await screen.findByRole('button', { name: 'Ações para Rafaela Lima' }));
+    await user.click(screen.getByRole('button', { name: 'Conceder papel' }));
+    await user.click(screen.getByRole('button', { name: 'Conceder papel' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Informe o motivo da alteração.');
     expect(requestCount).toBe(0);
@@ -284,7 +295,9 @@ describe('StaffRoleChange', () => {
       submittedInput = body;
     });
 
-    await user.selectOptions(await screen.findByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
+    await user.click(await screen.findByRole('button', { name: 'Ações para Rafaela Lima' }));
+    await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
+    await user.selectOptions(screen.getByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
     await user.selectOptions(screen.getByLabelText('Novo papel para Rafaela Lima'), 'financeiro');
     await user.type(screen.getByLabelText('Motivo para trocar o papel de Rafaela Lima'), 'Mudou para o time financeiro.');
     await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
@@ -312,12 +325,10 @@ describe('StaffRoleChange', () => {
       isSelf: false,
     }], undefined, () => { requestCount += 1; });
 
-    await user.selectOptions(await screen.findByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
-    await user.selectOptions(screen.getByLabelText('Novo papel para Rafaela Lima'), 'professor');
-    await user.type(screen.getByLabelText('Motivo para trocar o papel de Rafaela Lima'), 'Motivo informado.');
+    await user.click(await screen.findByRole('button', { name: 'Ações para Rafaela Lima' }));
     await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Escolha papéis de origem e destino diferentes.');
+    await user.selectOptions(screen.getByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
+    expect(within(screen.getByLabelText('Novo papel para Rafaela Lima')).queryByRole('option', { name: 'professor' })).not.toBeInTheDocument();
     expect(requestCount).toBe(0);
   });
 
@@ -337,7 +348,9 @@ describe('StaffRoleChange', () => {
       )),
     );
 
-    await user.selectOptions(await screen.findByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
+    await user.click(await screen.findByRole('button', { name: 'Ações para Rafaela Lima' }));
+    await user.click(screen.getByRole('button', { name: 'Trocar papel' }));
+    await user.selectOptions(screen.getByLabelText('Papel atual para trocar de Rafaela Lima'), 'professor');
     await user.selectOptions(screen.getByLabelText('Novo papel para Rafaela Lima'), 'financeiro');
     await user.type(screen.getByLabelText('Motivo para trocar o papel de Rafaela Lima'), 'Mudou para o time financeiro.');
     await user.click(screen.getByRole('button', { name: 'Trocar papel' }));

@@ -1,0 +1,42 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Validação full (ciclo 2)
+
+- Diff: `git diff f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c...HEAD` (HEAD `0ddfa16`, `main` inalterada).
+- Specs: `prd.md`, `techspec.md`, `contracts.md` 1.2 (contratos OpenAPI 1.0.1, C-11 `ROLE_CHANGE_INVALID`),
+  `asyncapi-contract*.yaml`, ADRs 0003/0004/0005.
+- **CI:** execute a matriz de "Verificação herdada" do `tasks.md` para cada componente alterado
+  (identity, bff-admin, admin-spa, notification, commerce, bff-student): restore, `dotnet format
+  --verify-no-changes`, `dotnet test` de todos os projetos com cobertura ≥ 70%, `dotnet publish -c Release`,
+  build da imagem Docker; SPA: lint, typecheck, test com cobertura ≥ 70%, build, imagem. Registre a
+  matriz com comando, exit e resultado. Passo obrigatório sem evidência impede aprovação.
+- **Smoke autorizado pelo usuário:** pode subir a stack Docker Compose a partir desta worktree (nada está
+  rodando no ambiente principal). Siga `docs/student-registration-local-development.md` (geração de `.env`,
+  migrações, `provision-first-admin`). Cubra os checkpoints de fase do `tasks.md`: admin provisionado define
+  senha via smtp4dev e entra em `http://localhost:8081/admin/` vendo "Acessos"; convite → aceite → troca de
+  papel com atos na trilha da Auditoria; revogação desconecta na próxima ação (duas sessões); professor
+  recusado no menu, no BFF e direto no Commerce; recuperação de senha neutra; token fora do log do nginx.
+  Ao final, derrube a stack (`docker compose down`, mantendo volumes só se necessário para diagnóstico).
+- Lacunas e recomendações acumuladas das revisões focused a reavaliar (bloqueiam só se quebrarem jornada do
+  PRD, contrato ou CI): 3.0 R5 (Origin no login anônimo); 4.0 R1/R2 (corrida no índice de convite pendente;
+  ROLE_NOT_SUPPORTED); 5.0 R1 (Idempotency-Key do aceite por envio); 6.0 R3 (400 não declarado em
+  listStaffMembersInternal); 8.0 R2/R3/R4 (cardinalidade JWKS; 401 TOKEN_INVALID; 500 genérico no BFF);
+  9.0 R1/R2 (sem teste HTTP dos internal/v1/staff-*; neutralidade de tempo).
+- Atribua cada bloqueante à task responsável (1.0–9.0).
+
+### Ciclo 2 — o que mudou desde a full 1 (`prd_review.md`, run.QeuEMpDO, 5 bloqueantes)
+- B4 (2.0, `d7a87ab`) e B5 (4.0, `c72399b`): testes que matam os mutantes; revalidados com sensor.
+- B1 (3.0, `13f2d8b`) e B2/B3 (8.0, `80e92af`): por decisão do usuário, `tests/Directory.Build.props` +
+  `tests/testconfig.json` do precedente bff-student replicados em bff-admin, identity, notification,
+  commerce, learning e media (exclusão de `obj/` e `*.generated.cs` da cobertura).
+- Nenhum código de produção mudou desde a full 1. Refaça a matriz de CI completa (todos os workflows
+  acionados, inclusive audit, bff-student, learning, media) e o sensor de discriminação (inclui os mutantes
+  B4/B5). Quanto ao smoke: ele passou 36/36 na full 1 sobre o mesmo código de produção; repita-o apenas se
+  julgar necessário e justifique a decisão no relatório (continua autorizado a subir a stack, isolada).
+- Acrescente uma seção "Ciclo 2" em `tasks/prd-acesso-interno/prd_review.md` sem apagar o ciclo 1.

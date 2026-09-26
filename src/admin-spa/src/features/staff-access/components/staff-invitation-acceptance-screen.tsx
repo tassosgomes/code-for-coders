@@ -1,10 +1,13 @@
 import { useLayoutEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { paths } from '@/config/paths';
+import { AuthLayout } from '@/components/auth-layout';
+import { PasswordRequirements } from '@/components/password-requirements';
 import {
   getStaffInvitationAcceptanceError,
   staffInvitationAcceptanceFormSchema,
@@ -23,6 +26,7 @@ const staffRoleLabels: Record<string, string> = {
 export const StaffInvitationAcceptanceScreen = () => {
   const [token] = useState(() => new URLSearchParams(window.location.search).get('token') ?? '');
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const preview = useStaffInvitationPreview(token, Boolean(token));
   const acceptInvitation = useAcceptStaffInvitation();
@@ -30,6 +34,7 @@ export const StaffInvitationAcceptanceScreen = () => {
     defaultValues: { name: '', password: '' },
     resolver: zodResolver(staffInvitationAcceptanceFormSchema),
   });
+  const password = useWatch({ control: form.control, name: 'password', defaultValue: '' });
 
   useLayoutEffect(() => {
     const currentUrl = new URL(window.location.href);
@@ -52,9 +57,9 @@ export const StaffInvitationAcceptanceScreen = () => {
   };
 
   return (
-    <main className="password-reset-page">
+    <AuthLayout>
       <section aria-labelledby="invitation-acceptance-title" className="password-reset-card">
-        <p className="eyebrow">Acesso interno</p>
+        <p className="eyebrow">Backoffice</p>
         <h1 id="invitation-acceptance-title">Aceite seu convite</h1>
 
         {!token ? (
@@ -82,7 +87,7 @@ export const StaffInvitationAcceptanceScreen = () => {
             {requestError ? <p role="alert">{requestError}</p> : null}
             <form noValidate onSubmit={(event) => void form.handleSubmit(submitAcceptance)(event)}>
               <label htmlFor="invitation-name">Nome</label>
-              <input
+              <div className="password-input"><input
                 autoComplete="name"
                 id="invitation-name"
                 type="text"
@@ -98,17 +103,15 @@ export const StaffInvitationAcceptanceScreen = () => {
               <input
                 autoComplete="new-password"
                 id="invitation-password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 {...form.register('password')}
                 aria-invalid={Boolean(form.formState.errors.password)}
                 aria-describedby={form.formState.errors.password ? 'invitation-password-error' : undefined}
-              />
+              /><button aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} className="visibility-button" onClick={() => setShowPassword(!showPassword)} type="button">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
               {form.formState.errors.password ? (
                 <p id="invitation-password-error" role="alert">{form.formState.errors.password.message}</p>
               ) : null}
-              <p className="password-reset-hint">
-                Use 8 caracteres ou mais, com letra maiúscula, minúscula, número e símbolo.
-              </p>
+              <PasswordRequirements password={password} />
               <button disabled={acceptInvitation.isPending} type="submit">
                 {acceptInvitation.isPending ? 'Ativando conta…' : 'Aceitar convite'}
               </button>
@@ -116,6 +119,6 @@ export const StaffInvitationAcceptanceScreen = () => {
           </>
         ) : null}
       </section>
-    </main>
+    </AuthLayout>
   );
 };

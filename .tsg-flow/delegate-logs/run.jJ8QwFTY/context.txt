@@ -1,0 +1,19 @@
+# Decisões operacionais do orquestrador
+
+- Este PRD roda na worktree `/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno`
+  (branch `feature/acesso-interno`). Trabalhe apenas nela; não altere o checkout principal
+  `/home/tsgomes/github-tassosgomes/code-for-coders` nem a branch `main`.
+- `tasks/prd-acesso-interno/flow-state.json` pertence ao orquestrador: não edite.
+- Logs do transporte ficam fora da worktree; nada de `.tsg-flow/` entra em commits.
+
+## Revalidação da task 7.0 (tentativa 2/3)
+
+- Revisão anterior: `tasks/prd-acesso-interno/7.0_task_review.md` (run.U8XX8u3R), B1 (contratos editados sem dono).
+- Decisão do usuário: `ROLE_CHANGE_INVALID` (422, `fromRole` = `toRole`) aprovado. O contract-creator
+  formalizou em `api-contract.yaml`/`internal-api-contract.yaml` 1.0.1 (versões, descrições, exemplo
+  `papeisIguais`), `api-contract.md`, `internal-api-contract.md`, `contracts.md` 1.2 (C-11) e na tabela de
+  erros da `techspec.md`. Essas mudanças de contrato/spec são **autorizadas** e fazem parte do diff;
+  confira coerência entre elas e com o código, e valide os YAMLs (Spectral com
+  `.claude/skills/tsg-flow-contract-creator/rulesets/openapi.yaml`).
+- Relatório do fix (alegação): `/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs/run.nBZflsIv/report.md`.
+- Rode gate + suítes completas dos componentes tocados. Não suba o Docker Compose.

@@ -33,7 +33,7 @@ describe('StaffPasswordRecovery', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar instruções' }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(
-      'Se houver uma conta interna associada a este e-mail, enviaremos as instruções para redefinir sua senha.',
+      'Se esse e-mail for de uma conta da equipe, enviamos um link para criar uma nova senha. Ele vale por tempo limitado.',
     );
     expect(requestBody).toEqual({ email: 'marina@example.com' });
     expect(idempotencyKey).toBeTruthy();

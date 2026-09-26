@@ -55,18 +55,24 @@
       "id": "CAP-005",
       "stage": "backlog",
       "artifacts": {},
-      "mvp_order": 3
+      "mvp_order": 4
     },
     {
       "id": "CAP-006",
-      "stage": "backlog",
-      "artifacts": {},
-      "mvp_order": 4
+      "stage": "techspec",
+      "artifacts": {
+        "domain": "domains/entrega-de-midia-e-protecao/domain.md",
+        "prd": "tasks/prd-ingestao-midia/prd.md",
+        "contract": "tasks/prd-ingestao-midia/contracts.md"
+      },
+      "mvp_order": 3
     },
     {
       "id": "CAP-007",
       "stage": "backlog",
-      "artifacts": {},
+      "artifacts": {
+        "domain": "domains/entrega-de-midia-e-protecao/domain.md"
+      },
       "mvp_order": 7
     },
     {
@@ -216,6 +222,12 @@
       "blocked_by": [
         "NA17"
       ]
+    },
+    {
+      "id": "NA19",
+      "what": "Revisar e aprovar tasks/prd-ingestao-midia/techspec.draft.md e ADR-0006 (Proposed); decidir resposta de armazenamento indisponivel (patch de contrato). Tasks so apos CAP-002 integrada",
+      "skill": "tsg-flow-techspec-creator",
+      "blocked_by": []
     }
   ],
   "open_decisions": [
@@ -497,6 +509,86 @@
       "owner": "tasso",
       "decided_at": "2026-09-25",
       "decision": "ADR-0005 aceita: validacao da sessao interna em Identity a cada acao protegida; emissores de assercao separados por borda com escopos proprios; JWT com claims de papel/permissao validado via JWKS no servico dono (commerce na area financeira). Primeiro admin por comando provision-first-admin com senha definida pelo fluxo de redefinicao. Descartado: permissoes em cache no BFF (viola RN-17), servico consultando Identity para autorizar, chave unica para as duas bordas."
+    },
+    {
+      "id": "OD28",
+      "ref": "backlog/capabilities.md CAP-006 · context/architecture-baseline.md (HLS com AES-128) · R10",
+      "what": "Onde roda a preparacao HLS AES-128 do video",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "ffmpeg dentro do servico media, no runtime Coolify; S3 + CloudFront seguem so como armazenamento e distribuicao (ADR-0002). Descartado: servico gerenciado de transcodificacao da AWS - custo por minuto e mais uma dependencia externa com camada anticorrupcao, quando o volume do MVP cabe no compute ja provisionado."
+    },
+    {
+      "id": "OD29",
+      "ref": "backlog/capabilities.md CAP-006",
+      "what": "Fatia do primeiro PRD de CAP-006",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Entra: envio do video pelo professor; preparacao HLS AES-128 com chave guardada no media; status do ativo (recebido, preparando, pronto, falhou) visivel a quem enviou; ativo pronto consultavel para vinculo (o que CAP-005 consome); nenhum objeto de video publico (G21); tela de envio no backoffice. Fora: reproducao, URL assinada, entrega da chave ao player e marca d agua (CAP-007); vinculo a aula (CAP-005); substituir/excluir video, retencao, miniatura e legenda (pos-MVP). Em aberto para o PRD: escada de qualidades, limite de tamanho do envio, visibilidade do status entre professores."
+    },
+    {
+      "id": "OD30",
+      "ref": "domains/entrega-de-midia-e-protecao/domain.md §5 · context/domain-map.md (Conteudo -> Midia)",
+      "what": "Como Midia confere a que conteudo um ativo pertence sem conhecer curso",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Referencia de Uso opaca: ao publicar, Conteudo informa por evento quais ativos cada conteudo usa; Midia guarda so o identificador e, na abertura da sessao, confere o conteudo alegado antes de perguntar a Matricula. Envio e preparacao acontecem em Midia pelo professor; Conteudo consulta ativo pronto antes de vincular. Descartado: confiar no conteudo informado pelo BFF (aluno com direito a A reproduziria midia de B); Midia consultar Conteudo na sessao (2 saltos, viola G08)."
+    },
+    {
+      "id": "OD31",
+      "ref": "domains/entrega-de-midia-e-protecao/domain.md RN-M16 · QM-05",
+      "what": "Materiais pesados no dominio de Midia",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Ativo Protegido com dois tipos, video e material, sob as mesmas regras de sigilo (nada publico, acesso de vida curta apos decisao de acesso); preparacao HLS so para video. Qual PRD entrega o ciclo de material fica para o planejamento de CAP-005. Descartado: domain doc so de video - deixaria material sem regra quando CAP-005 anexar."
+    },
+    {
+      "id": "OD32",
+      "ref": "tasks/prd-ingestao-midia/prd.md DP-06 (era QP-01)",
+      "what": "Retencao do arquivo original depois da preparacao",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Descartar o original ao chegar a pronto ou falhou; so a Versao de Reproducao permanece. Preparar de novo exige reenvio pelo professor. Descartado: manter o original - ~2x o armazenamento necessario para entregar (R10)."
+    },
+    {
+      "id": "OD33",
+      "ref": "tasks/prd-ingestao-midia/prd.md DP-01 a DP-05 · domain.md QM-01, QM-02, QM-03",
+      "what": "Qualidades, limite de envio, visibilidade e aviso da ingestao de video",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Escada 1080p/720p/480p sem ampliar; MP4/MOV/MKV ate 5 GB e 3 h, envio retomavel por 24 h; todo ator com midia.enviar ve todos os videos da escola; estado so pela lista com atualizacao automatica, sem e-mail; midia.enviar so do professor. Descartados: so 1080p (trava no 4G), 2 GB/1 h (recusa live-coding), so quem enviou ve (coautoria e saida de professor), e-mail de pronto (modelo e consentimento novos em Notificacao)."
+    },
+    {
+      "id": "OD34",
+      "ref": "tasks/prd-ingestao-midia/contracts.md C-11",
+      "what": "Como o video de ate 5 GB chega ao armazenamento",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Direto do navegador ao S3 em partes, por URL assinada de vida curta emitida por Media via bff-admin; unica excecao a SPA so fala com o BFF (BA05). Descartado: partes via bff-admin e Media - 5 GB atravessando dois servicos no VPS."
+    },
+    {
+      "id": "OD35",
+      "ref": "tasks/prd-ingestao-midia/contracts.md C-12",
+      "what": "Como Conteudo valida o video no vinculo (RF-08)",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Seletor via bff-admin (listVideos?status=ready, getVideo); learning valida o vinculo por visao local alimentada por midia.ativo-pronto/preparacao-falhou, forma exata em CAP-005. Descartado: operacao learning->media agora - exigiria ADR de autenticacao servico->servico sem consumidor com PRD."
+    },
+    {
+      "id": "OD36",
+      "ref": "docs/adr/0006-preparacao-de-video-e-custodia-de-chave.md · tasks/prd-ingestao-midia/techspec.draft.md D-01",
+      "what": "Onde roda o ffmpeg dentro do media",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Container media-worker separado, mesma imagem, papel por configuracao. Descartado: BackgroundService na API - disputa CPU com a entrega de CAP-007."
+    },
+    {
+      "id": "OD37",
+      "ref": "tasks/prd-ingestao-midia/techspec.draft.md D-06 · PRD RF-11",
+      "what": "Metrica de volume por escola vs baseline (dimensao nunca e Id)",
+      "owner": "tasso",
+      "decided_at": "2026-09-25",
+      "decision": "Sem dimensao de tenant enquanto mono-tenant (DE10); detalhe por escola por consulta quando houver multi-tenant. Descartado: excecao ao baseline para tenant - precedente para todos os servicos."
     }
   ]
 }
