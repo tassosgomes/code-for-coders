@@ -2,17 +2,17 @@
 tsg_artifact: contract
 product: code-4-coders
 capability: CAP-006
-version: 1.0
+version: 1.1
 status: approved
-updated: 2026-09-25
+updated: 2026-09-26
 sources: tasks/prd-ingestao-midia/prd.md@1.0, domains/entrega-de-midia-e-protecao/domain.md@1.0
 ---
 
 # Contratos de integração — ingestão de mídia
 
 > - PRD: [prd.md](prd.md), v1.0, aprovado em 2026-09-25
-> - Data da revisão: 2026-09-25
-> - Estado do conjunto: **Aprovado para implementação (1.0)** em 2026-09-25 — C-11 a C-15 aprovadas; os três documentos validados.
+> - Data da revisão: 2026-09-26
+> - Estado do conjunto: **Aprovado para implementação (1.1)** em 2026-09-26 — C-11 a C-15 aprovadas em 2026-09-25; C-16 (respostas de indisponibilidade) aprovada em 2026-09-26; os três documentos validados.
 
 Este conjunto registra o acordo para o recorte de `CAP-006`. A aprovação significa acordo para implementar as interfaces descritas; não afirma implantação. Os contratos de `CAP-002` são preservados na pasta de origem; a única mudança neles é aditiva e está descrita em C-14.
 
@@ -22,8 +22,8 @@ O SPA do backoffice consome novas operações do BFF do backoffice, que repassa 
 
 | Documento | Padrão e versão | Versão do contrato | Fronteira | Estado |
 |---|---|---|---|---|
-| [api-contract.yaml](api-contract.yaml) e [api-contract.md](api-contract.md) | OpenAPI 3.1.0 | `bff-admin` 1.1.0 | Recorte de CAP-006 na borda `admin-spa` → `bff-admin`: 8 operações novas; as de CAP-002 (1.0.0) não mudam e não são repetidas | **Aprovado para implementação** em 2026-09-25; lint sem erros |
-| [internal-api-contract.yaml](internal-api-contract.yaml) | OpenAPI 3.1.0 | `media` 1.0.0 | `bff-admin` → Media: as mesmas 8 operações, com JWT de ator interno | **Aprovado para implementação** em 2026-09-25; lint sem erros |
+| [api-contract.yaml](api-contract.yaml) e [api-contract.md](api-contract.md) | OpenAPI 3.1.0 | `bff-admin` 1.1.1 | Recorte de CAP-006 na borda `admin-spa` → `bff-admin`: 8 operações novas; as de CAP-002 (1.0.0) não mudam e não são repetidas | **Aprovado para implementação** em 2026-09-25; 1.1.1 em 2026-09-26; lint sem erros |
+| [internal-api-contract.yaml](internal-api-contract.yaml) | OpenAPI 3.1.0 | `media` 1.0.1 | `bff-admin` → Media: as mesmas 8 operações, com JWT de ator interno | **Aprovado para implementação** em 2026-09-25; 1.0.1 em 2026-09-26; lint sem erros |
 | [asyncapi-contract.yaml](asyncapi-contract.yaml) | AsyncAPI 3.0.0 | `media` 1.0.0 | Media como **produtora** de `midia.ativo-pronto.v1` e `midia.preparacao-falhou.v1` | **Aprovado para implementação** em 2026-09-25; parser sem erros |
 
 ## Participantes e interfaces
@@ -69,10 +69,12 @@ Decisões novas deste contrato, aprovadas em 2026-09-25:
 | C-12 | **RF-08 é atendido pelo BFF** (`listVideos?status=ready`, `getVideo`), e `learning` valida o vínculo em CAP-005 por uma visão local alimentada por `midia.ativo-pronto`/`midia.preparacao-falhou`. A forma exata fica para CAP-005. **Decidida pelo usuário em 2026-09-25** | Operação `learning` → Media já agora: exigiria decidir autenticação serviço→serviço (ADR nova) para um consumidor ainda sem PRD |
 | C-13 | **Nome do autor como retrato no momento do envio:** o BFF repassa `SessionValidated.name` em `uploaderName`; a identidade do autor vem de `sub` do JWT, nunca do corpo | Claim de nome no JWT: mudaria o token de CAP-002. Resolver o nome em Identity a cada listagem: exigiria `acesso.gerir`, que o professor não tem, ou uma operação nova em Identity |
 | C-14 | **`midia.enviar` entra no enum `Permission`** de `tasks/prd-acesso-interno/api-contract.yaml` e `internal-api-contract.yaml` (1.0.0 → 1.1.0, aditivo), e Identity passa a aceitar `audience: media` para o `bff-admin`. A mudança é aplicada depois de CAP-002 integrada | Permissão fora do catálogo de Identity: contraria RN-12/RN-18 e o dono do catálogo |
+| C-16 | **Indisponibilidade declarada no contrato.** Media responde 503 `STORAGE_UNAVAILABLE` quando o armazenamento falha em `createVideoUploadInternal`, `getVideoUploadInternal` e `completeVideoUploadInternal` (as operações que falam com o provedor); nenhum estado de negócio muda e o cliente repete com a mesma `Idempotency-Key`. O BFF responde 502 `MEDIA_UNAVAILABLE` (Media fora ou 5xx de Media, inclusive `STORAGE_UNAVAILABLE`) e 504 `MEDIA_UNAVAILABLE` (tempo esgotado) nas oito operações, no mesmo padrão de `IDENTITY_UNAVAILABLE` de CAP-002. **Decidida pelo usuário em 2026-09-26**, fechando a questão aberta da TechSpec | Deixar 5xx fora do contrato: o implementador inventaria o código |
 | C-15 | **`videoId` é o mesmo nas APIs e nos fatos**; estados e motivos em inglês kebab-case, iguais nas duas modalidades | Nomes diferentes por modalidade: dois vocabulários para o mesmo vídeo |
 
 ## Evolução e compatibilidade
 
+- **`bff-admin` 1.1.0 → 1.1.1 e `media` 1.0.0 → 1.0.1 (C-16):** só acrescentam respostas 5xx; nenhum schema de requisição ou de sucesso muda. Clientes que tratam qualquer 5xx como falha genérica continuam corretos.
 - **`bff-admin` 1.0.0 → 1.1.0:** só acrescenta operações; nenhuma operação de CAP-002 muda. O `Permission` da sessão ganha `midia.enviar` (C-14). O contrato de CAP-002 já diz que clientes ignoram permissão desconhecida, então o `admin-spa` de CAP-002 continua correto; o menu de vídeos passa a aparecer para quem tem a permissão.
 - **Identity interna 1.0.0 → 1.1.0:** o enum `Permission` na resposta de validação ganha um valor. O único consumidor é o `bff-admin`, que é atualizado junto. Não há mudança de schema de requisição. `audience: media` é configuração de emissores/audiências, não campo novo.
 - **Media interna e fatos `midia.*`:** novos, sem versão anterior. Compatibilidade com produção não verificada. O consumidor previsto (`learning`, CAP-005) ainda não existe; os enums `reason` e `status` podem crescer, e o consumidor deve tolerar valor novo.
@@ -104,7 +106,7 @@ A validade estrutural não comprova escrita direta, retomada, idempotência nem 
 
 ## Pendências e handoff
 
-1. C-11 a C-15 aprovadas em 2026-09-25.
+1. C-11 a C-15 aprovadas em 2026-09-25; C-16 em 2026-09-26 (lint Spectral sem erros nem avisos nos dois OpenAPI após o patch).
 2. **CORS e política do bucket** (plataforma): aceitar `PUT` só da origem do backoffice nas URLs de parte; nenhuma leitura pública (G21). É configuração, não contrato.
 3. **Ordem de implantação:** Identity com `midia.enviar` e `audience: media` antes do `bff-admin` expor a área de vídeos; C-14 só depois de CAP-002 integrada.
 4. **Valores operacionais** para a TechSpec: tamanho da parte, validade da URL de parte, número de tentativas da preparação.

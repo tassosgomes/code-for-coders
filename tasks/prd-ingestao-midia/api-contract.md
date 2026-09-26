@@ -1,6 +1,6 @@
 # API HTTP — vídeos da escola no backoffice
 
-> Derivado de [api-contract.yaml](api-contract.yaml), versão 1.1.0, OpenAPI 3.1.0. Recorte do PRD de `CAP-006` v1.0 (2026-09-25). Estado: Aprovado para implementação em 2026-09-25.
+> Derivado de [api-contract.yaml](api-contract.yaml), versão 1.1.1, OpenAPI 3.1.0. Recorte do PRD de `CAP-006` v1.0 (2026-09-25). Estado: Aprovado para implementação em 2026-09-25; 1.1.1 (C-16) em 2026-09-26.
 
 O SPA do backoffice usa o BFF do backoffice em `/api/v1`, com o cookie `staff_session` de `CAP-002`. **Uma exceção:** os bytes do vídeo vão do navegador direto ao armazenamento, por URLs de parte assinadas que o BFF entrega (C-11). Campos, respostas, erros e exemplos têm como fonte o YAML.
 
@@ -33,7 +33,7 @@ O SPA do backoffice usa o BFF do backoffice em `/api/v1`, com o cookie `staff_se
 - **Título:** 1 a 200 caracteres; só espaços responde 422 `TITLE_REQUIRED`.
 - **Escritas** exigem `Idempotency-Key` (24 horas) e `X-CSRF-Token`. Pedir URLs de parte não muda estado de negócio e dispensa a chave.
 - **Listagens** paginam com `_page` e `_size` (máximo 50).
-- **Erros** seguem RFC 9457 com `code` estável e `traceId`; nenhum erro carrega nome do autor, título ou URL de parte.
+- **Erros** seguem RFC 9457 com `code` estável e `traceId`; nenhum erro carrega nome do autor, título ou URL de parte. Media fora do ar ou armazenamento indisponível → 502 `MEDIA_UNAVAILABLE`; tempo esgotado → 504 `MEDIA_UNAVAILABLE` (C-16).
 
 ## Exemplo derivado do contrato
 

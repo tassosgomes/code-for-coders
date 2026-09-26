@@ -1,12 +1,12 @@
 openapi: 3.1.0
 info:
   title: Media — vídeos do backoffice (interno)
-  version: 1.0.0
+  version: 1.0.1
   description: 'Recorte interno de CAP-006, PRD `tasks/prd-ingestao-midia/prd.md` v1.0. Consumidor único conhecido:
     `bff-admin`. `media` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity,
     emissor `identity`, audiência `media`, validade) e exige `midia.enviar` no claim `permissions`, sem consultar
     Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações espelham
-    1:1 o contrato público do BFF (`api-contract.yaml` 1.1.0); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID`
+    1:1 o contrato público do BFF (`api-contract.yaml` 1.1.1); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID`
     em vez de `SESSION_REQUIRED`, e `uploaderName` no início do envio.'
   contact:
     name: Time de Entrega de Mídia
@@ -109,6 +109,8 @@ paths:
                   $ref: '#/components/examples/TitleRequired'
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
     get:
       tags:
       - Envio
@@ -191,6 +193,8 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/UploadNotFound'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /video-uploads/{uploadId}/part-urls:
     post:
       tags:
@@ -316,6 +320,8 @@ paths:
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
   /videos:
     get:
       tags:
@@ -608,6 +614,20 @@ components:
                 title: Token de acesso inválido.
                 status: 401
                 code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    StorageUnavailable:
+      description: O armazenamento de objetos não respondeu ou recusou a operação (C-16). Nenhum estado de negócio muda; o cliente pode repetir com a mesma `Idempotency-Key`. O corpo não traz bucket, host nem identificador do upload do provedor.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            armazenamentoIndisponivel:
+              value:
+                type: about:blank
+                title: Armazenamento indisponível no momento.
+                status: 503
+                code: STORAGE_UNAVAILABLE
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   examples:
     PermissionDenied:

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: BFF do backoffice — vídeos da escola
-  version: 1.1.0
+  version: 1.1.1
   description: >
     Recorte de CAP-006, PRD `tasks/prd-ingestao-midia/prd.md` v1.0, aprovado em 2026-09-25.
     Interface `admin-spa` → `bff-admin`. Acrescenta as operações de vídeo ao BFF do backoffice
@@ -106,6 +106,10 @@ paths:
                   $ref: '#/components/examples/TitleRequired'
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
     get:
       tags: [Envio]
       summary: Listar os envios pendentes do próprio ator
@@ -145,6 +149,10 @@ paths:
           $ref: '#/components/responses/SessionRequired'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
   /video-uploads/{uploadId}:
     get:
       tags: [Envio]
@@ -172,6 +180,10 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/UploadNotFound'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
   /video-uploads/{uploadId}/part-urls:
     post:
       tags: [Envio]
@@ -236,6 +248,10 @@ paths:
                     status: 422
                     code: PART_OUT_OF_RANGE
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
   /video-uploads/{uploadId}/complete:
     post:
       tags: [Envio]
@@ -291,6 +307,10 @@ paths:
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
   /videos:
     get:
       tags: [Vídeos]
@@ -370,6 +390,10 @@ paths:
           $ref: '#/components/responses/SessionRequired'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
   /videos/{videoId}:
     get:
       tags: [Vídeos]
@@ -398,6 +422,10 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         '404':
           $ref: '#/components/responses/VideoNotFound'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
     patch:
       tags: [Vídeos]
       summary: Corrigir o título de um vídeo
@@ -449,6 +477,10 @@ paths:
                   $ref: '#/components/examples/TitleRequired'
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
 components:
   securitySchemes:
     StaffSessionCookie:
@@ -601,6 +633,34 @@ components:
                 title: Vídeo não encontrado.
                 status: 404
                 code: VIDEO_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    MediaUnavailable:
+      description: Media indisponível ou falha de infraestrutura atrás do BFF, inclusive armazenamento indisponível (C-16). Nenhum detalhe interno é exposto; o cliente pode repetir com a mesma `Idempotency-Key`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Serviço de vídeos indisponível no momento.
+                status: 502
+                code: MEDIA_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    MediaTimeout:
+      description: Media não respondeu dentro do tempo limite do BFF (C-16). Mesmo tratamento de `MediaUnavailable`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tempoEsgotado:
+              value:
+                type: about:blank
+                title: Serviço de vídeos indisponível no momento.
+                status: 504
+                code: MEDIA_UNAVAILABLE
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   examples:
     PermissionDenied:
