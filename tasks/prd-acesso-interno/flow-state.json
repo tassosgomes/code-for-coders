@@ -5,9 +5,9 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
-  "last_checkpoint": "13f2d8bb628555744bd36db11e787d392600c357",
-  "phase": "checkpoint",
-  "active_task": "4.0",
+  "last_checkpoint": "c72399bcd27420494c08f507c98087110ffd3f6c",
+  "phase": "reopen",
+  "active_task": "8.0",
   "attempt": 3,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -325,6 +325,13 @@
       "task": "4.0",
       "run_id": "run.gWMl0Sfm",
       "note": "B5 fechado; mutante morto"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "4.0",
+      "commit": "c72399bcd27420494c08f507c98087110ffd3f6c",
+      "note": "pós-full B5"
     }
   ],
   "full_pending_gaps": [
