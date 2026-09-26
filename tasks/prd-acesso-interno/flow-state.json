@@ -6,7 +6,7 @@
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "last_checkpoint": "13f2d8bb628555744bd36db11e787d392600c357",
-  "phase": "reopen",
+  "phase": "checkpoint",
   "active_task": "4.0",
   "attempt": 3,
   "max_attempts": 3,
@@ -28,15 +28,15 @@
   "pending_delegation": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "3.0",
+    "task": "4.0",
     "attempt": 3
   },
   "last_result": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "3.0",
+    "task": "4.0",
     "attempt": 3,
-    "run_id": "run.rIJVXeXt",
+    "run_id": "run.gWMl0Sfm",
     "outcome": "approved"
   },
   "history": [
@@ -312,6 +312,19 @@
       "task": "3.0",
       "commit": "13f2d8bb628555744bd36db11e787d392600c357",
       "note": "pós-full B1"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "task_reopened",
+      "task": "4.0",
+      "commit": "986d740"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "4.0",
+      "run_id": "run.gWMl0Sfm",
+      "note": "B5 fechado; mutante morto"
     }
   ],
   "full_pending_gaps": [
