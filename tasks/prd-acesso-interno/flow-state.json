@@ -6,9 +6,9 @@
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "last_checkpoint": "c72399bcd27420494c08f507c98087110ffd3f6c",
-  "phase": "reopen",
+  "phase": "checkpoint",
   "active_task": "8.0",
-  "attempt": 3,
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
   "transport_retries": 1,
@@ -28,15 +28,15 @@
   "pending_delegation": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "4.0",
-    "attempt": 3
+    "task": "8.0",
+    "attempt": 2
   },
   "last_result": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "4.0",
-    "attempt": 3,
-    "run_id": "run.gWMl0Sfm",
+    "task": "8.0",
+    "attempt": 2,
+    "run_id": "run.p28zrsdg",
     "outcome": "approved"
   },
   "history": [
@@ -332,6 +332,19 @@
       "task": "4.0",
       "commit": "c72399bcd27420494c08f507c98087110ffd3f6c",
       "note": "pós-full B5"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "task_reopened",
+      "task": "8.0",
+      "commit": "3422698"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "revalidation_approved",
+      "task": "8.0",
+      "run_id": "run.p28zrsdg",
+      "note": "B2/B3 fechados; commerce 78.41 learning 76.09 media 77.03"
     }
   ],
   "full_pending_gaps": [
