@@ -5,10 +5,10 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
-  "last_checkpoint": "c72399bcd27420494c08f507c98087110ffd3f6c",
-  "phase": "checkpoint",
-  "active_task": "8.0",
-  "attempt": 2,
+  "last_checkpoint": "80e92af0c63acc8ab52341bd67b6babc1e189b41",
+  "phase": "prepare_integration",
+  "active_task": null,
+  "attempt": 0,
   "max_attempts": 3,
   "full_attempt": 1,
   "transport_retries": 1,
@@ -26,10 +26,8 @@
   "validated_commit": null,
   "validated_tree": null,
   "pending_delegation": {
-    "role": "validator",
-    "mode": "revalidation",
-    "task": "8.0",
-    "attempt": 2
+    "role": "integrator",
+    "mode": "prepare-integration"
   },
   "last_result": {
     "role": "validator",
@@ -345,6 +343,13 @@
       "task": "8.0",
       "run_id": "run.p28zrsdg",
       "note": "B2/B3 fechados; commerce 78.41 learning 76.09 media 77.03"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint_ok",
+      "task": "8.0",
+      "commit": "80e92af",
+      "note": "pós-full B2/B3; todos os bloqueantes da full 1 fechados"
     }
   ],
   "full_pending_gaps": [
