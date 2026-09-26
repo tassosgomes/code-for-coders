@@ -3,14 +3,14 @@
   "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno",
   "branch": "feature/acesso-interno",
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
-  "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
-  "target_ref": null,
+  "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
+  "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "last_checkpoint": "1e43a53ffca5192716b24ac08dbefec14b408d65",
-  "phase": "prepare_integration",
+  "phase": "full_fix",
   "active_task": null,
   "attempt": 0,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 1,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
@@ -27,15 +27,23 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "prepare-integration"
+    "mode": "reopen-task",
+    "task": "2.0"
   },
   "last_result": {
-    "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "9.0",
-    "run_id": "run.Bii9hMS0",
-    "outcome": "checkpoint_ok",
-    "commit": "1e43a53ffca5192716b24ac08dbefec14b408d65"
+    "role": "validator",
+    "mode": "full",
+    "attempt": 1,
+    "run_id": "run.QeuEMpDO",
+    "outcome": "rejected",
+    "report": "tasks/prd-acesso-interno/prd_review.md",
+    "blockers": {
+      "B1": "3.0 cobertura bff-admin 67.95",
+      "B2": "8.0 cobertura commerce 59.87 (herdada)",
+      "B3": "1.0/8.0 learning 55.69 e media 56.98 herdadas, acionadas por Directory.Packages.props",
+      "B4": "2.0 mutante: token de redefinição reutilizável sobrevive",
+      "B5": "4.0 mutante: Identity emite convite sem acesso.gerir sobrevive"
+    }
   },
   "history": [
     {
@@ -241,6 +249,35 @@
       "event": "infra_failure",
       "run_id": "run.7gKZ39qg",
       "note": "opencode: provider \"request contains invalid parameters\"; sem operação git; repetição com --kind=codex (escalonamento do integrator). main avançou 7 commits (e515e36..f7bda4f)"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "user_decision",
+      "note": "smoke full: rodar Compose na worktree"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "integration_ready",
+      "run_id": "run.kJ6A1vc1",
+      "note": "rebase sobre main f7bda4f sem conflitos; 10 commits"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "transport_failure",
+      "run_id": "run.QeuEMpDO",
+      "note": "result_missing aos 1007s com validator claude ainda working (turnos encerrados à espera de monitores); acompanhando o mesmo pane, sem nova delegação"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "full_rejected",
+      "full_attempt": 1,
+      "run_id": "run.QeuEMpDO",
+      "note": "smoke 36/36 OK; 5 bloqueantes (3 de cobertura CI, 2 mutantes); aguardando decisão sobre cobertura"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "user_decision",
+      "note": "cobertura: seguir precedente testconfig.json"
     }
   ],
   "full_pending_gaps": [
@@ -256,5 +293,35 @@
     "8.0 R3/R4: BFF propaga 401 TOKEN_INVALID não previsto e pode devolver 500 genérico em falha do Commerce",
     "9.0 R1: nenhum endpoint internal/v1/staff-* do Identity tem teste HTTP (401/400/422) — smoke deve cobrir BFF→Identity real",
     "9.0 R2: neutralidade de tempo na recuperação (conta interna grava token/outbox)"
-  ]
+  ],
+  "smoke_authorization": "Usuário autorizou (2026-09-25) subir a stack Docker Compose a partir da worktree para o smoke da validação full; nada rodando no ambiente principal",
+  "integration_head": "893b8be61fea5a4849be8f8f60e22b82347e8032",
+  "full_fix_plan": [
+    {
+      "task": "2.0",
+      "blockers": [
+        "B4"
+      ]
+    },
+    {
+      "task": "3.0",
+      "blockers": [
+        "B1"
+      ]
+    },
+    {
+      "task": "4.0",
+      "blockers": [
+        "B5"
+      ]
+    },
+    {
+      "task": "8.0",
+      "blockers": [
+        "B2",
+        "B3"
+      ]
+    }
+  ],
+  "coverage_decision": "Usuário: seguir precedente audit/bff-student — tests/testconfig.json excluindo obj/ e *.generated.cs em bff-admin, identity, notification (3.0) e commerce, learning, media (8.0); testes onde ainda < 70%"
 }
