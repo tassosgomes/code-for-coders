@@ -29,16 +29,21 @@ internal static class FfmpegTools
             var ffprobe = FindOnPath("ffprobe");
             if (ffmpeg is null || ffprobe is null)
             {
-                await InstallWithAptAsync(cancellationToken);
-                ffmpeg = FindOnPath("ffmpeg");
-                ffprobe = FindOnPath("ffprobe");
+                if (IsContinuousIntegration())
+                {
+                    await InstallWithAptAsync(cancellationToken);
+                    ffmpeg = FindOnPath("ffmpeg");
+                    ffprobe = FindOnPath("ffprobe");
+                }
+                else
+                {
+                    throw MissingTools();
+                }
             }
 
             if (ffmpeg is null || ffprobe is null)
             {
-                throw new InvalidOperationException(
-                    "ffmpeg and ffprobe are required by the media integration tests but were not found. " +
-                    "Install ffmpeg with the system package manager (for example: sudo apt-get install -y ffmpeg).");
+                throw MissingTools();
             }
 
             resolved = (ffmpeg, ffprobe);
@@ -99,6 +104,18 @@ internal static class FfmpegTools
 
         return null;
     }
+
+    private static bool IsContinuousIntegration()
+        => IsTrue(Environment.GetEnvironmentVariable("CI"))
+            || IsTrue(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
+
+    private static bool IsTrue(string? value)
+        => string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+
+    private static InvalidOperationException MissingTools()
+        => new(
+            "ffmpeg and ffprobe are required by the media integration tests but were not found. " +
+            "Install them with 'sudo apt-get install -y ffmpeg' before running the tests.");
 
     private static async Task InstallWithAptAsync(CancellationToken cancellationToken)
     {

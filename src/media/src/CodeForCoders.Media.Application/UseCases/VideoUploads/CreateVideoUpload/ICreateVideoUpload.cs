@@ -14,4 +14,4 @@ public sealed record CreateVideoUploadInput(
     string UploaderName,
     string IdempotencyKey);
 
-public sealed record CreateVideoUploadOutput(VideoUploadOutput Upload);
+public sealed record CreateVideoUploadOutput(VideoUploadOutput Upload, bool Resumed = false);

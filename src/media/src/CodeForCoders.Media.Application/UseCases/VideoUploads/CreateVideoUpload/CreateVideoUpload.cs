@@ -39,6 +39,7 @@ public sealed class CreateVideoUpload(
         var requestHash = VideoUploadUseCaseHelpers.HashRequest(input);
         var existingIdempotency = await idempotencyRecords.GetAsync(
             "createVideoUpload",
+            tenantId,
             actorAccountId,
             input.IdempotencyKey,
             cancellationToken);
@@ -48,19 +49,138 @@ public sealed class CreateVideoUpload(
             return VideoUploadUseCaseHelpers.Replay<CreateVideoUploadOutput>(existingIdempotency);
         }
 
+        var pendingUpload = await videoUploads.GetPendingByFingerprintAsync(
+            tenantId,
+            actorAccountId,
+            input.Fingerprint,
+            now,
+            cancellationToken);
+        if (pendingUpload is not null)
+        {
+            var resumed = await CreateResumedOutputAsync(pendingUpload, cancellationToken);
+            if (await SaveIdempotencyResultAsync(existingIdempotency, tenantId, actorAccountId, input, requestHash, resumed, now, cancellationToken))
+            {
+                return resumed;
+            }
+
+            return await RecoverConcurrentCreateAsync(tenantId, actorAccountId, input, requestHash, now, cancellationToken);
+        }
+
+        var expiredUpload = await videoUploads.GetExpiredPendingByFingerprintAsync(
+            tenantId,
+            actorAccountId,
+            input.Fingerprint,
+            now,
+            cancellationToken);
+        if (expiredUpload is not null)
+        {
+            await videoUploads.ExpireAsync(
+                expiredUpload.UploadId,
+                now,
+                (upload, token) => mediaStorage.AbortMultipartUploadAsync(upload.ObjectKey, upload.StorageUploadId, token),
+                cancellationToken);
+        }
+
         var storageUploadId = await mediaStorage.InitiateMultipartUploadAsync(
             proposedUpload.ObjectKey,
             proposedUpload.ContentType,
             cancellationToken);
         proposedUpload.SetStorageUploadId(storageUploadId);
         await videoUploads.AddAsync(proposedUpload, cancellationToken);
-        var result = new CreateVideoUploadOutput(VideoUploadUseCaseHelpers.ToOutput(proposedUpload, Array.Empty<int>()));
-        await SaveIdempotencyResultAsync(existingIdempotency, tenantId, actorAccountId, input, requestHash, result, now, cancellationToken);
+        var created = new CreateVideoUploadOutput(VideoUploadUseCaseHelpers.ToOutput(proposedUpload, Array.Empty<int>()));
+        if (await SaveIdempotencyResultAsync(existingIdempotency, tenantId, actorAccountId, input, requestHash, created, now, cancellationToken))
+        {
+            return created;
+        }
 
-        return result;
+        await AbortOrphanedUploadAsync(proposedUpload, cancellationToken);
+        return await RecoverConcurrentCreateAsync(tenantId, actorAccountId, input, requestHash, now, cancellationToken);
     }
 
-    private async Task SaveIdempotencyResultAsync(
+    private async Task<CreateVideoUploadOutput> RecoverConcurrentCreateAsync(
+        Guid tenantId,
+        Guid actorAccountId,
+        CreateVideoUploadInput input,
+        string requestHash,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var concurrentIdempotency = await idempotencyRecords.GetAsync(
+            "createVideoUpload",
+            tenantId,
+            actorAccountId,
+            input.IdempotencyKey,
+            cancellationToken);
+        if (concurrentIdempotency is not null && concurrentIdempotency.ExpiresAt > now)
+        {
+            VideoUploadUseCaseHelpers.EnsureSameRequest(concurrentIdempotency, requestHash);
+            return VideoUploadUseCaseHelpers.Replay<CreateVideoUploadOutput>(concurrentIdempotency);
+        }
+
+        var concurrentUpload = await videoUploads.GetPendingByFingerprintAsync(
+            tenantId,
+            actorAccountId,
+            input.Fingerprint,
+            now,
+            cancellationToken);
+        if (concurrentUpload is null)
+        {
+            throw new InvalidOperationException("A concurrent unique conflict did not leave a matching video upload.");
+        }
+
+        var resumed = await CreateResumedOutputAsync(concurrentUpload, cancellationToken);
+        if (await SaveIdempotencyResultAsync(concurrentIdempotency, tenantId, actorAccountId, input, requestHash, resumed, now, cancellationToken))
+        {
+            return resumed;
+        }
+
+        var replayedIdempotency = await idempotencyRecords.GetAsync(
+            "createVideoUpload",
+            tenantId,
+            actorAccountId,
+            input.IdempotencyKey,
+            cancellationToken);
+        if (replayedIdempotency is null || replayedIdempotency.ExpiresAt <= now)
+        {
+            throw new InvalidOperationException("The video upload idempotency conflict could not be reconciled.");
+        }
+
+        VideoUploadUseCaseHelpers.EnsureSameRequest(replayedIdempotency, requestHash);
+        return VideoUploadUseCaseHelpers.Replay<CreateVideoUploadOutput>(replayedIdempotency);
+    }
+
+    private async Task<CreateVideoUploadOutput> CreateResumedOutputAsync(
+        VideoUpload upload,
+        CancellationToken cancellationToken)
+    {
+        IReadOnlyList<MediaUploadPart> parts;
+        try
+        {
+            parts = await mediaStorage.ListPartsAsync(upload.ObjectKey, upload.StorageUploadId, cancellationToken);
+        }
+        catch (MultipartUploadNotFoundException)
+        {
+            throw VideoUploadUseCaseHelpers.UploadNotFound();
+        }
+
+        return new CreateVideoUploadOutput(
+            VideoUploadUseCaseHelpers.ToOutput(upload, parts.Select(part => part.PartNumber).ToArray()),
+            Resumed: true);
+    }
+
+    private async Task AbortOrphanedUploadAsync(VideoUpload upload, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await mediaStorage.AbortMultipartUploadAsync(upload.ObjectKey, upload.StorageUploadId, cancellationToken);
+        }
+        catch (StorageUnavailableException)
+        {
+            // The persisted upload remains resumable; the orphaned multipart upload is reclaimed by storage lifecycle policy.
+        }
+    }
+
+    private async Task<bool> SaveIdempotencyResultAsync(
         CodeForCoders.Media.Domain.Entities.OperationIdempotencyRecord? existing,
         Guid tenantId,
         Guid actorAccountId,
@@ -78,12 +198,12 @@ public sealed class CreateVideoUpload(
             input.IdempotencyKey,
             requestHash,
             now);
-        record.SetResponse(201, System.Text.Json.JsonSerializer.Serialize(output), now.AddHours(24));
+        record.SetResponse(output.Resumed ? 200 : 201, System.Text.Json.JsonSerializer.Serialize(output), now.AddHours(24));
         if (existing is null)
         {
             await idempotencyRecords.AddAsync(record, cancellationToken);
         }
 
-        await unitOfWork.CommitAsync(cancellationToken);
+        return await unitOfWork.TryCommitAsync(cancellationToken);
     }
 }

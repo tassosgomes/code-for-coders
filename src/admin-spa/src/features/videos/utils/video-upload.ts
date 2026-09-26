@@ -49,7 +49,7 @@ export const putVideoPart = (
     if (request.status >= 200 && request.status < 300) {
       resolve();
     } else {
-      reject(new Error('Não foi possível enviar uma parte do vídeo.'));
+      reject(new VideoPartUploadError(request.status));
     }
   };
   request.onerror = () => reject(new Error('A conexão foi interrompida durante o envio.'));
@@ -58,6 +58,16 @@ export const putVideoPart = (
   signal?.addEventListener('abort', () => request.abort(), { once: true });
   request.send(part);
 });
+
+export class VideoPartUploadError extends Error {
+  constructor(public readonly statusCode: number) {
+    super('Não foi possível enviar uma parte do vídeo.');
+    this.name = 'VideoPartUploadError';
+  }
+}
+
+export const isVideoPartForbidden = (error: unknown) =>
+  error instanceof VideoPartUploadError && error.statusCode === 403;
 
 export const getVideoUploadErrorCode = (error: unknown): string | null => {
   if (typeof error !== 'object' || error === null || !('response' in error)) return null;

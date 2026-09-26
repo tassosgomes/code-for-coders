@@ -8,11 +8,13 @@ public sealed class OperationIdempotencyRepository(MediaDbContext dbContext) : I
 {
     public Task<OperationIdempotencyRecord?> GetAsync(
         string operation,
+        Guid tenantId,
         Guid actorAccountId,
         string key,
         CancellationToken cancellationToken)
         => dbContext.OperationIdempotencyRecords.SingleOrDefaultAsync(
-            record => record.ActorAccountId == actorAccountId
+            record => record.TenantId == tenantId
+                && record.ActorAccountId == actorAccountId
                 && record.Operation == operation
                 && record.Key == key,
             cancellationToken);

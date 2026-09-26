@@ -137,6 +137,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   margin:12px 0
 }
 
+.pending-video-uploads {
+  display:grid;
+  gap:4px;
+  margin-top:16px
+}
+
+.pending-video-upload {
+  margin:0
+}
+
+.pending-video-upload-title {
+  margin:0 0 6px
+}
+
+.pending-video-upload p:not(.pending-video-upload-title) {
+  margin:0 0 10px
+}
+
 .backoffice-brand {
   display:flex;
   align-items:center;

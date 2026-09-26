@@ -6,6 +6,7 @@ public interface IOperationIdempotencyRepository
 {
     Task<OperationIdempotencyRecord?> GetAsync(
         string operation,
+        Guid tenantId,
         Guid actorAccountId,
         string key,
         CancellationToken cancellationToken);

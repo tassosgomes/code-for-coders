@@ -35,6 +35,10 @@ export const handlers = [
     receivedParts: [],
     expiresAt: '2026-09-27T14:05:11Z',
   }, { status: 201 })),
+  http.get(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 50, total: 0, totalPages: 0 },
+  })),
   http.get(`${env.API_URL}/api/v1/video-uploads/:uploadId`, () => HttpResponse.json({
     uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
     title: 'Aula de exemplo',

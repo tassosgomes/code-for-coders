@@ -9,6 +9,7 @@ using Amazon.S3.Model;
 using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -290,6 +291,52 @@ public sealed class VideoUploadTests(VideoLibraryApiFactory factory)
         Assert.Equal("STORAGE_UNAVAILABLE", await ReadCodeAsync(response));
         Assert.Empty(await ListMultipartUploadsAsync(tenantId));
     }
+
+    [Fact(DisplayName = nameof(VideoUpload_MapsUnavailableStorageTo503WhenGettingUpload))]
+    [Trait("Layer", "Media video upload - Integration")]
+    public async Task VideoUpload_MapsUnavailableStorageTo503WhenGettingUpload()
+    {
+        using var client = factory.CreateClient();
+        var token = factory.CreateToken(Guid.CreateVersion7(), permissions: ["midia.enviar"]);
+        using var created = await StartUploadAsync(client, token, "upload-storage-unavailable-get");
+        using var createdBody = await ReadJsonAsync(created);
+        var uploadId = createdBody.RootElement.GetProperty("uploadId").GetGuid();
+        using var unavailableFactory = CreateUnavailableStorageFactory();
+        using var unavailableClient = unavailableFactory.CreateClient();
+        using var request = AuthorizedRequest(HttpMethod.Get, $"/internal/v1/video-uploads/{uploadId:D}", token);
+
+        using var response = await unavailableClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal("STORAGE_UNAVAILABLE", await ReadCodeAsync(response));
+    }
+
+    [Fact(DisplayName = nameof(VideoUpload_MapsUnavailableStorageTo503WhenCompletingUpload))]
+    [Trait("Layer", "Media video upload - Integration")]
+    public async Task VideoUpload_MapsUnavailableStorageTo503WhenCompletingUpload()
+    {
+        using var client = factory.CreateClient();
+        var token = factory.CreateToken(Guid.CreateVersion7(), permissions: ["midia.enviar"]);
+        using var created = await StartUploadAsync(client, token, "upload-storage-unavailable-complete");
+        using var createdBody = await ReadJsonAsync(created);
+        var uploadId = createdBody.RootElement.GetProperty("uploadId").GetGuid();
+        using var unavailableFactory = CreateUnavailableStorageFactory();
+        using var unavailableClient = unavailableFactory.CreateClient();
+        using var request = AuthorizedRequest(HttpMethod.Post, $"/internal/v1/video-uploads/{uploadId:D}/complete", token);
+        request.Headers.Add("Idempotency-Key", "upload-storage-unavailable-complete-key");
+
+        using var response = await unavailableClient.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal("STORAGE_UNAVAILABLE", await ReadCodeAsync(response));
+    }
+
+    private WebApplicationFactory<Program> CreateUnavailableStorageFactory()
+        => factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IMediaStoragePort>();
+            services.AddSingleton<IMediaStoragePort, UnavailableMediaStoragePort>();
+        }));
 
     private static async Task<HttpResponseMessage> StartUploadAsync(
         HttpClient client,

@@ -15,8 +15,8 @@ public sealed class GetVideoUpload(
         GetVideoUploadInput input,
         CancellationToken cancellationToken)
     {
-        var (_, actorAccountId) = VideoUploadUseCaseHelpers.RequireActor(tenantContext);
-        var upload = await videoUploads.GetOwnedAsync(input.UploadId, actorAccountId, false, cancellationToken);
+        var (tenantId, actorAccountId) = VideoUploadUseCaseHelpers.RequireActor(tenantContext);
+        var upload = await videoUploads.GetOwnedAsync(input.UploadId, tenantId, actorAccountId, false, cancellationToken);
         if (upload is null || upload.ExpiresAt <= timeProvider.GetUtcNow())
         {
             throw VideoUploadUseCaseHelpers.UploadNotFound();

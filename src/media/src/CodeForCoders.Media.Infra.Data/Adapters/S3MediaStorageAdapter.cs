@@ -51,9 +51,12 @@ public sealed class S3MediaStorageAdapter(
                 }, token),
                 cancellationToken);
 
-            parts.AddRange(response.Parts
-                .Where(part => part.PartNumber.HasValue && part.Size.HasValue && !string.IsNullOrWhiteSpace(part.ETag))
-                .Select(part => new MediaUploadPart(part.PartNumber!.Value, part.ETag!, part.Size!.Value)));
+            if (response.Parts is not null)
+            {
+                parts.AddRange(response.Parts
+                    .Where(part => part.PartNumber.HasValue && part.Size.HasValue && !string.IsNullOrWhiteSpace(part.ETag))
+                    .Select(part => new MediaUploadPart(part.PartNumber!.Value, part.ETag!, part.Size!.Value)));
+            }
             marker = response.NextPartNumberMarker?.ToString(System.Globalization.CultureInfo.InvariantCulture);
             isTruncated = response.IsTruncated ?? false;
         }
@@ -112,14 +115,21 @@ public sealed class S3MediaStorageAdapter(
         string storageUploadId,
         CancellationToken cancellationToken)
     {
-        await ExecuteAsync(
-            token => clients.Internal.AbortMultipartUploadAsync(new AbortMultipartUploadRequest
-            {
-                BucketName = options.Value.BucketName,
-                Key = GetKey(objectKey),
-                UploadId = storageUploadId,
-            }, token),
-            cancellationToken);
+        try
+        {
+            await ExecuteAsync(
+                token => clients.Internal.AbortMultipartUploadAsync(new AbortMultipartUploadRequest
+                {
+                    BucketName = options.Value.BucketName,
+                    Key = GetKey(objectKey),
+                    UploadId = storageUploadId,
+                }, token),
+                cancellationToken);
+        }
+        catch (MultipartUploadNotFoundException)
+        {
+            // Aborting an upload that is already absent is an idempotent cleanup operation.
+        }
     }
 
     private string GetKey(string objectKey)

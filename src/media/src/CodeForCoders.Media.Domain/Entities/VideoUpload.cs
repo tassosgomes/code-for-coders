@@ -44,7 +44,11 @@ public sealed class VideoUpload
 
     public DateTimeOffset? CompletedAt { get; private set; }
 
+    public DateTimeOffset? ExpiredAt { get; private set; }
+
     public bool IsCompleted => CompletedAt.HasValue;
+
+    public bool IsExpired => ExpiredAt.HasValue;
 
     public static VideoUpload Create(
         Guid tenantId,
@@ -146,7 +150,22 @@ public sealed class VideoUpload
 
     public void MarkCompleted(DateTimeOffset completedAt)
     {
+        if (IsExpired)
+        {
+            throw new EntityValidationException("An expired upload cannot be completed.");
+        }
+
         CompletedAt ??= completedAt;
+    }
+
+    public void MarkExpired(DateTimeOffset expiredAt)
+    {
+        if (IsCompleted)
+        {
+            throw new EntityValidationException("A completed upload cannot be expired.");
+        }
+
+        ExpiredAt ??= expiredAt;
     }
 
     private static bool IsSupportedFormat(string fileName, string contentType)

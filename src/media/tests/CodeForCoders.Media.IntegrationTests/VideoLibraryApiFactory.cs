@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
@@ -65,7 +66,17 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     public string CreateToken(Guid tenantId, string audience = "media", params string[] permissions)
         => CreateToken(
             tenantId,
+            Guid.CreateVersion7(),
             audience,
+            DateTime.UtcNow.AddMinutes(-1),
+            DateTime.UtcNow.AddMinutes(5),
+            permissions);
+
+    public string CreateTokenForActor(Guid tenantId, Guid actorAccountId, params string[] permissions)
+        => CreateToken(
+            tenantId,
+            actorAccountId,
+            "media",
             DateTime.UtcNow.AddMinutes(-1),
             DateTime.UtcNow.AddMinutes(5),
             permissions);
@@ -73,6 +84,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     public string CreateExpiredToken(Guid tenantId)
         => CreateToken(
             tenantId,
+            Guid.CreateVersion7(),
             "media",
             DateTime.UtcNow.AddMinutes(-31),
             DateTime.UtcNow.AddMinutes(-30),
@@ -80,6 +92,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
 
     private string CreateToken(
         Guid tenantId,
+        Guid actorAccountId,
         string audience,
         DateTime notBefore,
         DateTime expires,
@@ -87,7 +100,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     {
         var claims = new List<System.Security.Claims.Claim>
         {
-            new("sub", Guid.CreateVersion7().ToString("D")),
+            new("sub", actorAccountId.ToString("D")),
             new("tenantId", tenantId.ToString("D")),
             new("roles", "professor"),
             new("scope", "videos:write"),
@@ -146,6 +159,20 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
                 Content = new StringContent(readDocument()),
             });
     }
+}
+
+public sealed class AdjustableTimeProvider(DateTimeOffset initialUtcNow) : TimeProvider
+{
+    private long utcTicks = initialUtcNow.UtcDateTime.Ticks;
+
+    public override DateTimeOffset GetUtcNow()
+        => new(Interlocked.Read(ref utcTicks), TimeSpan.Zero);
+
+    public void SetUtcNow(DateTimeOffset value)
+        => Interlocked.Exchange(ref utcTicks, value.UtcDateTime.Ticks);
+
+    public void Advance(TimeSpan duration)
+        => Interlocked.Add(ref utcTicks, duration.Ticks);
 }
 
 [CollectionDefinition(Name)]

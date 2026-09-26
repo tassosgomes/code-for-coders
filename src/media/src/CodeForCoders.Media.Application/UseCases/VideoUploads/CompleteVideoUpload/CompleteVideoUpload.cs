@@ -19,7 +19,7 @@ public sealed class CompleteVideoUpload(
         CompleteVideoUploadInput input,
         CancellationToken cancellationToken)
     {
-        var (_, actorAccountId) = VideoUploadUseCaseHelpers.RequireActor(tenantContext);
+        var (tenantId, actorAccountId) = VideoUploadUseCaseHelpers.RequireActor(tenantContext);
         var now = timeProvider.GetUtcNow();
         if (string.IsNullOrWhiteSpace(input.IdempotencyKey) || input.IdempotencyKey.Length > 128)
         {
@@ -29,6 +29,7 @@ public sealed class CompleteVideoUpload(
         var requestHash = VideoUploadUseCaseHelpers.HashRequest(new { input.UploadId });
         var existingIdempotency = await idempotencyRecords.GetAsync(
             "completeVideoUpload",
+            tenantId,
             actorAccountId,
             input.IdempotencyKey,
             cancellationToken);
@@ -38,7 +39,7 @@ public sealed class CompleteVideoUpload(
             return VideoUploadUseCaseHelpers.Replay<CompletedVideoOutput>(existingIdempotency);
         }
 
-        var upload = await videoUploads.GetOwnedAsync(input.UploadId, actorAccountId, true, cancellationToken);
+        var upload = await videoUploads.GetOwnedAsync(input.UploadId, tenantId, actorAccountId, true, cancellationToken);
         if (upload is null || (!upload.IsCompleted && upload.ExpiresAt <= now))
         {
             throw VideoUploadUseCaseHelpers.UploadNotFound();

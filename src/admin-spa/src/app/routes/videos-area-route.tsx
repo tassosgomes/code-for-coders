@@ -7,11 +7,12 @@ import { completeVideoUpload } from '@/features/videos/api/complete-video-upload
 import { createVideoUpload } from '@/features/videos/api/create-video-upload';
 import { createVideoUploadPartUrls } from '@/features/videos/api/create-video-upload-part-urls';
 import { getVideoUpload } from '@/features/videos/api/get-video-upload';
+import { getPendingVideoUploadsQueryOptions, usePendingVideoUploads } from '@/features/videos/api/get-pending-video-uploads';
 import { getVideosQueryOptions, useVideos } from '@/features/videos/api/get-videos';
 import { VideoUploadDialog } from '@/features/videos/components/video-upload-dialog';
 import { VideosAreaScreen } from '@/features/videos/components/videos-area-screen';
 import type { VideoTransferView } from '@/features/videos/components/video-transfer-panel';
-import { createVideoFingerprint, getVideoUploadErrorMessage, getVideoUploadErrorCode, maximumParallelVideoParts, maximumPartUrlBatchSize, putVideoPart } from '@/features/videos/utils/video-upload';
+import { createVideoFingerprint, getVideoUploadErrorMessage, getVideoUploadErrorCode, isVideoPartForbidden, maximumParallelVideoParts, maximumPartUrlBatchSize, putVideoPart } from '@/features/videos/utils/video-upload';
 
 type TransferSession = {
   uploadId: string;
@@ -38,6 +39,7 @@ export const VideosAreaRoute = () => {
 
 const VideosAreaContent = () => {
   const videos = useVideos();
+  const pendingUploads = usePendingVideoUploads();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
@@ -85,12 +87,38 @@ const VideosAreaContent = () => {
 
     const missingParts = Array.from({ length: session.partCount }, (_, index) => index + 1)
       .filter((partNumber) => !completedParts.has(partNumber));
-    const partUrls = new Map<number, string>();
-    for (let index = 0; index < missingParts.length; index += maximumPartUrlBatchSize) {
-      const batch = missingParts.slice(index, index + maximumPartUrlBatchSize);
-      const response = await createVideoUploadPartUrls(session.uploadId, batch, controller.signal);
-      for (const part of response.parts) partUrls.set(part.partNumber, part.url);
-    }
+    const partUrls = new Map<number, { url: string; expiresAt: string }>();
+    let partUrlRequest: Promise<void> | null = null;
+    const requestPartUrlBatch = async () => {
+      if (partUrlRequest) return partUrlRequest;
+      const batch = missingParts
+        .filter((partNumber) => !partUrls.has(partNumber))
+        .slice(0, Math.min(maximumPartUrlBatchSize, maximumParallelVideoParts * 2));
+      if (batch.length === 0) return;
+      partUrlRequest = createVideoUploadPartUrls(session.uploadId, batch, controller.signal)
+        .then((response) => {
+          for (const part of response.parts) partUrls.set(part.partNumber, { url: part.url, expiresAt: part.expiresAt });
+        })
+        .finally(() => { partUrlRequest = null; });
+      return partUrlRequest;
+    };
+    const getPartUrl = async (partNumber: number) => {
+      const cachedPartUrl = partUrls.get(partNumber);
+      if (!cachedPartUrl || Date.parse(cachedPartUrl.expiresAt) <= Date.now() + 60_000) {
+        partUrls.delete(partNumber);
+        await requestPartUrlBatch();
+      }
+      const partUrl = partUrls.get(partNumber);
+      if (!partUrl) throw new Error('A part URL was not returned.');
+      return partUrl.url;
+    };
+    const renewPartUrl = async (partNumber: number) => {
+      const response = await createVideoUploadPartUrls(session.uploadId, [partNumber], controller.signal);
+      const part = response.parts.find((value) => value.partNumber === partNumber);
+      if (!part) throw new Error('A renewed part URL was not returned.');
+      partUrls.set(partNumber, { url: part.url, expiresAt: part.expiresAt });
+      return part.url;
+    };
 
     let nextPartIndex = 0;
     const sendNextParts = async () => {
@@ -99,13 +127,13 @@ const VideosAreaContent = () => {
         const partNumber = missingParts[nextPartIndex];
         nextPartIndex += 1;
         if (partNumber === undefined) return;
-        const url = partUrls.get(partNumber);
-        if (!url) throw new Error('A part URL was not returned.');
+        let url = await getPartUrl(partNumber);
         const start = (partNumber - 1) * session.partSize;
         const end = Math.min(start + session.partSize, session.file.size);
         const part = session.file.slice(start, end);
 
         let uploaded = false;
+        let urlRenewed = false;
         for (let attempt = 0; attempt <= 3 && !uploaded; attempt += 1) {
           try {
             await putVideoPart(url, part, (loaded) => {
@@ -117,6 +145,13 @@ const VideosAreaContent = () => {
             updateProgress(session, completedParts, partProgress);
             uploaded = true;
           } catch (error) {
+            if (isVideoPartForbidden(error)) {
+              if (urlRenewed) throw error;
+              url = await renewPartUrl(partNumber);
+              urlRenewed = true;
+              attempt -= 1;
+              continue;
+            }
             if (controller.signal.aborted || attempt === 3) throw error;
             setTransfer((current) => current ? {
               ...current,
@@ -169,6 +204,7 @@ const VideosAreaContent = () => {
         sessionRef.current = null;
         operationControllerRef.current = null;
         await queryClient.invalidateQueries({ queryKey: getVideosQueryOptions().queryKey });
+        await queryClient.invalidateQueries({ queryKey: getPendingVideoUploadsQueryOptions().queryKey });
         return;
       } catch (error) {
         if (getVideoUploadErrorCode(error) !== 'UPLOAD_INCOMPLETE' || incompleteRetry === 3) throw error;
@@ -187,9 +223,22 @@ const VideosAreaContent = () => {
     session: TransferSession,
     receivedParts: readonly number[],
     controller: AbortController,
+    resumed = false,
   ) => {
     setTransferInProgress(true);
-    setTransfer({ fileName: session.file.name, title: session.title, progress: 0, status: 'uploading', message: null });
+    const receivedBytes = receivedParts.reduce(
+      (total, partNumber) => total + bytesInPart(session.file.size, session.partSize, partNumber),
+      0,
+    );
+    const progress = Math.min(100, Math.round((receivedBytes / session.file.size) * 100));
+    const divisor = receivedBytes >= 1024 * 1024 * 1024 ? 1024 * 1024 * 1024 : 1024 * 1024;
+    const unit = divisor === 1024 * 1024 * 1024 ? 'GiB' : 'MiB';
+    const resumedMessage = resumed
+      ? receivedBytes > 0
+        ? `Retomado de onde parou: ${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(receivedBytes / divisor)} ${unit} já estavam na escola.`
+        : 'Continuando o envio de onde parou.'
+      : null;
+    setTransfer({ fileName: session.file.name, title: session.title, progress, status: 'uploading', message: resumedMessage });
     try {
       await finishTransfer(session, receivedParts, controller);
     } catch (error) {
@@ -228,7 +277,9 @@ const VideosAreaContent = () => {
       };
       sessionRef.current = session;
       setDialogOpen(false);
-      await startTransfer(session, upload.receivedParts, controller);
+      const resumed = upload.receivedParts.length > 0
+        || pendingUploads.data?.data.some((pending) => pending.fileName === file.name && pending.fileSize === file.size) === true;
+      await startTransfer(session, upload.receivedParts, controller, resumed);
     } catch (error) {
       if (controller.signal.aborted) return;
       setTransferInProgress(false);
@@ -248,7 +299,7 @@ const VideosAreaContent = () => {
     setTransfer((current) => current ? { ...current, status: 'reconnecting', message: 'Conferindo as partes recebidas…' } : current);
     try {
       const upload = await getVideoUpload(session.uploadId, controller.signal);
-      await startTransfer(session, upload.receivedParts, controller);
+      await startTransfer(session, upload.receivedParts, controller, true);
     } catch (error) {
       if (controller.signal.aborted) return;
       setTransfer((current) => current ? { ...current, status: 'paused', message: getVideoUploadErrorMessage(error) } : current);
@@ -275,17 +326,20 @@ const VideosAreaContent = () => {
     <VideosAreaScreen
       state={state}
       videos={videos.data}
+      pendingUploads={transferInProgress ? [] : pendingUploads.data?.data ?? []}
       uploadDisabled={transferInProgress}
       transfer={transfer}
       onUpload={() => { setDialogError(null); setDialogOpen(true); }}
       onRetry={() => void videos.refetch()}
       onRetryTransfer={() => void retryTransfer()}
+      onResumeUpload={() => { setDialogError(null); setDialogOpen(true); }}
     />
     {dialogOpen ? <VideoUploadDialog
       busy={dialogBusy}
       error={dialogError}
       onClose={() => { if (!dialogBusy) setDialogOpen(false); }}
       onStart={startUpload}
+      pendingUploads={pendingUploads.data?.data ?? []}
     /> : null}
     {blocker.state === 'blocked' ? <div className="dialog-backdrop">
       <section aria-labelledby="leave-video-upload-title" aria-modal="true" className="dialog-card leave-upload-dialog" role="alertdialog">

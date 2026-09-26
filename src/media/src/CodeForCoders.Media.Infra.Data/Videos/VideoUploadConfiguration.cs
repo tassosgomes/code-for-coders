@@ -72,11 +72,16 @@ public sealed class VideoUploadConfiguration : IEntityTypeConfiguration<VideoUpl
         builder.Property(upload => upload.CompletedAt)
             .HasColumnName("completed_at")
             .HasColumnType("timestamp with time zone");
+        builder.Property(upload => upload.ExpiredAt)
+            .HasColumnName("expired_at")
+            .HasColumnType("timestamp with time zone");
 
         builder.HasIndex(upload => new { upload.TenantId, upload.UploaderAccountId, upload.CreatedAt })
             .HasDatabaseName("ix_video_uploads_tenant_actor_created_at");
         builder.HasIndex(upload => new { upload.TenantId, upload.UploaderAccountId, upload.Fingerprint })
-            .HasDatabaseName("ix_video_uploads_tenant_actor_fingerprint");
+            .IsUnique()
+            .HasFilter("completed_at IS NULL AND expired_at IS NULL")
+            .HasDatabaseName("ux_video_uploads_tenant_actor_fingerprint_pending");
         builder.HasIndex(upload => upload.VideoId)
             .IsUnique()
             .HasDatabaseName("ux_video_uploads_video_id");

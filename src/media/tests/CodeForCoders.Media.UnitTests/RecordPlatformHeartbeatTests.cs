@@ -74,5 +74,11 @@ public sealed class RecordPlatformHeartbeatTests
             MessageCountAtCommit = messageCount();
             return Task.CompletedTask;
         }
+
+        public async Task<bool> TryCommitAsync(CancellationToken cancellationToken)
+        {
+            await CommitAsync(cancellationToken);
+            return true;
+        }
     }
 }

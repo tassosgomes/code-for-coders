@@ -2,7 +2,9 @@ import { Clapperboard, Upload } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { paths } from '@/config/paths';
+import type { PendingVideoUpload } from '@/features/videos/api/get-pending-video-uploads';
 import type { VideoPage } from '@/features/videos/api/get-videos';
+import { PendingVideoUploadsAlert } from '@/features/videos/components/pending-video-uploads-alert';
 import { VideoTransferPanel, type VideoTransferView } from '@/features/videos/components/video-transfer-panel';
 
 type VideosAreaScreenProps = {
@@ -13,6 +15,8 @@ type VideosAreaScreenProps = {
   onUpload?: () => void;
   onRetry?: () => void;
   onRetryTransfer?: () => void;
+  pendingUploads?: readonly PendingVideoUpload[];
+  onResumeUpload?: () => void;
 };
 
 const videoStatusLabels = {
@@ -35,6 +39,8 @@ export const VideosAreaScreen = ({
   onUpload,
   onRetry,
   onRetryTransfer,
+  pendingUploads = [],
+  onResumeUpload,
 }: VideosAreaScreenProps) => {
   if (state === 'forbidden') {
     return <main className="page-shell videos-page">
@@ -61,6 +67,7 @@ export const VideosAreaScreen = ({
       {sendButton}
     </div>
 
+    {pendingUploads.length > 0 ? <PendingVideoUploadsAlert uploads={pendingUploads} onSelectFile={onResumeUpload ?? (() => undefined)} /> : null}
     {transfer ? <VideoTransferPanel transfer={transfer} onRetry={onRetryTransfer ?? (() => undefined)} /> : null}
 
     {state === 'loading' ? <section aria-label="Carregando vídeos" aria-busy="true" className="empty-state videos-state">

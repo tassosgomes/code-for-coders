@@ -28,6 +28,10 @@ public static class DependencyInjection
         {
             services.AddHostedService<HeartbeatConsumerWorker>();
         }
+        else
+        {
+            services.AddHostedService<ExpiredVideoUploadWorker>();
+        }
 
         return services;
     }

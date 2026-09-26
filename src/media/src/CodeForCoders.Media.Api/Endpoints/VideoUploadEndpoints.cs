@@ -5,6 +5,7 @@ using CodeForCoders.Media.Application.UseCases.VideoUploads.CompleteVideoUpload;
 using CodeForCoders.Media.Application.UseCases.VideoUploads.CreateVideoUpload;
 using CodeForCoders.Media.Application.UseCases.VideoUploads.CreateVideoUploadPartUrls;
 using CodeForCoders.Media.Application.UseCases.VideoUploads.GetVideoUpload;
+using CodeForCoders.Media.Application.UseCases.VideoUploads.ListPendingVideoUploads;
 
 namespace CodeForCoders.Media.Api.Endpoints;
 
@@ -23,6 +24,13 @@ public static class VideoUploadEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapGet("/video-uploads", ListPendingVideoUploadsAsync)
+            .WithName("ListPendingVideoUploadsInternal")
+            .Produces<VideoUploadPageOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
         group.MapGet("/video-uploads/{uploadId:guid}", GetVideoUploadAsync)
@@ -68,8 +76,19 @@ public static class VideoUploadEndpoints
                 request.UploaderName,
                 httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty),
             cancellationToken);
-        return Results.Created($"/internal/v1/video-uploads/{result.Upload.UploadId:D}", result.Upload);
+        return result.Resumed
+            ? Results.Ok(result.Upload)
+            : Results.Created($"/internal/v1/video-uploads/{result.Upload.UploadId:D}", result.Upload);
     }
+
+    private static async Task<IResult> ListPendingVideoUploadsAsync(
+        IListPendingVideoUploads listPendingVideoUploads,
+        CancellationToken cancellationToken,
+        int _page = 1,
+        int _size = 10)
+        => Results.Ok(await listPendingVideoUploads.ExecuteAsync(
+            new ListPendingVideoUploadsInput(_page, _size),
+            cancellationToken));
 
     private static async Task<IResult> GetVideoUploadAsync(
         Guid uploadId,

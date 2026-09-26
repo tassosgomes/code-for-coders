@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import type { PendingVideoUpload } from '@/features/videos/api/get-pending-video-uploads';
 import { getVideoFileProblem } from '@/features/videos/utils/video-upload';
 
 const videoTitleSchema = z.object({
@@ -17,12 +18,19 @@ type VideoUploadDialogProps = {
   error: string | null;
   onClose: () => void;
   onStart: (file: File, title: string) => Promise<void>;
+  pendingUploads?: readonly PendingVideoUpload[];
 };
 
-export const VideoUploadDialog = ({ busy, error, onClose, onStart }: VideoUploadDialogProps) => {
+export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUploads = [] }: VideoUploadDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [fileProblem, setFileProblem] = useState<string | null>(null);
   const [title, setTitle] = useState('');
+  const hasMatchingPendingUpload = file && pendingUploads.some(
+    (upload) => upload.fileName === file.name && upload.fileSize === file.size,
+  );
+  const differentPendingUpload = file && pendingUploads.length > 0 && !hasMatchingPendingUpload
+    ? pendingUploads[0]
+    : undefined;
   const form = useForm<VideoTitleForm>({
     defaultValues: { title: '' },
     resolver: zodResolver(videoTitleSchema),
@@ -60,6 +68,9 @@ export const VideoUploadDialog = ({ busy, error, onClose, onStart }: VideoUpload
             onChange={(event) => selectFile(event.currentTarget.files?.[0])}
             type="file"
           />
+          {differentPendingUpload ? <p className="warning-alert" role="status">
+            Este não é o arquivo do envio incompleto ({differentPendingUpload.fileName}). Ele será enviado como um vídeo novo.
+          </p> : null}
           {fileProblem ? <p className="inline-alert" role="alert">{fileProblem}</p> : null}
           <label htmlFor="video-title">Título</label>
           <input
