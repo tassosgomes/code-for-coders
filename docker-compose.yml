@@ -204,6 +204,7 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
+      Media__Role: api
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
@@ -221,6 +222,35 @@ services:
       <<: *api-dependencies
       minio-bucket-init:
         condition: service_completed_successfully
+    healthcheck: *api-healthcheck
+
+  media-worker:
+    image: code-for-coders-media:local
+    build:
+      context: .
+      dockerfile: src/media/Dockerfile
+    container_name: code-for-coders-media-worker
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
+      Media__Role: worker
+      MediaTokens__Issuer: identity
+      MediaTokens__Audience: media
+      MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      AwsMedia__Region: us-east-1
+      AwsMedia__BucketName: code-for-coders-media
+      AwsMedia__ObjectKeyPrefix: media
+      AwsMedia__EndpointInternal: http://minio:9000
+      AwsMedia__EndpointPublic: http://localhost:9000
+      AwsMedia__AccessKeyId: ${MINIO_ROOT_USER:-code-for-coders}
+      AwsMedia__SecretAccessKey: ${MINIO_ROOT_PASSWORD:-code-for-coders-local}
+      AwsMedia__ForcePathStyle: "true"
+    depends_on:
+      <<: *api-dependencies
+      minio-bucket-init:
+        condition: service_completed_successfully
+    volumes:
+      - code-for-coders-media-worker:/var/lib/media-work
     healthcheck: *api-healthcheck
 
   commerce:
@@ -376,3 +406,4 @@ volumes:
   code-for-coders-rabbitmq:
   code-for-coders-valkey:
   code-for-coders-minio:
+  code-for-coders-media-worker:

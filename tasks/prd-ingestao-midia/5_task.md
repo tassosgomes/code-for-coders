@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["3.0"]
 gate: 'docker build -f src/media/Dockerfile -t code-4-coders-media:en03 . && docker run --rm --entrypoint ffmpeg code-4-coders-media:en03 -version && docker run --rm --entrypoint ffprobe code-4-coders-media:en03 -version'

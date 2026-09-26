@@ -30,6 +30,13 @@ jobs:
       docker-context: .
       dockerfile: src/media/Dockerfile
       version: '10.0.x'
+      # Pinned instead of relying on the template default: the job needs a Linux
+      # runner with passwordless sudo so the FfmpegTools test fixture can provision
+      # ffmpeg/ffprobe when the image does not ship them (ubuntu-latest does not).
+      # The template offers no pre-test install hook (test-args only appends flags
+      # to the dotnet test command), so provisioning lives in the test fixture and
+      # the availability test fails instead of skipping when the binaries are absent.
+      runs-on: ubuntu-latest
       test-configuration: Debug
       coverage-threshold: 70
       build-container: true

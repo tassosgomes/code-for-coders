@@ -4,9 +4,9 @@
   "original_base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
   "base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
   "target_ref": null,
-  "last_checkpoint": "747bebbd41b70d74810e34e3d63cb20533652ba2",
+  "last_checkpoint": "8fb586d15e3287e47922cc6c8412a55942b48962",
   "phase": "checkpoint",
-  "active_task": "4.0",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,16 +19,16 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.qM40aAkF",
+    "run_id": "run.5OLBwb0c",
     "role": "validator",
     "mode": "focused",
-    "task": "4.0",
+    "task": "5.0",
     "outcome": "approved"
   },
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "4.0"
+    "task": "5.0"
   },
   "history": [
     {
@@ -108,6 +108,20 @@
       "task": "4.0",
       "run_id": "run.qM40aAkF",
       "note": "0 bloqueantes, 5 recomendações; R1–R4 carregadas para a 6.0; R5 (MKV com MIME vazio em alguns navegadores) para decisão de produto"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "4.0",
+      "run_id": "run.XsRrb9CP",
+      "commit": "8fb586d"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "focused_approved",
+      "task": "5.0",
+      "run_id": "run.5OLBwb0c",
+      "note": "0 bloqueantes, 4 recomendações; mecanismo de ffmpeg no CI (fixture com sudo -n apt-get) aceito; R1–R3 carregadas para a 6.0; R4 (posição de MediaRoleOptions) observação"
     }
   ],
   "carryover": {
@@ -115,7 +129,10 @@
       "4.0-R1: rota GET /api/v1/video-uploads no BFF sem implementação em Media (pasta ListPendingVideoUploads vazia)",
       "4.0-R2: testes de 503 STORAGE_UNAVAILABLE em consultar e concluir",
       "4.0-R3: URLs de parte expiram em conexão lenta; pedir lotes sob demanda ou renovar após 403",
-      "4.0-R4: corrida na idempotência do início com a mesma Idempotency-Key pode dar 500; tratar conflito como replay"
+      "4.0-R4: corrida na idempotência do início com a mesma Idempotency-Key pode dar 500; tratar conflito como replay",
+      "5.0-R1: FfmpegTools só instala via apt quando CI/GITHUB_ACTIONS=true; fora do CI falha com instrução (sem skip)",
+      "5.0-R2: ajustar comentário do runs-on em media.yml",
+      "5.0-R3: documentar Media__Role obrigatório no README/launchSettings do media"
     ]
   }
 }

@@ -35,6 +35,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     {
         builder.UseEnvironment("IntegrationTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", infrastructure.PostgreSql.GetConnectionString());
+        builder.UseSetting("Media:Role", "api");
         builder.UseSetting("AwsMedia:EndpointInternal", infrastructure.MinioEndpoint);
         builder.UseSetting("AwsMedia:EndpointPublic", infrastructure.MinioEndpoint);
         builder.UseSetting("AwsMedia:BucketName", MediaIntegrationFixture.MinioBucketName);

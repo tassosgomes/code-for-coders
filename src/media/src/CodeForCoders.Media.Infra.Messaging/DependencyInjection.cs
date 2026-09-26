@@ -24,7 +24,10 @@ public static class DependencyInjection
         services.AddSingleton<HeartbeatReceiptStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
-        services.AddHostedService<HeartbeatConsumerWorker>();
+        if (MediaRoleOptions.ReadRole(configuration) == MediaServiceRole.Api)
+        {
+            services.AddHostedService<HeartbeatConsumerWorker>();
+        }
 
         return services;
     }
