@@ -6,9 +6,9 @@
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "last_checkpoint": "1e43a53ffca5192716b24ac08dbefec14b408d65",
-  "phase": "full_fix",
-  "active_task": null,
-  "attempt": 0,
+  "phase": "checkpoint",
+  "active_task": "2.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
   "transport_retries": 1,
@@ -26,24 +26,18 @@
   "validated_commit": null,
   "validated_tree": null,
   "pending_delegation": {
-    "role": "integrator",
-    "mode": "reopen-task",
-    "task": "2.0"
+    "role": "validator",
+    "mode": "revalidation",
+    "task": "2.0",
+    "attempt": 2
   },
   "last_result": {
     "role": "validator",
-    "mode": "full",
-    "attempt": 1,
-    "run_id": "run.QeuEMpDO",
-    "outcome": "rejected",
-    "report": "tasks/prd-acesso-interno/prd_review.md",
-    "blockers": {
-      "B1": "3.0 cobertura bff-admin 67.95",
-      "B2": "8.0 cobertura commerce 59.87 (herdada)",
-      "B3": "1.0/8.0 learning 55.69 e media 56.98 herdadas, acionadas por Directory.Packages.props",
-      "B4": "2.0 mutante: token de redefinição reutilizável sobrevive",
-      "B5": "4.0 mutante: Identity emite convite sem acesso.gerir sobrevive"
-    }
+    "mode": "revalidation",
+    "task": "2.0",
+    "attempt": 2,
+    "run_id": "run.DqJr4MKt",
+    "outcome": "approved"
   },
   "history": [
     {
@@ -278,6 +272,19 @@
       "ts": "2026-09-25",
       "event": "user_decision",
       "note": "cobertura: seguir precedente testconfig.json"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "task_reopened",
+      "task": "2.0",
+      "commit": "1293dc0"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "2.0",
+      "run_id": "run.DqJr4MKt",
+      "note": "B4 fechado; mutante morto"
     }
   ],
   "full_pending_gaps": [

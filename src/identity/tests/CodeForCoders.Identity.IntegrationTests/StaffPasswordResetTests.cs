@@ -128,6 +128,32 @@ public sealed class StaffPasswordResetTests(IdentityIntegrationFixture fixture)
         Assert.Equal(204, accepted.StatusCode);
     }
 
+    [Fact(DisplayName = nameof(ResetStaffPassword_RejectsAnAlreadyUsedLinkWithAnotherIdempotencyKey))]
+    [Trait("Layer", "Identity staff password reset - Integration")]
+    public async Task ResetStaffPassword_RejectsAnAlreadyUsedLinkWithAnotherIdempotencyKey()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        await using var dbContext = fixture.CreateDbContext(tenantId);
+        var rawToken = await ProvisionAndReadTokenAsync(dbContext, tenantId, cancellationToken);
+        var accepted = await CreateResetUseCase(dbContext).ExecuteAsync(
+            new ResetStaffPasswordInput(tenantId, rawToken, "SenhaForte1!", "staff-reset-reuse-1"),
+            cancellationToken);
+        Assert.Equal(204, accepted.StatusCode);
+
+        var exception = await Assert.ThrowsAsync<StaffPasswordRecoveryException>(() =>
+            CreateResetUseCase(dbContext).ExecuteAsync(
+                new ResetStaffPasswordInput(tenantId, rawToken, "OutraSenha2@", "staff-reset-reuse-2"),
+                cancellationToken));
+
+        Assert.Equal("RESET_TOKEN_INVALID", exception.Code);
+        await using var verifyContext = fixture.CreateDbContext(tenantId);
+        var credential = await verifyContext.Credentials.SingleAsync(cancellationToken);
+        var hasher = new Pbkdf2PasswordHasher();
+        Assert.True(hasher.Verify("SenhaForte1!", credential.PasswordHash));
+        Assert.False(hasher.Verify("OutraSenha2@", credential.PasswordHash));
+    }
+
     private static async Task<string> ProvisionAndReadTokenAsync(
         IdentityDbContext dbContext,
         Guid tenantId,
