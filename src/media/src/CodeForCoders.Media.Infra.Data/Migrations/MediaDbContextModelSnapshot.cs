@@ -23,6 +23,63 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.OperationIdempotencyRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActorAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_account_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("operation");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_json");
+
+                    b.Property<int>("ResponseStatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("response_status_code");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_operation_idempotency_expires_at");
+
+                    b.HasIndex("TenantId", "ActorAccountId", "Operation", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("ux_operation_idempotency_scope_key");
+
+                    b.ToTable("operation_idempotency", "media_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Video", b =>
                 {
                     b.Property<Guid>("VideoId")
@@ -80,6 +137,101 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                         .HasDatabaseName("ix_videos_tenant_uploaded_at");
 
                     b.ToTable("videos", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.VideoUpload", b =>
+                {
+                    b.Property<Guid>("UploadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("upload_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("file_name");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("object_key");
+
+                    b.Property<int>("PartCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("part_count");
+
+                    b.Property<string>("StorageUploadId")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("storage_upload_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<Guid>("UploaderAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploader_account_id");
+
+                    b.Property<string>("UploaderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("uploader_name");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.HasKey("UploadId");
+
+                    b.HasIndex("VideoId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_video_uploads_video_id");
+
+                    b.HasIndex("TenantId", "UploaderAccountId", "CreatedAt")
+                        .HasDatabaseName("ix_video_uploads_tenant_actor_created_at");
+
+                    b.HasIndex("TenantId", "UploaderAccountId", "Fingerprint")
+                        .HasDatabaseName("ix_video_uploads_tenant_actor_fingerprint");
+
+                    b.ToTable("video_uploads", "media_access");
                 });
 
             modelBuilder.Entity("CodeForCoders.Media.Infra.Data.Outbox.OutboxMessage", b =>

@@ -1,4 +1,5 @@
 using CodeForCoders.Media.Application.Exceptions;
+using CodeForCoders.Media.Domain.Exceptions;
 using CodeForCoders.Media.Domain.SeedWork;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
@@ -17,6 +18,26 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail) = exception switch
         {
+            MediaApiException mediaException => (
+                mediaException.StatusCode,
+                "/problems/media-operation-error",
+                mediaException.Title,
+                mediaException.Detail),
+            StorageUnavailableException => (
+                StatusCodes.Status503ServiceUnavailable,
+                "/problems/storage-unavailable",
+                "Media storage is temporarily unavailable",
+                "Retry the request later."),
+            MultipartUploadNotFoundException => (
+                StatusCodes.Status404NotFound,
+                "/problems/upload-not-found",
+                "The video upload was not found",
+                null),
+            VideoUploadRuleViolationException ruleViolation => (
+                StatusCodes.Status422UnprocessableEntity,
+                "/problems/video-upload-rule-violation",
+                ruleViolation.Message,
+                null),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",
@@ -58,6 +79,18 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
+        var code = exception switch
+        {
+            MediaApiException mediaException => mediaException.Code,
+            StorageUnavailableException => "STORAGE_UNAVAILABLE",
+            MultipartUploadNotFoundException => "UPLOAD_NOT_FOUND",
+            VideoUploadRuleViolationException ruleViolation => ruleViolation.Code,
+            _ => null,
+        };
+        if (code is not null)
+        {
+            problemDetails.Extensions["code"] = code;
+        }
         if (exception is ValidationException validationException)
         {
             problemDetails.Extensions["errors"] = validationException.Errors

@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using Testcontainers.PostgreSql;
 using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
@@ -20,30 +19,28 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
 {
     private const string SigningKeyId = "media-integration";
     private readonly RSA signingKey = RSA.Create(2048);
-
-    public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
-        .WithDatabase("code_for_coders_media")
-        .WithUsername("code_for_coders_media")
-        .WithPassword("code_for_coders_media")
-        .Build();
+    private readonly MediaIntegrationFixture infrastructure = new();
 
     public string JwksDocument { get; private set; } = string.Empty;
 
+    public string MinioEndpoint => infrastructure.MinioEndpoint;
+
     public async ValueTask InitializeAsync()
     {
-        await PostgreSql.StartAsync();
-        var dbOptions = new DbContextOptionsBuilder<MediaDbContext>()
-            .UseNpgsql(PostgreSql.GetConnectionString())
-            .Options;
-        await using var dbContext = new MediaDbContext(dbOptions, new TenantContext());
-        await dbContext.Database.MigrateAsync();
+        await infrastructure.InitializeAsync();
         JwksDocument = CreateJwksDocument(signingKey);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTest");
-        builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
+        builder.UseSetting("ConnectionStrings:DefaultConnection", infrastructure.PostgreSql.GetConnectionString());
+        builder.UseSetting("AwsMedia:EndpointInternal", infrastructure.MinioEndpoint);
+        builder.UseSetting("AwsMedia:EndpointPublic", infrastructure.MinioEndpoint);
+        builder.UseSetting("AwsMedia:BucketName", MediaIntegrationFixture.MinioBucketName);
+        builder.UseSetting("AwsMedia:AccessKeyId", MediaIntegrationFixture.MinioAccessKey);
+        builder.UseSetting("AwsMedia:SecretAccessKey", MediaIntegrationFixture.MinioSecretKey);
+        builder.UseSetting("AwsMedia:ForcePathStyle", "true");
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
         builder.UseSetting("MediaTokens:Issuer", "identity");
@@ -65,6 +62,27 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     }
 
     public string CreateToken(Guid tenantId, string audience = "media", params string[] permissions)
+        => CreateToken(
+            tenantId,
+            audience,
+            DateTime.UtcNow.AddMinutes(-1),
+            DateTime.UtcNow.AddMinutes(5),
+            permissions);
+
+    public string CreateExpiredToken(Guid tenantId)
+        => CreateToken(
+            tenantId,
+            "media",
+            DateTime.UtcNow.AddMinutes(-31),
+            DateTime.UtcNow.AddMinutes(-30),
+            ["midia.enviar"]);
+
+    private string CreateToken(
+        Guid tenantId,
+        string audience,
+        DateTime notBefore,
+        DateTime expires,
+        string[] permissions)
     {
         var claims = new List<System.Security.Claims.Claim>
         {
@@ -81,8 +99,8 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
             "identity",
             audience,
             claims,
-            DateTime.UtcNow.AddMinutes(-1),
-            DateTime.UtcNow.AddMinutes(5),
+            notBefore,
+            expires,
             credentials);
         return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
     }
@@ -91,7 +109,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     {
         Dispose();
         signingKey.Dispose();
-        await PostgreSql.DisposeAsync();
+        await infrastructure.DisposeAsync();
     }
 
     private static string CreateJwksDocument(RSA rsa)

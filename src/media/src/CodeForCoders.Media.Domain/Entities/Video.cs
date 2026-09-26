@@ -36,10 +36,19 @@ public sealed class Video
         Guid uploadedByAccountId,
         string uploadedByName,
         DateTimeOffset uploadedAt)
+        => Create(Guid.CreateVersion7(uploadedAt), tenantId, title, uploadedByAccountId, uploadedByName, uploadedAt);
+
+    public static Video Create(
+        Guid videoId,
+        Guid tenantId,
+        string title,
+        Guid uploadedByAccountId,
+        string uploadedByName,
+        DateTimeOffset uploadedAt)
     {
-        if (tenantId == Guid.Empty || uploadedByAccountId == Guid.Empty)
+        if (videoId == Guid.Empty || tenantId == Guid.Empty || uploadedByAccountId == Guid.Empty)
         {
-            throw new EntityValidationException("Tenant and uploader identifiers are required.");
+            throw new EntityValidationException("Video, tenant, and uploader identifiers are required.");
         }
 
         if (string.IsNullOrWhiteSpace(title) || title.Length > 200)
@@ -54,7 +63,7 @@ public sealed class Video
 
         return new Video
         {
-            VideoId = Guid.CreateVersion7(uploadedAt),
+            VideoId = videoId,
             TenantId = tenantId,
             Title = title.Trim(),
             NormalizedTitle = NormalizeTitle(title),

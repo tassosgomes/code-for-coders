@@ -57,6 +57,19 @@ public static class ServiceConfigurationExtensions
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.DisableForUnsafeHttpMethods();
             });
+        builder.Services.AddHttpClient<IVideoUploadClient, VideoUploadClient>((serviceProvider, client) =>
+            {
+                var settings = serviceProvider.GetRequiredService<IOptions<MediaApiOptions>>().Value;
+                client.BaseAddress = new Uri(settings.BaseAddress, UriKind.Absolute);
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(35);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(40);
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(90);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddHttpClient("bff-admin-outbound")
             .AddStandardResilienceHandler(options =>
             {

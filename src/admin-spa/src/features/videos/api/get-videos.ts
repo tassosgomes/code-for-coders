@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api-client';
 
 const videoStatusSchema = z.enum(['received', 'preparing', 'ready', 'failed']);
 
-const videoSchema = z.object({
+export const videoSchema = z.object({
   videoId: z.string().uuid(),
   title: z.string(),
   status: videoStatusSchema,
@@ -13,7 +13,7 @@ const videoSchema = z.object({
     accountId: z.string().uuid(),
     name: z.string(),
   }).strict(),
-  uploadedAt: z.string().datetime(),
+  uploadedAt: z.string().datetime({ offset: true }),
   durationSeconds: z.number().int().nullable(),
   failureReason: z.string().nullable(),
 }).strict();

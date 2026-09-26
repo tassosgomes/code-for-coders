@@ -1042,3 +1042,267 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   justify-content:space-between;
   gap:8px
 }
+
+.visually-hidden {
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0
+}
+
+.videos-page .page-subtitle {
+  font-size:14px
+}
+
+.videos-state {
+  max-width:640px;
+  text-align:left;
+  padding:24px;
+  display:grid;
+  gap:16px
+}
+
+.videos-state h2 {
+  font-size:20px
+}
+
+.videos-state p {
+  margin:0
+}
+
+.videos-state .code-window {
+  width:100%
+}
+
+.videos-state .primary-button {
+  justify-self:start
+}
+
+.videos-table {
+  margin-top:24px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow:hidden
+}
+
+.videos-table-header,.videos-table-row {
+  display:grid;
+  grid-template-columns:minmax(200px,2fr) minmax(130px,1fr) minmax(130px,1fr) minmax(170px,1fr);
+  align-items:center;
+  gap:16px;
+  padding:16px 20px
+}
+
+.videos-table-header {
+  background:#fbfaff;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:600;
+  border-bottom:1px solid var(--border)
+}
+
+.videos-table-row+.videos-table-row {
+  border-top:1px solid var(--border)
+}
+
+.video-title-cell,.video-status {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0
+}
+
+.video-title-cell svg {
+  color:var(--primary);
+  flex:none
+}
+
+.video-title-cell strong {
+  overflow-wrap:anywhere
+}
+
+.video-status {
+  flex-wrap:wrap;
+  font-size:13px;
+  font-weight:500
+}
+
+.video-status>span {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#98a2b3
+}
+
+.video-status.preparing>span {
+  background:#7c3aed
+}
+
+.video-status.ready>span {
+  background:#039855
+}
+
+.video-status.failed>span {
+  background:#d92d20
+}
+
+.video-status small {
+  width:100%;
+  padding-left:18px;
+  color:var(--muted);
+  font-weight:400
+}
+
+.video-transfer-panel {
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  margin-top:24px;
+  padding:18px 20px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px
+}
+
+.video-transfer-icon {
+  width:36px;
+  height:36px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#f5f3ff;
+  color:#6d28d9
+}
+
+.video-transfer-icon.complete {
+  background:#ecfdf3;
+  color:#027a48
+}
+
+.video-transfer-icon.paused {
+  background:#fffaeb;
+  color:#b54708
+}
+
+.video-transfer-details {
+  flex:1;
+  min-width:0
+}
+
+.video-transfer-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  font-size:14px
+}
+
+.video-transfer-heading strong {
+  overflow-wrap:anywhere
+}
+
+.video-transfer-heading span {
+  color:var(--muted);
+  flex:none;
+  font-size:12px
+}
+
+.video-transfer-details progress {
+  display:block;
+  width:100%;
+  height:8px;
+  margin:12px 0 6px;
+  accent-color:var(--primary)
+}
+
+.video-transfer-note,.video-transfer-error {
+  font-size:12px;
+  margin-top:8px
+}
+
+.video-transfer-note {
+  color:var(--muted)
+}
+
+.video-transfer-error,.field-error {
+  color:#b42318
+}
+
+.video-transfer-retry {
+  margin-top:12px
+}
+
+.video-upload-dialog .video-upload-intro {
+  margin:0 0 16px
+}
+
+.video-file-picker {
+  display:grid;
+  justify-items:center;
+  gap:8px;
+  padding:24px 16px;
+  border:1px dashed #c8c1dc;
+  border-radius:12px;
+  background:#fbfaff;
+  color:#5b21b6;
+  cursor:pointer;
+  text-align:center
+}
+
+.video-file-picker span {
+  color:var(--muted);
+  font-size:12px
+}
+
+.video-upload-dialog .video-privacy-note {
+  margin:4px 0 8px;
+  padding:10px 12px;
+  background:#f9f7ff;
+  border-radius:8px;
+  font-size:12px
+}
+
+.dialog-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:8px
+}
+
+.leave-upload-dialog>p {
+  margin-top:12px
+}
+
+@media(max-width:760px) {
+  .videos-table-header {
+    display:none
+  }
+
+  .videos-table-row {
+    grid-template-columns:1fr auto;
+    gap:10px 16px
+  }
+
+  .videos-table-row>*:nth-child(2),.videos-table-row>*:nth-child(4) {
+    grid-column:1
+  }
+
+  .videos-table-row>*:nth-child(3) {
+    grid-column:2;
+    grid-row:1 / span 2
+  }
+}
+
+@media(max-width:500px) {
+  .video-transfer-heading {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px
+  }
+}

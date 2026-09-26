@@ -165,6 +165,36 @@ services:
     depends_on: *api-dependencies
     healthcheck: *api-healthcheck
 
+  minio:
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
+    container_name: code-for-coders-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-code-for-coders}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-code-for-coders-local}
+      MINIO_API_CORS_ALLOW_ORIGIN: http://localhost:8081
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - code-for-coders-minio:/data
+
+  minio-bucket-init:
+    image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-code-for-coders}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-code-for-coders-local}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do sleep 1; done;
+        mc mb --ignore-existing local/code-for-coders-media;
+        mc anonymous set none local/code-for-coders-media
+    restart: "no"
+
   media:
     image: code-for-coders-media:local
     build:
@@ -177,9 +207,20 @@ services:
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      AwsMedia__Region: us-east-1
+      AwsMedia__BucketName: code-for-coders-media
+      AwsMedia__ObjectKeyPrefix: media
+      AwsMedia__EndpointInternal: http://minio:9000
+      AwsMedia__EndpointPublic: http://localhost:9000
+      AwsMedia__AccessKeyId: ${MINIO_ROOT_USER:-code-for-coders}
+      AwsMedia__SecretAccessKey: ${MINIO_ROOT_PASSWORD:-code-for-coders-local}
+      AwsMedia__ForcePathStyle: "true"
     ports:
       - "5103:8080"
-    depends_on: *api-dependencies
+    depends_on:
+      <<: *api-dependencies
+      minio-bucket-init:
+        condition: service_completed_successfully
     healthcheck: *api-healthcheck
 
   commerce:
@@ -334,3 +375,4 @@ volumes:
   code-for-coders-postgres:
   code-for-coders-rabbitmq:
   code-for-coders-valkey:
+  code-for-coders-minio:

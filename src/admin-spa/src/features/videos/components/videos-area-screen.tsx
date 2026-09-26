@@ -2,13 +2,40 @@ import { Clapperboard, Upload } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { paths } from '@/config/paths';
+import type { VideoPage } from '@/features/videos/api/get-videos';
+import { VideoTransferPanel, type VideoTransferView } from '@/features/videos/components/video-transfer-panel';
 
 type VideosAreaScreenProps = {
   state: 'loading' | 'empty' | 'has-videos' | 'unavailable' | 'forbidden';
+  videos?: VideoPage;
+  uploadDisabled?: boolean;
+  transfer?: VideoTransferView | null;
+  onUpload?: () => void;
   onRetry?: () => void;
+  onRetryTransfer?: () => void;
 };
 
-export const VideosAreaScreen = ({ state, onRetry }: VideosAreaScreenProps) => {
+const videoStatusLabels = {
+  received: 'Recebido',
+  preparing: 'Em preparação',
+  ready: 'Pronto',
+  failed: 'Falhou',
+} as const;
+
+const formatDate = (value: string) => new Intl.DateTimeFormat('pt-BR', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+}).format(new Date(value));
+
+export const VideosAreaScreen = ({
+  state,
+  videos,
+  uploadDisabled = false,
+  transfer,
+  onUpload,
+  onRetry,
+  onRetryTransfer,
+}: VideosAreaScreenProps) => {
   if (state === 'forbidden') {
     return <main className="page-shell videos-page">
       <p className="eyebrow">Vídeos</p>
@@ -20,6 +47,10 @@ export const VideosAreaScreen = ({ state, onRetry }: VideosAreaScreenProps) => {
     </main>;
   }
 
+  const sendButton = <button className="primary-button" disabled={uploadDisabled} onClick={onUpload} type="button" title={uploadDisabled ? 'Aguarde o envio atual terminar.' : undefined}>
+    <Upload aria-hidden="true" size={16} />Enviar vídeo
+  </button>;
+
   return <main className="page-shell videos-page">
     <div className="page-heading-row">
       <div>
@@ -27,10 +58,12 @@ export const VideosAreaScreen = ({ state, onRetry }: VideosAreaScreenProps) => {
         <h1>Vídeos da escola</h1>
         <p className="page-subtitle">Envie as gravações das aulas e acompanhe até ficarem prontas.</p>
       </div>
-      <button className="primary-button" disabled type="button"><Upload aria-hidden="true" size={16} />Enviar vídeo</button>
+      {sendButton}
     </div>
 
-    {state === 'loading' ? <section aria-label="Carregando vídeos" className="empty-state videos-state" aria-busy="true">
+    {transfer ? <VideoTransferPanel transfer={transfer} onRetry={onRetryTransfer ?? (() => undefined)} /> : null}
+
+    {state === 'loading' ? <section aria-label="Carregando vídeos" aria-busy="true" className="empty-state videos-state">
       <p>Carregando vídeos…</p>
     </section> : null}
 
@@ -41,12 +74,19 @@ export const VideosAreaScreen = ({ state, onRetry }: VideosAreaScreenProps) => {
       </div>
       <h2>Nenhum vídeo ainda</h2>
       <p>Envie a primeira gravação. Ela fica pronta para a aula sozinha.</p>
-      <button className="primary-button" disabled type="button"><Upload aria-hidden="true" size={16} />Enviar vídeo</button>
+      {sendButton}
     </section> : null}
 
-    {state === 'has-videos' ? <section className="empty-state videos-state">
-      <Clapperboard aria-hidden="true" size={28} />
-      <p>A lista de vídeos será exibida aqui.</p>
+    {state === 'has-videos' ? <section aria-label="Biblioteca de vídeos" className="videos-table">
+      <div className="videos-table-header"><span>Vídeo</span><span>Autor</span><span>Estado</span><span>Enviado em</span></div>
+      {videos?.data.map((video) => <div className="videos-table-row" key={video.videoId}>
+        <div className="video-title-cell"><Clapperboard aria-hidden="true" size={18} /><strong>{video.title}</strong></div>
+        <span className="row-muted">{video.uploadedBy.name}</span>
+        <div className={`video-status ${video.status}`}><span aria-hidden="true" />{videoStatusLabels[video.status]}
+          {video.failureReason ? <small>{video.failureReason}</small> : null}
+        </div>
+        <time className="row-muted" dateTime={video.uploadedAt}>{formatDate(video.uploadedAt)}</time>
+      </div>)}
     </section> : null}
 
     {state === 'unavailable' ? <section className="empty-state videos-state" role="alert">

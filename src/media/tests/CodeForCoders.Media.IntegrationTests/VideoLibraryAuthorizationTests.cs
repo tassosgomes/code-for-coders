@@ -74,6 +74,22 @@ public sealed class VideoLibraryAuthorizationTests(VideoLibraryApiFactory factor
         Assert.Equal("TOKEN_INVALID", await ReadCodeAsync(response));
     }
 
+    [Fact(DisplayName = nameof(VideoLibrary_RejectsExpiredToken))]
+    [Trait("Layer", "Media video library - Integration")]
+    public async Task VideoLibrary_RejectsExpiredToken()
+    {
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/internal/v1/videos");
+        request.Headers.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            factory.CreateExpiredToken(Guid.CreateVersion7()));
+
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("TOKEN_INVALID", await ReadCodeAsync(response));
+    }
+
     [Fact(DisplayName = nameof(VideoLibrary_RejectsTokenWithCommerceAudience))]
     [Trait("Layer", "Media video library - Integration")]
     public async Task VideoLibrary_RejectsTokenWithCommerceAudience()

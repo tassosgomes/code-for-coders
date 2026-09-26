@@ -31,7 +31,7 @@ describe('videos area', () => {
     expect(await screen.findByRole('heading', { name: 'Nenhum vídeo ainda' })).toBeInTheDocument();
     expect(screen.getByText('Envie a primeira gravação. Ela fica pronta para a aula sozinha.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Enviar vídeo' })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Enviar vídeo' }).every((button) => button.hasAttribute('disabled'))).toBe(true);
+    expect(screen.getAllByRole('button', { name: 'Enviar vídeo' }).every((button) => !button.hasAttribute('disabled'))).toBe(true);
   });
 
   it('adds the Videos menu area only for the send permission', () => {

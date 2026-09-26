@@ -14,6 +14,7 @@ import {
 import { env } from '@/config/env';
 
 let initialized = false;
+const signedStorageUrl = /[?&]X-Amz-Signature=/i;
 
 const recordUnhandledError = (error: unknown) => {
   const tracer = trace.getTracer('admin-spa');
@@ -52,10 +53,12 @@ export const initTelemetry = () => {
         '@opentelemetry/instrumentation-fetch': {
           // Enables W3C traceparent propagation to the configured API origin.
           propagateTraceHeaderCorsUrls: [new RegExp(env.API_URL)],
+          ignoreUrls: [signedStorageUrl],
           clearTimingResources: true,
         },
         '@opentelemetry/instrumentation-xml-http-request': {
           propagateTraceHeaderCorsUrls: [new RegExp(env.API_URL)],
+          ignoreUrls: [signedStorageUrl],
         },
         '@opentelemetry/instrumentation-user-interaction': {
           eventNames: ['click', 'submit'],

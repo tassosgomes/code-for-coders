@@ -1,29 +1,37 @@
 namespace CodeForCoders.Media.Application.Interfaces;
 
 /// <summary>
-/// Vendor-neutral port for media persistence. AWS SDK types stay behind the anti-corruption layer.
+/// Vendor-neutral operations for private multipart media storage.
 /// </summary>
 public interface IMediaStoragePort
 {
-    Task<MediaObjectReceipt> StageAsync(
-        MediaObjectRequest request,
+    Task<string> InitiateMultipartUploadAsync(
+        string objectKey,
+        string contentType,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<MediaUploadPart>> ListPartsAsync(
+        string objectKey,
+        string storageUploadId,
+        CancellationToken cancellationToken);
+
+    Task<Uri> CreatePartUploadUriAsync(
+        string objectKey,
+        string storageUploadId,
+        int partNumber,
+        DateTimeOffset expiresAt,
+        CancellationToken cancellationToken);
+
+    Task CompleteMultipartUploadAsync(
+        string objectKey,
+        string storageUploadId,
+        IReadOnlyList<MediaUploadPart> parts,
+        CancellationToken cancellationToken);
+
+    Task AbortMultipartUploadAsync(
+        string objectKey,
+        string storageUploadId,
         CancellationToken cancellationToken);
 }
 
-/// <summary>
-/// Vendor-neutral port for producing a media delivery URL.
-/// </summary>
-public interface IMediaCdnPort
-{
-    Uri CreateDeliveryUri(string objectKey);
-}
-
-public sealed record MediaObjectRequest(
-    string ObjectKey,
-    string ContentType,
-    long ContentLength);
-
-public sealed record MediaObjectReceipt(
-    string ObjectKey,
-    string ProviderReference,
-    Uri DeliveryUri);
+public sealed record MediaUploadPart(int PartNumber, string ETag, long Size);

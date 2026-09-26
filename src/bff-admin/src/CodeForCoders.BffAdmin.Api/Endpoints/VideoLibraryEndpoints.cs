@@ -75,7 +75,7 @@ public static class VideoLibraryEndpoints
             : MediaProblem(httpContext, result);
     }
 
-    private static async Task<MediaAccess> GetMediaAccessAsync(
+    internal static async Task<MediaAccess> GetMediaAccessAsync(
         HttpContext httpContext,
         IStaffSessionIdentityClient identityClient,
         CancellationToken cancellationToken)
@@ -84,7 +84,7 @@ public static class VideoLibraryEndpoints
         var currentValidation = BffSessionContext.GetValidatedSession(httpContext);
         if (session is null || currentValidation is null)
         {
-            return new MediaAccess(null, Problem(
+            return new MediaAccess(null, null, Problem(
                 httpContext,
                 StatusCodes.Status401Unauthorized,
                 "SESSION_REQUIRED",
@@ -93,7 +93,7 @@ public static class VideoLibraryEndpoints
 
         if (!currentValidation.Permissions.Contains(VideoPermission, StringComparer.Ordinal))
         {
-            return new MediaAccess(null, Problem(
+            return new MediaAccess(null, null, Problem(
                 httpContext,
                 StatusCodes.Status403Forbidden,
                 "PERMISSION_DENIED",
@@ -106,7 +106,7 @@ public static class VideoLibraryEndpoints
             cancellationToken);
         if (validation.StatusCode == StatusCodes.Status401Unauthorized && validation.Code == "SESSION_REQUIRED")
         {
-            return new MediaAccess(null, Problem(
+            return new MediaAccess(null, null, Problem(
                 httpContext,
                 StatusCodes.Status401Unauthorized,
                 "SESSION_REQUIRED",
@@ -120,14 +120,14 @@ public static class VideoLibraryEndpoints
             var statusCode = validation.StatusCode == StatusCodes.Status504GatewayTimeout
                 ? StatusCodes.Status504GatewayTimeout
                 : StatusCodes.Status502BadGateway;
-            return new MediaAccess(null, Problem(
+            return new MediaAccess(null, null, Problem(
                 httpContext,
                 statusCode,
                 "IDENTITY_UNAVAILABLE",
                 "The staff identity service is temporarily unavailable."));
         }
 
-        return new MediaAccess(validation.Session.AccessToken, null);
+        return new MediaAccess(validation.Session.AccessToken, validation.Session.Name, null);
     }
 
     private static IResult MediaProblem(HttpContext httpContext, VideoLibraryResult result)
@@ -167,5 +167,5 @@ public static class VideoLibraryEndpoints
                 ["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString() ?? httpContext.TraceIdentifier,
             });
 
-    private sealed record MediaAccess(string? AccessToken, IResult? Problem);
+    internal sealed record MediaAccess(string? AccessToken, string? UploaderName, IResult? Problem);
 }

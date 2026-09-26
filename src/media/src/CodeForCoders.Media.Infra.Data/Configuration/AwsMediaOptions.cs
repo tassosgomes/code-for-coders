@@ -2,9 +2,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CodeForCoders.Media.Infra.Data.Configuration;
 
-/// <summary>
-/// Secretless AWS wiring. Credentials come from the AWS default credential chain or workload identity.
-/// </summary>
 public sealed class AwsMediaOptions
 {
     public const string SectionName = "AwsMedia";
@@ -16,8 +13,17 @@ public sealed class AwsMediaOptions
     public string BucketName { get; set; } = "code-for-coders-media";
 
     [Required]
-    public string CloudFrontDistributionDomain { get; set; } = "media.example.invalid";
-
-    [Required]
     public string ObjectKeyPrefix { get; set; } = "media";
+
+    public string? EndpointInternal { get; set; }
+
+    public string? EndpointPublic { get; set; }
+
+    public string? AccessKeyId { get; set; }
+
+    public string? SecretAccessKey { get; set; }
+
+    public bool ForcePathStyle { get; set; }
+
+    public int RequestTimeoutSeconds { get; set; } = 30;
 }

@@ -30,6 +30,8 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public VideoLibraryHandler VideoLibraryHandler { get; } = new();
 
+    public VideoUploadHandler VideoUploadHandler { get; } = new();
+
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
     public string IdentityPublicKeyBase64 { get; private set; } = string.Empty;
@@ -85,6 +87,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddSingleton(StaffMemberIdentityHandler);
             services.AddSingleton(CommerceFinanceAreaHandler);
             services.AddSingleton(VideoLibraryHandler);
+            services.AddSingleton(VideoUploadHandler);
             services.RemoveAll<IBffSessionStore>();
             services.AddSingleton<IBffSessionStore>(SessionStore);
             services.AddHttpClient<IStaffPasswordResetIdentityClient, StaffPasswordResetIdentityClient>()
@@ -107,6 +110,10 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddHttpClient<IVideoLibraryClient, VideoLibraryClient>()
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<VideoLibraryHandler>());
+            services.RemoveAll<IVideoUploadClient>();
+            services.AddHttpClient<IVideoUploadClient, VideoUploadClient>()
+                .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+                    serviceProvider.GetRequiredService<VideoUploadHandler>());
         });
     }
 

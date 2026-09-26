@@ -25,6 +25,50 @@ export const handlers = [
     data: [],
     pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
   })),
+  http.post(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
+    uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
+    title: 'Aula de exemplo',
+    fileName: 'aula.mp4',
+    fileSize: 4,
+    partSize: 67108864,
+    partCount: 1,
+    receivedParts: [],
+    expiresAt: '2026-09-27T14:05:11Z',
+  }, { status: 201 })),
+  http.get(`${env.API_URL}/api/v1/video-uploads/:uploadId`, () => HttpResponse.json({
+    uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
+    title: 'Aula de exemplo',
+    fileName: 'aula.mp4',
+    fileSize: 4,
+    partSize: 67108864,
+    partCount: 1,
+    receivedParts: [],
+    expiresAt: '2026-09-27T14:05:11Z',
+  })),
+  http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/part-urls`, async ({ request }) => {
+    const body = await request.json() as { partNumbers: number[] };
+    return HttpResponse.json({
+      parts: body.partNumbers.map((partNumber) => ({
+        partNumber,
+        url: `http://localhost:9000/part-${partNumber}?X-Amz-Signature=test`,
+        expiresAt: '2026-09-27T14:05:11Z',
+      })),
+      uploadExpiresAt: '2026-09-28T14:05:11Z',
+    });
+  }),
+  http.put('http://localhost:9000/:part', () => new HttpResponse(null, { status: 200 })),
+  http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/complete`, () => HttpResponse.json({
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'received',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: null,
+  }, { status: 201 })),
   http.delete(`${env.API_URL}/api/v1/staff-sessions/current`, () => new HttpResponse(null, { status: 204 })),
   http.get(`${env.API_URL}/v1/admin/workspace/status`, () =>
     HttpResponse.json({

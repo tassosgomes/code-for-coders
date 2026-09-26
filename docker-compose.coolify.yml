@@ -82,6 +82,14 @@ services:
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      AwsMedia__Region: ${AWS_REGION:-us-east-1}
+      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:?set in Coolify}
+      AwsMedia__ObjectKeyPrefix: ${AWS_MEDIA_OBJECT_PREFIX:-media}
+      AwsMedia__EndpointInternal: ${AWS_S3_ENDPOINT:-}
+      AwsMedia__EndpointPublic: ${AWS_S3_PUBLIC_ENDPOINT:-}
+      AwsMedia__AccessKeyId: ${AWS_ACCESS_KEY_ID:-}
+      AwsMedia__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY:-}
+      AwsMedia__ForcePathStyle: ${AWS_S3_FORCE_PATH_STYLE:-false}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
