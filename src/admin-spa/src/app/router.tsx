@@ -6,6 +6,7 @@ import { paths } from '@/config/paths';
 import { DashboardRoute } from '@/app/routes/dashboard-route';
 import { RouteError } from '@/app/routes/route-error';
 import { StaffPasswordResetRoute } from '@/app/routes/staff-password-reset-route';
+import { StaffPasswordRecoveryRoute } from '@/app/routes/staff-password-recovery-route';
 import { StaffInvitationAcceptanceRoute } from '@/app/routes/staff-invitation-acceptance-route';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { StaffLoginRoute } from '@/app/routes/staff-login-route';
@@ -33,6 +34,11 @@ const routes: RouteObject[] = [
   {
     path: paths.staffPasswordReset.path.slice(1),
     element: <StaffPasswordResetRoute />,
+    errorElement: <RouteError />,
+  },
+  {
+    path: paths.staffPasswordRecovery.path.slice(1),
+    element: <StaffPasswordRecoveryRoute />,
     errorElement: <RouteError />,
   },
   {

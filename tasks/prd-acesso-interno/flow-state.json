@@ -5,13 +5,13 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "122902b3798043f4d8da8de65cc77f5033d4c6f7",
+  "last_checkpoint": "868d173bda9ebfc5c03e479dae5bbff579b5916d",
   "phase": "checkpoint",
-  "active_task": "8.0",
+  "active_task": "9.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 0,
+  "transport_retries": 1,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
   "specs": [
@@ -28,17 +28,17 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "8.0"
+    "task": "9.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "focused",
-    "task": "8.0",
+    "task": "9.0",
     "attempt": 1,
-    "run_id": "run.wwrLb1lH",
+    "run_id": "run.lAGdudjh",
     "outcome": "approved",
     "gate": "passed",
-    "report": "tasks/prd-acesso-interno/8.0_task_review.md"
+    "report": "tasks/prd-acesso-interno/9.0_task_review.md"
   },
   "history": [
     {
@@ -202,6 +202,34 @@
       "event": "focused_approved",
       "task": "8.0",
       "run_id": "run.wwrLb1lH"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "8.0",
+      "run_id": "run.JJUmxeoo",
+      "commit": "868d173",
+      "note": "falso agent_blocked reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "infra_failure",
+      "task": "9.0",
+      "run_id": "run.fv6lcNIC",
+      "note": "codex CLI sem credencial válida (401); sem efeitos na worktree; tentativa não consumida; aguardando usuário"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "intervention",
+      "task": "9.0",
+      "note": "usuário corrigiu credencial do codex; repetição com timeout 2h e start_settle 8s"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "9.0",
+      "run_id": "run.lAGdudjh",
+      "note": "transporte relatou result_missing (validator claude encerrou turno com suítes em background); reenviado continue ao mesmo pane, resultado gravado no mesmo run"
     }
   ],
   "full_pending_gaps": [
@@ -214,6 +242,8 @@
     "6.0 R3: listStaffMembersInternal devolve 400 não declarado no internal-api-contract.yaml",
     "8.0 R1: sem teste da emissão de JWT com audience commerce no Identity",
     "8.0 R2: JWKS não respeita minItems 1 / maxItems 2 do contrato",
-    "8.0 R3/R4: BFF propaga 401 TOKEN_INVALID não previsto e pode devolver 500 genérico em falha do Commerce"
+    "8.0 R3/R4: BFF propaga 401 TOKEN_INVALID não previsto e pode devolver 500 genérico em falha do Commerce",
+    "9.0 R1: nenhum endpoint internal/v1/staff-* do Identity tem teste HTTP (401/400/422) — smoke deve cobrir BFF→Identity real",
+    "9.0 R2: neutralidade de tempo na recuperação (conta interna grava token/outbox)"
   ]
 }

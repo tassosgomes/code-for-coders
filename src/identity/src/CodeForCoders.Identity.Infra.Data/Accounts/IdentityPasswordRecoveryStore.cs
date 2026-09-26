@@ -40,6 +40,17 @@ public sealed class IdentityPasswordRecoveryStore(IdentityDbContext dbContext) :
                 : null;
     }
 
+    public Task<Account?> FindEligibleStaffByEmailAsync(
+        Guid tenantId,
+        string normalizedEmail,
+        CancellationToken cancellationToken)
+        => dbContext.Accounts.SingleOrDefaultAsync(
+            candidate => candidate.TenantId == tenantId
+                && candidate.NormalizedEmail == normalizedEmail
+                && candidate.Type == AccountType.InternalActor
+                && candidate.DeactivatedOn == null,
+            cancellationToken);
+
     public Task<VerificationToken?> FindVerificationTokenAsync(
         Guid tenantId,
         string tokenHash,

@@ -29,6 +29,7 @@ export const handlers = [
     }),
   ),
   http.post(`${env.API_URL}/api/v1/staff-password-resets`, () => new HttpResponse(null, { status: 204 })),
+  http.post(`${env.API_URL}/api/v1/staff-password-reset-requests`, () => new HttpResponse(null, { status: 202 })),
   http.post(`${env.API_URL}/api/v1/staff-invitation-lookups`, () => HttpResponse.json({
     offeredRole: 'professor',
     expiresAt: '2026-10-09T14:05:11Z',

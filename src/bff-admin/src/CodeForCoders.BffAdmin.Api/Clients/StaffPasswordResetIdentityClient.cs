@@ -15,11 +15,70 @@ public sealed class StaffPasswordResetIdentityClient(
 {
     private const string ResetScope = "staff-passwords:reset";
 
+    public Task<StaffPasswordRecoveryIdentityResult> RequestPasswordResetAsync(
+        StaffPasswordRecoveryRequestV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+        => SendRequestAsync(request, idempotencyKey, cancellationToken);
+
     public Task<StaffPasswordResetIdentityResult> ResetPasswordAsync(
         StaffPasswordResetRequestV1 request,
         string idempotencyKey,
         CancellationToken cancellationToken)
         => SendAsync(request, idempotencyKey, cancellationToken);
+
+    private async Task<StaffPasswordRecoveryIdentityResult> SendRequestAsync(
+        StaffPasswordRecoveryRequestV1 request,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, "internal/v1/staff-password-reset-requests")
+        {
+            Content = JsonContent.Create(request),
+        };
+        message.Headers.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            assertionTokenFactory.Create(ResetScope));
+        message.Headers.Add("Idempotency-Key", idempotencyKey);
+
+        try
+        {
+            using var response = await httpClient.SendAsync(message, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.Accepted)
+            {
+                return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status202Accepted, null);
+            }
+
+            var code = await ReadCodeAsync(response, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.BadRequest && code == "INVALID_REQUEST")
+            {
+                return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status400BadRequest, code);
+            }
+
+            if (response.StatusCode == HttpStatusCode.UnprocessableEntity && code == "IDEMPOTENCY_CONFLICT")
+            {
+                return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status422UnprocessableEntity, code);
+            }
+
+            return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE");
+        }
+        catch (HttpRequestException)
+        {
+            return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE");
+        }
+        catch (TimeoutRejectedException)
+        {
+            return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status504GatewayTimeout, "IDENTITY_UNAVAILABLE");
+        }
+        catch (ExecutionRejectedException)
+        {
+            return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status502BadGateway, "IDENTITY_UNAVAILABLE");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new StaffPasswordRecoveryIdentityResult(StatusCodes.Status504GatewayTimeout, "IDENTITY_UNAVAILABLE");
+        }
+    }
 
     private async Task<StaffPasswordResetIdentityResult> SendAsync(
         StaffPasswordResetRequestV1 request,

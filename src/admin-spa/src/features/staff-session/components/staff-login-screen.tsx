@@ -69,8 +69,8 @@ export const StaffLoginScreen = () => {
             {createSession.isPending ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
-        <Link className="primary-link" to={paths.staffPasswordReset.getHref()}>
-          Esqueci minha senha
+        <Link className="primary-link" to={paths.staffPasswordRecovery.getHref()}>
+          Esqueci a senha
         </Link>
       </section>
     </main>

@@ -15,6 +15,8 @@ public sealed class StaffPasswordResetIdentityHandler : HttpMessageHandler
 
     public StaffPasswordResetRequestV1? LastRequest { get; private set; }
 
+    public StaffPasswordRecoveryRequestV1? LastRecoveryRequest { get; private set; }
+
     public string? LastIdempotencyKey { get; private set; }
 
     public string? LastAssertion { get; private set; }
@@ -27,9 +29,15 @@ public sealed class StaffPasswordResetIdentityHandler : HttpMessageHandler
         LastIdempotencyKey = request.Headers.GetValues("Idempotency-Key").Single();
         LastAssertion = request.Headers.Authorization?.Parameter;
         var content = await request.Content!.ReadAsStringAsync(cancellationToken);
-        LastRequest = JsonSerializer.Deserialize<StaffPasswordResetRequestV1>(
-            content,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        if (request.RequestUri?.AbsolutePath == "/internal/v1/staff-password-reset-requests")
+        {
+            LastRecoveryRequest = JsonSerializer.Deserialize<StaffPasswordRecoveryRequestV1>(content, jsonOptions);
+        }
+        else
+        {
+            LastRequest = JsonSerializer.Deserialize<StaffPasswordResetRequestV1>(content, jsonOptions);
+        }
 
         var response = new HttpResponseMessage(ResponseStatus);
         if (ResponseStatus != HttpStatusCode.NoContent && ResponseCode is not null)
@@ -46,6 +54,7 @@ public sealed class StaffPasswordResetIdentityHandler : HttpMessageHandler
         ResponseCode = null;
         LastRequestUri = null;
         LastRequest = null;
+        LastRecoveryRequest = null;
         LastIdempotencyKey = null;
         LastAssertion = null;
     }

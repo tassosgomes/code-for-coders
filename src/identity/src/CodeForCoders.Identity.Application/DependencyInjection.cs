@@ -12,6 +12,7 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.AuthenticateStudentSe
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStudentSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ProvisionFirstAdministrator;
+using CodeForCoders.Identity.Application.UseCases.Accounts.RequestStaffPasswordReset;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ResetStaffPassword;
 using CodeForCoders.Identity.Application.UseCases.Accounts.AuthenticateStaffSession;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStaffSession;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IValidator<RequestStudentPasswordResetInput>, RequestStudentPasswordResetInputValidator>();
         services.AddScoped<IValidator<ResetStudentPasswordInput>, ResetStudentPasswordInputValidator>();
         services.AddScoped<IValidator<ProvisionFirstAdministratorInput>, ProvisionFirstAdministratorInputValidator>();
+        services.AddScoped<IValidator<RequestStaffPasswordResetInput>, RequestStaffPasswordResetInputValidator>();
         services.AddScoped<IValidator<ResetStaffPasswordInput>, ResetStaffPasswordInputValidator>();
         services.AddScoped<IValidator<AuthenticateStaffSessionInput>, AuthenticateStaffSessionInputValidator>();
         services.AddScoped<IValidator<ValidateStaffSessionInput>, ValidateStaffSessionInputValidator>();

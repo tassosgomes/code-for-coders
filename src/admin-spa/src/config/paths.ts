@@ -19,6 +19,10 @@ export const paths = {
     path: '/redefinir-senha',
     getHref: () => '/redefinir-senha',
   },
+  staffPasswordRecovery: {
+    path: '/recuperar-senha',
+    getHref: () => '/recuperar-senha',
+  },
   staffInvitation: {
     path: '/convite',
     getHref: () => '/convite',

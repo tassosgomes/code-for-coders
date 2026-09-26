@@ -15,6 +15,11 @@ public interface IIdentityPasswordRecoveryStore
         string normalizedEmail,
         CancellationToken cancellationToken);
 
+    Task<Account?> FindEligibleStaffByEmailAsync(
+        Guid tenantId,
+        string normalizedEmail,
+        CancellationToken cancellationToken);
+
     Task<VerificationToken?> FindVerificationTokenAsync(
         Guid tenantId,
         string tokenHash,
