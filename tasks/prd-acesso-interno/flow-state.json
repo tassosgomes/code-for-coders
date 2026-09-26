@@ -5,10 +5,10 @@
   "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
   "target_ref": null,
-  "last_checkpoint": "868d173bda9ebfc5c03e479dae5bbff579b5916d",
-  "phase": "checkpoint",
-  "active_task": "9.0",
-  "attempt": 1,
+  "last_checkpoint": "1e43a53ffca5192716b24ac08dbefec14b408d65",
+  "phase": "prepare_integration",
+  "active_task": null,
+  "attempt": 0,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 1,
@@ -27,18 +27,15 @@
   "validated_tree": null,
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "9.0"
+    "mode": "prepare-integration"
   },
   "last_result": {
-    "role": "validator",
-    "mode": "focused",
+    "role": "integrator",
+    "mode": "checkpoint-task",
     "task": "9.0",
-    "attempt": 1,
-    "run_id": "run.lAGdudjh",
-    "outcome": "approved",
-    "gate": "passed",
-    "report": "tasks/prd-acesso-interno/9.0_task_review.md"
+    "run_id": "run.Bii9hMS0",
+    "outcome": "checkpoint_ok",
+    "commit": "1e43a53ffca5192716b24ac08dbefec14b408d65"
   },
   "history": [
     {
@@ -230,6 +227,20 @@
       "task": "9.0",
       "run_id": "run.lAGdudjh",
       "note": "transporte relatou result_missing (validator claude encerrou turno com suítes em background); reenviado continue ao mesmo pane, resultado gravado no mesmo run"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "9.0",
+      "run_id": "run.Bii9hMS0",
+      "commit": "1e43a53",
+      "note": "todas as 9 tasks done"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "infra_failure",
+      "run_id": "run.7gKZ39qg",
+      "note": "opencode: provider \"request contains invalid parameters\"; sem operação git; repetição com --kind=codex (escalonamento do integrator). main avançou 7 commits (e515e36..f7bda4f)"
     }
   ],
   "full_pending_gaps": [
