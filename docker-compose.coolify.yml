@@ -21,6 +21,12 @@ services:
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      StaffSessionTokens__Issuer: identity
+      StaffSessionTokens__SigningKeyId: local-dev-1
+      StaffSessionTokens__SigningKeyBase64: ${IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64:?set in Coolify}
+      StaffSessionTokens__LifetimeMinutes: "5"
+      StaffSessionTokens__AudienceScopes__commerce: finance-area:read
+      StaffSessionTokens__AudienceScopes__media: videos:write
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       StudentAccount__ConfirmationBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/confirm-account
@@ -73,6 +79,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      MediaTokens__Issuer: identity
+      MediaTokens__Audience: media
+      MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -181,6 +190,7 @@ services:
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
+      Media__BaseAddress: http://media:8080/
     depends_on:
       learning:
         condition: service_healthy

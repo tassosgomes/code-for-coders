@@ -121,6 +121,7 @@ services:
       StaffSessionTokens__SigningKeyBase64: ${IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StaffSessionTokens__LifetimeMinutes: "5"
       StaffSessionTokens__AudienceScopes__commerce: finance-area:read
+      StaffSessionTokens__AudienceScopes__media: videos:write
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?run scripts/generate-local-env.sh}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Audience: identity-internal
@@ -173,6 +174,9 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
+      MediaTokens__Issuer: identity
+      MediaTokens__Audience: media
+      MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
     ports:
       - "5103:8080"
     depends_on: *api-dependencies
@@ -260,6 +264,7 @@ services:
       StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       Commerce__BaseAddress: http://commerce:8080/
+      Media__BaseAddress: http://media:8080/
     ports:
       - "5107:8080"
     depends_on:

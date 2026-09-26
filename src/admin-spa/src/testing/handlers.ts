@@ -21,6 +21,10 @@ export const handlers = [
       csrfToken: 'staff-session-csrf',
     }),
   ),
+  http.get(`${env.API_URL}/api/v1/videos`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
+  })),
   http.delete(`${env.API_URL}/api/v1/staff-sessions/current`, () => new HttpResponse(null, { status: 204 })),
   http.get(`${env.API_URL}/v1/admin/workspace/status`, () =>
     HttpResponse.json({

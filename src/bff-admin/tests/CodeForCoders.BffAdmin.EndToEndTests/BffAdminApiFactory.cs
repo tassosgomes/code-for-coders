@@ -28,6 +28,8 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public CommerceFinanceAreaHandler CommerceFinanceAreaHandler { get; } = new();
 
+    public VideoLibraryHandler VideoLibraryHandler { get; } = new();
+
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
     public string IdentityPublicKeyBase64 { get; private set; } = string.Empty;
@@ -61,6 +63,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("StaffIdentity:SigningKeyId", "e2e-test");
         builder.UseSetting("StaffIdentity:TenantId", "00000000-0000-7000-8000-000000000001");
         builder.UseSetting("Commerce:BaseAddress", "http://commerce.test/");
+        builder.UseSetting("Media:BaseAddress", "http://media.test/");
         builder.UseSetting("BffSecurity:AllowedOrigins:0", "http://localhost:8081");
         using var rsa = RSA.Create(2048);
         var privateKey = rsa.ExportPkcs8PrivateKey();
@@ -81,6 +84,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddSingleton(StaffInvitationIdentityHandler);
             services.AddSingleton(StaffMemberIdentityHandler);
             services.AddSingleton(CommerceFinanceAreaHandler);
+            services.AddSingleton(VideoLibraryHandler);
             services.RemoveAll<IBffSessionStore>();
             services.AddSingleton<IBffSessionStore>(SessionStore);
             services.AddHttpClient<IStaffPasswordResetIdentityClient, StaffPasswordResetIdentityClient>()
@@ -99,6 +103,10 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddHttpClient<ICommerceFinanceAreaClient, CommerceFinanceAreaClient>()
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<CommerceFinanceAreaHandler>());
+            services.RemoveAll<IVideoLibraryClient>();
+            services.AddHttpClient<IVideoLibraryClient, VideoLibraryClient>()
+                .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+                    serviceProvider.GetRequiredService<VideoLibraryHandler>());
         });
     }
 

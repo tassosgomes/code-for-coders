@@ -1,4 +1,5 @@
 using CodeForCoders.Media.Application.Common;
+using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data.Configuration;
 using CodeForCoders.Media.Infra.Data.Outbox;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +12,15 @@ public sealed class MediaDbContext(
 {
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<Video> Videos => Set<Video>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(MediaSchema.Name);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MediaDbContext).Assembly);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
             message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<Video>().HasQueryFilter(
+            video => tenantContext.TenantId.HasValue && video.TenantId == tenantContext.TenantId.Value);
     }
 }

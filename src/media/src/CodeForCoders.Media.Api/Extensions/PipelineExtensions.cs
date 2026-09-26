@@ -1,4 +1,5 @@
 using Scalar.AspNetCore;
+using CodeForCoders.Media.Api.Security;
 
 namespace CodeForCoders.Media.Api.Extensions;
 
@@ -14,6 +15,9 @@ public static class PipelineExtensions
         }
 
         app.UseRouting();
+        app.UseAuthentication();
+        app.UseMiddleware<TenantContextMiddleware>();
+        app.UseAuthorization();
         return app;
     }
 }

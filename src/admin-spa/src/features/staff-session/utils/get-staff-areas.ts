@@ -2,6 +2,7 @@ import type { StaffArea } from '@/types/staff-area';
 import { paths } from '@/config/paths';
 
 const staffAreas = [
+  { label: 'Vídeos', permission: 'midia.enviar', href: paths.videos.getHref() },
   { label: 'Acessos', permission: 'acesso.gerir', href: paths.staffAccess.getHref() },
   { label: 'Financeiro', permission: 'financeiro.ler', href: paths.staffFinance.getHref() },
   { label: 'Autoria', permission: 'autoria.ler' },

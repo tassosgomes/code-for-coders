@@ -3,6 +3,7 @@ using CodeForCoders.Media.Infra.Data.Adapters;
 using CodeForCoders.Media.Infra.Data.Configuration;
 using CodeForCoders.Media.Infra.Data.Health;
 using CodeForCoders.Media.Infra.Data.Outbox;
+using CodeForCoders.Media.Infra.Data.Videos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,11 +29,11 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
             }
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
+        services.AddScoped<IVideoQueries, VideoQueries>();
         services.AddOptions<AwsMediaOptions>()
             .Bind(configuration.GetSection(AwsMediaOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Region), "AWS region is required.")
