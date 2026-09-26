@@ -6,9 +6,9 @@
   "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
   "last_checkpoint": "d7a87abc9b9737cddf18d156a328f0a8d5cf8dec",
-  "phase": "reopen",
+  "phase": "checkpoint",
   "active_task": "3.0",
-  "attempt": 2,
+  "attempt": 3,
   "max_attempts": 3,
   "full_attempt": 1,
   "transport_retries": 1,
@@ -28,16 +28,16 @@
   "pending_delegation": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "2.0",
-    "attempt": 2
+    "task": "3.0",
+    "attempt": 3
   },
   "last_result": {
-    "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "2.0",
-    "run_id": "run.m9RYh6lB",
-    "outcome": "checkpoint_ok",
-    "commit": "d7a87abc9b9737cddf18d156a328f0a8d5cf8dec"
+    "role": "validator",
+    "mode": "revalidation",
+    "task": "3.0",
+    "attempt": 3,
+    "run_id": "run.rIJVXeXt",
+    "outcome": "approved"
   },
   "history": [
     {
@@ -292,6 +292,19 @@
       "task": "2.0",
       "commit": "d7a87ab",
       "note": "pós-full B4"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "task_reopened",
+      "task": "3.0",
+      "commit": "7411cf1"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "3.0",
+      "run_id": "run.rIJVXeXt",
+      "note": "B1 fechado; bff-admin 78.01"
     }
   ],
   "full_pending_gaps": [
