@@ -10,5 +10,7 @@ public sealed class TransactionalConsentService : IConsentService
         string purpose,
         CancellationToken cancellationToken)
         => Task.FromResult(
-            purpose is NotificationPurposes.AccountConfirmation or NotificationPurposes.PasswordRecovery);
+            purpose is NotificationPurposes.AccountConfirmation
+                or NotificationPurposes.PasswordRecovery
+                or NotificationPurposes.StaffInvitation);
 }

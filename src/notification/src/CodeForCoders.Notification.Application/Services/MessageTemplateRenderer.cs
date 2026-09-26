@@ -12,18 +12,23 @@ public sealed class MessageTemplateRenderer(IEmailTemplateSettings settings) : I
     public TransactionalEmail Render(
         string model,
         string recipient,
-        string recipientName,
-        string link)
+        string? recipientName,
+        string link,
+        string? recipientRole = null)
     {
         return model switch
         {
             NotificationPurposes.AccountConfirmation => RenderAccountConfirmation(
                 recipient,
-                recipientName,
+                recipientName ?? string.Empty,
                 link),
             NotificationPurposes.PasswordRecovery => RenderPasswordRecovery(
                 recipient,
-                recipientName,
+                recipientName ?? string.Empty,
+                link),
+            NotificationPurposes.StaffInvitation => RenderStaffInvitation(
+                recipient,
+                recipientRole,
                 link),
             _ => throw new EntityValidationException(
                 "The notification model is not supported by this slice."),
@@ -66,6 +71,28 @@ public sealed class MessageTemplateRenderer(IEmailTemplateSettings settings) : I
         return new TransactionalEmail(
             recipient,
             "Redefina sua senha da Code4Coders",
+            textBody,
+            htmlBody);
+    }
+
+    private TransactionalEmail RenderStaffInvitation(string recipient, string? recipientRole, string link)
+    {
+        if (string.IsNullOrWhiteSpace(recipientRole))
+        {
+            throw new EntityValidationException("The staff invitation role is required.");
+        }
+
+        var validityText = GetValidityText(NotificationPurposes.StaffInvitation);
+        var greeting = GetGreeting(null);
+        var introduction = $"Você recebeu um convite para acessar o backoffice da Code4Coders como {recipientRole}.";
+        const string action = "Aceitar convite";
+        const string notice = "Não esperava este convite? Ignore este e-mail.";
+        var textBody = CreateTextBody(greeting, introduction, action, link, validityText, notice);
+        var htmlBody = CreateHtmlBody(greeting, introduction, action, link, validityText, notice);
+
+        return new TransactionalEmail(
+            recipient,
+            "Convite para acessar o backoffice da Code4Coders",
             textBody,
             htmlBody);
     }
@@ -146,9 +173,9 @@ public sealed class MessageTemplateRenderer(IEmailTemplateSettings settings) : I
             : $"{validityHours} horas";
     }
 
-    private static string GetGreeting(string recipientName)
+    private static string GetGreeting(string? recipientName)
     {
-        var firstName = recipientName
+        var firstName = recipientName?
             .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)
             .FirstOrDefault();
         return firstName is null

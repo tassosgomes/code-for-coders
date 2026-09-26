@@ -72,6 +72,30 @@ public sealed class MessageTemplateRendererTests
         Assert.DoesNotContain(Recipient, htmlBody, StringComparison.Ordinal);
     }
 
+    [Fact(DisplayName = nameof(StaffInvitationRendersOfferedRoleLinkAndConfiguredValidity))]
+    [Trait("Unit", "MessageTemplateRenderer - Staff invitation")]
+    public void StaffInvitationRendersOfferedRoleLinkAndConfiguredValidity()
+    {
+        var renderer = new MessageTemplateRenderer(new TestEmailTemplateSettings(24, 1, 168));
+        const string link = "https://backoffice.example.invalid/admin/convite?token=abc123";
+
+        var email = renderer.Render(
+            NotificationPurposes.StaffInvitation,
+            Recipient,
+            recipientName: null,
+            link,
+            recipientRole: "professor");
+
+        Assert.Equal("Convite para acessar o backoffice da Code4Coders", email.Subject);
+        Assert.Contains("como professor", email.TextBody, StringComparison.Ordinal);
+        Assert.Contains(link, email.TextBody, StringComparison.Ordinal);
+        Assert.Contains("O link vale por 168 horas e só funciona uma vez.", email.TextBody, StringComparison.Ordinal);
+        Assert.DoesNotContain(Recipient, email.TextBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("null", email.TextBody, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("como professor", email.HtmlBody!, StringComparison.Ordinal);
+        Assert.Contains("O link vale por 168 horas e só funciona uma vez.", email.HtmlBody!, StringComparison.Ordinal);
+    }
+
     [Fact(DisplayName = nameof(RenderHtmlEncodesPersonalizationAndLink))]
     [Trait("Unit", "MessageTemplateRenderer - Html encoding")]
     public void RenderHtmlEncodesPersonalizationAndLink()
@@ -93,7 +117,10 @@ public sealed class MessageTemplateRendererTests
         Assert.DoesNotContain("onmouseover=", htmlBody, StringComparison.OrdinalIgnoreCase);
     }
 
-    private sealed class TestEmailTemplateSettings(int accountValidityHours, int recoveryValidityHours)
+    private sealed class TestEmailTemplateSettings(
+        int accountValidityHours,
+        int recoveryValidityHours,
+        int invitationValidityHours = 168)
         : IEmailTemplateSettings
     {
         public int GetLinkValidityHours(string purpose)
@@ -102,6 +129,7 @@ public sealed class MessageTemplateRendererTests
             {
                 NotificationPurposes.AccountConfirmation => accountValidityHours,
                 NotificationPurposes.PasswordRecovery => recoveryValidityHours,
+                NotificationPurposes.StaffInvitation => invitationValidityHours,
                 _ => throw new InvalidOperationException($"Unexpected purpose: {purpose}"),
             };
         }

@@ -29,6 +29,8 @@ public sealed class DeliveryRecord
 
     public string? RecipientName { get; private set; }
 
+    public string? RecipientRole { get; private set; }
+
     public string? Link { get; private set; }
 
     public string? Purpose { get; private set; }
@@ -64,18 +66,24 @@ public sealed class DeliveryRecord
         Guid tenantId,
         Guid requestId,
         string recipient,
-        string recipientName,
+        string? recipientName,
         string link,
         string purpose,
         string model,
         DateTimeOffset requestedOn,
         DateTimeOffset acceptedOn,
-        string? correlationId)
+        string? correlationId,
+        string? recipientRole = null)
     {
         var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         ValidateIdentity(tenantId, requestId);
         ValidateRecipient(recipient);
-        ValidateRequiredText(recipientName, RecipientNameMaxLength, "Recipient name");
+        ValidateOptionalText(recipientName, RecipientNameMaxLength, "Recipient name");
+        ValidateOptionalText(recipientRole, 32, "Recipient role");
+        if (string.IsNullOrWhiteSpace(recipientName) && string.IsNullOrWhiteSpace(recipientRole))
+        {
+            throw new EntityValidationException("A recipient name or role is required.");
+        }
         ValidateRequiredText(link, LinkMaxLength, "Link");
         ValidateRequiredText(purpose, PurposeMaxLength, "Purpose");
         ValidateRequiredText(model, ModelMaxLength, "Model");
@@ -88,7 +96,8 @@ public sealed class DeliveryRecord
             TenantId = tenantId,
             RequestId = requestId,
             Recipient = recipient,
-            RecipientName = recipientName,
+            RecipientName = NullIfWhiteSpace(recipientName),
+            RecipientRole = NullIfWhiteSpace(recipientRole),
             Link = link,
             Purpose = purpose,
             Model = model,
@@ -112,12 +121,14 @@ public sealed class DeliveryRecord
         string reason,
         DateTimeOffset requestedOn,
         DateTimeOffset refusedOn,
-        string? correlationId)
+        string? correlationId,
+        string? recipientRole = null)
     {
         var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         ValidateIdentity(tenantId, requestId);
         ValidateRecipient(recipient);
         ValidateOptionalText(recipientName, RecipientNameMaxLength, "Recipient name");
+        ValidateOptionalText(recipientRole, 32, "Recipient role");
         ValidateOptionalText(link, LinkMaxLength, "Link");
         ValidateOptionalText(purpose, PurposeMaxLength, "Purpose");
         ValidateOptionalText(model, ModelMaxLength, "Model");
@@ -132,6 +143,7 @@ public sealed class DeliveryRecord
             RequestId = requestId,
             Recipient = recipient,
             RecipientName = NullIfWhiteSpace(recipientName),
+            RecipientRole = NullIfWhiteSpace(recipientRole),
             Link = null,
             Purpose = NullIfWhiteSpace(purpose),
             Model = NullIfWhiteSpace(model),
@@ -198,6 +210,7 @@ public sealed class DeliveryRecord
 
         Recipient = null;
         RecipientName = null;
+        RecipientRole = null;
         Link = null;
         Reason = null;
     }

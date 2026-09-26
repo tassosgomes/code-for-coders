@@ -1,0 +1,17 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!--
+    Shared Microsoft.Testing.Platform config for every identity test project. It keeps
+    compiler-generated sources (obj/**, *.g.cs, *.generated.cs such as the OpenAPI XML comment
+    generator) out of the Cobertura report so the CI coverage gate measures hand-written code only.
+  -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)testconfig.json"
+          Link="testconfig.json"
+          TargetPath="$(AssemblyName).testconfig.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -145,6 +145,18 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("operation_id");
 
+                    b.Property<Guid?>("StaffInvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_invitation_id");
+
+                    b.Property<bool?>("StaffRoleActionChanged")
+                        .HasColumnType("boolean")
+                        .HasColumnName("staff_role_action_changed");
+
+                    b.Property<Guid?>("StaffSessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_session_id");
+
                     b.Property<int>("StatusCode")
                         .HasColumnType("integer")
                         .HasColumnName("status_code");
@@ -152,6 +164,10 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                     b.Property<Guid?>("StudentSessionId")
                         .HasColumnType("uuid")
                         .HasColumnName("student_session_id");
+
+                    b.Property<Guid?>("SupersededStaffInvitationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("superseded_staff_invitation_id");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -171,6 +187,149 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                         .HasDatabaseName("ux_idempotency_records_scope_key");
 
                     b.ToTable("idempotency_records", "identity_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AcceptedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_on");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email");
+
+                    b.Property<DateTimeOffset>("ExpiresOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_on");
+
+                    b.Property<DateTimeOffset>("InvitedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("invited_on");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<string>("OfferedRole")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("offered_role");
+
+                    b.Property<DateTimeOffset?>("SupersededOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("superseded_on");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_staff_invitations_tenant_id_id");
+
+                    b.HasIndex("TenantId", "InvitedOn")
+                        .HasDatabaseName("ix_staff_invitations_tenant_invited_on");
+
+                    b.HasIndex("TenantId", "NormalizedEmail")
+                        .IsUnique()
+                        .HasDatabaseName("ux_staff_invitations_pending_email")
+                        .HasFilter("accepted_on IS NULL AND superseded_on IS NULL");
+
+                    b.ToTable("staff_invitations", "identity_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffRoleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("AssignedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_on");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_staff_role_assignments_tenant_id_id");
+
+                    b.HasIndex("TenantId", "AccountId", "Role")
+                        .IsUnique()
+                        .HasDatabaseName("ux_staff_role_assignments_tenant_account_role");
+
+                    b.ToTable("staff_role_assignments", "identity_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on");
+
+                    b.Property<DateTimeOffset>("ExpiresOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_on");
+
+                    b.Property<DateTimeOffset?>("RevokedOn")
+                        .IsConcurrencyToken()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_on");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_staff_sessions_tenant_id_id");
+
+                    b.HasIndex("ExpiresOn")
+                        .HasDatabaseName("ix_staff_sessions_expires_on");
+
+                    b.HasIndex("TenantId", "AccountId")
+                        .HasDatabaseName("ix_staff_sessions_tenant_id_account_id");
+
+                    b.ToTable("staff_sessions", "identity_access");
                 });
 
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StudentSession", b =>
@@ -338,6 +497,26 @@ namespace CodeForCoders.Identity.Infra.Data.Migrations
                 });
 
             modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.Credential", b =>
+                {
+                    b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "AccountId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffRoleAssignment", b =>
+                {
+                    b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "AccountId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Identity.Domain.Entities.StaffSession", b =>
                 {
                     b.HasOne("CodeForCoders.Identity.Domain.Entities.Account", null)
                         .WithMany()

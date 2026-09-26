@@ -30,7 +30,9 @@ public sealed class IdentityUnitOfWork(IdentityDbContext dbContext) : IUnitOfWor
         if (exception.InnerException is PostgresException postgresException
             && postgresException.SqlState == PostgresErrorCodes.UniqueViolation
             && postgresException.ConstraintName is "ux_accounts_tenant_id_normalized_email"
-                or "ux_idempotency_records_scope_key")
+                or "ux_idempotency_records_scope_key"
+                or "ux_staff_role_assignments_tenant_account_role"
+                or "ux_staff_invitations_pending_email")
         {
             constraintName = postgresException.ConstraintName;
             return true;

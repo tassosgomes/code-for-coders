@@ -15,6 +15,11 @@ public interface IIdentityPasswordRecoveryStore
         string normalizedEmail,
         CancellationToken cancellationToken);
 
+    Task<Account?> FindEligibleStaffByEmailAsync(
+        Guid tenantId,
+        string normalizedEmail,
+        CancellationToken cancellationToken);
+
     Task<VerificationToken?> FindVerificationTokenAsync(
         Guid tenantId,
         string tokenHash,
@@ -49,6 +54,8 @@ public interface IIdentityPasswordRecoveryStore
         CancellationToken cancellationToken);
 
     void AddVerificationToken(VerificationToken token);
+
+    void AddCredential(Credential credential);
 
     void AddIdempotencyRecord(IdempotencyRecord record);
 }

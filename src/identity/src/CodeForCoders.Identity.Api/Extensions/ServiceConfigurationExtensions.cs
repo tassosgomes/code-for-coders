@@ -28,6 +28,25 @@ public static class ServiceConfigurationExtensions
                 "Configured student session audiences require an RSA signing key and a non-empty scope.")
             .ValidateOnStart();
         builder.Services.AddSingleton<StudentSessionTokenIssuer>();
+        builder.Services.AddOptions<StaffSessionTokenOptions>()
+            .Bind(builder.Configuration.GetSection(StaffSessionTokenOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer)
+                && options.LifetimeMinutes is >= 1 and <= 15,
+                "Staff session token issuer and lifetime are invalid.")
+            .Validate(options => options.PreviousSigningPublicKeys.All(pair =>
+                    !string.IsNullOrWhiteSpace(pair.Key)
+                    && !string.Equals(pair.Key, options.SigningKeyId, StringComparison.Ordinal)
+                    && IsValidPublicKey(pair.Value)),
+                "Previous staff session signing keys must have unique key identifiers and valid RSA public keys.")
+            .Validate(options => options.AudienceScopes.Count == 0
+                || (!string.IsNullOrWhiteSpace(options.SigningKeyId)
+                    && IsValidPrivateKey(options.SigningKeyBase64)
+                    && options.AudienceScopes.All(pair => !string.IsNullOrWhiteSpace(pair.Key)
+                        && !string.IsNullOrWhiteSpace(pair.Value))),
+                "Configured staff session audiences require an RSA signing key and a non-empty scope.")
+            .ValidateOnStart();
+        builder.Services.AddSingleton<StaffSessionTokenIssuer>();
+        builder.Services.AddSingleton<UserTokenSigningKeySet>();
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);
@@ -47,6 +66,24 @@ public static class ServiceConfigurationExtensions
         {
             using var rsa = RSA.Create();
             rsa.ImportPkcs8PrivateKey(Convert.FromBase64String(encodedKey), out _);
+            return rsa.KeySize >= 2048;
+        }
+        catch (CryptographicException)
+        {
+            return false;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsValidPublicKey(string encodedKey)
+    {
+        try
+        {
+            using var rsa = RSA.Create();
+            rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(encodedKey), out _);
             return rsa.KeySize >= 2048;
         }
         catch (CryptographicException)

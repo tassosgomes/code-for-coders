@@ -32,6 +32,9 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
         builder.Property(record => record.RecipientName)
             .HasColumnName("recipient_name")
             .HasMaxLength(DeliveryRecord.RecipientNameMaxLength);
+        builder.Property(record => record.RecipientRole)
+            .HasColumnName("recipient_role")
+            .HasMaxLength(32);
         builder.Property(record => record.Link)
             .HasColumnName("link")
             .HasMaxLength(DeliveryRecord.LinkMaxLength);

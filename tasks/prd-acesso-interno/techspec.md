@@ -366,6 +366,7 @@ incremento. Nomes internos derivam das skills `dotnet` e `react`.
 | Motivo vazio | 422 | `REASON_REQUIRED` |
 | Ação sobre a própria conta | 422 | `SELF_ROLE_CHANGE_FORBIDDEN` |
 | `fromRole` ausente na troca | 422 | `ROLE_NOT_HELD` |
+| `fromRole` igual a `toRole` na troca | 422 | `ROLE_CHANGE_INVALID` |
 | E-mail de conta interna / aluno no convite | 422 | `EMAIL_BELONGS_TO_STAFF` / `EMAIL_BELONGS_TO_STUDENT` |
 | Convite sem validade | 422 | `INVITATION_INVALID` |
 | E-mail ganhou conta antes do aceite | 422 | `INVITATION_EMAIL_UNAVAILABLE` |

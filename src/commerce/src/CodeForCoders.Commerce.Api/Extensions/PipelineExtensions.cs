@@ -14,6 +14,8 @@ public static class PipelineExtensions
         }
 
         app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
         return app;
     }
 }

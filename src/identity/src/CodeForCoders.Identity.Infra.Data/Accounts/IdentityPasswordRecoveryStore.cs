@@ -40,6 +40,17 @@ public sealed class IdentityPasswordRecoveryStore(IdentityDbContext dbContext) :
                 : null;
     }
 
+    public Task<Account?> FindEligibleStaffByEmailAsync(
+        Guid tenantId,
+        string normalizedEmail,
+        CancellationToken cancellationToken)
+        => dbContext.Accounts.SingleOrDefaultAsync(
+            candidate => candidate.TenantId == tenantId
+                && candidate.NormalizedEmail == normalizedEmail
+                && candidate.Type == AccountType.InternalActor
+                && candidate.DeactivatedOn == null,
+            cancellationToken);
+
     public Task<VerificationToken?> FindVerificationTokenAsync(
         Guid tenantId,
         string tokenHash,
@@ -104,6 +115,8 @@ public sealed class IdentityPasswordRecoveryStore(IdentityDbContext dbContext) :
             .ToListAsync(cancellationToken);
 
     public void AddVerificationToken(VerificationToken token) => dbContext.VerificationTokens.Add(token);
+
+    public void AddCredential(Credential credential) => dbContext.Credentials.Add(credential);
 
     public void AddIdempotencyRecord(IdempotencyRecord record) => dbContext.IdempotencyRecords.Add(record);
 }

@@ -26,6 +26,14 @@ public sealed class IdempotencyRecord
 
     public Guid? StudentSessionId { get; private set; }
 
+    public Guid? StaffSessionId { get; private set; }
+
+    public Guid? StaffInvitationId { get; private set; }
+
+    public Guid? SupersededStaffInvitationId { get; private set; }
+
+    public bool? StaffRoleActionChanged { get; private set; }
+
     public DateTimeOffset CreatedOn { get; private set; }
 
     public DateTimeOffset ExpiresOn { get; private set; }
@@ -78,6 +86,10 @@ public sealed class IdempotencyRecord
         Code = code;
         Title = title;
         StudentSessionId = null;
+        StaffSessionId = null;
+        StaffInvitationId = null;
+        SupersededStaffInvitationId = null;
+        StaffRoleActionChanged = null;
         CreatedOn = createdOn;
         ExpiresOn = expiresOn;
     }
@@ -90,5 +102,31 @@ public sealed class IdempotencyRecord
         }
 
         StudentSessionId = sessionId;
+    }
+
+    public void SetStaffSessionId(Guid sessionId)
+    {
+        if (sessionId == Guid.Empty)
+        {
+            throw new EntityValidationException("The staff session identifier is required.");
+        }
+
+        StaffSessionId = sessionId;
+    }
+
+    public void SetStaffInvitationResult(Guid invitationId, Guid? supersededInvitationId)
+    {
+        if (invitationId == Guid.Empty || supersededInvitationId == Guid.Empty)
+        {
+            throw new EntityValidationException("The staff invitation result is invalid.");
+        }
+
+        StaffInvitationId = invitationId;
+        SupersededStaffInvitationId = supersededInvitationId;
+    }
+
+    public void SetStaffRoleActionResult(bool changed)
+    {
+        StaffRoleActionChanged = changed;
     }
 }

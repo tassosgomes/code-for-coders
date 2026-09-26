@@ -1,17 +1,50 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
-import { AppShell } from '@/components/app-shell';
+import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
 import { paths } from '@/config/paths';
 
 import { DashboardRoute } from '@/app/routes/dashboard-route';
 import { RouteError } from '@/app/routes/route-error';
+import { StaffPasswordResetRoute } from '@/app/routes/staff-password-reset-route';
+import { StaffPasswordRecoveryRoute } from '@/app/routes/staff-password-recovery-route';
+import { StaffInvitationAcceptanceRoute } from '@/app/routes/staff-invitation-acceptance-route';
+import { loadStaffSession } from '@/app/routes/staff-session-loader';
+import { StaffLoginRoute } from '@/app/routes/staff-login-route';
+import { StaffAccessRoute } from '@/app/routes/staff-access-route';
+import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 
 const routes: RouteObject[] = [
   {
     path: paths.home.path,
-    element: <AppShell serviceName="admin-spa" title="Admin Workspace" />,
+    id: 'admin-root',
+    loader: loadStaffSession,
+    element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
     errorElement: <RouteError />,
-    children: [{ index: true, element: <DashboardRoute /> }],
+    children: [
+      { index: true, element: <DashboardRoute /> },
+      { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
+      { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
+    ],
+  },
+  {
+    path: paths.staffLogin.path.slice(1),
+    element: <StaffLoginRoute />,
+    errorElement: <RouteError />,
+  },
+  {
+    path: paths.staffPasswordReset.path.slice(1),
+    element: <StaffPasswordResetRoute />,
+    errorElement: <RouteError />,
+  },
+  {
+    path: paths.staffPasswordRecovery.path.slice(1),
+    element: <StaffPasswordRecoveryRoute />,
+    errorElement: <RouteError />,
+  },
+  {
+    path: paths.staffInvitation.path.slice(1),
+    element: <StaffInvitationAcceptanceRoute />,
+    errorElement: <RouteError />,
   },
 ];
 

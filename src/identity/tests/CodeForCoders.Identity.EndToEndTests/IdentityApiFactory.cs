@@ -18,8 +18,35 @@ namespace CodeForCoders.Identity.EndToEndTests;
 public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string ServiceTenantId = "00000000-0000-7000-8000-000000000001";
+    private const string StudentIssuer = "bff-student";
+    private const string AdminIssuer = "bff-admin";
     private const string ServiceAssertionKeyId = "test-key";
+    private const string AdminAssertionKeyId = "admin-test-key";
     private static readonly RSA ServiceAssertionKey = RSA.Create(2048);
+    private static readonly RSA AdminAssertionKey = RSA.Create(2048);
+    private static readonly string[] StudentScopes =
+    [
+        "student-accounts:create",
+        "student-accounts:confirm",
+        "student-accounts:request-confirmation",
+        "student-sessions:create",
+        "student-sessions:validate",
+        "student-sessions:revoke",
+        "student-password-resets:request",
+        "student-password-resets:execute",
+        "student-password-changes:execute",
+    ];
+    private static readonly string[] StaffScopes =
+    [
+        "staff-sessions:create",
+        "staff-sessions:validate",
+        "staff-sessions:revoke",
+        "staff-passwords:reset",
+        "staff-invitations:read",
+        "staff-invitations:write",
+        "staff-members:read",
+        "staff-members:write",
+    ];
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_identity")
         .WithUsername("code_for_coders_identity")
@@ -51,10 +78,21 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("StudentAccount:ConfirmationLifetimeHours", "24");
         builder.UseSetting("Idempotency:FingerprintKeyBase64", Convert.ToBase64String(new byte[32]));
         builder.UseSetting("OutboxProtection:KeyBase64", Convert.ToBase64String(new byte[32]));
-        builder.UseSetting("ServiceAssertions:Issuer", "bff-student");
         builder.UseSetting("ServiceAssertions:Audience", "identity-internal");
-        builder.UseSetting($"ServiceAssertions:PublicKeys:{ServiceAssertionKeyId}", Convert.ToBase64String(ServiceAssertionKey.ExportSubjectPublicKeyInfo()));
-        builder.UseSetting("ServiceAssertions:AllowedTenantIds:0", ServiceTenantId);
+        builder.UseSetting($"ServiceAssertions:Issuers:{StudentIssuer}:PublicKeys:{ServiceAssertionKeyId}", Convert.ToBase64String(ServiceAssertionKey.ExportSubjectPublicKeyInfo()));
+        for (var index = 0; index < StudentScopes.Length; index++)
+        {
+            builder.UseSetting($"ServiceAssertions:Issuers:{StudentIssuer}:AllowedScopes:{index}", StudentScopes[index]);
+        }
+
+        builder.UseSetting($"ServiceAssertions:Issuers:{StudentIssuer}:AllowedTenantIds:0", ServiceTenantId);
+        builder.UseSetting($"ServiceAssertions:Issuers:{AdminIssuer}:PublicKeys:{AdminAssertionKeyId}", Convert.ToBase64String(AdminAssertionKey.ExportSubjectPublicKeyInfo()));
+        for (var index = 0; index < StaffScopes.Length; index++)
+        {
+            builder.UseSetting($"ServiceAssertions:Issuers:{AdminIssuer}:AllowedScopes:{index}", StaffScopes[index]);
+        }
+
+        builder.UseSetting($"ServiceAssertions:Issuers:{AdminIssuer}:AllowedTenantIds:0", ServiceTenantId);
         builder.ConfigureTestServices(services =>
         {
             var hostedServices = services
@@ -68,19 +106,25 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
     }
 
     public static string CreateServiceAssertion(string scope)
+        => CreateServiceAssertion(StudentIssuer, ServiceAssertionKey, ServiceAssertionKeyId, scope);
+
+    public static string CreateAdminServiceAssertion(string scope)
+        => CreateServiceAssertion(AdminIssuer, AdminAssertionKey, AdminAssertionKeyId, scope);
+
+    public static string CreateServiceAssertion(string issuer, RSA signingKey, string keyId, string scope)
     {
         var now = DateTimeOffset.UtcNow;
         var header = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(new
         {
             alg = "RS256",
             typ = "JWT",
-            kid = ServiceAssertionKeyId,
+            kid = keyId,
         }));
         var claims = Base64UrlEncode(JsonSerializer.SerializeToUtf8Bytes(new
         {
-            iss = "bff-student",
+            iss = issuer,
             aud = "identity-internal",
-            sub = "bff-student",
+            sub = issuer,
             tenantId = ServiceTenantId,
             scope,
             jti = Guid.CreateVersion7(now).ToString("D"),
@@ -88,7 +132,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
             nbf = now.AddSeconds(-5).ToUnixTimeSeconds(),
             exp = now.AddSeconds(30).ToUnixTimeSeconds(),
         }));
-        var signature = ServiceAssertionKey.SignData(
+        var signature = signingKey.SignData(
             Encoding.ASCII.GetBytes($"{header}.{claims}"),
             HashAlgorithmName.SHA256,
             RSASignaturePadding.Pkcs1);

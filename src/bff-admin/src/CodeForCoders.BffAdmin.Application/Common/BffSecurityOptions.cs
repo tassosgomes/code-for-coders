@@ -10,16 +10,17 @@ public sealed class BffSecurityOptions
     public string SessionCookieName { get; set; } = "__Host-bff-admin-session";
 
     [Required]
-    public string CsrfCookieName { get; set; } = "bff-admin-csrf";
+    public string CsrfHeaderName { get; set; } = "X-CSRF-Token";
 
-    [Required]
-    public string CsrfHeaderName { get; set; } = "X-CSRF-TOKEN";
+    public string[] AllowedOrigins { get; set; } = ["http://localhost:8081"];
 
     [Required]
     public string SessionKeyPrefix { get; set; } = "bff-admin:session:";
 
     [Range(1, 1440)]
     public int SessionTtlMinutes { get; set; } = 60;
+
+    public string ProxyAudience { get; set; } = string.Empty;
 
     public bool SessionCookieHttpOnly { get; set; } = true;
 

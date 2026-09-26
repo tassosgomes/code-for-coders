@@ -133,6 +133,11 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("recipient_name");
 
+                    b.Property<string>("RecipientRole")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("recipient_role");
+
                     b.Property<DateTimeOffset?>("RefusedOn")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("refused_on");

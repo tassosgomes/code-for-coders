@@ -17,4 +17,7 @@ public static class IdentityTelemetry
     public static readonly Counter<long> HeartbeatsConsumed = Meter.CreateCounter<long>(
         "identity.platform.heartbeat.consumed",
         unit: "{heartbeat}");
+    public static readonly Counter<long> AuditActionsPublished = Meter.CreateCounter<long>(
+        "identity.audit.action.published",
+        unit: "{action}");
 }

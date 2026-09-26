@@ -10,16 +10,78 @@ public static class ServiceAssertionExtensions
     {
         services.AddOptions<ServiceAssertionOptions>()
             .Bind(configuration.GetSection(ServiceAssertionOptions.SectionName))
-            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer)
-                && !string.IsNullOrWhiteSpace(options.Audience), "Service assertion issuer and audience are required.")
-            .Validate(options => options.PublicKeys.Count > 0 && options.PublicKeys.All(IsValidPublicKey),
-                "At least one valid service assertion public key is required.")
-            .Validate(options => options.AllowedTenantIds.Length > 0
-                && options.AllowedTenantIds.All(value => Guid.TryParse(value, out var tenantId) && tenantId != Guid.Empty),
-                "At least one allowed tenant id is required for service assertions.")
+            .Validate(options => ServiceAssertionConfigurationValidator.TryValidate(options, out _),
+                "Invalid service assertion configuration: each issuer requires a name, at least one valid public key (RSA 2048+), at least one allowed scope and at least one allowed tenant id.")
             .ValidateOnStart();
         services.AddScoped<ServiceAssertionVerifier>();
         return services;
+    }
+}
+
+public static class ServiceAssertionConfigurationValidator
+{
+    public static bool TryValidate(ServiceAssertionOptions options, out string? error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(options.Audience))
+        {
+            error = "Service assertion audience is required.";
+            return false;
+        }
+
+        var issuers = options.GetEffectiveIssuers();
+        if (issuers.Count == 0)
+        {
+            error = "At least one service assertion issuer is required.";
+            return false;
+        }
+
+        foreach (var issuer in issuers)
+        {
+            if (!TryValidateIssuer(issuer.Key, issuer.Value, out error))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static bool TryValidateIssuer(string name, ServiceAssertionIssuerOptions issuer, out string? error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(name) || issuer is null)
+        {
+            error = "Service assertion issuer name is required.";
+            return false;
+        }
+
+        if (issuer.PublicKeys.Count == 0)
+        {
+            error = $"Service assertion issuer '{name}' requires at least one public key.";
+            return false;
+        }
+
+        if (!issuer.PublicKeys.All(IsValidPublicKey))
+        {
+            error = $"Service assertion issuer '{name}' has an invalid public key (RSA 2048+ required).";
+            return false;
+        }
+
+        if (issuer.AllowedScopes.Length == 0 || issuer.AllowedScopes.Any(string.IsNullOrWhiteSpace))
+        {
+            error = $"Service assertion issuer '{name}' requires at least one allowed scope.";
+            return false;
+        }
+
+        if (issuer.AllowedTenantIds.Length == 0
+            || issuer.AllowedTenantIds.Any(value => !Guid.TryParse(value, out var tenantId) || tenantId == Guid.Empty))
+        {
+            error = $"Service assertion issuer '{name}' requires at least one allowed tenant id.";
+            return false;
+        }
+
+        return true;
     }
 
     private static bool IsValidPublicKey(KeyValuePair<string, string> key)

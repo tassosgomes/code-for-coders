@@ -17,6 +17,44 @@ namespace CodeForCoders.Identity.IntegrationTests;
 public sealed class StudentSessionTests(IdentityIntegrationFixture fixture)
 {
     [Fact]
+    public async Task StudentSession_InternalActorIsRejectedWithInvalidCredentials()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        var now = TimeProvider.System.GetUtcNow();
+        var accountId = Guid.CreateVersion7(now);
+        await using (var seedContext = fixture.CreateDbContext(tenantId))
+        {
+            seedContext.Accounts.Add(Account.CreateInternal(
+                accountId,
+                tenantId,
+                "Internal Actor",
+                "internal@example.com",
+                "internal@example.com"));
+            seedContext.Credentials.Add(Credential.Create(
+                Guid.CreateVersion7(now.AddTicks(1)),
+                tenantId,
+                accountId,
+                new Pbkdf2PasswordHasher().Hash("SenhaForte1!"),
+                now));
+            await new IdentityUnitOfWork(seedContext).CommitAsync(cancellationToken);
+        }
+
+        await using var dbContext = fixture.CreateDbContext(tenantId);
+        var exception = await Assert.ThrowsAsync<StudentSessionException>(() => CreateLoginUseCase(dbContext).ExecuteAsync(
+            new AuthenticateStudentSessionInput(
+                tenantId,
+                "internal@example.com",
+                "SenhaForte1!",
+                "student-login-internal"),
+            cancellationToken));
+
+        Assert.Equal(401, exception.StatusCode);
+        Assert.Equal("INVALID_CREDENTIALS", exception.Code);
+        Assert.Empty(await dbContext.StudentSessions.ToListAsync(cancellationToken));
+    }
+
+    [Fact]
     public async Task StudentSession_LoginCreatesOneSessionAndReplaysTheSameLogicalSession()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

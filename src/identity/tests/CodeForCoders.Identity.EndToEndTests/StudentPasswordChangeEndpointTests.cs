@@ -74,6 +74,32 @@ public sealed class StudentPasswordChangeEndpointTests(IdentityApiFactory factor
     }
 
     [Fact]
+    public async Task ChangeStudentPasswordInternal_RejectsForeignIssuerAssertionWithServiceUnauthorizedProblem()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var student = await SeedStudentAsync("SenhaForte1!", cancellationToken);
+        using var client = factory.CreateClient();
+        var body = new { sessionId = student.CurrentSessionId, currentPassword = "SenhaForte1!", newPassword = "NovaSenha2!" };
+
+        using var adminIssuer = await SendWithAssertionAsync(
+            client,
+            JsonContent.Create(body),
+            "change-issuer-1",
+            IdentityApiFactory.CreateAdminServiceAssertion("staff-sessions:validate"),
+            cancellationToken);
+        using var studentInBackofficeScope = await SendAsync(
+            client,
+            JsonContent.Create(body),
+            "change-issuer-2",
+            "staff-sessions:validate",
+            cancellationToken);
+
+        await AssertProblemAsync(adminIssuer, HttpStatusCode.Unauthorized, "SERVICE_UNAUTHORIZED", cancellationToken);
+        await AssertProblemAsync(studentInBackofficeScope, HttpStatusCode.Unauthorized, "SERVICE_UNAUTHORIZED", cancellationToken);
+        await AssertUnchangedAsync(student, "SenhaForte1!", cancellationToken);
+    }
+
+    [Fact]
     public async Task ChangeStudentPasswordInternal_RejectsInvalidJsonMissingFieldsOrIdempotencyKeyWithBadRequestProblem()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

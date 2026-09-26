@@ -35,6 +35,12 @@ public sealed class GlobalExceptionHandler(
                 recoveryException.Title,
                 recoveryException.Message,
                 recoveryException.Code),
+            StaffPasswordRecoveryException staffRecoveryException => (
+                staffRecoveryException.StatusCode,
+                "/problems/staff-password-recovery",
+                staffRecoveryException.Title,
+                staffRecoveryException.Message,
+                staffRecoveryException.Code),
             StudentPasswordChangeException passwordChangeException => (
                 passwordChangeException.StatusCode,
                 "/problems/student-password-change",
@@ -47,6 +53,12 @@ public sealed class GlobalExceptionHandler(
                 sessionException.Title,
                 sessionException.Message,
                 sessionException.Code),
+            StaffSessionException staffSessionException => (
+                staffSessionException.StatusCode,
+                "/problems/staff-session",
+                staffSessionException.Title,
+                staffSessionException.Message,
+                staffSessionException.Code),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",

@@ -26,7 +26,9 @@ public sealed class DeliverAcceptedNotification(
         if (record is null
             || record.Status != DeliveryStatus.Accepted
             || record.Recipient is null
-            || record.RecipientName is null
+            || (record.Model == NotificationPurposes.StaffInvitation
+                ? record.RecipientRole is null
+                : record.RecipientName is null)
             || record.Link is null
             || record.Purpose is null
             || record.Model is null)
@@ -49,7 +51,8 @@ public sealed class DeliverAcceptedNotification(
             record.Model,
             recipient,
             record.RecipientName,
-            record.Link);
+            record.Link,
+            record.RecipientRole);
         var attemptedOn = DateTimeOffset.UtcNow;
         record.RegisterProviderAttempt(attemptedOn);
         try

@@ -119,6 +119,32 @@ h2 {
   padding: 1.5rem;
 }
 
+.staff-areas {
+  background: #ffffff;
+  border: 1px solid #e4def1;
+  border-radius: 1rem;
+  margin-top: 2rem;
+  max-width: 680px;
+  padding: 1.5rem;
+}
+
+.staff-areas ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.staff-areas li {
+  background: #f1ebfb;
+  border-radius: 999px;
+  color: #4d2d93;
+  font-weight: 700;
+  padding: 0.5rem 0.8rem;
+}
+
 .status-card-header {
   align-items: flex-start;
   display: flex;
@@ -158,4 +184,63 @@ h2 {
 .primary-link {
   color: #6941c6;
   font-weight: 700;
+}
+
+.password-reset-page {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: clamp(2rem, 8vw, 5rem) 1rem;
+}
+
+.password-reset-card {
+  background: #ffffff;
+  border: 1px solid #e4def1;
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2.5rem rgb(33 26 56 / 8%);
+  max-width: 440px;
+  padding: 2rem;
+  width: 100%;
+}
+
+.password-reset-card form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.password-reset-card input {
+  border: 1px solid #bbb0d0;
+  border-radius: 0.6rem;
+  font: inherit;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+.password-reset-card input[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.password-reset-card button {
+  background: #6941c6;
+  border: 0;
+  border-radius: 0.6rem;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+}
+
+.password-reset-card button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.password-reset-hint {
+  color: #625979;
+  font-size: 0.9rem;
+  margin: 0;
 }

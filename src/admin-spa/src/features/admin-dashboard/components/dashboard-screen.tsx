@@ -1,7 +1,14 @@
+import { Link } from 'react-router';
+
 import { getAdminWorkspaceStatus, useAdminWorkspaceStatus } from '@/features/admin-dashboard/api/get-admin-workspace-status';
+import type { StaffArea } from '@/types/staff-area';
 import { getErrorMessage } from '@/utils/get-error-message';
 
-export const DashboardScreen = () => {
+type DashboardScreenProps = {
+  areas?: readonly StaffArea[];
+};
+
+export const DashboardScreen = ({ areas = [] }: DashboardScreenProps) => {
   const { data, error, isError, isFetching, isPending, refetch } = useAdminWorkspaceStatus();
 
   const statusMessage = isPending
@@ -15,6 +22,21 @@ export const DashboardScreen = () => {
       <p className="eyebrow">Admin Workspace</p>
       <h1>Operations overview</h1>
       <p className="lead">Keep a clear view of platform operations in the admin workspace.</p>
+
+      <section aria-labelledby="staff-areas-title" className="staff-areas">
+        <h2 id="staff-areas-title">Áreas disponíveis</h2>
+        {areas.length === 0 ? (
+          <p>Sua conta ainda não tem acesso a nenhuma área do backoffice.</p>
+        ) : (
+          <ul>
+            {areas.map((area) => (
+              <li key={area.permission}>
+                {area.href ? <Link to={area.href}>{area.label}</Link> : area.label}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section aria-labelledby="service-status" className="status-card">
         <div className="status-card-header">

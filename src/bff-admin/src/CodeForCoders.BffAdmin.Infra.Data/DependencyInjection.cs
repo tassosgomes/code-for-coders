@@ -40,6 +40,10 @@ public static class DependencyInjection
         services.AddOptions<BffSecurityOptions>()
             .Bind(configuration.GetSection(BffSecurityOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(options => options.AllowedOrigins.Length > 0
+                && options.AllowedOrigins.All(origin => Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                    && uri.Scheme is "http" or "https"),
+                "At least one absolute HTTP(S) staff SPA origin is required.")
             .Validate(options => options.UseOpaqueSessions, "BFF sessions must be opaque.")
             .Validate(options => !options.BrowserReceivesAccessToken, "Access tokens must remain server-side.")
             .Validate(options => string.Equals(options.ReverseProxy, "YARP", StringComparison.Ordinal), "YARP is the required reverse proxy.")

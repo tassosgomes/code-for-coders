@@ -1,0 +1,418 @@
+{
+  "schema_version": 1,
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-acesso-interno",
+  "branch": "feature/acesso-interno",
+  "original_base_ref": "e515e3614834ca1b6fec739cb3818e6478accc22",
+  "base_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
+  "target_ref": "f7bda4f1dd3d7de85001ec1b77e80b1914e0b24c",
+  "last_checkpoint": "80e92af0c63acc8ab52341bd67b6babc1e189b41",
+  "phase": "complete",
+  "active_task": null,
+  "attempt": 0,
+  "max_attempts": 3,
+  "full_attempt": 2,
+  "transport_retries": 1,
+  "transport": "herdr",
+  "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
+  "specs": [
+    "prd.md",
+    "techspec.md",
+    "contracts.md",
+    "api-contract.yaml 1.0.1",
+    "internal-api-contract.yaml 1.0.1"
+  ],
+  "delivery": "pr",
+  "plan_approval": "Plano validado (validate_plan APROVADO) e execução autorizada pelo usuário ao invocar o orquestrador em 2026-09-25",
+  "validated_commit": "0ddfa16c23995a0d0b184ac4610457aaec7874a9",
+  "validated_tree": "ad68fcb283f8d82ced18972e4ab8e6ad4e7ecde7",
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "complete-prd",
+    "delivery": "pr"
+  },
+  "last_result": {
+    "role": "validator",
+    "mode": "full",
+    "attempt": 2,
+    "run_id": "run.IYwr3d1R",
+    "outcome": "approved",
+    "report": "tasks/prd-acesso-interno/prd_review.md"
+  },
+  "history": [
+    {
+      "ts": "2026-09-25",
+      "event": "branch_ready",
+      "run_id": "run.i3alZ1Nz",
+      "note": "worktree nova criada a partir de main e515e36"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "transport_failure_reconciled",
+      "run_id": "run.ZehMLHWz",
+      "note": "tsg-delegate reportou agent_blocked aos 1501s com o opencode ainda working; o worker gravou result.json válido depois (implementation_complete, gate passed). Diff da worktree confere com o relatório; sem repetição, tentativa não consumida pela falha de transporte."
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "1.0",
+      "run_id": "run.VqNkiGnN",
+      "note": "0 bloqueantes, 4 recomendações; R3 (seção StaffIdentity__* do Compose) repassada à 2.0"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "1.0",
+      "run_id": "run.Jd4AWOHa",
+      "commit": "5a8172a",
+      "note": "transporte relatou agent_blocked com opencode working (2ª vez; detecção de tela do opencode desligada); resultado e commit reconciliados"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "transport_failure",
+      "task": "2.0",
+      "run_id": "run.7j84uBZY",
+      "note": "codex iniciou mas o Herdr perdeu o agente (agent_not_found); prompt não chegou; worktree sem efeitos; repetição 1/2"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "2.0",
+      "run_id": "run.yp6ZUtwK",
+      "note": "0 bloqueantes, 5 recomendações, lacuna L1 para a full"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "2.0",
+      "run_id": "run.raxxVRjA",
+      "commit": "28d50fc",
+      "note": "falso agent_blocked do opencode (3ª vez), reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_rejected",
+      "task": "3.0",
+      "attempt": 1,
+      "run_id": "run.ciaJ631w",
+      "note": "B1 admin-spa suite; R1 = defeito da 2.0 (fixture Heartbeat sem StaffAccount:PasswordResetBaseUrl) incluído no fix da 3.0 por decisão do orquestrador para não deixar CI obrigatório quebrado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "3.0",
+      "attempt": 2,
+      "run_id": "run.SCEWavaU"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "3.0",
+      "run_id": "run.ynvulrUo",
+      "commit": "5d412ec",
+      "note": "Fase 1 concluída; falso agent_blocked do opencode reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_rejected",
+      "task": "4.0",
+      "attempt": 1,
+      "run_id": "run.vU1d8ECY",
+      "note": "B-01 maxLength motivo"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "4.0",
+      "attempt": 2,
+      "run_id": "run.mpvAo9ro"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "4.0",
+      "run_id": "run.gHUWLU14",
+      "commit": "bbe4eff"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "5.0",
+      "run_id": "run.OqoExtC1"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "5.0",
+      "run_id": "run.9TdqnyCG",
+      "commit": "cc581e2"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "6.0",
+      "run_id": "run.NCVira28"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "6.0",
+      "run_id": "run.JHNrocSH",
+      "commit": "ba346b8",
+      "note": "falso agent_blocked do opencode reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_rejected",
+      "task": "7.0",
+      "attempt": 1,
+      "run_id": "run.U8XX8u3R",
+      "note": "aguardando decisão do usuário sobre o código de erro de fromRole=toRole"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "user_decision",
+      "task": "7.0",
+      "note": "usuário aprovou ROLE_CHANGE_INVALID (422) para fromRole=toRole; contract-creator formaliza contratos e techspec; transporte herdr não suporta contract-creator, delegado via subagente"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "contract_formalized",
+      "task": "7.0",
+      "note": "contract-creator (subagente): api/internal 1.0.1, contracts.md 1.2 C-11, techspec linha ROLE_CHANGE_INVALID; Spectral sem erros"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "7.0",
+      "attempt": 2,
+      "run_id": "run.jJ8QwFTY"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "7.0",
+      "run_id": "run.J3yCruqY",
+      "commit": "122902b",
+      "note": "Fase 2 concluída; inclui contratos 1.0.1; falso agent_blocked reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "8.0",
+      "run_id": "run.wwrLb1lH"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "8.0",
+      "run_id": "run.JJUmxeoo",
+      "commit": "868d173",
+      "note": "falso agent_blocked reconciliado"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "infra_failure",
+      "task": "9.0",
+      "run_id": "run.fv6lcNIC",
+      "note": "codex CLI sem credencial válida (401); sem efeitos na worktree; tentativa não consumida; aguardando usuário"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "intervention",
+      "task": "9.0",
+      "note": "usuário corrigiu credencial do codex; repetição com timeout 2h e start_settle 8s"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "focused_approved",
+      "task": "9.0",
+      "run_id": "run.lAGdudjh",
+      "note": "transporte relatou result_missing (validator claude encerrou turno com suítes em background); reenviado continue ao mesmo pane, resultado gravado no mesmo run"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "9.0",
+      "run_id": "run.Bii9hMS0",
+      "commit": "1e43a53",
+      "note": "todas as 9 tasks done"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "infra_failure",
+      "run_id": "run.7gKZ39qg",
+      "note": "opencode: provider \"request contains invalid parameters\"; sem operação git; repetição com --kind=codex (escalonamento do integrator). main avançou 7 commits (e515e36..f7bda4f)"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "user_decision",
+      "note": "smoke full: rodar Compose na worktree"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "integration_ready",
+      "run_id": "run.kJ6A1vc1",
+      "note": "rebase sobre main f7bda4f sem conflitos; 10 commits"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "transport_failure",
+      "run_id": "run.QeuEMpDO",
+      "note": "result_missing aos 1007s com validator claude ainda working (turnos encerrados à espera de monitores); acompanhando o mesmo pane, sem nova delegação"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "full_rejected",
+      "full_attempt": 1,
+      "run_id": "run.QeuEMpDO",
+      "note": "smoke 36/36 OK; 5 bloqueantes (3 de cobertura CI, 2 mutantes); aguardando decisão sobre cobertura"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "user_decision",
+      "note": "cobertura: seguir precedente testconfig.json"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "task_reopened",
+      "task": "2.0",
+      "commit": "1293dc0"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "2.0",
+      "run_id": "run.DqJr4MKt",
+      "note": "B4 fechado; mutante morto"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "2.0",
+      "commit": "d7a87ab",
+      "note": "pós-full B4"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "task_reopened",
+      "task": "3.0",
+      "commit": "7411cf1"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "3.0",
+      "run_id": "run.rIJVXeXt",
+      "note": "B1 fechado; bff-admin 78.01"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "3.0",
+      "commit": "13f2d8bb628555744bd36db11e787d392600c357",
+      "note": "pós-full B1"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "task_reopened",
+      "task": "4.0",
+      "commit": "986d740"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "revalidation_approved",
+      "task": "4.0",
+      "run_id": "run.gWMl0Sfm",
+      "note": "B5 fechado; mutante morto"
+    },
+    {
+      "ts": "2026-09-25",
+      "event": "checkpoint_ok",
+      "task": "4.0",
+      "commit": "c72399bcd27420494c08f507c98087110ffd3f6c",
+      "note": "pós-full B5"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "task_reopened",
+      "task": "8.0",
+      "commit": "3422698"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "revalidation_approved",
+      "task": "8.0",
+      "run_id": "run.p28zrsdg",
+      "note": "B2/B3 fechados; commerce 78.41 learning 76.09 media 77.03"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint_ok",
+      "task": "8.0",
+      "commit": "80e92af",
+      "note": "pós-full B2/B3; todos os bloqueantes da full 1 fechados"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "integration_ready",
+      "run_id": "run.0zorb0vs",
+      "note": "main inalterada f7bda4f; sem rebase"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "full_approved",
+      "full_attempt": 2,
+      "run_id": "run.IYwr3d1R",
+      "note": "5 bloqueantes do ciclo 1 resolvidos; 12/12 mutantes mortos; matriz CI verde; 10 recomendações"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "user_decision",
+      "note": "entrega autorizada: pr"
+    }
+  ],
+  "full_pending_gaps": [
+    "2.0 L1: smoke do Compose (bff-admin real contra Identity real, smtp4dev, nginx sem token no log) não executado; Compose compartilha nomes/volumes com o checkout principal",
+    "3.0: smoke em http://localhost:8081/admin/entrar (checkpoint da Fase 1) não executado",
+    "3.0 R5: login anônimo /api/v1/staff-sessions sem checagem de Origin (login CSRF) — avaliar na full",
+    "4.0 R1/R2: corrida no índice parcial de convite pendente (500) e ROLE_NOT_SUPPORTED fora do contrato — avaliar na full",
+    "5.0 R1: Idempotency-Key do aceite gerada a cada envio no SPA (reenvio após falha de rede vira INVITATION_INVALID)",
+    "6.0 R1: desconexão pós-revogação BFF+Identity só provada por composição — confirmar no smoke com dois navegadores",
+    "6.0 R3: listStaffMembersInternal devolve 400 não declarado no internal-api-contract.yaml",
+    "8.0 R1: sem teste da emissão de JWT com audience commerce no Identity",
+    "8.0 R2: JWKS não respeita minItems 1 / maxItems 2 do contrato",
+    "8.0 R3/R4: BFF propaga 401 TOKEN_INVALID não previsto e pode devolver 500 genérico em falha do Commerce",
+    "9.0 R1: nenhum endpoint internal/v1/staff-* do Identity tem teste HTTP (401/400/422) — smoke deve cobrir BFF→Identity real",
+    "9.0 R2: neutralidade de tempo na recuperação (conta interna grava token/outbox)"
+  ],
+  "smoke_authorization": "Usuário autorizou (2026-09-25) subir a stack Docker Compose a partir da worktree para o smoke da validação full; nada rodando no ambiente principal",
+  "integration_head": "0ddfa16c23995a0d0b184ac4610457aaec7874a9",
+  "full_fix_plan": [
+    {
+      "task": "2.0",
+      "blockers": [
+        "B4"
+      ]
+    },
+    {
+      "task": "3.0",
+      "blockers": [
+        "B1"
+      ]
+    },
+    {
+      "task": "4.0",
+      "blockers": [
+        "B5"
+      ]
+    },
+    {
+      "task": "8.0",
+      "blockers": [
+        "B2",
+        "B3"
+      ]
+    }
+  ],
+  "coverage_decision": "Usuário: seguir precedente audit/bff-student — tests/testconfig.json excluindo obj/ e *.generated.cs em bff-admin, identity, notification (3.0) e commerce, learning, media (8.0); testes onde ainda < 70%"
+}

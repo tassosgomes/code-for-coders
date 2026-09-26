@@ -5,15 +5,15 @@ namespace CodeForCoders.BffAdmin.Api.Security;
 
 public static class CsrfProtection
 {
-    public static bool IsValid(string? cookieValue, string? headerValue)
+    public static bool IsValid(string? expectedValue, string? headerValue)
     {
-        if (string.IsNullOrWhiteSpace(cookieValue) || string.IsNullOrWhiteSpace(headerValue))
+        if (string.IsNullOrWhiteSpace(expectedValue) || string.IsNullOrWhiteSpace(headerValue))
         {
             return false;
         }
 
-        var cookieBytes = Encoding.UTF8.GetBytes(cookieValue);
+        var expectedBytes = Encoding.UTF8.GetBytes(expectedValue);
         var headerBytes = Encoding.UTF8.GetBytes(headerValue);
-        return CryptographicOperations.FixedTimeEquals(cookieBytes, headerBytes);
+        return CryptographicOperations.FixedTimeEquals(expectedBytes, headerBytes);
     }
 }

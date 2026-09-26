@@ -1,3 +1,4 @@
+using CodeForCoders.Identity.Application.Common;
 using CodeForCoders.Identity.Infra.Data;
 using CodeForCoders.Identity.Infra.Data.Configuration;
 using CodeForCoders.Identity.Infra.Data.Outbox;
@@ -17,6 +18,8 @@ public sealed class OutboxPublisherWorker(
     IOptions<OutboxOptions> options,
     ILogger<OutboxPublisherWorker> logger) : BackgroundService
 {
+    private const string AuditActionRoutingKey = "auditoria.ato-praticado.v1";
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.Value.PollingIntervalSeconds));
@@ -90,6 +93,10 @@ public sealed class OutboxPublisherWorker(
             message.MarkProcessed();
             await dbContext.SaveChangesAsync(CancellationToken.None);
             await transaction.CommitAsync(CancellationToken.None);
+            if (message.RoutingKey == AuditActionRoutingKey)
+            {
+                IdentityTelemetry.AuditActionsPublished.Add(1);
+            }
         }
         catch (OutboxPublishException exception)
         {

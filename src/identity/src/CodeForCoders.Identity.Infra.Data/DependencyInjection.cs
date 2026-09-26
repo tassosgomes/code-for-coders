@@ -38,6 +38,8 @@ public static class DependencyInjection
         services.AddScoped<IIdentityRegistrationStore, IdentityRegistrationStore>();
         services.AddScoped<IIdentityConfirmationStore, IdentityConfirmationStore>();
         services.AddScoped<IIdentityPasswordRecoveryStore, IdentityPasswordRecoveryStore>();
+        services.AddScoped<IIdentityStaffAccountStore, IdentityStaffAccountStore>();
+        services.AddScoped<IIdentityStaffInvitationStore, IdentityStaffInvitationStore>();
         services.AddScoped<IIdentitySessionStore, IdentitySessionStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
@@ -50,10 +52,28 @@ public static class DependencyInjection
                 && resetUri.Scheme is "http" or "https", "Student password reset URL must be absolute HTTP(S).")
             .Validate(options => options.PasswordResetLifetimeHours > 0, "Student password reset lifetime must be positive.")
             .ValidateOnStart();
+        services.AddOptions<StaffAccountOptions>()
+            .Bind(configuration.GetSection(StaffAccountOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.PasswordResetBaseUrl, UriKind.Absolute, out var resetUri)
+                && resetUri.Scheme is "http" or "https", "Staff password reset URL must be absolute HTTP(S).")
+            .Validate(options => options.PasswordResetLifetimeHours > 0, "Staff password reset lifetime must be positive.")
+            .ValidateOnStart();
+        services.AddOptions<StaffInvitationOptions>()
+            .Bind(configuration.GetSection(StaffInvitationOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.AcceptanceBaseUrl, UriKind.Absolute, out var invitationUri)
+                && invitationUri.Scheme is "http" or "https",
+                "Staff invitation acceptance URL must be an absolute HTTP(S) URL.")
+            .Validate(options => options.LifetimeHours > 0, "Staff invitation lifetime must be positive.")
+            .ValidateOnStart();
         services.AddOptions<StudentSessionOptions>()
             .Bind(configuration.GetSection(StudentSessionOptions.SectionName))
             .Validate(options => options.InactivityTimeoutMinutes is >= 1 and <= 1440,
                 "Student session inactivity timeout must be between 1 and 1440 minutes.")
+            .ValidateOnStart();
+        services.AddOptions<StaffSessionOptions>()
+            .Bind(configuration.GetSection(StaffSessionOptions.SectionName))
+            .Validate(options => options.InactivityTimeoutMinutes is >= 1 and <= 1440,
+                "Staff session inactivity timeout must be between 1 and 1440 minutes.")
             .ValidateOnStart();
         services.AddOptions<IdempotencyOptions>()
             .Bind(configuration.GetSection(IdempotencyOptions.SectionName))
@@ -63,6 +83,7 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(OutboxDestinationOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Exchange), "Identity exchange is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.NotificationExchange), "Notification exchange is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.AuditExchange), "Audit exchange is required.")
             .ValidateOnStart();
         services.AddOptions<OutboxProtectionOptions>()
             .Bind(configuration.GetSection(OutboxProtectionOptions.SectionName))

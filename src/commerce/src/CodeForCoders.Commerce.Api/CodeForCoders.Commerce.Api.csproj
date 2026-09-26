@@ -10,6 +10,7 @@
     <ProjectReference Include="../CodeForCoders.Commerce.Contracts/CodeForCoders.Commerce.Contracts.csproj" />
     <ProjectReference Include="../CodeForCoders.Commerce.Infra.Data/CodeForCoders.Commerce.Infra.Data.csproj" />
     <ProjectReference Include="../CodeForCoders.Commerce.Infra.Messaging/CodeForCoders.Commerce.Infra.Messaging.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
