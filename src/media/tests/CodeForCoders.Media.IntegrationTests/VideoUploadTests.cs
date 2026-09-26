@@ -491,5 +491,17 @@ public sealed class VideoUploadTests(VideoLibraryApiFactory factory)
 
         public Task AbortMultipartUploadAsync(string objectKey, string storageUploadId, CancellationToken cancellationToken)
             => Task.FromException(new StorageUnavailableException());
+
+        public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
     }
 }

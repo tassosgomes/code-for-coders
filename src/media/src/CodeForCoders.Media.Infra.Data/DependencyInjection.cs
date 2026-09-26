@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
         services.AddScoped<IVideoQueries, VideoQueries>();
         services.AddScoped<IVideoUploadRepository, VideoUploadRepository>();
+        services.AddScoped<IVideoPreparationRepository, VideoPreparationRepository>();
         services.AddScoped<IOperationIdempotencyRepository, OperationIdempotencyRepository>();
         services.AddOptions<AwsMediaOptions>()
             .Bind(configuration.GetSection(AwsMediaOptions.SectionName))

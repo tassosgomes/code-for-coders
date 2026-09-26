@@ -24,5 +24,7 @@ internal sealed class MediaRoleFactory(
         builder.UseSetting("RabbitMq:Port", rabbitMqPort.ToString(CultureInfo.InvariantCulture));
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
+        builder.UseSetting("Preparation:MasterKey", Convert.ToBase64String(new byte[32]));
+        builder.UseSetting("Preparation:MasterKeyId", "media-e2e-test");
     }
 }

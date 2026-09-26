@@ -103,12 +103,14 @@ public sealed class MediaRoleTests : IAsyncLifetime
     }
 
     [Fact]
-    public void WorkerRole_RegistersOnlyTheOutboxPublisher()
+    public void WorkerRole_RegistersPreparationAndExpirationWorkers()
     {
         var hostedServices = workerFactory.Services.GetServices<IHostedService>().ToList();
 
         Assert.Contains(hostedServices, service => service is RabbitMqTopologyInitializer);
         Assert.Contains(hostedServices, service => service is OutboxPublisherWorker);
+        Assert.Contains(hostedServices, service => service is ExpiredVideoUploadWorker);
+        Assert.Contains(hostedServices, service => service is VideoPreparationWorker);
         Assert.DoesNotContain(hostedServices, service => service is HeartbeatConsumerWorker);
     }
 

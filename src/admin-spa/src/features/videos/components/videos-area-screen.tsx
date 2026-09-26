@@ -1,4 +1,5 @@
 import { Clapperboard, Upload } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { paths } from '@/config/paths';
@@ -19,6 +20,8 @@ type VideosAreaScreenProps = {
   onResumeUpload?: () => void;
 };
 
+type VideoSummary = VideoPage['data'][number];
+
 const videoStatusLabels = {
   received: 'Recebido',
   preparing: 'Em preparação',
@@ -31,6 +34,30 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('pt-BR', {
   timeStyle: 'short',
 }).format(new Date(value));
 
+const formatDuration = (durationSeconds: number) => {
+  const hours = Math.floor(durationSeconds / 3600);
+  const minutes = Math.floor((durationSeconds % 3600) / 60);
+  const seconds = durationSeconds % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${minutes}:${String(seconds).padStart(2, '0')}`;
+};
+
+const formatVideoStatus = (video: VideoSummary) => video.status === 'ready' && video.durationSeconds !== null
+  ? `Pronto · ${formatDuration(video.durationSeconds)}`
+  : videoStatusLabels[video.status];
+
+const describeStatusChanges = (previous: readonly VideoSummary[], current: readonly VideoSummary[]) => {
+  const previousStatuses = new Map(previous.map((video) => [video.videoId, video.status]));
+  return current
+    .filter((video) => {
+      const previousStatus = previousStatuses.get(video.videoId);
+      return previousStatus !== undefined && previousStatus !== video.status;
+    })
+    .map((video) => `${video.title}: ${formatVideoStatus(video)}`)
+    .join('. ');
+};
+
 export const VideosAreaScreen = ({
   state,
   videos,
@@ -42,6 +69,14 @@ export const VideosAreaScreen = ({
   pendingUploads = [],
   onResumeUpload,
 }: VideosAreaScreenProps) => {
+  const [announcedVideos, setAnnouncedVideos] = useState(videos?.data);
+  const [statusAnnouncement, setStatusAnnouncement] = useState('');
+  if (videos?.data !== announcedVideos) {
+    const changes = announcedVideos && videos ? describeStatusChanges(announcedVideos, videos.data) : '';
+    setAnnouncedVideos(videos?.data);
+    if (changes) setStatusAnnouncement(changes);
+  }
+
   if (state === 'forbidden') {
     return <main className="page-shell videos-page">
       <p className="eyebrow">Vídeos</p>
@@ -56,6 +91,7 @@ export const VideosAreaScreen = ({
   const sendButton = <button className="primary-button" disabled={uploadDisabled} onClick={onUpload} type="button" title={uploadDisabled ? 'Aguarde o envio atual terminar.' : undefined}>
     <Upload aria-hidden="true" size={16} />Enviar vídeo
   </button>;
+  const hasProcessingVideo = videos?.data.some((video) => video.status === 'received' || video.status === 'preparing') ?? false;
 
   return <main className="page-shell videos-page">
     <div className="page-heading-row">
@@ -85,11 +121,14 @@ export const VideosAreaScreen = ({
     </section> : null}
 
     {state === 'has-videos' ? <section aria-label="Biblioteca de vídeos" className="videos-table">
+      <p aria-atomic="true" aria-live="polite" className="visually-hidden" data-testid="video-status-announcement" role="status">{statusAnnouncement}</p>
+      {hasProcessingVideo ? <p className="video-refresh-status">Atualizando automaticamente</p> : null}
       <div className="videos-table-header"><span>Vídeo</span><span>Autor</span><span>Estado</span><span>Enviado em</span></div>
       {videos?.data.map((video) => <div className="videos-table-row" key={video.videoId}>
         <div className="video-title-cell"><Clapperboard aria-hidden="true" size={18} /><strong>{video.title}</strong></div>
         <span className="row-muted">{video.uploadedBy.name}</span>
-        <div className={`video-status ${video.status}`}><span aria-hidden="true" />{videoStatusLabels[video.status]}
+        <div className={`video-status ${video.status}`}><span aria-hidden="true" />
+          {formatVideoStatus(video)}
           {video.failureReason ? <small>{video.failureReason}</small> : null}
         </div>
         <time className="row-muted" dateTime={video.uploadedAt}>{formatDate(video.uploadedAt)}</time>

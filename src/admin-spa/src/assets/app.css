@@ -1145,6 +1145,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   overflow-wrap:anywhere
 }
 
+.video-refresh-status {
+  margin:0 0 12px;
+  color:var(--muted);
+  font-size:12px
+}
+
 .video-status {
   flex-wrap:wrap;
   font-size:13px;

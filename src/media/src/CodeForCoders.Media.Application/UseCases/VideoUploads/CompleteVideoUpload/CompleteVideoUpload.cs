@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
@@ -45,13 +46,16 @@ public sealed class CompleteVideoUpload(
             throw VideoUploadUseCaseHelpers.UploadNotFound();
         }
 
-        var video = Video.Create(
+        var video = Video.Create(new VideoCreateInput(
             upload.VideoId,
             upload.TenantId,
             upload.Title,
             upload.UploaderAccountId,
             upload.UploaderName,
-            now);
+            now,
+            upload.ObjectKey,
+            upload.FileSize,
+            Activity.Current?.Id));
         var completedVideo = await videoUploads.CompleteAsync(
             upload,
             video,

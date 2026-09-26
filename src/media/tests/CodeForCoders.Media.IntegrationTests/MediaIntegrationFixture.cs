@@ -7,6 +7,7 @@ using Amazon.S3.Model;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using Xunit;
@@ -42,17 +43,31 @@ public sealed class MediaIntegrationFixture : IAsyncLifetime
 
     public string MinioEndpoint => $"http://{Minio.Hostname}:{Minio.GetMappedPublicPort(9000)}";
 
+    public string VideoPreparationConnectionString { get; private set; } = string.Empty;
+
     public async ValueTask InitializeAsync()
     {
         await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync(), Minio.StartAsync());
 
-        var dbOptions = new DbContextOptionsBuilder<MediaDbContext>()
-            .UseNpgsql(PostgreSql.GetConnectionString())
-            .Options;
-        await using (var dbContext = new MediaDbContext(dbOptions, new TenantContext()))
+        var adminConnectionString = new NpgsqlConnectionStringBuilder(PostgreSql.GetConnectionString())
         {
-            await dbContext.Database.MigrateAsync();
+            Database = "postgres",
+        };
+        await using (var adminConnection = new NpgsqlConnection(adminConnectionString.ConnectionString))
+        {
+            await adminConnection.OpenAsync();
+            await using var createDatabase = adminConnection.CreateCommand();
+            createDatabase.CommandText = "CREATE DATABASE code_for_coders_media_preparation";
+            await createDatabase.ExecuteNonQueryAsync();
         }
+
+        VideoPreparationConnectionString = new NpgsqlConnectionStringBuilder(PostgreSql.GetConnectionString())
+        {
+            Database = "code_for_coders_media_preparation",
+        }.ConnectionString;
+
+        await MigrateDatabaseAsync(PostgreSql.GetConnectionString());
+        await MigrateDatabaseAsync(VideoPreparationConnectionString);
 
         using var minioClient = new AmazonS3Client(
             new BasicAWSCredentials(MinioAccessKey, MinioSecretKey),
@@ -71,6 +86,17 @@ public sealed class MediaIntegrationFixture : IAsyncLifetime
         await RabbitMq.DisposeAsync();
         await Minio.DisposeAsync();
         await PostgreSql.DisposeAsync();
+    }
+
+    private static async Task MigrateDatabaseAsync(string connectionString)
+    {
+        var dbOptions = new DbContextOptionsBuilder<MediaDbContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable(
+                "__ef_migrations_history",
+                "media_access"))
+            .Options;
+        await using var dbContext = new MediaDbContext(dbOptions, new TenantContext());
+        await dbContext.Database.MigrateAsync();
     }
 }
 

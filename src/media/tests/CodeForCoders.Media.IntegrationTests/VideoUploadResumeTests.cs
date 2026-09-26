@@ -150,9 +150,7 @@ public sealed class VideoUploadResumeTests
         using (var scope = clockFactory.Services.CreateAsyncScope())
         {
             var expireUploads = scope.ServiceProvider.GetRequiredService<IExpirePendingVideoUploads>();
-            Assert.True(await expireUploads.ExecuteAsync(
-                100,
-                TestContext.Current.CancellationToken) >= 1);
+            Assert.True(await expireUploads.ExpireAsync(uploadId, TestContext.Current.CancellationToken));
         }
 
         using (var storage = CreateMinioClient())
@@ -381,6 +379,18 @@ public sealed class VideoUploadResumeTests
             Interlocked.Increment(ref abortCount);
             return Task.CompletedTask;
         }
+
+        public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken)
+            => Task.FromException(new NotSupportedException());
+
+        public Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken)
+            => Task.FromException(new NotSupportedException());
+
+        public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
+            => Task.FromException(new NotSupportedException());
+
+        public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
+            => Task.FromException(new NotSupportedException());
     }
 
     private sealed class UnavailableMediaStoragePort : IMediaStoragePort
@@ -398,6 +408,18 @@ public sealed class VideoUploadResumeTests
             => Task.FromException(new StorageUnavailableException());
 
         public Task AbortMultipartUploadAsync(string objectKey, string storageUploadId, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
+            => Task.FromException(new StorageUnavailableException());
+
+        public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
             => Task.FromException(new StorageUnavailableException());
     }
 }

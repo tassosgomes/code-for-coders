@@ -245,6 +245,8 @@ services:
       AwsMedia__AccessKeyId: ${MINIO_ROOT_USER:-code-for-coders}
       AwsMedia__SecretAccessKey: ${MINIO_ROOT_PASSWORD:-code-for-coders-local}
       AwsMedia__ForcePathStyle: "true"
+      Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in local .env}
+      Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:-local-v1}
     depends_on:
       <<: *api-dependencies
       minio-bucket-init:

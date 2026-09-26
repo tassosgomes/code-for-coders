@@ -40,4 +40,10 @@ export const getVideosQueryOptions = (page = 1, size = 10) => queryOptions({
   queryFn: () => getVideos(page, size),
 });
 
-export const useVideos = (page = 1, size = 10) => useQuery(getVideosQueryOptions(page, size));
+export const useVideos = (page = 1, size = 10) => useQuery({
+  ...getVideosQueryOptions(page, size),
+  refetchInterval: (query) => query.state.data?.data.some((video) =>
+    video.status === 'received' || video.status === 'preparing',
+  ) ? 10_000 : false,
+  refetchIntervalInBackground: false,
+});

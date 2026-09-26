@@ -2,6 +2,7 @@ using CodeForCoders.Media.Application;
 using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Infra.Data;
 using CodeForCoders.Media.Infra.Messaging;
+using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +13,11 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddMediaConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        if (MediaRoleOptions.ReadRole(builder.Configuration) == MediaServiceRole.Worker)
+        {
+            builder.Services.AddVideoPreparationConfiguration();
+        }
+
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddMessagingConfiguration(builder.Configuration);
         builder.Services.AddOptions<MediaTokenOptions>()

@@ -132,6 +132,102 @@ public sealed class S3MediaStorageAdapter(
         }
     }
 
+    public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken)
+        => ExecuteAsync(
+            async token =>
+            {
+                using var response = await clients.Internal.GetObjectAsync(new GetObjectRequest
+                {
+                    BucketName = options.Value.BucketName,
+                    Key = GetKey(objectKey),
+                }, token);
+                await using var destination = new FileStream(
+                    destinationPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    81920,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan);
+                await response.ResponseStream.CopyToAsync(destination, token);
+            },
+            cancellationToken);
+
+    public async Task UploadDirectoryAsync(
+        string sourceDirectory,
+        string objectPrefix,
+        CancellationToken cancellationToken)
+    {
+        var fullSourceDirectory = Path.GetFullPath(sourceDirectory);
+        foreach (var filePath in Directory.EnumerateFiles(fullSourceDirectory, "*", SearchOption.AllDirectories)
+                     .Order(StringComparer.Ordinal))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var relativePath = Path.GetRelativePath(fullSourceDirectory, filePath)
+                .Replace(Path.DirectorySeparatorChar, '/');
+            var objectKey = $"{objectPrefix.TrimEnd('/')}/{relativePath}";
+            await ExecuteAsync(
+                async token =>
+                {
+                    await using var stream = new FileStream(
+                        filePath,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.Read,
+                        81920,
+                        FileOptions.Asynchronous | FileOptions.SequentialScan);
+                    await clients.Internal.PutObjectAsync(new PutObjectRequest
+                    {
+                        BucketName = options.Value.BucketName,
+                        Key = GetKey(objectKey),
+                        InputStream = stream,
+                        CannedACL = S3CannedACL.Private,
+                    }, token);
+                },
+                cancellationToken);
+        }
+    }
+
+    public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
+        => ExecuteAsync(
+            token => clients.Internal.DeleteObjectAsync(new DeleteObjectRequest
+            {
+                BucketName = options.Value.BucketName,
+                Key = GetKey(objectKey),
+            }, token),
+            cancellationToken);
+
+    public async Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
+    {
+        string? continuationToken = null;
+        do
+        {
+            var page = await ExecuteAsync(
+                token => clients.Internal.ListObjectsV2Async(new ListObjectsV2Request
+                {
+                    BucketName = options.Value.BucketName,
+                    Prefix = GetKey(objectPrefix.TrimEnd('/') + "/"),
+                    ContinuationToken = continuationToken,
+                    MaxKeys = 1000,
+                }, token),
+                cancellationToken);
+            var objectKeys = page.S3Objects?.Select(item => item.Key).ToArray() ?? [];
+            if (objectKeys.Length > 0)
+            {
+                await ExecuteAsync(
+                    token => clients.Internal.DeleteObjectsAsync(new DeleteObjectsRequest
+                    {
+                        BucketName = options.Value.BucketName,
+                        Objects = objectKeys.Select(key => new KeyVersion { Key = key }).ToList(),
+                        Quiet = true,
+                    }, token),
+                    cancellationToken);
+            }
+
+            continuationToken = page.IsTruncated == true ? page.NextContinuationToken : null;
+        }
+        while (continuationToken is not null);
+    }
+
     private string GetKey(string objectKey)
     {
         var prefix = options.Value.ObjectKeyPrefix.Trim('/');

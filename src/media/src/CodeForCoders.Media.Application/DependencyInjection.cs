@@ -3,6 +3,7 @@ using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Application.UseCases;
 using CodeForCoders.Media.Application.UseCases.Platform.RecordPlatformHeartbeat;
 using CodeForCoders.Media.Application.UseCases.VideoUploads.ExpirePendingVideoUploads;
+using CodeForCoders.Media.Application.UseCases.Videos.PrepareVideo;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,12 @@ public static class DependencyInjection
             .AsMatchingInterface()
             .WithScopedLifetime());
 
+        return services;
+    }
+
+    public static IServiceCollection AddVideoPreparationConfiguration(this IServiceCollection services)
+    {
+        services.AddScoped<IVideoPreparationWorkflow, PrepareVideo>();
         return services;
     }
 }

@@ -21,14 +21,7 @@ public sealed class ExpirePendingVideoUploads(
         var expiredCount = 0;
         foreach (var uploadId in expiredUploadIds)
         {
-            if (await videoUploads.ExpireAsync(
-                uploadId,
-                now,
-                (upload, token) => mediaStorage.AbortMultipartUploadAsync(
-                    upload.ObjectKey,
-                    upload.StorageUploadId,
-                    token),
-                cancellationToken))
+            if (await ExpireAsync(uploadId, now, cancellationToken))
             {
                 expiredCount++;
             }
@@ -36,4 +29,17 @@ public sealed class ExpirePendingVideoUploads(
 
         return expiredCount;
     }
+
+    public Task<bool> ExpireAsync(Guid uploadId, CancellationToken cancellationToken)
+        => ExpireAsync(uploadId, timeProvider.GetUtcNow(), cancellationToken);
+
+    private Task<bool> ExpireAsync(Guid uploadId, DateTimeOffset now, CancellationToken cancellationToken)
+        => videoUploads.ExpireAsync(
+            uploadId,
+            now,
+            (upload, token) => mediaStorage.AbortMultipartUploadAsync(
+                upload.ObjectKey,
+                upload.StorageUploadId,
+                token),
+            cancellationToken);
 }

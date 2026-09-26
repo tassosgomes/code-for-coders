@@ -26,6 +26,10 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
 
     public string MinioEndpoint => infrastructure.MinioEndpoint;
 
+    public string VideoPreparationConnectionString => infrastructure.VideoPreparationConnectionString;
+
+    public Uri RabbitMqEndpoint => new(infrastructure.RabbitMq.GetConnectionString());
+
     public async ValueTask InitializeAsync()
     {
         await infrastructure.InitializeAsync();

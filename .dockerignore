@@ -2,6 +2,8 @@
 .github
 .agents
 .codex
+.env
+.env.*
 .vs
 .idea
 **/bin
@@ -14,4 +16,3 @@ domains
 skills-lock.json
 flow-state.json
 vision.md
-

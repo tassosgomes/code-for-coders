@@ -2,6 +2,45 @@ import { http, HttpResponse } from 'msw';
 
 import { env } from '@/config/env';
 
+export const videoStatusFixtures = {
+  received: {
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'received',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: null,
+  },
+  preparing: {
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'preparing',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: null,
+  },
+  ready: {
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'ready',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: 20,
+    failureReason: null,
+  },
+} as const;
+
 export const handlers = [
   http.post(`${env.API_URL}/api/v1/staff-sessions`, () =>
     HttpResponse.json({

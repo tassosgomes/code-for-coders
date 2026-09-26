@@ -3,6 +3,7 @@ using System;
 using CodeForCoders.Media.Infra.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CodeForCoders.Media.Infra.Data.Migrations
 {
     [DbContext(typeof(MediaDbContext))]
-    partial class MediaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926220704_PrepareVideoPlaybackAssets")]
+    partial class PrepareVideoPlaybackAssets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,7 +141,6 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                         .HasColumnName("preparation_attempts");
 
                     b.Property<Guid?>("PreparationLeaseId")
-                        .IsConcurrencyToken()
                         .HasColumnType("uuid")
                         .HasColumnName("preparation_lease_id");
 

@@ -32,6 +32,14 @@ public interface IMediaStoragePort
         string objectKey,
         string storageUploadId,
         CancellationToken cancellationToken);
+
+    Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken);
+
+    Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken);
+
+    Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken);
+
+    Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken);
 }
 
 public sealed record MediaUploadPart(int PartNumber, string ETag, long Size);

@@ -94,6 +94,17 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
         Func<VideoUpload, CancellationToken, Task> abortStorage,
         CancellationToken cancellationToken)
     {
+        var candidate = await dbContext.VideoUploads.IgnoreQueryFilters().AsNoTracking().SingleOrDefaultAsync(
+            upload => upload.UploadId == uploadId,
+            cancellationToken);
+        if (candidate is null || candidate.CompletedAt is not null || candidate.ExpiredAt is not null || candidate.ExpiresAt > now)
+        {
+            return false;
+        }
+
+        // Storage calls can take seconds. Do not hold the upload row lock while aborting the multipart upload.
+        await abortStorage(candidate, cancellationToken);
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT upload_id FROM media_access.video_uploads WHERE upload_id = {uploadId} FOR UPDATE",
@@ -115,7 +126,6 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
             return false;
         }
 
-        await abortStorage(upload, cancellationToken);
         upload.MarkExpired(now);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

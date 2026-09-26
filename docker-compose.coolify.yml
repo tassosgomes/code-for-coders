@@ -126,6 +126,8 @@ services:
       AwsMedia__AccessKeyId: ${AWS_ACCESS_KEY_ID:-}
       AwsMedia__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY:-}
       AwsMedia__ForcePathStyle: ${AWS_S3_FORCE_PATH_STYLE:-false}
+      Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in Coolify}
+      Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:?set in Coolify}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
