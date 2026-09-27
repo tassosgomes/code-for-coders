@@ -17,8 +17,6 @@ namespace CodeForCoders.BffAdmin.IntegrationTests;
 public sealed class AuditComplementConfirmationTests(BffAdminIntegrationFixture fixture)
 {
     private const string Explanation = "The access change was verified against the internal support case.";
-    private const string KeyVersion = "test-key-v1";
-    private static readonly string KeyBase64 = Convert.ToBase64String(Enumerable.Range(1, 32).Select(value => (byte)value).ToArray());
 
     [Fact(DisplayName = nameof(AuditComplementConfirmation_StoresCiphertextAndAnAuthenticatedFingerprint))]
     public async Task AuditComplementConfirmation_StoresCiphertextAndAnAuthenticatedFingerprint()
@@ -39,7 +37,7 @@ public sealed class AuditComplementConfirmationTests(BffAdminIntegrationFixture 
         Assert.Equal(draft.ConfirmationId, result.ConfirmationId);
         Assert.Equal("audit.events", message.DestinationExchange);
         Assert.Equal("auditoria.registro.complemento-confirmado.v1", message.RoutingKey);
-        Assert.Equal(KeyVersion, message.PayloadKeyVersion);
+        Assert.Equal(SharedOutboxTestProtection.KeyVersion, message.PayloadKeyVersion);
         Assert.DoesNotContain(Explanation, message.Payload, StringComparison.Ordinal);
         Assert.DoesNotContain(Explanation, JsonSerializer.Serialize(record), StringComparison.Ordinal);
         Assert.Equal(32, record.RequestHash.Length);
@@ -295,7 +293,11 @@ public sealed class AuditComplementConfirmationTests(BffAdminIntegrationFixture 
         => new(dbContext, new OutboxMessageWriter(dbContext, protector), protector);
 
     private static OutboxPayloadProtector CreateProtector()
-        => new(Options.Create(new OutboxProtectionOptions { KeyBase64 = KeyBase64, KeyVersion = KeyVersion }));
+        => new(Options.Create(new OutboxProtectionOptions
+        {
+            KeyBase64 = SharedOutboxTestProtection.KeyBase64,
+            KeyVersion = SharedOutboxTestProtection.KeyVersion,
+        }));
 
     private static AuditComplementConfirmationDraft CreateDraft(Guid tenantId)
     {

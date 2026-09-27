@@ -31,8 +31,8 @@ public sealed class BffAdminInfrastructureTests(BffAdminIntegrationFixture fixtu
             ["Outbox:PollingIntervalSeconds"] = "5",
             ["Outbox:BatchSize"] = "10",
             ["Outbox:MaxAttempts"] = "3",
-            ["OutboxProtection:KeyBase64"] = Convert.ToBase64String(Enumerable.Repeat((byte)1, 32).ToArray()),
-            ["OutboxProtection:KeyVersion"] = "integration-v1",
+            ["OutboxProtection:KeyBase64"] = SharedOutboxTestProtection.KeyBase64,
+            ["OutboxProtection:KeyVersion"] = SharedOutboxTestProtection.KeyVersion,
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
         };
 

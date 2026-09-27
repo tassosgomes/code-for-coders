@@ -22,9 +22,7 @@ namespace CodeForCoders.BffAdmin.IntegrationTests;
 [Collection(BffAdminIntegrationCollection.Name)]
 public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture fixture)
 {
-    private const string KeyVersion = "test-key-v1";
     private const string Explanation = "The access change was verified against the internal support case.";
-    private const string KeyBase64 = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=";
     private const string AuditRoutingKey = "auditoria.registro.complemento-confirmado.v1";
 
     [Fact(DisplayName = nameof(PublishesDecryptedConfirmationToTheAuditExchangeAndMarksItProcessed))]
@@ -440,7 +438,11 @@ public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture f
         };
 
     private static OutboxPayloadProtector CreateProtector()
-        => new(Options.Create(new OutboxProtectionOptions { KeyBase64 = KeyBase64, KeyVersion = KeyVersion }));
+        => new(Options.Create(new OutboxProtectionOptions
+        {
+            KeyBase64 = SharedOutboxTestProtection.KeyBase64,
+            KeyVersion = SharedOutboxTestProtection.KeyVersion,
+        }));
 
     private static int GetClosedLocalPort()
     {

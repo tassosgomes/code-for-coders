@@ -5,8 +5,8 @@
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "last_checkpoint": "6472550",
-  "phase": "full-fix",
+  "last_checkpoint": "4822431",
+  "phase": "checkpoint",
   "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -22,14 +22,14 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "3.0",
+    "task": "6.0",
     "role": "validator",
-    "run_id": "run.yV7GZthd",
+    "run_id": "run.xGySxsCi",
     "outcome": "approved"
   },
   "pending_delegation": {
     "role": "integrator",
-    "mode": "reopen-task",
+    "mode": "checkpoint-task",
     "task": "6.0"
   },
   "history": [
