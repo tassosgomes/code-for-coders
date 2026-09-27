@@ -38,6 +38,20 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
     }
 
     [Fact]
+    public async Task OldPreparingVideoIsStuckWithoutDuration()
+    {
+        await ResetAsync();
+        var old = Video.Create(Guid.CreateVersion7(), "Old preparation", Guid.CreateVersion7(), "Teacher", DateTimeOffset.UtcNow.AddHours(-13));
+        var recent = Video.Create(Guid.CreateVersion7(), "Recent preparation", Guid.CreateVersion7(), "Teacher", DateTimeOffset.UtcNow.AddHours(-1));
+        old.MarkPreparing(Guid.CreateVersion7(), DateTimeOffset.UtcNow.AddMinutes(5));
+        recent.MarkPreparing(Guid.CreateVersion7(), DateTimeOffset.UtcNow.AddMinutes(5));
+        await SeedAsync(old, recent);
+
+        var values = await CollectAsync();
+        Assert.Equal(1, values.Single(value => value.Name == "media.videos.stuck").Value);
+    }
+
+    [Fact]
     public async Task DurationControlsStuckThreshold()
     {
         await ResetAsync();
