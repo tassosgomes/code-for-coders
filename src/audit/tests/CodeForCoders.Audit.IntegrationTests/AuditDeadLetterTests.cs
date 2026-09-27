@@ -307,7 +307,10 @@ public sealed class AuditDeadLetterTests(AuditIntegrationFixture fixture)
             ["RabbitMq:DeadLetterExchange"] = "audit.integration.dead-letter-events.dlx",
             ["RabbitMq:AuditQueue"] = queueName,
             ["RabbitMq:EventRoutingKey"] = RoutingKey,
+            ["RabbitMq:AuditComplementQueue"] = $"audit.integration.dead-letter.complements.{Guid.CreateVersion7():N}",
             ["AuditDatabase:WriterRole"] = "code_for_coders_audit_writer",
+            ["AuditSnapshots:ConnectionString"] = fixture.Valkey.GetConnectionString(),
+            ["AuditSnapshots:KeyPrefix"] = $"audit:integration:{nameof(AuditDeadLetterTests)}:{Guid.CreateVersion7():N}:",
         };
 
         var host = Host.CreateDefaultBuilder()
