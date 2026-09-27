@@ -10,15 +10,16 @@ export const updateVideoTitleInputSchema = z.object({
 
 export type UpdateVideoTitleInput = z.infer<typeof updateVideoTitleInputSchema>;
 
-export const updateVideoTitle = async (videoId: string, input: UpdateVideoTitleInput) =>
+export const updateVideoTitle = async (videoId: string, input: UpdateVideoTitleInput, idempotencyKey: string) =>
   videoSchema.parse(await apiClient.patch<unknown>(`/api/v1/videos/${videoId}`, input, {
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    headers: { 'Idempotency-Key': idempotencyKey },
   }));
 
 export const useUpdateVideoTitle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ videoId, input }: { videoId: string; input: UpdateVideoTitleInput }) => updateVideoTitle(videoId, input),
+    mutationFn: ({ videoId, input, idempotencyKey }: { videoId: string; input: UpdateVideoTitleInput; idempotencyKey: string }) =>
+      updateVideoTitle(videoId, input, idempotencyKey),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['videos'] });
     },

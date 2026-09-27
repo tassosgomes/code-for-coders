@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker, useOutletContext, useSearchParams } from 'react-router';
 
 import type { StaffSession } from '@/features/staff-session/api/staff-session';
@@ -43,6 +43,7 @@ const VideosAreaContent = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = searchParams.get('status') ?? 'all';
   const search = searchParams.get('q') ?? '';
+  const [searchInput, setSearchInput] = useState(search);
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const statuses: VideoStatus[] = filter === 'progress' ? ['received', 'preparing']
     : filter === 'ready' || filter === 'failed' ? [filter] : [];
@@ -52,6 +53,7 @@ const VideosAreaContent = () => {
   const updateTitle = useUpdateVideoTitle();
   const [editingVideo, setEditingVideo] = useState<VideoPage['data'][number] | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [editIdempotencyKey, setEditIdempotencyKey] = useState('');
   const [titleUpdated, setTitleUpdated] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
@@ -62,13 +64,20 @@ const VideosAreaContent = () => {
   const operationControllerRef = useRef<AbortController | null>(null);
   const blocker = useBlocker(transferInProgress);
 
-  const changeFilters = (nextFilter: string, nextSearch: string, nextPage = 1) => {
+  const changeFilters = useCallback((nextFilter: string, nextSearch: string, nextPage = 1) => {
     const params = new URLSearchParams();
     if (nextFilter !== 'all') params.set('status', nextFilter);
     if (nextSearch.trim()) params.set('q', nextSearch);
     if (nextPage > 1) params.set('page', String(nextPage));
     setSearchParams(params);
-  };
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      if (searchInput !== search) changeFilters(filter, searchInput);
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput, search, filter, changeFilters]);
 
   useEffect(() => {
     if (!transferInProgress) return undefined;
@@ -354,11 +363,11 @@ const VideosAreaContent = () => {
       onRetryTransfer={() => void retryTransfer()}
       onResumeUpload={() => { setDialogError(null); setDialogOpen(true); }}
       filter={filter}
-      search={search}
-      onFilterChange={(value) => changeFilters(value, search)}
-      onSearchChange={(value) => changeFilters(filter, value)}
+      search={searchInput}
+      onFilterChange={(value) => changeFilters(value, searchInput)}
+      onSearchChange={setSearchInput}
       onPageChange={(value) => changeFilters(filter, search, value)}
-      onEditTitle={(video) => { setEditError(null); setTitleUpdated(false); setEditingVideo(video); }}
+      onEditTitle={(video) => { setEditError(null); setTitleUpdated(false); setEditIdempotencyKey(crypto.randomUUID()); setEditingVideo(video); }}
       titleUpdated={titleUpdated}
     />
     {editingVideo ? <EditVideoTitleDialog
@@ -369,11 +378,13 @@ const VideosAreaContent = () => {
       onClose={() => setEditingVideo(null)}
       onSave={async (input) => {
         try {
-          await updateTitle.mutateAsync({ videoId: editingVideo.videoId, input });
+          await updateTitle.mutateAsync({ videoId: editingVideo.videoId, input, idempotencyKey: editIdempotencyKey });
           setEditingVideo(null);
           setTitleUpdated(true);
-        } catch {
-          setEditError('Não conseguimos atualizar o título agora. Tente novamente.');
+        } catch (error) {
+          setEditError(getVideoUploadErrorCode(error) === 'TITLE_REQUIRED'
+            ? 'TITLE_REQUIRED'
+            : 'Não conseguimos atualizar o título agora. Tente novamente.');
         }
       }}
     /> : null}

@@ -95,6 +95,8 @@ services:
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
+      RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     healthcheck:
@@ -133,6 +135,8 @@ services:
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
+      RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     volumes:

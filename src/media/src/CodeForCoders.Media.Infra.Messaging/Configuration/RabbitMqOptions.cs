@@ -30,6 +30,15 @@ public sealed class RabbitMqOptions
     [Required]
     public string HeartbeatQueue { get; set; } = "media.platform-heartbeat";
 
+    [Required]
+    public string AuditQueue { get; set; } = "media.events.audit";
+
+    [Range(1, int.MaxValue)]
+    public int AuditMessageTtlMilliseconds { get; set; } = 604800000;
+
+    [Range(1, int.MaxValue)]
+    public int AuditMaxLength { get; set; } = 100000;
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 

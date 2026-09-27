@@ -21,9 +21,14 @@ public sealed class UpdateVideoTitle(
             throw new MediaApiException(400, "INVALID_REQUEST", "A valid idempotency key is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(input.Title) || input.Title.Length > 200)
+        if (string.IsNullOrWhiteSpace(input.Title))
         {
             throw new MediaApiException(422, "TITLE_REQUIRED", "A video title is required.");
+        }
+
+        if (input.Title.Length > 200)
+        {
+            throw new MediaApiException(400, "INVALID_REQUEST", "A video title must contain at most 200 characters.");
         }
 
         var now = timeProvider.GetUtcNow();

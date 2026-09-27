@@ -39,6 +39,7 @@ public static class DependencyInjection
             services.AddSingleton<IVideoTranscoder, FfmpegVideoTranscoder>();
             services.AddHostedService<ExpiredVideoUploadWorker>();
             services.AddHostedService<VideoPreparationWorker>();
+            services.AddHostedService<MediaVolumeMetricsWorker>();
         }
 
         return services;

@@ -6,6 +6,8 @@ x-api-environment: &api-environment
   RabbitMq__Host: rabbitmq
   RabbitMq__Username: code_for_coders
   RabbitMq__Password: code-for-coders-local
+  RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
+  RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
   Valkey__ConnectionString: valkey:6379,abortConnect=false
   OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
 

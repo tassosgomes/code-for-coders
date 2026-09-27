@@ -1,12 +1,16 @@
 using CodeForCoders.Media.Application;
 using CodeForCoders.Media.Application.Common;
+using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Application.UseCases.Platform.RecordPlatformHeartbeat;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging;
+using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
@@ -14,6 +18,51 @@ namespace CodeForCoders.Media.IntegrationTests;
 [Collection(MediaIntegrationCollection.Name)]
 public sealed class MediaInfrastructureTests(MediaIntegrationFixture fixture)
 {
+    [Fact]
+    public async Task AuditQueueReceivesBothMediaEventsWithoutNoRoute()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var suffix = Guid.CreateVersion7().ToString("N");
+        var settings = Options.Create(new RabbitMqOptions
+        {
+            Host = fixture.RabbitMq.Hostname,
+            Port = fixture.RabbitMq.GetMappedPublicPort(5672),
+            Username = "code_for_coders",
+            Password = "code_for_coders",
+            Exchange = $"media.integration.audit.{suffix}",
+            DeadLetterExchange = $"media.integration.audit.dlx.{suffix}",
+            HeartbeatQueue = $"media.integration.heartbeat.{suffix}",
+            AuditQueue = $"media.integration.events.audit.{suffix}",
+        });
+        await using var connection = new RabbitMqConnectionProvider(settings);
+        var topology = new RabbitMqTopologyInitializer(connection, settings);
+        await topology.StartAsync(cancellationToken);
+        var publisher = new RabbitMqPublisher(connection, settings);
+        var routingKeys = new[] { "midia.ativo-pronto.v1", "midia.preparacao-falhou.v1" };
+        foreach (var routingKey in routingKeys)
+        {
+            var draft = new OutboxMessageDraft(Guid.CreateVersion7(), Guid.CreateVersion7(), routingKey, routingKey, new { }, DateTimeOffset.UtcNow, null);
+            await publisher.PublishAsync(OutboxMessage.Create(draft, "{}"), cancellationToken);
+        }
+
+        await using var channel = await connection.CreateChannelAsync(cancellationToken);
+        var received = new List<string>();
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(10);
+        while (received.Count < 2 && DateTimeOffset.UtcNow < deadline)
+        {
+            var delivery = await channel.BasicGetAsync(settings.Value.AuditQueue, autoAck: true, cancellationToken);
+            if (delivery is null)
+            {
+                await Task.Delay(100, cancellationToken);
+                continue;
+            }
+
+            received.Add(delivery.RoutingKey);
+        }
+
+        Assert.Equal(routingKeys.Order(), received.Order());
+    }
+
     [Fact]
     public async Task HeartbeatFlowsThroughOutboxRabbitMqAndConsumer()
     {

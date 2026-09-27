@@ -100,6 +100,40 @@ public sealed class VideoTitleSearchTests(VideoLibraryApiFactory factory)
         Assert.Equal("TITLE_REQUIRED", document.RootElement.GetProperty("code").GetString());
     }
 
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"title\":null}")]
+    public async Task MissingTitleReturnsTitleRequired(string body)
+    {
+        var tenant = Guid.CreateVersion7();
+        var video = Create(tenant, "Original");
+        await SeedAsync(video);
+        using var client = factory.CreateClient();
+        using var request = Request(HttpMethod.Patch, $"/internal/v1/videos/{video.VideoId:D}", tenant);
+        request.Headers.Add("Idempotency-Key", "missing-title");
+        request.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var document = await ReadAsync(response);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal("TITLE_REQUIRED", document.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task TitleOverTwoHundredCharactersReturnsInvalidRequest()
+    {
+        var tenant = Guid.CreateVersion7();
+        var video = Create(tenant, "Original");
+        await SeedAsync(video);
+        using var client = factory.CreateClient();
+        using var request = Request(HttpMethod.Patch, $"/internal/v1/videos/{video.VideoId:D}", tenant);
+        request.Headers.Add("Idempotency-Key", "long-title");
+        request.Content = JsonContent.Create(new { title = new string('a', 201) });
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var document = await ReadAsync(response);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("INVALID_REQUEST", document.RootElement.GetProperty("code").GetString());
+    }
+
     [Fact]
     public async Task RenameOfAnotherTenantReturnsNotFound()
     {

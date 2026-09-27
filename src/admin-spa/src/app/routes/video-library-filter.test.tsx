@@ -49,15 +49,18 @@ describe('video library filters', () => {
 
   it('searches by title and offers to clear an empty result', async () => {
     const user = userEvent.setup();
+    const searchedTitles: string[] = [];
     server.use(http.get(`${env.API_URL}/api/v1/videos`, ({ request }) => {
       const query = new URL(request.url).searchParams.get('q');
+      if (query) searchedTitles.push(query);
       return HttpResponse.json(page(query === 'injecao' ? [videos[0]!] : query ? [] : videos));
     }));
     renderRoute();
     expect(await screen.findByText('Aula falhada')).toBeInTheDocument();
     await user.type(screen.getByRole('searchbox', { name: 'Buscar título' }), 'injecao');
+    expect(await screen.findByText('Injeção de dependência')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Aula falhada')).not.toBeInTheDocument());
-    expect(screen.getByText('Injeção de dependência')).toBeInTheDocument();
+    expect(searchedTitles).toEqual(['injecao']);
     await user.clear(screen.getByRole('searchbox', { name: 'Buscar título' }));
     await user.type(screen.getByRole('searchbox', { name: 'Buscar título' }), 'ausente');
     expect(await screen.findByText('Nenhum vídeo encontrado com esses filtros.')).toBeInTheDocument();
@@ -88,5 +91,34 @@ describe('video library filters', () => {
     expect(await screen.findByText('Aula corrigida')).toBeInTheDocument();
     expect(screen.getByText('Pronto · 0:20')).toBeInTheDocument();
     expect(screen.getByText('Título atualizado')).toBeInTheDocument();
+  });
+
+  it('shows server title errors in the field and reuses the retry key', async () => {
+    const user = userEvent.setup();
+    const keys: string[] = [];
+    let attempts = 0;
+    server.use(
+      http.get(`${env.API_URL}/api/v1/videos`, () => HttpResponse.json(page([videos[0]!]))),
+      http.patch(`${env.API_URL}/api/v1/videos/:videoId`, ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key') ?? '');
+        attempts += 1;
+        return attempts === 1
+          ? HttpResponse.json({ code: 'TITLE_REQUIRED' }, { status: 422 })
+          : HttpResponse.json({ ...videos[0], title: 'Aula corrigida' });
+      }),
+    );
+    renderRoute();
+    await screen.findByText('Injeção de dependência');
+    await user.click(screen.getByRole('button', { name: 'Editar título de Injeção de dependência' }));
+    const title = screen.getByRole('textbox', { name: 'Título' });
+    await user.clear(title);
+    await user.type(title, 'Aula corrigida');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    expect(await screen.findByText('Dê um título para reconhecer o vídeo.')).toHaveClass('field-error');
+    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    await screen.findByText('Título atualizado');
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toBeTruthy();
+    expect(keys[1]).toBe(keys[0]);
   });
 });
