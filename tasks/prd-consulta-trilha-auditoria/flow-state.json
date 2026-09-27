@@ -5,9 +5,9 @@
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "last_checkpoint": "d724414",
-  "phase": "checkpoint",
-  "active_task": "3.0",
+  "last_checkpoint": "6472550",
+  "phase": "full-fix",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -29,8 +29,8 @@
   },
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "3.0"
+    "mode": "reopen-task",
+    "task": "6.0"
   },
   "history": [
     {
@@ -125,6 +125,18 @@
       "event": "reopen",
       "task": "3.0",
       "run_id": "run.GfLynAcV",
+      "source": "run.8EPhaVq4"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "6472550",
+      "cycle": "full 1"
+    },
+    {
+      "event": "reopen",
+      "task": "6.0",
+      "run_id": "run.Vg5Aba2v",
       "source": "run.8EPhaVq4"
     }
   ]
