@@ -60,7 +60,7 @@ describe('video library filters', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Buscar título' }), 'injecao');
     expect(await screen.findByText('Injeção de dependência')).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByText('Aula falhada')).not.toBeInTheDocument());
-    expect(searchedTitles).toEqual(['injecao']);
+    await waitFor(() => expect(searchedTitles).toEqual(['injecao']));
     await user.clear(screen.getByRole('searchbox', { name: 'Buscar título' }));
     await user.type(screen.getByRole('searchbox', { name: 'Buscar título' }), 'ausente');
     expect(await screen.findByText('Nenhum vídeo encontrado com esses filtros.')).toBeInTheDocument();
