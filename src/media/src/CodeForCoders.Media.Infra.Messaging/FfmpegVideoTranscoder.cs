@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
+using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +13,8 @@ namespace CodeForCoders.Media.Infra.Messaging;
 
 public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> options) : IVideoTranscoder
 {
+    private const int MaximumDurationSeconds = 10_800;
+
     public async Task<VideoTranscodeResult> TranscodeAsync(
         string sourcePath,
         string outputDirectory,
@@ -19,6 +22,23 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
         CancellationToken cancellationToken)
     {
         var probe = await ProbeAsync(sourcePath, cancellationToken);
+        if (probe.FailureReason is not null)
+        {
+            return VideoTranscodeResult.Failed(probe.FailureReason);
+        }
+
+        var decodeCheck = await RunProcessAsync(
+            options.Value.FfmpegPath,
+            [
+                "-hide_banner", "-loglevel", "error", "-i", sourcePath,
+                "-map", "0:v:0", "-frames:v", "1", "-f", "null", "-",
+            ],
+            cancellationToken);
+        if (decodeCheck.ExitCode != 0)
+        {
+            return VideoTranscodeResult.Failed(VideoFailureReasons.UnsupportedFormat);
+        }
+
         var qualities = VideoQualityLadder.Select(probe.Width, probe.Height);
         Directory.CreateDirectory(outputDirectory);
         foreach (var quality in qualities)
@@ -46,32 +66,66 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
             [
                 "-v", "error",
                 "-select_streams", "v:0",
-                "-show_entries", "stream=width,height:format=duration",
+                "-show_entries", "stream=width,height,codec_name:format=duration",
                 "-of", "json",
                 sourcePath,
             ],
             cancellationToken);
-        using var document = JsonDocument.Parse(output);
-        if (!document.RootElement.TryGetProperty("streams", out var streams)
-            || streams.GetArrayLength() == 0)
+        if (output.ExitCode != 0)
         {
-            throw new InvalidOperationException("The uploaded file does not contain a video stream.");
+            return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
         }
 
-        var stream = streams[0];
-        var width = stream.GetProperty("width").GetInt32();
-        var height = stream.GetProperty("height").GetInt32();
-        var durationText = document.RootElement.GetProperty("format").GetProperty("duration").GetString();
-        if (!double.TryParse(durationText, NumberStyles.Float, CultureInfo.InvariantCulture, out var duration))
+        try
         {
-            throw new InvalidOperationException("The uploaded video duration is invalid.");
-        }
-        if (width < 1 || height < 1 || duration <= 0)
-        {
-            throw new InvalidOperationException("The uploaded video metadata is invalid.");
-        }
+            using var document = JsonDocument.Parse(output.StandardOutput);
+            if (!document.RootElement.TryGetProperty("streams", out var streams)
+                || streams.GetArrayLength() == 0)
+            {
+                return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+            }
 
-        return new ProbeResult(width, height, checked((int)Math.Ceiling(duration)));
+            var stream = streams[0];
+            if (!stream.TryGetProperty("width", out var widthElement)
+                || !stream.TryGetProperty("height", out var heightElement)
+                || !document.RootElement.TryGetProperty("format", out var format)
+                || !format.TryGetProperty("duration", out var durationElement))
+            {
+                return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+            }
+
+            var width = widthElement.GetInt32();
+            var height = heightElement.GetInt32();
+            var durationText = durationElement.GetString();
+            if (!double.TryParse(durationText, NumberStyles.Float, CultureInfo.InvariantCulture, out var duration)
+                || width < 1
+                || height < 1
+                || duration <= 0)
+            {
+                return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+            }
+
+            if (duration > MaximumDurationSeconds)
+            {
+                return ProbeResult.Failed(VideoFailureReasons.DurationExceeded);
+            }
+
+            if (!stream.TryGetProperty("codec_name", out var codecNameElement)
+                || string.IsNullOrWhiteSpace(codecNameElement.GetString()))
+            {
+                return ProbeResult.Failed(VideoFailureReasons.UnsupportedFormat);
+            }
+
+            return new ProbeResult(width, height, checked((int)Math.Ceiling(duration)), null);
+        }
+        catch (JsonException)
+        {
+            return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+        }
+        catch (InvalidOperationException)
+        {
+            return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+        }
     }
 
     private async Task RunFfmpegAsync(
@@ -96,6 +150,7 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
                 "-map", "0:a:0?",
                 "-vf", $"scale=-2:{quality.Height}",
                 "-c:v", "libx264",
+                "-threads:v", options.Value.Threads.ToString(CultureInfo.InvariantCulture),
                 "-preset", "veryfast",
                 "-pix_fmt", "yuv420p",
                 "-b:v", $"{quality.Bandwidth / 1000}k",
@@ -115,7 +170,11 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
             ]);
         }
 
-        await RunProcessAsync(options.Value.FfmpegPath, arguments, cancellationToken);
+        var process = await RunProcessAsync(options.Value.FfmpegPath, arguments, cancellationToken);
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"Video preparation tool exited with code {process.ExitCode}.");
+        }
     }
 
     private static async Task WriteMasterPlaylistAsync(
@@ -147,7 +206,7 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
         "Design",
         "CA1031:Do not catch general exception types",
         Justification = "The child process must be terminated and awaited if cancellation occurs.")]
-    private static async Task<string> RunProcessAsync(
+    private static async Task<ProcessResult> RunProcessAsync(
         string executable,
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken)
@@ -187,12 +246,7 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
 
         _ = await standardError;
         var output = await standardOutput;
-        if (process.ExitCode != 0)
-        {
-            throw new InvalidOperationException($"Video preparation tool exited with code {process.ExitCode}.");
-        }
-
-        return output;
+        return new ProcessResult(process.ExitCode, output);
     }
 
     private static Activity? StartActivity(string name)
@@ -202,5 +256,10 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
         return activity;
     }
 
-    private sealed record ProbeResult(int Width, int Height, int DurationSeconds);
+    private sealed record ProbeResult(int Width, int Height, int DurationSeconds, string? FailureReason)
+    {
+        public static ProbeResult Failed(string reason) => new(0, 0, 0, reason);
+    }
+
+    private sealed record ProcessResult(int ExitCode, string StandardOutput);
 }

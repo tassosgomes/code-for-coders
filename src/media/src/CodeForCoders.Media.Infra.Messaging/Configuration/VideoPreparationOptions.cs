@@ -13,6 +13,8 @@ public sealed class VideoPreparationOptions
 
     public int MaxConcurrency { get; set; } = 1;
 
+    public int Threads { get; set; } = 2;
+
     public int LeaseDurationSeconds { get; set; } = 300;
 
     public int LeaseRenewalIntervalSeconds { get; set; } = 60;
@@ -48,6 +50,7 @@ public sealed class VideoPreparationOptions
         => !string.IsNullOrWhiteSpace(WorkDirectory)
             && PollingIntervalSeconds is >= 1 and <= 300
             && MaxConcurrency is >= 1 and <= 8
+            && Threads is >= 1 and <= 16
             && LeaseDurationSeconds is >= 30 and <= 3600
             && LeaseRenewalIntervalSeconds >= 5
             && LeaseRenewalIntervalSeconds < LeaseDurationSeconds

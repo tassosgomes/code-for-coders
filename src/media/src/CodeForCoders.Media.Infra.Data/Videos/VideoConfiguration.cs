@@ -94,6 +94,6 @@ public sealed class VideoConfiguration : IEntityTypeConfiguration<Video>
             .HasFilter("status = 'preparing'");
         builder.HasIndex(video => new { video.Status, video.OriginalDeletedAt })
             .HasDatabaseName("ix_videos_original_cleanup")
-            .HasFilter("status = 'ready' AND original_deleted_at IS NULL");
+            .HasFilter("status IN ('ready', 'failed') AND original_deleted_at IS NULL");
     }
 }

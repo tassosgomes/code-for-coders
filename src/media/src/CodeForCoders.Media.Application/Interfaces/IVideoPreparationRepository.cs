@@ -18,9 +18,12 @@ public interface IVideoPreparationRepository
         DateTimeOffset leaseUntil,
         CancellationToken cancellationToken);
 
-    Task<int> ReleaseExpiredLeasesAsync(DateTimeOffset now, int batchSize, CancellationToken cancellationToken);
+    Task<IReadOnlyList<VideoPreparationLease>> GetExpiredLeasesAsync(
+        DateTimeOffset now,
+        int batchSize,
+        CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<VideoOriginalCleanup>> GetReadyOriginalsForCleanupAsync(
+    Task<IReadOnlyList<VideoOriginalCleanup>> GetFinalOriginalsForCleanupAsync(
         int batchSize,
         CancellationToken cancellationToken);
 
@@ -34,4 +37,4 @@ public sealed record VideoPreparationLease(
     long OriginalSizeBytes,
     string? CorrelationId);
 
-public sealed record VideoOriginalCleanup(Guid VideoId, string OriginalObjectKey);
+public sealed record VideoOriginalCleanup(Guid VideoId, string OriginalObjectKey, string Status);

@@ -39,6 +39,18 @@ export const videoStatusFixtures = {
     durationSeconds: 20,
     failureReason: null,
   },
+  failed: {
+    videoId: 'd3844c70-62d3-5f3d-93d9-7ef705301ea8',
+    title: 'Aula de exemplo',
+    status: 'failed',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: 'unreadable-file',
+  },
 } as const;
 
 export const handlers = [

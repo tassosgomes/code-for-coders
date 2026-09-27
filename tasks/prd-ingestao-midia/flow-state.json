@@ -4,9 +4,9 @@
   "original_base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
   "base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
   "target_ref": null,
-  "last_checkpoint": "023969ad8e88b220a9a53dc9dc18b4cc5e5c5d77",
+  "last_checkpoint": "77e50b6",
   "phase": "checkpoint",
-  "active_task": "7.0",
+  "active_task": "8.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,10 +19,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.yynXkV2q",
+    "run_id": "run.hOLk3dDD",
     "role": "validator",
     "mode": "revalidation",
-    "task": "7.0",
+    "task": "8.0",
     "outcome": "approved"
   },
   "pending_delegation": {
@@ -165,6 +165,59 @@
       "task": "7.0",
       "run_id": "run.yynXkV2q",
       "note": "revalidação 2/3 aprovada; gate exit 0; smoke Compose com versão corrigida: vídeo passa a Pronto sem recarregar"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "7.0",
+      "commit": "77e50b6",
+      "run_id": "run.AQgvUPpw"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "8.0",
+      "attempt": 1
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "routing_override",
+      "note": "usuário pediu escalar para gpt-6-sol high na próxima task ou nova tentativa"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "8.0",
+      "run_id": "run.F7JqP21K",
+      "note": "gate 7 Media + 2 SPA; checks ok; smoke falha ilegível ok"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "rejected",
+      "task": "8.0",
+      "run_id": "run.eLvb8fNi",
+      "note": "B1: codec desconhecido classificado como unreadable-file; teste usa wrapper. R1-R4 recomendações"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "8.0",
+      "attempt": 2,
+      "note": "fix com codex gpt-6-sol high (override do usuário)"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "8.0",
+      "run_id": "run.Q5TfdHu3",
+      "note": "B1, R1, R3 corrigidos; R2 justificado sem migration; smoke dois motivos ok"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "approved",
+      "task": "8.0",
+      "run_id": "run.hOLk3dDD",
+      "note": "revalidação 2/3; B1 fechado; R2 aceito com risco"
     }
   ],
   "carryover": {
@@ -176,12 +229,21 @@
     ],
     "9.0": [
       "6.0-R3: total da listagem de pendentes conta envios descartados",
-      "6.0-R4: VideoUploadResumeTests usa page/size em vez de _page/_size"
+      "6.0-R4: VideoUploadResumeTests usa page/size em vez de _page/_size",
+      "8.0-R5: publicação do outbox devolve 312 NO_ROUTE em media.events sem fila ligada no Compose (ativo-pronto e preparacao-falhou acumulam tentativas); decidir tratamento no publisher ou fila de auditoria no Compose",
+      "8.0-R4: validar payload de preparacao-falhou contra schema AsyncAPI e header correlationId"
     ],
     "8.0": [
       "7.0-R7: falha de item deixa vídeo preparing até a lease vencer e volta a received sem limite; fechar com D-03",
       "7.0-R4: opção de threads do ffmpeg por configuração (D-04)",
       "7.0-R6: backfill único de original_object_key na migration em vez do COALESCE/LEFT JOIN permanente"
     ]
+  },
+  "routing_override": {
+    "applies_to": "implementer: tentativas de fix da 8.0 e tasks 9.0+",
+    "kind": "codex",
+    "model": "gpt-6-sol",
+    "effort": "high",
+    "source": "pedido do usuário 2026-09-26"
   }
 }

@@ -29,6 +29,16 @@ const videoStatusLabels = {
   failed: 'Falhou',
 } as const;
 
+const videoFailureMessages: Record<string, string> = {
+  'unreadable-file': 'Arquivo de vídeo ilegível.',
+  'unsupported-format': 'Formato de vídeo não suportado.',
+  'duration-exceeded': 'Duração acima de 3 horas.',
+  'preparation-failed': 'Não foi possível preparar este vídeo — envie novamente.',
+};
+
+const formatVideoFailure = (reason: string) => videoFailureMessages[reason]
+  ?? 'Não foi possível preparar este vídeo — envie novamente.';
+
 const formatDate = (value: string) => new Intl.DateTimeFormat('pt-BR', {
   dateStyle: 'medium',
   timeStyle: 'short',
@@ -129,7 +139,14 @@ export const VideosAreaScreen = ({
         <span className="row-muted">{video.uploadedBy.name}</span>
         <div className={`video-status ${video.status}`}><span aria-hidden="true" />
           {formatVideoStatus(video)}
-          {video.failureReason ? <small>{video.failureReason}</small> : null}
+          {video.failureReason ? <small>{formatVideoFailure(video.failureReason)}</small> : null}
+          {video.status === 'failed' && onUpload ? <button
+            aria-label={`Enviar ${video.title} de novo`}
+            className="video-retry-link"
+            disabled={uploadDisabled}
+            onClick={onUpload}
+            type="button"
+          >Enviar de novo</button> : null}
         </div>
         <time className="row-muted" dateTime={video.uploadedAt}>{formatDate(video.uploadedAt)}</time>
       </div>)}

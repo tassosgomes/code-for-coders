@@ -39,15 +39,20 @@ public sealed class PrepareVideo(
     }
 
     public Task<int> RecoverExpiredLeasesAsync(int batchSize, CancellationToken cancellationToken)
-        => videos.ReleaseExpiredLeasesAsync(timeProvider.GetUtcNow(), batchSize, cancellationToken);
+        => RecoverExpiredLeasesCoreAsync(batchSize, cancellationToken);
 
-    public async Task<int> CleanupReadyOriginalsAsync(int batchSize, CancellationToken cancellationToken)
+    public async Task<int> CleanupFinalArtifactsAsync(int batchSize, CancellationToken cancellationToken)
     {
-        var cleanups = await videos.GetReadyOriginalsForCleanupAsync(batchSize, cancellationToken);
+        var cleanups = await videos.GetFinalOriginalsForCleanupAsync(batchSize, cancellationToken);
         var deleted = 0;
         foreach (var cleanup in cleanups)
         {
             using var activity = StartActivity("media.video.delete-original");
+            if (cleanup.Status == "failed")
+            {
+                await storage.DeletePrefixAsync(GetHlsObjectPrefix(cleanup.OriginalObjectKey), cancellationToken);
+            }
+
             await storage.DeleteObjectAsync(cleanup.OriginalObjectKey, cancellationToken);
             if (await videos.MarkOriginalDeletedAsync(cleanup.VideoId, timeProvider.GetUtcNow(), cancellationToken))
             {
@@ -59,6 +64,10 @@ public sealed class PrepareVideo(
         return deleted;
     }
 
+    [SuppressMessage(
+        "Design",
+        "CA1031:Do not catch general exception types",
+        Justification = "Unexpected per-item preparation failures are persisted and retried with a bounded policy.")]
     private async Task PrepareClaimedVideoAsync(
         VideoPreparationLease lease,
         string workDirectory,
@@ -78,45 +87,71 @@ public sealed class PrepareVideo(
 
         try
         {
-            Directory.CreateDirectory(videoDirectory);
-            Directory.CreateDirectory(hlsDirectory);
-            await WritePrivateFileAsync(keyPath, videoKey, processingCancellation.Token);
-            await File.WriteAllLinesAsync(
-                keyInfoPath,
-                [$"c4c-key:{lease.VideoId:D}", keyPath],
-                processingCancellation.Token);
-            SetPrivateFileMode(keyInfoPath);
-            leaseRenewal = RenewLeaseUntilCanceledAsync(
-                lease,
-                leaseDuration,
-                leaseRenewalInterval,
-                processingCancellation,
-                renewalCancellation.Token);
-
-            using (StartActivity("media.video.download"))
+            try
             {
-                await storage.DownloadObjectAsync(lease.OriginalObjectKey, sourcePath, processingCancellation.Token);
-            }
+                Directory.CreateDirectory(videoDirectory);
+                Directory.CreateDirectory(hlsDirectory);
+                await WritePrivateFileAsync(keyPath, videoKey, processingCancellation.Token);
+                await File.WriteAllLinesAsync(
+                    keyInfoPath,
+                    [$"c4c-key:{lease.VideoId:D}", keyPath],
+                    processingCancellation.Token);
+                SetPrivateFileMode(keyInfoPath);
+                leaseRenewal = RenewLeaseUntilCanceledAsync(
+                    lease,
+                    leaseDuration,
+                    leaseRenewalInterval,
+                    processingCancellation,
+                    renewalCancellation.Token);
 
-            var result = await transcoder.TranscodeAsync(
-                sourcePath,
-                hlsDirectory,
-                keyInfoPath,
-                processingCancellation.Token);
-            var protectedKey = keyProtector.Protect(lease.VideoId, videoKey);
+                using (StartActivity("media.video.download"))
+                {
+                    await storage.DownloadObjectAsync(lease.OriginalObjectKey, sourcePath, processingCancellation.Token);
+                }
 
-            using (StartActivity("media.video.publish"))
-            {
-                await storage.UploadDirectoryAsync(
-                    hlsDirectory,
+                await storage.DeletePrefixAsync(
                     GetHlsObjectPrefix(lease.OriginalObjectKey),
                     processingCancellation.Token);
-            }
+                var result = await transcoder.TranscodeAsync(
+                    sourcePath,
+                    hlsDirectory,
+                    keyInfoPath,
+                    processingCancellation.Token);
+                if (result.FailureReason is not null)
+                {
+                    renewalCancellation.Cancel();
+                    await leaseRenewal;
+                    await RecordFailureAsync(lease, result.FailureReason, stoppingToken);
+                    return;
+                }
 
-            renewalCancellation.Cancel();
-            await leaseRenewal;
-            processingCancellation.Token.ThrowIfCancellationRequested();
-            await CompletePreparationAsync(lease, result, protectedKey, stoppingToken);
+                var protectedKey = keyProtector.Protect(lease.VideoId, videoKey);
+
+                using (StartActivity("media.video.publish"))
+                {
+                    await storage.UploadDirectoryAsync(
+                        hlsDirectory,
+                        GetHlsObjectPrefix(lease.OriginalObjectKey),
+                        processingCancellation.Token);
+                }
+
+                renewalCancellation.Cancel();
+                await leaseRenewal;
+                processingCancellation.Token.ThrowIfCancellationRequested();
+                await CompletePreparationAsync(lease, result, protectedKey, stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "A video preparation attempt failed and will be retried when eligible.");
+                renewalCancellation.Cancel();
+                await leaseRenewal;
+                await RecordFailureAsync(lease, VideoFailureReasons.PreparationFailed, stoppingToken);
+                return;
+            }
 
             try
             {
@@ -182,6 +217,106 @@ public sealed class PrepareVideo(
             throw new InvalidOperationException("The video preparation lease was lost before the ready commit.");
         }
     }
+
+    private async Task<int> RecoverExpiredLeasesCoreAsync(int batchSize, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        var expiredLeases = await videos.GetExpiredLeasesAsync(now, batchSize, cancellationToken);
+        var recovered = 0;
+        foreach (var lease in expiredLeases)
+        {
+            try
+            {
+                if (await RecordFailureAsync(lease, VideoFailureReasons.PreparationFailed, cancellationToken))
+                {
+                    recovered++;
+                }
+            }
+            catch (ConcurrencyConflictException)
+            {
+                // A different worker already recovered or completed this lease.
+            }
+        }
+
+        return recovered;
+    }
+
+    private async Task<bool> RecordFailureAsync(
+        VideoPreparationLease lease,
+        string reason,
+        CancellationToken cancellationToken)
+    {
+        var video = await videos.GetClaimedAsync(lease.VideoId, lease.LeaseId, cancellationToken);
+        if (video is null)
+        {
+            return false;
+        }
+
+        var now = timeProvider.GetUtcNow();
+        if (reason == VideoFailureReasons.PreparationFailed
+            && video.PreparationAttempts < Video.MaximumPreparationAttempts)
+        {
+            video.SchedulePreparationRetry(lease.LeaseId, now.Add(GetRetryDelay(video.PreparationAttempts)));
+            await unitOfWork.CommitAsync(cancellationToken);
+            await TryDeletePartialHlsAsync(lease, cancellationToken);
+            return true;
+        }
+
+        video.MarkFailed(lease.LeaseId, reason);
+        var eventId = Guid.CreateVersion7(now);
+        await outbox.AppendAsync(
+            new OutboxMessageDraft(
+                eventId,
+                video.TenantId,
+                "PreparacaoFalhouV1",
+                "midia.preparacao-falhou.v1",
+                new PreparacaoFalhouV1(eventId, video.TenantId, video.VideoId, now, reason),
+                now,
+                lease.CorrelationId),
+            cancellationToken);
+        await unitOfWork.CommitAsync(cancellationToken);
+        await TryCleanupFailedArtifactsAsync(lease, cancellationToken);
+        return true;
+    }
+
+    private async Task TryDeletePartialHlsAsync(VideoPreparationLease lease, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await storage.DeletePrefixAsync(GetHlsObjectPrefix(lease.OriginalObjectKey), cancellationToken);
+        }
+        catch (StorageUnavailableException exception)
+        {
+            logger.LogWarning(exception, "Partial HLS objects will be removed before the next preparation attempt.");
+        }
+    }
+
+    private async Task TryCleanupFailedArtifactsAsync(
+        VideoPreparationLease lease,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await storage.DeletePrefixAsync(GetHlsObjectPrefix(lease.OriginalObjectKey), cancellationToken);
+            await storage.DeleteObjectAsync(lease.OriginalObjectKey, cancellationToken);
+            if (await videos.MarkOriginalDeletedAsync(lease.VideoId, timeProvider.GetUtcNow(), cancellationToken))
+            {
+                await unitOfWork.CommitAsync(cancellationToken);
+            }
+        }
+        catch (StorageUnavailableException exception)
+        {
+            logger.LogWarning(exception, "Failed video artifacts will be removed by a later cleanup cycle.");
+        }
+    }
+
+    private static TimeSpan GetRetryDelay(int attempts)
+        => attempts switch
+        {
+            1 => TimeSpan.FromMinutes(1),
+            2 => TimeSpan.FromMinutes(5),
+            _ => throw new InvalidOperationException("The video preparation retry count is invalid."),
+        };
 
     [SuppressMessage(
         "Design",

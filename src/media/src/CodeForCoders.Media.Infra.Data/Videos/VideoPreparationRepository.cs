@@ -28,16 +28,15 @@ public sealed class VideoPreparationRepository(MediaDbContext dbContext) : IVide
             command.CommandText = $"""
                 WITH candidate AS (
                     SELECT video.video_id,
-                           COALESCE(NULLIF(video.original_object_key, ''), upload.object_key) AS original_object_key,
-                           COALESCE(NULLIF(video.original_size_bytes, 0), upload.file_size) AS original_size_bytes
+                           video.original_object_key,
+                           video.original_size_bytes
                     FROM {MediaSchema.Name}.videos AS video
-                    LEFT JOIN {MediaSchema.Name}.video_uploads AS upload
-                      ON upload.video_id = video.video_id
-                     AND upload.completed_at IS NOT NULL
                     WHERE video.status = 'received'
+                      AND video.preparation_attempts < {Video.MaximumPreparationAttempts}
                       AND (video.next_preparation_at IS NULL OR video.next_preparation_at <= @now)
-                      AND COALESCE(NULLIF(video.original_object_key, ''), upload.object_key) IS NOT NULL
-                      AND COALESCE(NULLIF(video.original_size_bytes, 0), upload.file_size) <= @maximum_original_size
+                      AND video.original_object_key <> ''
+                      AND video.original_size_bytes > 0
+                      AND video.original_size_bytes <= @maximum_original_size
                     ORDER BY video.uploaded_at, video.video_id
                     LIMIT 1
                     FOR UPDATE OF video SKIP LOCKED
@@ -109,47 +108,44 @@ public sealed class VideoPreparationRepository(MediaDbContext dbContext) : IVide
         return changed == 1;
     }
 
-    public Task<int> ReleaseExpiredLeasesAsync(
+    public async Task<IReadOnlyList<VideoPreparationLease>> GetExpiredLeasesAsync(
         DateTimeOffset now,
         int batchSize,
         CancellationToken cancellationToken)
-    {
-        var command = $"""
-            WITH expired AS (
-                SELECT video_id
-                FROM {MediaSchema.Name}.videos
-                WHERE status = 'preparing'
-                  AND preparation_lease_until <= @now
-                ORDER BY preparation_lease_until, video_id
-                LIMIT @batchSize
-                FOR UPDATE SKIP LOCKED
-            )
-            UPDATE {MediaSchema.Name}.videos AS video
-            SET status = 'received',
-                preparation_lease_id = NULL,
-                preparation_lease_until = NULL,
-                next_preparation_at = @now
-            FROM expired
-            WHERE video.video_id = expired.video_id
-            """;
-        return dbContext.Database.ExecuteSqlRawAsync(
-            command,
-            [
-                new NpgsqlParameter("now", now),
-                new NpgsqlParameter("batchSize", batchSize),
-            ],
-            cancellationToken);
-    }
+        => (await dbContext.Videos.IgnoreQueryFilters().AsNoTracking()
+            .Where(video => video.Status == "preparing"
+                && video.PreparationLeaseId != null
+                && video.PreparationLeaseUntil <= now)
+            .OrderBy(video => video.PreparationLeaseUntil)
+            .ThenBy(video => video.VideoId)
+            .Take(batchSize)
+            .Select(video => new
+            {
+                video.VideoId,
+                video.PreparationLeaseId,
+                video.OriginalObjectKey,
+                video.OriginalSizeBytes,
+                video.CorrelationId,
+            })
+            .ToArrayAsync(cancellationToken))
+            .Select(video => new VideoPreparationLease(
+                video.VideoId,
+                video.PreparationLeaseId!.Value,
+                video.OriginalObjectKey,
+                video.OriginalSizeBytes,
+                video.CorrelationId))
+            .ToArray();
 
-    public async Task<IReadOnlyList<VideoOriginalCleanup>> GetReadyOriginalsForCleanupAsync(
+    public async Task<IReadOnlyList<VideoOriginalCleanup>> GetFinalOriginalsForCleanupAsync(
         int batchSize,
         CancellationToken cancellationToken)
         => await dbContext.Videos.IgnoreQueryFilters().AsNoTracking()
-            .Where(video => video.Status == "ready" && video.OriginalDeletedAt == null)
+            .Where(video => (video.Status == "ready" || video.Status == "failed")
+                && video.OriginalDeletedAt == null)
             .OrderBy(video => video.UploadedAt)
             .ThenBy(video => video.VideoId)
             .Take(batchSize)
-            .Select(video => new VideoOriginalCleanup(video.VideoId, video.OriginalObjectKey))
+            .Select(video => new VideoOriginalCleanup(video.VideoId, video.OriginalObjectKey, video.Status))
             .ToArrayAsync(cancellationToken);
 
     public async Task<bool> MarkOriginalDeletedAsync(

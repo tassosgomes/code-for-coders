@@ -75,7 +75,7 @@ varredura que aborta envios vencidos roda no papel `worker` (TechSpec, Media wor
 - [x] 5.0 Media parte como worker em container próprio, com ffmpeg na imagem e no CI
 - [x] 6.0 Envio interrompido continua de onde parou, e envio abandonado some em 24 h
 - [x] 7.0 Vídeo recebido fica pronto em três qualidades cifradas, e a lista mostra isso sozinha
-- [ ] 8.0 Vídeo com problema falha com motivo claro e não fica preso
+- [x] 8.0 Vídeo com problema falha com motivo claro e não fica preso
 - [ ] 9.0 Professor corrige o título e encontra vídeos por estado e por nome
 - [ ] 10.0 Volume guardado e vídeos por estado visíveis na telemetria
 

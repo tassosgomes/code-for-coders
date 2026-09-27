@@ -51,8 +51,8 @@ public sealed class VideoPreparationWorker(
             workflow => workflow.RecoverExpiredLeasesAsync(MaintenanceBatchSize, cancellationToken),
             cancellationToken);
         await RunMaintenanceAsync(
-            "original object cleanup",
-            workflow => workflow.CleanupReadyOriginalsAsync(MaintenanceBatchSize, cancellationToken),
+            "final video artifact cleanup",
+            workflow => workflow.CleanupFinalArtifactsAsync(MaintenanceBatchSize, cancellationToken),
             cancellationToken);
 
         var diskBudget = new DriveInfo(settings.WorkDirectory).AvailableFreeSpace / settings.MaxConcurrency;

@@ -1183,6 +1183,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   font-weight:400
 }
 
+.video-retry-link {
+  margin-left:18px;
+  padding:0;
+  color:var(--primary);
+  background:transparent;
+  border:0;
+  font:inherit;
+  text-decoration:underline;
+  cursor:pointer
+}
+
+.video-retry-link:disabled {
+  cursor:not-allowed;
+  opacity:.6
+}
+
 .video-transfer-panel {
   display:flex;
   gap:14px;

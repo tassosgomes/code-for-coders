@@ -247,6 +247,7 @@ services:
       AwsMedia__ForcePathStyle: "true"
       Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in local .env}
       Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:-local-v1}
+      Preparation__Threads: ${MEDIA_PREPARATION_THREADS:-2}
     depends_on:
       <<: *api-dependencies
       minio-bucket-init:

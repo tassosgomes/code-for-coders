@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using CodeForCoders.Media.Application.Common;
+using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data;
@@ -16,12 +17,14 @@ using CodeForCoders.Media.Application.UseCases.Videos.PrepareVideo;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
+using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
 
@@ -32,11 +35,13 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
     private readonly VideoLibraryApiFactory factory;
     private readonly ServiceProvider services;
     private readonly List<TestVideo> videos = [];
+    private readonly StorageFailureController storageFailures;
 
     private VideoPreparationTestContext(
         VideoLibraryApiFactory factory,
         ServiceProvider services,
         CapturedLogProvider logs,
+        StorageFailureController storageFailures,
         string ffmpegPath,
         string ffprobePath,
         string rootDirectory)
@@ -44,6 +49,7 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         this.factory = factory;
         this.services = services;
         Logs = logs;
+        this.storageFailures = storageFailures;
         FfmpegPath = ffmpegPath;
         FfprobePath = ffprobePath;
         RootDirectory = rootDirectory;
@@ -58,21 +64,37 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
 
     public string WorkDirectory { get; }
 
+    public string FfmpegArgumentCapturePath => Path.Combine(RootDirectory, "ffmpeg-arguments.log");
+
     public CapturedLogProvider Logs { get; }
+
+    public int DownloadAttemptCount => storageFailures.DownloadAttemptCount;
 
     public AsyncServiceScope CreateScope()
         => services.CreateAsyncScope();
 
     public static async Task<VideoPreparationTestContext> CreateAsync(
         VideoLibraryApiFactory factory,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        TestOverrides? overrides = null)
     {
+        overrides ??= new TestOverrides();
         var (ffmpegPath, ffprobePath) = await FfmpegTools.EnsureAvailableAsync(cancellationToken);
         var rootDirectory = Path.Combine(Path.GetTempPath(), $"media-preparation-{Guid.CreateVersion7():N}");
         Directory.CreateDirectory(rootDirectory);
         Directory.CreateDirectory(Path.Combine(rootDirectory, "work"));
+        var transcoderFfmpegPath = overrides.TranscoderFfmpegPath ?? ffmpegPath;
+        if (overrides.CaptureFfmpegArguments)
+        {
+            transcoderFfmpegPath = await CreateFfmpegWrapperAsync(
+                rootDirectory,
+                ffmpegPath,
+                overrides.CaptureFfmpegArguments,
+                cancellationToken);
+        }
 
         var logs = new CapturedLogProvider();
+        var storageFailures = new StorageFailureController(overrides.StorageDownloadFailures);
         var services = new ServiceCollection();
         services.AddLogging(logging => logging.SetMinimumLevel(LogLevel.Trace).AddProvider(logs));
         services.AddSingleton<TimeProvider>(TimeProvider.System);
@@ -83,10 +105,14 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         services.AddScoped<IVideoPreparationRepository, VideoPreparationRepository>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
-        services.AddScoped<IMediaStoragePort, S3MediaStorageAdapter>();
+        services.AddScoped<S3MediaStorageAdapter>();
+        services.AddScoped<IMediaStoragePort>(provider => new FaultInjectingMediaStoragePort(
+            provider.GetRequiredService<S3MediaStorageAdapter>(),
+            storageFailures));
         services.AddSingleton<S3MediaClientPair>();
         services.AddSingleton<IVideoKeyProtector, AesVideoKeyProtector>();
-        services.AddSingleton<IVideoTranscoder, FfmpegVideoTranscoder>();
+        services.AddSingleton<IVideoTranscoder>(provider =>
+            new FfmpegVideoTranscoder(provider.GetRequiredService<IOptions<VideoPreparationOptions>>()));
         services.AddScoped<IVideoPreparationWorkflow, PrepareVideo>();
         services.Configure<AwsMediaOptions>(options =>
         {
@@ -102,8 +128,9 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         services.Configure<VideoPreparationOptions>(options =>
         {
             options.WorkDirectory = Path.Combine(rootDirectory, "work");
-            options.FfmpegPath = ffmpegPath;
+            options.FfmpegPath = transcoderFfmpegPath;
             options.FfprobePath = ffprobePath;
+            options.Threads = overrides.Threads;
             options.MasterKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
             options.MasterKeyId = MasterKeyId;
         });
@@ -118,7 +145,14 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<RabbitMqTopologyInitializer>();
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
-        var context = new VideoPreparationTestContext(factory, provider, logs, ffmpegPath, ffprobePath, rootDirectory);
+        var context = new VideoPreparationTestContext(
+            factory,
+            provider,
+            logs,
+            storageFailures,
+            ffmpegPath,
+            ffprobePath,
+            rootDirectory);
         await context.ResetDatabaseAsync(cancellationToken);
         return context;
     }
@@ -134,6 +168,81 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         var originalObjectKey = $"{tenantId:D}/{videoId:D}/original";
         var sourcePath = Path.Combine(RootDirectory, $"source-{videoId:N}.mp4");
         await CreateSourceVideoAsync(sourcePath, width, height, durationSeconds, cancellationToken);
+        var fileSize = new FileInfo(sourcePath).Length;
+        await UploadOriginalAsync(originalObjectKey, sourcePath, cancellationToken);
+        var video = CreateDomainVideo(videoId, tenantId, originalObjectKey, fileSize, DateTimeOffset.UtcNow);
+        await AddVideoAsync(video, cancellationToken);
+        var testVideo = new TestVideo(videoId, tenantId, originalObjectKey, sourcePath, fileSize);
+        videos.Add(testVideo);
+        return testVideo;
+    }
+
+    public async Task<TestVideo> CreateQueuedVideoWithBytesAsync(
+        byte[] contents,
+        CancellationToken cancellationToken)
+    {
+        var videoId = Guid.CreateVersion7();
+        var tenantId = Guid.CreateVersion7();
+        var originalObjectKey = $"{tenantId:D}/{videoId:D}/original";
+        var sourcePath = Path.Combine(RootDirectory, $"source-{videoId:N}.mp4");
+        await File.WriteAllBytesAsync(sourcePath, contents, cancellationToken);
+        await UploadOriginalBytesAsync(originalObjectKey, contents, cancellationToken);
+        var video = CreateDomainVideo(videoId, tenantId, originalObjectKey, contents.Length, DateTimeOffset.UtcNow);
+        await AddVideoAsync(video, cancellationToken);
+        var testVideo = new TestVideo(videoId, tenantId, originalObjectKey, sourcePath, contents.Length);
+        videos.Add(testVideo);
+        return testVideo;
+    }
+
+    public async Task<TestVideo> CreateQueuedVideoWithUnknownCodecAsync(CancellationToken cancellationToken)
+    {
+        var sourcePath = Path.Combine(RootDirectory, "unknown-codec.avi");
+        await RunProcessAsync(
+            FfmpegPath,
+            [
+                "-hide_banner", "-loglevel", "error", "-y",
+                "-f", "lavfi", "-i", "testsrc=size=320x240:rate=10:duration=1",
+                "-c:v", "mpeg4", "-vtag", "XVID", sourcePath,
+            ],
+            cancellationToken);
+
+        var contents = await File.ReadAllBytesAsync(sourcePath, cancellationToken);
+        var codecTag = "XVID"u8;
+        var unknownTag = "ZZZZ"u8;
+        var replacements = 0;
+        for (var index = 0; index <= contents.Length - codecTag.Length; index++)
+        {
+            if (!contents.AsSpan(index, codecTag.Length).SequenceEqual(codecTag))
+            {
+                continue;
+            }
+
+            unknownTag.CopyTo(contents.AsSpan(index, unknownTag.Length));
+            replacements++;
+        }
+
+        Assert.True(replacements > 0, "The generated AVI did not contain its expected video codec tag.");
+        return await CreateQueuedVideoWithBytesAsync(contents, cancellationToken);
+    }
+
+    public async Task<TestVideo> CreateLongQueuedVideoAsync(
+        int durationSeconds,
+        CancellationToken cancellationToken)
+    {
+        var videoId = Guid.CreateVersion7();
+        var tenantId = Guid.CreateVersion7();
+        var originalObjectKey = $"{tenantId:D}/{videoId:D}/original";
+        var shortSourcePath = Path.Combine(RootDirectory, $"short-source-{videoId:N}.mp4");
+        var sourcePath = Path.Combine(RootDirectory, $"source-{videoId:N}.mp4");
+        await CreateSourceVideoAsync(shortSourcePath, 256, 144, 1, cancellationToken);
+        await RunProcessAsync(
+            FfmpegPath,
+            [
+                "-hide_banner", "-loglevel", "error", "-y", "-stream_loop", "-1",
+                "-i", shortSourcePath, "-t", durationSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "-c", "copy", sourcePath,
+            ],
+            cancellationToken);
         var fileSize = new FileInfo(sourcePath).Length;
         await UploadOriginalAsync(originalObjectKey, sourcePath, cancellationToken);
         var video = CreateDomainVideo(videoId, tenantId, originalObjectKey, fileSize, DateTimeOffset.UtcNow);
@@ -185,9 +294,6 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             dbContext.Videos.Add(video);
             dbContext.VideoUploads.Add(upload);
             await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellationToken);
-            await dbContext.Database.ExecuteSqlInterpolatedAsync(
-                $"UPDATE media_access.videos SET original_object_key = '', original_size_bytes = 0 WHERE video_id = {upload.VideoId}",
-                cancellationToken);
         }
 
         var legacyVideo = new TestVideo(upload.VideoId, tenantId, upload.ObjectKey, sourcePath, fileSize);
@@ -231,6 +337,24 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             freeDiskBytes,
             TimeSpan.FromMinutes(5),
             TimeSpan.FromSeconds(30),
+            cancellationToken);
+    }
+
+    public async Task MakePreparationEligibleAsync(Guid videoId, CancellationToken cancellationToken)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE media_access.videos SET next_preparation_at = {DateTimeOffset.UtcNow.AddSeconds(-1)} WHERE video_id = {videoId}",
+            cancellationToken);
+    }
+
+    public async Task ExpirePreparationLeaseAsync(Guid videoId, CancellationToken cancellationToken)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE media_access.videos SET preparation_lease_until = {DateTimeOffset.UtcNow.AddSeconds(-1)} WHERE video_id = {videoId}",
             cancellationToken);
     }
 
@@ -408,6 +532,43 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             cancellationToken);
     }
 
+    private static async Task<string> CreateFfmpegWrapperAsync(
+        string rootDirectory,
+        string ffmpegPath,
+        bool captureArguments,
+        CancellationToken cancellationToken)
+    {
+        if (!OperatingSystem.IsLinux())
+        {
+            throw new PlatformNotSupportedException("The ffmpeg test wrapper requires Linux.");
+        }
+
+        var wrapperPath = Path.Combine(rootDirectory, "ffmpeg-wrapper");
+        var capturePath = Path.Combine(rootDirectory, "ffmpeg-arguments.log");
+        var script = new StringBuilder("#!/bin/sh\n");
+        if (captureArguments)
+        {
+            script.Append("printf '%s\\n' \"$@\" >> '")
+                .Append(EscapeShellPath(capturePath))
+                .AppendLine("'");
+            script.Append("printf '\\n' >> '")
+                .Append(EscapeShellPath(capturePath))
+                .AppendLine("'");
+        }
+
+        script.Append("exec '")
+            .Append(EscapeShellPath(ffmpegPath))
+            .AppendLine("' \"$@\"");
+        await File.WriteAllTextAsync(wrapperPath, script.ToString(), cancellationToken);
+        File.SetUnixFileMode(
+            wrapperPath,
+            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        return wrapperPath;
+    }
+
+    private static string EscapeShellPath(string path)
+        => path.Replace("'", "'\\''", StringComparison.Ordinal);
+
     private async Task UploadOriginalAsync(string originalObjectKey, string sourcePath, CancellationToken cancellationToken)
     {
         using var client = CreateS3Client();
@@ -516,6 +677,98 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         string OriginalObjectKey,
         string SourcePath,
         long FileSize);
+
+    public sealed record TestOverrides(
+        int StorageDownloadFailures = 0,
+        string? TranscoderFfmpegPath = null,
+        int Threads = 2,
+        bool CaptureFfmpegArguments = false);
+
+    private sealed class StorageFailureController(int remainingFailures)
+    {
+        private int failuresRemaining = remainingFailures;
+        private int downloadAttemptCount;
+
+        public int DownloadAttemptCount => Volatile.Read(ref downloadAttemptCount);
+
+        public bool TryFailDownload()
+        {
+            Interlocked.Increment(ref downloadAttemptCount);
+            while (true)
+            {
+                var remaining = Volatile.Read(ref failuresRemaining);
+                if (remaining <= 0)
+                {
+                    return false;
+                }
+
+                if (Interlocked.CompareExchange(ref failuresRemaining, remaining - 1, remaining) == remaining)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    private sealed class FaultInjectingMediaStoragePort(
+        S3MediaStorageAdapter inner,
+        StorageFailureController failures) : IMediaStoragePort
+    {
+        public Task<string> InitiateMultipartUploadAsync(
+            string objectKey,
+            string contentType,
+            CancellationToken cancellationToken)
+            => inner.InitiateMultipartUploadAsync(objectKey, contentType, cancellationToken);
+
+        public Task<IReadOnlyList<MediaUploadPart>> ListPartsAsync(
+            string objectKey,
+            string storageUploadId,
+            CancellationToken cancellationToken)
+            => inner.ListPartsAsync(objectKey, storageUploadId, cancellationToken);
+
+        public Task<Uri> CreatePartUploadUriAsync(
+            string objectKey,
+            string storageUploadId,
+            int partNumber,
+            DateTimeOffset expiresAt,
+            CancellationToken cancellationToken)
+            => inner.CreatePartUploadUriAsync(objectKey, storageUploadId, partNumber, expiresAt, cancellationToken);
+
+        public Task CompleteMultipartUploadAsync(
+            string objectKey,
+            string storageUploadId,
+            IReadOnlyList<MediaUploadPart> parts,
+            CancellationToken cancellationToken)
+            => inner.CompleteMultipartUploadAsync(objectKey, storageUploadId, parts, cancellationToken);
+
+        public Task AbortMultipartUploadAsync(
+            string objectKey,
+            string storageUploadId,
+            CancellationToken cancellationToken)
+            => inner.AbortMultipartUploadAsync(objectKey, storageUploadId, cancellationToken);
+
+        public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken)
+        {
+            if (failures.TryFailDownload())
+            {
+                throw new StorageUnavailableException();
+            }
+
+            return inner.DownloadObjectAsync(objectKey, destinationPath, cancellationToken);
+        }
+
+        public Task UploadDirectoryAsync(
+            string sourceDirectory,
+            string objectPrefix,
+            CancellationToken cancellationToken)
+            => inner.UploadDirectoryAsync(sourceDirectory, objectPrefix, cancellationToken);
+
+        public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
+            => inner.DeleteObjectAsync(objectKey, cancellationToken);
+
+        public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
+            => inner.DeletePrefixAsync(objectPrefix, cancellationToken);
+    }
 
     internal sealed record FfmpegProcessResult(int ExitCode, string StandardError);
 

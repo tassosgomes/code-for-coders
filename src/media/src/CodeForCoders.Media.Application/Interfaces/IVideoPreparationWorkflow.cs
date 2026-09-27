@@ -11,5 +11,5 @@ public interface IVideoPreparationWorkflow
 
     Task<int> RecoverExpiredLeasesAsync(int batchSize, CancellationToken cancellationToken);
 
-    Task<int> CleanupReadyOriginalsAsync(int batchSize, CancellationToken cancellationToken);
+    Task<int> CleanupFinalArtifactsAsync(int batchSize, CancellationToken cancellationToken);
 }

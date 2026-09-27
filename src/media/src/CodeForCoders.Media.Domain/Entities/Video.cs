@@ -6,6 +6,8 @@ namespace CodeForCoders.Media.Domain.Entities;
 
 public sealed class Video
 {
+    public const int MaximumPreparationAttempts = 3;
+
     private Video()
     {
     }
@@ -140,18 +142,40 @@ public sealed class Video
         return true;
     }
 
-    public bool ReleaseExpiredPreparationLease(DateTimeOffset now)
+    public void SchedulePreparationRetry(Guid leaseId, DateTimeOffset nextAttemptAt)
     {
-        if (Status != "preparing" || PreparationLeaseUntil is null || PreparationLeaseUntil > now)
+        if (Status != "preparing" || PreparationLeaseId != leaseId || PreparationAttempts >= MaximumPreparationAttempts)
         {
-            return false;
+            throw new EntityValidationException("The video preparation retry is invalid.");
         }
 
         Status = "received";
+        FailureReason = null;
         PreparationLeaseId = null;
         PreparationLeaseUntil = null;
-        NextPreparationAt = now;
-        return true;
+        NextPreparationAt = nextAttemptAt;
+    }
+
+    public void MarkFailed(Guid leaseId, string reason)
+    {
+        if (Status != "preparing" || PreparationLeaseId != leaseId)
+        {
+            throw new EntityValidationException("The video preparation lease is no longer active.");
+        }
+
+        if (reason is not (VideoFailureReasons.UnreadableFile
+            or VideoFailureReasons.UnsupportedFormat
+            or VideoFailureReasons.DurationExceeded
+            or VideoFailureReasons.PreparationFailed))
+        {
+            throw new EntityValidationException("The video preparation failure reason is invalid.");
+        }
+
+        Status = "failed";
+        FailureReason = reason;
+        PreparationLeaseId = null;
+        PreparationLeaseUntil = null;
+        NextPreparationAt = null;
     }
 
     public void MarkReady(
@@ -183,7 +207,7 @@ public sealed class Video
 
     public bool MarkOriginalDeleted(DateTimeOffset deletedAt)
     {
-        if (Status != "ready" || OriginalDeletedAt is not null)
+        if (Status is not ("ready" or "failed") || OriginalDeletedAt is not null)
         {
             return false;
         }

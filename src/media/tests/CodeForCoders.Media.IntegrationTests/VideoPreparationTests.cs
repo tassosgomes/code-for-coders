@@ -168,9 +168,9 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
         Assert.Equal(0, stored.PreparationAttempts);
     }
 
-    [Fact(DisplayName = nameof(VideoPreparation_RecoversSourceMetadataForCompletedLegacyUpload))]
+    [Fact(DisplayName = nameof(VideoPreparation_ClaimsSourceMetadataStoredOnVideo))]
     [Trait("Layer", "Media video preparation - Integration")]
-    public async Task VideoPreparation_RecoversSourceMetadataForCompletedLegacyUpload()
+    public async Task VideoPreparation_ClaimsSourceMetadataStoredOnVideo()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var context = await VideoPreparationTestContext.CreateAsync(factory, cancellationToken);
@@ -206,9 +206,9 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
         Assert.Contains(claims, claim => claim?.VideoId == video.VideoId);
     }
 
-    [Fact(DisplayName = nameof(VideoPreparation_ExpiredLeaseCanBeReclaimed))]
+    [Fact(DisplayName = nameof(VideoPreparation_ExpiredLeaseUsesTheFirstRetryBackoff))]
     [Trait("Layer", "Media video preparation - Integration")]
-    public async Task VideoPreparation_ExpiredLeaseCanBeReclaimed()
+    public async Task VideoPreparation_ExpiredLeaseUsesTheFirstRetryBackoff()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var context = await VideoPreparationTestContext.CreateAsync(factory, cancellationToken);
@@ -218,12 +218,16 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
             .ClaimNextAsync(previousClaim, TimeSpan.FromMinutes(5), 1_000_000, cancellationToken));
         Assert.NotNull(firstLease);
 
-        var released = await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationRepository>()
-            .ReleaseExpiredLeasesAsync(DateTimeOffset.UtcNow, 100, cancellationToken));
+        var recovered = await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationWorkflow>()
+            .RecoverExpiredLeasesAsync(100, cancellationToken));
+        var deferredClaim = await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationRepository>()
+            .ClaimNextAsync(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(5), 1_000_000, cancellationToken));
+        await context.MakePreparationEligibleAsync(video.VideoId, cancellationToken);
         var nextLease = await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationRepository>()
             .ClaimNextAsync(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(5), 1_000_000, cancellationToken));
 
-        Assert.Equal(1, released);
+        Assert.Equal(1, recovered);
+        Assert.Null(deferredClaim);
         Assert.NotNull(nextLease);
         Assert.Equal(video.VideoId, nextLease.VideoId);
         Assert.NotEqual(firstLease.LeaseId, nextLease.LeaseId);
@@ -267,7 +271,7 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
         await context.SeedReadyVideoAsync(video, cancellationToken);
 
         var deleted = await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationWorkflow>()
-            .CleanupReadyOriginalsAsync(100, cancellationToken));
+            .CleanupFinalArtifactsAsync(100, cancellationToken));
         var stored = await ReadVideoAsync(context, video.VideoId, cancellationToken);
         var keys = await context.ListObjectKeysAsync($"{video.TenantId:D}/{video.VideoId:D}", cancellationToken);
 
@@ -417,8 +421,10 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
             .GetClaimedAsync(video.VideoId, staleLease.LeaseId, cancellationToken);
         Assert.NotNull(staleVideo);
 
-        await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationRepository>()
-            .ReleaseExpiredLeasesAsync(DateTimeOffset.UtcNow, 100, cancellationToken));
+        await context.ExpirePreparationLeaseAsync(video.VideoId, cancellationToken);
+        await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationWorkflow>()
+            .RecoverExpiredLeasesAsync(100, cancellationToken));
+        await context.MakePreparationEligibleAsync(video.VideoId, cancellationToken);
         var activeLease = await context.WithScopeAsync(scope => scope.GetRequiredService<IVideoPreparationRepository>()
             .ClaimNextAsync(DateTimeOffset.UtcNow, TimeSpan.FromMinutes(5), 1_000_000, cancellationToken));
         Assert.NotNull(activeLease);
@@ -527,7 +533,7 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
             return Task.FromResult(0);
         }
 
-        public Task<int> CleanupReadyOriginalsAsync(int batchSize, CancellationToken cancellationToken)
+        public Task<int> CleanupFinalArtifactsAsync(int batchSize, CancellationToken cancellationToken)
             => Task.FromResult(0);
     }
 
