@@ -15,7 +15,17 @@ src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecove
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:52
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:57
 src/notification/src/CodeForCoders.Notification.Api/appsettings.json:generic-api-key:19
-src/notification/tests/CodeForCoders.Notification.IntegrationTests/AcceptAndDeliverAccountConfirmationTests.cs:generic-api-key:183
-src/notification/tests/CodeForCoders.Notification.IntegrationTests/DeliverPasswordRecoveryEmailTests.cs:generic-api-key:192
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/AcceptAndDeliverAccountConfirmationTests.cs:generic-api-key:194
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/DeliverPasswordRecoveryEmailTests.cs:generic-api-key:204
 src/notification/tests/CodeForCoders.Notification.IntegrationTests/RejectInvalidSendRequestTests.cs:generic-api-key:193
 src/notification/tests/CodeForCoders.Notification.IntegrationTests/SendRequestIdempotencyTests.cs:generic-api-key:236
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/StaffInvitationEmailTests.cs:generic-api-key:184
+src/identity/src/CodeForCoders.Identity.Application/Services/StaffInvitationMessageWriter.cs:generic-api-key:19
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:125
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:46
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:133
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffPasswordResetTests.cs:generic-api-key:68
+src/media/tests/CodeForCoders.Media.IntegrationTests/VideoPreparationTests.cs:generic-api-key:484
+# Fixtures de teste, não segredos: token fictício de convite e Idempotency-Key literal.
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:26
+src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/StaffInvitationAcceptanceTests.cs:generic-api-key:61
