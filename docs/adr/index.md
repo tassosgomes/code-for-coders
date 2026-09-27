@@ -12,3 +12,4 @@ usado.
 | ADR-0004 | Autenticação de serviço entre BFF do aluno e Identity | Accepted | Chamada interna pré-login e emissão de JWT | [0004-autenticacao-de-servico-bff-identity.md](0004-autenticacao-de-servico-bff-identity.md) |
 | ADR-0005 | Sessão do ator interno e autenticação de serviço do BFF do backoffice | Accepted | Sessão do backoffice, bff-admin, Identity, JWKS e serviços de domínio | [0005-sessao-e-servico-do-backoffice.md](0005-sessao-e-servico-do-backoffice.md) |
 | ADR-0006 | Preparação de vídeo em worker próprio do media e custódia da chave HLS | Accepted | Preparação ffmpeg, fila de preparação, chave AES por vídeo | [0006-preparacao-de-video-e-custodia-de-chave.md](0006-preparacao-de-video-e-custodia-de-chave.md) |
+| ADR-0007 | Snapshots efêmeros da consulta de Auditoria | Accepted | Paginação estável do serviço audit em Valkey | [0007-snapshots-efemeros-da-consulta-de-auditoria.md](0007-snapshots-efemeros-da-consulta-de-auditoria.md) |

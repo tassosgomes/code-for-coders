@@ -7,6 +7,12 @@
       "skillPath": "skills/dotnet/SKILL.md",
       "computedHash": "6f3c65c635099c6bb331c254b5ec8a46cd70f6c93024f5f364d8442497d344a5"
     },
+    "flow-qa": {
+      "source": "tassosgomes/my-skills",
+      "sourceType": "github",
+      "skillPath": "skills/flow-qa/SKILL.md",
+      "computedHash": "43681f06594cdee07ca8ce3324ba82748ee79958c3cb2cbd9edab516628409d1"
+    },
     "react": {
       "source": "tassosgomes/my-skills",
       "sourceType": "github",

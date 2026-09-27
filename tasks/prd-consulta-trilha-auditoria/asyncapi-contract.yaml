@@ -1,0 +1,137 @@
+# Recorte do segundo PRD de CAP-030: nova entrada de audit para complementos.
+# O canal auditoria.ato-praticado.v1 continua no contrato do primeiro PRD, sem alteração.
+asyncapi: 3.0.0
+id: urn:code-4-coders:audit
+info:
+  title: Auditoria — complemento confirmado no backoffice
+  version: 1.1.0
+  description: >-
+    Recorte aditivo da aplicação audit para tasks/prd-consulta-trilha-auditoria/prd.md
+    v1.0, aprovado em 2026-09-27. Produtor conhecido: bff-admin, após confirmar
+    administrador vigente, tenant e original. Audit é a única consumidora e cria o
+    registro complementar só após consumir o fato. O ato original e sua conformidade
+    não mudam. O contrato 1.0.1 de auditoria.ato-praticado.v1 permanece no primeiro PRD.
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: >-
+      RabbitMQ do baseline v1.2, exchange topic, fila quorum, DLX/DLQ e limite de
+      entrega por fila. Host, vhost e credenciais são configuração da plataforma.
+      Publicação do BFF por outbox durável; consumidor com confirmação manual.
+    variables:
+      host:
+        default: localhost
+        description: Resolvido na implantação.
+channels:
+  complementoConfirmado:
+    address: auditoria.registro.complemento-confirmado.v1
+    description: >-
+      Routing key versionada no formato servico.agregado.evento.v1 do baseline,
+      para o fato confirmado pelo administrador no backoffice.
+      Apenas bff-admin é produtor autorizado nesta fatia. O prefixo auditoria indica
+      o domínio dono do contrato, como em auditoria.ato-praticado.v1.
+    messages:
+      complementoConfirmado:
+        $ref: '#/components/messages/ComplementoConfirmado'
+operations:
+  receberComplementoConfirmado:
+    action: receive
+    summary: Criar registro complementar imutável após receber confirmação
+    channel:
+      $ref: '#/channels/complementoConfirmado'
+    messages:
+      - $ref: '#/channels/complementoConfirmado/messages/complementoConfirmado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: '0.3.0'
+    description: >-
+      Idempotência por (tenantId, confirmationId): reentrega idêntica gera um único
+      complemento; conteúdo divergente com a mesma chave não altera o primeiro e
+      gera alerta. O original deve existir no mesmo tenant e não pode ser outro
+      complemento. Caso contrário, nenhum complemento é gravado, a mensagem fica
+      na fila de erro para investigação e a operação é alertada. Mensagem sem
+      confirmationId, tenantId ou originalRecordId válidos é ilegível: não cria
+      registro, vai à fila de erro e alerta. Falha transitória de gravação impede
+      confirmação e provoca reentrega; após o limite, vai à fila de erro. A
+      confirmação só ocorre após commit. Não há garantia de ordem entre mensagens;
+      a leitura ordena por confirmedAt e id como desempate. O registro guarda o
+      instante de recebimento separadamente, sem substituir confirmedAt.
+components:
+  messages:
+    ComplementoConfirmado:
+      name: ComplementoConfirmado
+      title: Complemento de auditoria confirmado
+      summary: Fato consumado da confirmação de explicação pelo administrador.
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        required: [correlationId]
+        properties:
+          correlationId:
+            type: string
+            minLength: 1
+            description: Correlação técnica opaca, sem dado pessoal nem explicação.
+      payload:
+        $ref: '#/components/schemas/ComplementoConfirmadoPayload'
+      examples:
+        - name: explanationConfirmed
+          headers:
+            correlationId: backoffice-2026-09-27-0042
+          payload:
+            confirmationId: d69bd911-9631-4f59-8242-c43629806177
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            originalRecordId: 5137eb89-3e71-4462-9c52-3994f7be0f9a
+            confirmedAt: '2026-09-27T10:15:00Z'
+            author:
+              type: conta-interna
+              id: 337fcd34-6bf6-4fe5-a1e6-608fe9426be7
+            explanation: A autorização foi confirmada no chamado interno de suporte.
+  schemas:
+    ComplementoConfirmadoPayload:
+      type: object
+      additionalProperties: false
+      required: [confirmationId, tenantId, originalRecordId, confirmedAt, author, explanation]
+      properties:
+        confirmationId:
+          type: string
+          format: uuid
+          description: ID estável da confirmação; igual ao devolvido no HTTP 202 e à chave de deduplicação.
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant da sessão do administrador, nunca informado pelo navegador.
+        originalRecordId:
+          type: string
+          format: uuid
+          description: Registro original encontrado no mesmo tenant.
+        confirmedAt:
+          type: string
+          format: date-time
+          description: Momento da confirmação no backoffice; ordena complementos.
+        author:
+          $ref: '#/components/schemas/StaffReference'
+        explanation:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: '\S'
+          description: >-
+            Contexto posterior, nunca correção do original. Texto restrito à trilha;
+            não entra em log, métrica, span, URL ou routing key.
+    StaffReference:
+      type: object
+      additionalProperties: false
+      required: [type, id]
+      properties:
+        type:
+          type: string
+          const: conta-interna
+        id:
+          type: string
+          format: uuid
+          description: Conta interna obtida da sessão validada por Identity.
