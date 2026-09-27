@@ -77,7 +77,7 @@ varredura que aborta envios vencidos roda no papel `worker` (TechSpec, Media wor
 - [x] 7.0 Vídeo recebido fica pronto em três qualidades cifradas, e a lista mostra isso sozinha
 - [x] 8.0 Vídeo com problema falha com motivo claro e não fica preso
 - [x] 9.0 Professor corrige o título e encontra vídeos por estado e por nome
-- [x] 10.0 Volume guardado e vídeos por estado visíveis na telemetria
+- [ ] 10.0 Volume guardado e vídeos por estado visíveis na telemetria
 
 ## Caminho crítico e lanes
 

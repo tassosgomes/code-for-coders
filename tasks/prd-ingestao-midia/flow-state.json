@@ -4,9 +4,9 @@
   "original_base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
   "base_ref": "ce2be47124fbf409235eda7c4e8b5a22874fee4a",
   "target_ref": "ce2be47124fbf409235eda7c4e8b5a22874fee4a",
-  "last_checkpoint": "10ae3ba",
+  "last_checkpoint": "5c1f79b",
   "phase": "full-fix",
-  "active_task": "9.0",
+  "active_task": "10.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -408,6 +408,19 @@
       "task": "9.0",
       "run_id": "run.biQYr9K1",
       "note": "revalidacao focused aprovada; gate exit 0 (21 testes); B2 resolvido"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "checkpoint",
+      "task": "9.0",
+      "commit": "5c1f79b",
+      "note": "correção da full"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "reopen",
+      "task": "10.0",
+      "source": "run.DqHeR9Nv"
     }
   ],
   "carryover": {
