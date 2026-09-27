@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.VideoTitleSearchTests --minimum-expected-tests 6 && dotnet test --project src/media/tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj -- --filter-class CodeForCoders.Media.UnitTests.VideoTitleNormalizationTests --minimum-expected-tests 3 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/CodeForCoders.BffAdmin.EndToEndTests.csproj -- --filter-class CodeForCoders.BffAdmin.EndToEndTests.VideoTitleTests --minimum-expected-tests 2 && npm --prefix src/admin-spa run test -- video-library-filter'
