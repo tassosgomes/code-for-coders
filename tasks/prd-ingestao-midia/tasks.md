@@ -70,7 +70,7 @@ varredura que aborta envios vencidos roda no papel `worker` (TechSpec, Media wor
 
 - [x] 1.0 Wireframe ASCII da área Vídeos aprovado, com nome e posição da área decididos
 - [x] 2.0 Telas da área Vídeos desenhadas no Figma e aprovadas
-- [x] 3.0 Professor abre a área Vídeos, e quem não tem a permissão é barrado nas três camadas
+- [ ] 3.0 Professor abre a área Vídeos, e quem não tem a permissão é barrado nas três camadas
 - [x] 4.0 Professor envia um vídeo e ele aparece na lista como recebido
 - [x] 5.0 Media parte como worker em container próprio, com ffmpeg na imagem e no CI
 - [x] 6.0 Envio interrompido continua de onde parou, e envio abandonado some em 24 h
