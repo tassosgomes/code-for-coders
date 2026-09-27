@@ -2,7 +2,7 @@
 tsg_artifact: domain
 product: code-4-coders
 version: 1.2
-status: approved
+status: in_review
 updated: 2026-09-27
 sources: vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, backlog/capabilities.md@1.4
 ---

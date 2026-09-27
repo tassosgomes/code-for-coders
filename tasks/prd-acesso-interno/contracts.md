@@ -2,17 +2,20 @@
 tsg_artifact: contract
 product: code-4-coders
 capability: CAP-002
-version: 1.2
+version: 1.4
 status: approved
-updated: 2026-09-25
-sources: tasks/prd-acesso-interno/prd.md@1.0, tasks/prd-acesso-interno/techspec.md@1.0
+updated: 2026-09-27
+sources: tasks/prd-acesso-interno/prd.md@1.1
 ---
 
 # Contratos de integração — acesso interno por papel e permissão
 
-> - PRD: [prd.md](prd.md), v1.0, aprovado em 2026-09-25
-> - Data da revisão: 2026-09-25
-> - Estado do conjunto: **Aprovado para implementação (1.2)** em 2026-09-25 — C-01 a C-11 aprovadas; públicos, AsyncAPI e os dois contratos internos (EN-01) validados.
+> - PRD: [prd.md](prd.md), v1.1, procedência revisada em 2026-09-27
+> - Data da revisão: 2026-09-27
+> - Estado do conjunto: **Aprovado para implementação (1.4)** — C-01 a C-11 aprovadas; públicos, AsyncAPI e os dois contratos internos (EN-01) validados.
+
+A revisão 1.3 corrige apenas a procedência: este acordo deriva do PRD e é consumido pela TechSpec. As versões e o conteúdo dos contratos de interface permanecem os aprovados anteriormente.
+A revisão 1.4 sincroniza a origem com o PRD 1.1 após a revisão do domain doc de Auditoria; as interfaces permanecem iguais.
 
 Este conjunto registra o acordo para o recorte de `CAP-002`. A aprovação significa acordo para implementar as interfaces descritas; não afirma implantação. Os contratos de `CAP-001`, `CAP-026` e `CAP-030` são preservados nas pastas de origem.
 

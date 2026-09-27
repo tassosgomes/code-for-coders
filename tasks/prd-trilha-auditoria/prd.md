@@ -2,13 +2,16 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-030
-version: 1.1
+version: 1.2
 status: approved
-updated: 2026-09-24
-sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/auditoria-e-conformidade/domain.md@1.1, domains/identidade-e-acesso/domain.md@1.1
+updated: 2026-09-27
+sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/auditoria-e-conformidade/domain.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
 
 # Trilha de auditoria — registro imutável de atos administrativos
+
+> Revisão 1.2: procedência atualizada para o domain doc de Auditoria 1.2. O recorte de registro
+> imutável deste primeiro PRD permanece o mesmo.
 
 ## Visão Geral
 
@@ -46,7 +49,7 @@ primeiro convite.
     e `CAP-008`/`CAP-009`.
   - Solicitação do titular, base legal e retenção da trilha → `CAP-031`, revisão D18.
 - **Domínios atravessados:** Auditoria e Conformidade,
-  [domain.md](../../domains/auditoria-e-conformidade/domain.md) v1.1; Identidade e Acesso,
+  [domain.md](../../domains/auditoria-e-conformidade/domain.md) v1.2; Identidade e Acesso,
   [domain.md](../../domains/identidade-e-acesso/domain.md) v1.1, como origem dos quatro tipos de ato.
 - **Junta entre os domínios:** Identidade e Acesso é dona do **conteúdo** do ato — o que aconteceu,
   quem fez, sobre quem, por quê (Identidade RN-19). Auditoria e Conformidade é dona da **forma** em

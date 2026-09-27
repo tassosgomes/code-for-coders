@@ -2,21 +2,24 @@
 tsg_artifact: techspec
 product: code-4-coders
 capability: CAP-002
-version: 1.0
+version: 1.2
 status: approved
-updated: 2026-09-25
-sources: tasks/prd-acesso-interno/prd.md@1.0, tasks/prd-acesso-interno/contracts.md@1.1
+updated: 2026-09-27
+sources: tasks/prd-acesso-interno/prd.md@1.1, tasks/prd-acesso-interno/contracts.md@1.4
 ---
 
 # TechSpec — acesso interno por papel e permissão
 
 > - **Escopo:** Full-stack (`identity`, `bff-admin`, `admin-spa`, `notification`, `commerce`)
 > - **Modo:** Pipeline, API-First
-> - **PRD de origem:** [prd.md](prd.md), v1.0, aprovado em 2026-09-25
-> - **Contratos:** [contracts.md](contracts.md) — [OpenAPI SPA → BFF](api-contract.yaml), [AsyncAPI Identity 1.1.0](asyncapi-contract.yaml), [AsyncAPI Notificação 1.1.0](asyncapi-contract-notification.yaml), [AsyncAPI Auditoria 1.0.1](../prd-trilha-auditoria/asyncapi-contract.yaml). Contrato interno `bff-admin` → Identity/Commerce: **a produzir após a aprovação desta spec** (§ Interfaces entre fatias ou times)
-> - **Data:** 2026-09-25
-> - **Status:** Aprovado em 2026-09-25
-> - **Handoff:** approved — contrato interno (EN-01) antes do Task Creator
+> - **PRD de origem:** [prd.md](prd.md), v1.1, procedência revisada em 2026-09-27
+> - **Contratos:** [contracts.md](contracts.md) 1.4 — [OpenAPI SPA → BFF](api-contract.yaml), [AsyncAPI Identity 1.1.0](asyncapi-contract.yaml), [AsyncAPI Notificação 1.1.0](asyncapi-contract-notification.yaml), [AsyncAPI Auditoria 1.0.1](../prd-trilha-auditoria/asyncapi-contract.yaml), [OpenAPI BFF → Identity](internal-api-contract.yaml) e [OpenAPI BFF → Commerce](internal-api-contract-commerce.yaml).
+> - **Data da revisão:** 2026-09-27
+> - **Status:** Aprovado; procedência revisada em 2026-09-27
+> - **Handoff:** approved — contratos internos (EN-01) disponíveis
+
+A revisão 1.1 atualiza a procedência para o índice de contratos 1.3 e as referências aos contratos internos já aprovados. O comportamento e as decisões da especificação permanecem os aprovados anteriormente.
+A revisão 1.2 sincroniza as fontes com o PRD 1.1 e o índice de contratos 1.4 após a revisão do domain doc de Auditoria, sem mudar o comportamento.
 
 ## Resumo Executivo
 
@@ -427,8 +430,8 @@ Migrations de Identity pela ferramenta do EF (instrução do projeto); nenhuma m
 
 ### Interfaces entre fatias ou times
 
-**Contrato interno a produzir (EN-01)** — `tasks/prd-acesso-interno/internal-api-contract.yaml`, pelo
-`tsg-flow-contract-creator`, antes das tasks. Conteúdo mínimo acordado aqui:
+**Contratos internos aprovados (EN-01)** — `tasks/prd-acesso-interno/internal-api-contract.yaml`
+e `tasks/prd-acesso-interno/internal-api-contract-commerce.yaml`. Interfaces acordadas:
 
 - `bff-admin` → Identity, base `/internal/v1`, asserção de serviço do emissor `bff-admin` com escopos
   por grupo: `staff-sessions:create|validate|revoke`, `staff-passwords:reset`,

@@ -2,22 +2,25 @@
 tsg_artifact: techspec
 product: code-4-coders
 capability: CAP-030
-version: 1.0
+version: 1.1
 status: approved
-updated: 2026-09-24
-sources: tasks/prd-trilha-auditoria/prd.md@1.1, tasks/prd-trilha-auditoria/contracts.md@1.1
+updated: 2026-09-27
+sources: tasks/prd-trilha-auditoria/prd.md@1.2, tasks/prd-trilha-auditoria/contracts.md@1.2
 ---
 
 # Especificação Técnica — Trilha de auditoria (CAP-030, fatia mínima)
 
 > **Escopo:** Backend
 > **Modo:** Pipeline
-> **PRD de origem:** `tasks/prd-trilha-auditoria/prd.md` (v1.1, aprovado 2026-09-24)
-> **Contratos de integração:** `tasks/prd-trilha-auditoria/contracts.md` e
+> **PRD de origem:** `tasks/prd-trilha-auditoria/prd.md` (v1.2, procedência revisada 2026-09-27)
+> **Contratos de integração:** `tasks/prd-trilha-auditoria/contracts.md` v1.2 e
 > `tasks/prd-trilha-auditoria/asyncapi-contract.yaml` (AsyncAPI 3.0.0, v1.0.1, aprovado para implementação)
-> **Data:** 2026-09-24
+> **Data da revisão:** 2026-09-27
 > **Status:** Aprovado
 > **Handoff:** approved — pode alimentar o Task Creator
+
+A revisão 1.1 atualiza somente a procedência do PRD e do índice de contratos; as decisões de
+implementação da primeira fatia permanecem as aprovadas anteriormente.
 
 Este documento cobre apenas o serviço `audit` (`src/audit`). O lado produtor — Identidade e Acesso
 publicar os quatro atos em `auditoria.ato-praticado.v1` — pertence ao PRD de `CAP-002`, ainda não

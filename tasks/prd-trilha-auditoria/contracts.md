@@ -2,17 +2,20 @@
 tsg_artifact: contract
 product: code-4-coders
 capability: CAP-030
-version: 1.1
+version: 1.2
 status: approved
-updated: 2026-09-24
-sources: tasks/prd-trilha-auditoria/prd.md@1.1
+updated: 2026-09-27
+sources: tasks/prd-trilha-auditoria/prd.md@1.2
 ---
 
 # Contratos de integração — Trilha de auditoria (CAP-030, fatia mínima)
 
-> PRD: [`tasks/prd-trilha-auditoria/prd.md`](prd.md) v1.1
-> Data: 2026-09-24
+> PRD: [`tasks/prd-trilha-auditoria/prd.md`](prd.md) v1.2
+> Revisão do índice: 2026-09-27
 > Estado do conjunto: Aprovado para implementação
+
+A revisão 1.2 atualiza somente a procedência do primeiro PRD. O contrato AsyncAPI 1.0.1 e o
+comportamento da fatia de ingestão permanecem os acordados anteriormente.
 
 Este conjunto registra o acordo para esta implementação. PRDs posteriores podem evoluí-lo.
 Não afirma qual contrato está em produção. Catalogação, armazenamento definitivo e mecanismos
@@ -49,7 +52,7 @@ armazenamento da trilha.
 | Entrada consultada | Versão e revisão/data | Decisão herdada ou alterada | Motivo |
 |---|---|---|---|
 | [PRD CAP-030](prd.md) | v1.0, aprovado 2026-09-24 | Herdadas DP-02 a DP-05 | Forma do envelope, tolerância a ato incompleto, tipo desconhecido, mensagem ilegível |
-| [Domain doc Auditoria](../../domains/auditoria-e-conformidade/domain.md) | v1.1 | RN-A14: contrato é da Auditoria; prefixo `auditoria.` | Dono da forma é quem guarda |
+| [Domain doc Auditoria](../../domains/auditoria-e-conformidade/domain.md) | v1.2 | RN-A14: contrato é da Auditoria; prefixo `auditoria.` | Dono da forma é quem guarda |
 | [Domain doc Identidade](../../domains/identidade-e-acesso/domain.md) | v1.1 | Tipos e obrigatoriedade de motivo vêm de RN-19 | Conteúdo é do domínio de origem |
 | [Contrato de Notificação](../prd-notificacao-transacional/asyncapi-contract.yaml) | 1.0.0 | Herdados: servidor, convenção de routing key versionada, `correlationId` em header, `tenantId` no payload | Mesmo modelo de dono (mensagem endereçada ao domínio que a recebe) |
 | Baseline | v1.2 | G06 (outbox, DLQ, `x-delivery-limit`), G13, BA10 | Convenções já decididas, não reabertas |

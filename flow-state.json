@@ -1,13 +1,16 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-25",
-  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo e nunca sao duplicados aqui. Escrito pelas skills TSG Flow ao concluir uma etapa; validado por .tsg/validate_state.py.",
+  "updated": "2026-09-27",
+  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. Validado por .agents/skills/tsg-flow-next/scripts/validate_state.py.",
   "artifacts": {
     "vision": "vision.md",
     "domain-map": "context/domain-map.md",
     "architecture-baseline": "context/architecture-baseline.md",
-    "capability-backlog": "backlog/capabilities.md"
+    "capability-backlog": "backlog/capabilities.md",
+    "prd": "tasks/prd-trilha-auditoria/prd.md",
+    "contract": "tasks/prd-trilha-auditoria/contracts.md",
+    "techspec": "tasks/prd-trilha-auditoria/techspec.md"
   },
   "capability_stages": [
     "backlog",
@@ -31,7 +34,7 @@
     },
     {
       "id": "CAP-002",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/identidade-e-acesso/domain.md",
         "prd": "tasks/prd-acesso-interno/prd.md",
@@ -59,11 +62,12 @@
     },
     {
       "id": "CAP-006",
-      "stage": "techspec",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
         "prd": "tasks/prd-ingestao-midia/prd.md",
-        "contract": "tasks/prd-ingestao-midia/contracts.md"
+        "contract": "tasks/prd-ingestao-midia/contracts.md",
+        "techspec": "tasks/prd-ingestao-midia/techspec.md"
       },
       "mvp_order": 3
     },
@@ -193,12 +197,10 @@
     },
     {
       "id": "CAP-030",
-      "stage": "done",
+      "stage": "prd",
       "artifacts": {
         "domain": "domains/auditoria-e-conformidade/domain.md",
-        "prd": "tasks/prd-trilha-auditoria/prd.md",
-        "contract": "tasks/prd-trilha-auditoria/contracts.md",
-        "techspec": "tasks/prd-trilha-auditoria/techspec.md"
+        "prd": "tasks/prd-consulta-trilha-auditoria/prd.md"
       },
       "mvp_order": 2
     },
@@ -210,23 +212,9 @@
   ],
   "next_actions": [
     {
-      "id": "NA17",
-      "what": "Aprovar o plano tasks/prd-acesso-interno/tasks.md e iniciar a execução",
-      "skill": "tsg-flow-orchestrator",
-      "blocked_by": []
-    },
-    {
-      "id": "NA18",
-      "what": "Segundo PRD de CAP-030 (ainda MVP): consulta da trilha no backoffice pelo administrador (OD21). Primeiro PRD integrado no PR #56; CAP-030 reabre de done para prd quando esta acao comecar (so apos CAP-002 entregue)",
-      "skill": "tsg-flow-prd-creator",
-      "blocked_by": [
-        "NA17"
-      ]
-    },
-    {
-      "id": "NA19",
-      "what": "Revisar e aprovar tasks/prd-ingestao-midia/techspec.draft.md e ADR-0006 (Proposed); decidir resposta de armazenamento indisponivel (patch de contrato). Tasks so apos CAP-002 integrada",
-      "skill": "tsg-flow-techspec-creator",
+      "id": "NA21",
+      "what": "Criar os contratos de consulta administrativa e complemento da CAP-030 a partir de tasks/prd-consulta-trilha-auditoria/prd.md, preservando o contrato da primeira fatia",
+      "skill": "tsg-flow-contract-creator",
       "blocked_by": []
     }
   ],
@@ -589,6 +577,22 @@
       "owner": "tasso",
       "decided_at": "2026-09-25",
       "decision": "Sem dimensao de tenant enquanto mono-tenant (DE10); detalhe por escola por consulta quando houver multi-tenant. Descartado: excecao ao baseline para tenant - precedente para todos os servicos."
+    },
+    {
+      "id": "OD38",
+      "ref": "tasks/prd-consulta-trilha-auditoria/prd.draft.md DP-05 · domains/auditoria-e-conformidade/domain.draft.md RN-A02",
+      "what": "Quem inicia o complemento e como ele respeita a escrita por evento",
+      "owner": "produto",
+      "decided_at": "2026-09-27",
+      "decision": "O administrador confirma o complemento no backoffice. A Auditoria so grava o novo registro depois de consumir o fato dessa acao, preservando G13. Descartada a escrita direta pela tela, que violaria G13 e RN-A01; descartado exigir que o dominio do ato original inicie o complemento, pois a apuracao posterior e uma acao do administrador."
+    },
+    {
+      "id": "OD39",
+      "ref": "tasks/prd-consulta-trilha-auditoria/prd.draft.md DP-04 · domains/auditoria-e-conformidade/domain.draft.md RN-A07",
+      "what": "Conteudo do complemento de registro",
+      "owner": "produto",
+      "decided_at": "2026-09-27",
+      "decision": "Somente explicacao posterior vinculada ao original, exibida separadamente com autor e momento proprios. O original e a sua conformidade permanecem intactos. Descartado preencher ou substituir autor, alvo, tipo e motivo recebidos, pois isso confundiria contexto posterior com o fato preservado."
     }
   ]
 }

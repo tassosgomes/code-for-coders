@@ -2,13 +2,16 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-002
-version: 1.0
+version: 1.1
 status: approved
-updated: 2026-09-25
-sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1, domains/auditoria-e-conformidade/domain.md@1.1
+updated: 2026-09-27
+sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1, domains/auditoria-e-conformidade/domain.md@1.2
 ---
 
 # Acesso interno — convite, papel e permissão no backoffice
+
+> Revisão 1.1: procedência atualizada para o domain doc de Auditoria 1.2. O comportamento de
+> acesso interno já entregue permanece o mesmo.
 
 ## Visão Geral
 
@@ -54,7 +57,7 @@ curso) e o segundo PRD de `CAP-030` (administrador consulta a trilha).
 - **Domínios atravessados:**
   - Identidade e Acesso — [domain.md](../../domains/identidade-e-acesso/domain.md) v1.1. Dono de
     tudo o que esta entrega decide.
-  - Auditoria e Conformidade — [domain.md](../../domains/auditoria-e-conformidade/domain.md) v1.1,
+  - Auditoria e Conformidade — [domain.md](../../domains/auditoria-e-conformidade/domain.md) v1.2,
     como destino dos atos, pelo contrato já integrado
     ([asyncapi-contract.yaml](../prd-trilha-auditoria/asyncapi-contract.yaml) v1.0.1).
   - Notificação — sem domain doc; regras no [PRD de `CAP-026`](../prd-notificacao-transacional/prd.md),
