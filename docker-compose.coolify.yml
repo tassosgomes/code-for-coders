@@ -27,6 +27,7 @@ services:
       StaffSessionTokens__LifetimeMinutes: "5"
       StaffSessionTokens__AudienceScopes__commerce: finance-area:read
       StaffSessionTokens__AudienceScopes__media: videos:write
+      StaffSessionTokens__AudienceScopes__audit: audit-records:read
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       StudentAccount__ConfirmationBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/confirm-account
@@ -39,6 +40,19 @@ services:
       ServiceAssertions__Audience: identity-internal
       ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
       ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      ServiceAssertions__Issuers__bff-student__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-student__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      ServiceAssertions__Issuers__bff-admin__PublicKeys__local-dev-1: ${BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__0: staff-sessions:create
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__1: staff-sessions:validate
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__2: staff-sessions:revoke
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__3: staff-passwords:reset
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__4: staff-invitations:read
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__5: staff-invitations:write
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__6: staff-members:read
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__7: staff-members:write
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__8: audit-references:read
+      ServiceAssertions__Issuers__bff-admin__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -213,11 +227,17 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      AuditTokens__MetadataAddress: http://identity:8080/.well-known/openid-configuration
+      AuditTokens__Issuer: identity
+      AuditTokens__Audience: audit
+      AuditTokens__Scope: audit-records:read
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      AuditSnapshots__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${AUDIT_VALKEY_DATABASE:-5},abortConnect=false
+      AuditSnapshots__KeyPrefix: "code4coders:audit:snapshot:v1:"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
@@ -236,6 +256,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      StaffIdentity__BaseAddress: http://identity:8080/
+      StaffIdentity__Issuer: bff-admin
+      StaffIdentity__Audience: identity-internal
+      StaffIdentity__SigningKeyId: local-dev-1
+      StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?set in Coolify}
+      StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -244,8 +270,13 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
       Media__BaseAddress: http://media:8080/
+      Audit__BaseAddress: http://audit:8080/
     depends_on:
       learning:
+        condition: service_healthy
+      audit:
+        condition: service_healthy
+      identity:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]

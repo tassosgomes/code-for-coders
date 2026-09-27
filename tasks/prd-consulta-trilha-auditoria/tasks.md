@@ -68,7 +68,7 @@ proteção do outbox em 5.0; mensageria em 6.0; migrations EF nas fatias que as 
 
 - [x] 1.0 Wireframe ASCII da área Auditoria aprovado
 - [x] 2.0 Telas da área Auditoria no Figma aprovadas
-- [ ] 3.0 Administrador abre a trilha, filtra e percorre páginas estáveis; outros papéis e tenants são barrados
+- [x] 3.0 Administrador abre a trilha, filtra e percorre páginas estáveis; outros papéis e tenants são barrados
 - [ ] 4.0 Administrador examina o fato recebido, suas faltas e referências, e volta à lista filtrada pela pessoa
 - [ ] 5.0 Administrador confirma uma explicação e o BFF a aceita uma única vez, de forma durável e protegida
 - [ ] 6.0 A confirmação aceita vira complemento imutável e aparece ao lado do original

@@ -19,6 +19,25 @@ public static class ServiceConfigurationExtensions
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddBffProxyConfiguration(builder.Configuration);
         builder.AddStaffIdentityConfiguration();
+        builder.Services.AddOptions<AuditApiOptions>()
+            .Bind(builder.Configuration.GetSection(AuditApiOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)
+                && uri.Scheme is "http" or "https"
+                && options.BaseAddress.EndsWith("/", StringComparison.Ordinal),
+                "Audit base address must be an absolute HTTP(S) URL ending in a slash.")
+            .ValidateOnStart();
+        builder.Services.AddHttpClient<IAuditRecordClient, AuditRecordClient>((serviceProvider, client) =>
+            {
+                var settings = serviceProvider.GetRequiredService<IOptions<AuditApiOptions>>().Value;
+                client.BaseAddress = new Uri(settings.BaseAddress, UriKind.Absolute);
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddOptions<CommerceApiOptions>()
             .Bind(builder.Configuration.GetSection(CommerceApiOptions.SectionName))
             .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)

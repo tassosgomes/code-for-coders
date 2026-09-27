@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
+using Testcontainers.Redis;
 using Xunit;
 
 namespace CodeForCoders.Audit.IntegrationTests;
@@ -34,6 +35,8 @@ public sealed class AuditIntegrationFixture : IAsyncLifetime
         .WithPassword("code_for_coders")
         .Build();
 
+    public RedisContainer Valkey { get; } = new RedisBuilder("redis:8.0").Build();
+
     public string MigrationConnectionString => PostgreSql.GetConnectionString();
 
     public string RuntimeConnectionString
@@ -51,7 +54,7 @@ public sealed class AuditIntegrationFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync());
+        await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync(), Valkey.StartAsync());
         await ProvisionCredentialsAsync();
 
         var dbOptions = new DbContextOptionsBuilder<AuditDbContext>()
@@ -66,6 +69,7 @@ public sealed class AuditIntegrationFixture : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         await RabbitMq.DisposeAsync();
+        await Valkey.DisposeAsync();
         await PostgreSql.DisposeAsync();
     }
 

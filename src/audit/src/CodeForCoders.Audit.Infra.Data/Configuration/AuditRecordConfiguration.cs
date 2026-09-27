@@ -82,5 +82,15 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
             .HasDatabaseName(UniqueOriginFactIdIndexName);
         builder.HasIndex(record => new { record.TenantId, record.PracticedOn })
             .HasDatabaseName("ix_audit_records_tenant_praticado_em");
+        builder.HasIndex(record => new { record.TenantId, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.Type, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_tipo_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.AuthorId, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_autor_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.TargetId, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_alvo_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.Conformity, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_conformidade_praticado_em_id");
     }
 }

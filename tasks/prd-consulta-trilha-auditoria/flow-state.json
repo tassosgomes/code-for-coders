@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "branch": "feature/consulta-trilha-auditoria",
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-consulta-trilha-auditoria",
+  "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
+  "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
+  "target_ref": null,
+  "last_checkpoint": null,
+  "phase": "checkpoint",
+  "active_task": "3.0",
+  "attempt": 3,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 1,
+  "specs": [
+    "techspec.md",
+    "prd.md",
+    "contracts.md"
+  ],
+  "delivery": "pr",
+  "transport": "herdr",
+  "validated_commit": null,
+  "validated_tree": null,
+  "last_result": {
+    "task": "3.0",
+    "role": "validator",
+    "run_id": "run.vC3gg9ba",
+    "outcome": "approved"
+  },
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "3.0"
+  },
+  "history": [
+    {
+      "event": "branch_ready",
+      "run_id": "run.2TXmAdPU",
+      "base": "dead10b"
+    },
+    {
+      "event": "rejected",
+      "task": "3.0",
+      "attempt": 1,
+      "run_id": "run.y3VqSVbv"
+    },
+    {
+      "event": "validation_error",
+      "task": "3.0",
+      "run_id": "run.k9FfoLU3",
+      "action": "reenviado com autorização de contas sintéticas locais"
+    },
+    {
+      "event": "rejected",
+      "task": "3.0",
+      "attempt": 2,
+      "run_id": "run.B8D9LnZD"
+    },
+    {
+      "event": "approved",
+      "task": "3.0",
+      "attempt": 3,
+      "run_id": "run.vC3gg9ba"
+    }
+  ]
+}

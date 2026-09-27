@@ -19,6 +19,11 @@ public static class HealthExtensions
                 failureStatus: HealthStatus.Unhealthy,
                 tags: new[] { "ready" },
                 timeout: TimeSpan.FromSeconds(5))
+            .AddCheck<AuditSnapshotHealthCheck>(
+                "valkey-audit-snapshots",
+                failureStatus: HealthStatus.Unhealthy,
+                tags: new[] { "ready" },
+                timeout: TimeSpan.FromSeconds(5))
             .AddCheck<RabbitMqHealthCheck>(
                 "rabbitmq",
                 failureStatus: HealthStatus.Unhealthy,

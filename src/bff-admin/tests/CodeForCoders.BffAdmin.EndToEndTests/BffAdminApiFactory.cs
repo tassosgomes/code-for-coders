@@ -32,6 +32,10 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public VideoUploadHandler VideoUploadHandler { get; } = new();
 
+    public AuditRecordSearchHandler AuditRecordSearchHandler { get; } = new();
+
+    public AuditIdentityReferenceHandler AuditIdentityReferenceHandler { get; } = new();
+
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
     public string IdentityPublicKeyBase64 { get; private set; } = string.Empty;
@@ -66,6 +70,7 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("StaffIdentity:TenantId", "00000000-0000-7000-8000-000000000001");
         builder.UseSetting("Commerce:BaseAddress", "http://commerce.test/");
         builder.UseSetting("Media:BaseAddress", "http://media.test/");
+        builder.UseSetting("Audit:BaseAddress", "http://audit.test/");
         builder.UseSetting("BffSecurity:AllowedOrigins:0", "http://localhost:8081");
         using var rsa = RSA.Create(2048);
         var privateKey = rsa.ExportPkcs8PrivateKey();
@@ -88,6 +93,8 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddSingleton(CommerceFinanceAreaHandler);
             services.AddSingleton(VideoLibraryHandler);
             services.AddSingleton(VideoUploadHandler);
+            services.AddSingleton(AuditRecordSearchHandler);
+            services.AddSingleton(AuditIdentityReferenceHandler);
             services.RemoveAll<IBffSessionStore>();
             services.AddSingleton<IBffSessionStore>(SessionStore);
             services.AddHttpClient<IStaffPasswordResetIdentityClient, StaffPasswordResetIdentityClient>()
@@ -96,6 +103,14 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
             services.AddHttpClient<IStaffSessionIdentityClient, StaffSessionIdentityClient>()
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<StaffSessionIdentityHandler>());
+            services.RemoveAll<IAuditRecordClient>();
+            services.AddHttpClient<IAuditRecordClient, AuditRecordClient>()
+                .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+                    serviceProvider.GetRequiredService<AuditRecordSearchHandler>());
+            services.RemoveAll<IAuditIdentityReferenceClient>();
+            services.AddHttpClient<IAuditIdentityReferenceClient, AuditIdentityReferenceClient>()
+                .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+                    serviceProvider.GetRequiredService<AuditIdentityReferenceHandler>());
             services.AddHttpClient<IStaffInvitationIdentityClient, StaffInvitationIdentityClient>()
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<StaffInvitationIdentityHandler>());

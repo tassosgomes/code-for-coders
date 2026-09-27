@@ -14,9 +14,11 @@ public static class EndpointExtensions
         app.MapStudentSessionEndpoints();
         app.MapStaffSessionEndpoints();
         app.MapSigningKeyEndpoints();
+        app.MapOpenIdConfigurationEndpoints();
         app.MapStaffPasswordResetEndpoints();
         app.MapStaffPasswordRecoveryEndpoints();
         app.MapStaffInvitationEndpoints();
         app.MapStaffMemberEndpoints();
+        app.MapAuditIdentityReferenceEndpoints();
     }
 }

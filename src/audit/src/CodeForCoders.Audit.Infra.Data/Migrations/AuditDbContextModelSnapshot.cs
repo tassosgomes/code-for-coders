@@ -105,6 +105,21 @@ namespace CodeForCoders.Audit.Infra.Data.Migrations
                     b.HasIndex("TenantId", "PracticedOn")
                         .HasDatabaseName("ix_audit_records_tenant_praticado_em");
 
+                    b.HasIndex("TenantId", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_praticado_em_id");
+
+                    b.HasIndex("TenantId", "AuthorId", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_autor_praticado_em_id");
+
+                    b.HasIndex("TenantId", "Conformity", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_conformidade_praticado_em_id");
+
+                    b.HasIndex("TenantId", "TargetId", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_alvo_praticado_em_id");
+
+                    b.HasIndex("TenantId", "Type", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_tipo_praticado_em_id");
+
                     b.ToTable("audit_records", "audit_access", t =>
                         {
                             t.HasComment("Append-only audit evidence. UPDATE and DELETE are rejected by database trigger.");

@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityPasswordRecoveryStore, IdentityPasswordRecoveryStore>();
         services.AddScoped<IIdentityStaffAccountStore, IdentityStaffAccountStore>();
         services.AddScoped<IIdentityStaffInvitationStore, IdentityStaffInvitationStore>();
+        services.AddScoped<IAuditIdentityReferenceQueries, AuditIdentityReferenceQueries>();
         services.AddScoped<IIdentitySessionStore, IdentitySessionStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
         services.AddSingleton<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();

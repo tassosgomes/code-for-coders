@@ -13,6 +13,7 @@ import { StaffLoginRoute } from '@/app/routes/staff-login-route';
 import { StaffAccessRoute } from '@/app/routes/staff-access-route';
 import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 import { VideosAreaRoute } from '@/app/routes/videos-area-route';
+import { AuditTrailRoute } from '@/app/routes/audit-trail-route';
 
 const routes: RouteObject[] = [
   {
@@ -26,6 +27,7 @@ const routes: RouteObject[] = [
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
       { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
       { path: paths.videos.path.slice(1), element: <VideosAreaRoute /> },
+      { path: paths.auditTrail.path.slice(1), element: <AuditTrailRoute /> },
       { path: '*', element: <RouteError notFound /> },
     ],
   },

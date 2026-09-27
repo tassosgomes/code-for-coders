@@ -76,6 +76,10 @@ export const handlers = [
     data: [],
     pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
   })),
+  http.post(`${env.API_URL}/api/v1/audit-record-searches`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 20, total: 0, totalPages: 0, snapshot: 'snap_testfixture' },
+  })),
   http.patch(`${env.API_URL}/api/v1/videos/:videoId`, async ({ params, request }) => {
     const body = await request.json() as { title: string };
     if (!body.title.trim()) {
