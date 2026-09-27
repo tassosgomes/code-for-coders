@@ -4,5 +4,7 @@ public interface ITenantContext
 {
     Guid? TenantId { get; }
 
-    void Set(Guid tenantId);
+    Guid? ActorAccountId { get; }
+
+    void Set(Guid tenantId, Guid? actorAccountId = null);
 }

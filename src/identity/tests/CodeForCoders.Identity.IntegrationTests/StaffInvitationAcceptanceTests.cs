@@ -93,7 +93,7 @@ public sealed class StaffInvitationAcceptanceTests(IdentityIntegrationFixture fi
 
         Assert.Equal("Marina Alves", session.Name);
         Assert.Equal([StaffRoleCatalog.Teacher], session.Roles);
-        Assert.Equal([StaffRoleCatalog.ReadAuthoring], session.Permissions);
+        Assert.Equal([StaffRoleCatalog.ReadAuthoring, StaffRoleCatalog.SendVideos], session.Permissions);
         Assert.True(session.ExpiresAt > Now);
 
         dbContext.ChangeTracker.Clear();

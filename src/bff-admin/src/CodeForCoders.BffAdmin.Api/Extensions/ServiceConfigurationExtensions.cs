@@ -38,6 +38,38 @@ public static class ServiceConfigurationExtensions
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.DisableForUnsafeHttpMethods();
             });
+        builder.Services.AddOptions<MediaApiOptions>()
+            .Bind(builder.Configuration.GetSection(MediaApiOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)
+                && uri.Scheme is "http" or "https"
+                && options.BaseAddress.EndsWith("/", StringComparison.Ordinal),
+                "Media base address must be an absolute HTTP(S) URL ending in a slash.")
+            .ValidateOnStart();
+        builder.Services.AddHttpClient<IVideoLibraryClient, VideoLibraryClient>((serviceProvider, client) =>
+            {
+                var settings = serviceProvider.GetRequiredService<IOptions<MediaApiOptions>>().Value;
+                client.BaseAddress = new Uri(settings.BaseAddress, UriKind.Absolute);
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
+        builder.Services.AddHttpClient<IVideoUploadClient, VideoUploadClient>((serviceProvider, client) =>
+            {
+                var settings = serviceProvider.GetRequiredService<IOptions<MediaApiOptions>>().Value;
+                client.BaseAddress = new Uri(settings.BaseAddress, UriKind.Absolute);
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(35);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(40);
+                options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(90);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddHttpClient("bff-admin-outbound")
             .AddStandardResilienceHandler(options =>
             {

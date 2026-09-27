@@ -7,7 +7,7 @@ public static class StaffRoleCatalog
         {
             [Administrator] = [ManageAccess],
             [Finance] = [ReadFinance],
-            [Teacher] = [ReadAuthoring],
+            [Teacher] = [ReadAuthoring, SendVideos],
             [Support] = [HandleSupport],
         };
 
@@ -20,6 +20,7 @@ public static class StaffRoleCatalog
     public const string ReadFinance = "financeiro.ler";
     public const string ReadAuthoring = "autoria.ler";
     public const string HandleSupport = "suporte.atender";
+    public const string SendVideos = "midia.enviar";
 
     public static bool Contains(string role) => PermissionsByRole.ContainsKey(role);
 

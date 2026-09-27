@@ -34,6 +34,7 @@ public sealed class MediaApiFactory : WebApplicationFactory<Program>, IAsyncLife
     {
         builder.UseEnvironment("EndToEndTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
+        builder.UseSetting("Media:Role", "api");
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
         builder.ConfigureTestServices(services =>

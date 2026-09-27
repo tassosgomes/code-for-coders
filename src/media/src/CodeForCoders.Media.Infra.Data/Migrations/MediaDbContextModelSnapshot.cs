@@ -8,7 +8,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CodeForCoders.Media.Infra.Data.Migrations;
+namespace CodeForCoders.Media.Infra.Data.Migrations
+{
     [DbContext(typeof(MediaDbContext))]
     partial class MediaDbContextModelSnapshot : ModelSnapshot
     {
@@ -21,6 +22,284 @@ namespace CodeForCoders.Media.Infra.Data.Migrations;
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.OperationIdempotencyRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActorAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_account_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("operation");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_json");
+
+                    b.Property<int>("ResponseStatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("response_status_code");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_operation_idempotency_expires_at");
+
+                    b.HasIndex("TenantId", "ActorAccountId", "Operation", "Key")
+                        .IsUnique()
+                        .HasDatabaseName("ux_operation_idempotency_scope_key");
+
+                    b.ToTable("operation_idempotency", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Video", b =>
+                {
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_seconds");
+
+                    b.Property<byte[]>("EncryptedVideoKey")
+                        .HasColumnType("bytea")
+                        .HasColumnName("encrypted_video_key");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<string>("MasterKeyId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("master_key_id");
+
+                    b.Property<DateTimeOffset?>("NextPreparationAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_preparation_at");
+
+                    b.Property<string>("NormalizedTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_title");
+
+                    b.Property<DateTimeOffset?>("OriginalDeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("original_deleted_at");
+
+                    b.Property<string>("OriginalObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("original_object_key");
+
+                    b.Property<long>("OriginalSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("original_size_bytes");
+
+                    b.Property<int>("PreparationAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("preparation_attempts");
+
+                    b.Property<Guid?>("PreparationLeaseId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasColumnName("preparation_lease_id");
+
+                    b.Property<DateTimeOffset?>("PreparationLeaseUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("preparation_lease_until");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<long>("StoredBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("stored_bytes");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTimeOffset>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<Guid>("UploadedByAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploaded_by_account_id");
+
+                    b.Property<string>("UploadedByName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("uploaded_by_name");
+
+                    b.HasKey("VideoId");
+
+                    b.HasIndex("Status", "OriginalDeletedAt")
+                        .HasDatabaseName("ix_videos_original_cleanup")
+                        .HasFilter("status IN ('ready', 'failed') AND original_deleted_at IS NULL");
+
+                    b.HasIndex("Status", "PreparationLeaseUntil")
+                        .HasDatabaseName("ix_videos_preparation_lease")
+                        .HasFilter("status = 'preparing'");
+
+                    b.HasIndex("TenantId", "UploadedAt", "VideoId")
+                        .HasDatabaseName("ix_videos_tenant_uploaded_at");
+
+                    b.HasIndex("Status", "NextPreparationAt", "UploadedAt", "VideoId")
+                        .HasDatabaseName("ix_videos_preparation_queue")
+                        .HasFilter("status = 'received'");
+
+                    b.ToTable("videos", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.VideoUpload", b =>
+                {
+                    b.Property<Guid>("UploadId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("upload_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("file_name");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("object_key");
+
+                    b.Property<int>("PartCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("part_count");
+
+                    b.Property<string>("StorageUploadId")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("storage_upload_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<Guid>("UploaderAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploader_account_id");
+
+                    b.Property<string>("UploaderName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("uploader_name");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.HasKey("UploadId");
+
+                    b.HasIndex("VideoId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_video_uploads_video_id");
+
+                    b.HasIndex("TenantId", "UploaderAccountId", "CreatedAt")
+                        .HasDatabaseName("ix_video_uploads_tenant_actor_created_at");
+
+                    b.HasIndex("TenantId", "UploaderAccountId", "Fingerprint")
+                        .IsUnique()
+                        .HasDatabaseName("ux_video_uploads_tenant_actor_fingerprint_pending")
+                        .HasFilter("completed_at IS NULL AND expired_at IS NULL");
+
+                    b.ToTable("video_uploads", "media_access");
+                });
 
             modelBuilder.Entity("CodeForCoders.Media.Infra.Data.Outbox.OutboxMessage", b =>
                 {
@@ -85,3 +364,4 @@ namespace CodeForCoders.Media.Infra.Data.Migrations;
 #pragma warning restore 612, 618
         }
     }
+}

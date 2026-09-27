@@ -100,6 +100,7 @@ Decisão de evolução, aprovada pelo usuário em 2026-09-25 (revisão da task 7
 
 ## Evolução e compatibilidade
 
+- **Contratos HTTP de Identity 1.0.1 → 1.1.0 (C-14):** aditiva. `midia.enviar` entra no enum `Permission`; Identity concede a permissão somente ao papel `professor`. A audiência `media` emitida na validação de sessão usa o escopo `videos:write` e carrega as permissões vigentes da sessão.
 - **Contratos internos:** novos. O documento interno de CAP-001 (`bff-student` → Identity) não muda; a verificação de asserção passa a aceitar dois emissores, e o `bff-student` mantém exatamente os seus escopos (regressão exigida na V-02).
 
 - **HTTP do backoffice:** interface nova, sem versão anterior a comparar. Compatibilidade com produção não verificada.

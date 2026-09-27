@@ -15,6 +15,10 @@ export const paths = {
     path: '/financeiro',
     getHref: () => '/financeiro',
   },
+  videos: {
+    path: '/videos',
+    getHref: () => '/videos',
+  },
   staffPasswordReset: {
     path: '/redefinir-senha',
     getHref: () => '/redefinir-senha',

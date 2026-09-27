@@ -4,8 +4,11 @@ public sealed class TenantContext : ITenantContext
 {
     public Guid? TenantId { get; private set; }
 
-    public void Set(Guid tenantId)
+    public Guid? ActorAccountId { get; private set; }
+
+    public void Set(Guid tenantId, Guid? actorAccountId = null)
     {
         TenantId = tenantId;
+        ActorAccountId = actorAccountId;
     }
 }

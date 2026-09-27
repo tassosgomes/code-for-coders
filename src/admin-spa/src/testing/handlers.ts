@@ -2,6 +2,57 @@ import { http, HttpResponse } from 'msw';
 
 import { env } from '@/config/env';
 
+export const videoStatusFixtures = {
+  received: {
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'received',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: null,
+  },
+  preparing: {
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'preparing',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: null,
+  },
+  ready: {
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'ready',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: 20,
+    failureReason: null,
+  },
+  failed: {
+    videoId: 'd3844c70-62d3-5f3d-93d9-7ef705301ea8',
+    title: 'Aula de exemplo',
+    status: 'failed',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: 'unreadable-file',
+  },
+} as const;
+
 export const handlers = [
   http.post(`${env.API_URL}/api/v1/staff-sessions`, () =>
     HttpResponse.json({
@@ -21,6 +72,65 @@ export const handlers = [
       csrfToken: 'staff-session-csrf',
     }),
   ),
+  http.get(`${env.API_URL}/api/v1/videos`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
+  })),
+  http.patch(`${env.API_URL}/api/v1/videos/:videoId`, async ({ params, request }) => {
+    const body = await request.json() as { title: string };
+    if (!body.title.trim()) {
+      return HttpResponse.json({ code: 'TITLE_REQUIRED' }, { status: 422 });
+    }
+    return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, title: body.title.trim() });
+  }),
+  http.post(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
+    uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
+    title: 'Aula de exemplo',
+    fileName: 'aula.mp4',
+    fileSize: 4,
+    partSize: 67108864,
+    partCount: 1,
+    receivedParts: [],
+    expiresAt: '2026-09-27T14:05:11Z',
+  }, { status: 201 })),
+  http.get(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 50, total: 0, totalPages: 0 },
+  })),
+  http.get(`${env.API_URL}/api/v1/video-uploads/:uploadId`, () => HttpResponse.json({
+    uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
+    title: 'Aula de exemplo',
+    fileName: 'aula.mp4',
+    fileSize: 4,
+    partSize: 67108864,
+    partCount: 1,
+    receivedParts: [],
+    expiresAt: '2026-09-27T14:05:11Z',
+  })),
+  http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/part-urls`, async ({ request }) => {
+    const body = await request.json() as { partNumbers: number[] };
+    return HttpResponse.json({
+      parts: body.partNumbers.map((partNumber) => ({
+        partNumber,
+        url: `http://localhost:9000/part-${partNumber}?X-Amz-Signature=test`,
+        expiresAt: '2026-09-27T14:05:11Z',
+      })),
+      uploadExpiresAt: '2026-09-28T14:05:11Z',
+    });
+  }),
+  http.put('http://localhost:9000/:part', () => new HttpResponse(null, { status: 200 })),
+  http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/complete`, () => HttpResponse.json({
+    videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
+    title: 'Aula de exemplo',
+    status: 'received',
+    uploadedBy: {
+      accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+      name: 'Marina Alves',
+    },
+    uploadedAt: '2026-09-26T14:05:11Z',
+    durationSeconds: null,
+    failureReason: null,
+  }, { status: 201 })),
   http.delete(`${env.API_URL}/api/v1/staff-sessions/current`, () => new HttpResponse(null, { status: 204 })),
   http.get(`${env.API_URL}/v1/admin/workspace/status`, () =>
     HttpResponse.json({

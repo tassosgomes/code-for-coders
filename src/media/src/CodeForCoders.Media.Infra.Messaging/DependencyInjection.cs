@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using CodeForCoders.Media.Infra.Messaging.Health;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +25,22 @@ public static class DependencyInjection
         services.AddSingleton<HeartbeatReceiptStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
-        services.AddHostedService<HeartbeatConsumerWorker>();
+        if (MediaRoleOptions.ReadRole(configuration) == MediaServiceRole.Api)
+        {
+            services.AddHostedService<HeartbeatConsumerWorker>();
+        }
+        else
+        {
+            services.AddOptions<VideoPreparationOptions>()
+                .Bind(configuration.GetSection(VideoPreparationOptions.SectionName))
+                .Validate(options => options.HasValidWorkerSettings(), "Media video preparation configuration is invalid.")
+                .ValidateOnStart();
+            services.AddSingleton<IVideoKeyProtector, AesVideoKeyProtector>();
+            services.AddSingleton<IVideoTranscoder, FfmpegVideoTranscoder>();
+            services.AddHostedService<ExpiredVideoUploadWorker>();
+            services.AddHostedService<VideoPreparationWorker>();
+            services.AddHostedService<MediaVolumeMetricsWorker>();
+        }
 
         return services;
     }

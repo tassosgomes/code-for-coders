@@ -12,6 +12,7 @@ import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { StaffLoginRoute } from '@/app/routes/staff-login-route';
 import { StaffAccessRoute } from '@/app/routes/staff-access-route';
 import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
+import { VideosAreaRoute } from '@/app/routes/videos-area-route';
 
 const routes: RouteObject[] = [
   {
@@ -24,6 +25,7 @@ const routes: RouteObject[] = [
       { index: true, element: <DashboardRoute /> },
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
       { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
+      { path: paths.videos.path.slice(1), element: <VideosAreaRoute /> },
       { path: '*', element: <RouteError notFound /> },
     ],
   },

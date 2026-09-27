@@ -1,0 +1,497 @@
+{
+  "schema_version": 1,
+  "branch": "feature/ingestao-midia",
+  "original_base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
+  "base_ref": "ce2be47124fbf409235eda7c4e8b5a22874fee4a",
+  "target_ref": "ce2be47124fbf409235eda7c4e8b5a22874fee4a",
+  "last_checkpoint": "4ee534a",
+  "phase": "complete-prd",
+  "active_task": null,
+  "attempt": 2,
+  "max_attempts": 3,
+  "full_attempt": 2,
+  "transport_retries": 3,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "transport": "herdr",
+  "validated_commit": "4ee534aea9d41a27188fc16943febcf942909c50",
+  "validated_tree": "8c6c0ebbf1c439b9bda494321963be92c705cfaa",
+  "last_result": {
+    "run_id": "run.M2v4KBUJ",
+    "role": "integrator",
+    "mode": "complete-prd",
+    "outcome": "prd_complete",
+    "gate": "passed",
+    "report": "tasks/prd-ingestao-midia/prd_review.md",
+    "delivery": "pr",
+    "pull_request": "https://github.com/tassosgomes/code-for-coders/pull/68"
+  },
+  "pending_delegation": null,
+  "history": [
+    {
+      "ts": "2026-09-26",
+      "event": "plan_approved",
+      "note": "Tasks 1.0 e 2.0 (design) concluídas e aprovadas pelo usuário; execução autorizada a partir da 3.0 com transporte herdr e entrega por PR. Planejamento commitado em main ce2be47."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "branch_ready",
+      "run_id": "run.RVQH1M0k",
+      "note": "worktree ../code-for-coders-ingestao-midia a partir de ce2be47; base_ref fac60e7 (origin/main) — o diff da PR inclui também fa5268a, ainda não publicado"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "transport_failure",
+      "run_id": "run.xoU9pmsP",
+      "note": "codex auto-atualizou (0.157.0→0.157.1) e saiu antes do prompt; nenhuma escrita; repetição segura, tentativa não consumida"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "task_blocked",
+      "task": "3.0",
+      "run_id": "run.8fFzAoO3",
+      "note": "gate exit 0 (22 testes) e checks do projeto exit 0; smoke no Compose não executado: a stack ativa é do checkout principal (mesmos nomes de container e portas) e a worktree não tem .env. Tentativa não consumida; aguarda decisão do usuário."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "intervention",
+      "task": "3.0",
+      "note": "Usuário autorizou derrubar a stack do checkout principal (volumes preservados) e copiar .env para a worktree; nova rodada da 3.0 só para smoke/correções, tentativa 1 mantida."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "gate_error",
+      "task": "3.0",
+      "run_id": "run.ZaBPo97r",
+      "note": "gate exit 0 (22 testes); stack da worktree no ar, migrations aplicadas, admin do seed criado. Smoke bloqueado: e-mails vão ao smtp4dev remoto (smtp.tasso.dev.br) que exige Basic Auth ausente do .env. Infra; tentativa não consumida."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "intervention",
+      "task": "3.0",
+      "note": "Usuário adicionou credencial Basic Auth do smtp4dev ao .env; copiada para a worktree (sem valores em log). Rodada 3 só para smoke; tentativa 1 mantida."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "3.0",
+      "run_id": "run.OJXe4ELU",
+      "note": "smoke no Compose ok: admin, convites professor/suporte, /admin/videos vazio para professor e Sem permissão para suporte. NO_ROUTE no Notification sem impacto."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "focused_approved",
+      "task": "3.0",
+      "run_id": "run.5FrCLb4M",
+      "note": "0 bloqueantes, 4 recomendações (R1: teste de token expirado em Media ausente; R2: timeout do JWKS fora do cache de falha; R3: 4xx de Media → 502 no BFF; R4: retry/timeout do cliente Media)"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "3.0",
+      "run_id": "run.26IkYocZ",
+      "commit": "747bebb"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "transport_failure_reconciled",
+      "task": "4.0",
+      "run_id": "run.M6haTNsj",
+      "note": "tsg-delegate atingiu o timeout de 2 h com o codex ainda working; o agente concluiu no mesmo pane e gravou result.json válido (implementation_complete, gate passed, 23 testes, smoke no navegador ok). Sem repetição; tentativa não consumida. R1 da 3.0 (token expirado) incluído."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "focused_approved",
+      "task": "4.0",
+      "run_id": "run.qM40aAkF",
+      "note": "0 bloqueantes, 5 recomendações; R1–R4 carregadas para a 6.0; R5 (MKV com MIME vazio em alguns navegadores) para decisão de produto"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "4.0",
+      "run_id": "run.XsRrb9CP",
+      "commit": "8fb586d"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "focused_approved",
+      "task": "5.0",
+      "run_id": "run.5OLBwb0c",
+      "note": "0 bloqueantes, 4 recomendações; mecanismo de ffmpeg no CI (fixture com sudo -n apt-get) aceito; R1–R3 carregadas para a 6.0; R4 (posição de MediaRoleOptions) observação"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "5.0",
+      "run_id": "run.3XjqJHZ1",
+      "commit": "3bc93df"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "focused_approved",
+      "task": "6.0",
+      "run_id": "run.DqM2nHWe",
+      "note": "0 bloqueantes, 5 recomendações; carryovers 4.0/5.0 conferidos; R1/R2/R5 → 7.0; R3/R4 → 9.0"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "6.0",
+      "run_id": "run.Ldl3rgSv",
+      "commit": "023969a"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "focused_rejected",
+      "task": "7.0",
+      "run_id": "run.6A49uQ0r",
+      "note": "1 bloqueante (B1 escada/teto de 480p vs D-04), 7 recomendações; carryovers 6.0 atendidos; tentativa 1/3 consumida"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "validation_error",
+      "task": "7.0",
+      "run_id": "run.D9xXWlLt",
+      "note": "B1 e R1/R2/R3/R5 confirmados resolvidos; gate exit 0 (25). Smoke no navegador da versão corrigida não concluído: sessão de professor expirada e senha desconhecida (trocada no smoke da 6.0). Validator recriou media, media-worker, admin-spa e bff-admin com a árvore atual. Infra; tentativa não consumida; revalidação repetida com caminho de acesso."
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "approved",
+      "task": "7.0",
+      "run_id": "run.yynXkV2q",
+      "note": "revalidação 2/3 aprovada; gate exit 0; smoke Compose com versão corrigida: vídeo passa a Pronto sem recarregar"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "7.0",
+      "commit": "77e50b6",
+      "run_id": "run.AQgvUPpw"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "8.0",
+      "attempt": 1
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "routing_override",
+      "note": "usuário pediu escalar para gpt-6-sol high na próxima task ou nova tentativa"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "8.0",
+      "run_id": "run.F7JqP21K",
+      "note": "gate 7 Media + 2 SPA; checks ok; smoke falha ilegível ok"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "rejected",
+      "task": "8.0",
+      "run_id": "run.eLvb8fNi",
+      "note": "B1: codec desconhecido classificado como unreadable-file; teste usa wrapper. R1-R4 recomendações"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "8.0",
+      "attempt": 2,
+      "note": "fix com codex gpt-6-sol high (override do usuário)"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "8.0",
+      "run_id": "run.Q5TfdHu3",
+      "note": "B1, R1, R3 corrigidos; R2 justificado sem migration; smoke dois motivos ok"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "approved",
+      "task": "8.0",
+      "run_id": "run.hOLk3dDD",
+      "note": "revalidação 2/3; B1 fechado; R2 aceito com risco"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "8.0",
+      "commit": "ea89672",
+      "run_id": "run.FrJw4cMJ"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "9.0",
+      "attempt": 1,
+      "note": "codex gpt-6-sol high (override do usuário)"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "9.0",
+      "run_id": "run.ENxyJH9N",
+      "note": "gate 17 testes; R3/R4 6.0 e R4 8.0 resolvidos; R5 sem precedente"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "approved",
+      "task": "9.0",
+      "run_id": "run.ykRkAZuF",
+      "note": "focused 1/3; 0 bloqueantes, 7 recomendações"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "9.0",
+      "commit": "e218c02",
+      "run_id": "run.S09l7kxr"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "10.0",
+      "attempt": 1,
+      "note": "codex gpt-6-sol high"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "10.0",
+      "run_id": "run.ibrYJvE7",
+      "note": "gate 4; fila de auditoria; outbox max 10→20; 9.0 R1/R2/R3/R6"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "rejected",
+      "task": "10.0",
+      "run_id": "run.qEncmxpK",
+      "note": "B1 título null → 500; B2 outbox 10→20 reverter"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "start",
+      "task": "10.0",
+      "attempt": 2,
+      "note": "fix codex gpt-6-sol high"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "implementation_complete",
+      "task": "10.0",
+      "run_id": "run.Nf2skemX",
+      "note": "B1/B2 corrigidos; R1/R3/R5; gate 6"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "approved",
+      "task": "10.0",
+      "run_id": "run.ouXU7ORe",
+      "note": "revalidação 2/3; R2/R4/R6 abertas não bloqueantes"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "10.0",
+      "commit": "df63c88",
+      "run_id": "run.l1KYrUL4"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "checkpoint",
+      "task": "10.0",
+      "commit": "df63c88",
+      "run_id": "run.l1KYrUL4"
+    },
+    {
+      "ts": "2026-09-26",
+      "event": "integration_ready",
+      "run_id": "run.L9NumhhB",
+      "note": "target main local ce2be47 (sem rede para origin); base_ref corrigido para merge-base ce2be47"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "full_rejected",
+      "run_id": "run.DqHeR9Nv",
+      "note": "B1→3.0, B2→9.0, B3/B4→6.0, B5→10.0"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "reopen",
+      "task": "3.0",
+      "source": "run.DqHeR9Nv"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "implementation_complete",
+      "task": "3.0",
+      "run_id": "run.jJHqSxgP",
+      "note": "B1 StaffInvitationAcceptanceTests alinha expectativa a [autoria.ler, midia.enviar]; gate passed"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "approved",
+      "task": "3.0",
+      "run_id": "run.EjD0GlwP",
+      "note": "revalidacao 1/3 aprovada; gate exit 0 (23); Identity 114/114; B1 resolvido"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "b5afad9",
+      "note": "correção da full"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "reopen",
+      "task": "6.0",
+      "source": "run.DqHeR9Nv"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "transport_failure",
+      "task": "6.0",
+      "run_id": "run.x6bRjbL1",
+      "note": "opencode invalid parameters; sem commit; repetido"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "implementation_complete",
+      "task": "6.0",
+      "run_id": "run.QHiqnPae",
+      "note": "B3/B4 da full: 2 testes novos de expiracao em VideoUploadResumeTests; gate passed"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "approved",
+      "task": "6.0",
+      "run_id": "run.QO5nEEPk",
+      "note": "revalidacao 1/3 aprovada; gate exit 0 (15 testes: 10 Media, 2 BFF, 3 SPA); B3/B4 resolvidos"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "10ae3ba",
+      "note": "correção da full"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "reopen",
+      "task": "9.0",
+      "source": "run.DqHeR9Nv"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "transport_failure",
+      "task": "9.0",
+      "run_id": "run.pnWqWHt1",
+      "note": "opencode agent_blocked; sem commit; integrador escalado para codex"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "reopen",
+      "task": "9.0",
+      "source": "run.DqHeR9Nv"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "approved",
+      "task": "9.0",
+      "run_id": "run.biQYr9K1",
+      "note": "revalidacao focused aprovada; gate exit 0 (21 testes); B2 resolvido"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "checkpoint",
+      "task": "9.0",
+      "commit": "5c1f79b",
+      "note": "correção da full"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "reopen",
+      "task": "10.0",
+      "source": "run.DqHeR9Nv"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "approved",
+      "task": "10.0",
+      "run_id": "run.zw64hZ2g",
+      "note": "revalidacao 1/3 aprovada; B5 resolvido; gate 7 testes"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "checkpoint",
+      "task": "10.0",
+      "commit": "4ee534a",
+      "note": "correção da full"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "full_start",
+      "full_attempt": 2
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "full_approved",
+      "run_id": "run.pRm2FrdL",
+      "full_attempt": 2
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "prd_complete",
+      "run_id": "run.M2v4KBUJ",
+      "branch": "feature/ingestao-midia",
+      "pull_request": "https://github.com/tassosgomes/code-for-coders/pull/68"
+    }
+  ],
+  "carryover": {
+    "6.0": [],
+    "7.0": [
+      "6.0-R1: ExpiredVideoUploadWorker (e os novos serviços do worker) não podem derrubar o host em exceção não prevista; registrar e seguir para o próximo ciclo",
+      "6.0-R2: teste de expiração depende do lote global de 100; isolar o alvo e testar que a varredura só é registrada no papel worker",
+      "6.0-R5: ExpireAsync mantém transação aberta durante AbortMultipartUpload (acompanhar)"
+    ],
+    "9.0": [
+      "6.0-R3: total da listagem de pendentes conta envios descartados",
+      "6.0-R4: VideoUploadResumeTests usa page/size em vez de _page/_size",
+      "8.0-R5: publicação do outbox devolve 312 NO_ROUTE em media.events sem fila ligada no Compose (ativo-pronto e preparacao-falhou acumulam tentativas); decidir tratamento no publisher ou fila de auditoria no Compose",
+      "8.0-R4: validar payload de preparacao-falhou contra schema AsyncAPI e header correlationId"
+    ],
+    "8.0": [
+      "7.0-R7: falha de item deixa vídeo preparing até a lease vencer e volta a received sem limite; fechar com D-03",
+      "7.0-R4: opção de threads do ffmpeg por configuração (D-04)",
+      "7.0-R6: backfill único de original_object_key na migration em vez do COALESCE/LEFT JOIN permanente"
+    ],
+    "10.0": [
+      "8.0-R5 (decidido): fila durável de auditoria media.events.audit — ver decisions",
+      "9.0-R1: debounce ~300 ms na busca da SPA",
+      "9.0-R2: 422 TITLE_REQUIRED do servidor exibido no campo do diálogo",
+      "9.0-R3: Idempotency-Key gerada ao abrir o diálogo, reaproveitada em nova tentativa",
+      "9.0-R6: título > 200 caracteres deve seguir o código de erro do contrato"
+    ]
+  },
+  "routing_override": {
+    "applies_to": "implementer: tentativas de fix da 8.0 e tasks 9.0+",
+    "kind": "codex",
+    "model": "gpt-6-sol",
+    "effort": "high",
+    "source": "pedido do usuário 2026-09-26"
+  },
+  "decisions": [
+    {
+      "id": "8.0-R5",
+      "ts": "2026-09-26",
+      "source": "usuário aprovou a sugestão",
+      "decision": "Media declara no RabbitMqTopologyInitializer uma fila durável de auditoria (media.events.audit), dono Media, ligada a midia.ativo-pronto.v1 e midia.preparacao-falhou.v1; retenção configurável (padrão x-message-ttl 7 dias, x-max-length 100000, overflow drop-head); mandatory:true mantido"
+    }
+  ]
+}

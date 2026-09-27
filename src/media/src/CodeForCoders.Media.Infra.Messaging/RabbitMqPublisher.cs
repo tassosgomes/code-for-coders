@@ -16,18 +16,20 @@ public sealed class RabbitMqPublisher(
         try
         {
             await using var channel = await connectionProvider.CreatePublisherChannelAsync(cancellationToken);
+            var messageId = message.Id.ToString("N");
+            var correlationId = message.TraceParent ?? $"00-{messageId}-{messageId[..16]}-01";
             var properties = new BasicProperties
             {
                 ContentType = "application/json",
                 DeliveryMode = DeliveryModes.Persistent,
                 MessageId = message.Id.ToString(),
                 Type = message.Type,
-                Headers = string.IsNullOrWhiteSpace(message.TraceParent)
-                    ? null
-                    : new Dictionary<string, object?>
-                    {
-                        ["traceparent"] = message.TraceParent,
-                    },
+                CorrelationId = correlationId,
+                Headers = new Dictionary<string, object?>
+                {
+                    ["correlationId"] = correlationId,
+                    ["traceparent"] = correlationId,
+                },
             };
             await channel.BasicPublishAsync(
                 exchange: options.Value.Exchange,

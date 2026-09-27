@@ -1,13 +1,9 @@
-# Media
+# Media service
 
-`media` owns the boundary between the product and media providers. Application exposes only the
-vendor-neutral `IMediaStoragePort` and `IMediaCdnPort`; the S3 and CloudFront adapters live in
-`Infra.Data/Adapters`.
+Media validates staff tokens through Identity JWKS and stores private multipart uploads in S3-compatible storage. The browser writes file parts only through short-lived presigned `PUT` URLs; Media lists and completes parts through its internal storage client.
 
-`AwsMedia` contains region, bucket, object-prefix and distribution-domain configuration only. No
-AWS access key, secret, private key or signed-URL material is committed. Production credentials are
-resolved through the AWS default credential chain/workload identity and secret management outside
-the service configuration.
+Object keys contain only the configured prefix, tenant ID, video ID, and `original`. Titles, file names, uploader names, provider upload IDs, and presigned URLs are not written to logs or spans.
 
-The current foundation slice returns deterministic S3/CloudFront references without making a network
-call. Replacing that implementation with AWS SDK calls is intentionally isolated to the adapters.
+Local development uses MinIO from `docker-compose.yml`. The bucket is private, and the public signing endpoint must be reachable by the browser from the admin SPA origin.
+
+Set `Media__Role` on every Media process. The value is required and must be `api` or `worker`: `api` serves HTTP requests and consumes platform heartbeats; `worker` runs video preparation and the periodic abandoned-upload expiration scan.

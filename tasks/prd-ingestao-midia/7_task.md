@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0", "5.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.VideoPreparationTests --minimum-expected-tests 9 && dotnet test --project src/media/tests/CodeForCoders.Media.EndToEndTests/CodeForCoders.Media.EndToEndTests.csproj -- --filter-class CodeForCoders.Media.EndToEndTests.MediaHostRoleTests --minimum-expected-tests 2 && npm --prefix src/admin-spa run test -- video-status'

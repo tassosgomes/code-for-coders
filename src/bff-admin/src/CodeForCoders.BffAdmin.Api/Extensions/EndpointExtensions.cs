@@ -13,6 +13,8 @@ public static class EndpointExtensions
         app.MapStaffInvitationEndpoints();
         app.MapStaffMemberEndpoints();
         app.MapFinanceAreaEndpoints();
+        app.MapVideoLibraryEndpoints();
+        app.MapVideoUploadEndpoints();
         app.MapProxyEndpoints();
     }
 }

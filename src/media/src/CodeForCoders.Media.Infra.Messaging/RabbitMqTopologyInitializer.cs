@@ -65,6 +65,29 @@ public sealed class RabbitMqTopologyInitializer(
             "media.platform.heartbeat.v1",
             arguments: null,
             cancellationToken: cancellationToken);
+
+        await channel.QueueDeclareAsync(
+            settings.AuditQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-message-ttl"] = settings.AuditMessageTtlMilliseconds,
+                ["x-max-length"] = settings.AuditMaxLength,
+                ["x-overflow"] = "drop-head",
+            },
+            cancellationToken: cancellationToken);
+        foreach (var routingKey in new[] { "midia.ativo-pronto.v1", "midia.preparacao-falhou.v1" })
+        {
+            await channel.QueueBindAsync(
+                settings.AuditQueue,
+                settings.Exchange,
+                routingKey,
+                arguments: null,
+                cancellationToken: cancellationToken);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

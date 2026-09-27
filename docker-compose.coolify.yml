@@ -21,6 +21,12 @@ services:
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      StaffSessionTokens__Issuer: identity
+      StaffSessionTokens__SigningKeyId: local-dev-1
+      StaffSessionTokens__SigningKeyBase64: ${IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64:?set in Coolify}
+      StaffSessionTokens__LifetimeMinutes: "5"
+      StaffSessionTokens__AudienceScopes__commerce: finance-area:read
+      StaffSessionTokens__AudienceScopes__media: videos:write
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       StudentAccount__ConfirmationBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/confirm-account
@@ -73,12 +79,68 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      Media__Role: api
+      MediaTokens__Issuer: identity
+      MediaTokens__Audience: media
+      MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      AwsMedia__Region: ${AWS_REGION:-us-east-1}
+      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:?set in Coolify}
+      AwsMedia__ObjectKeyPrefix: ${AWS_MEDIA_OBJECT_PREFIX:-media}
+      AwsMedia__EndpointInternal: ${AWS_S3_ENDPOINT:-}
+      AwsMedia__EndpointPublic: ${AWS_S3_PUBLIC_ENDPOINT:-}
+      AwsMedia__AccessKeyId: ${AWS_ACCESS_KEY_ID:-}
+      AwsMedia__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY:-}
+      AwsMedia__ForcePathStyle: ${AWS_S3_FORCE_PATH_STYLE:-false}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
+      RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  media-worker:
+    build:
+      context: .
+      dockerfile: src/media/Dockerfile
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      Media__Role: worker
+      MediaTokens__Issuer: identity
+      MediaTokens__Audience: media
+      MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      AwsMedia__Region: ${AWS_REGION:-us-east-1}
+      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:?set in Coolify}
+      AwsMedia__ObjectKeyPrefix: ${AWS_MEDIA_OBJECT_PREFIX:-media}
+      AwsMedia__EndpointInternal: ${AWS_S3_ENDPOINT:-}
+      AwsMedia__EndpointPublic: ${AWS_S3_PUBLIC_ENDPOINT:-}
+      AwsMedia__AccessKeyId: ${AWS_ACCESS_KEY_ID:-}
+      AwsMedia__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY:-}
+      AwsMedia__ForcePathStyle: ${AWS_S3_FORCE_PATH_STYLE:-false}
+      Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in Coolify}
+      Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:?set in Coolify}
+      Preparation__Threads: ${MEDIA_PREPARATION_THREADS:-2}
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
+      RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    volumes:
+      - media-worker-work:/var/lib/media-work
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -181,6 +243,7 @@ services:
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
+      Media__BaseAddress: http://media:8080/
     depends_on:
       learning:
         condition: service_healthy
@@ -261,3 +324,6 @@ services:
       timeout: 3s
       retries: 6
       start_period: 10s
+
+volumes:
+  media-worker-work:

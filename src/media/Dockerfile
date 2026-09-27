@@ -30,7 +30,9 @@ RUN dotnet publish "src/CodeForCoders.Media.Api/CodeForCoders.Media.Api.csproj" 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends --yes libgssapi-krb5-2 \
+    && apt-get install --no-install-recommends --yes ffmpeg libgssapi-krb5-2 \
+    && mkdir -p /var/lib/media-work \
+    && chown app:app /var/lib/media-work \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
