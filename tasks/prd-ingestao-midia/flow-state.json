@@ -4,33 +4,31 @@
   "original_base_ref": "fac60e74ffe11e90a37a06d25fc348a7b55d9f67",
   "base_ref": "ce2be47124fbf409235eda7c4e8b5a22874fee4a",
   "target_ref": "ce2be47124fbf409235eda7c4e8b5a22874fee4a",
-  "last_checkpoint": "5c1f79b",
-  "phase": "checkpoint",
-  "active_task": "10.0",
+  "last_checkpoint": "4ee534a",
+  "phase": "complete-prd",
+  "active_task": null,
   "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 3,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
   "transport": "herdr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "4ee534aea9d41a27188fc16943febcf942909c50",
+  "validated_tree": "8c6c0ebbf1c439b9bda494321963be92c705cfaa",
   "last_result": {
-    "run_id": "run.zw64hZ2g",
-    "role": "validator",
-    "mode": "revalidation",
-    "task": "10.0",
-    "outcome": "approved"
+    "run_id": "run.M2v4KBUJ",
+    "role": "integrator",
+    "mode": "complete-prd",
+    "outcome": "prd_complete",
+    "gate": "passed",
+    "report": "tasks/prd-ingestao-midia/prd_review.md",
+    "delivery": "pr",
+    "pull_request": "https://github.com/tassosgomes/code-for-coders/pull/68"
   },
-  "pending_delegation": {
-    "role": "validator",
-    "mode": "revalidation",
-    "task": "7.0",
-    "attempt": "2/3"
-  },
+  "pending_delegation": null,
   "history": [
     {
       "ts": "2026-09-26",
@@ -428,6 +426,31 @@
       "task": "10.0",
       "run_id": "run.zw64hZ2g",
       "note": "revalidacao 1/3 aprovada; B5 resolvido; gate 7 testes"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "checkpoint",
+      "task": "10.0",
+      "commit": "4ee534a",
+      "note": "correção da full"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "full_start",
+      "full_attempt": 2
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "full_approved",
+      "run_id": "run.pRm2FrdL",
+      "full_attempt": 2
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "prd_complete",
+      "run_id": "run.M2v4KBUJ",
+      "branch": "feature/ingestao-midia",
+      "pull_request": "https://github.com/tassosgomes/code-for-coders/pull/68"
     }
   ],
   "carryover": {
