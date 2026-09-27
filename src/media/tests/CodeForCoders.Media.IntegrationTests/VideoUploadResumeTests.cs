@@ -173,6 +173,61 @@ public sealed class VideoUploadResumeTests
         Assert.NotEqual(uploadId, restartedBody.RootElement.GetProperty("uploadId").GetGuid());
     }
 
+    [Fact(DisplayName = nameof(VideoUploadResume_ExpiredFingerprintStartsANewUploadWithoutTheSweep))]
+    [Trait("Layer", "Media video upload resume - Integration")]
+    public async Task VideoUploadResume_ExpiredFingerprintStartsANewUploadWithoutTheSweep()
+    {
+        var clock = new AdjustableTimeProvider(DateTimeOffset.UtcNow);
+        using var clockFactory = WithClock(clock);
+        using var client = clockFactory.CreateClient();
+        var token = factory.CreateTokenForActor(Guid.CreateVersion7(), Guid.CreateVersion7(), "midia.enviar");
+        using var created = await StartUploadAsync(client, token, "expired-fingerprint-first");
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var uploadId = await ReadUploadIdAsync(created);
+        var partUrl = await GetPartUrlAsync(client, token, uploadId);
+        using var uploadedPart = await PutPartAsync(partUrl, 17);
+        Assert.Equal(HttpStatusCode.OK, uploadedPart.StatusCode);
+        var storedUpload = await GetStorageUploadAsync(clockFactory.Services, uploadId);
+        clock.SetUtcNow(storedUpload.ExpiresAt.AddMinutes(1));
+
+        using var restarted = await StartUploadAsync(client, token, "expired-fingerprint-second");
+        Assert.Equal(HttpStatusCode.Created, restarted.StatusCode);
+        Assert.NotEqual(uploadId, await ReadUploadIdAsync(restarted));
+        Assert.NotNull((await GetStorageUploadAsync(clockFactory.Services, uploadId)).ExpiredAt);
+        await AssertMultipartUploadAbortedAsync(storedUpload);
+    }
+
+    [Fact(DisplayName = nameof(VideoUploadResume_SweepExpiresOnlyAfterTheDeadline))]
+    [Trait("Layer", "Media video upload resume - Integration")]
+    public async Task VideoUploadResume_SweepExpiresOnlyAfterTheDeadline()
+    {
+        var clock = new AdjustableTimeProvider(DateTimeOffset.UtcNow);
+        using var clockFactory = WithClock(clock);
+        using var client = clockFactory.CreateClient();
+        var token = factory.CreateTokenForActor(Guid.CreateVersion7(), Guid.CreateVersion7(), "midia.enviar");
+        using var created = await StartUploadAsync(client, token, "sweep-deadline");
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var uploadId = await ReadUploadIdAsync(created);
+        var partUrl = await GetPartUrlAsync(client, token, uploadId);
+        using var uploadedPart = await PutPartAsync(partUrl, 17);
+        Assert.Equal(HttpStatusCode.OK, uploadedPart.StatusCode);
+        var storedUpload = await GetStorageUploadAsync(clockFactory.Services, uploadId);
+
+        clock.SetUtcNow(storedUpload.ExpiresAt.AddMinutes(-1));
+        await RunExpirationSweepAsync(clockFactory.Services);
+        Assert.Null((await GetStorageUploadAsync(clockFactory.Services, uploadId)).ExpiredAt);
+        using (var storage = CreateMinioClient())
+        {
+            var parts = await storage.ListPartsAsync(CreateListPartsRequest(storedUpload), TestContext.Current.CancellationToken);
+            Assert.Single(parts.Parts);
+        }
+
+        clock.SetUtcNow(storedUpload.ExpiresAt);
+        await RunExpirationSweepAsync(clockFactory.Services);
+        Assert.NotNull((await GetStorageUploadAsync(clockFactory.Services, uploadId)).ExpiredAt);
+        await AssertMultipartUploadAbortedAsync(storedUpload);
+    }
+
     [Fact(DisplayName = nameof(VideoUploadResume_DoesNotCountExternallyRemovedMultipartUpload))]
     [Trait("Layer", "Media video upload resume - Integration")]
     public async Task VideoUploadResume_DoesNotCountExternallyRemovedMultipartUpload()
@@ -276,6 +331,20 @@ public sealed class VideoUploadResumeTests
             services.AddSingleton(storage);
         }));
 
+    private WebApplicationFactory<Program> WithClock(TimeProvider clock)
+        => factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton(clock);
+        }));
+
+    private static async Task RunExpirationSweepAsync(IServiceProvider services)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var expireUploads = scope.ServiceProvider.GetRequiredService<IExpirePendingVideoUploads>();
+        await expireUploads.ExecuteAsync(500, TestContext.Current.CancellationToken);
+    }
+
     private static async Task<HttpResponseMessage> StartUploadAsync(HttpClient client, string token, string idempotencyKey)
     {
         using var request = AuthorizedRequest(HttpMethod.Post, "/internal/v1/video-uploads", token);
@@ -325,7 +394,7 @@ public sealed class VideoUploadResumeTests
         var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
         var upload = await dbContext.VideoUploads.IgnoreQueryFilters()
             .SingleAsync(candidate => candidate.UploadId == uploadId, TestContext.Current.CancellationToken);
-        return new StoredUpload(upload.ObjectKey, upload.StorageUploadId);
+        return new StoredUpload(upload.ObjectKey, upload.StorageUploadId, upload.ExpiresAt, upload.ExpiredAt);
     }
 
     private AmazonS3Client CreateMinioClient()
@@ -339,6 +408,23 @@ public sealed class VideoUploadResumeTests
                 UseHttp = true,
                 ServiceURL = factory.MinioEndpoint,
             });
+
+    private async Task AssertMultipartUploadAbortedAsync(StoredUpload upload)
+    {
+        using var storage = CreateMinioClient();
+        var missingParts = await Assert.ThrowsAsync<AmazonS3Exception>(() => storage.ListPartsAsync(
+            CreateListPartsRequest(upload),
+            TestContext.Current.CancellationToken));
+        Assert.Equal("NoSuchUpload", missingParts.ErrorCode);
+    }
+
+    private static ListPartsRequest CreateListPartsRequest(StoredUpload upload)
+        => new()
+        {
+            BucketName = MediaIntegrationFixture.MinioBucketName,
+            Key = $"media/{upload.ObjectKey}",
+            UploadId = upload.StorageUploadId,
+        };
 
     private static HttpRequestMessage AuthorizedRequest(HttpMethod method, string path, string token)
     {
@@ -369,7 +455,11 @@ public sealed class VideoUploadResumeTests
             .Select(upload => upload.GetProperty("uploadId").GetGuid())
             .ToArray();
 
-    private sealed record StoredUpload(string ObjectKey, string StorageUploadId);
+    private sealed record StoredUpload(
+        string ObjectKey,
+        string StorageUploadId,
+        DateTimeOffset ExpiresAt,
+        DateTimeOffset? ExpiredAt);
 
     private sealed class BarrierMediaStoragePort : IMediaStoragePort
     {

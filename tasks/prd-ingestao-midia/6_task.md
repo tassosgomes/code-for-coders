@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["4.0", "5.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.VideoUploadResumeTests --minimum-expected-tests 7 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/CodeForCoders.BffAdmin.EndToEndTests.csproj -- --filter-class CodeForCoders.BffAdmin.EndToEndTests.VideoUploadResumeTests --minimum-expected-tests 2 && npm --prefix src/admin-spa run test -- video-upload-resume'
