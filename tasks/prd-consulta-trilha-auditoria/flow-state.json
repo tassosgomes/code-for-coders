@@ -5,12 +5,12 @@
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "last_checkpoint": "4822431",
-  "phase": "checkpoint",
-  "active_task": "6.0",
+  "last_checkpoint": "413e5eb",
+  "phase": "full-fix",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 1,
   "specs": [
     "techspec.md",
@@ -22,15 +22,19 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "6.0",
     "role": "validator",
-    "run_id": "run.xGySxsCi",
-    "outcome": "approved"
+    "mode": "full",
+    "run_id": "run.XnmIxFI0",
+    "outcome": "rejected",
+    "blockers": {
+      "B2prime": "6.0",
+      "B3": "3.0"
+    }
   },
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "6.0"
+    "mode": "reopen-task",
+    "task": "3.0"
   },
   "history": [
     {
@@ -138,6 +142,27 @@
       "task": "6.0",
       "run_id": "run.Vg5Aba2v",
       "source": "run.8EPhaVq4"
+    },
+    {
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "413e5eb",
+      "cycle": "full 1"
+    },
+    {
+      "event": "full_rejected",
+      "full_attempt": 2,
+      "run_id": "run.XnmIxFI0",
+      "attribution": {
+        "B2prime": "6.0 (reincidente)",
+        "B3": "3.0"
+      }
+    },
+    {
+      "event": "reopen",
+      "task": "3.0",
+      "run_id": "run.aPfsmR05",
+      "source": "run.XnmIxFI0"
     }
   ]
 }
