@@ -30,18 +30,24 @@ export const videoPageSchema = z.object({
 
 export type VideoPage = z.infer<typeof videoPageSchema>;
 
-export const getVideos = async (page = 1, size = 10): Promise<VideoPage> =>
-  videoPageSchema.parse(await apiClient.get<unknown>('/api/v1/videos', {
-    params: { _page: page, _size: size },
-  }));
+export type VideoStatus = z.infer<typeof videoStatusSchema>;
 
-export const getVideosQueryOptions = (page = 1, size = 10) => queryOptions({
-  queryKey: ['videos', { page, size }],
-  queryFn: () => getVideos(page, size),
+export type VideoListFilters = { page?: number; size?: number; statuses?: VideoStatus[]; query?: string };
+
+export const getVideos = async ({ page = 1, size = 10, statuses = [], query }: VideoListFilters = {}): Promise<VideoPage> => {
+  const params = new URLSearchParams({ _page: String(page), _size: String(size) });
+  for (const status of statuses) params.append('status', status);
+  if (query) params.set('q', query);
+  return videoPageSchema.parse(await apiClient.get<unknown>('/api/v1/videos', { params }));
+};
+
+export const getVideosQueryOptions = ({ page = 1, size = 10, statuses = [], query }: VideoListFilters = {}) => queryOptions({
+  queryKey: ['videos', { page, size, statuses, query: query || undefined }],
+  queryFn: () => getVideos({ page, size, statuses, query }),
 });
 
-export const useVideos = (page = 1, size = 10) => useQuery({
-  ...getVideosQueryOptions(page, size),
+export const useVideos = (filters: VideoListFilters = {}) => useQuery({
+  ...getVideosQueryOptions(filters),
   refetchInterval: (query) => query.state.data?.data.some((video) =>
     video.status === 'received' || video.status === 'preparing',
   ) ? 10_000 : false,

@@ -476,6 +476,16 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
 
             delivered.Add(new PublishedMessage(
                 result.BasicProperties.MessageId,
+                result.BasicProperties.CorrelationId,
+                result.BasicProperties.Headers is not null
+                    && result.BasicProperties.Headers.TryGetValue("correlationId", out var correlationHeader)
+                    ? correlationHeader switch
+                    {
+                        byte[] bytes => Encoding.UTF8.GetString(bytes),
+                        string value => value,
+                        _ => null,
+                    }
+                    : null,
                 result.RoutingKey,
                 Encoding.UTF8.GetString(result.Body.Span)));
         }
@@ -772,7 +782,7 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
 
     internal sealed record FfmpegProcessResult(int ExitCode, string StandardError);
 
-    internal sealed record PublishedMessage(string? MessageId, string RoutingKey, string Body);
+    internal sealed record PublishedMessage(string? MessageId, string? CorrelationId, string? CorrelationHeader, string RoutingKey, string Body);
 
     internal sealed class CapturedLogProvider : ILoggerProvider
     {

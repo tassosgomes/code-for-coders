@@ -1109,6 +1109,60 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   overflow:hidden
 }
 
+.video-library-controls {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:16px;
+  margin-top:24px
+}
+
+.video-filter-options {
+  display:flex;
+  gap:4px;
+  overflow-x:auto;
+  max-width:100%
+}
+
+.video-filter-options button,.video-pagination button {
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:8px;
+  padding:8px 12px;
+  white-space:nowrap;
+  cursor:pointer
+}
+
+.video-filter-options .video-filter-active {
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff
+}
+
+.video-library-controls input {
+  min-width:220px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 12px
+}
+
+.video-edit-title {
+  display:inline-flex;
+  border:0;
+  background:transparent;
+  color:var(--primary);
+  cursor:pointer;
+  padding:4px
+}
+
+.video-pagination {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px
+}
+
 .videos-table-header,.videos-table-row {
   display:grid;
   grid-template-columns:minmax(200px,2fr) minmax(130px,1fr) minmax(130px,1fr) minmax(170px,1fr);

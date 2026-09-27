@@ -7,7 +7,7 @@ public sealed class ListVideos(IVideoQueries videoQueries) : IListVideos
 {
     public async Task<VideoPageOutput> ExecuteAsync(ListVideosInput input, CancellationToken cancellationToken)
     {
-        var snapshot = await videoQueries.ListAsync(input.Page, input.Size, cancellationToken);
+        var snapshot = await videoQueries.ListAsync(input.Page, input.Size, input.Statuses, input.Query, cancellationToken);
         var data = snapshot.Data.Select(video => new VideoOutput(
             video.VideoId,
             video.Title,

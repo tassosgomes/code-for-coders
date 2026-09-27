@@ -29,6 +29,14 @@ public static class VideoLibraryEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+
+        endpoints.MapPatch("/api/v1/videos/{videoId:guid}", UpdateVideoTitleAsync)
+            .WithName("UpdateVideoTitle")
+            .WithTags("Videos")
+            .Produces<VideoResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status502BadGateway);
     }
 
     private static async Task<IResult> ListVideosAsync(
@@ -37,9 +45,13 @@ public static class VideoLibraryEndpoints
         IVideoLibraryClient mediaClient,
         CancellationToken cancellationToken,
         int _page = 1,
-        int _size = 10)
+        int _size = 10,
+        string[]? status = null,
+        string? q = null)
     {
-        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue)
+        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue
+            || status?.Any(value => value is not ("received" or "preparing" or "ready" or "failed")) == true
+            || (q is not null && (string.IsNullOrWhiteSpace(q) || q.Length > 120)))
         {
             return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The requested page is invalid.");
         }
@@ -50,9 +62,31 @@ public static class VideoLibraryEndpoints
             return access.Problem;
         }
 
-        var result = await mediaClient.ListVideosAsync(_page, _size, access.AccessToken!, cancellationToken);
+        var result = await mediaClient.ListVideosAsync(_page, _size, status ?? [], q?.Trim(), access.AccessToken!, cancellationToken);
         return result.StatusCode == HttpStatusCode.OK && result.Page is not null
             ? Results.Ok(result.Page)
+            : MediaProblem(httpContext, result);
+    }
+
+    private static async Task<IResult> UpdateVideoTitleAsync(
+        Guid videoId,
+        UpdateVideoTitleRequest request,
+        HttpContext httpContext,
+        IStaffSessionIdentityClient identityClient,
+        IVideoLibraryClient mediaClient,
+        CancellationToken cancellationToken)
+    {
+        var access = await GetMediaAccessAsync(httpContext, identityClient, cancellationToken);
+        if (access.Problem is not null) return access.Problem;
+        var key = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(key) || key.Length > 128)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "A valid idempotency key is required.");
+        }
+
+        var result = await mediaClient.UpdateVideoTitleAsync(videoId, request.Title, key, access.AccessToken!, cancellationToken);
+        return result.StatusCode == HttpStatusCode.OK && result.Video is not null
+            ? Results.Ok(result.Video)
             : MediaProblem(httpContext, result);
     }
 
@@ -145,6 +179,16 @@ public static class VideoLibraryEndpoints
         if (result.StatusCode == HttpStatusCode.NotFound && result.Code == "VIDEO_NOT_FOUND")
         {
             return Problem(httpContext, StatusCodes.Status404NotFound, "VIDEO_NOT_FOUND", "The requested video was not found.");
+        }
+
+        if (result.StatusCode == HttpStatusCode.UnprocessableEntity && result.Code is "TITLE_REQUIRED" or "IDEMPOTENCY_KEY_REUSED")
+        {
+            return Problem(httpContext, StatusCodes.Status422UnprocessableEntity, result.Code, "The video title could not be updated.");
+        }
+
+        if (result.StatusCode == HttpStatusCode.BadRequest)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The video title request is invalid.");
         }
 
         var gatewayStatus = result.StatusCode == HttpStatusCode.GatewayTimeout

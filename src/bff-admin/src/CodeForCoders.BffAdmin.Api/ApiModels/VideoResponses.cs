@@ -14,3 +14,5 @@ public sealed record VideoResponse(
 public sealed record VideoPaginationResponse(int Page, int Size, long Total, long TotalPages);
 
 public sealed record VideoPageResponse(IReadOnlyList<VideoResponse> Data, VideoPaginationResponse Pagination);
+
+public sealed record UpdateVideoTitleRequest(string Title);

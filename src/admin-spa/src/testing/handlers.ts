@@ -76,6 +76,13 @@ export const handlers = [
     data: [],
     pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
   })),
+  http.patch(`${env.API_URL}/api/v1/videos/:videoId`, async ({ params, request }) => {
+    const body = await request.json() as { title: string };
+    if (!body.title.trim()) {
+      return HttpResponse.json({ code: 'TITLE_REQUIRED' }, { status: 422 });
+    }
+    return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, title: body.title.trim() });
+  }),
   http.post(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
     uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
     title: 'Aula de exemplo',

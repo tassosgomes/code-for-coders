@@ -117,6 +117,19 @@ public sealed class Video
         };
     }
 
+    public void UpdateTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title) || title.Length > 200)
+        {
+            throw new EntityValidationException("Video title must contain between 1 and 200 characters.");
+        }
+
+        Title = title.Trim();
+        NormalizedTitle = NormalizeTitle(title);
+    }
+
+    public static string NormalizeSearchTitle(string title) => NormalizeTitle(title);
+
     public void MarkPreparing(Guid leaseId, DateTimeOffset leaseUntil)
     {
         if (Status != "received" || leaseId == Guid.Empty)

@@ -227,7 +227,15 @@ public sealed class VideoPreparationFailureTests(VideoLibraryApiFactory factory)
         var delivered = await context.PublishRepeatedlyAsync(message, 1, cancellationToken);
         var published = Assert.Single(delivered);
         Assert.Equal("midia.preparacao-falhou.v1", published.RoutingKey);
+        Assert.False(string.IsNullOrWhiteSpace(published.CorrelationId));
+        Assert.Equal(published.CorrelationId, published.CorrelationHeader);
         using var payload = JsonDocument.Parse(published.Body);
+        Assert.Equal(
+            new[] { "eventId", "tenantId", "videoId", "occurredAt", "reason" }.Order(),
+            payload.RootElement.EnumerateObject().Select(property => property.Name).Order());
+        Assert.NotEqual(Guid.Empty, payload.RootElement.GetProperty("eventId").GetGuid());
+        Assert.NotEqual(Guid.Empty, payload.RootElement.GetProperty("tenantId").GetGuid());
+        Assert.True(payload.RootElement.GetProperty("occurredAt").GetDateTimeOffset() > DateTimeOffset.MinValue);
         Assert.Equal(reason, payload.RootElement.GetProperty("reason").GetString());
         Assert.Equal(videoId, payload.RootElement.GetProperty("videoId").GetGuid());
     }

@@ -15,6 +15,10 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
 
     public string? LastPath { get; private set; }
 
+    public HttpMethod? LastMethod { get; private set; }
+
+    public string? LastIdempotencyKey { get; private set; }
+
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
@@ -22,6 +26,8 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
         RequestCount++;
         LastAccessToken = request.Headers.Authorization?.Parameter;
         LastPath = request.RequestUri?.PathAndQuery;
+        LastMethod = request.Method;
+        LastIdempotencyKey = request.Headers.TryGetValues("Idempotency-Key", out var keys) ? keys.FirstOrDefault() : null;
 
         if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath.EndsWith("/videos", StringComparison.Ordinal) == true)
         {
@@ -72,5 +78,7 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
         RequestCount = 0;
         LastAccessToken = null;
         LastPath = null;
+        LastMethod = null;
+        LastIdempotencyKey = null;
     }
 }

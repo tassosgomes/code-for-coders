@@ -2,6 +2,8 @@ using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Application.UseCases.Videos.GetVideo;
 using CodeForCoders.Media.Application.UseCases.Videos.ListVideos;
 using CodeForCoders.Media.Application.UseCases.Videos;
+using CodeForCoders.Media.Application.UseCases.Videos.UpdateVideoTitle;
+using CodeForCoders.Media.Api.ApiModels;
 
 namespace CodeForCoders.Media.Api.Endpoints;
 
@@ -26,6 +28,12 @@ public static class VideoEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPatch("/videos/{videoId:guid}", UpdateVideoTitleAsync)
+            .WithName("UpdateVideoTitleInternal")
+            .Produces<VideoOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
 
     private static async Task<IResult> ListVideosAsync(
@@ -33,16 +41,30 @@ public static class VideoEndpoints
         IListVideos listVideos,
         CancellationToken cancellationToken,
         int _page = 1,
-        int _size = 10)
+        int _size = 10,
+        string[]? status = null,
+        string? q = null)
     {
-        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue)
+        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue
+            || status?.Any(value => value is not ("received" or "preparing" or "ready" or "failed")) == true
+            || (q is not null && (string.IsNullOrWhiteSpace(q) || q.Length > 120)))
         {
             return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The requested page is invalid.");
         }
 
-        var page = await listVideos.ExecuteAsync(new ListVideosInput(_page, _size), cancellationToken);
+        var page = await listVideos.ExecuteAsync(new ListVideosInput(_page, _size, status ?? [], q?.Trim()), cancellationToken);
         return Results.Ok(page);
     }
+
+    private static async Task<IResult> UpdateVideoTitleAsync(
+        Guid videoId,
+        UpdateVideoTitleRequest request,
+        HttpContext httpContext,
+        IUpdateVideoTitle updateVideoTitle,
+        CancellationToken cancellationToken)
+        => Results.Ok(await updateVideoTitle.ExecuteAsync(
+            new UpdateVideoTitleInput(videoId, request.Title, httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty),
+            cancellationToken));
 
     private static async Task<IResult> GetVideoAsync(
         Guid videoId,

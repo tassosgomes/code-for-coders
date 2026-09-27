@@ -173,6 +173,33 @@ public sealed class VideoUploadResumeTests
         Assert.NotEqual(uploadId, restartedBody.RootElement.GetProperty("uploadId").GetGuid());
     }
 
+    [Fact(DisplayName = nameof(VideoUploadResume_DoesNotCountExternallyRemovedMultipartUpload))]
+    [Trait("Layer", "Media video upload resume - Integration")]
+    public async Task VideoUploadResume_DoesNotCountExternallyRemovedMultipartUpload()
+    {
+        using var client = factory.CreateClient();
+        var token = factory.CreateTokenForActor(Guid.CreateVersion7(), Guid.CreateVersion7(), "midia.enviar");
+        using var created = await StartUploadAsync(client, token, "removed-storage-upload");
+        var uploadId = await ReadUploadIdAsync(created);
+        var storageUpload = await GetStorageUploadAsync(factory.Services, uploadId);
+        using (var storage = CreateMinioClient())
+        {
+            await storage.AbortMultipartUploadAsync(new AbortMultipartUploadRequest
+            {
+                BucketName = MediaIntegrationFixture.MinioBucketName,
+                Key = $"media/{storageUpload.ObjectKey}",
+                UploadId = storageUpload.StorageUploadId,
+            }, TestContext.Current.CancellationToken);
+        }
+
+        using var response = await ListPendingAsync(client, token);
+        using var body = await ReadJsonAsync(response);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty(body.RootElement.GetProperty("data").EnumerateArray());
+        Assert.Equal(0, body.RootElement.GetProperty("pagination").GetProperty("total").GetInt32());
+        Assert.Equal(0, body.RootElement.GetProperty("pagination").GetProperty("totalPages").GetInt32());
+    }
+
     [Fact(DisplayName = nameof(VideoUploadResume_ConcurrentFingerprintsCreateOnlyOnePendingUpload))]
     [Trait("Layer", "Media video upload resume - Integration")]
     public async Task VideoUploadResume_ConcurrentFingerprintsCreateOnlyOnePendingUpload()
@@ -289,7 +316,7 @@ public sealed class VideoUploadResumeTests
 
     private static Task<HttpResponseMessage> ListPendingAsync(HttpClient client, string token)
         => client.SendAsync(
-            AuthorizedRequest(HttpMethod.Get, "/internal/v1/video-uploads?page=1&size=10", token),
+            AuthorizedRequest(HttpMethod.Get, "/internal/v1/video-uploads?_page=1&_size=10", token),
             TestContext.Current.CancellationToken);
 
     private static async Task<StoredUpload> GetStorageUploadAsync(IServiceProvider serviceProvider, Guid uploadId)

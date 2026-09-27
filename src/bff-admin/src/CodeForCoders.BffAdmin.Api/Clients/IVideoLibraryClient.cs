@@ -8,10 +8,14 @@ public interface IVideoLibraryClient
     Task<VideoLibraryResult> ListVideosAsync(
         int page,
         int size,
+        IReadOnlyList<string> statuses,
+        string? query,
         string accessToken,
         CancellationToken cancellationToken);
 
     Task<VideoLibraryResult> GetVideoAsync(Guid videoId, string accessToken, CancellationToken cancellationToken);
+
+    Task<VideoLibraryResult> UpdateVideoTitleAsync(Guid videoId, string title, string idempotencyKey, string accessToken, CancellationToken cancellationToken);
 }
 
 public sealed record VideoLibraryResult(

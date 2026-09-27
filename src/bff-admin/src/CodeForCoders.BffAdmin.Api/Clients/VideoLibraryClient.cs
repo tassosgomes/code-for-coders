@@ -14,9 +14,15 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
     public Task<VideoLibraryResult> ListVideosAsync(
         int page,
         int size,
+        IReadOnlyList<string> statuses,
+        string? query,
         string accessToken,
         CancellationToken cancellationToken)
-        => SendAsync($"internal/v1/videos?_page={page}&_size={size}", accessToken, true, cancellationToken);
+    {
+        var filters = string.Concat(statuses.Select(status => $"&status={Uri.EscapeDataString(status)}"));
+        if (query is not null) filters += $"&q={Uri.EscapeDataString(query)}";
+        return SendAsync($"internal/v1/videos?_page={page}&_size={size}{filters}", accessToken, true, cancellationToken);
+    }
 
     public Task<VideoLibraryResult> GetVideoAsync(
         Guid videoId,
@@ -24,14 +30,30 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         CancellationToken cancellationToken)
         => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, false, cancellationToken);
 
+    public Task<VideoLibraryResult> UpdateVideoTitleAsync(
+        Guid videoId,
+        string title,
+        string idempotencyKey,
+        string accessToken,
+        CancellationToken cancellationToken)
+        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, false, cancellationToken, HttpMethod.Patch, title, idempotencyKey);
+
     private async Task<VideoLibraryResult> SendAsync(
         string path,
         string accessToken,
         bool isList,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        HttpMethod? method = null,
+        string? title = null,
+        string? idempotencyKey = null)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        using var request = new HttpRequestMessage(method ?? HttpMethod.Get, path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        if (idempotencyKey is not null)
+        {
+            request.Headers.Add("Idempotency-Key", idempotencyKey);
+            request.Content = JsonContent.Create(new UpdateVideoTitleRequest(title!));
+        }
 
         try
         {
@@ -80,7 +102,7 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
             }
         }
 
-        if (response.StatusCode == HttpStatusCode.NotFound)
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.UnprocessableEntity or HttpStatusCode.BadRequest)
         {
             return new VideoLibraryResult(
                 response.StatusCode,

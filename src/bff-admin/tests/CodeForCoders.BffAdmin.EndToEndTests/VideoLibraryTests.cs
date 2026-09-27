@@ -134,6 +134,8 @@ public sealed class VideoLibraryTests(BffAdminApiFactory factory)
         var result = await mediaClient.ListVideosAsync(
             1,
             10,
+            [],
+            null,
             "teacher-media-token",
             TestContext.Current.CancellationToken);
 

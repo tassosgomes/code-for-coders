@@ -6,9 +6,19 @@ namespace CodeForCoders.Media.Infra.Data.Videos;
 
 public sealed class VideoQueries(MediaDbContext dbContext) : IVideoQueries
 {
-    public async Task<VideoPageSnapshot> ListAsync(int page, int size, CancellationToken cancellationToken)
+    public async Task<VideoPageSnapshot> ListAsync(int page, int size, IReadOnlyList<string> statuses, string? query, CancellationToken cancellationToken)
     {
         var videos = dbContext.Videos.AsNoTracking();
+        if (statuses.Count > 0)
+        {
+            videos = videos.Where(video => statuses.Contains(video.Status));
+        }
+
+        if (query is not null)
+        {
+            var normalizedQuery = Video.NormalizeSearchTitle(query);
+            videos = videos.Where(video => video.NormalizedTitle.Contains(normalizedQuery));
+        }
         var total = await videos.LongCountAsync(cancellationToken);
         var data = await videos
             .OrderByDescending(video => video.UploadedAt)
@@ -24,4 +34,7 @@ public sealed class VideoQueries(MediaDbContext dbContext) : IVideoQueries
         => dbContext.Videos.AsNoTracking().SingleOrDefaultAsync(
             video => video.VideoId == videoId,
             cancellationToken);
+
+    public Task<Video?> GetForUpdateAsync(Guid videoId, CancellationToken cancellationToken)
+        => dbContext.Videos.SingleOrDefaultAsync(video => video.VideoId == videoId, cancellationToken);
 }

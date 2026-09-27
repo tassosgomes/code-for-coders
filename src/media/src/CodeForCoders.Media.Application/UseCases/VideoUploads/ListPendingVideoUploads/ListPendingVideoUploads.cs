@@ -21,36 +21,50 @@ public sealed class ListPendingVideoUploads(
         }
 
         var (tenantId, actorAccountId) = VideoUploadUseCaseHelpers.RequireActor(tenantContext);
-        var (uploads, total) = await videoUploads.ListPendingAsync(
-            tenantId,
-            actorAccountId,
-            timeProvider.GetUtcNow(),
-            input.Page,
-            input.Size,
-            cancellationToken);
-
-        var pending = new List<VideoUploadOutput>(uploads.Count);
-        foreach (var upload in uploads)
+        var pending = new List<VideoUploadOutput>(input.Size);
+        var now = timeProvider.GetUtcNow();
+        long visibleTotal = 0;
+        long candidateTotal;
+        var candidatePage = 1;
+        const int scanSize = 50;
+        do
         {
-            try
+            var (uploads, total) = await videoUploads.ListPendingAsync(
+                tenantId,
+                actorAccountId,
+                now,
+                candidatePage++,
+                scanSize,
+                cancellationToken);
+            candidateTotal = total;
+            foreach (var upload in uploads)
             {
-                var parts = await mediaStorage.ListPartsAsync(upload.ObjectKey, upload.StorageUploadId, cancellationToken);
-                pending.Add(VideoUploadUseCaseHelpers.ToOutput(
-                    upload,
-                    parts.Select(part => part.PartNumber).ToArray()));
-            }
-            catch (MultipartUploadNotFoundException)
-            {
-                // An externally removed multipart upload cannot be resumed and is reclaimed by the expiration worker.
+                try
+                {
+                    var parts = await mediaStorage.ListPartsAsync(upload.ObjectKey, upload.StorageUploadId, cancellationToken);
+                    if (visibleTotal >= (long)(input.Page - 1) * input.Size && pending.Count < input.Size)
+                    {
+                        pending.Add(VideoUploadUseCaseHelpers.ToOutput(
+                            upload,
+                            parts.Select(part => part.PartNumber).ToArray()));
+                    }
+
+                    visibleTotal++;
+                }
+                catch (MultipartUploadNotFoundException)
+                {
+                    // An externally removed multipart upload cannot be resumed and is reclaimed by the expiration worker.
+                }
             }
         }
+        while ((long)(candidatePage - 1) * scanSize < candidateTotal);
 
         return new VideoUploadPageOutput(
             pending,
             new VideoUploadPaginationOutput(
                 input.Page,
                 input.Size,
-                total,
-                (long)Math.Ceiling(total / (double)input.Size)));
+                visibleTotal,
+                (long)Math.Ceiling(visibleTotal / (double)input.Size)));
     }
 }

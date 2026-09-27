@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { useBlocker, useOutletContext } from 'react-router';
+import { useBlocker, useOutletContext, useSearchParams } from 'react-router';
 
 import type { StaffSession } from '@/features/staff-session/api/staff-session';
 import { completeVideoUpload } from '@/features/videos/api/complete-video-upload';
@@ -8,7 +8,9 @@ import { createVideoUpload } from '@/features/videos/api/create-video-upload';
 import { createVideoUploadPartUrls } from '@/features/videos/api/create-video-upload-part-urls';
 import { getVideoUpload } from '@/features/videos/api/get-video-upload';
 import { getPendingVideoUploadsQueryOptions, usePendingVideoUploads } from '@/features/videos/api/get-pending-video-uploads';
-import { getVideosQueryOptions, useVideos } from '@/features/videos/api/get-videos';
+import { getVideosQueryOptions, useVideos, type VideoPage, type VideoStatus } from '@/features/videos/api/get-videos';
+import { useUpdateVideoTitle } from '@/features/videos/api/update-video-title';
+import { EditVideoTitleDialog } from '@/features/videos/components/edit-video-title-dialog';
 import { VideoUploadDialog } from '@/features/videos/components/video-upload-dialog';
 import { VideosAreaScreen } from '@/features/videos/components/videos-area-screen';
 import type { VideoTransferView } from '@/features/videos/components/video-transfer-panel';
@@ -38,9 +40,19 @@ export const VideosAreaRoute = () => {
 };
 
 const VideosAreaContent = () => {
-  const videos = useVideos();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filter = searchParams.get('status') ?? 'all';
+  const search = searchParams.get('q') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
+  const statuses: VideoStatus[] = filter === 'progress' ? ['received', 'preparing']
+    : filter === 'ready' || filter === 'failed' ? [filter] : [];
+  const videos = useVideos({ page, statuses, query: search.trim() || undefined });
   const pendingUploads = usePendingVideoUploads();
   const queryClient = useQueryClient();
+  const updateTitle = useUpdateVideoTitle();
+  const [editingVideo, setEditingVideo] = useState<VideoPage['data'][number] | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [titleUpdated, setTitleUpdated] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -49,6 +61,14 @@ const VideosAreaContent = () => {
   const sessionRef = useRef<TransferSession | null>(null);
   const operationControllerRef = useRef<AbortController | null>(null);
   const blocker = useBlocker(transferInProgress);
+
+  const changeFilters = (nextFilter: string, nextSearch: string, nextPage = 1) => {
+    const params = new URLSearchParams();
+    if (nextFilter !== 'all') params.set('status', nextFilter);
+    if (nextSearch.trim()) params.set('q', nextSearch);
+    if (nextPage > 1) params.set('page', String(nextPage));
+    setSearchParams(params);
+  };
 
   useEffect(() => {
     if (!transferInProgress) return undefined;
@@ -333,7 +353,30 @@ const VideosAreaContent = () => {
       onRetry={() => void videos.refetch()}
       onRetryTransfer={() => void retryTransfer()}
       onResumeUpload={() => { setDialogError(null); setDialogOpen(true); }}
+      filter={filter}
+      search={search}
+      onFilterChange={(value) => changeFilters(value, search)}
+      onSearchChange={(value) => changeFilters(filter, value)}
+      onPageChange={(value) => changeFilters(filter, search, value)}
+      onEditTitle={(video) => { setEditError(null); setTitleUpdated(false); setEditingVideo(video); }}
+      titleUpdated={titleUpdated}
     />
+    {editingVideo ? <EditVideoTitleDialog
+      key={editingVideo.videoId}
+      title={editingVideo.title}
+      busy={updateTitle.isPending}
+      error={editError}
+      onClose={() => setEditingVideo(null)}
+      onSave={async (input) => {
+        try {
+          await updateTitle.mutateAsync({ videoId: editingVideo.videoId, input });
+          setEditingVideo(null);
+          setTitleUpdated(true);
+        } catch {
+          setEditError('Não conseguimos atualizar o título agora. Tente novamente.');
+        }
+      }}
+    /> : null}
     {dialogOpen ? <VideoUploadDialog
       busy={dialogBusy}
       error={dialogError}
