@@ -4,13 +4,13 @@
   "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-consulta-trilha-auditoria",
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "target_ref": null,
-  "last_checkpoint": "31059bc",
-  "phase": "checkpoint",
-  "active_task": "6.0",
+  "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
+  "last_checkpoint": "b407b19",
+  "phase": "full-fix",
+  "active_task": "3.0",
   "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 1,
   "specs": [
     "techspec.md",
@@ -22,15 +22,19 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "6.0",
     "role": "validator",
-    "run_id": "run.miinCAwf",
-    "outcome": "approved"
+    "mode": "full",
+    "run_id": "run.8EPhaVq4",
+    "outcome": "rejected",
+    "blockers": {
+      "B1": "3.0",
+      "B2": "6.0"
+    }
   },
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "6.0"
+    "mode": "reopen-task",
+    "task": "3.0"
   },
   "history": [
     {
@@ -106,6 +110,26 @@
       "task": "6.0",
       "attempt": 2,
       "run_id": "run.miinCAwf"
+    },
+    {
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "b407b19"
+    },
+    {
+      "event": "full_rejected",
+      "full_attempt": 1,
+      "run_id": "run.8EPhaVq4",
+      "attribution": {
+        "B1": "3.0 (b8a40f1)",
+        "B2": "6.0 (b407b19)"
+      }
+    },
+    {
+      "event": "reopen",
+      "task": "3.0",
+      "run_id": "run.GfLynAcV",
+      "source": "run.8EPhaVq4"
     }
   ]
 }
