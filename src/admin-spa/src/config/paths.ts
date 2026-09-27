@@ -19,6 +19,10 @@ export const paths = {
     path: '/auditoria',
     getHref: () => '/auditoria',
   },
+  auditRecordDetail: {
+    path: '/auditoria/:recordId',
+    getHref: (recordId: string) => `/auditoria/${recordId}`,
+  },
   videos: {
     path: '/videos',
     getHref: () => '/videos',

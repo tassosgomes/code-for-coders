@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/api-client';
 const identityReferenceSchema = z.object({
   type: z.string(),
   id: z.uuid(),
-  label: z.string().optional(),
+  label: z.string().nullable().optional(),
 });
 
 const auditRecordSummarySchema = z.object({

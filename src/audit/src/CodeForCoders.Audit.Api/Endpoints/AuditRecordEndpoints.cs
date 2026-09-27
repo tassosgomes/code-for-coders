@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using CodeForCoders.Audit.Api.ApiModels;
 using CodeForCoders.Audit.Api.Configuration;
 using CodeForCoders.Audit.Application.Exceptions;
+using CodeForCoders.Audit.Application.UseCases.Audit.GetAuditRecord;
 using CodeForCoders.Audit.Application.UseCases.Audit.SearchAuditRecords;
 using FluentValidation;
 using Microsoft.Extensions.Options;
@@ -30,6 +31,48 @@ public static class AuditRecordEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        endpoints.MapGet("/internal/v1/audit-records/{recordId:guid}", GetAsync)
+            .RequireAuthorization()
+            .WithName("GetAuditRecordInternal")
+            .WithTags("AuditRecords")
+            .Produces<AuditRecordDetailV1>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound);
+    }
+
+    private static async Task<IResult> GetAsync(
+        Guid recordId,
+        HttpContext httpContext,
+        IGetAuditRecord useCase,
+        IOptions<AuditTokensOptions> tokenOptions,
+        CancellationToken cancellationToken)
+    {
+        var identity = httpContext.User.Identity;
+        if (identity?.IsAuthenticated != true
+            || !Guid.TryParse(httpContext.User.FindFirstValue("tenantId"), out var tenantId)
+            || tenantId == Guid.Empty
+            || !Guid.TryParse(httpContext.User.FindFirstValue("sessionId"), out var sessionId)
+            || sessionId == Guid.Empty)
+        {
+            return Problem(httpContext, StatusCodes.Status401Unauthorized, "TOKEN_INVALID", "Staff token is invalid.");
+        }
+
+        if (!HasScope(httpContext.User, tokenOptions.Value.Scope))
+        {
+            return Problem(httpContext, StatusCodes.Status403Forbidden, "PERMISSION_DENIED", "The staff token cannot read audit records.");
+        }
+
+        if (!httpContext.User.FindAll("roles").Any(claim => claim.Value == "administrador"))
+        {
+            return Problem(httpContext, StatusCodes.Status403Forbidden, "PERMISSION_DENIED", "The current staff role cannot read audit records.");
+        }
+
+        var result = await useCase.ExecuteAsync(new GetAuditRecordInput(tenantId, recordId), cancellationToken);
+        return result is null
+            ? Problem(httpContext, StatusCodes.Status404NotFound, "AUDIT_RECORD_NOT_FOUND", "The audit record was not found.")
+            : Results.Ok(ToDetailApiModel(result));
     }
 
     private static async Task<IResult> SearchAsync(
@@ -129,6 +172,30 @@ public static class AuditRecordEndpoints
                 : new AuditRecordIdentityReferenceV1(record.Target.Type, record.Target.Id),
             record.Compliant,
             record.HasComplements);
+
+    private static AuditRecordDetailV1 ToDetailApiModel(AuditRecordDetailOutput record)
+        => new(
+            record.Id,
+            record.Type,
+            record.PracticedAt,
+            ToApiReference(record.Author),
+            ToApiReference(record.Target),
+            record.Compliant,
+            record.HasComplements,
+            record.Origin,
+            record.ReceivedAt,
+            record.Reason,
+            record.Attributes,
+            record.NonComplianceReasons,
+            record.Complements.Select(complement => new AuditRecordComplementV1(
+                complement.Id,
+                complement.ConfirmationId,
+                complement.CreatedAt,
+                ToApiReference(complement.Author),
+                complement.Explanation)).ToArray());
+
+    private static AuditRecordIdentityReferenceV1? ToApiReference(AuditRecordDetailIdentityReferenceOutput? reference)
+        => reference is null ? null : new AuditRecordIdentityReferenceV1(reference.Type, reference.Id);
 
     private static async Task<AuditRecordSearchRequestV1?> ReadRequestAsync(
         HttpContext httpContext,

@@ -30,6 +30,28 @@ public sealed record AuditRecordPageV1(
     IReadOnlyList<AuditRecordSummaryV1> Data,
     AuditRecordPaginationV1 Pagination);
 
+public sealed record AuditRecordDetailV1(
+    Guid Id,
+    string? Type,
+    DateTimeOffset? PracticedAt,
+    AuditRecordIdentityReferenceV1? Author,
+    AuditRecordIdentityReferenceV1? Target,
+    bool Compliant,
+    bool HasComplements,
+    string Origin,
+    DateTimeOffset ReceivedAt,
+    string? Reason,
+    IReadOnlyDictionary<string, string> Attributes,
+    IReadOnlyList<string> NonComplianceReasons,
+    IReadOnlyList<AuditRecordComplementV1> Complements);
+
+public sealed record AuditRecordComplementV1(
+    Guid Id,
+    Guid ConfirmationId,
+    DateTimeOffset CreatedAt,
+    AuditRecordIdentityReferenceV1? Author,
+    string Explanation);
+
 public sealed record AuditIdentityReferenceV1(string Type, Guid Id, string? Label = null);
 
 public sealed record AuditIdentityReferenceLookupRequestV1(

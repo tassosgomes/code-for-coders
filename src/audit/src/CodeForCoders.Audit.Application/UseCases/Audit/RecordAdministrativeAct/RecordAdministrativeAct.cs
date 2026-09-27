@@ -40,7 +40,7 @@ public sealed class RecordAdministrativeAct(
         catch (AuditRecordAlreadyExistsException)
         {
             var existingFingerprint = await recordWriter.ReadFingerprintAsync(
-                record.Origin,
+                record.Origin!,
                 record.FactId,
                 cancellationToken);
             if (existingFingerprint is null)
@@ -80,7 +80,7 @@ public sealed class RecordAdministrativeAct(
                 record.FactId,
                 record.Origin,
                 record.Type,
-                string.Join(",", record.Reasons));
+                string.Join(",", record.Reasons ?? []));
         }
         else
         {

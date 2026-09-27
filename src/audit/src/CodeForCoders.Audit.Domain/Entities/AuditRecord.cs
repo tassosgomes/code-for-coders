@@ -19,6 +19,8 @@ public sealed class AuditRecord
     public const int FingerprintLength = 64;
     public const string Conforming = "conforming";
     public const string NonConforming = "non_conforming";
+    public const string OriginalRecordType = "original";
+    public const string ComplementRecordType = "complement";
 
     private static readonly JsonSerializerOptions CanonicalJsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -33,9 +35,19 @@ public sealed class AuditRecord
 
     public Guid TenantId { get; private set; }
 
+    public string RecordType { get; private set; } = OriginalRecordType;
+
     public string Origin { get; private set; } = string.Empty;
 
     public Guid FactId { get; private set; }
+
+    public Guid? OriginalRecordId { get; private set; }
+
+    public Guid? ConfirmationId { get; private set; }
+
+    public DateTimeOffset? ConfirmedAt { get; private set; }
+
+    public string? Explanation { get; private set; }
 
     public string? Type { get; private set; }
 
@@ -70,6 +82,7 @@ public sealed class AuditRecord
         {
             Id = Guid.CreateVersion7(receivedOn),
             TenantId = act.TenantId,
+            RecordType = OriginalRecordType,
             Origin = act.Origin,
             FactId = act.FactId,
             Type = act.Type,
@@ -86,6 +99,43 @@ public sealed class AuditRecord
             Conformity = reasons.Length is 0 ? Conforming : NonConforming,
             Reasons = reasons,
             Fingerprint = CalculateFingerprint(act),
+        };
+    }
+
+    public static AuditRecord CreateComplement(
+        Guid tenantId,
+        Guid originalRecordId,
+        Guid confirmationId,
+        DateTimeOffset confirmedAt,
+        string authorType,
+        Guid authorId,
+        string explanation)
+    {
+        if (tenantId == Guid.Empty || originalRecordId == Guid.Empty || confirmationId == Guid.Empty
+            || authorId == Guid.Empty || string.IsNullOrWhiteSpace(authorType)
+            || string.IsNullOrWhiteSpace(explanation) || explanation.Length > ReasonMaxLength)
+        {
+            throw new EntityValidationException("Audit record complement is invalid.");
+        }
+
+        var timestamp = confirmedAt.ToUniversalTime();
+        return new AuditRecord
+        {
+            Id = Guid.CreateVersion7(timestamp),
+            TenantId = tenantId,
+            RecordType = ComplementRecordType,
+            Origin = "audit-complement",
+            FactId = confirmationId,
+            OriginalRecordId = originalRecordId,
+            ConfirmationId = confirmationId,
+            ConfirmedAt = timestamp,
+            ReceivedOn = timestamp,
+            AuthorType = authorType,
+            AuthorId = authorId,
+            Conformity = Conforming,
+            Reasons = [],
+            Fingerprint = string.Empty,
+            Explanation = explanation,
         };
     }
 

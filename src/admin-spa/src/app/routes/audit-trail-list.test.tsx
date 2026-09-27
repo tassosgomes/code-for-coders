@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
 import { AuditTrailRoute } from '@/app/routes/audit-trail-route';
+import { AuditTrailScreen } from '@/features/audit-trail/components/audit-trail-screen';
 import { DashboardRoute } from '@/app/routes/dashboard-route';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { env } from '@/config/env';
@@ -46,7 +47,7 @@ const pageFixture = (data = rowFixtures, page = 1, totalPages = 1) => ({
   pagination: { page, size: 20, total: data.length, totalPages, snapshot: 'snap_7mQ2kV4b123456789012345678901234567890123' },
 });
 
-const renderAuditRoute = (roles = ['administrador'], child = <AuditTrailRoute />) => {
+const renderAuditRoute = (roles = ['administrador']) => {
   server.use(http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () => HttpResponse.json({
     ...adminSession,
     roles,
@@ -55,7 +56,11 @@ const renderAuditRoute = (roles = ['administrador'], child = <AuditTrailRoute />
     path: '/',
     loader: loadStaffSession,
     element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
-    children: [{ path: 'auditoria', element: child }],
+    children: [{
+      path: 'auditoria',
+      element: <AuditTrailRoute />,
+      children: [{ index: true, element: <AuditTrailScreen /> }],
+    }],
   }], { initialEntries: ['/auditoria'] });
   renderWithProviders(<RouterProvider router={router} />);
 };

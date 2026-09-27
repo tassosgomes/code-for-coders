@@ -30,7 +30,9 @@ public sealed class AuditRecordSearchQueries(AuditDbContext dbContext) : IAuditR
         IReadOnlyList<Guid> ids,
         CancellationToken cancellationToken)
         => await dbContext.AuditRecords.AsNoTracking()
-            .Where(record => record.TenantId == tenantId && ids.Contains(record.Id))
+            .Where(record => record.TenantId == tenantId
+                && record.RecordType == AuditRecord.OriginalRecordType
+                && ids.Contains(record.Id))
             .ToListAsync(cancellationToken);
 
     private static IQueryable<AuditRecord> ApplyFilters(
@@ -38,7 +40,8 @@ public sealed class AuditRecordSearchQueries(AuditDbContext dbContext) : IAuditR
         Guid tenantId,
         AuditRecordSearchFilters filters)
     {
-        query = query.Where(record => record.TenantId == tenantId);
+        query = query.Where(record => record.TenantId == tenantId
+            && record.RecordType == AuditRecord.OriginalRecordType);
         if (filters.From is not null)
         {
             query = query.Where(record => record.PracticedOn != null && record.PracticedOn >= filters.From.Value);

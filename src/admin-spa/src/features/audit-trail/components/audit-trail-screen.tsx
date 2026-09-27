@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { CircleCheck, RefreshCw, TriangleAlert } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate, useNavigationType } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { paths } from '@/config/paths';
 import { useAuditRecordSearch, type AuditRecordSearchInput, type AuditRecordSummary } from '@/features/audit-trail/api/search-audit-records';
+import { parseAuditTrailNavigationState, type AuditTrailComplianceFilter, type AuditTrailDraftFilters, type AuditTrailListNavigation, type AuditTrailPersonFilter } from '@/features/audit-trail/types/audit-trail-navigation';
+import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-trail-forbidden';
 
-type ComplianceFilter = 'all' | 'compliant' | 'non-compliant';
-
-type DraftFilters = {
-  from: string;
-  to: string;
-  type: string;
-};
-
-const initialDraft: DraftFilters = { from: '', to: '', type: '' };
+const initialDraft: AuditTrailDraftFilters = { from: '', to: '', type: '' };
 const pageSize = 20;
 const typeOptions = [
   { value: 'papel-concedido', label: 'Papel concedido' },
@@ -25,15 +19,29 @@ const typeOptions = [
 ];
 
 export const AuditTrailScreen = () => {
-  const [draft, setDraft] = useState<DraftFilters>(initialDraft);
-  const [compliance, setCompliance] = useState<ComplianceFilter>('all');
-  const [search, setSearch] = useState<AuditRecordSearchInput>({ _page: 1, _size: pageSize });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const locationState = parseAuditTrailNavigationState(location.state);
+  const navigationState = navigationType === 'POP' ? null : locationState;
+  const restoredList = navigationState?.restoreAuditList;
+  const incomingPersonFilter = navigationState?.personFilter ?? null;
+  const initialPersonFilter = restoredList?.personFilter ?? incomingPersonFilter;
+  const [personFilter, setPersonFilter] = useState<AuditTrailPersonFilter | null>(initialPersonFilter);
+  const [draft, setDraft] = useState<AuditTrailDraftFilters>(restoredList?.draft ?? initialDraft);
+  const [compliance, setCompliance] = useState<AuditTrailComplianceFilter>(restoredList?.compliance ?? 'all');
+  const [search, setSearch] = useState<AuditRecordSearchInput>(
+    restoredList?.search ?? createPersonSearch(initialPersonFilter),
+  );
   const [periodError, setPeriodError] = useState<string | null>(null);
   const [snapshotExpired, setSnapshotExpired] = useState(false);
   // A new generation forces a fresh first page (and a new snapshot) even when the filters are unchanged.
-  const [generation, setGeneration] = useState(0);
+  const [generation, setGeneration] = useState(restoredList?.generation ?? 0);
   const queryClient = useQueryClient();
   const query = useAuditRecordSearch(search, generation);
+  const restartNotice = navigationType === 'POP'
+    && Boolean(locationState?.personFilter || locationState?.restoreAuditList?.personFilter);
+  const returnToDetailId = navigationType === 'POP' ? locationState?.returnToAuditDetail : undefined;
 
   useEffect(() => {
     const snapshot = search.snapshot;
@@ -69,10 +77,12 @@ export const AuditTrailScreen = () => {
       ...(toDate ? { to: toDate.toISOString() } : {}),
       ...(draft.type ? { type: draft.type } : {}),
       ...(compliance === 'all' ? {} : { compliant: compliance === 'compliant' }),
+      ...(personFilter?.kind === 'author' ? { authorId: personFilter.id } : {}),
+      ...(personFilter?.kind === 'target' ? { targetId: personFilter.id } : {}),
     });
   };
 
-  const changeCompliance = (value: ComplianceFilter) => {
+  const changeCompliance = (value: AuditTrailComplianceFilter) => {
     setCompliance(value);
     setSnapshotExpired(false);
     setSearch((current) => ({
@@ -88,9 +98,20 @@ export const AuditTrailScreen = () => {
   const clearFilters = () => {
     setDraft(initialDraft);
     setCompliance('all');
+    setPersonFilter(null);
     setPeriodError(null);
     setSnapshotExpired(false);
     setSearch({ _page: 1, _size: pageSize });
+  };
+
+  const removePersonFilter = () => {
+    setPersonFilter(null);
+    setSearch((current) => {
+      const updated = { ...current, _page: 1, _size: pageSize, snapshot: undefined };
+      delete updated.authorId;
+      delete updated.targetId;
+      return updated;
+    });
   };
 
   const updateSearch = () => {
@@ -101,10 +122,19 @@ export const AuditTrailScreen = () => {
 
   const page = query.data;
   const hasFilters = Boolean(search.from || search.to || search.type || search.authorId || search.targetId || search.compliant !== undefined);
+  const listNavigation: AuditTrailListNavigation = { search, draft, compliance, generation, personFilter };
   const total = page?.pagination.total ?? 0;
   const fixedAt = query.dataUpdatedAt
     ? new Date(query.dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     : null;
+
+  if (query.isError && axios.isAxiosError(query.error) && query.error.response?.status === 401) {
+    return <Navigate replace to={paths.staffLogin.getHref()} />;
+  }
+
+  if (query.isError && axios.isAxiosError(query.error) && query.error.response?.status === 403) {
+    return <AuditTrailForbidden />;
+  }
 
   return <main className="page-shell audit-trail-page">
     <div className="page-heading-row">
@@ -153,6 +183,20 @@ export const AuditTrailScreen = () => {
         <button className="primary-button" disabled={query.isFetching || Boolean(periodError)} type="submit">Buscar</button>
       </div>
     </form>
+
+    {restartNotice ? <p className="audit-restarted-alert" role="status">
+      A busca foi reiniciada sem o filtro de pessoa.
+      {returnToDetailId ? <Link to={paths.auditRecordDetail.getHref(returnToDetailId)}>Voltar ao registro</Link> : null}
+    </p> : null}
+
+    {personFilter ? <div className="audit-filter-chip">
+      <span>{personFilter.kind === 'author' ? 'Autor' : 'Alvo'}: {personFilter.label}</span>
+      <button
+        aria-label={`Remover filtro de ${personFilter.kind === 'author' ? 'autor' : 'alvo'}`}
+        onClick={removePersonFilter}
+        type="button"
+      >×</button>
+    </div> : null}
 
     <div aria-label="Filtrar por conformidade" className="audit-tabs" role="tablist">
       {([
@@ -207,7 +251,13 @@ export const AuditTrailScreen = () => {
             <th scope="col">Alvo</th>
             <th scope="col">Situação</th>
           </tr></thead>
-          <tbody>{page.data.map((record) => <AuditRecordRow key={record.id} record={record} />)}</tbody>
+          <tbody>{page.data.map((record) => <AuditRecordRow
+            key={record.id}
+            onOpen={() => navigate(paths.auditRecordDetail.getHref(record.id), {
+              state: { returnToAuditList: listNavigation },
+            })}
+            record={record}
+          />)}</tbody>
         </table>
       </div>
       <nav aria-label="Paginação da trilha" className="audit-pagination">
@@ -229,7 +279,18 @@ export const AuditTrailScreen = () => {
   </main>;
 };
 
-const AuditRecordRow = ({ record }: { record: AuditRecordSummary }) => <tr>
+const AuditRecordRow = ({ record, onOpen }: { record: AuditRecordSummary; onOpen: () => void }) => <tr
+  aria-label={`Abrir registro ${record.type ?? 'sem tipo'}`}
+  onClick={onOpen}
+  onKeyDown={(event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onOpen();
+    }
+  }}
+  role="link"
+  tabIndex={0}
+>
   <td>{record.practicedAt
     ? <time dateTime={record.practicedAt}>{new Date(record.practicedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</time>
     : <span className="audit-missing">— ausente</span>}</td>
@@ -252,6 +313,14 @@ const IdentityReference = ({ reference }: { reference: AuditRecordSummary['autho
 };
 
 const shortReference = (id: string) => `${id.slice(0, 4)}…${id.slice(-4)}`;
+
+const createPersonSearch = (personFilter: AuditTrailPersonFilter | null): AuditRecordSearchInput => {
+  const base = { _page: 1, _size: pageSize };
+  if (!personFilter) return base;
+  return personFilter.kind === 'author'
+    ? { ...base, authorId: personFilter.id }
+    : { ...base, targetId: personFilter.id };
+};
 
 const isExpiredSnapshotError = (error: unknown) => axios.isAxiosError(error)
   && error.response?.status === 422

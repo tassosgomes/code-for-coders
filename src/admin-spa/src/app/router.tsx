@@ -14,6 +14,8 @@ import { StaffAccessRoute } from '@/app/routes/staff-access-route';
 import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 import { VideosAreaRoute } from '@/app/routes/videos-area-route';
 import { AuditTrailRoute } from '@/app/routes/audit-trail-route';
+import { AuditRecordDetailRoute } from '@/app/routes/audit-record-detail-route';
+import { AuditTrailScreen } from '@/features/audit-trail/components/audit-trail-screen';
 
 const routes: RouteObject[] = [
   {
@@ -27,7 +29,14 @@ const routes: RouteObject[] = [
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
       { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
       { path: paths.videos.path.slice(1), element: <VideosAreaRoute /> },
-      { path: paths.auditTrail.path.slice(1), element: <AuditTrailRoute /> },
+      {
+        path: paths.auditTrail.path.slice(1),
+        element: <AuditTrailRoute />,
+        children: [
+          { index: true, element: <AuditTrailScreen /> },
+          { path: ':recordId', element: <AuditRecordDetailRoute /> },
+        ],
+      },
       { path: '*', element: <RouteError notFound /> },
     ],
   },

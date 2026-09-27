@@ -31,6 +31,7 @@ public static class DependencyInjection
         });
         services.AddScoped<IAuditRecordWriter, AuditRecordWriter>();
         services.AddScoped<IAuditRecordSearchQueries, AuditRecordSearchQueries>();
+        services.AddScoped<IAuditRecordDetailQueries, AuditRecordDetailQueries>();
         services.AddScoped<IAuditRecordSnapshotStore, AuditRecordSnapshotStore>();
         services.AddOptions<AuditSnapshotOptions>()
             .Bind(configuration.GetSection(AuditSnapshotOptions.SectionName))
