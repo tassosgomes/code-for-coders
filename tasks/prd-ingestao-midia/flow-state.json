@@ -19,10 +19,11 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.DqHeR9Nv",
+    "run_id": "run.EjD0GlwP",
     "role": "validator",
-    "mode": "full",
-    "outcome": "rejected"
+    "mode": "revalidation",
+    "task": "3.0",
+    "outcome": "approved"
   },
   "pending_delegation": {
     "role": "validator",
@@ -326,6 +327,20 @@
       "event": "reopen",
       "task": "3.0",
       "source": "run.DqHeR9Nv"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "implementation_complete",
+      "task": "3.0",
+      "run_id": "run.jJHqSxgP",
+      "note": "B1 StaffInvitationAcceptanceTests alinha expectativa a [autoria.ler, midia.enviar]; gate passed"
+    },
+    {
+      "ts": "2026-09-27",
+      "event": "approved",
+      "task": "3.0",
+      "run_id": "run.EjD0GlwP",
+      "note": "revalidacao 1/3 aprovada; gate exit 0 (23); Identity 114/114; B1 resolvido"
     }
   ],
   "carryover": {
