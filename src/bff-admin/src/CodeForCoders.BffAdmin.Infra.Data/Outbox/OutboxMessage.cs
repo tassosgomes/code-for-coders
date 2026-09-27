@@ -17,6 +17,8 @@ public sealed class OutboxMessage
     public string? PayloadKeyVersion { get; private set; }
     public DateTimeOffset OccurredOn { get; private set; }
     public DateTimeOffset? ProcessedOn { get; private set; }
+    public Guid? LeaseToken { get; private set; }
+    public DateTimeOffset? LeaseExpiresOn { get; private set; }
     public int Attempts { get; private set; }
     public string? LastError { get; private set; }
     public string? TraceParent { get; private set; }
@@ -35,11 +37,24 @@ public sealed class OutboxMessage
             TraceParent = draft.TraceParent,
         };
 
-    public void MarkProcessed() => ProcessedOn = DateTimeOffset.UtcNow;
+    public void AcquireLease(Guid leaseToken, DateTimeOffset leaseExpiresOn)
+    {
+        LeaseToken = leaseToken;
+        LeaseExpiresOn = leaseExpiresOn;
+    }
+
+    public void MarkProcessed(DateTimeOffset processedOn)
+    {
+        ProcessedOn = processedOn;
+        LeaseToken = null;
+        LeaseExpiresOn = null;
+    }
 
     public void RegisterFailure(string errorCode)
     {
         Attempts++;
         LastError = errorCode.Length <= 64 ? errorCode : errorCode[..64];
+        LeaseToken = null;
+        LeaseExpiresOn = null;
     }
 }

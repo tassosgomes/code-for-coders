@@ -113,6 +113,7 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
 
         builder.HasIndex(record => new { record.Origin, record.FactId })
             .IsUnique()
+            .HasFilter("\"record_type\" = 'original'")
             .HasDatabaseName(UniqueOriginFactIdIndexName);
         builder.HasIndex(record => new { record.TenantId, record.ConfirmationId })
             .IsUnique()

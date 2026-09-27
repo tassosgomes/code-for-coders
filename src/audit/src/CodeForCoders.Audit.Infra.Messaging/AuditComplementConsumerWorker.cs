@@ -3,8 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Application.Common;
+using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Contracts;
 using CodeForCoders.Audit.Infra.Messaging.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,11 +16,11 @@ using RabbitMQ.Client.Exceptions;
 
 namespace CodeForCoders.Audit.Infra.Messaging;
 
-public sealed class AuditEventConsumerWorker(
+public sealed class AuditComplementConsumerWorker(
     RabbitMqConnectionProvider connectionProvider,
     IServiceScopeFactory scopeFactory,
     IOptions<RabbitMqOptions> options,
-    ILogger<AuditEventConsumerWorker> logger) : BackgroundService
+    ILogger<AuditComplementConsumerWorker> logger) : BackgroundService
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
@@ -31,9 +31,9 @@ public sealed class AuditEventConsumerWorker(
     {
         await using var channel = await connectionProvider.CreateChannelAsync(stoppingToken);
         await channel.BasicQosAsync(0, options.Value.PrefetchCount, global: false, cancellationToken: stoppingToken);
-        var consumer = new AuditActConsumer(channel, scopeFactory, logger);
+        var consumer = new AuditComplementConsumer(channel, scopeFactory, options.Value, logger);
         await channel.BasicConsumeAsync(
-            queue: options.Value.AuditQueue,
+            queue: options.Value.AuditComplementQueue,
             autoAck: false,
             consumer: consumer,
             cancellationToken: stoppingToken);
@@ -47,19 +47,22 @@ public sealed class AuditEventConsumerWorker(
         }
     }
 
-    private sealed class AuditActConsumer : AsyncDefaultBasicConsumer
+    private sealed class AuditComplementConsumer : AsyncDefaultBasicConsumer
     {
         private readonly IChannel channel;
         private readonly IServiceScopeFactory scopeFactory;
-        private readonly ILogger<AuditEventConsumerWorker> logger;
+        private readonly RabbitMqOptions options;
+        private readonly ILogger<AuditComplementConsumerWorker> logger;
 
-        public AuditActConsumer(
+        public AuditComplementConsumer(
             IChannel channel,
             IServiceScopeFactory scopeFactory,
-            ILogger<AuditEventConsumerWorker> logger) : base(channel)
+            RabbitMqOptions options,
+            ILogger<AuditComplementConsumerWorker> logger) : base(channel)
         {
             this.channel = channel;
             this.scopeFactory = scopeFactory;
+            this.options = options;
             this.logger = logger;
         }
 
@@ -73,14 +76,16 @@ public sealed class AuditEventConsumerWorker(
             ReadOnlyMemory<byte> body,
             CancellationToken cancellationToken = default)
         {
-            if (!TryDeserializeAct(body, out var act, out var reason))
+            if (!TryDeserializeComplement(body, out var complement, out var reason)
+                || routingKey != options.AuditComplementEventRoutingKey
+                || properties.Type != "ComplementoConfirmado"
+                || !Guid.TryParse(properties.MessageId, out var messageId)
+                || messageId != complement!.ConfirmationId)
             {
-                AuditTelemetry.MessagesIllegible.Add(
-                    1,
-                    new KeyValuePair<string, object?>("reason", reason));
+                AuditTelemetry.MessagesIllegible.Add(1);
                 logger.LogError(
-                    "Unreadable administrative act sent to the dead-letter queue. Reason {Reason}",
-                    reason);
+                    "Unreadable audit complement sent to the dead-letter queue {Reason}",
+                    reason ?? "message-metadata");
                 await TryNackAsync(deliveryTag, requeue: false);
                 return;
             }
@@ -88,21 +93,16 @@ public sealed class AuditEventConsumerWorker(
             try
             {
                 using var activity = StartConsumerActivity(properties);
-                activity?.SetTag("fatoId", act.FatoId);
-                activity?.SetTag("origem", act.Origem);
-                activity?.SetTag("tipo", act.Tipo);
-                activity?.SetTag("tenantId", act.TenantId);
-
                 await using var scope = scopeFactory.CreateAsyncScope();
-                var recorder = scope.ServiceProvider.GetRequiredService<IAuditActRecorder>();
-                await recorder.RecordAsync(act, CancellationToken.None);
+                var recorder = scope.ServiceProvider.GetRequiredService<IAuditComplementRecorder>();
+                var result = await recorder.RecordAsync(complement, CancellationToken.None);
+                if (result is AuditComplementRecordStatus.Rejected)
+                {
+                    await TryNackAsync(deliveryTag, requeue: false);
+                    return;
+                }
 
-                logger.LogInformation(
-                    "Administrative act recorded {FatoId} {Origem} {Tipo} {TenantId}",
-                    act.FatoId,
-                    act.Origem,
-                    act.Tipo,
-                    act.TenantId);
+                await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
             }
             catch (Exception exception) when (exception is not OutOfMemoryException
                 and not StackOverflowException
@@ -110,18 +110,8 @@ public sealed class AuditEventConsumerWorker(
             {
                 logger.LogError(
                     exception,
-                    "Unexpected failure while recording an administrative act; the message will be retried.");
+                    "Unexpected failure while recording an audit complement; the message will be retried.");
                 await TryNackAsync(deliveryTag, requeue: true);
-                return;
-            }
-
-            try
-            {
-                await channel.BasicAckAsync(deliveryTag, multiple: false, CancellationToken.None);
-            }
-            catch (AlreadyClosedException exception)
-            {
-                logger.LogError(exception, "RabbitMQ channel closed while acknowledging an administrative act.");
             }
         }
 
@@ -131,7 +121,7 @@ public sealed class AuditEventConsumerWorker(
             {
                 if (requeue)
                 {
-                    // On RabbitMQ 4.3 quorum queues, basic.reject counts failed deliveries; basic.nack does not.
+                    // basic.reject marks this delivery failed so RabbitMQ 4.3 applies x-delivery-limit.
                     await channel.BasicRejectAsync(deliveryTag, requeue: true, CancellationToken.None);
                 }
                 else
@@ -145,60 +135,73 @@ public sealed class AuditEventConsumerWorker(
             }
             catch (AlreadyClosedException exception)
             {
-                logger.LogError(exception, "RabbitMQ channel closed while rejecting an administrative act.");
+                logger.LogError(exception, "RabbitMQ channel closed while rejecting an audit complement.");
             }
         }
 
-        private static bool TryDeserializeAct(
+        private static bool TryDeserializeComplement(
             ReadOnlyMemory<byte> body,
-            [NotNullWhen(true)] out AtoPraticado? act,
+            [NotNullWhen(true)] out ComplementoConfirmadoV1? complement,
             [NotNullWhen(false)] out string? reason)
         {
             try
             {
-                act = JsonSerializer.Deserialize<AtoPraticado>(body.Span, SerializerOptions);
+                complement = JsonSerializer.Deserialize<ComplementoConfirmadoV1>(body.Span, SerializerOptions);
             }
             catch (JsonException)
             {
-                act = null;
+                complement = null;
                 reason = "body";
                 return false;
             }
 
-            if (act is null)
+            if (complement is null)
             {
                 reason = "body";
                 return false;
             }
 
-            if (act.FatoId == Guid.Empty)
+            if (complement.ConfirmationId == Guid.Empty)
             {
-                reason = "fatoId";
+                reason = "confirmationId";
                 return false;
             }
 
-            if (!IsContractOrigin(act.Origem))
-            {
-                reason = "origem";
-                return false;
-            }
-
-            if (act.TenantId == Guid.Empty)
+            if (complement.TenantId == Guid.Empty)
             {
                 reason = "tenantId";
+                return false;
+            }
+
+            if (complement.OriginalRecordId == Guid.Empty)
+            {
+                reason = "originalRecordId";
+                return false;
+            }
+
+            if (complement.ConfirmedAt == default)
+            {
+                reason = "confirmedAt";
+                return false;
+            }
+
+            if (complement.Author is null || complement.Author.Id == Guid.Empty
+                || string.IsNullOrWhiteSpace(complement.Author.Type)
+                || complement.Author.Type.Length > 100)
+            {
+                reason = "author";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(complement.Explanation) || complement.Explanation.Length > 1000)
+            {
+                reason = "explanation";
                 return false;
             }
 
             reason = null;
             return true;
         }
-
-        private static bool IsContractOrigin(string? origin)
-            => origin is { Length: > 0 and <= 100 }
-                && origin[0] is >= 'a' and <= 'z'
-                && origin.All(static character => character is >= 'a' and <= 'z'
-                    or >= '0' and <= '9'
-                    or '-');
 
         private static Activity? StartConsumerActivity(IReadOnlyBasicProperties properties)
         {
@@ -216,8 +219,8 @@ public sealed class AuditEventConsumerWorker(
                 ? parentContext
                 : default;
 
-            return RabbitMqTelemetry.ActivitySource.StartActivity(
-                "audit.acts.consume",
+            return AuditTelemetry.ActivitySource.StartActivity(
+                "audit.complements.consume",
                 ActivityKind.Consumer,
                 parent);
         }

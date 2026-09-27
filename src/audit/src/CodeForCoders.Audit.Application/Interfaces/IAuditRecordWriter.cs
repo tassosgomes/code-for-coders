@@ -10,4 +10,8 @@ public interface IAuditRecordWriter
     Task AppendAsync(AuditRecord record, CancellationToken cancellationToken);
 
     Task<string?> ReadFingerprintAsync(string origin, Guid factId, CancellationToken cancellationToken);
+
+    Task<AuditRecord?> FindOriginalAsync(Guid tenantId, Guid recordId, CancellationToken cancellationToken);
+
+    Task<AuditRecord?> FindByConfirmationIdAsync(Guid tenantId, Guid confirmationId, CancellationToken cancellationToken);
 }

@@ -318,6 +318,8 @@ public sealed class AdministrativeActRecordingTests(AuditIntegrationFixture fixt
             ["RabbitMq:AuditQueue"] = "audit.integration.acts",
             ["RabbitMq:EventRoutingKey"] = RoutingKey,
             ["AuditDatabase:WriterRole"] = "code_for_coders_audit_writer",
+            ["AuditSnapshots:ConnectionString"] = "localhost:6379,abortConnect=false",
+            ["AuditSnapshots:KeyPrefix"] = "audit:recording-tests:",
         };
 
         var host = Host.CreateDefaultBuilder()

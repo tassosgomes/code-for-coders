@@ -13,6 +13,11 @@ public interface IAuditRecordSearchQueries
         Guid tenantId,
         IReadOnlyList<Guid> ids,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<Guid>> FindOriginalIdsWithComplementsAsync(
+        Guid tenantId,
+        IReadOnlyList<Guid> originalIds,
+        CancellationToken cancellationToken);
 }
 
 public sealed record AuditRecordSearchFilters(

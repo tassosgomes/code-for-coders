@@ -28,6 +28,7 @@ readonly infrastructure_timeout=120
 readonly app_startup_timeout=300
 readonly application_readiness_timeout=120
 readonly local_database_password=code-for-coders-local
+readonly local_bff_admin_rabbitmq_password=code-for-coders-bff-admin-local
 infrastructure_mode=local
 
 compose() {
@@ -78,6 +79,20 @@ validate_compose() {
   compose config --quiet || die "docker-compose.yml has invalid Compose configuration."
 }
 
+provision_local_bff_admin_rabbitmq_user() {
+  local username=code_for_coders_bff_admin
+  if compose exec -T rabbitmq rabbitmqctl --quiet list_users | awk '{print $1}' | grep -Fqx "$username"; then
+    compose exec -T rabbitmq rabbitmqctl --quiet change_password "$username" "$local_bff_admin_rabbitmq_password" >/dev/null
+  else
+    compose exec -T rabbitmq rabbitmqctl --quiet add_user "$username" "$local_bff_admin_rabbitmq_password" >/dev/null
+  fi
+
+  compose exec -T rabbitmq rabbitmqctl --quiet set_permissions -p / "$username" \
+    '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' \
+    '^(bff-admin\.events|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq|audit\.events)$' \
+    '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' >/dev/null
+}
+
 wait_for_readiness() {
   local deadline=$((SECONDS + application_readiness_timeout))
   local check service url
@@ -123,6 +138,10 @@ start_stack() {
     log "Starting PostgreSQL, RabbitMQ, Valkey, and OpenTelemetry Collector..."
     compose up --detach --wait --wait-timeout "$infrastructure_timeout" "${infrastructure_services[@]}" \
       || die "Infrastructure did not become healthy. Inspect it with: docker compose logs postgres rabbitmq valkey otel-collector"
+
+    log "Provisioning restricted RabbitMQ credentials for bff-admin..."
+    provision_local_bff_admin_rabbitmq_user \
+      || die "Could not provision the bff-admin RabbitMQ permissions."
 
     log "Provisioning local databases and application roles..."
     if ! compose exec -T postgres psql \

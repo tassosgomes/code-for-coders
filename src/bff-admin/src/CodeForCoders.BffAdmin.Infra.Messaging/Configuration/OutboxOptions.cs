@@ -14,4 +14,7 @@ public sealed class OutboxOptions
 
     [Range(1, 100)]
     public int MaxAttempts { get; set; } = 10;
+
+    [Range(5, 600)]
+    public int LeaseDurationSeconds { get; set; } = 30;
 }

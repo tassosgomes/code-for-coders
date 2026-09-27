@@ -343,6 +343,31 @@ public sealed class AuditRecordSearchTests(AuditIntegrationFixture fixture)
         Assert.Null(result.Data.Single().Target!.Label);
     }
 
+    [Fact(DisplayName = nameof(AuditRecordSearch_ReportsWhichOriginalsHaveComplements))]
+    public async Task AuditRecordSearch_ReportsWhichOriginalsHaveComplements()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        await using var scenario = CreateScenario();
+        var complemented = CreateRecord(tenantId, FirstDay, ReceivedOn);
+        var other = CreateRecord(tenantId, FirstDay.AddMinutes(-1), ReceivedOn);
+        var sameTenantComplement = AuditRecord.CreateComplement(
+            tenantId,
+            complemented.Id,
+            Guid.CreateVersion7(),
+            ReceivedOn.AddMinutes(1),
+            "conta-interna",
+            Guid.CreateVersion7(),
+            "Complemento sintético");
+        await AddRecordsAsync(scenario, cancellationToken, complemented, other, sameTenantComplement);
+
+        var result = await SearchAsync(scenario, tenantId, Guid.CreateVersion7(), 1, 20, cancellationToken);
+
+        var summaries = result.Data.ToDictionary(record => record.Id);
+        Assert.False(summaries[other.Id].HasComplements);
+        Assert.True(summaries[complemented.Id].HasComplements);
+    }
+
     private Scenario CreateScenario()
     {
         var dbOptions = new DbContextOptionsBuilder<AuditDbContext>()

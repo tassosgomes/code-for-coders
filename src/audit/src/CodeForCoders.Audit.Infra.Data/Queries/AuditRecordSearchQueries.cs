@@ -35,6 +35,26 @@ public sealed class AuditRecordSearchQueries(AuditDbContext dbContext) : IAuditR
                 && ids.Contains(record.Id))
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Guid>> FindOriginalIdsWithComplementsAsync(
+        Guid tenantId,
+        IReadOnlyList<Guid> originalIds,
+        CancellationToken cancellationToken)
+    {
+        if (originalIds.Count == 0)
+        {
+            return [];
+        }
+
+        return await dbContext.AuditRecords.AsNoTracking()
+            .Where(record => record.TenantId == tenantId
+                && record.RecordType == AuditRecord.ComplementRecordType
+                && record.OriginalRecordId != null
+                && originalIds.Contains(record.OriginalRecordId.Value))
+            .Select(record => record.OriginalRecordId!.Value)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
+
     private static IQueryable<AuditRecord> ApplyFilters(
         IQueryable<AuditRecord> query,
         Guid tenantId,

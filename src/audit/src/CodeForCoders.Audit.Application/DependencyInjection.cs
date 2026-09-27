@@ -1,6 +1,7 @@
 using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Application.UseCases;
 using CodeForCoders.Audit.Application.UseCases.Audit.RecordAdministrativeAct;
+using CodeForCoders.Audit.Application.UseCases.Audit.RecordAuditComplement;
 using CodeForCoders.Audit.Application.UseCases.Audit.SearchAuditRecords;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddScoped<IAuditActRecorder>(serviceProvider =>
             serviceProvider.GetRequiredService<RecordAdministrativeAct>());
+        services.AddScoped<IAuditComplementRecorder, RecordAuditComplement>();
 
         return services;
     }

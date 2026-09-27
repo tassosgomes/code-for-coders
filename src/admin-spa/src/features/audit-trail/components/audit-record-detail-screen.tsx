@@ -44,6 +44,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
   const [confirmationStatus, setConfirmationStatus] = useState<number | null>(null);
   const [pendingConfirmation, setPendingConfirmation] = useState<{ confirmationId: string; startedAt: number } | null>(null);
   const [confirmationTimedOut, setConfirmationTimedOut] = useState(false);
+  const [confirmationRecorded, setConfirmationRecorded] = useState(false);
   const location = useLocation();
   const navigationType = useNavigationType();
   const locationState = navigationType === 'POP' ? null : parseAuditTrailNavigationState(location.state);
@@ -67,6 +68,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
       if (isConfirmed(result.data?.complements)) {
         setPendingConfirmation(null);
         setConfirmationTimedOut(false);
+        setConfirmationRecorded(true);
         return;
       }
 
@@ -112,6 +114,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
     setRetryableError(false);
     setConfirmationError(null);
     setConfirmationStatus(null);
+    setConfirmationRecorded(false);
 
     try {
       const accepted = await confirmationMutation.mutateAsync({ recordId, explanation, idempotencyKey: attemptKey });
@@ -147,6 +150,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
     if (result.data?.complements.some(complement => complement.confirmationId === pendingConfirmation?.confirmationId)) {
       setPendingConfirmation(null);
       setConfirmationTimedOut(false);
+      setConfirmationRecorded(true);
     }
   };
 
@@ -254,9 +258,24 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
     {query.data.complements.length > 0 || pendingConfirmation ? <section aria-labelledby="audit-complements-heading" className="audit-complements-summary">
       <h2 id="audit-complements-heading">Complementos <span>{query.data.complements.length}</span></h2>
       {query.data.complements.length > 0 ? <p>Há complementos registrados para este ato.</p> : null}
-      {pendingConfirmation ? <ul aria-live="polite" className="audit-complement-pending-list">
-        <li>Aguardando registro…</li>
-      </ul> : null}
+      {confirmationRecorded ? <p className="audit-complement-recorded-toast" role="status">Complemento registrado</p> : null}
+      <ol aria-live="polite" className="audit-complement-timeline">
+        {query.data.complements.map((complement) => <li className="audit-complement-entry" key={complement.id}>
+          <p className="audit-complement-entry-marker">ACRESCENTADO DEPOIS</p>
+          <dl className="audit-detail-fields">
+            <DetailField label="Autor">
+              <IdentityReference recordId={recordId} reference={complement.author} filterKind="author" />
+            </DetailField>
+            <DetailField label="Momento">
+              <time dateTime={complement.createdAt}>{formatMoment(complement.createdAt)}</time>
+            </DetailField>
+            <DetailField label="Explicação">
+              <p className="audit-complement-explanation">{complement.explanation}</p>
+            </DetailField>
+          </dl>
+        </li>)}
+        {pendingConfirmation ? <li className="audit-complement-pending-entry">Aguardando registro…</li> : null}
+      </ol>
     </section> : null}
 
     <section aria-labelledby="audit-complement-confirmation-heading" className="audit-complement-confirmation">

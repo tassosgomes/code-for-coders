@@ -61,10 +61,14 @@ public sealed class SearchAuditRecords(
         var records = pageIds.Length == 0
             ? []
             : await queries.FindOriginalsByIdsAsync(input.TenantId, pageIds, cancellationToken);
+        var originalIdsWithComplements = pageIds.Length == 0
+            ? []
+            : await queries.FindOriginalIdsWithComplementsAsync(input.TenantId, pageIds, cancellationToken);
+        var originalsWithComplements = originalIdsWithComplements.ToHashSet();
         var recordsById = records.ToDictionary(record => record.Id);
         var page = pageIds
             .Where(recordsById.ContainsKey)
-            .Select(id => ToSummary(recordsById[id]))
+            .Select(id => ToSummary(recordsById[id], originalsWithComplements.Contains(id)))
             .ToArray();
         var totalPages = snapshot.RecordIds.Count == 0
             ? 0
@@ -95,7 +99,7 @@ public sealed class SearchAuditRecords(
             .Replace('+', '-')
             .Replace('/', '_');
 
-    private static AuditRecordSummaryOutput ToSummary(AuditRecord record)
+    private static AuditRecordSummaryOutput ToSummary(AuditRecord record, bool hasComplements)
         => new(
             record.Id,
             record.Type,
@@ -103,7 +107,7 @@ public sealed class SearchAuditRecords(
             ToReference(record.AuthorType, record.AuthorId),
             ToReference(record.TargetType, record.TargetId),
             record.Conformity == AuditRecord.Conforming,
-            false);
+            hasComplements);
 
     private static AuditRecordIdentityReferenceOutput? ToReference(string? type, Guid? id)
         => type is null || id is null

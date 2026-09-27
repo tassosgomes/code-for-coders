@@ -9,6 +9,7 @@ readonly database_bootstrap="$script_directory/init-local-databases.sql"
 
 readonly rabbitmq_vhost=code-for-coders
 readonly rabbitmq_user=code_for_coders
+readonly bff_admin_rabbitmq_user=code_for_coders_bff_admin
 # service|Infra.Data project|database|migration role|design-time connection variable
 readonly migration_targets=(
   "identity|src/identity/src/CodeForCoders.Identity.Infra.Data|code_for_coders_identity|code_for_coders_identity|ConnectionStrings__DefaultConnection"
@@ -97,6 +98,7 @@ provision() {
   # Hex keeps the secrets safe inside connection strings and remote shell commands.
   set_env_if_missing REMOTE_DB_PASSWORD "$(openssl rand -hex 24)"
   set_env_if_missing REMOTE_RABBITMQ_PASSWORD "$(openssl rand -hex 24)"
+  set_env_if_missing BFF_ADMIN_RABBITMQ_PASSWORD "$(openssl rand -hex 24)"
 
   if [[ -z "$(env_value REMOTE_VALKEY_PASSWORD)" ]]; then
     local valkey_password
@@ -109,9 +111,10 @@ provision() {
     set_env_if_missing REMOTE_VALKEY_PASSWORD "$valkey_password"
   fi
 
-  local db_password rabbitmq_password
+  local db_password rabbitmq_password bff_admin_rabbitmq_password
   db_password="$(require_value REMOTE_DB_PASSWORD)"
   rabbitmq_password="$(require_value REMOTE_RABBITMQ_PASSWORD)"
+  bff_admin_rabbitmq_password="$(require_value BFF_ADMIN_RABBITMQ_PASSWORD)"
 
   log "Provisioning PostgreSQL roles and databases..."
   { printf "SET client_min_messages = warning;\n\\set app_password '%s'\n" "$db_password"; cat "$database_bootstrap"; } \
@@ -130,6 +133,15 @@ else
 fi
 ctl set_user_tags '$rabbitmq_user' management >/dev/null
 ctl set_permissions -p '$rabbitmq_vhost' '$rabbitmq_user' '.*' '.*' '.*' >/dev/null
+if ctl list_users | awk '{print \$1}' | grep -qx '$bff_admin_rabbitmq_user'; then
+  ctl change_password '$bff_admin_rabbitmq_user' '$bff_admin_rabbitmq_password' >/dev/null
+else
+  ctl add_user '$bff_admin_rabbitmq_user' '$bff_admin_rabbitmq_password' >/dev/null
+fi
+ctl set_permissions -p '$rabbitmq_vhost' '$bff_admin_rabbitmq_user' \
+  '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' \
+  '^(bff-admin\.events|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq|audit\.events)$' \
+  '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' >/dev/null
 EOF
 
   log "Remote infrastructure is provisioned. Next: scripts/remote-infra.sh migrate"

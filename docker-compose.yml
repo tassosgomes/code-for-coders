@@ -323,6 +323,8 @@ services:
       AuditTokens__Issuer: identity
       AuditTokens__Audience: audit
       AuditTokens__Scope: audit-records:read
+      RabbitMq__AuditComplementQueue: audit.complements
+      RabbitMq__AuditComplementEventRoutingKey: auditoria.registro.complemento-confirmado.v1
       AuditSnapshots__ConnectionString: valkey:6379,defaultDatabase=5,abortConnect=false
       AuditSnapshots__KeyPrefix: "code4coders:audit:snapshot:v1:"
     ports:
@@ -340,6 +342,8 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=code-for-coders-local
+      RabbitMq__Username: code_for_coders_bff_admin
+      RabbitMq__Password: ${BFF_ADMIN_RABBITMQ_PASSWORD:-code-for-coders-bff-admin-local}
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
       StaffIdentity__BaseAddress: http://identity:8080/
       StaffIdentity__Issuer: bff-admin

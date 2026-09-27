@@ -14,16 +14,17 @@ public sealed class AuditUnitOfWork(AuditDbContext dbContext) : IUnitOfWork
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException exception) when (IsDuplicateAdministrativeAct(exception))
+        catch (DbUpdateException exception) when (IsDuplicateAuditRecordKey(exception))
         {
             throw new AuditRecordAlreadyExistsException();
         }
     }
 
-    private static bool IsDuplicateAdministrativeAct(DbUpdateException exception)
+    private static bool IsDuplicateAuditRecordKey(DbUpdateException exception)
         => exception.GetBaseException() is PostgresException
         {
             SqlState: PostgresErrorCodes.UniqueViolation,
-            ConstraintName: AuditRecordConfiguration.UniqueOriginFactIdIndexName,
+            ConstraintName: AuditRecordConfiguration.UniqueOriginFactIdIndexName
+                or "ux_audit_records_tenant_confirmation_id",
         };
 }

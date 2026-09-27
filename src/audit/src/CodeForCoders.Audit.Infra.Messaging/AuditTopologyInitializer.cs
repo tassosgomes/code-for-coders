@@ -65,6 +65,44 @@ public sealed class AuditTopologyInitializer(
             settings.EventRoutingKey,
             arguments: null,
             cancellationToken: cancellationToken);
+
+        var complementDeadLetterQueue = $"{settings.AuditComplementQueue}.dlq";
+        await channel.QueueDeclareAsync(
+            complementDeadLetterQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+            },
+            cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(
+            complementDeadLetterQueue,
+            settings.DeadLetterExchange,
+            settings.AuditComplementQueue,
+            arguments: null,
+            cancellationToken: cancellationToken);
+
+        await channel.QueueDeclareAsync(
+            settings.AuditComplementQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+                ["x-dead-letter-routing-key"] = settings.AuditComplementQueue,
+                ["x-delivery-limit"] = settings.DeliveryLimit,
+            },
+            cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(
+            settings.AuditComplementQueue,
+            settings.Exchange,
+            settings.AuditComplementEventRoutingKey,
+            arguments: null,
+            cancellationToken: cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

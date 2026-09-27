@@ -19,6 +19,8 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.PayloadKeyVersion).HasColumnName("payload_key_version").HasMaxLength(64);
         builder.Property(message => message.OccurredOn).HasColumnName("occurred_on").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(message => message.ProcessedOn).HasColumnName("processed_on").HasColumnType("timestamp with time zone");
+        builder.Property(message => message.LeaseToken).HasColumnName("lease_token").IsRequired(false);
+        builder.Property(message => message.LeaseExpiresOn).HasColumnName("lease_expires_on").HasColumnType("timestamp with time zone").IsRequired(false);
         builder.Property(message => message.Attempts).HasColumnName("attempts").IsRequired();
         builder.Property(message => message.LastError).HasColumnName("last_error").HasMaxLength(2000);
         builder.Property(message => message.TraceParent).HasColumnName("trace_parent").HasMaxLength(55);

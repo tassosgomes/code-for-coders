@@ -231,6 +231,8 @@ services:
       AuditTokens__Issuer: identity
       AuditTokens__Audience: audit
       AuditTokens__Scope: audit-records:read
+      RabbitMq__AuditComplementQueue: audit.complements
+      RabbitMq__AuditComplementEventRoutingKey: auditoria.registro.complemento-confirmado.v1
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -265,8 +267,8 @@ services:
       OutboxProtection__KeyBase64: ${BFF_ADMIN_OUTBOX_KEY_B64:?set in Coolify}
       OutboxProtection__KeyVersion: ${BFF_ADMIN_OUTBOX_KEY_VERSION:-v1}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
-      RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Username: code_for_coders_bff_admin
+      RabbitMq__Password: ${BFF_ADMIN_RABBITMQ_PASSWORD:?set in Coolify}
       RabbitMq__VirtualHost: code-for-coders
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317

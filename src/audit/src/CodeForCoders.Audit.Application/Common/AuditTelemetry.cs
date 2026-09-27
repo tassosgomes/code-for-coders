@@ -23,4 +23,13 @@ public static class AuditTelemetry
     public static readonly Counter<long> MessagesIllegible = Meter.CreateCounter<long>(
         "audit.messages.illegible",
         unit: "{message}");
+    public static readonly Counter<long> ComplementsRecorded = Meter.CreateCounter<long>(
+        "audit.complements.recorded",
+        unit: "{complement}");
+    public static readonly Counter<long> ComplementsRedelivered = Meter.CreateCounter<long>(
+        "audit.complements.redelivered",
+        unit: "{complement}");
+    public static readonly Counter<long> ComplementsRejected = Meter.CreateCounter<long>(
+        "audit.complements.rejected",
+        unit: "{message}");
 }

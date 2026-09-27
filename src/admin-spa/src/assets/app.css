@@ -1636,6 +1636,57 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   font-size:14px;
 }
 
+.audit-complement-recorded-toast {
+  width:fit-content;
+  margin:10px 0 0 !important;
+  border:1px solid #bbf7d0;
+  border-radius:8px;
+  padding:8px 12px;
+  color:#166534 !important;
+  background:#f0fdf4;
+  font-weight:600;
+}
+
+.audit-complement-timeline {
+  display:grid;
+  gap:12px;
+  margin:14px 0 0;
+  padding:0;
+  list-style:none;
+}
+
+.audit-complement-entry {
+  border:1px solid var(--border);
+  border-left:3px solid #8b5cf6;
+  border-radius:10px;
+  padding:14px 16px;
+  background:var(--surface);
+}
+
+.audit-complement-entry-marker {
+  margin:0 0 10px !important;
+  color:#6d28d9 !important;
+  font-size:11px !important;
+  font-weight:700;
+  letter-spacing:.06em;
+}
+
+.audit-complement-entry .audit-detail-fields {
+  gap:10px;
+}
+
+.audit-complement-explanation {
+  color:#16131f !important;
+  white-space:pre-wrap;
+}
+
+.audit-complement-pending-entry {
+  padding:4px 0;
+  color:#5b21b6;
+  font-size:14px;
+  font-weight:600;
+}
+
 .audit-complement-pending-list {
   margin:12px 0 0;
   padding-left:20px;

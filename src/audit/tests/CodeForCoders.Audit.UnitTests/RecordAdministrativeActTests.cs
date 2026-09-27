@@ -100,6 +100,16 @@ public sealed class RecordAdministrativeActTests
             return Task.CompletedTask;
         }
 
+        public Task<AuditRecord?> FindByConfirmationIdAsync(Guid tenantId, Guid confirmationId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<AuditRecord?> FindOriginalAsync(Guid tenantId, Guid recordId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<string?> ReadFingerprintAsync(
             string origin,
             Guid factId,
