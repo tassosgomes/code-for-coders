@@ -347,6 +347,8 @@ services:
       StaffIdentity__SigningKeyId: local-dev-1
       StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      OutboxProtection__KeyBase64: ${BFF_ADMIN_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
+      OutboxProtection__KeyVersion: ${BFF_ADMIN_OUTBOX_KEY_VERSION:-v1}
       Audit__BaseAddress: http://audit:8080/
       Commerce__BaseAddress: http://commerce:8080/
       Media__BaseAddress: http://media:8080/

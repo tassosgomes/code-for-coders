@@ -1,6 +1,8 @@
 using CodeForCoders.BffAdmin.Api.Clients;
 using CodeForCoders.BffAdmin.Api.Security;
+using CodeForCoders.BffAdmin.Application.UseCases.Audit.ConfirmAuditRecordComplement;
 using CodeForCoders.BffAdmin.Contracts;
+using Microsoft.Extensions.Options;
 
 namespace CodeForCoders.BffAdmin.Api.Endpoints;
 
@@ -29,6 +31,98 @@ public static class AuditRecordEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        endpoints.MapPost("/api/v1/audit-records/{recordId:guid}/complement-confirmations", ConfirmComplementAsync)
+            .WithName("ConfirmAuditRecordComplement")
+            .WithTags("AuditRecords")
+            .Accepts<AuditComplementConfirmationRequestV1>("application/json")
+            .Produces<AuditComplementConfirmationAcceptedV1>(StatusCodes.Status202Accepted)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+    }
+
+    private static async Task<IResult> ConfirmComplementAsync(
+        Guid recordId,
+        HttpContext httpContext,
+        IStaffSessionIdentityClient identityClient,
+        IAuditRecordClient auditClient,
+        IConfirmAuditRecordComplement confirmUseCase,
+        IOptions<StaffIdentityOptions> identityOptions,
+        CancellationToken cancellationToken)
+    {
+        var access = await ValidateAdministratorSessionAsync(httpContext, identityClient, cancellationToken);
+        if (access.Problem is not null)
+        {
+            return access.Problem;
+        }
+
+        AuditComplementConfirmationRequestV1? request;
+        try
+        {
+            request = await System.Text.Json.JsonSerializer.DeserializeAsync<AuditComplementConfirmationRequestV1>(
+                httpContext.Request.Body,
+                new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web),
+                cancellationToken);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "VALIDATION_ERROR", "A valid JSON request is required.");
+        }
+
+        var keyValue = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        if (recordId == Guid.Empty || !Guid.TryParse(keyValue, out var idempotencyKey) || idempotencyKey == Guid.Empty || request is null)
+        {
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "VALIDATION_ERROR", "A record, explanation, and UUID Idempotency-Key are required.");
+        }
+
+        var currentSession = BffSessionContext.GetValidatedSession(httpContext)!;
+        var input = new ConfirmAuditRecordComplementInput(
+            Guid.Parse(identityOptions.Value.TenantId),
+            currentSession.AccountId,
+            recordId,
+            idempotencyKey,
+            request.Explanation);
+        var replay = await confirmUseCase.TryReplayAsync(input, cancellationToken);
+        if (replay is not null)
+        {
+            return MapConfirmationResult(httpContext, replay);
+        }
+
+        var audit = await auditClient.GetAsync(recordId, access.AccessToken!, cancellationToken);
+        if (audit.StatusCode != StatusCodes.Status200OK || audit.Detail is null)
+        {
+            var title = audit.StatusCode switch
+            {
+                StatusCodes.Status401Unauthorized => "The staff token is invalid.",
+                StatusCodes.Status403Forbidden => "The current staff role cannot confirm audit complements.",
+                StatusCodes.Status404NotFound => "The audit record was not found.",
+                _ => "The audit service is temporarily unavailable.",
+            };
+            return Problem(httpContext, audit.StatusCode, audit.Code ?? "AUDIT_UNAVAILABLE", title);
+        }
+
+        var result = await confirmUseCase.ExecuteAsync(input, cancellationToken);
+
+        return MapConfirmationResult(httpContext, result);
+    }
+
+    private static IResult MapConfirmationResult(
+        HttpContext httpContext,
+        ConfirmAuditRecordComplementOutput result)
+    {
+        return result.Status switch
+        {
+            ConfirmAuditRecordComplementStatus.Accepted when result.ConfirmationId.HasValue
+                => Results.Accepted(value: new AuditComplementConfirmationAcceptedV1(result.ConfirmationId.Value, "accepted")),
+            ConfirmAuditRecordComplementStatus.Conflict
+                => Problem(httpContext, StatusCodes.Status422UnprocessableEntity, "IDEMPOTENCY_CONFLICT", "The Idempotency-Key was already used for a different confirmation."),
+            _ => Problem(httpContext, StatusCodes.Status422UnprocessableEntity, "EXPLANATION_REQUIRED", "Enter a non-blank explanation of up to 1000 characters."),
+        };
     }
 
     private static async Task<IResult> GetAsync(

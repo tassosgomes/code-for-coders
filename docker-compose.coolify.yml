@@ -262,6 +262,8 @@ services:
       StaffIdentity__SigningKeyId: local-dev-1
       StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?set in Coolify}
       StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      OutboxProtection__KeyBase64: ${BFF_ADMIN_OUTBOX_KEY_B64:?set in Coolify}
+      OutboxProtection__KeyVersion: ${BFF_ADMIN_OUTBOX_KEY_VERSION:-v1}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}

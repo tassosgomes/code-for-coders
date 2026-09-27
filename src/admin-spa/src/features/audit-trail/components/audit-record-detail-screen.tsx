@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { ArrowLeft, Copy, CircleCheck, TriangleAlert } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate, useNavigationType } from 'react-router';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 
 import { paths } from '@/config/paths';
+import { useConfirmAuditRecordComplement } from '@/features/audit-trail/api/confirm-audit-record-complement';
 import { useAuditRecord, type AuditRecordDetail } from '@/features/audit-trail/api/get-audit-record';
 import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-trail-forbidden';
 import { parseAuditTrailNavigationState, type AuditTrailPersonFilter } from '@/features/audit-trail/types/audit-trail-navigation';
@@ -31,6 +32,18 @@ type AuditRecordDetailScreenProps = {
 
 export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenProps) => {
   const query = useAuditRecord(recordId);
+  const { refetch } = query;
+  const confirmationMutation = useConfirmAuditRecordComplement();
+  const confirmationButtonRef = useRef<HTMLButtonElement>(null);
+  const [confirmationFormOpen, setConfirmationFormOpen] = useState(false);
+  const [explanation, setExplanation] = useState('');
+  const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [retryableError, setRetryableError] = useState(false);
+  const [confirmationError, setConfirmationError] = useState<string | null>(null);
+  const [confirmationStatus, setConfirmationStatus] = useState<number | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<{ confirmationId: string; startedAt: number } | null>(null);
+  const [confirmationTimedOut, setConfirmationTimedOut] = useState(false);
   const location = useLocation();
   const navigationType = useNavigationType();
   const locationState = navigationType === 'POP' ? null : parseAuditTrailNavigationState(location.state);
@@ -41,6 +54,104 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
     <ArrowLeft aria-hidden="true" size={16} /> Trilha de auditoria
   </Link>;
 
+  useEffect(() => {
+    if (!pendingConfirmation) return;
+
+    const isConfirmed = (complements: AuditRecordDetail['complements'] | undefined) =>
+      complements?.some(complement => complement.confirmationId === pendingConfirmation.confirmationId) ?? false;
+    let cancelled = false;
+    let timerId: number | undefined;
+    const poll = async () => {
+      const result = await refetch();
+      if (cancelled) return;
+      if (isConfirmed(result.data?.complements)) {
+        setPendingConfirmation(null);
+        setConfirmationTimedOut(false);
+        return;
+      }
+
+      if (Date.now() - pendingConfirmation.startedAt >= 30_000) {
+        setConfirmationTimedOut(true);
+        return;
+      }
+
+      timerId = window.setTimeout(() => { void poll(); }, 2_000);
+    };
+
+    timerId = window.setTimeout(() => { void poll(); }, 2_000);
+
+    return () => {
+      cancelled = true;
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
+  }, [pendingConfirmation, refetch]);
+
+  const returnFocusToConfirmationButton = () => {
+    window.requestAnimationFrame(() => confirmationButtonRef.current?.focus());
+  };
+
+  const closeConfirmationForm = () => {
+    setConfirmationFormOpen(false);
+    setExplanation('');
+    setIdempotencyKey(null);
+    setValidationMessage(null);
+    setRetryableError(false);
+    setConfirmationError(null);
+    returnFocusToConfirmationButton();
+  };
+
+  const submitConfirmation = async () => {
+    if (!explanation.trim()) {
+      setValidationMessage('Escreva a explicação do que foi apurado.');
+      return;
+    }
+
+    const attemptKey = idempotencyKey ?? crypto.randomUUID();
+    setIdempotencyKey(attemptKey);
+    setValidationMessage(null);
+    setRetryableError(false);
+    setConfirmationError(null);
+    setConfirmationStatus(null);
+
+    try {
+      const accepted = await confirmationMutation.mutateAsync({ recordId, explanation, idempotencyKey: attemptKey });
+      setConfirmationFormOpen(false);
+      setExplanation('');
+      setIdempotencyKey(null);
+      setPendingConfirmation({ confirmationId: accepted.confirmationId, startedAt: Date.now() });
+      setConfirmationTimedOut(false);
+      returnFocusToConfirmationButton();
+    } catch (error: unknown) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      setConfirmationStatus(status ?? null);
+      if (status === 422) {
+        const problem = axios.isAxiosError(error) ? error.response?.data as { code?: unknown } | undefined : undefined;
+        setConfirmationError(problem?.code === 'IDEMPOTENCY_CONFLICT'
+          ? 'Esta chave já foi usada com outros dados. Edite a explicação para iniciar uma nova tentativa.'
+          : 'Escreva a explicação do que foi apurado.');
+        setRetryableError(false);
+        return;
+      }
+
+      setRetryableError(true);
+    }
+  };
+
+  const onConfirmationSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void submitConfirmation();
+  };
+
+  const refreshConfirmation = async () => {
+    const result = await query.refetch();
+    if (result.data?.complements.some(complement => complement.confirmationId === pendingConfirmation?.confirmationId)) {
+      setPendingConfirmation(null);
+      setConfirmationTimedOut(false);
+    }
+  };
+
+  if (confirmationStatus === 401) return <Navigate replace to={paths.staffLogin.getHref()} />;
+  if (confirmationStatus === 403) return <AuditTrailForbidden />;
   if (query.isPending) {
     return <main className="page-shell audit-trail-page audit-detail-page">
       {backLink}
@@ -51,7 +162,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
     </main>;
   }
 
-  if (query.isError) {
+  if (query.isError && !query.data) {
     const status = axios.isAxiosError(query.error) ? query.error.response?.status : undefined;
     if (status === 401) return <Navigate replace to={paths.staffLogin.getHref()} />;
     if (status === 403) return <AuditTrailForbidden />;
@@ -140,12 +251,81 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
       </dl>
     </section>
 
-    {query.data.complements.length > 0 ? <section aria-labelledby="audit-complements-heading" className="audit-complements-summary">
+    {query.data.complements.length > 0 || pendingConfirmation ? <section aria-labelledby="audit-complements-heading" className="audit-complements-summary">
       <h2 id="audit-complements-heading">Complementos <span>{query.data.complements.length}</span></h2>
-      <p>Há complementos registrados para este ato.</p>
+      {query.data.complements.length > 0 ? <p>Há complementos registrados para este ato.</p> : null}
+      {pendingConfirmation ? <ul aria-live="polite" className="audit-complement-pending-list">
+        <li>Aguardando registro…</li>
+      </ul> : null}
     </section> : null}
+
+    <section aria-labelledby="audit-complement-confirmation-heading" className="audit-complement-confirmation">
+      <h2 id="audit-complement-confirmation-heading">Complementar a apuração</h2>
+      <button
+        aria-disabled={Boolean(pendingConfirmation)}
+        className="outline-button"
+        onClick={() => { if (!pendingConfirmation) setConfirmationFormOpen(true); }}
+        ref={confirmationButtonRef}
+        type="button"
+      >+ Acrescentar complemento</button>
+
+      {confirmationFormOpen ? <form className="audit-complement-form" noValidate onSubmit={onConfirmationSubmit}>
+        <ReasonField
+          error={validationMessage}
+          value={explanation}
+          onChange={(value) => {
+            if (idempotencyKey && value !== explanation) {
+              setIdempotencyKey(null);
+              setRetryableError(false);
+            }
+            setExplanation(value);
+            setValidationMessage(null);
+            setConfirmationError(null);
+          }}
+        />
+        <div className="audit-complement-irreversible" role="note">Complementos não podem ser editados nem excluídos. O registro original não muda.</div>
+        {confirmationError ? <p role="alert" className="audit-complement-error">{confirmationError}</p> : null}
+        {retryableError ? <div className="audit-complement-retry-alert" role="alert">
+          <p>Não conseguimos confirmar agora. Seu texto foi mantido.</p>
+          <button className="outline-button" disabled={confirmationMutation.isPending} onClick={() => void submitConfirmation()} type="button">Tentar de novo</button>
+        </div> : null}
+        <div className="audit-complement-form-actions">
+          <button className="primary-button" disabled={confirmationMutation.isPending} type="submit">
+            {confirmationMutation.isPending ? 'Enviando…' : 'Confirmar complemento'}
+          </button>
+          <button className="outline-button" disabled={confirmationMutation.isPending} onClick={closeConfirmationForm} type="button">Cancelar</button>
+        </div>
+      </form> : null}
+
+      {pendingConfirmation && confirmationTimedOut ? <div className="audit-confirmation-pending-alert" role="alert">
+        <p>A confirmação foi aceita e ainda está sendo registrada.</p>
+        <button className="outline-button" onClick={() => void refreshConfirmation()} type="button">Atualizar</button>
+      </div> : null}
+    </section>
   </main>;
 };
+
+type ReasonFieldProps = {
+  error: string | null;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+const ReasonField = ({ error, value, onChange }: ReasonFieldProps) => <div className="audit-complement-reason-field">
+  <label htmlFor="audit-complement-explanation">Explicação do que foi apurado</label>
+  <textarea
+    aria-describedby={error ? 'audit-complement-explanation-help audit-complement-explanation-error audit-complement-explanation-count' : 'audit-complement-explanation-help audit-complement-explanation-count'}
+    aria-invalid={Boolean(error)}
+    id="audit-complement-explanation"
+    maxLength={1000}
+    onChange={(event) => onChange(event.currentTarget.value)}
+    rows={5}
+    value={value}
+  />
+  <p className="audit-complement-help" id="audit-complement-explanation-help">Não cite dados pessoais de outras pessoas.</p>
+  <p className="audit-complement-character-count" id="audit-complement-explanation-count">{value.length}/1000</p>
+  {error ? <p className="audit-complement-error" id="audit-complement-explanation-error" role="alert">{error}</p> : null}
+</div>;
 
 type DetailFieldProps = {
   label: string;

@@ -14,7 +14,9 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.TenantId).HasColumnName("tenant_id").ValueGeneratedNever().IsRequired();
         builder.Property(message => message.Type).HasColumnName("type").HasMaxLength(200).IsRequired();
         builder.Property(message => message.RoutingKey).HasColumnName("routing_key").HasMaxLength(200).IsRequired();
+        builder.Property(message => message.DestinationExchange).HasColumnName("destination_exchange").HasMaxLength(200);
         builder.Property(message => message.Payload).HasColumnName("payload").HasColumnType("jsonb").IsRequired();
+        builder.Property(message => message.PayloadKeyVersion).HasColumnName("payload_key_version").HasMaxLength(64);
         builder.Property(message => message.OccurredOn).HasColumnName("occurred_on").HasColumnType("timestamp with time zone").IsRequired();
         builder.Property(message => message.ProcessedOn).HasColumnName("processed_on").HasColumnType("timestamp with time zone");
         builder.Property(message => message.Attempts).HasColumnName("attempts").IsRequired();

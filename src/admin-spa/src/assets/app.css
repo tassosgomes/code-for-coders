@@ -1636,6 +1636,138 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   font-size:14px;
 }
 
+.audit-complement-pending-list {
+  margin:12px 0 0;
+  padding-left:20px;
+  color:#5b21b6;
+  font-size:14px;
+  font-weight:600;
+}
+
+.audit-complement-confirmation {
+  display:grid;
+  justify-items:start;
+  gap:14px;
+  border-top:1px solid var(--border);
+  padding-top:20px;
+}
+
+.audit-complement-confirmation h2 {
+  margin:0;
+  font-size:17px;
+}
+
+.audit-complement-confirmation [aria-disabled=true] {
+  cursor:not-allowed;
+  opacity:.55;
+}
+
+.audit-complement-form {
+  display:grid;
+  gap:14px;
+  width:min(100%,720px);
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--surface);
+  padding:18px;
+}
+
+.audit-complement-reason-field {
+  display:grid;
+  gap:8px;
+}
+
+.audit-complement-reason-field label {
+  color:#3b3548;
+  font-size:14px;
+  font-weight:600;
+}
+
+.audit-complement-reason-field textarea {
+  width:100%;
+  min-height:112px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fff;
+  color:#16131f;
+  padding:10px 12px;
+  font:inherit;
+  resize:vertical;
+}
+
+.audit-complement-reason-field textarea[aria-invalid=true] {
+  border-color:#dc2626;
+}
+
+.audit-complement-character-count {
+  justify-self:end;
+  margin:0;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.audit-complement-irreversible {
+  margin:0;
+  border:1px solid #bfdbfe;
+  border-radius:10px;
+  background:#eff6ff;
+  color:#1e3a8a;
+  padding:10px 12px;
+  font-size:13px;
+  line-height:19px;
+}
+
+.audit-complement-help {
+  margin:0;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.audit-complement-retry-alert {
+  display:grid;
+  justify-items:start;
+  gap:10px;
+  border:1px solid #fecaca;
+  border-radius:10px;
+  background:#fef2f2;
+  color:#991b1b;
+  padding:12px 14px;
+}
+
+.audit-complement-retry-alert p {
+  margin:0;
+  font-size:13px;
+}
+
+.audit-complement-error {
+  margin:0;
+  color:#b91c1c;
+  font-size:13px;
+}
+
+.audit-complement-form-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.audit-confirmation-pending-alert {
+  display:grid;
+  justify-items:start;
+  gap:12px;
+  width:min(100%,720px);
+  border:1px solid #bfdbfe;
+  border-radius:10px;
+  background:#eff6ff;
+  color:#1e3a8a;
+  padding:14px 16px;
+}
+
+.audit-confirmation-pending-alert p {
+  margin:0;
+  font-size:14px;
+}
+
 .audit-filter-chip {
   display:inline-flex;
   align-items:center;

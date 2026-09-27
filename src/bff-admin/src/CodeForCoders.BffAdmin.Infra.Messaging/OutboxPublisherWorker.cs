@@ -65,7 +65,9 @@ public sealed class OutboxPublisherWorker(
         var maxAttempts = options.Value.MaxAttempts;
         var query = $"""
             SELECT * FROM {BffAdminSchema.Name}.outbox_messages
-            WHERE processed_on IS NULL AND attempts < {maxAttempts}
+            WHERE processed_on IS NULL
+                AND attempts < {maxAttempts}
+                AND destination_exchange IS NULL
             ORDER BY id
             LIMIT 1
             FOR UPDATE SKIP LOCKED
@@ -88,9 +90,9 @@ public sealed class OutboxPublisherWorker(
             await dbContext.SaveChangesAsync(CancellationToken.None);
             await transaction.CommitAsync(CancellationToken.None);
         }
-        catch (OutboxPublishException exception)
+        catch (OutboxPublishException)
         {
-            message.RegisterFailure(exception);
+            message.RegisterFailure("OUTBOX_PUBLISH_FAILED");
             await dbContext.SaveChangesAsync(CancellationToken.None);
             await transaction.CommitAsync(CancellationToken.None);
             throw;

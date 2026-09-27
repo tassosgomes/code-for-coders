@@ -2,6 +2,7 @@ using CodeForCoders.BffAdmin.Application.Common;
 using CodeForCoders.BffAdmin.Application.Interfaces;
 using CodeForCoders.BffAdmin.Infra.Data.Configuration;
 using CodeForCoders.BffAdmin.Infra.Data.Health;
+using CodeForCoders.BffAdmin.Infra.Data.Idempotency;
 using CodeForCoders.BffAdmin.Infra.Data.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,7 +33,15 @@ public static class DependencyInjection
             }
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
+        services.AddScoped<IAuditComplementConfirmationStore, AuditComplementConfirmationStore>();
         services.AddScoped<IUnitOfWork, BffAdminUnitOfWork>();
+        services.AddOptions<OutboxProtectionOptions>()
+            .Bind(configuration.GetSection(OutboxProtectionOptions.SectionName))
+            .Validate(options => IsValidProtectionKey(options.KeyBase64), "BFF outbox protection key must contain exactly 256 bits.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.KeyVersion) && options.KeyVersion.Length <= 64,
+                "BFF outbox protection key version is required and must be at most 64 characters.")
+            .ValidateOnStart();
+        services.AddSingleton<OutboxPayloadProtector>();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))
             .ValidateDataAnnotations()
@@ -52,5 +61,17 @@ public static class DependencyInjection
         services.AddSingleton<IBffSessionStore, ValkeyBffSessionStore>();
 
         return services;
+    }
+
+    private static bool IsValidProtectionKey(string encodedKey)
+    {
+        try
+        {
+            return Convert.FromBase64String(encodedKey).Length == 32;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }
