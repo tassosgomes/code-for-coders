@@ -26,6 +26,7 @@ public sealed class AuditIdentityReferenceQueries(IdentityDbContext dbContext) :
         if (accountIds.Length > 0)
         {
             var accounts = await dbContext.Accounts.AsNoTracking()
+                .IgnoreQueryFilters()
                 .Where(account => account.TenantId == tenantId
                     && account.Type == AccountType.InternalActor
                     && accountIds.Contains(account.Id))
@@ -40,6 +41,7 @@ public sealed class AuditIdentityReferenceQueries(IdentityDbContext dbContext) :
         if (invitationIds.Length > 0)
         {
             var invitations = await dbContext.StaffInvitations.AsNoTracking()
+                .IgnoreQueryFilters()
                 .Where(invitation => invitation.TenantId == tenantId && invitationIds.Contains(invitation.Id))
                 .Select(invitation => new { invitation.Id, invitation.Email })
                 .ToListAsync(cancellationToken);

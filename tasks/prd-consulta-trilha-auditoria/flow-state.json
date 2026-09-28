@@ -5,10 +5,10 @@
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "last_checkpoint": "413e5eb",
-  "phase": "full-fix",
+  "last_checkpoint": "1459cfc",
+  "phase": "checkpoint",
   "active_task": "3.0",
-  "attempt": 1,
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 2,
   "transport_retries": 1,
@@ -22,18 +22,14 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
+    "task": "3.0",
     "role": "validator",
-    "mode": "full",
-    "run_id": "run.XnmIxFI0",
-    "outcome": "rejected",
-    "blockers": {
-      "B2prime": "6.0",
-      "B3": "3.0"
-    }
+    "run_id": "run.vCYU09Qx",
+    "outcome": "approved"
   },
   "pending_delegation": {
     "role": "integrator",
-    "mode": "reopen-task",
+    "mode": "checkpoint-task",
     "task": "3.0"
   },
   "history": [

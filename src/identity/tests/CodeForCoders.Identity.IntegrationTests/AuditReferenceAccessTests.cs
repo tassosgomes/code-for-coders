@@ -12,6 +12,7 @@ using CodeForCoders.Identity.Application.Interfaces;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ResolveAuditIdentityReferences;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStaffSession;
 using CodeForCoders.Identity.Domain.Entities;
+using CodeForCoders.Identity.Infra.Data.Accounts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -21,7 +22,8 @@ using Xunit;
 
 namespace CodeForCoders.Identity.IntegrationTests;
 
-public sealed class AuditReferenceAccessTests
+[Collection(IdentityIntegrationCollection.Name)]
+public sealed class AuditReferenceAccessTests(IdentityIntegrationFixture fixture)
 {
     private const string Scope = "audit-references:read";
     private static readonly Guid ReferenceId = Guid.Parse("550e8400-e29b-41d4-a716-446655440000");
@@ -177,6 +179,71 @@ public sealed class AuditReferenceAccessTests
 
         await AssertProblemAsync(duplicateResponse, HttpStatusCode.BadRequest, "VALIDATION_ERROR");
         await AssertProblemAsync(oversizedResponse, HttpStatusCode.BadRequest, "VALIDATION_ERROR");
+    }
+
+    [Fact(DisplayName = nameof(AuditReferenceAccess_LabelsOnlyReferencesOfTheAssertedTenant))]
+    public async Task AuditReferenceAccess_LabelsOnlyReferencesOfTheAssertedTenant()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        var otherTenantId = Guid.CreateVersion7();
+        var deactivatedAccount = Account.CreateInternal(
+            Guid.CreateVersion7(), tenantId, "Conta Desativada", "desativada@example.com", "desativada@example.com");
+        var ownInvitation = CreateInvitation(tenantId, "convidada@example.com");
+        var foreignAccount = Account.CreateInternal(
+            Guid.CreateVersion7(), otherTenantId, "Conta Alheia", "alheia@example.com", "alheia@example.com");
+        var foreignInvitation = CreateInvitation(otherTenantId, "convite-alheio@example.com");
+        await using (var tenantDbContext = fixture.CreateDbContext(tenantId))
+        {
+            tenantDbContext.Accounts.Add(deactivatedAccount);
+            tenantDbContext.Entry(deactivatedAccount).Property(account => account.DeactivatedOn).CurrentValue =
+                DateTimeOffset.UtcNow.AddDays(-1);
+            tenantDbContext.StaffInvitations.Add(ownInvitation);
+            await tenantDbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        await using (var otherTenantDbContext = fixture.CreateDbContext(otherTenantId))
+        {
+            otherTenantDbContext.Accounts.Add(foreignAccount);
+            otherTenantDbContext.StaffInvitations.Add(foreignInvitation);
+            await otherTenantDbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        // The ambient tenant belongs to the other tenant so only the asserted tenant parameter can scope the lookup.
+        await using var lookupDbContext = fixture.CreateDbContext(otherTenantId);
+        var useCase = new ResolveAuditIdentityReferences(
+            new AuditIdentityReferenceQueries(lookupDbContext),
+            new ResolveAuditIdentityReferencesInputValidator());
+
+        var output = await useCase.ExecuteAsync(
+            new ResolveAuditIdentityReferencesInput(tenantId, [
+                new AuditIdentityReferenceKey("conta-interna", deactivatedAccount.Id),
+                new AuditIdentityReferenceKey("convite-interno", ownInvitation.Id),
+                new AuditIdentityReferenceKey("conta-interna", foreignAccount.Id),
+                new AuditIdentityReferenceKey("convite-interno", foreignInvitation.Id),
+            ]),
+            cancellationToken);
+
+        var labels = output.Data.ToDictionary(reference => reference.Id, reference => reference.Label);
+        Assert.Equal(4, output.Data.Count);
+        Assert.Equal("Conta Desativada", labels[deactivatedAccount.Id]);
+        Assert.Equal("convidada@example.com", labels[ownInvitation.Id]);
+        Assert.Null(labels[foreignAccount.Id]);
+        Assert.Null(labels[foreignInvitation.Id]);
+    }
+
+    private static StaffInvitation CreateInvitation(Guid tenantId, string email)
+    {
+        var invitedOn = DateTimeOffset.UtcNow.AddHours(-1);
+        return StaffInvitation.Create(
+            Guid.CreateVersion7(),
+            tenantId,
+            email,
+            email,
+            StaffRoleCatalog.Administrator,
+            Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+            invitedOn,
+            invitedOn.AddDays(7));
     }
 
     private static async Task<WebApplication> CreateServer(
