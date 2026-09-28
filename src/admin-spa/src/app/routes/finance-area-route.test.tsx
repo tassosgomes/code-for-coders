@@ -8,6 +8,7 @@ import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
 import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { env } from '@/config/env';
+import { useShellStore } from '@/stores/use-shell-store';
 import { server } from '@/testing/server';
 import { renderWithProviders } from '@/testing/test-utils';
 
@@ -37,7 +38,10 @@ const renderFinanceArea = (permissions: string[], onFinanceRequest: () => void) 
 };
 
 describe('FinanceArea', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    useShellStore.setState({ menuOpen: false });
+  });
 
   it('shows an access message and does not call the finance API for a professor', async () => {
     let financeRequests = 0;
@@ -61,7 +65,7 @@ describe('FinanceArea', () => {
 });
 
 const openNavigation = async (user = userEvent.setup()) => {
-  const toggle = screen.getByRole('button', { name: 'Toggle navigation' });
+  const toggle = screen.getByRole('button', { name: 'Abrir navegação' });
   if (toggle.getAttribute('aria-expanded') !== 'true') {
     await user.click(toggle);
   }
