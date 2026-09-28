@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useBlocker, useOutletContext, useSearchParams } from 'react-router';
 
@@ -20,6 +21,7 @@ type TransferSession = {
   uploadId: string;
   file: File;
   title: string;
+  expiresAt: string;
   partSize: number;
   partCount: number;
   completionIdempotencyKey: string;
@@ -30,16 +32,30 @@ const pause = (milliseconds: number) => new Promise<void>((resolve) => window.se
 const bytesInPart = (fileSize: number, partSize: number, partNumber: number) =>
   Math.max(0, Math.min(partSize, fileSize - ((partNumber - 1) * partSize)));
 
+const formatBytes = (bytes: number) => {
+  const divisor = bytes >= 1_000_000_000 ? 1_000_000_000 : bytes >= 1_000_000 ? 1_000_000 : bytes >= 1_000 ? 1_000 : 1;
+  const unit = divisor === 1_000_000_000 ? 'GB' : divisor === 1_000_000 ? 'MB' : divisor === 1_000 ? 'KB' : 'B';
+  return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: divisor === 1 ? 0 : 1 }).format(bytes / divisor)} ${unit}`;
+};
+
+const formatExpiry = (value: string) => {
+  const parts = new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+  }).formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? '';
+  return `${part('day')}/${part('month')} às ${part('hour')}:${part('minute')}`;
+};
+
 export const VideosAreaRoute = () => {
   const session = useOutletContext<StaffSession>();
   if (!session.permissions.includes('midia.enviar')) {
     return <VideosAreaScreen state="forbidden" />;
   }
 
-  return <VideosAreaContent />;
+  return <VideosAreaContent session={session} />;
 };
 
-const VideosAreaContent = () => {
+const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = searchParams.get('status') ?? 'all';
   const search = searchParams.get('q') ?? '';
@@ -47,14 +63,14 @@ const VideosAreaContent = () => {
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const statuses: VideoStatus[] = filter === 'progress' ? ['received', 'preparing']
     : filter === 'ready' || filter === 'failed' ? [filter] : [];
-  const videos = useVideos({ page, statuses, query: search.trim() || undefined });
+  const videos = useVideos({ page, size: 20, statuses, query: search.trim() || undefined });
   const pendingUploads = usePendingVideoUploads();
   const queryClient = useQueryClient();
   const updateTitle = useUpdateVideoTitle();
   const [editingVideo, setEditingVideo] = useState<VideoPage['data'][number] | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [editIdempotencyKey, setEditIdempotencyKey] = useState('');
-  const [titleUpdated, setTitleUpdated] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -62,6 +78,8 @@ const VideosAreaContent = () => {
   const [transferInProgress, setTransferInProgress] = useState(false);
   const sessionRef = useRef<TransferSession | null>(null);
   const operationControllerRef = useRef<AbortController | null>(null);
+  const transferStartedAtRef = useRef(0);
+  const transferInitialBytesRef = useRef(0);
   const blocker = useBlocker(transferInProgress);
 
   const changeFilters = useCallback((nextFilter: string, nextSearch: string, nextPage = 1) => {
@@ -89,6 +107,12 @@ const VideosAreaContent = () => {
     return () => window.removeEventListener('beforeunload', warnBeforeUnload);
   }, [transferInProgress]);
 
+  useEffect(() => {
+    if (!successToast) return undefined;
+    const timeout = window.setTimeout(() => setSuccessToast(null), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [successToast]);
+
   const updateProgress = (
     session: TransferSession,
     completedParts: ReadonlySet<number>,
@@ -102,7 +126,12 @@ const VideosAreaContent = () => {
         : Math.min(size, partProgress.get(partNumber) ?? 0);
     }
     const progress = Math.min(100, Math.round((uploadedBytes / session.file.size) * 100));
-    setTransfer((current) => current ? { ...current, progress } : current);
+    const elapsedSeconds = Math.max(0, (Date.now() - transferStartedAtRef.current) / 1000);
+    const newlyUploadedBytes = Math.max(0, uploadedBytes - transferInitialBytesRef.current);
+    const remainingSeconds = newlyUploadedBytes >= 1_000_000 && elapsedSeconds >= 2 && uploadedBytes < session.file.size
+      ? Math.ceil((elapsedSeconds / newlyUploadedBytes) * (session.file.size - uploadedBytes))
+      : null;
+    setTransfer((current) => current ? { ...current, progress, transferredBytes: uploadedBytes, remainingSeconds } : current);
   };
 
   const uploadMissingParts = async (
@@ -185,7 +214,7 @@ const VideosAreaContent = () => {
             setTransfer((current) => current ? {
               ...current,
               status: 'reconnecting',
-              message: 'A conexão oscilou. Tentando novamente…',
+              message: 'A parte que falhou é reenviada sozinha (até 3 tentativas).',
             } : current);
             await pause(250 * (attempt + 1));
             setTransfer((current) => current ? { ...current, status: 'uploading', message: null } : current);
@@ -211,7 +240,7 @@ const VideosAreaContent = () => {
     for (let incompleteRetry = 0; incompleteRetry <= 3; incompleteRetry += 1) {
       await uploadMissingParts(session, receivedParts, controller);
       if (controller.signal.aborted) return;
-      setTransfer((current) => current ? { ...current, status: 'completing', message: null } : current);
+      setTransfer((current) => current ? { ...current, status: 'completing', message: 'Quase lá: confirmando as partes recebidas.' } : current);
       try {
         const completedVideo = await completeVideoUpload(session.uploadId, session.completionIdempotencyKey, controller.signal);
         queryClient.setQueryData(getVideosQueryOptions().queryKey, (currentPage) => {
@@ -228,7 +257,8 @@ const VideosAreaContent = () => {
             },
           };
         });
-        setTransfer((current) => current ? { ...current, progress: 100, status: 'complete', message: null } : current);
+        setTransfer(null);
+        setSuccessToast(`${session.title} recebido. A preparação começou.`);
         setTransferInProgress(false);
         sessionRef.current = null;
         operationControllerRef.current = null;
@@ -239,8 +269,8 @@ const VideosAreaContent = () => {
         if (getVideoUploadErrorCode(error) !== 'UPLOAD_INCOMPLETE' || incompleteRetry === 3) throw error;
         setTransfer((current) => current ? {
           ...current,
-          status: 'reconnecting',
-          message: 'Conferindo as partes recebidas…',
+          status: 'completing',
+          message: 'Quase lá: confirmando as partes recebidas.',
         } : current);
         const currentUpload = await getVideoUpload(session.uploadId, controller.signal);
         receivedParts = currentUpload.receivedParts;
@@ -260,14 +290,25 @@ const VideosAreaContent = () => {
       0,
     );
     const progress = Math.min(100, Math.round((receivedBytes / session.file.size) * 100));
-    const divisor = receivedBytes >= 1024 * 1024 * 1024 ? 1024 * 1024 * 1024 : 1024 * 1024;
-    const unit = divisor === 1024 * 1024 * 1024 ? 'GiB' : 'MiB';
     const resumedMessage = resumed
       ? receivedBytes > 0
-        ? `Retomado de onde parou: ${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(receivedBytes / divisor)} ${unit} já estavam na escola.`
+        ? `Retomado de onde parou: ${formatBytes(receivedBytes)} já estavam na escola.`
         : 'Continuando o envio de onde parou.'
       : null;
-    setTransfer({ fileName: session.file.name, title: session.title, progress, status: 'uploading', message: resumedMessage });
+    transferStartedAtRef.current = Date.now();
+    transferInitialBytesRef.current = receivedBytes;
+    setTransfer({
+      fileName: session.file.name,
+      title: session.title,
+      progress,
+      transferredBytes: receivedBytes,
+      totalBytes: session.file.size,
+      remainingSeconds: null,
+      resumedBytes: receivedBytes,
+      resumed,
+      status: 'uploading',
+      message: resumedMessage,
+    });
     try {
       await finishTransfer(session, receivedParts, controller);
     } catch (error) {
@@ -275,7 +316,7 @@ const VideosAreaContent = () => {
       setTransfer((current) => current ? {
         ...current,
         status: 'paused',
-        message: getVideoUploadErrorMessage(error),
+        message: `${getVideoUploadErrorMessage(error)} As partes já enviadas ficam guardadas até ${formatExpiry(session.expiresAt)}.`,
       } : current);
       setTransferInProgress(true);
     }
@@ -286,6 +327,7 @@ const VideosAreaContent = () => {
     operationControllerRef.current = controller;
     setDialogBusy(true);
     setDialogError(null);
+    setSuccessToast(null);
     setTransferInProgress(true);
     try {
       const fingerprint = await createVideoFingerprint(file);
@@ -300,6 +342,7 @@ const VideosAreaContent = () => {
         uploadId: upload.uploadId,
         file,
         title: upload.title,
+        expiresAt: upload.expiresAt,
         partSize: upload.partSize,
         partCount: upload.partCount,
         completionIdempotencyKey: crypto.randomUUID(),
@@ -331,7 +374,11 @@ const VideosAreaContent = () => {
       await startTransfer(session, upload.receivedParts, controller, true);
     } catch (error) {
       if (controller.signal.aborted) return;
-      setTransfer((current) => current ? { ...current, status: 'paused', message: getVideoUploadErrorMessage(error) } : current);
+      setTransfer((current) => current ? {
+        ...current,
+        status: 'paused',
+        message: `${getVideoUploadErrorMessage(error)} As partes já enviadas ficam guardadas até ${formatExpiry(session.expiresAt)}.`,
+      } : current);
       setTransferInProgress(true);
     }
   };
@@ -358,6 +405,7 @@ const VideosAreaContent = () => {
       pendingUploads={transferInProgress ? [] : pendingUploads.data?.data ?? []}
       uploadDisabled={transferInProgress}
       transfer={transfer}
+      currentAccountId={session.accountId}
       onUpload={() => { setDialogError(null); setDialogOpen(true); }}
       onRetry={() => void videos.refetch()}
       onRetryTransfer={() => void retryTransfer()}
@@ -367,8 +415,8 @@ const VideosAreaContent = () => {
       onFilterChange={(value) => changeFilters(value, searchInput)}
       onSearchChange={setSearchInput}
       onPageChange={(value) => changeFilters(filter, search, value)}
-      onEditTitle={(video) => { setEditError(null); setTitleUpdated(false); setEditIdempotencyKey(crypto.randomUUID()); setEditingVideo(video); }}
-      titleUpdated={titleUpdated}
+      onEditTitle={(video) => { setEditError(null); setSuccessToast(null); setEditIdempotencyKey(crypto.randomUUID()); setEditingVideo(video); }}
+      successMessage={successToast}
     />
     {editingVideo ? <EditVideoTitleDialog
       key={editingVideo.videoId}
@@ -380,7 +428,7 @@ const VideosAreaContent = () => {
         try {
           await updateTitle.mutateAsync({ videoId: editingVideo.videoId, input, idempotencyKey: editIdempotencyKey });
           setEditingVideo(null);
-          setTitleUpdated(true);
+          setSuccessToast('Título atualizado');
         } catch (error) {
           setEditError(getVideoUploadErrorCode(error) === 'TITLE_REQUIRED'
             ? 'TITLE_REQUIRED'
@@ -397,11 +445,14 @@ const VideosAreaContent = () => {
     /> : null}
     {blocker.state === 'blocked' ? <div className="dialog-backdrop">
       <section aria-labelledby="leave-video-upload-title" aria-modal="true" className="dialog-card leave-upload-dialog" role="alertdialog">
-        <h2 id="leave-video-upload-title">Sair durante o envio?</h2>
-        <p>O envio será interrompido. Você pode ficar nesta tela até ele terminar.</p>
+        <div className="video-dialog-heading">
+          <h2 id="leave-video-upload-title">Sair interrompe o envio</h2>
+          <button aria-label="Continuar enviando" className="dialog-close" onClick={() => blocker.reset()} type="button"><X size={18} /></button>
+        </div>
+        <p>{sessionRef.current?.file.name ?? 'O vídeo'} está em {transfer?.progress ?? 0}%. O que já foi enviado fica guardado até {sessionRef.current ? formatExpiry(sessionRef.current.expiresAt) : 'o prazo expirar'} — volte e selecione o mesmo arquivo para continuar.</p>
         <div className="dialog-actions">
-          <button className="outline-button" onClick={() => blocker.reset()} type="button">Continuar enviando</button>
-          <button className="primary-button" onClick={leaveDuringTransfer} type="button">Sair mesmo assim</button>
+          <button className="outline-button" onClick={leaveDuringTransfer} type="button">Sair mesmo assim</button>
+          <button className="primary-button" onClick={() => blocker.reset()} type="button">Continuar enviando</button>
         </div>
       </section>
     </div> : null}

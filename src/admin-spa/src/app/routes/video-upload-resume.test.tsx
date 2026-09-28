@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router';
@@ -67,8 +67,8 @@ const selectFile = async (user: ReturnType<typeof userEvent.setup>, file: File) 
 };
 
 const submitUpload = async (user: ReturnType<typeof userEvent.setup>) => {
-  const buttons = screen.getAllByRole('button', { name: 'Enviar vídeo' });
-  await user.click(buttons[buttons.length - 1]!);
+  const dialog = within(screen.getByRole('dialog', { name: 'Enviar vídeo' }));
+  await user.click(dialog.getByRole('button', { name: 'Enviar' }));
 };
 
 describe('video upload resume', () => {
@@ -102,8 +102,8 @@ describe('video upload resume', () => {
     await selectFile(user, videoFile());
     await submitUpload(user);
 
-    expect(await screen.findByText(/Retomado de onde parou: 2 MiB já estavam na escola/)).toBeInTheDocument();
-    expect(await screen.findByRole('status', { name: 'Vídeo recebido' })).toBeInTheDocument();
+    expect(await screen.findByText(/Retomado de onde parou: 2,1 MB já estavam na escola/)).toBeInTheDocument();
+    expect(await screen.findByText('Aula retomada recebido. A preparação começou.')).toBeInTheDocument();
     expect(sentParts).toEqual([2]);
   });
 
@@ -115,11 +115,10 @@ describe('video upload resume', () => {
     await screen.findByText(/Envio incompleto de aula-pendente\.mp4/);
     await selectFile(user, videoFile('aula-nova.mp4'));
 
-    expect(
-      await screen.findByText(
-        'Este não é o arquivo do envio incompleto (aula-pendente.mp4). Ele será enviado como um vídeo novo.',
-      ),
-    ).toHaveAttribute('role', 'status');
+    const dialog = within(await screen.findByRole('dialog', { name: 'Enviar vídeo' }));
+    expect(await dialog.findByRole('status')).toHaveTextContent(
+      /Este não é o arquivo do envio incompleto \(aula-pendente\.mp4\)\. Ele será enviado como um vídeo novo;/,
+    );
   });
 
   it('renews an expired part URL after a storage 403', async () => {
@@ -158,7 +157,7 @@ describe('video upload resume', () => {
     await user.upload(screen.getByLabelText(/Escolher arquivo de vídeo/), videoFile());
     await submitUpload(user);
 
-    expect(await screen.findByRole('status', { name: 'Vídeo recebido' })).toBeInTheDocument();
+    expect(await screen.findByText('Aula retomada recebido. A preparação começou.')).toBeInTheDocument();
     expect(urlBatches).toEqual([[1, 2], [1]]);
     expect(putUrls).toContain('fresh-part-1');
   });
