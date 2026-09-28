@@ -1,6 +1,7 @@
 using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Infra.Data.Configuration;
 using CodeForCoders.Audit.Infra.Data.Health;
+using CodeForCoders.Audit.Infra.Data.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,15 @@ public static class DependencyInjection
             }
         });
         services.AddScoped<IAuditRecordWriter, AuditRecordWriter>();
+        services.AddScoped<IAuditRecordSearchQueries, AuditRecordSearchQueries>();
+        services.AddScoped<IAuditRecordDetailQueries, AuditRecordDetailQueries>();
+        services.AddScoped<IAuditRecordSnapshotStore, AuditRecordSnapshotStore>();
+        services.AddOptions<AuditSnapshotOptions>()
+            .Bind(configuration.GetSection(AuditSnapshotOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Audit snapshot Valkey connection string is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.KeyPrefix), "Audit snapshot key prefix is required.")
+            .ValidateOnStart();
+        services.AddSingleton<AuditSnapshotConnectionProvider>();
         services.AddScoped<IUnitOfWork, AuditUnitOfWork>();
         services.AddOptions<AuditDatabaseOptions>()
             .Bind(configuration.GetSection(AuditDatabaseOptions.SectionName))

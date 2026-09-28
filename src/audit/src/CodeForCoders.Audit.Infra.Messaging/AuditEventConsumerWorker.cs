@@ -131,7 +131,7 @@ public sealed class AuditEventConsumerWorker(
             {
                 if (requeue)
                 {
-                    // RabbitMQ 4.3 does not count basic.nack requeues toward x-delivery-limit.
+                    // On RabbitMQ 4.3 quorum queues, basic.reject counts failed deliveries; basic.nack does not.
                     await channel.BasicRejectAsync(deliveryTag, requeue: true, CancellationToken.None);
                 }
                 else

@@ -282,7 +282,10 @@ public sealed class AuditImmutabilityTests(AuditIntegrationFixture fixture)
             ["RabbitMq:DeadLetterExchange"] = DeadLetterExchange,
             ["RabbitMq:AuditQueue"] = Queue,
             ["RabbitMq:EventRoutingKey"] = RoutingKey,
+            ["RabbitMq:AuditComplementQueue"] = $"audit.integration.immutability.complements.{Guid.CreateVersion7():N}",
             ["AuditDatabase:WriterRole"] = AuditIntegrationFixture.WriterRole,
+            ["AuditSnapshots:ConnectionString"] = fixture.Valkey.GetConnectionString(),
+            ["AuditSnapshots:KeyPrefix"] = $"audit:integration:{nameof(AuditImmutabilityTests)}:{Guid.CreateVersion7():N}:",
         };
 
         var host = Host.CreateDefaultBuilder()

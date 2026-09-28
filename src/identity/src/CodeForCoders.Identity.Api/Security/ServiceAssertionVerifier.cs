@@ -21,27 +21,36 @@ public sealed class ServiceAssertionVerifier(
         string requiredScope,
         CancellationToken cancellationToken)
     {
+        var result = await VerifyDetailedAsync(token, requiredScope, cancellationToken);
+        return result.ScopeGranted ? result.Assertion : null;
+    }
+
+    public async Task<ServiceAssertionVerification> VerifyDetailedAsync(
+        string? token,
+        string requiredScope,
+        CancellationToken cancellationToken)
+    {
         var settings = options.Value;
         if (string.IsNullOrWhiteSpace(token))
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
         var segments = token.Split('.');
         if (segments.Length != 3 || !TryReadHeader(segments[0], out var keyId))
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
         if (!TryReadClaims(segments[1], out var claims))
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
         if (!settings.GetEffectiveIssuers().TryGetValue(claims.Issuer, out var issuer)
             || !issuer.PublicKeys.TryGetValue(keyId, out var encodedPublicKey))
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
         try
@@ -52,39 +61,41 @@ public sealed class ServiceAssertionVerifier(
             var signature = Base64UrlDecode(segments[2]);
             if (!rsa.VerifyData(signingInput, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
             {
-                return null;
+                return new ServiceAssertionVerification(null, false);
             }
         }
         catch (CryptographicException)
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
         catch (FormatException)
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
         var now = timeProvider.GetUtcNow();
         if (claims.Audience != settings.Audience
             || claims.Subject != claims.Issuer
-            || !claims.Scopes.Contains(requiredScope, StringComparer.Ordinal)
-            || !issuer.AllowedScopes.Contains(requiredScope, StringComparer.Ordinal)
             || claims.NotBefore > now + AllowedClockSkew
             || claims.IssuedAt > now + AllowedClockSkew
             || claims.ExpiresOn <= now
             || claims.ExpiresOn - claims.IssuedAt > MaximumLifetime
             || !issuer.AllowedTenantIds.Any(value => Guid.TryParse(value, out var allowedTenant) && allowedTenant == claims.TenantId))
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
         tenantContext.Set(claims.TenantId);
         if (!await replayStore.TryConsumeAsync(claims.AssertionId, claims.ExpiresOn, cancellationToken))
         {
-            return null;
+            return new ServiceAssertionVerification(null, false);
         }
 
-        return new VerifiedServiceAssertion(claims.TenantId, claims.AssertionId, claims.ExpiresOn);
+        var scopeGranted = claims.Scopes.Contains(requiredScope, StringComparer.Ordinal)
+            && issuer.AllowedScopes.Contains(requiredScope, StringComparer.Ordinal);
+        return new ServiceAssertionVerification(
+            new VerifiedServiceAssertion(claims.TenantId, claims.AssertionId, claims.ExpiresOn),
+            scopeGranted);
     }
 
     private static bool TryReadHeader(string encodedHeader, out string keyId)

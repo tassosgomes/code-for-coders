@@ -21,4 +21,25 @@ public sealed class AuditRecordWriter(AuditDbContext dbContext) : IAuditRecordWr
             .Where(record => record.Origin == origin && record.FactId == factId)
             .Select(record => record.Fingerprint)
             .SingleOrDefaultAsync(cancellationToken);
+
+    public Task<AuditRecord?> FindOriginalAsync(
+        Guid tenantId,
+        Guid recordId,
+        CancellationToken cancellationToken)
+        => dbContext.AuditRecords
+            .AsNoTracking()
+            .SingleOrDefaultAsync(record => record.TenantId == tenantId
+                && record.Id == recordId
+                && record.RecordType == AuditRecord.OriginalRecordType,
+                cancellationToken);
+
+    public Task<AuditRecord?> FindByConfirmationIdAsync(
+        Guid tenantId,
+        Guid confirmationId,
+        CancellationToken cancellationToken)
+        => dbContext.AuditRecords
+            .AsNoTracking()
+            .SingleOrDefaultAsync(record => record.TenantId == tenantId
+                && record.ConfirmationId == confirmationId,
+                cancellationToken);
 }

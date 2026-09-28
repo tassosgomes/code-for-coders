@@ -22,6 +22,7 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.ListPendingStaffInvit
 using CodeForCoders.Identity.Application.UseCases.Accounts.LookupStaffInvitation;
 using CodeForCoders.Identity.Application.UseCases.Accounts.AcceptStaffInvitation;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ListStaffMembers;
+using CodeForCoders.Identity.Application.UseCases.Accounts.ResolveAuditIdentityReferences;
 using CodeForCoders.Identity.Application.UseCases.Accounts.ChangeStaffRole;
 using CodeForCoders.Identity.Application.UseCases.Accounts.GrantStaffRole;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStaffRole;
@@ -54,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IValidator<LookupStaffInvitationInput>, LookupStaffInvitationInputValidator>();
         services.AddScoped<IValidator<AcceptStaffInvitationInput>, AcceptStaffInvitationInputValidator>();
         services.AddScoped<IValidator<ListStaffMembersInput>, ListStaffMembersInputValidator>();
+        services.AddScoped<IValidator<ResolveAuditIdentityReferencesInput>, ResolveAuditIdentityReferencesInputValidator>();
         services.AddScoped<IValidator<StaffRoleActionCommand>, StaffRoleActionCommandValidator>();
         services.AddScoped<IValidator<StaffRoleChangeCommand>, StaffRoleChangeCommandValidator>();
         services.AddScoped<IValidator<ChangeStudentPasswordInput>, ChangeStudentPasswordInputValidator>();

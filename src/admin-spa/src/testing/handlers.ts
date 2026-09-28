@@ -76,6 +76,14 @@ export const handlers = [
     data: [],
     pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
   })),
+  http.post(`${env.API_URL}/api/v1/audit-record-searches`, () => HttpResponse.json({
+    data: [],
+    pagination: { page: 1, size: 20, total: 0, totalPages: 0, snapshot: 'snap_testfixture' },
+  })),
+  http.post(`${env.API_URL}/api/v1/audit-records/:recordId/complement-confirmations`, () => HttpResponse.json({
+    confirmationId: 'd69bd911-9631-4f59-8242-c43629806177',
+    status: 'accepted',
+  }, { status: 202 })),
   http.patch(`${env.API_URL}/api/v1/videos/:videoId`, async ({ params, request }) => {
     const body = await request.json() as { title: string };
     if (!body.title.trim()) {

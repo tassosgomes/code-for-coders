@@ -20,6 +20,7 @@ public sealed class ServiceAssertionTokenFactory(
         "staff-invitations:write",
         "staff-members:read",
         "staff-members:write",
+        "audit-references:read",
     ];
 
     public string Create(string requiredScope)

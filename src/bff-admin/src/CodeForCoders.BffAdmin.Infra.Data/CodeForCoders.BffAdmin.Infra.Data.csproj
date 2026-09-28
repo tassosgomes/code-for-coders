@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../CodeForCoders.BffAdmin.Application/CodeForCoders.BffAdmin.Application.csproj" />
+    <ProjectReference Include="../CodeForCoders.BffAdmin.Contracts/CodeForCoders.BffAdmin.Contracts.csproj" />
     <ProjectReference Include="../CodeForCoders.BffAdmin.Domain/CodeForCoders.BffAdmin.Domain.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">

@@ -33,6 +33,12 @@ public sealed class RabbitMqOptions
     [Required]
     public string EventRoutingKey { get; set; } = "auditoria.ato-praticado.v1";
 
+    [Required]
+    public string AuditComplementQueue { get; set; } = "audit.complements";
+
+    [Required]
+    public string AuditComplementEventRoutingKey { get; set; } = "auditoria.registro.complemento-confirmado.v1";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 

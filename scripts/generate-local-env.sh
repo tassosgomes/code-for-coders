@@ -7,7 +7,23 @@ readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
 readonly env_file="$repository_root/.env"
 
 if [[ -e "$env_file" ]]; then
-  printf '[local-env] %s already exists; keeping the current configuration.\n' "$env_file"
+  if rg -q '^BFF_ADMIN_OUTBOX_KEY_B64=' "$env_file"; then
+    printf '[local-env] %s already contains the BFF outbox key; keeping the current configuration.\n' "$env_file"
+    exit 0
+  fi
+
+  command -v openssl >/dev/null 2>&1 || {
+    printf '[local-env] OpenSSL is required to generate local development keys.\n' >&2
+    exit 1
+  }
+
+  bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
+  printf '\nBFF_ADMIN_OUTBOX_KEY_B64=%s\n' "$bff_admin_outbox_key_b64" >> "$env_file"
+  if ! rg -q '^BFF_ADMIN_OUTBOX_KEY_VERSION=' "$env_file"; then
+    printf 'BFF_ADMIN_OUTBOX_KEY_VERSION=v1\n' >> "$env_file"
+  fi
+  chmod 600 "$env_file"
+  printf '[local-env] Added a development-only BFF outbox key to %s.\n' "$env_file"
   exit 0
 fi
 
@@ -46,6 +62,7 @@ identity_staff_token_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outfor
   -in "$key_material_dir/identity-staff-token-private.pem" | base64 | tr -d '\n')"
 idempotency_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
+bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 
 {
   printf 'NOTIFICATION_NAMESPACE=default\n'
@@ -56,6 +73,8 @@ outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
   printf 'STUDENT_TENANT_ID=00000000-0000-7000-8000-000000000001\n'
   printf 'IDENTITY_IDEMPOTENCY_KEY_B64=%s\n' "$idempotency_key_b64"
   printf 'IDENTITY_OUTBOX_KEY_B64=%s\n' "$outbox_key_b64"
+  printf 'BFF_ADMIN_OUTBOX_KEY_B64=%s\n' "$bff_admin_outbox_key_b64"
+  printf 'BFF_ADMIN_OUTBOX_KEY_VERSION=v1\n'
   printf 'BFF_IDENTITY_PUBLIC_KEY_B64=%s\n' "$public_key_b64"
   printf 'BFF_IDENTITY_PRIVATE_KEY_B64=%s\n' "$private_key_b64"
   printf 'BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64=%s\n' "$admin_public_key_b64"

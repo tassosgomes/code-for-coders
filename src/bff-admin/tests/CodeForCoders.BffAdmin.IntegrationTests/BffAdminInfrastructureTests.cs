@@ -31,6 +31,8 @@ public sealed class BffAdminInfrastructureTests(BffAdminIntegrationFixture fixtu
             ["Outbox:PollingIntervalSeconds"] = "5",
             ["Outbox:BatchSize"] = "10",
             ["Outbox:MaxAttempts"] = "3",
+            ["OutboxProtection:KeyBase64"] = SharedOutboxTestProtection.KeyBase64,
+            ["OutboxProtection:KeyVersion"] = SharedOutboxTestProtection.KeyVersion,
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
         };
 
@@ -46,6 +48,7 @@ public sealed class BffAdminInfrastructureTests(BffAdminIntegrationFixture fixtu
             })
             .Build();
 
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         await host.StartAsync(cancellationToken);
 
         Guid eventId;

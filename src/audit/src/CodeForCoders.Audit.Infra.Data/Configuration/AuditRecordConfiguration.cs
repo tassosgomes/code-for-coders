@@ -13,6 +13,12 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
         builder.ToTable("audit_records", AuditSchema.Name, tableBuilder =>
         {
             tableBuilder.HasComment("Append-only audit evidence. UPDATE and DELETE are rejected by database trigger.");
+            tableBuilder.HasCheckConstraint(
+                "ck_audit_records_record_type",
+                "\"record_type\" IN ('original', 'complement')");
+            tableBuilder.HasCheckConstraint(
+                "ck_audit_records_complement_shape",
+                "(\"record_type\" = 'original' AND \"original_record_id\" IS NULL AND \"confirmation_id\" IS NULL AND \"confirmed_at\" IS NULL AND \"explanation\" IS NULL) OR (\"record_type\" = 'complement' AND \"original_record_id\" IS NOT NULL AND \"confirmation_id\" IS NOT NULL AND \"confirmed_at\" IS NOT NULL AND \"explanation\" IS NOT NULL)");
         });
         builder.HasKey(record => record.Id);
 
@@ -23,6 +29,11 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
             .HasColumnName("tenant_id")
             .ValueGeneratedNever()
             .IsRequired();
+        builder.Property(record => record.RecordType)
+            .HasColumnName("record_type")
+            .HasMaxLength(16)
+            .HasDefaultValue(AuditRecord.OriginalRecordType)
+            .IsRequired();
         builder.Property(record => record.Origin)
             .HasColumnName("origem")
             .HasMaxLength(AuditRecord.OriginMaxLength)
@@ -30,6 +41,20 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
         builder.Property(record => record.FactId)
             .HasColumnName("fato_id")
             .IsRequired();
+        builder.Property(record => record.OriginalRecordId)
+            .HasColumnName("original_record_id")
+            .IsRequired(false);
+        builder.Property(record => record.ConfirmationId)
+            .HasColumnName("confirmation_id")
+            .IsRequired(false);
+        builder.Property(record => record.ConfirmedAt)
+            .HasColumnName("confirmed_at")
+            .HasColumnType("timestamp with time zone")
+            .IsRequired(false);
+        builder.Property(record => record.Explanation)
+            .HasColumnName("explanation")
+            .HasColumnType("text")
+            .IsRequired(false);
         builder.Property(record => record.Type)
             .HasColumnName("tipo")
             .HasColumnType("text")
@@ -77,10 +102,34 @@ public sealed class AuditRecordConfiguration : IEntityTypeConfiguration<AuditRec
             .HasMaxLength(AuditRecord.FingerprintLength)
             .IsRequired();
 
+        builder.HasAlternateKey(record => new { record.TenantId, record.Id })
+            .HasName("ak_audit_records_tenant_id_id");
+        builder.HasOne<AuditRecord>()
+            .WithMany()
+            .HasForeignKey(record => new { record.TenantId, record.OriginalRecordId })
+            .HasPrincipalKey(record => new { record.TenantId, record.Id })
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("fk_audit_records_original_record");
+
         builder.HasIndex(record => new { record.Origin, record.FactId })
             .IsUnique()
+            .HasFilter("\"record_type\" = 'original'")
             .HasDatabaseName(UniqueOriginFactIdIndexName);
+        builder.HasIndex(record => new { record.TenantId, record.ConfirmationId })
+            .IsUnique()
+            .HasDatabaseName("ux_audit_records_tenant_confirmation_id")
+            .HasFilter("\"confirmation_id\" IS NOT NULL");
         builder.HasIndex(record => new { record.TenantId, record.PracticedOn })
             .HasDatabaseName("ix_audit_records_tenant_praticado_em");
+        builder.HasIndex(record => new { record.TenantId, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.Type, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_tipo_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.AuthorId, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_autor_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.TargetId, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_alvo_praticado_em_id");
+        builder.HasIndex(record => new { record.TenantId, record.Conformity, record.PracticedOn, record.Id })
+            .HasDatabaseName("ix_audit_records_tenant_conformidade_praticado_em_id");
     }
 }

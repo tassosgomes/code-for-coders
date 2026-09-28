@@ -1,5 +1,6 @@
 export type StaffArea = {
   label: string;
-  permission: string;
+  permission?: string;
+  role?: string;
   href?: string;
 };

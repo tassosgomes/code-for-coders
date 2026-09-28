@@ -41,11 +41,23 @@ namespace CodeForCoders.Audit.Infra.Data.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("complemento");
 
+                    b.Property<Guid?>("ConfirmationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("confirmation_id");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
                     b.Property<string>("Conformity")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("conformidade");
+
+                    b.Property<string>("Explanation")
+                        .HasColumnType("text")
+                        .HasColumnName("explanation");
 
                     b.Property<Guid>("FactId")
                         .HasColumnType("uuid")
@@ -63,6 +75,10 @@ namespace CodeForCoders.Audit.Infra.Data.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("origem");
 
+                    b.Property<Guid?>("OriginalRecordId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("original_record_id");
+
                     b.Property<DateTimeOffset?>("PracticedOn")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("praticado_em");
@@ -79,6 +95,14 @@ namespace CodeForCoders.Audit.Infra.Data.Migrations
                     b.Property<DateTimeOffset>("ReceivedOn")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("recebido_em");
+
+                    b.Property<string>("RecordType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("original")
+                        .HasColumnName("record_type");
 
                     b.Property<Guid?>("TargetId")
                         .HasColumnType("uuid")
@@ -98,17 +122,57 @@ namespace CodeForCoders.Audit.Infra.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("TenantId", "Id")
+                        .HasName("ak_audit_records_tenant_id_id");
+
                     b.HasIndex("Origin", "FactId")
                         .IsUnique()
-                        .HasDatabaseName("ux_audit_records_origem_fato_id");
+                        .HasDatabaseName("ux_audit_records_origem_fato_id")
+                        .HasFilter("\"record_type\" = 'original'");
+
+                    b.HasIndex("TenantId", "ConfirmationId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_audit_records_tenant_confirmation_id")
+                        .HasFilter("\"confirmation_id\" IS NOT NULL");
+
+                    b.HasIndex("TenantId", "OriginalRecordId");
 
                     b.HasIndex("TenantId", "PracticedOn")
                         .HasDatabaseName("ix_audit_records_tenant_praticado_em");
 
+                    b.HasIndex("TenantId", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_praticado_em_id");
+
+                    b.HasIndex("TenantId", "AuthorId", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_autor_praticado_em_id");
+
+                    b.HasIndex("TenantId", "Conformity", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_conformidade_praticado_em_id");
+
+                    b.HasIndex("TenantId", "TargetId", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_alvo_praticado_em_id");
+
+                    b.HasIndex("TenantId", "Type", "PracticedOn", "Id")
+                        .HasDatabaseName("ix_audit_records_tenant_tipo_praticado_em_id");
+
                     b.ToTable("audit_records", "audit_access", t =>
                         {
                             t.HasComment("Append-only audit evidence. UPDATE and DELETE are rejected by database trigger.");
+
+                            t.HasCheckConstraint("ck_audit_records_complement_shape", "(\"record_type\" = 'original' AND \"original_record_id\" IS NULL AND \"confirmation_id\" IS NULL AND \"confirmed_at\" IS NULL AND \"explanation\" IS NULL) OR (\"record_type\" = 'complement' AND \"original_record_id\" IS NOT NULL AND \"confirmation_id\" IS NOT NULL AND \"confirmed_at\" IS NOT NULL AND \"explanation\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_audit_records_record_type", "\"record_type\" IN ('original', 'complement')");
                         });
+                });
+
+            modelBuilder.Entity("CodeForCoders.Audit.Domain.Entities.AuditRecord", b =>
+                {
+                    b.HasOne("CodeForCoders.Audit.Domain.Entities.AuditRecord", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "OriginalRecordId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_audit_records_original_record");
                 });
 #pragma warning restore 612, 618
         }

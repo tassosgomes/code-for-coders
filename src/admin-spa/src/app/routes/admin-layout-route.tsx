@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useNavigate } from 'react-router';
 
 import axios from 'axios';
@@ -16,6 +17,7 @@ type AdminLayoutRouteProps = {
 
 export const AdminLayoutRoute = ({ serviceName, title }: AdminLayoutRouteProps) => {
   const session = useLoaderData<typeof loadStaffSession>();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const endSession = useEndCurrentStaffSession();
@@ -24,9 +26,11 @@ export const AdminLayoutRoute = ({ serviceName, title }: AdminLayoutRouteProps) 
     setLogoutError(null);
     try {
       await endSession.mutateAsync();
+      queryClient.clear();
       await navigate(paths.staffLogin.getHref(), { replace: true });
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
+        queryClient.clear();
         await navigate(paths.staffLogin.getHref(), { replace: true });
         return;
       }
@@ -37,7 +41,7 @@ export const AdminLayoutRoute = ({ serviceName, title }: AdminLayoutRouteProps) 
 
   return (
     <AppShell
-      areas={getStaffAreas(session.permissions)}
+      areas={getStaffAreas(session.permissions, session.roles)}
       name={session.name}
       roles={session.roles}
       outletContext={session}

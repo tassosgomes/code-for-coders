@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "branch": "feature/consulta-trilha-auditoria",
+  "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-consulta-trilha-auditoria",
+  "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
+  "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
+  "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
+  "last_checkpoint": "450f45a",
+  "phase": "complete",
+  "active_task": null,
+  "attempt": 2,
+  "max_attempts": 3,
+  "full_attempt": 3,
+  "transport_retries": 1,
+  "specs": [
+    "techspec.md",
+    "prd.md",
+    "contracts.md"
+  ],
+  "delivery": "pr",
+  "transport": "herdr",
+  "validated_commit": "450f45a1835a40c8758150de5c49c4c4f15b8c75",
+  "validated_tree": "4ac94bc6304e6143e31c1de2cf5779d681e59dc9",
+  "last_result": {
+    "role": "validator",
+    "mode": "full",
+    "run_id": "run.A5UGbt7y",
+    "outcome": "approved"
+  },
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "complete-prd",
+    "delivery": "pr"
+  },
+  "history": [
+    {
+      "event": "branch_ready",
+      "run_id": "run.2TXmAdPU",
+      "base": "dead10b"
+    },
+    {
+      "event": "rejected",
+      "task": "3.0",
+      "attempt": 1,
+      "run_id": "run.y3VqSVbv"
+    },
+    {
+      "event": "validation_error",
+      "task": "3.0",
+      "run_id": "run.k9FfoLU3",
+      "action": "reenviado com autorização de contas sintéticas locais"
+    },
+    {
+      "event": "rejected",
+      "task": "3.0",
+      "attempt": 2,
+      "run_id": "run.B8D9LnZD"
+    },
+    {
+      "event": "approved",
+      "task": "3.0",
+      "attempt": 3,
+      "run_id": "run.vC3gg9ba"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "b8a40f1"
+    },
+    {
+      "event": "approved",
+      "task": "4.0",
+      "attempt": 1,
+      "run_id": "run.6K0leWXi"
+    },
+    {
+      "event": "checkpoint",
+      "task": "4.0",
+      "commit": "5b536fc"
+    },
+    {
+      "event": "rejected",
+      "task": "5.0",
+      "attempt": 1,
+      "run_id": "run.jw0vW5it"
+    },
+    {
+      "event": "approved",
+      "task": "5.0",
+      "attempt": 2,
+      "run_id": "run.HgVs61Sk"
+    },
+    {
+      "event": "checkpoint",
+      "task": "5.0",
+      "commit": "31059bc"
+    },
+    {
+      "event": "rejected",
+      "task": "6.0",
+      "attempt": 1,
+      "run_id": "run.Lc3pGO8r"
+    },
+    {
+      "event": "approved",
+      "task": "6.0",
+      "attempt": 2,
+      "run_id": "run.miinCAwf"
+    },
+    {
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "b407b19"
+    },
+    {
+      "event": "full_rejected",
+      "full_attempt": 1,
+      "run_id": "run.8EPhaVq4",
+      "attribution": {
+        "B1": "3.0 (b8a40f1)",
+        "B2": "6.0 (b407b19)"
+      }
+    },
+    {
+      "event": "reopen",
+      "task": "3.0",
+      "run_id": "run.GfLynAcV",
+      "source": "run.8EPhaVq4"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "6472550",
+      "cycle": "full 1"
+    },
+    {
+      "event": "reopen",
+      "task": "6.0",
+      "run_id": "run.Vg5Aba2v",
+      "source": "run.8EPhaVq4"
+    },
+    {
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "413e5eb",
+      "cycle": "full 1"
+    },
+    {
+      "event": "full_rejected",
+      "full_attempt": 2,
+      "run_id": "run.XnmIxFI0",
+      "attribution": {
+        "B2prime": "6.0 (reincidente)",
+        "B3": "3.0"
+      }
+    },
+    {
+      "event": "reopen",
+      "task": "3.0",
+      "run_id": "run.aPfsmR05",
+      "source": "run.XnmIxFI0"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "c856ed0",
+      "cycle": "full 2"
+    },
+    {
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "450f45a",
+      "cycle": "full 2"
+    },
+    {
+      "event": "full_approved",
+      "full_attempt": 3,
+      "run_id": "run.A5UGbt7y"
+    }
+  ],
+  "routing_override": {
+    "condition": "falha da correção em andamento (6.0 B2prime, ciclo full 2) ou reprovação subsequente",
+    "role": "implementer",
+    "args": "--kind=codex --model=gpt-6-sol --effort=high",
+    "requested": "2026-09-27 pelo usuário"
+  }
+}

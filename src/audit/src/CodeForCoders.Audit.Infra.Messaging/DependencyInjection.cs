@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddHostedService<AuditTopologyInitializer>();
         services.AddHostedService<AuditEventConsumerWorker>();
+        services.AddHostedService<AuditComplementConsumerWorker>();
 
         return services;
     }

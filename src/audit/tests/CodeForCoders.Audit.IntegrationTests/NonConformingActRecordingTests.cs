@@ -160,7 +160,10 @@ public sealed class NonConformingActRecordingTests(AuditIntegrationFixture fixtu
             ["RabbitMq:DeadLetterExchange"] = "audit.integration.events.dlx",
             ["RabbitMq:AuditQueue"] = Queue,
             ["RabbitMq:EventRoutingKey"] = RoutingKey,
+            ["RabbitMq:AuditComplementQueue"] = $"audit.integration.nonconforming.complements.{Guid.CreateVersion7():N}",
             ["AuditDatabase:WriterRole"] = "code_for_coders_audit_writer",
+            ["AuditSnapshots:ConnectionString"] = fixture.Valkey.GetConnectionString(),
+            ["AuditSnapshots:KeyPrefix"] = $"audit:integration:{nameof(NonConformingActRecordingTests)}:{Guid.CreateVersion7():N}:",
         };
 
         var host = Host.CreateDefaultBuilder()

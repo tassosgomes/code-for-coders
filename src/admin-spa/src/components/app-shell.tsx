@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CodeXml, ChevronDown, Clapperboard, House, Menu, Users, Wallet, X } from 'lucide-react';
+import { CodeXml, ChevronDown, Clapperboard, House, Menu, ScrollText, Users, Wallet, X } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 
 import { paths } from '@/config/paths';
@@ -36,11 +36,13 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
           <NavLink end to={paths.home.getHref()}><House size={18} />Início</NavLink>
           {areas.map((area) => area.href ? (
-            <NavLink key={area.permission} to={area.href}>
+            <NavLink key={area.permission ?? area.role ?? area.label} to={area.href}>
               {area.permission === 'financeiro.ler'
                 ? <Wallet size={18} />
                 : area.permission === 'midia.enviar'
                   ? <Clapperboard size={18} />
+                  : area.role === 'administrador'
+                    ? <ScrollText size={18} />
                   : <Users size={18} />}{area.label}
             </NavLink>
           ) : null)}

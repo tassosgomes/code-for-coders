@@ -15,6 +15,14 @@ export const paths = {
     path: '/financeiro',
     getHref: () => '/financeiro',
   },
+  auditTrail: {
+    path: '/auditoria',
+    getHref: () => '/auditoria',
+  },
+  auditRecordDetail: {
+    path: '/auditoria/:recordId',
+    getHref: (recordId: string) => `/auditoria/${recordId}`,
+  },
   videos: {
     path: '/videos',
     getHref: () => '/videos',
