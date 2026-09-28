@@ -50,9 +50,12 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
       </aside>
       <div className="app-main">
         <header className="app-header">
-          <button aria-expanded={menuOpen} aria-label="Toggle navigation" className="menu-button" onClick={toggleMenu} type="button">
+          <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Fechar navegação' : 'Abrir navegação'} className="menu-button" onClick={toggleMenu} type="button">
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+          <Link aria-label={`${serviceName} — início`} className="mobile-backoffice-brand" to={paths.home.getHref()}>
+            <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
+          </Link>
           <div className="account-menu-wrap">
             <button aria-expanded={accountOpen} aria-haspopup="menu" className="account-trigger" onClick={() => setAccountOpen(!accountOpen)} type="button">
               <span className="account-avatar">{initials}</span><span>{name}</span><ChevronDown size={16} />

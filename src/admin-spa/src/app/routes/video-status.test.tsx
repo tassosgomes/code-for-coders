@@ -44,7 +44,7 @@ describe('video preparation status', () => {
     renderVideosRoute();
 
     expect(await screen.findByText('Recebido')).toBeInTheDocument();
-    expect(screen.getByText('Atualizando automaticamente')).toBeInTheDocument();
+    expect(screen.getByText('Atualizando automaticamente enquanto há vídeo em andamento')).toBeInTheDocument();
     const announcement = screen.getByRole('status');
     expect(announcement).toHaveAttribute('aria-live', 'polite');
     expect(announcement).toBeEmptyDOMElement();
@@ -52,9 +52,10 @@ describe('video preparation status', () => {
     expect(screen.getByText('Em preparação')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Aula de exemplo: Em preparação');
     await act(async () => { await vi.advanceTimersByTimeAsync(10_000); });
-    expect(screen.getAllByText('Pronto · 0:20')).toHaveLength(1);
+    expect(screen.getByText('Pronto')).toBeInTheDocument();
+    expect(screen.getByText('0:20')).toBeInTheDocument();
     expect(screen.getAllByRole('status')).toHaveLength(1);
-    expect(screen.getByRole('status')).toHaveTextContent('Aula de exemplo: Pronto · 0:20');
+    expect(screen.getByRole('status')).toHaveTextContent('Aula de exemplo: Pronto');
     expect(screen.queryByText('Atualizando automaticamente')).not.toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
 
@@ -71,7 +72,8 @@ describe('video preparation status', () => {
 
     renderVideosRoute();
 
-    expect(await screen.findByText('Pronto · 0:20')).toBeInTheDocument();
+    expect(await screen.findByText('Pronto')).toBeInTheDocument();
+    expect(screen.getByText('0:20')).toBeInTheDocument();
     await act(async () => { await vi.advanceTimersByTimeAsync(30_000); });
 
     expect(requestCount).toBe(1);

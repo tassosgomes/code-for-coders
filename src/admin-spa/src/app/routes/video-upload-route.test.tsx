@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, Link, Outlet, RouterProvider } from 'react-router';
@@ -64,8 +64,8 @@ const chooseFile = async (user: ReturnType<typeof userEvent.setup>, file: File) 
 };
 
 const submitUpload = async (user: ReturnType<typeof userEvent.setup>) => {
-  const buttons = screen.getAllByRole('button', { name: 'Enviar vídeo' });
-  await user.click(buttons[buttons.length - 1]!);
+  const dialog = within(screen.getByRole('dialog', { name: 'Enviar vídeo' }));
+  await user.click(dialog.getByRole('button', { name: 'Enviar' }));
 };
 
 const videoFile = () => new File([new Uint8Array([1, 2, 3, 4])], 'aula.mp4', {
@@ -153,7 +153,7 @@ describe('video upload', () => {
     await submitUpload(user);
 
     expect(await screen.findByText('Aula de exemplo')).toBeInTheDocument();
-    expect(await screen.findByRole('status', { name: 'Vídeo recebido' })).toBeInTheDocument();
+    expect(await screen.findByText('aula recebido. A preparação começou.')).toBeInTheDocument();
     expect(await screen.findByText('Marina Alves')).toBeInTheDocument();
     expect(uploadedParts.sort()).toEqual([1, 2]);
     expect(storageCookies).toEqual([null, null]);
@@ -208,7 +208,7 @@ describe('video upload', () => {
     await chooseFile(user, videoFile());
     await submitUpload(user);
 
-    expect(await screen.findByRole('status', { name: 'Vídeo recebido' })).toBeInTheDocument();
+    expect(await screen.findByText('aula recebido. A preparação começou.')).toBeInTheDocument();
     expect(partOneAttempts).toBe(2);
     expect(partTwoAttempts).toBe(2);
     expect(uploadLookups).toBe(1);
@@ -235,14 +235,15 @@ describe('video upload', () => {
     await screen.findByRole('region', { name: 'Transferência de vídeo' });
     await user.click(screen.getByRole('link', { name: 'Outra área' }));
 
-    const alert = await screen.findByRole('alertdialog', { name: 'Sair durante o envio?' });
-    expect(alert).toHaveTextContent('O envio será interrompido.');
-    await user.click(screen.getByRole('button', { name: 'Continuar enviando' }));
+    const alert = await screen.findByRole('alertdialog', { name: 'Sair interrompe o envio' });
+    expect(alert).toHaveTextContent(/aula\.mp4 está em \d+%\. O que já foi enviado fica guardado até/);
+    const continueButtons = within(alert).getAllByRole('button', { name: 'Continuar enviando' });
+    await user.click(continueButtons[continueButtons.length - 1]!);
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Vídeos da escola' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'Outra área' }));
-    await screen.findByRole('alertdialog', { name: 'Sair durante o envio?' });
+    await screen.findByRole('alertdialog', { name: 'Sair interrompe o envio' });
     await user.click(screen.getByRole('button', { name: 'Sair mesmo assim' }));
     expect(await screen.findByRole('heading', { name: 'Outra área' })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());

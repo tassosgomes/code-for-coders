@@ -63,7 +63,7 @@ describe('video library filters', () => {
     await waitFor(() => expect(searchedTitles).toEqual(['injecao']));
     await user.clear(screen.getByRole('searchbox', { name: 'Buscar título' }));
     await user.type(screen.getByRole('searchbox', { name: 'Buscar título' }), 'ausente');
-    expect(await screen.findByText('Nenhum vídeo encontrado com esses filtros.')).toBeInTheDocument();
+    expect(await screen.findByText('Nenhum vídeo tem “ausente” no título.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Limpar filtros' }));
     expect(await screen.findByText('Aula falhada')).toBeInTheDocument();
   });
@@ -89,7 +89,8 @@ describe('video library filters', () => {
     await user.type(title, 'Aula corrigida');
     await user.click(screen.getByRole('button', { name: 'Salvar' }));
     expect(await screen.findByText('Aula corrigida')).toBeInTheDocument();
-    expect(screen.getByText('Pronto · 0:20')).toBeInTheDocument();
+    expect(screen.getByText('Pronto')).toBeInTheDocument();
+    expect(screen.getByText('0:20')).toBeInTheDocument();
     expect(screen.getByText('Título atualizado')).toBeInTheDocument();
   });
 
