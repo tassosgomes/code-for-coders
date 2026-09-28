@@ -41,6 +41,15 @@ services:
       ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
       ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ServiceAssertions__Issuers__bff-student__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__0: student-accounts:create
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__1: student-accounts:confirm
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__2: student-accounts:request-confirmation
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__3: student-sessions:create
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__4: student-sessions:validate
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__5: student-sessions:revoke
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__6: student-password-resets:request
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__7: student-password-resets:execute
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__8: student-password-changes:execute
       ServiceAssertions__Issuers__bff-student__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ServiceAssertions__Issuers__bff-admin__PublicKeys__local-dev-1: ${BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__0: staff-sessions:create
