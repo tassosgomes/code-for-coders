@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { CircleAlert, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
 
@@ -15,7 +15,7 @@ import {
 } from '@/features/staff-session/api/staff-session';
 
 export const StaffLoginScreen = () => {
-  const [requestError, setRequestError] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<'credentials' | 'generic' | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const createSession = useCreateStaffSession();
@@ -30,9 +30,7 @@ export const StaffLoginScreen = () => {
       await createSession.mutateAsync(input);
       await navigate(paths.home.getHref(), { replace: true });
     } catch (error: unknown) {
-      setRequestError(axios.isAxiosError(error) && error.response?.status === 401
-        ? 'E-mail ou senha inválidos.'
-        : 'Não foi possível entrar agora. Tente novamente.');
+      setRequestError(axios.isAxiosError(error) && error.response?.status === 401 ? 'credentials' : 'generic');
     }
   };
 
@@ -42,7 +40,21 @@ export const StaffLoginScreen = () => {
         <p className="eyebrow">Backoffice</p>
         <h1 id="staff-login-title">Entrar na operação</h1>
         <p>Acesso da equipe da escola. Alunos entram por code4coders.com.br/entrar.</p>
-        {requestError ? <p role="alert">{requestError}</p> : null}
+        {requestError ? (
+          <div className="login-request-error" role="alert">
+            <CircleAlert aria-hidden="true" size={16} />
+            <div className="login-request-error-content">
+              {requestError === 'credentials' ? (
+                <>
+                  <p className="login-request-error-title">E-mail ou senha incorretos</p>
+                  <p>Confira os dados e tente de novo.</p>
+                </>
+              ) : (
+                <p>Não foi possível entrar agora. Tente novamente.</p>
+              )}
+            </div>
+          </div>
+        ) : null}
         <form noValidate onSubmit={(event) => void form.handleSubmit(submitCredentials)(event)}>
           <label htmlFor="email">E-mail</label>
           <input

@@ -324,6 +324,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   color:var(--muted)
 }
 
+.login-request-error {
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  margin-top:24px;
+  padding:16px;
+  border:1px solid #dc2626;
+  border-radius:12px;
+  background:#fff;
+  color:#dc2626;
+  font-size:14px;
+  line-height:20px
+}
+
+.login-request-error svg {
+  flex:none
+}
+
+.login-request-error-content {
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0
+}
+
+.login-request-error-title {
+  font-weight:500
+}
+
 .password-reset-card form {
   display:flex;
   flex-direction:column;

@@ -27,6 +27,7 @@ const renderStaffAccess = (
   staffMembers: StaffMemberFixture[] = [],
   onRoleAction?: (action: 'grant' | 'revoke', request: Request, body: RoleActionFixture) => void,
   onRoleChange?: (request: Request, body: RoleChangeFixture) => void,
+  createStatus = 422,
 ) => {
   server.use(
     http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () => HttpResponse.json({
@@ -81,7 +82,7 @@ const renderStaffAccess = (
     }),
     http.post(`${env.API_URL}/api/v1/staff-invitations`, async ({ request }) => {
       if (createCode) {
-        return HttpResponse.json({ code: createCode }, { status: 422 });
+        return HttpResponse.json({ code: createCode }, { status: createStatus });
       }
 
       const body = await request.json() as { email: string; role: string };
@@ -129,12 +130,13 @@ describe('StaffInvitationIssuing', () => {
   });
 
   it.each([
-    ['EMAIL_BELONGS_TO_STAFF', 'Este e-mail já pertence a uma conta interna.'],
-    ['EMAIL_BELONGS_TO_STUDENT', 'Este e-mail já pertence a uma conta de aluno.'],
-    ['REASON_REQUIRED', 'Informe o motivo do convite.'],
-  ])('shows the specific message for %s', async (code, message) => {
+    { code: 'EMAIL_BELONGS_TO_STAFF', message: 'Este e-mail já pertence a uma conta interna.', status: 422 },
+    { code: 'EMAIL_BELONGS_TO_STUDENT', message: 'Este e-mail já pertence a uma conta de aluno.', status: 422 },
+    { code: 'REASON_REQUIRED', message: 'Informe o motivo do convite.', status: 422 },
+    { code: 'CSRF_INVALID', message: 'Você não tem permissão para gerenciar acessos.', status: 403 },
+  ])('shows the specific message for $code', async ({ code, message, status }) => {
     const user = userEvent.setup();
-    renderStaffAccess(code);
+    renderStaffAccess(code, [], undefined, undefined, status);
 
     await user.click(await screen.findByRole('button', { name: 'Convidar' }));
     await user.type(screen.getByLabelText('E-mail'), 'convidada@example.com');

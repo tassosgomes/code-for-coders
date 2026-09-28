@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { RouterProvider, createMemoryRouter } from 'react-router';
 import { cleanup, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
@@ -52,5 +53,43 @@ describe('StaffSession areas', () => {
     const navigation = within(screen.getByRole('navigation', { name: 'admin-spa navigation' }));
     expect(navigation.queryByRole('link', { name: 'Acessos' })).not.toBeInTheDocument();
     expect(navigation.queryByRole('link', { name: 'Financeiro' })).not.toBeInTheDocument();
+  });
+
+  it('clears the logout error when navigating to another admin route', async () => {
+    server.use(
+      http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () => HttpResponse.json({
+        accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+        name: 'Marina Alves',
+        roles: ['administrador'],
+        permissions: ['acesso.gerir'],
+        csrfToken: 'staff-session-csrf',
+      })),
+      http.delete(`${env.API_URL}/api/v1/staff-sessions/current`, () =>
+        HttpResponse.json({ code: 'CSRF_INVALID' }, { status: 403 }),
+      ),
+    );
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        loader: loadStaffSession,
+        element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
+        children: [
+          { index: true, element: <h1>Início</h1> },
+          { path: 'acessos', element: <h1>Gerenciar acessos</h1> },
+        ],
+      },
+    ], { initialEntries: ['/'] });
+    const user = userEvent.setup();
+
+    renderWithProviders(<RouterProvider router={router} />);
+
+    await user.click(await screen.findByRole('button', { name: /Marina Alves/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sair' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível sair agora. Tente novamente.');
+
+    await user.click(screen.getByRole('link', { name: 'Acessos' }));
+
+    expect(await screen.findByRole('heading', { name: 'Gerenciar acessos' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
