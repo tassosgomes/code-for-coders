@@ -73,7 +73,8 @@ public sealed class AuditRecordSearchHandler : HttpMessageHandler
                 new AuditRecordIdentityReferenceV1("conta-interna", AuthorId),
                 new AuditRecordIdentityReferenceV1("conta-interna", TargetId),
                 true,
-                false)],
+                false,
+                "professor")],
             new AuditRecordPaginationV1(1, 20, 1, 1, "snap_7mQ2kV4b123456789012345678901234567890123"));
 
     private static AuditRecordDetailV1 CreateDetail()

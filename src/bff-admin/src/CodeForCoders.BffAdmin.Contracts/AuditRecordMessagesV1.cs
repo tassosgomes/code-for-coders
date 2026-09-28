@@ -22,7 +22,8 @@ public sealed record AuditRecordSummaryV1(
     AuditRecordIdentityReferenceV1? Author,
     AuditRecordIdentityReferenceV1? Target,
     bool Compliant,
-    bool HasComplements);
+    bool HasComplements,
+    string? Role = null);
 
 public sealed record AuditRecordPaginationV1(int Page, int Size, int Total, int TotalPages, string Snapshot);
 

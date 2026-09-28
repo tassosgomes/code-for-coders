@@ -17,6 +17,7 @@ const auditRecordSummarySchema = z.object({
   target: identityReferenceSchema.nullable(),
   compliant: z.boolean(),
   hasComplements: z.boolean(),
+  role: z.string().nullable().optional(),
 });
 
 const auditRecordPageSchema = z.object({

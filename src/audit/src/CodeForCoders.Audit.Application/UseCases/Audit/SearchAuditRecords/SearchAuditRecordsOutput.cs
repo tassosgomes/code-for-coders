@@ -13,6 +13,7 @@ public sealed record AuditRecordSummaryOutput(
     AuditRecordIdentityReferenceOutput? Author,
     AuditRecordIdentityReferenceOutput? Target,
     bool Compliant,
-    bool HasComplements);
+    bool HasComplements,
+    string? Role = null);
 
 public sealed record AuditRecordPaginationOutput(int Page, int Size, int Total, int TotalPages, string Snapshot);
