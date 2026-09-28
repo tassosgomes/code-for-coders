@@ -34,6 +34,11 @@ services:
       StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
       StudentAccount__PasswordResetBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/redefinir-senha
       StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
+      StaffAccount__PasswordResetBaseUrl: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}/admin/redefinir-senha
+      StaffAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
+      StaffInvitation__AcceptanceBaseUrl: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}/admin/convite
+      StaffInvitation__LifetimeHours: ${STAFF_INVITATION_VALIDITY_HOURS:-168}
+      RabbitMq__AuditExchange: audit.events
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set in Coolify}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set in Coolify}
       ServiceAssertions__Issuer: bff-student
@@ -181,6 +186,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      FinanceAreaTokens__Issuer: identity
+      FinanceAreaTokens__Audience: commerce
+      FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -218,6 +226,7 @@ services:
       Email__SmtpEnableSsl: "false"
       Email__ValidityHoursByPurpose__confirmacao-de-conta: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
       Email__ValidityHoursByPurpose__recuperacao-de-senha: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
+      Email__ValidityHoursByPurpose__convite-interno: ${STAFF_INVITATION_VALIDITY_HOURS:-168}
       Notification__Namespace: ${NOTIFICATION_NAMESPACE:-default}
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
@@ -284,6 +293,7 @@ services:
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
       Media__BaseAddress: http://media:8080/
       Audit__BaseAddress: http://audit:8080/
+      Commerce__BaseAddress: http://commerce:8080/
     depends_on:
       learning:
         condition: service_healthy
