@@ -68,9 +68,9 @@ describe('audit complement recorded', () => {
     );
     renderDetail();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
     await user.type(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' }), explanation);
-    await user.click(screen.getByRole('button', { name: 'Confirmar complemento' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
     expect(await screen.findByText('Aguardando registro…')).toBeInTheDocument();
 
     expect(await screen.findByText('Complemento registrado', {}, { timeout: 6_000 })).toHaveAttribute('role', 'status');

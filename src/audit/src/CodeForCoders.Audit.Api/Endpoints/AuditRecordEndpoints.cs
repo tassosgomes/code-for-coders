@@ -171,7 +171,8 @@ public static class AuditRecordEndpoints
                 ? null
                 : new AuditRecordIdentityReferenceV1(record.Target.Type, record.Target.Id),
             record.Compliant,
-            record.HasComplements);
+            record.HasComplements,
+            record.Role);
 
     private static AuditRecordDetailV1 ToDetailApiModel(AuditRecordDetailOutput record)
         => new(

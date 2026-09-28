@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Auditoria — consulta interna da trilha
-  version: 1.1.0
+  version: 1.2.0
   description: >-
     Recorte de CAP-030 para bff-admin → audit. Audit valida localmente o JWT RS256
     emitido por Identity para audience audit, exige papel administrador e aplica tenantId
@@ -61,6 +61,7 @@ paths:
                         target: { type: conta-interna, id: 550e8400-e29b-41d4-a716-446655440000 }
                         compliant: true
                         hasComplements: false
+                        role: professor
                     pagination: { page: 1, size: 10, total: 1, totalPages: 1, snapshot: 'snap_7mQ2kV4b' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
@@ -211,6 +212,9 @@ components:
         target: { oneOf: [{ $ref: '#/components/schemas/IdentityReference' }, { type: 'null' }] }
         compliant: { type: boolean }
         hasComplements: { type: boolean }
+        role:
+          type: [string, 'null']
+          description: Papel atribuído ou revogado no ato; null para outros tipos ou quando ausente.
     Pagination:
       type: object
       additionalProperties: false

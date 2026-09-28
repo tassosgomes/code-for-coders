@@ -2,18 +2,18 @@
 tsg_artifact: contract
 product: code-4-coders
 capability: CAP-030
-version: 1.1
+version: 1.2
 status: approved
-updated: 2026-09-27
+updated: 2026-09-28
 sources: tasks/prd-consulta-trilha-auditoria/prd.md@1.0, context/architecture-baseline.md@1.2, domains/auditoria-e-conformidade/domain.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
 
 # Contratos de integração — consulta e complemento da trilha
 
 > PRD: [prd.md](prd.md) v1.0, aprovado em 2026-09-27.  
-> Revisão: 2026-09-27. **Estado do conjunto: Aprovado para implementação.**
+> Revisão: 2026-09-28. **Estado do conjunto: Aprovado para implementação.**
 
-Este conjunto revisa o acordo aprovado em 2026-09-27 para o segundo PRD de `CAP-030`. O responsável autorizou substituir as buscas GET por POST antes da implementação, para manter referências de pessoas fora de URLs. Os contratos do primeiro PRD e de `CAP-002` permanecem intactos.
+Este conjunto revisa o acordo aprovado em 2026-09-27 para o segundo PRD de `CAP-030`. O responsável autorizou substituir as buscas GET por POST antes da implementação, para manter referências de pessoas fora de URLs. Em 2026-09-28, o resumo passou a expor `role` nullable para que a lista mostre o papel junto ao tipo do ato, conforme o Figma aprovado. O campo deriva somente do atributo `papel` de atos de concessão ou revogação; não expõe o complemento completo. Os contratos do primeiro PRD e de `CAP-002` permanecem intactos.
 
 ## Seleção e escopo
 
@@ -25,8 +25,8 @@ Este conjunto revisa o acordo aprovado em 2026-09-27 para o segundo PRD de `CAP-
 
 | Documento | Modalidade e versão do padrão | Versão do contrato | Fronteira coberta | Estado |
 |---|---|---|---|---|
-| [api-contract.yaml](api-contract.yaml) e [api-contract.md](api-contract.md) | OpenAPI 3.1.0 | 1.1.0 | Recorte `admin-spa` → `bff-admin` deste PRD | Validado, Aprovado para implementação |
-| [internal-api-contract-audit.yaml](internal-api-contract-audit.yaml) e [internal-api-contract-audit.md](internal-api-contract-audit.md) | OpenAPI 3.1.0 | 1.1.0 | Recorte `bff-admin` → `audit` para leitura | Validado, Aprovado para implementação |
+| [api-contract.yaml](api-contract.yaml) e [api-contract.md](api-contract.md) | OpenAPI 3.1.0 | 1.2.0 | Recorte `admin-spa` → `bff-admin` deste PRD | Validado, Aprovado para implementação |
+| [internal-api-contract-audit.yaml](internal-api-contract-audit.yaml) e [internal-api-contract-audit.md](internal-api-contract-audit.md) | OpenAPI 3.1.0 | 1.2.0 | Recorte `bff-admin` → `audit` para leitura | Validado, Aprovado para implementação |
 | [internal-api-contract-identity.yaml](internal-api-contract-identity.yaml) e [internal-api-contract-identity.md](internal-api-contract-identity.md) | OpenAPI 3.1.0 | 1.0.0 | Recorte `bff-admin` → `identity` para resolver referências | Validado, Aprovado para implementação |
 | [asyncapi-contract.yaml](asyncapi-contract.yaml) | AsyncAPI 3.0.0 | 1.1.0 | Recorte aditivo da aplicação `audit`: novo canal de complemento | Validado, Aprovado para implementação |
 
@@ -68,19 +68,20 @@ Decisões novas aprovadas pelo responsável pelo PRD em 2026-09-27:
 - O contrato `auditoria.ato-praticado.v1` 1.0.1 continua sem alteração. O novo canal é aditivo para `audit`, mas a compatibilidade operacional exige **implantar o consumidor antes de `bff-admin` publicar**. O contrato deste PRD descreve só o recorte novo; não declara a interface completa de `audit`.
 - As operações HTTP públicas e internas são novas. As buscas GET do acordo 1.0.0 foram substituídas por POST antes da implementação, por autorização do responsável em 2026-09-27. `authorId` e `targetId` ficam no corpo, e a busca pública exige CSRF por ser POST. Não existe consumidor implantado dessas operações para migrar; compatibilidade com consumidores externos e com produção **não foi verificada**.
 - O contrato interno de Identity em `CAP-002` não é editado. A nova operação requer escopo próprio e leitura de contas/convites no tenant; Identity deve aceitar o novo escopo apenas para `bff-admin`.
+- A revisão 1.2.0 acrescenta somente o campo opcional e nullable `role` ao resumo HTTP público e interno. O serviço `audit` lê o valor `papel` já armazenado no original e devolve apenas esse valor para concessões/revogações. A mudança é aditiva para consumidores existentes; não há migração de persistência nem mudança na mensagem de auditoria.
 - A mensagem usa `confirmationId`, `tenantId`, `originalRecordId`, `confirmedAt`, `author` por referência e `explanation`. Não reutiliza `AtoPraticado`: a semântica e a deduplicação diferem. Falta de identidade estrutural ou original válido leva à fila de erro, sem criar complemento.
 
 ## Validação e verificação
 
 | Documento | Comando e ferramenta | Padrão/ruleset | Resultado |
 |---|---|---|---|
-| [api-contract.yaml](api-contract.yaml) | `npx --yes @stoplight/spectral-cli@6.15.0 lint tasks/prd-consulta-trilha-auditoria/api-contract.yaml --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | OpenAPI 3.1.0; ruleset local | Revisão 1.1.0 válida, 0 erros |
-| [internal-api-contract-audit.yaml](internal-api-contract-audit.yaml) | `npx --yes @stoplight/spectral-cli@6.15.0 lint tasks/prd-consulta-trilha-auditoria/internal-api-contract-audit.yaml --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | OpenAPI 3.1.0; ruleset local | Revisão 1.1.0 válida, 0 erros |
+| [api-contract.yaml](api-contract.yaml) | `npx --yes @stoplight/spectral-cli@6.15.0 lint tasks/prd-consulta-trilha-auditoria/api-contract.yaml --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | OpenAPI 3.1.0; ruleset local | Revisão 1.2.0 válida, 0 erros |
+| [internal-api-contract-audit.yaml](internal-api-contract-audit.yaml) | `npx --yes @stoplight/spectral-cli@6.15.0 lint tasks/prd-consulta-trilha-auditoria/internal-api-contract-audit.yaml --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | OpenAPI 3.1.0; ruleset local | Revisão 1.2.0 válida, 0 erros |
 | [internal-api-contract-identity.yaml](internal-api-contract-identity.yaml) | `npx --yes @stoplight/spectral-cli@6.15.0 lint tasks/prd-consulta-trilha-auditoria/internal-api-contract-identity.yaml --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | OpenAPI 3.1.0; ruleset local | Válido, 0 erros e 0 avisos |
 | [asyncapi-contract.yaml](asyncapi-contract.yaml) | `npx --yes @asyncapi/cli@6.1.0 validate tasks/prd-consulta-trilha-auditoria/asyncapi-contract.yaml` | AsyncAPI 3.0.0; parser da CLI | Válido, 0 erros e 0 avisos; 1 informação sugere 3.1.0. Mantida 3.0.0 da skill. Avisos `node-config` são do ambiente. |
 | Exemplo `ComplementoConfirmado` | Ajv 8 + ajv-formats, schema extraído do YAML com PyYAML 6.0.3 | JSON Schema de `ComplementoConfirmadoPayload` | 1 exemplo válido; 0 erros |
 
-Gates de código existente afetado conceitualmente: `dotnet build --no-restore` das soluções `audit`, `bff-admin` e `identity` passou sem erros/avisos; execução direta dos testes unitários MTP passou (16, 2 e 15 testes); `admin-spa` passou em `npm run lint`, `npm run build` e `npm test` (47 testes). O build do SPA emitiu avisos de bundle grande e script de configuração não empacotado, já existentes; não há alteração de código nesta entrega. Esses testes cobrem o código atual, não as novas interfaces propostas.
+Gates executados nesta revisão: `admin-spa` passou em `npm run lint`, `npm run build` e `npm test` (20 arquivos, 79 testes); `audit` passou em `dotnet build` e nos testes de integração MTP (67 testes); `bff-admin` passou em `dotnet build` e nos testes end-to-end MTP (75 testes). O build do SPA mantém os avisos existentes sobre o script `runtime-env.js` e o tamanho do bundle.
 
 Validade estrutural não comprova autorização, estabilidade da paginação, entrega, idempotência ou imutabilidade. A implementação deve verificar: dois tenants e papel revogado na próxima ação; extremos do período; páginas com inserções concorrentes; ato sem autor/motivo e convite aceito sem motivo; identidade não resolvida; confirmação repetida com mesma chave e com corpo divergente; mensagem repetida e divergente; original inexistente/de outro tenant; falha do outbox, do consumidor e recuperação pela fila de erro; original byte a byte igual antes/depois; ausência de motivo/explicação em telemetria.
 

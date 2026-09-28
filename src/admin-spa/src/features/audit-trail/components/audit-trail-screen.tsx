@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { CircleCheck, RefreshCw, TriangleAlert } from 'lucide-react';
+import { ChevronRight, CircleCheck, MessageSquarePlus, TriangleAlert, X } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate, useNavigationType } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -30,6 +30,7 @@ export const AuditTrailScreen = () => {
   const [personFilter, setPersonFilter] = useState<AuditTrailPersonFilter | null>(initialPersonFilter);
   const [draft, setDraft] = useState<AuditTrailDraftFilters>(restoredList?.draft ?? initialDraft);
   const [compliance, setCompliance] = useState<AuditTrailComplianceFilter>(restoredList?.compliance ?? 'all');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [search, setSearch] = useState<AuditRecordSearchInput>(
     restoredList?.search ?? createPersonSearch(initialPersonFilter),
   );
@@ -37,11 +38,54 @@ export const AuditTrailScreen = () => {
   const [snapshotExpired, setSnapshotExpired] = useState(false);
   // A new generation forces a fresh first page (and a new snapshot) even when the filters are unchanged.
   const [generation, setGeneration] = useState(restoredList?.generation ?? 0);
+  const mobileFilterTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileFilterDialogRef = useRef<HTMLElement>(null);
   const queryClient = useQueryClient();
   const query = useAuditRecordSearch(search, generation);
   const restartNotice = navigationType === 'POP'
     && Boolean(locationState?.personFilter || locationState?.restoreAuditList?.personFilter);
   const returnToDetailId = navigationType === 'POP' ? locationState?.returnToAuditDetail : undefined;
+
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const dialog = mobileFilterDialogRef.current;
+    const trigger = mobileFilterTriggerRef.current;
+    dialog?.querySelector<HTMLButtonElement>('.audit-filter-sheet-close')?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setMobileFiltersOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab' || !dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])',
+      ));
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus();
+    };
+  }, [mobileFiltersOpen]);
 
   useEffect(() => {
     const snapshot = search.snapshot;
@@ -65,7 +109,7 @@ export const AuditTrailScreen = () => {
     const toDate = draft.to ? new Date(draft.to) : null;
     if (fromDate && toDate && fromDate.getTime() > toDate.getTime()) {
       setPeriodError('A data final vem antes da inicial.');
-      return;
+      return false;
     }
 
     setPeriodError(null);
@@ -80,6 +124,12 @@ export const AuditTrailScreen = () => {
       ...(personFilter?.kind === 'author' ? { authorId: personFilter.id } : {}),
       ...(personFilter?.kind === 'target' ? { targetId: personFilter.id } : {}),
     });
+    return true;
+  };
+
+  const updateDraft = (field: keyof AuditTrailDraftFilters, value: string) => {
+    setPeriodError(null);
+    setDraft((current) => ({ ...current, [field]: value }));
   };
 
   const changeCompliance = (value: AuditTrailComplianceFilter) => {
@@ -122,8 +172,14 @@ export const AuditTrailScreen = () => {
 
   const page = query.data;
   const hasFilters = Boolean(search.from || search.to || search.type || search.authorId || search.targetId || search.compliant !== undefined);
+  const activeFilterCount = [search.from, search.to, search.type, search.authorId || search.targetId]
+    .filter(Boolean).length;
   const listNavigation: AuditTrailListNavigation = { search, draft, compliance, generation, personFilter };
+  const openRecord = (recordId: string) => navigate(paths.auditRecordDetail.getHref(recordId), {
+    state: { returnToAuditList: listNavigation },
+  });
   const total = page?.pagination.total ?? 0;
+  const paginationItems = page ? getPaginationItems(page.pagination.page, page.pagination.totalPages) : [];
   const fixedAt = query.dataUpdatedAt
     ? new Date(query.dataUpdatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     : null;
@@ -141,47 +197,33 @@ export const AuditTrailScreen = () => {
       <div>
         <p className="eyebrow">Auditoria</p>
         <h1>Trilha de atos administrativos</h1>
-        <p className="page-subtitle">Quem fez o quê, com quem e quando. Nada aqui pode ser alterado.</p>
+        <p className="page-subtitle">
+          Quem fez o quê, com quem e quando. <span className="audit-subtitle-desktop">Nada aqui pode ser alterado.</span>
+        </p>
       </div>
     </div>
 
+    <div className="audit-mobile-toolbar">
+      <button
+        aria-controls="audit-mobile-filter-sheet"
+        aria-expanded={mobileFiltersOpen}
+        className="audit-mobile-filter-trigger outline-button"
+        onClick={() => setMobileFiltersOpen(true)}
+        ref={mobileFilterTriggerRef}
+        type="button"
+      >Filtros{activeFilterCount ? ` (${activeFilterCount})` : ''}</button>
+      <span aria-live="polite">{total} {total === 1 ? 'registro' : 'registros'}</span>
+    </div>
+
     <form className="audit-filter-card" onSubmit={(event) => { event.preventDefault(); applySearch(); }}>
-      <div className="audit-filter-grid">
-        <div className="audit-field">
-          <label htmlFor="audit-from">De</label>
-          <input
-            id="audit-from"
-            type="datetime-local"
-            value={draft.from}
-            onChange={(event) => { setPeriodError(null); setDraft((current) => ({ ...current, from: event.target.value })); }}
-          />
-        </div>
-        <div className="audit-field">
-          <label htmlFor="audit-to">Até</label>
-          <input
-            id="audit-to"
-            type="datetime-local"
-            value={draft.to}
-            onChange={(event) => { setPeriodError(null); setDraft((current) => ({ ...current, to: event.target.value })); }}
-          />
-        </div>
-        <div className="audit-field">
-          <label htmlFor="audit-type">Tipo</label>
-          <select
-            id="audit-type"
-            value={draft.type}
-            onChange={(event) => { setPeriodError(null); setDraft((current) => ({ ...current, type: event.target.value })); }}
-          >
-            <option value="">Todos</option>
-            {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
+      <div className="audit-filter-controls">
+        <AuditFilterFields draft={draft} idPrefix="audit-desktop" onChange={updateDraft} />
+        <div className="audit-filter-actions">
+          <button aria-label="Limpar filtros" className="secondary-button" disabled={query.isFetching} onClick={clearFilters} type="button">Limpar</button>
+          <button className="primary-button" disabled={query.isFetching || Boolean(periodError)} type="submit">Buscar</button>
         </div>
       </div>
       {periodError ? <p className="audit-period-error" role="alert">{periodError}</p> : null}
-      <div className="audit-filter-actions">
-        <button className="secondary-button" disabled={query.isFetching} onClick={clearFilters} type="button">Limpar filtros</button>
-        <button className="primary-button" disabled={query.isFetching || Boolean(periodError)} type="submit">Buscar</button>
-      </div>
     </form>
 
     {restartNotice ? <p className="audit-restarted-alert" role="status">
@@ -189,13 +231,13 @@ export const AuditTrailScreen = () => {
       {returnToDetailId ? <Link to={paths.auditRecordDetail.getHref(returnToDetailId)}>Voltar ao registro</Link> : null}
     </p> : null}
 
-    {personFilter ? <div className="audit-filter-chip">
+    {personFilter ? <div className="audit-filter-chip audit-person-filter-chip">
       <span>{personFilter.kind === 'author' ? 'Autor' : 'Alvo'}: {personFilter.label}</span>
       <button
         aria-label={`Remover filtro de ${personFilter.kind === 'author' ? 'autor' : 'alvo'}`}
         onClick={removePersonFilter}
         type="button"
-      >×</button>
+      ><X aria-hidden="true" size={14} /></button>
     </div> : null}
 
     <div aria-label="Filtrar por conformidade" className="audit-tabs" role="tablist">
@@ -215,9 +257,12 @@ export const AuditTrailScreen = () => {
 
     {snapshotExpired ? <p className="audit-expired-alert" role="status">A busca expirou e foi refeita. Você voltou à primeira página.</p> : null}
     {page ? <div aria-live="polite" className="audit-results-summary">
-      <span>{total} {total === 1 ? 'registro' : 'registros'}{fixedAt ? ` · resultado fixado às ${fixedAt}` : ''}</span>
+      <span>
+        {total} {total === 1 ? 'registro' : 'registros'}{fixedAt ? ` · resultado fixado às ${fixedAt}` : ''}
+        <span className="audit-results-note"> · atos novos entram ao buscar de novo</span>
+      </span>
       <button aria-label="Atualizar resultados" className="audit-refresh-button" disabled={query.isFetching} onClick={updateSearch} type="button">
-        <RefreshCw aria-hidden="true" size={16} /> Atualizar
+        Atualizar
       </button>
     </div> : null}
 
@@ -241,7 +286,7 @@ export const AuditTrailScreen = () => {
     </section> : null}
 
     {page && page.data.length > 0 ? <>
-      <div className="audit-table-wrap">
+      <div className="audit-table-wrap audit-desktop-table-wrap">
         <table className="audit-table">
           <caption>Registros da trilha de auditoria</caption>
           <thead><tr>
@@ -250,31 +295,89 @@ export const AuditTrailScreen = () => {
             <th scope="col">Autor</th>
             <th scope="col">Alvo</th>
             <th scope="col">Situação</th>
+            <th scope="col"><span className="visually-hidden">Abrir registro</span></th>
           </tr></thead>
           <tbody>{page.data.map((record) => <AuditRecordRow
             key={record.id}
-            onOpen={() => navigate(paths.auditRecordDetail.getHref(record.id), {
-              state: { returnToAuditList: listNavigation },
-            })}
+            onOpen={() => openRecord(record.id)}
             record={record}
           />)}</tbody>
         </table>
       </div>
+      <ul aria-label="Registros da trilha de auditoria" className="audit-mobile-cards">
+        {page.data.map((record) => <li key={record.id}>
+          <AuditRecordCard onOpen={() => openRecord(record.id)} record={record} />
+        </li>)}
+      </ul>
       <nav aria-label="Paginação da trilha" className="audit-pagination">
+        <span className="audit-pagination-summary">{total} {total === 1 ? 'registro' : 'registros'} · página {page.pagination.page} de {Math.max(page.pagination.totalPages, 1)}</span>
+        <div className="audit-pagination-pages">
         <button
           aria-label="Página anterior"
           disabled={query.isFetching || page.pagination.page <= 1}
           onClick={() => setSearch((current) => ({ ...current, _page: page.pagination.page - 1, snapshot: page.pagination.snapshot }))}
           type="button"
-        >Anterior</button>
-        <span aria-live="polite">Página {page.pagination.page} de {Math.max(page.pagination.totalPages, 1)}</span>
+        >‹</button>
+        {paginationItems.map((item, index) => item === 'ellipsis'
+          ? <span aria-hidden="true" className="audit-pagination-ellipsis" key={`ellipsis-${index}`}>…</span>
+          : <button
+            aria-current={page.pagination.page === item ? 'page' : undefined}
+            aria-label={`Página ${item}`}
+            disabled={query.isFetching}
+            key={item}
+            onClick={() => setSearch((current) => ({ ...current, _page: item, snapshot: page.pagination.snapshot }))}
+            type="button"
+          >{item}</button>)}
         <button
           aria-label="Próxima página"
           disabled={query.isFetching || page.pagination.page >= page.pagination.totalPages}
           onClick={() => setSearch((current) => ({ ...current, _page: page.pagination.page + 1, snapshot: page.pagination.snapshot }))}
           type="button"
-        >Próxima</button>
+        >›</button>
+        </div>
+        <span className="audit-page-size">(20 por página)</span>
       </nav>
+    </> : null}
+
+    {mobileFiltersOpen ? <>
+      <div aria-hidden="true" className="audit-filter-sheet-backdrop" onClick={() => setMobileFiltersOpen(false)} />
+      <section
+        aria-labelledby="audit-mobile-filter-title"
+        aria-modal="true"
+        className="audit-filter-sheet"
+        id="audit-mobile-filter-sheet"
+        ref={mobileFilterDialogRef}
+        role="dialog"
+      >
+        <div className="audit-filter-sheet-header">
+          <h2 id="audit-mobile-filter-title">Filtros</h2>
+          <button aria-label="Fechar filtros" className="audit-filter-sheet-close" onClick={() => setMobileFiltersOpen(false)} type="button">
+            <X aria-hidden="true" size={20} />
+          </button>
+        </div>
+        <form className="audit-filter-sheet-form" onSubmit={(event) => {
+          event.preventDefault();
+          if (applySearch()) setMobileFiltersOpen(false);
+        }}>
+          <AuditFilterFields draft={draft} idPrefix="audit-mobile" onChange={updateDraft} />
+          {personFilter ? <div className="audit-filter-chip audit-sheet-person-chip">
+            <span>{personFilter.kind === 'author' ? 'Autor' : 'Alvo'}: {personFilter.label}</span>
+            <button
+              aria-label={`Remover filtro de ${personFilter.kind === 'author' ? 'autor' : 'alvo'}`}
+              onClick={removePersonFilter}
+              type="button"
+            ><X aria-hidden="true" size={14} /></button>
+          </div> : null}
+          {periodError ? <p className="audit-period-error" role="alert">{periodError}</p> : null}
+          <div className="audit-filter-sheet-actions">
+            <button className="outline-button" disabled={query.isFetching} onClick={() => {
+              clearFilters();
+              setMobileFiltersOpen(false);
+            }} type="button">Limpar</button>
+            <button className="primary-button" disabled={query.isFetching || Boolean(periodError)} type="submit">Aplicar</button>
+          </div>
+        </form>
+      </section>
     </> : null}
   </main>;
 };
@@ -294,7 +397,10 @@ const AuditRecordRow = ({ record, onOpen }: { record: AuditRecordSummary; onOpen
   <td>{record.practicedAt
     ? <time dateTime={record.practicedAt}>{new Date(record.practicedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</time>
     : <span className="audit-missing">— ausente</span>}</td>
-  <td>{record.type ? (typeOptions.find((option) => option.value === record.type)?.label ?? record.type) : 'Tipo não disponível'}</td>
+  <td><div className="audit-type-cell">
+    <span>{getTypeLabel(record.type)}</span>
+    {record.role ? <span className="role-badge">{formatRoleLabel(record.role)}</span> : null}
+  </div></td>
   <td><IdentityReference reference={record.author} /></td>
   <td><IdentityReference reference={record.target} /></td>
   <td><div className="audit-status-cell">
@@ -302,9 +408,96 @@ const AuditRecordRow = ({ record, onOpen }: { record: AuditRecordSummary; onOpen
       {record.compliant ? <CircleCheck aria-hidden="true" size={15} /> : <TriangleAlert aria-hidden="true" size={15} />}
       {record.compliant ? 'Conforme' : 'Não conforme'}
     </span>
-    {record.hasComplements ? <span className="audit-complement-badge">Complementado</span> : null}
+    {record.hasComplements ? <span className="audit-complement-indicator"><MessageSquarePlus aria-hidden="true" size={13} />Complementado</span> : null}
   </div></td>
+  <td className="audit-row-action"><ChevronRight aria-hidden="true" size={16} /></td>
 </tr>;
+
+const AuditRecordCard = ({ record, onOpen }: { record: AuditRecordSummary; onOpen: () => void }) => <button
+  aria-label={`Abrir registro ${getTypeLabel(record.type)}`}
+  className="audit-mobile-card"
+  onClick={onOpen}
+  type="button"
+>
+  <span className="audit-mobile-card-heading">
+    <span>{getTypeLabel(record.type)}</span>
+    <span className={`audit-compliance-badge ${record.compliant ? 'is-compliant' : 'is-non-compliant'}`}>
+      {record.compliant ? <CircleCheck aria-hidden="true" size={14} /> : <TriangleAlert aria-hidden="true" size={14} />}
+      {record.compliant ? 'Conforme' : 'Não conforme'}
+    </span>
+  </span>
+  {record.role || record.hasComplements ? <span className="audit-mobile-card-metadata">
+    {record.role ? <span className="role-badge">{formatRoleLabel(record.role)}</span> : null}
+    {record.hasComplements ? <span className="audit-complement-indicator"><MessageSquarePlus aria-hidden="true" size={13} />Complementado</span> : null}
+  </span> : null}
+  <span className="audit-mobile-card-identities">
+    <span>{formatIdentityReference(record.author)}</span>
+    <span aria-hidden="true">→</span>
+    <span>{formatIdentityReference(record.target)}</span>
+  </span>
+  <span className="audit-mobile-card-footer">
+    <span>{record.practicedAt
+      ? <time dateTime={record.practicedAt}>{new Date(record.practicedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</time>
+      : <span className="audit-missing">— ausente</span>}</span>
+    <ChevronRight aria-hidden="true" size={16} />
+  </span>
+</button>;
+
+type AuditFilterFieldsProps = {
+  draft: AuditTrailDraftFilters;
+  idPrefix: string;
+  onChange: (field: keyof AuditTrailDraftFilters, value: string) => void;
+};
+
+const AuditFilterFields = ({ draft, idPrefix, onChange }: AuditFilterFieldsProps) => {
+  const fromId = `${idPrefix}-from`;
+  const toId = `${idPrefix}-to`;
+  const typeId = `${idPrefix}-type`;
+
+  return <div className="audit-filter-grid">
+    <div className="audit-field">
+      <label htmlFor={fromId}>De</label>
+      <input id={fromId} type="datetime-local" value={draft.from} onChange={(event) => onChange('from', event.currentTarget.value)} />
+    </div>
+    <div className="audit-field">
+      <label htmlFor={toId}>Até</label>
+      <input id={toId} type="datetime-local" value={draft.to} onChange={(event) => onChange('to', event.currentTarget.value)} />
+    </div>
+    <div className="audit-field">
+      <label htmlFor={typeId}>Tipo</label>
+      <select id={typeId} value={draft.type} onChange={(event) => onChange('type', event.currentTarget.value)}>
+        <option value="">Todos</option>
+        {typeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </div>
+  </div>;
+};
+
+const getTypeLabel = (type: string | null) => type
+  ? typeOptions.find((option) => option.value === type)?.label ?? type
+  : 'Tipo não disponível';
+
+const formatIdentityReference = (reference: AuditRecordSummary['author']) => {
+  if (!reference) return '— ausente';
+  if (reference.label) return reference.label;
+  return `Nome não disponível · ${shortReference(reference.id)}`;
+};
+
+const formatRoleLabel = (role: string) => roleLabels[role] ?? role;
+
+const roleLabels: Record<string, string> = {
+  administrador: 'Administrador',
+  financeiro: 'Financeiro',
+  professor: 'Professor',
+  suporte: 'Suporte',
+};
+
+const getPaginationItems = (currentPage: number, totalPages: number): Array<number | 'ellipsis'> => {
+  if (totalPages <= 4) return Array.from({ length: totalPages }, (_, index) => index + 1);
+  if (currentPage <= 3) return [1, 2, 3, 'ellipsis', totalPages];
+  if (currentPage >= totalPages - 2) return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+};
 
 const IdentityReference = ({ reference }: { reference: AuditRecordSummary['author'] }) => {
   if (!reference) return <span className="audit-missing">— ausente</span>;

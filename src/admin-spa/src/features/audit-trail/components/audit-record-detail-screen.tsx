@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ArrowLeft, Copy, CircleCheck, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, CircleCheck, Copy, Info, LoaderCircle, Plus, TriangleAlert } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate, useNavigationType } from 'react-router';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 
@@ -205,6 +205,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
     </div>
 
     {!query.data.compliant && query.data.nonComplianceReasons.length > 0 ? <section className="audit-detail-alert" role="alert">
+      <TriangleAlert aria-hidden="true" size={18} />
       <strong>A origem enviou este ato incompleto</strong>
       <ul>{query.data.nonComplianceReasons.map((reason) => <li key={reason}>{nonComplianceLabels[reason] ?? reason}</li>)}</ul>
       <p>Complementos não tornam o registro conforme.</p>
@@ -255,40 +256,34 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
       </dl>
     </section>
 
-    {query.data.complements.length > 0 || pendingConfirmation ? <section aria-labelledby="audit-complements-heading" className="audit-complements-summary">
-      <h2 id="audit-complements-heading">Complementos <span>{query.data.complements.length}</span></h2>
-      {query.data.complements.length > 0 ? <p>Há complementos registrados para este ato.</p> : null}
+    <section aria-labelledby="audit-complements-heading" className="audit-complements-summary">
+      <h2 id="audit-complements-heading">
+        Complementos{query.data.complements.length > 0 ? <span> {query.data.complements.length}</span> : null}
+      </h2>
+      {query.data.complements.length === 0 && !pendingConfirmation
+        ? <p>Nenhum complemento. Complementos acrescentam o que foi apurado depois, sem mudar o registro acima.</p>
+        : null}
       {confirmationRecorded ? <p className="audit-complement-recorded-toast" role="status">Complemento registrado</p> : null}
       <ol aria-live="polite" className="audit-complement-timeline">
         {query.data.complements.map((complement) => <li className="audit-complement-entry" key={complement.id}>
-          <p className="audit-complement-entry-marker">ACRESCENTADO DEPOIS</p>
-          <dl className="audit-detail-fields">
-            <DetailField label="Autor">
-              <IdentityReference recordId={recordId} reference={complement.author} filterKind="author" />
-            </DetailField>
-            <DetailField label="Momento">
+          <span aria-hidden="true" className="audit-complement-entry-rail" />
+          <div className="audit-complement-entry-body">
+            <p className="audit-complement-entry-marker">ACRESCENTADO DEPOIS</p>
+            <div className="audit-complement-entry-header">
+              {complement.author?.label
+                ? <span>{complement.author.label}</span>
+                : <span>Nome não disponível</span>}
               <time dateTime={complement.createdAt}>{formatMoment(complement.createdAt)}</time>
-            </DetailField>
-            <DetailField label="Explicação">
-              <p className="audit-complement-explanation">{complement.explanation}</p>
-            </DetailField>
-          </dl>
+            </div>
+            <p className="audit-complement-explanation">{complement.explanation}</p>
+          </div>
         </li>)}
-        {pendingConfirmation ? <li className="audit-complement-pending-entry">Aguardando registro…</li> : null}
+        {pendingConfirmation ? <li className="audit-complement-pending-entry">
+          <LoaderCircle aria-hidden="true" className="audit-spin" size={16} />Aguardando registro…
+        </li> : null}
       </ol>
-    </section> : null}
-
-    <section aria-labelledby="audit-complement-confirmation-heading" className="audit-complement-confirmation">
-      <h2 id="audit-complement-confirmation-heading">Complementar a apuração</h2>
-      <button
-        aria-disabled={Boolean(pendingConfirmation)}
-        className="outline-button"
-        onClick={() => { if (!pendingConfirmation) setConfirmationFormOpen(true); }}
-        ref={confirmationButtonRef}
-        type="button"
-      >+ Acrescentar complemento</button>
-
-      {confirmationFormOpen ? <form className="audit-complement-form" noValidate onSubmit={onConfirmationSubmit}>
+      {confirmationFormOpen ? <form aria-labelledby="audit-complement-confirmation-heading" className="audit-complement-form" noValidate onSubmit={onConfirmationSubmit}>
+        <h3 id="audit-complement-confirmation-heading">Acrescentar complemento</h3>
         <ReasonField
           error={validationMessage}
           value={explanation}
@@ -302,19 +297,30 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
             setConfirmationError(null);
           }}
         />
-        <div className="audit-complement-irreversible" role="note">Complementos não podem ser editados nem excluídos. O registro original não muda.</div>
+        <div className="audit-complement-irreversible" role="note">
+          <Info aria-hidden="true" size={16} />
+          <span>Complementos não podem ser editados nem excluídos. O registro original não muda.</span>
+        </div>
         {confirmationError ? <p role="alert" className="audit-complement-error">{confirmationError}</p> : null}
         {retryableError ? <div className="audit-complement-retry-alert" role="alert">
           <p>Não conseguimos confirmar agora. Seu texto foi mantido.</p>
           <button className="outline-button" disabled={confirmationMutation.isPending} onClick={() => void submitConfirmation()} type="button">Tentar de novo</button>
         </div> : null}
         <div className="audit-complement-form-actions">
-          <button className="primary-button" disabled={confirmationMutation.isPending} type="submit">
-            {confirmationMutation.isPending ? 'Enviando…' : 'Confirmar complemento'}
-          </button>
           <button className="outline-button" disabled={confirmationMutation.isPending} onClick={closeConfirmationForm} type="button">Cancelar</button>
+          <button className="primary-button" disabled={confirmationMutation.isPending} type="submit">
+            {confirmationMutation.isPending ? 'Enviando…' : 'Confirmar'}
+          </button>
         </div>
       </form> : null}
+
+      {!confirmationFormOpen ? <button
+        className="outline-button audit-complement-add-button"
+        disabled={Boolean(pendingConfirmation)}
+        onClick={() => setConfirmationFormOpen(true)}
+        ref={confirmationButtonRef}
+        type="button"
+      ><Plus aria-hidden="true" size={16} />Acrescentar complemento</button> : null}
 
       {pendingConfirmation && confirmationTimedOut ? <div className="audit-confirmation-pending-alert" role="alert">
         <p>A confirmação foi aceita e ainda está sendo registrada.</p>
@@ -356,7 +362,7 @@ const DetailField = ({ label, children }: DetailFieldProps) => <div className="a
   <dd>{children}</dd>
 </div>;
 
-const MissingValue = () => <span className="audit-missing">— ausente</span>;
+const MissingValue = () => <span className="audit-missing"><TriangleAlert aria-hidden="true" size={14} />— ausente</span>;
 
 type IdentityReferenceProps = {
   recordId: string;
@@ -402,6 +408,7 @@ const RoleBadge = ({ role }: { role: string }) => <span className="role-badge">{
 
 const roleLabels: Record<string, string> = {
   administrador: 'Administrador',
+  financeiro: 'Financeiro',
   professor: 'Professor',
   suporte: 'Suporte',
 };

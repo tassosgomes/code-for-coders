@@ -1,6 +1,7 @@
 # API do backoffice — consulta da trilha
 
-> Derivado de [api-contract.yaml](api-contract.yaml) 1.1.0, OpenAPI 3.1.0, em 2026-09-27.  
+> Derivado de [api-contract.yaml](api-contract.yaml) 1.2.0, OpenAPI 3.1.0, em 2026-09-28.
+>
 > PRD: [prd.md](prd.md) v1.0. Estado: **Aprovado para implementação em 2026-09-27**.
 
 O `admin-spa` chama somente o `bff-admin` em `/api/v1`. O cookie opaco de sessão não expõe JWT ao navegador. Em cada ação, o BFF revalida a sessão em Identity e exige papel `administrador`. `audit` repete a decisão para o recurso e tenant na interface interna. Buscas POST e confirmação exigem `X-CSRF-Token`; a confirmação exige também `Idempotency-Key`.
@@ -13,7 +14,7 @@ O `admin-spa` chama somente o `bff-admin` em `/api/v1`. O cookie opaco de sessã
 
 ## Consulta
 
-`listAuditRecords` recebe no corpo JSON `from` e `to` (instantes inclusivos), `type`, `authorId`, `targetId`, `compliant`, `_page` e `_size` (padrão 10, máximo 50). Nenhum filtro de pessoa aparece na URL. A ordenação é `practicedAt` e ID, ambos decrescentes; se o momento do ato está ausente, `receivedAt` serve apenas para posicionar o registro e `practicedAt` continua `null`. O resultado inclui apenas originais. A primeira página fixa uma visão dos registros elegíveis e devolve `pagination.snapshot`; as demais páginas mandam esse token no corpo com os mesmos filtros e tamanho. O token é opaco. Estado vazio devolve `data: []`.
+`listAuditRecords` recebe no corpo JSON `from` e `to` (instantes inclusivos), `type`, `authorId`, `targetId`, `compliant`, `_page` e `_size` (padrão 10, máximo 50). Nenhum filtro de pessoa aparece na URL. O resumo devolve `role` opcional e nullable, preenchido com o atributo `papel` somente para concessões e revogações. A ordenação é `practicedAt` e ID, ambos decrescentes; se o momento do ato está ausente, `receivedAt` serve apenas para posicionar o registro e `practicedAt` continua `null`. O resultado inclui apenas originais. A primeira página fixa uma visão dos registros elegíveis e devolve `pagination.snapshot`; as demais páginas mandam esse token no corpo com os mesmos filtros e tamanho. O token é opaco. Estado vazio devolve `data: []`.
 
 `getAuditRecord` distingue `practicedAt` de `receivedAt`, mostra conteúdo recebido, faltas, conformidade e complementos posteriores. `author` e `target` podem ser `null` se faltaram na origem. Quando Identity não resolve uma referência, o par `type`/`id` permanece visível e `label` fica ausente. `reason` pode ser `null` para o aceite de convite, que não exige motivo. A lista de complementos é ordenada por `createdAt` e ID crescentes.
 
@@ -25,4 +26,4 @@ O original, sua conformidade, tipo, autor, alvo e motivo nunca são alterados pe
 
 Schemas, campos obrigatórios, exemplos e respostas normativas estão em [api-contract.yaml](api-contract.yaml). Esta página é apenas a leitura do acordo.
 
-A revisão 1.1.0 substitui a busca GET 1.0.0 antes de sua implementação, por decisão do responsável em 2026-09-27: referências de pessoas deixam de trafegar em query string. Não há consumidor implantado dessa operação a migrar.
+A revisão 1.1.0 substitui a busca GET 1.0.0 antes de sua implementação, por decisão do responsável em 2026-09-27: referências de pessoas deixam de trafegar em query string. A revisão 1.2.0 acrescenta o campo opcional e nullable `role` ao resumo para apresentar o papel do ato na lista. Não há consumidor implantado dessa operação a migrar.

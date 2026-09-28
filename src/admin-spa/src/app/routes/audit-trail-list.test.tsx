@@ -25,6 +25,7 @@ const rowFixtures = [
   {
     id: '5137eb89-3e71-4462-9c52-3994f7be0f9a',
     type: 'papel-concedido',
+    role: 'professor',
     practicedAt: '2026-09-27T10:00:00Z',
     author: { type: 'conta-interna', id: '337fcd34-6bf6-4fe5-a1e6-608fe9426be7', label: 'Marina Costa' },
     target: { type: 'conta-interna', id: '550e8400-e29b-41d4-a716-446655440000', label: 'Rafael Silva' },
@@ -75,13 +76,32 @@ describe('AuditTrailList', () => {
     renderAuditRoute();
 
     expect(await screen.findByRole('heading', { name: 'Trilha de atos administrativos' })).toBeInTheDocument();
-    expect(await screen.findByText('Marina Costa')).toBeInTheDocument();
-    expect(screen.getByText('Rafael Silva')).toBeInTheDocument();
-    expect(screen.getByText('Conforme')).toBeInTheDocument();
-    expect(screen.getByText('Não conforme')).toBeInTheDocument();
-    expect(screen.getByText('Complementado')).toBeInTheDocument();
-    expect(screen.getAllByText('— ausente')).toHaveLength(2);
+    const table = await screen.findByRole('table', { name: 'Registros da trilha de auditoria' });
+    expect(within(table).getByText('Marina Costa')).toBeInTheDocument();
+    expect(within(table).getByText('Rafael Silva')).toBeInTheDocument();
+    expect(within(table).getByText('Conforme')).toBeInTheDocument();
+    expect(within(table).getByText('Não conforme')).toBeInTheDocument();
+    expect(within(table).getByText('Complementado')).toBeInTheDocument();
+    expect(screen.getAllByText('Professor', { selector: '.role-badge' })).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Abrir registro Papel concedido' })).toBeInTheDocument();
+    expect(within(table).getAllByText('— ausente')).toHaveLength(2);
     expect(screen.getByRole('navigation', { name: 'admin-spa navigation' })).toHaveTextContent('Auditoria');
+  });
+
+  it('opens the mobile filter sheet and restores focus when it closes', async () => {
+    const user = userEvent.setup();
+    server.use(http.post(searchPath, () => HttpResponse.json(pageFixture())));
+    renderAuditRoute();
+
+    const trigger = await screen.findByRole('button', { name: 'Filtros' });
+    await user.click(trigger);
+    const dialog = screen.getByRole('dialog', { name: 'Filtros' });
+    expect(within(dialog).getByLabelText('De')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Aplicar' })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Filtros' })).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
   });
 
   it('posts filters in the body and never puts them in the URL', async () => {
@@ -97,7 +117,7 @@ describe('AuditTrailList', () => {
     }));
     renderAuditRoute();
 
-    await screen.findByText('Marina Costa');
+    await screen.findByRole('table', { name: 'Registros da trilha de auditoria' });
     await user.type(screen.getByLabelText('De'), '2026-09-01T08:00');
     await user.type(screen.getByLabelText('Até'), '2026-09-27T17:30');
     await user.selectOptions(screen.getByLabelText('Tipo'), 'papel-concedido');
@@ -124,7 +144,7 @@ describe('AuditTrailList', () => {
     }));
     renderAuditRoute();
 
-    await screen.findByText('Marina Costa');
+    await screen.findByRole('table', { name: 'Registros da trilha de auditoria' });
     const initialRequestCount = requests;
     await user.type(screen.getByLabelText('De'), '2026-09-27T17:30');
     await user.type(screen.getByLabelText('Até'), '2026-09-01T08:00');
@@ -162,7 +182,7 @@ describe('AuditTrailList', () => {
     }));
     renderAuditRoute();
 
-    await screen.findByText('Marina Costa');
+    await screen.findByRole('table', { name: 'Registros da trilha de auditoria' });
     await user.click(screen.getByRole('button', { name: 'Próxima página' }));
     expect(await screen.findByRole('status')).toHaveTextContent('A busca expirou e foi refeita. Você voltou à primeira página.');
     await waitFor(() => expect(requests.filter((request) => request._page === 1).length).toBeGreaterThanOrEqual(2));
@@ -185,7 +205,7 @@ describe('AuditTrailList', () => {
     }));
     renderAuditRoute();
 
-    await screen.findByText('Marina Costa');
+    await screen.findByRole('table', { name: 'Registros da trilha de auditoria' });
     expect(requests).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Atualizar resultados' }));
 

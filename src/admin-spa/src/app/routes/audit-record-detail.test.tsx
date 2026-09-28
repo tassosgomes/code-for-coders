@@ -104,7 +104,8 @@ describe('AuditRecordDetail', () => {
     expect(screen.getByText('Identidade e Acesso')).toBeInTheDocument();
     expect(screen.getByText('Assumiu a turma de .NET após a saída do professor anterior.')).toBeInTheDocument();
     expect(screen.getByText('Professor', { selector: '.role-badge' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /Complementos/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Complementos' })).toBeInTheDocument();
+    expect(screen.getByText(/Nenhum complemento/)).toBeInTheDocument();
   });
 
   it('opens a record when the list row receives Enter', async () => {

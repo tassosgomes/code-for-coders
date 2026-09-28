@@ -27,6 +27,7 @@ public sealed class AuditRecordSearchTests(BffAdminApiFactory factory)
         var page = await response.Content.ReadFromJsonAsync<AuditRecordPageV1>(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("professor", page?.Data.Single().Role);
         Assert.Equal("Marina Alves", page?.Data.Single().Author?.Label);
         Assert.Equal("Rafael Silva", page?.Data.Single().Target?.Label);
         Assert.Equal(1, factory.AuditRecordSearchHandler.RequestCount);

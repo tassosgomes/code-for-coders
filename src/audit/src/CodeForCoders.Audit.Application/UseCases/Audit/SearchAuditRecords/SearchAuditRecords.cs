@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using CodeForCoders.Audit.Application.Exceptions;
 using CodeForCoders.Audit.Application.Interfaces;
 using CodeForCoders.Audit.Domain.Entities;
@@ -11,6 +12,7 @@ public sealed class SearchAuditRecords(
     IAuditRecordSnapshotStore snapshotStore,
     IValidator<SearchAuditRecordsInput> validator) : ISearchAuditRecords
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan SnapshotLifetime = TimeSpan.FromMinutes(30);
 
     public async Task<SearchAuditRecordsOutput> ExecuteAsync(
@@ -107,7 +109,27 @@ public sealed class SearchAuditRecords(
             ToReference(record.AuthorType, record.AuthorId),
             ToReference(record.TargetType, record.TargetId),
             record.Conformity == AuditRecord.Conforming,
-            hasComplements);
+            hasComplements,
+            ReadRole(record));
+
+    private static string? ReadRole(AuditRecord record)
+    {
+        if (record.Type is not ("papel-concedido" or "papel-revogado")
+            || string.IsNullOrWhiteSpace(record.Complement))
+        {
+            return null;
+        }
+
+        try
+        {
+            var attributes = JsonSerializer.Deserialize<Dictionary<string, string>>(record.Complement, JsonOptions);
+            return attributes is not null && attributes.TryGetValue("papel", out var role) ? role : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private static AuditRecordIdentityReferenceOutput? ToReference(string? type, Guid? id)
         => type is null || id is null

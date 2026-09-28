@@ -58,7 +58,7 @@ describe('audit complement confirmation', () => {
     respondWithDetail();
     renderScreen();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
 
     expect(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' })).toHaveAttribute('maxLength', '1000');
     expect(screen.getByText('0/1000')).toBeInTheDocument();
@@ -77,9 +77,9 @@ describe('audit complement confirmation', () => {
     }));
     renderScreen();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
     await user.type(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' }), '   ');
-    await user.click(screen.getByRole('button', { name: 'Confirmar complemento' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     expect(screen.getByRole('alert')).toHaveTextContent('Escreva a explicação do que foi apurado.');
     expect(requestCount).toBe(0);
@@ -100,9 +100,9 @@ describe('audit complement confirmation', () => {
     }));
     renderScreen();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
     await user.type(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' }), explanation);
-    await user.click(screen.getByRole('button', { name: 'Confirmar complemento' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
 
     expect(await screen.findByText('Aguardando registro…')).toBeInTheDocument();
     expect(screen.getByRole('list')).toHaveAttribute('aria-live', 'polite');
@@ -124,9 +124,9 @@ describe('audit complement confirmation', () => {
     }));
     renderScreen();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
     await user.type(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' }), explanation);
-    await user.click(screen.getByRole('button', { name: 'Confirmar complemento' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Não conseguimos confirmar agora. Seu texto foi mantido.');
     expect(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' })).toHaveValue(explanation);
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
@@ -148,13 +148,13 @@ describe('audit complement confirmation', () => {
     }));
     renderScreen();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
     await user.type(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' }), explanation);
-    await user.click(screen.getByRole('button', { name: 'Confirmar complemento' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
     expect(await screen.findByText('Aguardando registro…')).toBeInTheDocument();
 
     expect(requestCount).toBe(1);
-    expect(screen.getByRole('button', { name: '+ Acrescentar complemento' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Acrescentar complemento' })).toBeDisabled();
     expect(screen.queryByText(/falhou/i)).not.toBeInTheDocument();
   });
 
@@ -178,25 +178,25 @@ describe('audit complement confirmation', () => {
     }));
     renderScreen();
 
-    await user.click(await screen.findByRole('button', { name: '+ Acrescentar complemento' }));
+    await user.click(await screen.findByRole('button', { name: 'Acrescentar complemento' }));
     await user.type(screen.getByRole('textbox', { name: 'Explicação do que foi apurado' }), explanation);
-    await user.click(screen.getByRole('button', { name: 'Confirmar complemento' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
     expect(await screen.findByText('Aguardando registro…')).toBeInTheDocument();
 
     await waitFor(() => expect(screen.queryByText('Aguardando registro…')).not.toBeInTheDocument(), { timeout: 4_000 });
-    expect(screen.getByText('Há complementos registrados para este ato.')).toBeInTheDocument();
+    expect(screen.getByText(explanation)).toBeInTheDocument();
   });
 
   it('returns focus to the add button when the form is cancelled', async () => {
     const user = userEvent.setup();
     respondWithDetail();
     renderScreen();
-    const addButton = await screen.findByRole('button', { name: '+ Acrescentar complemento' });
+    await screen.findByRole('button', { name: 'Acrescentar complemento' });
 
-    await user.click(addButton);
+    await user.click(screen.getByRole('button', { name: 'Acrescentar complemento' }));
     await user.click(screen.getByRole('button', { name: 'Cancelar' }));
 
-    await waitFor(() => expect(addButton).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Acrescentar complemento' })).toHaveFocus());
     expect(screen.queryByRole('textbox', { name: 'Explicação do que foi apurado' })).not.toBeInTheDocument();
   });
 });

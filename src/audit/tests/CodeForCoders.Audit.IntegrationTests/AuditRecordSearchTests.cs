@@ -343,6 +343,20 @@ public sealed class AuditRecordSearchTests(AuditIntegrationFixture fixture)
         Assert.Null(result.Data.Single().Target!.Label);
     }
 
+    [Fact(DisplayName = nameof(AuditRecordSearch_ReturnsTheRoleForRoleChanges))]
+    public async Task AuditRecordSearch_ReturnsTheRoleForRoleChanges()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var tenantId = Guid.CreateVersion7();
+        await using var scenario = CreateScenario();
+        await AddRecordsAsync(scenario, cancellationToken,
+            CreateRecord(tenantId, FirstDay, ReceivedOn, type: "papel-concedido"));
+
+        var result = await SearchAsync(scenario, tenantId, Guid.CreateVersion7(), 1, 20, cancellationToken);
+
+        Assert.Equal("professor", result.Data.Single().Role);
+    }
+
     [Fact(DisplayName = nameof(AuditRecordSearch_ReportsWhichOriginalsHaveComplements))]
     public async Task AuditRecordSearch_ReportsWhichOriginalsHaveComplements()
     {
