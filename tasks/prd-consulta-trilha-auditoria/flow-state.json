@@ -5,12 +5,12 @@
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "last_checkpoint": "81c554c",
-  "phase": "checkpoint",
-  "active_task": "6.0",
+  "last_checkpoint": "450f45a",
+  "phase": "complete",
+  "active_task": null,
   "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 2,
+  "full_attempt": 3,
   "transport_retries": 1,
   "specs": [
     "techspec.md",
@@ -19,18 +19,18 @@
   ],
   "delivery": "pr",
   "transport": "herdr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "450f45a1835a40c8758150de5c49c4c4f15b8c75",
+  "validated_tree": "4ac94bc6304e6143e31c1de2cf5779d681e59dc9",
   "last_result": {
-    "task": "6.0",
     "role": "validator",
-    "run_id": "run.K0pXHRRs",
+    "mode": "full",
+    "run_id": "run.A5UGbt7y",
     "outcome": "approved"
   },
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "6.0"
+    "mode": "complete-prd",
+    "delivery": "pr"
   },
   "history": [
     {
@@ -165,6 +165,17 @@
       "task": "3.0",
       "commit": "c856ed0",
       "cycle": "full 2"
+    },
+    {
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "450f45a",
+      "cycle": "full 2"
+    },
+    {
+      "event": "full_approved",
+      "full_attempt": 3,
+      "run_id": "run.A5UGbt7y"
     }
   ],
   "routing_override": {
