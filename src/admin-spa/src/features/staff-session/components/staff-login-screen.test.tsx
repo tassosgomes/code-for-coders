@@ -24,6 +24,8 @@ describe('StaffSession login', () => {
     await user.type(screen.getByLabelText('Senha'), 'SenhaForte1!');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('E-mail ou senha inválidos.');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('E-mail ou senha incorretos');
+    expect(alert).toHaveTextContent('Confira os dados e tente de novo.');
   });
 });

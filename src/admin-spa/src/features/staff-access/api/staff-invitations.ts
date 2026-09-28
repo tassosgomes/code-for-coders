@@ -104,6 +104,10 @@ export const getStaffInvitationRequestError = (error: unknown): string => {
       case 'PERMISSION_DENIED':
         return 'Você não tem permissão para gerenciar acessos.';
     }
+
+    if (error.response?.status === 403) {
+      return 'Você não tem permissão para gerenciar acessos.';
+    }
   }
 
   return 'Não foi possível enviar o convite agora. Tente novamente.';

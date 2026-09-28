@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLoaderData, useNavigate } from 'react-router';
+import { useLoaderData, useLocation, useNavigate } from 'react-router';
 
 import axios from 'axios';
 
@@ -17,6 +17,23 @@ type AdminLayoutRouteProps = {
 
 export const AdminLayoutRoute = ({ serviceName, title }: AdminLayoutRouteProps) => {
   const session = useLoaderData<typeof loadStaffSession>();
+  const { key } = useLocation();
+
+  return (
+    <AdminLayoutContent
+      key={key}
+      serviceName={serviceName}
+      session={session}
+      title={title}
+    />
+  );
+};
+
+type AdminLayoutContentProps = AdminLayoutRouteProps & {
+  session: Awaited<ReturnType<typeof loadStaffSession>>;
+};
+
+const AdminLayoutContent = ({ serviceName, session, title }: AdminLayoutContentProps) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [logoutError, setLogoutError] = useState<string | null>(null);
