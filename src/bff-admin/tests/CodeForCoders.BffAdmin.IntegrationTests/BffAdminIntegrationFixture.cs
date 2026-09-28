@@ -37,6 +37,27 @@ public sealed class BffAdminIntegrationFixture : IAsyncLifetime
         }
     }
 
+    /// <summary>
+    /// The collection shares one outbox table and the worker leases any pending row, so a test that
+    /// starts a worker first settles rows left pending by other tests to stay independent of order.
+    /// </summary>
+    public async Task SettlePendingOutboxMessagesAsync(CancellationToken cancellationToken)
+    {
+        var dbOptions = new DbContextOptionsBuilder<BffAdminDbContext>()
+            .UseNpgsql(PostgreSql.GetConnectionString())
+            .Options;
+        await using var dbContext = new BffAdminDbContext(dbOptions, new TenantContext());
+        var settledOn = DateTimeOffset.UtcNow;
+        await dbContext.OutboxMessages.IgnoreQueryFilters()
+            .Where(message => message.ProcessedOn == null)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(message => message.ProcessedOn, settledOn)
+                    .SetProperty(message => message.LeaseToken, (Guid?)null)
+                    .SetProperty(message => message.LeaseExpiresOn, (DateTimeOffset?)null),
+                cancellationToken);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await RabbitMq.DisposeAsync();

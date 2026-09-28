@@ -5,9 +5,9 @@
   "original_base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "base_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
   "target_ref": "dead10bc6237cade3eb4c66699b1b89b150f5378",
-  "last_checkpoint": "1459cfc",
+  "last_checkpoint": "81c554c",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "6.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 2,
@@ -22,15 +22,15 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "3.0",
+    "task": "6.0",
     "role": "validator",
-    "run_id": "run.vCYU09Qx",
+    "run_id": "run.K0pXHRRs",
     "outcome": "approved"
   },
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "3.0"
+    "task": "6.0"
   },
   "history": [
     {
@@ -159,6 +159,18 @@
       "task": "3.0",
       "run_id": "run.aPfsmR05",
       "source": "run.XnmIxFI0"
+    },
+    {
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "c856ed0",
+      "cycle": "full 2"
     }
-  ]
+  ],
+  "routing_override": {
+    "condition": "falha da correção em andamento (6.0 B2prime, ciclo full 2) ou reprovação subsequente",
+    "role": "implementer",
+    "args": "--kind=codex --model=gpt-6-sol --effort=high",
+    "requested": "2026-09-27 pelo usuário"
+  }
 }

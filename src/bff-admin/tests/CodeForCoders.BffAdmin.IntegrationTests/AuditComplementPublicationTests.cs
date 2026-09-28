@@ -29,6 +29,7 @@ public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture f
     public async Task PublishesDecryptedConfirmationToTheAuditExchangeAndMarksItProcessed()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         var options = CreateOptions();
         var queue = NewQueueName();
         await DeclareDestinationAsync(CreateAdminOptions(), options.Exchange, queue, AuditRoutingKey, cancellationToken);
@@ -55,6 +56,7 @@ public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture f
     {
         const int maxAttempts = 2;
         var cancellationToken = TestContext.Current.CancellationToken;
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         var draft = CreateDraft(Guid.CreateVersion7());
         await ConfirmAsync(draft, cancellationToken);
         var unavailable = CreateOptions(port: GetClosedLocalPort());
@@ -98,6 +100,7 @@ public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture f
     public async Task ReclaimsAnExpiredLeaseAfterAWorkerStops()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         var options = CreateOptions();
         var queue = NewQueueName();
         await DeclareDestinationAsync(CreateAdminOptions(), options.Exchange, queue, AuditRoutingKey, cancellationToken);
@@ -122,6 +125,7 @@ public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture f
     public async Task UsesMandatoryPublisherConfirmWhenDestinationHasNoBinding()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         var options = CreateOptions();
         options.Exchange = $"audit.events.unroutable.{Guid.CreateVersion7():N}";
         options.Username = "code_for_coders";
@@ -159,6 +163,7 @@ public sealed class AuditComplementPublicationTests(BffAdminIntegrationFixture f
     public async Task ContinuesPublishingLegacyMessagesToTheBffExchange()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         var options = CreateOptions();
         options.Exchange = "bff-admin.events";
         var queue = NewQueueName();

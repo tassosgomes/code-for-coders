@@ -48,6 +48,7 @@ public sealed class BffAdminInfrastructureTests(BffAdminIntegrationFixture fixtu
             })
             .Build();
 
+        await fixture.SettlePendingOutboxMessagesAsync(cancellationToken);
         await host.StartAsync(cancellationToken);
 
         Guid eventId;
