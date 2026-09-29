@@ -77,7 +77,7 @@ export const VideoTransferPanel = ({ transfer, onRetry }: VideoTransferPanelProp
   return <section aria-label="Transferência de vídeo" className={`video-transfer-panel ${transfer.status}`}>
     <div className="video-transfer-details">
       <div className="video-transfer-heading">
-        <Icon aria-hidden="true" className={transfer.status === 'completing' ? 'video-status-spinner' : undefined} size={18} />
+        <Icon aria-hidden="true" className={transfer.status === 'completing' ? 'video-status-spinner' : undefined} size={20} />
         <strong>{getHeading(transfer)}</strong>
         <span>{transfer.progress}%</span>
       </div>

@@ -72,6 +72,18 @@ const submitUpload = async (user: ReturnType<typeof userEvent.setup>) => {
 };
 
 describe('video upload resume', () => {
+  it('groups multiple incomplete uploads with a file action for each one', async () => {
+    server.use(http.get(`${env.API_URL}/api/v1/video-uploads`, () => pendingPage([
+      upload(),
+      upload({ uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d3', fileName: 'outra-aula.mkv' }),
+    ])));
+    renderRoute();
+
+    expect(await screen.findByText('2 envios incompletos — selecione o mesmo arquivo para continuar cada um.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar aula.mp4' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selecionar outra-aula.mkv' })).toBeInTheDocument();
+  });
+
   it('shows pending parts and resumes by uploading only missing parts', async () => {
     const user = userEvent.setup();
     const sentParts: number[] = [];

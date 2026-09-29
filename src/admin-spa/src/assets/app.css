@@ -2647,13 +2647,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   border-color:var(--video-border);
 }
 
+.app-shell:has(.videos-page) .account-avatar {
+  border:2px solid var(--video-surface);
+}
+
+.videos-area-card .area-icon {
+  width:48px;
+  height:48px;
+  border-radius:12px;
+}
+
+.videos-area-card h2 {
+  line-height:24px;
+}
+
+.videos-area-card .outline-button {
+  margin-top:0;
+}
+
 .mobile-backoffice-brand {
   display:none;
 }
 
 .videos-page .page-subtitle {
-  font-size:14px;
+  font-size:16px;
   line-height:24px;
+}
+
+.video-subtitle-mobile {
+  display:none;
 }
 
 .videos-page .page-heading-row {
@@ -2668,8 +2690,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-header-action .primary-button {
   width:115px;
-  padding:8px 12px;
-  font-size:12px;
+  padding:8px 16px;
+  font-size:14px;
   white-space:nowrap;
 }
 
@@ -2796,6 +2818,39 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   margin:0 0 0 24px;
 }
 
+.pending-video-upload-group {
+  gap:12px;
+  padding:16px;
+  border:1px solid #fffbeb;
+  border-radius:12px;
+  color:#b45309;
+  font-size:14px;
+  line-height:20px;
+}
+
+.pending-video-upload-group .pending-video-upload-title {
+  margin:0;
+}
+
+.pending-video-upload-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.pending-video-upload-row p {
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+.pending-video-upload-row .outline-button {
+  min-height:32px;
+  flex:none;
+  padding:6px 12px;
+  font-size:12px;
+}
+
 .video-link-button {
   width:max-content;
   border:0;
@@ -2815,7 +2870,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .video-transfer-panel {
   display:block;
   margin-top:24px;
-  padding:16px;
+  padding:20px;
   border:1px solid var(--video-border);
   border-radius:12px;
   background:var(--video-surface);
@@ -2823,6 +2878,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 .video-transfer-details {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
   min-width:0;
 }
 
@@ -2850,16 +2908,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-transfer-heading span {
   color:var(--video-foreground);
-  font-size:12px;
+  font-size:14px;
   font-weight:600;
 }
 
 .video-transfer-progress {
-  height:6px;
-  margin:8px 0 4px;
+  height:8px;
+  margin:0;
   overflow:hidden;
   border-radius:999px;
-  background:#f5f3fa;
+  background:var(--video-page);
 }
 
 .video-transfer-progress>span {
@@ -2882,14 +2940,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   align-items:center;
   justify-content:space-between;
   gap:16px;
-  margin-top:8px;
+  margin-top:0;
 }
 
 .video-transfer-message {
   margin:0;
   color:var(--video-muted);
-  font-size:12px;
-  line-height:18px;
+  font-size:14px;
+  line-height:20px;
 }
 
 .video-transfer-message.success {
@@ -2986,7 +3044,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 .videos-page .videos-table-header span:last-child {
-  text-align:center;
+  font-size:0;
 }
 
 .videos-page .videos-table-row {
@@ -3253,23 +3311,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-empty-library h2 {
   color:var(--video-foreground);
-  font-size:16px;
-  line-height:20px;
+  font-size:20px;
+  line-height:28px;
 }
 
 .video-empty-library p,
 .video-empty-filter p {
   color:var(--video-muted);
-  font-size:12px;
-  line-height:18px;
+  font-size:14px;
+  line-height:20px;
 }
 
 .video-empty-library .primary-button {
   width:115px;
   min-height:40px;
   margin-top:0;
-  padding:8px 12px;
-  font-size:12px;
+  padding:8px 16px;
+  font-size:14px;
   white-space:nowrap;
 }
 
@@ -3373,6 +3431,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   color:var(--video-foreground);
 }
 
+.video-upload-dialog .video-dialog-heading,
+.video-edit-dialog .video-dialog-heading {
+  min-height:28px;
+  margin-bottom:20px;
+}
+
 .video-upload-dialog form,
 .video-edit-dialog form {
   display:grid;
@@ -3381,29 +3445,48 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-file-dropzone {
   display:flex;
-  min-height:206px;
   flex-direction:column;
   align-items:center;
-  justify-content:center;
-  gap:8px;
-  padding:16px;
+  gap:12px;
+  padding:28px 24px;
   border:1px dashed #d8d3e5;
-  border-radius:10px;
-  background:var(--video-subtle);
+  border-radius:12px;
+  background:var(--video-surface);
   color:var(--video-foreground);
   text-align:center;
   transition:background .15s,border-color .15s;
 }
 
 .video-file-dropzone.is-dragging {
+  border-width:2px;
   border-color:var(--primary);
   background:#f5f3ff;
 }
 
+.video-file-dropzone.is-rejected {
+  border-width:2px;
+  border-color:#dc2626;
+  color:var(--video-foreground);
+}
+
+.video-rejected-tile,
+.video-file-problem {
+  color:#dc2626;
+}
+
+.app-shell:has(.videos-page) .video-file-dropzone .video-rejected-tile {
+  background:var(--video-surface);
+}
+
+.video-file-problem {
+  font-size:14px;
+  line-height:20px;
+}
+
 .video-dropzone-icon {
   display:grid;
-  width:32px;
-  height:32px;
+  width:44px;
+  height:44px;
   place-items:center;
   border-radius:50%;
   background:#f5f3ff;
@@ -3412,13 +3495,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-file-dropzone>strong {
   font-size:14px;
-  font-weight:500;
+  font-weight:600;
   line-height:20px;
 }
 
 .video-choose-file {
   display:inline-flex;
-  min-height:28px;
+  min-height:32px;
   align-items:center;
   justify-content:center;
   padding:4px 12px;
@@ -3495,6 +3578,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   line-height:20px;
 }
 
+.video-upload-label {
+  margin-top:12px;
+}
+
 .video-upload-dialog .video-title-input,
 .video-edit-dialog input {
   width:100%;
@@ -3508,6 +3595,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   line-height:20px;
 }
 
+.video-upload-dialog .video-title-input[aria-invalid="true"],
+.video-edit-dialog input[aria-invalid="true"] {
+  border-color:#dc2626;
+}
+
 .video-title-hint {
   display:flex;
   align-items:flex-start;
@@ -3517,6 +3609,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   color:var(--video-muted);
   font-size:12px;
   line-height:16px;
+}
+
+.video-upload-dialog .video-title-hint {
+  margin-top:12px;
 }
 
 .video-title-hint>span:last-child {
@@ -3531,7 +3627,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   display:flex;
   align-items:flex-start;
   gap:8px;
-  margin:8px 0 0;
+  margin:12px 0 0;
   color:var(--video-muted);
   font-size:12px;
   line-height:16px;
@@ -3575,6 +3671,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   margin-top:16px;
 }
 
+.video-upload-actions {
+  margin-top:12px;
+}
+
+.video-edit-actions {
+  margin-top:12px;
+}
+
 .video-upload-actions button,
 .video-edit-actions button {
   min-height:40px;
@@ -3585,7 +3689,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 .video-edit-dialog .video-title-hint {
-  margin-top:4px;
+  margin-top:12px;
 }
 
 .leave-upload-dialog>p {
@@ -3595,8 +3699,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   line-height:20px;
 }
 
+.leave-upload-dialog .video-dialog-heading {
+  min-height:28px;
+  margin-bottom:4px;
+}
+
 .leave-upload-dialog .dialog-actions {
-  margin-top:16px;
+  margin-top:20px;
 }
 
 @media(max-width:900px) {
@@ -3648,7 +3757,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 
   .videos-page .page-subtitle {
+    font-size:14px;
     line-height:20px;
+    letter-spacing:-.03px;
+  }
+
+  .video-subtitle-desktop {
+    display:none;
+  }
+
+  .video-subtitle-mobile {
+    display:inline;
   }
 
   .videos-page .page-heading-row {
@@ -3701,7 +3820,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
   .videos-page .videos-table-row {
     grid-template-columns:minmax(0,1fr) 32px;
-    gap:12px;
+    gap:8px;
     min-height:0;
     margin-bottom:8px;
     padding:16px;
@@ -3711,7 +3830,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 
   .videos-page .videos-table-row+.videos-table-row {
-    border-top:0;
+    border-top:1px solid var(--video-border);
   }
 
   .videos-page .video-title-cell {
@@ -3729,6 +3848,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     grid-column:1/-1;
     grid-row:2;
     gap:4px;
+  }
+
+  .videos-page .video-status-cell.failed {
+    gap:8px;
   }
 
   .videos-page .video-meta {
@@ -3769,6 +3892,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .video-pagination {
     flex-wrap:wrap;
     padding:12px 0;
+  }
+
+  .video-refresh-status {
+    display:none;
+  }
+
+  .pending-video-upload-row {
+    align-items:flex-start;
   }
 
   .videos-loading .videos-skeleton-row {
@@ -3818,6 +3949,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 @media(max-width:500px) {
+  .app-shell:has(.videos-page) .app-header {
+    gap:8px;
+  }
+
+  .app-shell:has(.videos-page) .menu-button {
+    width:40px;
+  }
+
+  .app-shell:has(.videos-page) .account-avatar {
+    width:32px;
+    height:32px;
+  }
+
   .mobile-backoffice-brand {
     gap:8px;
     font-size:14px;
@@ -3826,6 +3970,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .mobile-backoffice-brand .brand-badge {
     padding:2px 8px;
     font-size:10px;
+  }
+
+  .app-shell:has(.videos-page) .mobile-backoffice-brand {
+    gap:10px;
+    font-size:16px;
+  }
+
+  .app-shell:has(.videos-page) .mobile-backoffice-brand .brand-badge {
+    padding:2px 10px;
+    font-size:12px;
   }
 
   .account-trigger {
@@ -3878,21 +4032,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 @media(prefers-color-scheme:dark) {
   .app-shell:has(.videos-page) {
-    --video-page:#221f30;
-    --video-surface:#15121f;
+    --video-page:#242033;
+    --video-surface:#16131f;
     --video-border:#2a2538;
     --video-foreground:#f8f7fc;
     --video-muted:#9a94ae;
     --video-input:#0d0b14;
-    --video-subtle:#221f30;
-    --video-sidebar:#15121f;
+    --video-subtle:#242033;
+    --video-sidebar:#16131f;
     --video-sidebar-foreground:#dedbe8;
-    --video-sidebar-active:#2a2538;
+    --video-sidebar-active:#242033;
     --video-sidebar-active-foreground:#fff;
     --primary:#a78bfa;
     --border:#2a2538;
     --muted:#9a94ae;
-    --surface:#15121f;
+    --surface:#16131f;
     background:var(--video-page);
     color:var(--video-foreground);
   }
@@ -3925,6 +4079,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 
   .app-shell:has(.videos-page) .account-trigger {
+    color:var(--video-foreground);
+  }
+
+  .app-shell:has(.videos-page) .account-avatar {
+    border-color:#0d0b14;
+    background:#242033;
     color:var(--video-foreground);
   }
 
@@ -3987,6 +4147,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .app-shell:has(.videos-page) .video-upload-alert.error {
     background:#35271d;
     color:#fdba74;
+  }
+
+  .app-shell:has(.videos-page) .pending-video-upload-group {
+    border-color:#35271d;
   }
 
   .app-shell:has(.videos-page) .video-unavailable-alert,

@@ -17,11 +17,11 @@ export const DashboardScreen = ({ areas = [], name = '', roles = [] }: Dashboard
     <p className="eyebrow">Início</p>
     <h1>Olá, {firstName || 'equipe'}</h1>
     <p className="page-subtitle">Seus papéis: {roles.length ? roles.map((role) => <span className="role-badge" key={role}>{role}</span>) : <span className="role-badge role-badge-empty">Sem papel</span>}</p>
-    {linkedAreas.length ? <div className="area-grid">{linkedAreas.map((area) => <article className="area-card" key={area.permission ?? area.role ?? area.label}>
+    {linkedAreas.length ? <div className="area-grid">{linkedAreas.map((area) => <article className={area.permission === 'midia.enviar' ? 'area-card videos-area-card' : 'area-card'} key={area.permission ?? area.role ?? area.label}>
       <span className="area-icon">{area.permission === 'financeiro.ler'
         ? <Wallet size={22} />
         : area.permission === 'midia.enviar'
-          ? <Clapperboard size={22} />
+          ? <Clapperboard size={24} />
           : area.role === 'administrador'
             ? <ScrollText size={22} />
           : <Users size={22} />}</span>
@@ -29,7 +29,7 @@ export const DashboardScreen = ({ areas = [], name = '', roles = [] }: Dashboard
       <p>{area.permission === 'acesso.gerir'
         ? 'Convide pessoas e ajuste os papéis da equipe.'
         : area.permission === 'midia.enviar'
-          ? 'Envie as gravações das aulas e acompanhe até ficarem prontas.'
+          ? 'Envie as gravações das aulas e acompanhe a preparação.'
           : area.role === 'administrador'
             ? 'Consulte os atos administrativos registrados para o seu tenant.'
             : 'Área financeira reservada à equipe autorizada.'}</p>

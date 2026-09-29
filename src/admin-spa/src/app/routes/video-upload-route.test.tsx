@@ -91,7 +91,8 @@ describe('video upload', () => {
 
     await chooseFile(user, new File(['video'], 'aula.avi', { type: 'video/x-msvideo' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Formato não aceito. Escolha um arquivo MP4, MOV ou MKV.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('aula.avi não é um formato aceito. Envie MP4, MOV ou MKV.');
+    expect(screen.getByText('Escolher outro arquivo')).toBeInTheDocument();
     expect(createRequests).toBe(0);
   });
 
@@ -109,8 +110,23 @@ describe('video upload', () => {
 
     await chooseFile(user, oversized);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('O arquivo deve ter até 5 GiB.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('O limite é 5 GB. Divida a gravação ou exporte em qualidade menor.');
+    expect(screen.getByText('Escolher outro arquivo')).toBeInTheDocument();
     expect(createRequests).toBe(0);
+  });
+
+  it('shows the title error and disables sending when the title is cleared', async () => {
+    const user = userEvent.setup();
+    renderRoute();
+    await screen.findByRole('heading', { name: 'Nenhum vídeo ainda' });
+
+    await chooseFile(user, videoFile());
+    const dialog = within(screen.getByRole('dialog', { name: 'Enviar vídeo' }));
+    await user.clear(dialog.getByRole('textbox', { name: 'Título' }));
+
+    expect(await dialog.findByRole('alert')).toHaveTextContent('Dê um título para reconhecer o vídeo.');
+    expect(dialog.getByRole('textbox', { name: 'Título' })).toHaveAttribute('aria-invalid', 'true');
+    expect(dialog.getByRole('button', { name: 'Enviar' })).toBeDisabled();
   });
 
   it('uploads file slices without cookies and shows the received video', async () => {
