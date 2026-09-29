@@ -16,12 +16,13 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
     private const int MaximumDurationSeconds = 10_800;
 
     public async Task<VideoTranscodeResult> TranscodeAsync(
+        Guid videoId,
         string sourcePath,
         string outputDirectory,
         string keyInfoPath,
         CancellationToken cancellationToken)
     {
-        var probe = await ProbeAsync(sourcePath, cancellationToken);
+        var probe = await ProbeAsync(videoId, sourcePath, cancellationToken);
         if (probe.FailureReason is not null)
         {
             return VideoTranscodeResult.Failed(probe.FailureReason);
@@ -46,10 +47,18 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
             Directory.CreateDirectory(Path.Combine(outputDirectory, quality.Name));
         }
 
-        using (var activity = StartActivity("media.video.transcode"))
+        var transcodeStartedAt = Stopwatch.GetTimestamp();
+        try
         {
-            activity?.SetTag("video.qualities", string.Join(',', qualities.Select(quality => quality.Name)));
-            await RunFfmpegAsync(sourcePath, outputDirectory, keyInfoPath, qualities, cancellationToken);
+            using (var activity = StartActivity("media.video.transcode", videoId))
+            {
+                activity?.SetTag("video.qualities", string.Join(',', qualities.Select(quality => quality.Name)));
+                await RunFfmpegAsync(sourcePath, outputDirectory, keyInfoPath, qualities, cancellationToken);
+            }
+        }
+        finally
+        {
+            MediaTelemetry.RecordVideoPrepareDuration("transcode", transcodeStartedAt);
         }
 
         await WriteMasterPlaylistAsync(outputDirectory, qualities, cancellationToken);
@@ -58,73 +67,81 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
         return new VideoTranscodeResult(probe.DurationSeconds, qualities, storedBytes);
     }
 
-    private async Task<ProbeResult> ProbeAsync(string sourcePath, CancellationToken cancellationToken)
+    private async Task<ProbeResult> ProbeAsync(Guid videoId, string sourcePath, CancellationToken cancellationToken)
     {
-        using var activity = StartActivity("media.video.probe");
-        var output = await RunProcessAsync(
-            options.Value.FfprobePath,
-            [
-                "-v", "error",
-                "-select_streams", "v:0",
-                "-show_entries", "stream=width,height,codec_name:format=duration",
-                "-of", "json",
-                sourcePath,
-            ],
-            cancellationToken);
-        if (output.ExitCode != 0)
-        {
-            return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
-        }
-
+        var probeStartedAt = Stopwatch.GetTimestamp();
         try
         {
-            using var document = JsonDocument.Parse(output.StandardOutput);
-            if (!document.RootElement.TryGetProperty("streams", out var streams)
-                || streams.GetArrayLength() == 0)
+            using var activity = StartActivity("media.video.probe", videoId);
+            var output = await RunProcessAsync(
+                options.Value.FfprobePath,
+                [
+                    "-v", "error",
+                    "-select_streams", "v:0",
+                    "-show_entries", "stream=width,height,codec_name:format=duration",
+                    "-of", "json",
+                    sourcePath,
+                ],
+                cancellationToken);
+            if (output.ExitCode != 0)
             {
                 return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
             }
 
-            var stream = streams[0];
-            if (!stream.TryGetProperty("width", out var widthElement)
-                || !stream.TryGetProperty("height", out var heightElement)
-                || !document.RootElement.TryGetProperty("format", out var format)
-                || !format.TryGetProperty("duration", out var durationElement))
+            try
+            {
+                using var document = JsonDocument.Parse(output.StandardOutput);
+                if (!document.RootElement.TryGetProperty("streams", out var streams)
+                    || streams.GetArrayLength() == 0)
+                {
+                    return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+                }
+
+                var stream = streams[0];
+                if (!stream.TryGetProperty("width", out var widthElement)
+                    || !stream.TryGetProperty("height", out var heightElement)
+                    || !document.RootElement.TryGetProperty("format", out var format)
+                    || !format.TryGetProperty("duration", out var durationElement))
+                {
+                    return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+                }
+
+                var width = widthElement.GetInt32();
+                var height = heightElement.GetInt32();
+                var durationText = durationElement.GetString();
+                if (!double.TryParse(durationText, NumberStyles.Float, CultureInfo.InvariantCulture, out var duration)
+                    || width < 1
+                    || height < 1
+                    || duration <= 0)
+                {
+                    return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+                }
+
+                if (duration > MaximumDurationSeconds)
+                {
+                    return ProbeResult.Failed(VideoFailureReasons.DurationExceeded);
+                }
+
+                if (!stream.TryGetProperty("codec_name", out var codecNameElement)
+                    || string.IsNullOrWhiteSpace(codecNameElement.GetString()))
+                {
+                    return ProbeResult.Failed(VideoFailureReasons.UnsupportedFormat);
+                }
+
+                return new ProbeResult(width, height, checked((int)Math.Ceiling(duration)), null);
+            }
+            catch (JsonException)
             {
                 return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
             }
-
-            var width = widthElement.GetInt32();
-            var height = heightElement.GetInt32();
-            var durationText = durationElement.GetString();
-            if (!double.TryParse(durationText, NumberStyles.Float, CultureInfo.InvariantCulture, out var duration)
-                || width < 1
-                || height < 1
-                || duration <= 0)
+            catch (InvalidOperationException)
             {
                 return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
             }
-
-            if (duration > MaximumDurationSeconds)
-            {
-                return ProbeResult.Failed(VideoFailureReasons.DurationExceeded);
-            }
-
-            if (!stream.TryGetProperty("codec_name", out var codecNameElement)
-                || string.IsNullOrWhiteSpace(codecNameElement.GetString()))
-            {
-                return ProbeResult.Failed(VideoFailureReasons.UnsupportedFormat);
-            }
-
-            return new ProbeResult(width, height, checked((int)Math.Ceiling(duration)), null);
         }
-        catch (JsonException)
+        finally
         {
-            return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
-        }
-        catch (InvalidOperationException)
-        {
-            return ProbeResult.Failed(VideoFailureReasons.UnreadableFile);
+            MediaTelemetry.RecordVideoPrepareDuration("probe", probeStartedAt);
         }
     }
 
@@ -249,9 +266,10 @@ public sealed class FfmpegVideoTranscoder(IOptions<VideoPreparationOptions> opti
         return new ProcessResult(process.ExitCode, output);
     }
 
-    private static Activity? StartActivity(string name)
+    private static Activity? StartActivity(string name, Guid videoId)
     {
         var activity = MediaTelemetry.ActivitySource.StartActivity(name, ActivityKind.Internal);
+        activity?.SetTag("video.id", videoId.ToString("D"));
         activity?.SetTag("video.status", "preparing");
         return activity;
     }

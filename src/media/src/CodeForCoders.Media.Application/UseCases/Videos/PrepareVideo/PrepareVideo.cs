@@ -54,7 +54,7 @@ public sealed class PrepareVideo(
         var deleted = 0;
         foreach (var cleanup in cleanups)
         {
-            using var activity = StartActivity("media.video.delete-original");
+            using var activity = StartActivity("media.video.delete-original", cleanup.VideoId);
             if (cleanup.Status == "failed")
             {
                 await storage.DeletePrefixAsync(GetHlsObjectPrefix(cleanup.OriginalObjectKey), cancellationToken);
@@ -82,6 +82,7 @@ public sealed class PrepareVideo(
         TimeSpan leaseRenewalInterval,
         CancellationToken stoppingToken)
     {
+        using var logScope = logger.BeginScope(new Dictionary<string, object?> { ["VideoId"] = lease.VideoId });
         var videoDirectory = Path.Combine(workDirectory, lease.VideoId.ToString("N"));
         var sourcePath = Path.Combine(videoDirectory, "original.mp4");
         var hlsDirectory = Path.Combine(videoDirectory, "hls");
@@ -111,15 +112,24 @@ public sealed class PrepareVideo(
                     processingCancellation,
                     renewalCancellation.Token);
 
-                using (StartActivity("media.video.download"))
+                var downloadStartedAt = Stopwatch.GetTimestamp();
+                try
                 {
-                    await storage.DownloadObjectAsync(lease.OriginalObjectKey, sourcePath, processingCancellation.Token);
+                    using (StartActivity("media.video.download", lease.VideoId))
+                    {
+                        await storage.DownloadObjectAsync(lease.OriginalObjectKey, sourcePath, processingCancellation.Token);
+                    }
+                }
+                finally
+                {
+                    MediaTelemetry.RecordVideoPrepareDuration("download", downloadStartedAt);
                 }
 
                 await storage.DeletePrefixAsync(
                     GetHlsObjectPrefix(lease.OriginalObjectKey),
                     processingCancellation.Token);
                 var result = await transcoder.TranscodeAsync(
+                    lease.VideoId,
                     sourcePath,
                     hlsDirectory,
                     keyInfoPath,
@@ -134,12 +144,20 @@ public sealed class PrepareVideo(
 
                 var protectedKey = keyProtector.Protect(lease.VideoId, videoKey);
 
-                using (StartActivity("media.video.publish"))
+                var publishStartedAt = Stopwatch.GetTimestamp();
+                try
                 {
-                    await storage.UploadDirectoryAsync(
-                        hlsDirectory,
-                        GetHlsObjectPrefix(lease.OriginalObjectKey),
-                        processingCancellation.Token);
+                    using (StartActivity("media.video.publish", lease.VideoId))
+                    {
+                        await storage.UploadDirectoryAsync(
+                            hlsDirectory,
+                            GetHlsObjectPrefix(lease.OriginalObjectKey),
+                            processingCancellation.Token);
+                    }
+                }
+                finally
+                {
+                    MediaTelemetry.RecordVideoPrepareDuration("publish", publishStartedAt);
                 }
 
                 renewalCancellation.Cancel();
@@ -223,6 +241,9 @@ public sealed class PrepareVideo(
         {
             throw new InvalidOperationException("The video preparation lease was lost before the ready commit.");
         }
+
+        MediaTelemetry.VideosCompleted.Add(1);
+        MediaTelemetry.VideoTimeToReady.Record(Math.Max(0, (occurredAt - lease.UploadedAt).TotalSeconds));
     }
 
     private async Task<int> RecoverExpiredLeasesCoreAsync(int batchSize, CancellationToken cancellationToken)
@@ -282,6 +303,9 @@ public sealed class PrepareVideo(
                 lease.CorrelationId),
             cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);
+        MediaTelemetry.VideosFailed.Add(
+            1,
+            new KeyValuePair<string, object?>("reason", GetFailureMetricReason(video.FailureReason)));
         await TryCleanupFailedArtifactsAsync(lease, cancellationToken);
         return true;
     }
@@ -323,6 +347,16 @@ public sealed class PrepareVideo(
             1 => TimeSpan.FromMinutes(1),
             2 => TimeSpan.FromMinutes(5),
             _ => throw new InvalidOperationException("The video preparation retry count is invalid."),
+        };
+
+    private static string GetFailureMetricReason(string? reason)
+        => reason switch
+        {
+            VideoFailureReasons.UnreadableFile => "unreadable-file",
+            VideoFailureReasons.UnsupportedFormat => "unsupported-format",
+            VideoFailureReasons.DurationExceeded => "duration-exceeded",
+            VideoFailureReasons.PreparationFailed => "attempts-exhausted",
+            _ => "attempts-exhausted",
         };
 
     [SuppressMessage(
@@ -403,9 +437,10 @@ public sealed class PrepareVideo(
         }
     }
 
-    private static Activity? StartActivity(string name)
+    private static Activity? StartActivity(string name, Guid videoId)
     {
         var activity = MediaTelemetry.ActivitySource.StartActivity(name, ActivityKind.Internal);
+        activity?.SetTag("video.id", videoId.ToString("D"));
         activity?.SetTag("video.status", "preparing");
         return activity;
     }

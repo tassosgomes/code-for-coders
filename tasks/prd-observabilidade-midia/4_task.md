@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.MediaPreparationMetricsTests --minimum-expected-tests 5'
@@ -71,8 +71,8 @@ nem nos motivos de falha.
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 5 testes.
-- [ ] Vídeo ilegível → +1 `failed{reason=unreadable-file}`, nenhum `completed`; vídeo válido →
+- [x] Gate passa (exit 0) com pelo menos 5 testes.
+- [x] Vídeo ilegível → +1 `failed{reason=unreadable-file}`, nenhum `completed`; vídeo válido →
       `completed` + `time_to_ready` + uma observação por `stage`.
 - [ ] Smoke: falha provocada (arquivo corrompido) aparece com motivo na seção Preparação no dia em
       que acontece, e o `video.id` dela é achado no Discover (spans + logs) sem abrir o banco.

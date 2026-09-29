@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import copy
 import json
 import os
 import re
@@ -40,6 +41,10 @@ INSTRUMENT_FIELDS = {
     "media.videos.claimed": "metrics.media.videos.claimed",
     "media.videos.retried": "metrics.media.videos.retried",
     "media.videos.wait": "metrics.media.videos.wait",
+    "media.videos.completed": "metrics.media.videos.completed",
+    "media.videos.failed": "metrics.media.videos.failed",
+    "media.videos.prepare_duration": "metrics.media.videos.prepare_duration",
+    "media.videos.time_to_ready": "metrics.media.videos.time_to_ready",
 }
 
 PANEL_TITLES = {
@@ -53,6 +58,10 @@ PANEL_TITLES = {
     "queue-oldest-waiting": "Fila · Idade do vídeo mais antigo",
     "queue-claims": "Fila · Claims e retentativas",
     "queue-wait": "Fila · Tempo de espera (s)",
+    "preparation-stage-duration": "Preparação · Duração por etapa (s)",
+    "preparation-time-to-ready": "Preparação · Tempo até pronto (s)",
+    "preparation-outcomes": "Preparação · Conclusões e tentativas na janela",
+    "preparation-failures": "Preparação · Falhas por motivo na janela",
 }
 PANEL_VISUALIZATIONS = {
     "videos-by-state": "lnsDatatable",
@@ -65,6 +74,10 @@ PANEL_VISUALIZATIONS = {
     "queue-oldest-waiting": "lnsMetric",
     "queue-claims": "lnsDatatable",
     "queue-wait": "lnsDatatable",
+    "preparation-stage-duration": "lnsDatatable",
+    "preparation-time-to-ready": "lnsDatatable",
+    "preparation-outcomes": "lnsDatatable",
+    "preparation-failures": "lnsDatatable",
 }
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
@@ -254,6 +267,36 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     if INSTRUMENT_FIELDS["media.videos.wait"] not in wait_query or "PERCENTILE(" not in wait_query:
         raise ValueError("painel da fila deve calcular percentis de media.videos.wait")
 
+    preparation_duration_query = panel_query(panels_by_id[stable_id("preparation-stage-duration")])
+    if (
+        INSTRUMENT_FIELDS["media.videos.prepare_duration"] not in preparation_duration_query
+        or "PERCENTILE(" not in preparation_duration_query
+        or "BY stage = attributes.stage" not in preparation_duration_query
+    ):
+        raise ValueError("painel de preparação deve calcular percentis por stage de media.videos.prepare_duration")
+
+    time_to_ready_query = panel_query(panels_by_id[stable_id("preparation-time-to-ready")])
+    if (
+        INSTRUMENT_FIELDS["media.videos.time_to_ready"] not in time_to_ready_query
+        or "PERCENTILE(" not in time_to_ready_query
+    ):
+        raise ValueError("painel de preparação deve calcular percentis de media.videos.time_to_ready")
+
+    outcomes_query = panel_query(panels_by_id[stable_id("preparation-outcomes")])
+    outcome_instruments = ("media.videos.completed", "media.videos.retried")
+    if any(INSTRUMENT_FIELDS[instrument] not in outcomes_query for instrument in outcome_instruments):
+        raise ValueError("painel de preparação deve comparar conclusões e retentativas na janela")
+    if any(f"SUM({INSTRUMENT_FIELDS[instrument]})" not in outcomes_query for instrument in outcome_instruments):
+        raise ValueError("painel de preparação deve somar conclusões e retentativas")
+
+    failures_query = panel_query(panels_by_id[stable_id("preparation-failures")])
+    if (
+        INSTRUMENT_FIELDS["media.videos.failed"] not in failures_query
+        or "SUM(" + INSTRUMENT_FIELDS["media.videos.failed"] + ")" not in failures_query
+        or "BY reason = attributes.reason" not in failures_query
+    ):
+        raise ValueError("painel de preparação deve somar media.videos.failed por reason")
+
     status_panel = panels_by_id[stable_id("videos-by-state")]
     status_state = status_panel["embeddableConfig"]["attributes"]["state"]
     status_query = next(iter(status_state["datasourceStates"]["textBased"]["layers"].values()))[
@@ -280,6 +323,148 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     if summary.get("exportedCount") != len(saved_objects):
         raise ValueError("exportedCount não corresponde à quantidade de saved objects")
     return saved_objects, summary
+
+
+def panel_query(panel: dict) -> str:
+    state = panel["embeddableConfig"]["attributes"]["state"]
+    return state["query"]["esql"]
+
+
+def make_lens_panel(
+    panel_id: str,
+    title: str,
+    query: str,
+    columns: list[tuple[str, str]],
+    data_view_id: str,
+    data_view: dict,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+) -> dict:
+    datasource_columns = []
+    visualization_columns = []
+    metric_index = 0
+    row_index = 0
+    for field_name, field_type in columns:
+        if field_type == "string":
+            column_id = f"datatable_accessor_row_{row_index}"
+            row_index += 1
+            datasource_columns.append({"columnId": column_id, "fieldName": field_name, "meta": {"type": "string"}})
+            visualization_columns.append({"columnId": column_id, "isTransposed": False, "isMetric": False})
+        else:
+            column_id = f"datatable_accessor_metric_{metric_index}"
+            metric_index += 1
+            datasource_columns.append({
+                "columnId": column_id,
+                "fieldName": field_name,
+                "meta": {"type": "number"},
+                "inMetricDimension": True,
+            })
+            visualization_columns.append({"columnId": column_id, "isTransposed": False, "isMetric": True})
+
+    title_text = title
+    internal_reference_name = "indexpattern-datasource-layer-layer_0"
+    layer = {
+        "index": data_view_id,
+        "query": {"esql": query},
+        "columns": datasource_columns,
+        "ignoreGlobalFilters": False,
+    }
+    state = {
+        "datasourceStates": {"textBased": {"layers": {"layer_0": layer}}},
+        "internalReferences": [{"type": "index-pattern", "id": data_view_id, "name": internal_reference_name}],
+        "visualization": {"layerId": "layer_0", "layerType": "data", "columns": visualization_columns},
+        "adHocDataViews": {data_view_id: copy.deepcopy(data_view)},
+        "query": {"esql": query},
+        "filters": [],
+    }
+    return {
+        "type": "vis",
+        "embeddableConfig": {
+            "title": title_text,
+            "attributes": {
+                "visualizationType": "lnsDatatable",
+                "title": "",
+                "references": [],
+                "version": 2,
+                "state": state,
+            },
+        },
+        "panelIndex": panel_id,
+        "gridData": {"x": x, "y": y, "w": width, "h": height, "i": panel_id},
+    }
+
+
+def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
+    saved_objects, summary = load_saved_objects(path)
+    dashboard = next(item for item in saved_objects if item["type"] == "dashboard" and item["id"] == DASHBOARD_ID)
+    attributes = dashboard["attributes"]
+    panels = json.loads(attributes["panelsJSON"])
+    existing_panels = {panel["panelIndex"]: panel for panel in panels}
+    queue_panel = existing_panels[stable_id("queue-wait")]
+    queue_state = queue_panel["embeddableConfig"]["attributes"]["state"]
+    queue_layer = queue_state["datasourceStates"]["textBased"]["layers"]["layer_0"]
+    data_view_id = queue_layer["index"]
+    data_view = queue_state["adHocDataViews"][data_view_id]
+
+    panel_definitions = [
+        (
+            "preparation-stage-duration",
+            "FROM metrics-generic* | WHERE metrics.media.videos.prepare_duration IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.videos.prepare_duration, 50), p95_seconds = PERCENTILE(metrics.media.videos.prepare_duration, 95) BY stage = attributes.stage | SORT stage ASC",
+            [("stage", "string"), ("p50_seconds", "number"), ("p95_seconds", "number")],
+            0,
+            54,
+        ),
+        (
+            "preparation-time-to-ready",
+            "FROM metrics-generic* | WHERE metrics.media.videos.time_to_ready IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.videos.time_to_ready, 50), p95_seconds = PERCENTILE(metrics.media.videos.time_to_ready, 95)",
+            [("p50_seconds", "number"), ("p95_seconds", "number")],
+            24,
+            54,
+        ),
+        (
+            "preparation-outcomes",
+            "FROM metrics-generic* | WHERE metrics.media.videos.completed IS NOT NULL OR metrics.media.videos.retried IS NOT NULL | STATS completed = SUM(metrics.media.videos.completed), retried = SUM(metrics.media.videos.retried)",
+            [("completed", "number"), ("retried", "number")],
+            0,
+            66,
+        ),
+        (
+            "preparation-failures",
+            "FROM metrics-generic* | WHERE metrics.media.videos.failed IS NOT NULL | STATS failed = SUM(metrics.media.videos.failed) BY reason = attributes.reason | SORT reason ASC",
+            [("reason", "string"), ("failed", "number")],
+            24,
+            66,
+        ),
+    ]
+    for key, query, columns, x, y in panel_definitions:
+        panel_id = stable_id(key)
+        existing_panels[panel_id] = make_lens_panel(
+            panel_id,
+            PANEL_TITLES[key],
+            query,
+            columns,
+            data_view_id,
+            data_view,
+            x,
+            y,
+            24,
+            12,
+        )
+
+    attributes["panelsJSON"] = json.dumps(list(existing_panels.values()), ensure_ascii=False, separators=(",", ":"))
+    summary["exportedCount"] = len(saved_objects)
+    content = "\n".join(json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in [*saved_objects, summary]) + "\n"
+    temporary_path = path.with_suffix(path.suffix + ".tmp")
+    try:
+        temporary_path.write_text(content, encoding="utf-8")
+        verify_saved_objects(temporary_path)
+        os.replace(temporary_path, path)
+    except (OSError, ValueError):
+        temporary_path.unlink(missing_ok=True)
+        raise
+    return len(existing_panels)
 
 
 def dotenv_values(path: Path) -> dict[str, str]:
@@ -434,7 +619,12 @@ def main() -> int:
     actions.add_argument(
         "--verify-only",
         action="store_true",
-        help="valida o NDJSON, os IDs, as métricas e os painéis de staleness, envio e fila; não usa rede",
+        help="valida o NDJSON, os IDs, as métricas e os painéis de envio, fila e preparação; não usa rede",
+    )
+    actions.add_argument(
+        "--generate-only",
+        action="store_true",
+        help="gera os painéis de preparação no NDJSON versionado e valida o resultado; não usa rede",
     )
     actions.add_argument(
         "--export",
@@ -450,6 +640,11 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        if args.generate_only:
+            panel_count = generate_saved_objects()
+            print(f"NDJSON gerado e validado com {panel_count} painéis em {SAVED_OBJECTS_PATH.relative_to(REPOSITORY_ROOT)}.")
+            return 0
+
         if args.export:
             export_saved_objects()
             print(f"Saved objects exportados para {SAVED_OBJECTS_PATH.relative_to(REPOSITORY_ROOT)}.")
@@ -463,7 +658,7 @@ def main() -> int:
         print(
             "Verificação estrutural passou: data view metrics-generic* e dashboard "
             f"{DASHBOARD_TITLE!r} com IDs estáveis; métricas verificadas contra o manifesto "
-            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de staleness, envio e fila presentes. "
+            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de envio, fila e preparação presentes. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0

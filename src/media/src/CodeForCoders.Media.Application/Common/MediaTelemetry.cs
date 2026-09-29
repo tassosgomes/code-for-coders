@@ -62,4 +62,29 @@ public static class MediaTelemetry
         {
             HistogramBucketBoundaries = [1, 5, 10, 30, 60, 300, 600, 1800, 3600],
         });
+    public static readonly Counter<long> VideosCompleted = Meter.CreateCounter<long>(
+        "media.videos.completed",
+        unit: "{video}");
+    public static readonly Counter<long> VideosFailed = Meter.CreateCounter<long>(
+        "media.videos.failed",
+        unit: "{video}");
+    public static readonly Histogram<double> VideoPrepareDuration = Meter.CreateHistogram<double>(
+        "media.videos.prepare_duration",
+        unit: "s",
+        advice: new InstrumentAdvice<double>
+        {
+            HistogramBucketBoundaries = [0.1, 0.5, 1, 5, 10, 30, 60, 300, 600, 1800, 3600, 10800, 86400],
+        });
+    public static readonly Histogram<double> VideoTimeToReady = Meter.CreateHistogram<double>(
+        "media.videos.time_to_ready",
+        unit: "s",
+        advice: new InstrumentAdvice<double>
+        {
+            HistogramBucketBoundaries = [10, 30, 60, 300, 600, 1800, 3600, 10800, 21600, 43200, 86400],
+        });
+
+    public static void RecordVideoPrepareDuration(string stage, long startedAt)
+        => VideoPrepareDuration.Record(
+            Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
+            new KeyValuePair<string, object?>("stage", stage));
 }
