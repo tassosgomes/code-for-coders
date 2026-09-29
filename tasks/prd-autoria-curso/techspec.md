@@ -241,7 +241,7 @@ Não há ODCS nesta entrega: a estrutura publicada é comunicada pelo fato, e o 
 
 ## Questões em Aberto
 
-- [ ] Aprovação dos wireframes/Figma da nova área Autoria antes do código visual — time de design e responsável pelo produto — bloqueia a implementação da tela, sem mudar os contratos ou o modelo técnico.
+- [x] Aprovação dos wireframes/Figma da nova área Autoria antes do código visual — responsável pelo produto aprovou explicitamente em 2026-09-29; [registro e desenho](../../docs/design/wireframes-autoria-curso.md) — gate visual satisfeito, sem mudar os contratos ou o modelo técnico.
 - [ ] Política de retenção e atendimento ao titular para o retrato do nome do professor — negócio e Auditoria, em AB03/CAP-031 — afeta operação futura; o retrato fica identificado no inventário de dados de `learning` até essa decisão.
 
 ## Architecture Decision Records

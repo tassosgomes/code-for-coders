@@ -1,6 +1,8 @@
 # Wireframes ASCII — Autoria de curso (CAP-005)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-09-29; desenho no Figma pendente.
+> **Status:** ASCII e Figma aprovados pelo responsável em 2026-09-29.
+> **Responsável:** responsável pelo produto (usuário desta conversa), com aprovação explícita “Está aprovado” após receber o link do desenho real.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040) · task_01 concluída; gate visual das tasks 2.0–7.0 satisfeito, preservadas as demais dependências.
 > **Handoff:** usar estes fluxos, telas, estados e decisões no Figma; submeter o desenho visual à aprovação antes da implementação.
 > **Objetivo:** definir fluxos, conteúdo e estados das telas de Autoria do `admin-spa` antes do desenho no Figma.
 > **Fontes:** [PRD de autoria](../../tasks/prd-autoria-curso/prd.md) v1.0 (RF-01…RF-12, Experiência do Usuário),
@@ -581,7 +583,7 @@ focáveis; títulos e badges não dependem da cor para comunicar o estado.
 
 ---
 
-## 5. Handoff para o Figma (ASCII aprovado)
+## 5. Handoff do Figma — aprovado
 
 1. **Fluxo — Autoria:** os dois diagramas da seção 2, com A1–A12 como nós e as transições de erro.
 2. **Screens — Autoria:** desktop 1440 para A1–A12 e seus estados; mobile 390 para A1, A2, A3,
@@ -589,8 +591,199 @@ focáveis; títulos e badges não dependem da cor para comunicar o estado.
 3. **Components (proposta):** `CourseStatusBadge`, `ModuleAccordionHeader`, `LessonItem`,
    `PublicationPendencyList` e `VideoOption`, reaproveitando os tokens e componentes aprovados.
 
-O desenho visual e sua aprovação são etapas posteriores; este documento registra apenas o fluxo e
-os wireframes ASCII.
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-09-29.
+A revisão começa pelo [índice de Autoria](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040).
+O responsável pelo produto aprovou explicitamente o desenho nesta conversa em **2026-09-29**,
+com a manifestação **“Está aprovado”**, após receber o link do Figma real.
+A task_01 está concluída; o gate visual das tasks 2.0–7.0 foi satisfeito.
+As dependências entre as tasks de implementação permanecem válidas.
+
+### 5.1 Fluxos e navegação
+
+| Artefato | Link e `node-id` |
+|---|---|
+| Índice de revisão | [176:11040](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040) |
+| Fluxo — Criar, montar e publicar | [169:2](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=169-2) |
+| Fluxo — Republicar, descartar e excluir | [169:152](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=169-152) |
+| Página Fluxo — Autoria | [155:7450](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=155-7450) |
+| Página Screens — Autoria | [155:7451](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=155-7451) |
+
+O modo **Present** tem quatro entradas: **Criar e publicar** (A12), **Republicar ou descartar**
+(A3 com mudanças), **Mobile 390** (A1) e **Dark** (A3). Botões, abas, menus de item, confirmação,
+cancelamento e links de pendência navegam entre frames. Os fluxos e o índice abrem os frames
+correspondentes pelo link do arquivo. Estados de falha também podem ser abertos diretamente
+pelos links do inventário abaixo.
+
+Os dados são ilustrativos e os estados são amostras para revisão visual. O protótipo não executa
+escritas reais, busca, arraste, cópia para a área de transferência ou autorização do servidor.
+Foco, teclado, preservação de valores e confirmação após conflito seguem a especificação das
+seções 1–4; o Figma mostra sua apresentação e os caminhos, sem substituir a validação da aplicação.
+
+### 5.2 Inventário de telas e estados
+
+**Desktop · Light**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.a · Cursos da escola · Todos | 1440 × 900 | [158:88](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=158-88) |
+| A2.a · Novo curso · formulário | 1440 × 900 | [158:217](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=158-217) |
+| A3.b · Rascunho estruturado | 1440 × 900 | [158:370](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=158-370) |
+| A1 · Escola sem cursos | 1440 × 900 | [160:366](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-366) |
+| A1 · Filtro sem resultados | 1440 × 900 | [160:448](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-448) |
+| A1 · Carregando | 1440 × 900 | [160:526](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-526) |
+| A1 · Serviço indisponível | 1440 × 900 | [160:596](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-596) |
+| A1 · Filtro Rascunhos | 1440 × 900 | [160:691](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-691) |
+| A1 · Filtro Publicados | 1440 × 900 | [160:779](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-779) |
+| A1.f · Somente leitura | 1440 × 900 | [160:877](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-877) |
+| A11 sucesso · Curso excluído | 1440 × 900 | [160:985](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-985) |
+| A2 · Título inválido | 1440 × 900 | [160:1107](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-1107) |
+| A2 · Criando | 1440 × 900 | [160:1258](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-1258) |
+| A2 · Erro preserva formulário | 1440 × 900 | [160:1407](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-1407) |
+| A3 · Curso sem módulos | 1440 × 900 | [160:1574](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-1574) |
+| A3 · Currículo completo | 1440 × 900 | [160:1662](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-1662) |
+| A3 · Publicado · v1 | 1440 × 900 | [160:1853](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-1853) |
+| A3 · Alterações não publicadas | 1440 × 900 | [160:2050](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-2050) |
+| A3 · Detalhes de vídeo indisponíveis | 1440 × 900 | [160:2272](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-2272) |
+| A3 · Carregando | 1440 × 900 | [160:12831](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-12831) |
+| A3 · Serviço indisponível | 1440 × 900 | [160:12886](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-12886) |
+| A3 · Curso não encontrado | 1440 × 900 | [160:12966](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-12966) |
+| A3 · Publicado · v2 | 1440 × 900 | [160:13046](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-13046) |
+| A3.e · Somente leitura | 1440 × 900 | [160:13243](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-13243) |
+| A3 · Módulo salvo | 1440 × 900 | [160:13348](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-13348) |
+| A3 · Aula salva | 1440 × 900 | [160:13529](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-13529) |
+| A3 · Item reordenado | 1440 × 900 | [160:13710](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-13710) |
+| A3 · Aula movida para Coleções | 1440 × 900 | [160:13891](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-13891) |
+| A3 · Módulo removido | 1440 × 900 | [160:14087](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-14087) |
+| A3 · Aula removida | 1440 × 900 | [160:14180](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-14180) |
+| A3 · Rascunho restaurado | 1440 × 900 | [160:14361](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-14361) |
+| A3 · Rascunho atualizado para nova revisão | 1440 × 900 | [160:14558](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-14558) |
+| A3 · Pendência · foco no módulo Coleções | 1440 × 900 | [160:14776](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-14776) |
+| A3 · Pendência · foco na aula Controle de fluxo | 1440 × 900 | [160:14952](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-14952) |
+| A4 · Editar curso | 1440 × 900 | [160:15128](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-15128) |
+| A4 · Novo módulo | 1440 × 900 | [160:15336](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-15336) |
+| A4 · Editar módulo | 1440 × 900 | [160:15535](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-15535) |
+| A4 · Nova aula | 1440 × 900 | [160:15734](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-15734) |
+| A4 · Editar aula | 1440 × 900 | [160:15942](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-15942) |
+| A4 · Título inválido | 1440 × 900 | [160:16150](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-16150) |
+| A4 · Salvando | 1440 × 900 | [160:16360](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-16360) |
+| A4 · Falha preserva valores | 1440 × 900 | [160:16568](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-16568) |
+| A4 · Limite de módulos | 1440 × 900 | [160:16794](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-16794) |
+| A4 · Limite de aulas | 1440 × 900 | [160:17011](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-17011) |
+| A5 · Menu do módulo | 1440 × 900 | [160:17237](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-17237) |
+| A5 · Menu da aula | 1440 × 900 | [160:17427](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-17427) |
+| A5 · Mover aula para outro módulo | 1440 × 900 | [160:17620](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-17620) |
+| A5 · Confirmar remoção do módulo | 1440 × 900 | [160:17803](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-17803) |
+| A5 · Confirmar remoção da aula | 1440 × 900 | [160:17995](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-17995) |
+| A5 · Falha de remoção | 1440 × 900 | [160:18187](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-18187) |
+| A6 · Vídeos prontos | 1440 × 900 | [160:18397](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=160-18397) |
+| A6 · Seleção pendente | 1440 × 900 | [161:5623](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-5623) |
+| A6 · Sem vídeo pronto | 1440 × 900 | [161:5850](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-5850) |
+| A6 · Busca sem resultados | 1440 × 900 | [161:6054](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-6054) |
+| A6 · Carregando | 1440 × 900 | [161:6257](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-6257) |
+| A6 · Mídia indisponível | 1440 × 900 | [161:6459](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-6459) |
+| A6 · Vídeo ainda indisponível para vínculo | 1440 × 900 | [161:6685](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-6685) |
+| A6 · Trocar ou desvincular vídeo | 1440 × 900 | [161:6939](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-6939) |
+| A6 · Vinculando vídeo | 1440 × 900 | [161:7169](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-7169) |
+| A7 · Pendências | 1440 × 900 | [161:17755](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-17755) |
+| A7 · Curso sem módulos | 1440 × 900 | [161:17989](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-17989) |
+| A7 · Primeira publicação | 1440 × 900 | [161:18215](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-18215) |
+| A7 · Republicar como versão 2 | 1440 × 900 | [161:18438](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-18438) |
+| A7 · Publicando | 1440 × 900 | [161:18661](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-18661) |
+| A7 · Pendências retornadas pelo servidor | 1440 × 900 | [161:18884](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-18884) |
+| A7 · Rascunho mudou · nova revisão obrigatória | 1440 × 900 | [161:19118](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-19118) |
+| A7 · Erro de publicação | 1440 × 900 | [161:19362](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-19362) |
+| A8 · Confirmar descarte | 1440 × 900 | [161:19606](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-19606) |
+| A8 · Rascunho mudou | 1440 × 900 | [161:19839](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-19839) |
+| A8 · Erro de descarte | 1440 × 900 | [161:20089](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20089) |
+| A9 · Versões publicadas | 1440 × 900 | [161:20336](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20336) |
+| A9 · Nenhuma versão | 1440 × 900 | [161:20423](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20423) |
+| A9 · Carregando | 1440 × 900 | [161:20493](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20493) |
+| A9 · Erro de consulta | 1440 × 900 | [161:20557](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20557) |
+| A10 · Versão vigente · leitura imutável | 1440 × 900 | [161:20638](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20638) |
+| A10 · Versão anterior · leitura imutável | 1440 × 900 | [161:20738](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20738) |
+| A10 · Carregando | 1440 × 900 | [161:20838](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20838) |
+| A10 · Versão não encontrada | 1440 × 900 | [161:20901](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20901) |
+| A10 · Erro de consulta | 1440 × 900 | [161:20980](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-20980) |
+| A11 · Confirmar exclusão | 1440 × 900 | [161:21059](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21059) |
+| A11 · Excluindo | 1440 × 900 | [161:21190](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21190) |
+| A11 · Erro preserva rascunho | 1440 × 900 | [161:21321](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21321) |
+| A11 · Publicado por colega · exclusão recusada | 1440 × 900 | [161:21470](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21470) |
+| A12 · Início do professor | 1440 × 900 | [161:21667](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21667) |
+| RF-11 · Auditoria · Versão publicada com título | 1440 × 960 | [161:21752](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21752) |
+| RF-11 · Auditoria · referência sem título | 1440 × 960 | [161:21816](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21816) |
+| B12 · Sem autoria.ler | 1440 × 900 | [161:21880](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21880) |
+| RF-11 · Auditoria · detalhe da versão publicada | 1440 × 1100 | [167:10975](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=167-10975) |
+| RF-11 · Auditoria · detalhe da versão publicada · referência sem título | 1440 × 1100 | [167:11078](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=167-11078) |
+
+**Mobile · Light · 390 px**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1 · Cursos da escola | 390 × 844 | [161:21938](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-21938) |
+| A2 · Novo curso | 390 × 844 | [161:22014](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22014) |
+| A3 · Alterações não publicadas | 390 × 844 | [161:22124](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22124) |
+| A6 · Escolher vídeo pronto | 390 × 844 | [161:22272](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22272) |
+| A7 · Primeira publicação | 390 × 844 | [161:22442](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22442) |
+| A7 · Pendências | 390 × 844 | [161:22600](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22600) |
+| A9 · Histórico | 390 × 844 | [161:22765](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22765) |
+| A3 · Curso recém-criado | 390 × 844 | [168:10704](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=168-10704) |
+| A3 · Rascunho estruturado | 390 × 844 | [168:10757](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=168-10757) |
+| A3 · Currículo completo | 390 × 844 | [168:10876](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=168-10876) |
+| A3 · Publicado · v1 | 390 × 844 | [168:11002](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=168-11002) |
+| A8 · Confirmar descarte | 390 × 844 | [168:11134](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=168-11134) |
+| A10 · Versão vigente | 390 × 844 | [168:11304](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=168-11304) |
+
+**Desktop · Dark**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1 · Cursos da escola | 1440 × 900 | [161:22817](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22817) |
+| A3 · Alterações não publicadas | 1440 × 900 | [161:22932](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-22932) |
+| A6 · Escolher vídeo pronto | 1440 × 900 | [161:23145](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-23145) |
+| A7 · Publicar nova versão | 1440 × 900 | [161:23372](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=161-23372) |
+
+### 5.3 Composições propostas e reuso
+
+As cinco composições são propostas visuais de Autoria; sua criação como `block` em código
+continua sujeita à regra de três usos de `Components.md`. Os frames usam instâncias dos
+componentes existentes e bindings das coleções **Theme**, **Spacing** e **Radius**.
+
+| Composição | Variações | Link e `node-id` |
+|---|---|---|
+| CourseStatusBadge | Rascunho / Publicado / Alterações não publicadas | [157:37](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-37) |
+| ModuleAccordionHeader | Desktop / mobile × edição / leitura | [157:89](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-89) |
+| LessonItem | Desktop / mobile × sem vídeo / vídeo pronto × edição / leitura | [157:178](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-178) |
+| PublicationPendencyList | Pendências de módulo e aula com links individuais | [157:179](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-179) |
+| VideoOption | Selecionado / não selecionado; largura responsiva | [157:209](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-209) |
+
+A [seção de composições](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-2) também inclui os ícones vetoriais
+[book-open](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-3), [grip-vertical](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-7)
+e [chevron-up](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=157-15), a partir dos SVGs de Lucide.
+O AppShell mantém Sidebar 264 e Topbar 68; no mobile a largura é 390 e a navegação compacta usa
+o padrão existente. Button, Badge, Tab, FormField, Input, EmptyState, Alert, Skeleton, Toast,
+Dialog Header, Radio Option e Area Card são instâncias do acervo aprovado. Textarea reaproveita
+a apresentação do campo multilinha, com ajuda e contador próprios de descrição ou nota de versão.
+O reflexo de Auditoria reutiliza a lista e o detalhe aprovados, com tipo **Versão publicada**,
+origem **Conteúdo e Currículo**, alvo **Curso** e estado **Conforme**.
+
+### 5.4 Verificação e aprovação
+
+- Inventário conferido no Figma: **106 frames de telas/estados**, incluindo **13
+  mobile**, **4 Dark**, os dois fluxos, o índice e as cinco composições.
+- Navegação conferida pela leitura das reações do Figma: **1586 destinos de navegação**
+  registrados e válidos na mesma página; A1–A12 são alcançáveis a partir do Início do professor.
+- Estrutura editável: texto, instâncias, frames e vetores; **nenhum preenchimento de imagem**
+  ou captura rasterizada da UI. Fontes conferidas: Plus Jakarta Sans, Inter e JetBrains Mono.
+- Revisão visual por screenshots dos layouts representativos, incluindo formulário, editor,
+  seletor, confirmação mobile, publicação Dark, Auditoria e fluxos; ajustes de reflow, campos
+  multilinha, largura mobile e bounds dos painéis realizados.
+- Aprovação visual explícita recebida do responsável pelo produto nesta conversa em
+  **2026-09-29**: **“Está aprovado”**. O gate estático de aprovação retornou **exit 0**
+  após o registro; ele verifica o registro e não substitui a manifestação humana.
+
+A task_01 foi concluída após a aprovação. As tasks 2.0–7.0 não têm mais o bloqueio visual;
+suas demais dependências e verificações de implementação permanecem obrigatórias.
+
 
 ---
 

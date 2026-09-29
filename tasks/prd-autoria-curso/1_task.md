@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: []
 gate: 'rg -q "^> \\*\\*Status:\\*\\* ASCII e Figma aprovados pelo responsável em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-autoria-curso.md'
@@ -55,9 +55,23 @@ Código do `admin-spa`, API, migrations, Figma Code Connect ou aprovação presu
 
 ## Pronto quando
 
-- [ ] A1–A12, estados, fluxos, mobile e Dark previstos no ASCII têm frames navegáveis e `node-id`
+- [x] A1–A12, estados, fluxos, mobile e Dark previstos no ASCII têm frames navegáveis e `node-id`
   registrados no documento.
-- [ ] O responsável recebe o link e aprova explicitamente o desenho no Figma; eventuais ajustes
+- [x] O responsável recebe o link e aprova explicitamente o desenho no Figma; eventuais ajustes
   pedidos são reapresentados antes de registrar a aprovação.
-- [ ] O cabeçalho do wireframe registra data e responsável **após** essa aprovação; o gate retorna
+- [x] O cabeçalho do wireframe registra data e responsável **após** essa aprovação; o gate retorna
   exit 0. Antes disso, 2.0–7.0 permanecem bloqueadas.
+
+## Evidências do desenho — aprovado em 2026-09-29
+
+- [Índice de revisão no Figma](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040).
+- O inventário de cada tela, estado, fluxo e composição está na seção 5 dos
+  [wireframes de Autoria](../../docs/design/wireframes-autoria-curso.md#5-handoff-do-figma--aprovado).
+- 106 frames de telas/estados, incluindo 13 mobile e 4 Dark; dois fluxos e cinco composições.
+  Camadas editáveis, fontes do DS e destinos de navegação conferidos pela API do Figma;
+  layouts representativos revisados visualmente por screenshots.
+- O responsável pelo produto (usuário desta conversa) aprovou explicitamente o desenho em
+  2026-09-29: **“Está aprovado”**, após receber o link do Figma real. Data e responsável
+  registrados no cabeçalho do wireframe após essa manifestação.
+- Gate de aprovação executado com **exit 0**. Esta task está `done`; o bloqueio visual das
+  tasks 2.0–7.0 foi satisfeito, sem alterar suas demais dependências nem iniciar implementação.

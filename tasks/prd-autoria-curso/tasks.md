@@ -3,9 +3,9 @@
 > **TechSpec de origem:** [techspec.md](techspec.md) 1.0, aprovada em 2026-09-29
 > **Escopo:** Full-stack (`identity`, `learning`, `media`, `audit`, `bff-admin`, `admin-spa`)
 > **Contratos:** [contracts.md](contracts.md) 1.0; OpenAPI e AsyncAPI aprovados em 2026-09-28
-> **Design:** [wireframes-autoria-curso.md](../../docs/design/wireframes-autoria-curso.md), ASCII aprovado em 2026-09-29; Figma pendente
+> **Design:** [wireframes-autoria-curso.md](../../docs/design/wireframes-autoria-curso.md), ASCII e Figma aprovados pelo responsável em 2026-09-29
 > **ADRs pertinentes:** [0001](../../docs/adr/0001-monorepo-de-codigo.md), [0005](../../docs/adr/0005-sessao-e-servico-do-backoffice.md), [0006](../../docs/adr/0006-preparacao-de-video-e-custodia-de-chave.md), [0007](../../docs/adr/0007-snapshots-efemeros-da-consulta-de-auditoria.md)
-> **Status do plano:** Em revisão; nenhuma task de implementação autorizada ou iniciada
+> **Status do plano:** Em revisão; task 1.0 concluída e gate visual satisfeito; nenhuma task de implementação iniciada
 
 ## Visão Geral
 
@@ -20,6 +20,11 @@ explícita. Enquanto ela não existir, 1.0 permanece `pending`/`validating`, seu
 no documento de wireframes só pode ser escrito após a manifestação do responsável sobre o desenho
 real. Aprovação do ASCII ou deste plano não vale como aprovação do Figma. Se houver ajustes, o
 desenho volta à revisão; mudança de comportamento exige atualização e nova aprovação do ASCII.
+
+**Checkpoint visual concluído em 2026-09-29:** após receber o link do desenho real, o responsável
+aprovou explicitamente nesta conversa: **“Está aprovado”**. A task 1.0 está `done` e seu gate
+retornou exit 0. O bloqueio visual das tasks 2.0–7.0 está satisfeito; as demais dependências
+do mapa de entrega permanecem válidas.
 
 ## Fases
 
@@ -72,7 +77,7 @@ vínculo de vídeo pronto já existente. Isso evita uma task horizontal sem feed
 
 ## Tasks
 
-- [ ] 1.0 Desenhar Autoria no Figma e obter aprovação explícita do responsável
+- [x] 1.0 Desenhar Autoria no Figma e obter aprovação explícita do responsável
 - [ ] 2.0 Professor cria e encontra cursos da escola com autorização
 - [ ] 3.0 Professor organiza módulos e aulas do rascunho sem mudar identidades
 - [ ] 4.0 Professor vincula apenas vídeo pronto da escola
@@ -154,7 +159,7 @@ comprovada atribuída a qualquer fatia.
 | `src/bff-admin` | `.github/workflows/bff-admin.yml` → `ci-dotnet.yml@v1`; .NET 10, Debug | mesmos checks; cobertura ≥ 70% | não medido | 2.0–7.0; adaptador real e DI testados |
 | `src/admin-spa` | `.github/workflows/admin-spa.yml` → `ci-react-ts.yml@v1`; Node 24, `--base=/admin/` | `npm ci`, lint, `tsc --noEmit`, Vitest com cobertura de linhas ≥ 70%, build, imagem | não medido | 2.0–7.0; full mede cobertura agregada |
 | Contratos | [contracts.md](contracts.md) | Spectral 6.15.0 e AsyncAPI 6.1.0 já validados no acordo; revalidar se alterados | aprovados; comportamento não medido | tarefas seguem schemas aprovados e provam erros no runtime |
-| Design | [wireframe](../../docs/design/wireframes-autoria-curso.md) §5–6 | Sem CI de Figma; aprovação visual do responsável é obrigatória | ASCII aprovado; Figma pendente | 1.0 mantém implementação bloqueada |
+| Design | [wireframe](../../docs/design/wireframes-autoria-curso.md) §5–6 | Sem CI de Figma; aprovação visual do responsável é obrigatória | ASCII e Figma aprovados em 2026-09-29; gate exit 0 | 1.0 concluída; bloqueio visual satisfeito |
 
 Testes de integração/EndToEnd com Testcontainers precisam de Docker. CI de segurança roda em
 paralelo; o chamador usa `security-mode: observe`, enquanto vazamento de segredo continua bloqueante
