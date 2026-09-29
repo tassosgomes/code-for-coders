@@ -2,31 +2,37 @@
   "schema_version": 1,
   "branch": "feature/observabilidade-midia",
   "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
-  "base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
+  "base_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
   "target_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
   "last_checkpoint": "4b0b38f",
-  "phase": "fix-full",
+  "phase": "complete",
   "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 2,
+  "full_attempt": 3,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "92330a4fbdcc8e5837198be1cb3c470d8218c317",
+  "validated_tree": "7bfaa833c207615626ce2d3c96f51f6142c76c90",
   "last_result": {
-    "run_id": "run.tYxj54Dc",
-    "role": "integrator",
-    "mode": "reopen-task",
-    "task": "7.0",
-    "attempt": null,
-    "outcome": "task_reopened",
-    "gate": "not_run"
+    "run_id": "run.OFJqDMrc",
+    "role": "validator",
+    "mode": "full",
+    "outcome": "approved",
+    "gate": "passed",
+    "report": "tasks/prd-observabilidade-midia/prd_review.md",
+    "commit": "92330a4fbdcc8e5837198be1cb3c470d8218c317",
+    "tree": "7bfaa833c207615626ce2d3c96f51f6142c76c90"
   },
-  "pending_delegation": null,
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "complete-prd",
+    "task": null,
+    "attempt": null
+  },
   "history": [
     {
       "ts": "2026-09-28",
@@ -340,6 +346,18 @@
       "task": "7.0",
       "run_id": "run.96j5Mnkc",
       "note": "0 bloqueantes, 1 pendencia operacional herdada 7.0-P1; gate static_passed (compose valido, default preservado, override 9 servicos); G2 corrigido sem regressao"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "integration_ready",
+      "run_id": "run.OeEr7T9P",
+      "note": "rebase sobre b1578d3 aplicado (G3 resolvido); HEAD 92330a4"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "full_approved",
+      "run_id": "run.OFJqDMrc",
+      "note": "full #3 aprovada (0 bloqueantes; suite 125/125, cobertura 90,09%, gitleaks 0, sensor 6/6); validated_commit=92330a4 tree=7bfaa83"
     }
   ],
   "carryover": {
