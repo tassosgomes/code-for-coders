@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["2.0", "3.0", "4.0", "5.0"]
 gate: "python3 scripts/kibana/import_observabilidade.py --verify-only"
@@ -55,7 +55,7 @@ regras consomem instrumentos já entregues em 2.0–5.0.
 
 ## Pronto quando
 
-- [x] Gate passa (exit 0).
+- [ ] Gate passa (exit 0).
 - [ ] Smoke A2: lote de ≥ 4 vídeos corrompidos ativa o alerta em ≤ 15 min e ele resolve sozinho
       após a janela esvaziar.
 - [ ] Smoke A4: `media-worker` parado com fila acumulando ativa o alerta; volta ao ar → resolve.

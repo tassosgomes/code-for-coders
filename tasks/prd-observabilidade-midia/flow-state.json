@@ -6,7 +6,7 @@
   "target_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
   "last_checkpoint": "4b0b38f",
   "phase": "fix-full",
-  "active_task": "2.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -18,10 +18,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.nhkPJcaB",
+    "run_id": "run.P9p49v9w",
     "role": "integrator",
     "mode": "reopen-task",
-    "task": "2.0",
+    "task": "6.0",
     "attempt": null,
     "outcome": "task_reopened",
     "gate": "not_run"
@@ -236,6 +236,13 @@
       "task": "2.0",
       "run_id": "run.nhkPJcaB",
       "note": "reabertura pos-full F2->2.0 (SUM sobre counters cumulativos distorce RF-02/04/05); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "6.0",
+      "run_id": "run.P9p49v9w",
+      "note": "reabertura pos-full F3->6.0 (A2 perde primeira amostra sem baseline COALESCE(f_base,f_first,0)); codigo preservado"
     }
   ],
   "carryover": {
