@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Identity — integração com o BFF do backoffice
-  version: 1.1.0
+  version: 1.2.0
   description: >-
     Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, EN-01; ADR-0004 e ADR-0005).
     Consumidor único conhecido: `bff-admin`. A asserção de serviço do emissor `bff-admin` autentica o
@@ -477,7 +477,7 @@ components:
       enum: [professor, suporte, financeiro, administrador]
     Permission:
       type: string
-      enum: [acesso.gerir, financeiro.ler, autoria.ler, suporte.atender, midia.enviar]
+      enum: [acesso.gerir, financeiro.ler, autoria.ler, suporte.atender, midia.enviar, autoria.editar]
     Email:
       type: string
       format: email

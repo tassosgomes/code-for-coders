@@ -1,0 +1,50 @@
+asyncapi: 3.0.0
+id: urn:code-4-coders:media
+info:
+  title: Media — registro das Referências de Uso
+  version: 1.1.0
+  description: >-
+    Recorte do primeiro PRD de CAP-005, `tasks/prd-autoria-curso/prd.md` v1.0 de 2026-09-28 (RF-12, DP-04).
+    Acrescenta à aplicação Media a recepção de `conteudo.versao-publicada`. Os fatos que Media produz
+    (`tasks/prd-ingestao-midia/asyncapi-contract.yaml` 1.0.0) não mudam e não são repetidos aqui. Nenhuma
+    interface HTTP de Media muda; o uso das referências na abertura de sessão é de CAP-007 (RN-M10).
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  versaoPublicada:
+    address: conteudo.versao-publicada.v1
+    description: Fato de `learning` (`asyncapi-contract.yaml` 1.0.0 desta pasta), sem mudança.
+    messages:
+      versaoPublicada:
+        $ref: './asyncapi-contract.yaml#/components/messages/VersaoPublicada'
+operations:
+  receberVersaoPublicada:
+    action: receive
+    summary: Substituir as Referências de Uso do curso pelas da versão vigente.
+    channel:
+      $ref: '#/channels/versaoPublicada'
+    messages:
+      - $ref: '#/channels/versaoPublicada/messages/versaoPublicada'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: '0.3.0'
+    description: >-
+      Compromissos observáveis (o mecanismo fica na TechSpec).
+      (1) Para cada aula da versão, registra a Referência de Uso (`courseId`, `lessonId`) → `videoId`,
+      na escola do fato. Guarda só identificadores: `title` de curso, módulo e aula é descartado (RN-M02).
+      (2) As referências de um curso são as da maior `versionNumber` aplicada. A nova versão substitui o
+      conjunto anterior por inteiro; referência a aula ausente deixa de valer (DP-04).
+      (3) Fato com `versionNumber` menor ou igual ao já aplicado para o curso é confirmado sem efeito.
+      Reentrega com o mesmo `eventId` não muda nada.
+      (4) Vídeo desconhecido ou de outra escola não é criado nem associado; a referência é registrada
+      mesmo assim, como RN-M09 prevê para ativo ainda não pronto, e nenhuma sessão abre para ela (RN-M05).
+      (5) Falha transitória não confirma a mensagem, que volta; esgotadas as entregas, segue para a fila
+      de erro e pode ser reprocessada sem efeito duplicado, por (2) e (3).

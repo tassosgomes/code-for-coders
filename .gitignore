@@ -10,3 +10,9 @@
 **/coverage/
 *.user
 *.suo
+
+# SKILLs
+.tsg
+.tsg-flow
+.groma
+.playwright-mcp
