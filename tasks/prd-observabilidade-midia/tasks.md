@@ -76,7 +76,7 @@ demais carregam instrumentação + painel na mesma linha.
 - [x] 3.0 Profundidade e idade da fila de preparação visíveis no painel
 - [x] 4.0 Resultado da preparação com motivo, e investigação por vídeo até o trace
 - [x] 5.0 Saúde do outbox e da DLQ no mesmo painel
-- [ ] 6.0 Alertas A1–A5 no Kibana, versionados e resolvendo sozinhos
+- [x] 6.0 Alertas A1–A5 no Kibana, versionados e resolvendo sozinhos
 - [x] 7.0 Paridade local: endpoint OTLP interpolável no Compose
 
 ## Caminho crítico e lanes

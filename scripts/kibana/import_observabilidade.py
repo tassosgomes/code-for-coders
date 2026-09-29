@@ -211,7 +211,8 @@ def verify_no_counter_sum(panels_query_text: str) -> None:
 # The ES|QL query returns rows only while the breach holds; the rule threshold
 # ([0], ">") fires on row count, so the alert recovers alone when rows stop.
 # A2 consome counters cumulativos: calcula incrementos (valor final na janela −
-# baseline imediatamente anterior à janela, por série, com tratamento de reset)
+# baseline imediatamente anterior à janela — ou 0 quando a série é nova, sem
+# amostra anterior — por série, com tratamento de reset)
 # em vez de somar snapshots — ver verify_a2_* abaixo.
 ALERT_RULE_TYPE_ID = ".es-query"
 ALERT_CONSUMER = "stackAlerts"
@@ -251,8 +252,9 @@ ALERT_RULES = {
         # amostra imediatamente anterior ao início da janela: sem ela, eventos
         # entre o início da janela e o primeiro snapshot produziriam FIRST = LAST
         # (incremento 0) e A2 perderia o disparo. O baseline é o LAST antes da
-        # janela (WHERE in_window == 0); sem amostra anterior, recai em FIRST na
-        # janela; sem nenhum ponto, em 0.
+        # janela (WHERE in_window == 0); sem amostra anterior, a série é nova —
+        # o counter começou em 0 quando a série apareceu — então o início é 0
+        # (COALESCE(base, 0), nunca o FIRST dentro da janela).
         "esql": (
             "FROM metrics-generic*"
             " | WHERE @timestamp >= NOW() - 16 minutes"
@@ -266,8 +268,8 @@ ALERT_RULES = {
             " f_base = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 0,"
             " f_first = FIRST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1,"
             " f_last = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1 BY reason"
-            " | EVAL c_start = COALESCE(c_base, c_first, 0), c_end = COALESCE(c_last, c_start),"
-            " f_start = COALESCE(f_base, f_first, 0), f_end = COALESCE(f_last, f_start)"
+            " | EVAL c_start = COALESCE(c_base, 0), c_end = COALESCE(c_last, c_start),"
+            " f_start = COALESCE(f_base, 0), f_end = COALESCE(f_last, f_start)"
             " | EVAL c_inc = CASE(c_end >= c_start, c_end - c_start, c_end),"
             " f_inc = CASE(f_end >= f_start, f_end - f_start, f_end)"
             " | STATS completed = SUM(c_inc), failed = SUM(f_inc)"
@@ -377,8 +379,8 @@ def verify_a2_esql_shape(esql: str, rule_id: str) -> None:
         "c_last = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1",
         "f_base = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 0",
         "f_last = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1",
-        "COALESCE(c_base, c_first, 0)",
-        "COALESCE(f_base, f_first, 0)",
+        "COALESCE(c_base, 0)",
+        "COALESCE(f_base, 0)",
         "BY reason",
     )
     for snippet in required:
@@ -390,11 +392,14 @@ def verify_a2_esql_shape(esql: str, rule_id: str) -> None:
     for forbidden in (
         "SUM(metrics.media.videos.completed)",
         "SUM(metrics.media.videos.failed)",
+        "COALESCE(c_base, c_first",
+        "COALESCE(f_base, f_first",
     ):
         if forbidden in esql:
             raise ValueError(
-                f"regra A2 ({rule_id}) não pode usar {forbidden}: counters "
-                "cumulativos repetem o total acumulado em cada snapshot"
+                f"regra A2 ({rule_id}) usa forma proibida {forbidden!r}: "
+                "baseline ausente significa série nova (início 0); "
+                "recuar para FIRST perde as finalizações antes do 1º snapshot"
             )
 
 
@@ -407,9 +412,37 @@ def a2_old_window_totals(points: list[dict]) -> tuple[float, float, float, float
 
 
 def a2_window_increments(points: list[dict]) -> tuple[float, float, float, float]:
-    """Matemática sem baseline de A2 (FIRST − LAST só na janela): perde eventos
-    entre o início da janela e o primeiro snapshot — ver caso (d) abaixo."""
-    return a2_window_increments_with_baseline([p for p in points if p.get("in_window", True)], [])
+    """Matemática antiga (incorreta) de A2: início recua para FIRST na janela.
+
+    Espelha o COALESCE(base, first, 0) anterior: perde as finalizações entre o
+    início da janela e o primeiro snapshot — ver casos (d) e (e) abaixo."""
+    series: dict[str, dict[str, float | None]] = {}
+    for point in points:
+        key = point.get("reason") or "__completed__"
+        entry = series.setdefault(
+            key,
+            {"c_base": None, "c_first": None, "c_last": None, "f_base": None, "f_first": None, "f_last": None},
+        )
+        completed, failed = point.get("completed"), point.get("failed")
+        if completed is not None:
+            if entry["c_first"] is None:
+                entry["c_first"] = completed
+            entry["c_last"] = completed
+        if failed is not None:
+            if entry["f_first"] is None:
+                entry["f_first"] = failed
+            entry["f_last"] = failed
+
+    def increment(start: float | None, first: float | None, last: float | None) -> float:
+        start = first if start is None else start
+        start = 0 if start is None else start
+        last = start if last is None else last
+        return (last - start) if last >= start else last
+
+    completed = sum(increment(entry["c_base"], entry["c_first"], entry["c_last"]) for entry in series.values())
+    failed = sum(increment(entry["f_base"], entry["f_first"], entry["f_last"]) for entry in series.values())
+    total = completed + failed
+    return completed, failed, total, (failed / total if total else 0.0)
 
 
 def a2_window_increments_with_baseline(
@@ -419,8 +452,9 @@ def a2_window_increments_with_baseline(
 
     `window_points` e `baseline_points` estão em ordem de @timestamp. Cada série
     é a dimensão `reason` (`failed`) ou "__completed__" (`completed`, sem
-    dimensão). O início é o LAST do baseline, com fallback para FIRST na janela
-    e depois 0; o fim é o LAST na janela (fallback para o início). Reset
+    dimensão). O início é o LAST do baseline; sem amostra anterior, a série é
+    nova e o counter começou em 0 (COALESCE(base, 0), nunca o FIRST na janela);
+    o fim é o LAST na janela (fallback para o início). Reset
     (fim < início) vale o fim — o acumulado desde o restart — sempre ≥ 0.
     """
     series: dict[str, dict[str, float | None]] = {}
@@ -451,7 +485,7 @@ def a2_window_increments_with_baseline(
             entry["f_last"] = failed
 
     def increment(start: float | None, first: float | None, last: float | None) -> float:
-        start = first if start is None else start
+        # Série nova (sem baseline): o counter começou em 0 — nunca o FIRST.
         start = 0 if start is None else start
         last = start if last is None else last
         return (last - start) if last >= start else last
@@ -473,13 +507,23 @@ def verify_a2_counter_semantics() -> None:
     (d) Eventos no início da janela: baseline conhecido + 4 finalizações entre o
     início da janela e o primeiro snapshot → a forma sem baseline conta 0 (não
     dispara) e a forma com baseline conta 4 (dispara).
+    (e) Série nova sem baseline (ex.: um `reason` que nunca falhou antes):
+    baseline ausente + 4 falhas na janela → a forma nova (início 0) conta 4
+    (dispara); a forma antiga (recuo para FIRST) conta 3 em rampa 1→4, ou 0 se
+    as 4 falhas chegam antes do primeiro snapshot (abaixo do mínimo de 4,
+    perde o disparo).
     """
     # (a) Uma única falha (cumulativo failed=1), repetida a cada 60 s na janela.
+    # A série já existia antes da janela (baseline failed=1), então não há
+    # incremento real.
     lonely_failure = [
         {"completed": 0, "failed": 1, "reason": "unreadable-file"} for _ in range(15)
     ]
+    lonely_baseline = [
+        {"completed": 0, "failed": 1, "reason": "unreadable-file"},
+    ]
     lonely_old = a2_old_window_totals(lonely_failure)
-    lonely_new = a2_window_increments(lonely_failure)
+    lonely_new = a2_window_increments_with_baseline(lonely_failure, lonely_baseline)
     if not (lonely_old[2] >= 4 and lonely_old[3] > 0.10):
         raise ValueError("demonstração A2(a) inconsistente: forma antiga deveria disparar")
     if lonely_new[2] != 0:
@@ -489,12 +533,18 @@ def verify_a2_counter_semantics() -> None:
         )
 
     # (b) Volume real: completed 100→104; failed em 2 motivos (50→51, 20→21).
+    # As séries já existiam (baselines 100/50/20), então os incrementos são reais.
     real_volume = (
         [{"completed": 100 + i, "failed": None, "reason": None} for i in range(5)]
         + [{"completed": None, "failed": 50 + (i // 8), "reason": "unreadable-file"} for i in range(15)]
         + [{"completed": None, "failed": 20 + (i // 8), "reason": "unsupported-format"} for i in range(15)]
     )
-    volume_new = a2_window_increments(real_volume)
+    volume_baseline = [
+        {"completed": 100, "failed": None, "reason": None},
+        {"completed": None, "failed": 50, "reason": "unreadable-file"},
+        {"completed": None, "failed": 20, "reason": "unsupported-format"},
+    ]
+    volume_new = a2_window_increments_with_baseline(real_volume, volume_baseline)
     if not (volume_new[0] == 4 and volume_new[1] == 2 and volume_new[2] >= 4 and volume_new[3] > 0.10):
         raise ValueError(
             f"demonstração A2(b) inconsistente: forma nova contou "
@@ -502,12 +552,17 @@ def verify_a2_counter_semantics() -> None:
         )
 
     # (c) Reset no meio da janela: completed 100,101 → restart → 0,1,2.
+    # A série existia em 100 antes da janela; após o reset vale o acumulado
+    # pós-restart.
     with_reset = [
         {"completed": value, "failed": None, "reason": None}
         for value in (100, 101, 0, 1, 2)
     ]
+    reset_baseline = [
+        {"completed": 100, "failed": None, "reason": None},
+    ]
     reset_old = a2_old_window_totals(with_reset)
-    reset_new = a2_window_increments(with_reset)
+    reset_new = a2_window_increments_with_baseline(with_reset, reset_baseline)
     if reset_new[0] != 2:
         raise ValueError(
             f"demonstração A2(c) inconsistente: após reset a forma nova contou "
@@ -548,6 +603,44 @@ def verify_a2_counter_semantics() -> None:
             f"(total={early_with_baseline[2]} taxa={early_with_baseline[3]:.2f})"
         )
 
+    # (e) Série nova sem baseline: um reason que nunca falhou antes — o counter
+    # começa em 0 quando a série aparece, então o início é 0. Rampa 1→4 na
+    # janela: a forma nova conta 4 (dispara); a forma antiga, recuando para
+    # FIRST=1, conta 3 (abaixo do mínimo de 4, perde o disparo). Se as 4 falhas
+    # chegam antes do primeiro snapshot (janela estável em 4), a forma antiga
+    # conta 0.
+    new_series_ramp = [
+        {"completed": None, "failed": value, "reason": "corrupt-frame"}
+        for value in (1, 2, 3, 4)
+    ]
+    new_series_flat = [
+        {"completed": None, "failed": 4, "reason": "corrupt-frame"} for _ in range(14)
+    ]
+    ramp_old = a2_window_increments(new_series_ramp)
+    ramp_new = a2_window_increments_with_baseline(new_series_ramp, [])
+    flat_old = a2_window_increments(new_series_flat)
+    flat_new = a2_window_increments_with_baseline(new_series_flat, [])
+    if ramp_old[1] != 3 or ramp_old[2] >= 4:
+        raise ValueError(
+            "demonstração A2(e) inconsistente: forma antiga na rampa contou "
+            f"failed={ramp_old[1]} total={ramp_old[2]} (esperado 3, sem disparo)"
+        )
+    if not (ramp_new[1] == 4 and ramp_new[2] >= 4 and ramp_new[3] > 0.10):
+        raise ValueError(
+            "demonstração A2(e) inconsistente: forma nova na rampa contou "
+            f"failed={ramp_new[1]} total={ramp_new[2]} (esperado 4, com disparo)"
+        )
+    if flat_old[2] != 0:
+        raise ValueError(
+            "demonstração A2(e) inconsistente: forma antiga na janela estável contou "
+            f"{flat_old[2]} finalizações (esperado 0)"
+        )
+    if not (flat_new[1] == 4 and flat_new[2] >= 4 and flat_new[3] > 0.10):
+        raise ValueError(
+            "demonstração A2(e) inconsistente: forma nova na janela estável contou "
+            f"failed={flat_new[1]} total={flat_new[2]} (esperado 4, com disparo)"
+        )
+
     print(
         "A2 (counters cumulativos): falha isolada repetida em 15 snapshots → "
         f"forma antiga total={lonely_old[2]:.0f} taxa={lonely_old[3]:.2f} (dispararia), "
@@ -557,7 +650,12 @@ def verify_a2_counter_semantics() -> None:
         f"forma antiga {reset_old[2]:.0f}; eventos no início da janela "
         f"(baseline + 4 finalizações antes do 1º snapshot) → sem baseline "
         f"total={early_without_baseline[2]:.0f} (não dispara), com baseline "
-        f"total={early_with_baseline[2]:.0f} taxa={early_with_baseline[3]:.2f} (dispara)."
+        f"total={early_with_baseline[2]:.0f} taxa={early_with_baseline[3]:.2f} (dispara); "
+        f"série nova sem baseline (4 falhas, rampa 1→4) → forma antiga "
+        f"failed={ramp_old[1]:.0f} (não dispara), forma nova "
+        f"total={ramp_new[2]:.0f} taxa={ramp_new[3]:.2f} (dispara); janela estável "
+        f"em 4 → forma antiga total={flat_old[2]:.0f} (não dispara), forma nova "
+        f"total={flat_new[2]:.0f} (dispara)."
     )
 
 
@@ -1488,7 +1586,8 @@ def main() -> int:
             "na janela − baseline imediatamente anterior à janela, por série "
             "ordenada por @timestamp, com tratamento de reset, somados entre as séries de reason), "
             "em vez de somar snapshots; a demonstração offline acima confirma a semântica, "
-            "incluindo o caso de eventos no início da janela. Os painéis de funil, claims, "
+            "incluindo o caso de eventos no início da janela e o de série nova sem "
+            "baseline (início 0). Os painéis de funil, claims, "
             "resultados, falhas por motivo e publicações por evento usam a mesma semântica de "
             "incrementos na janela selecionada (LAST − FIRST por série, com tratamento de reset; "
             "o início é o FIRST dentro da janela, pois o filtro temporal do dashboard não expõe "

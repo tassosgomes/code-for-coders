@@ -257,6 +257,20 @@
       "task": "2.0",
       "run_id": "run.NyCE5kgx",
       "note": "0 bloqueantes, 1 pendencia operacional herdada; gate 5 testes + verify-only/format/build/unit/arch verdes; F2 corrigido sem regressao .NET"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "6.0",
+      "run_id": "run.Got70VSW",
+      "note": "fix F3 (A2 COALESCE(base,0) serie nova + caso offline e; NDJSON regenerado, zero conectores); gate passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "6.0",
+      "run_id": "run.tMg9FCf6",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada 6.0-P1; gate verify-only exit 0 (A1-A5 IDs estaveis, sem conectores)"
     }
   ],
   "carryover": {
