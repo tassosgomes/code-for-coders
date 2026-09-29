@@ -94,10 +94,417 @@ PANEL_VISUALIZATIONS = {
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
 
+# Alert rules A1–A5 (TechSpec § Infraestrutura de visualização, tabela contratual).
+# Threshold rules over metrics-generic*, evaluated every 1 min on a 15 min window,
+# with NO notification connector (PRD DP-02: alcance é a tela de Alertas do Kibana).
+# The ES|QL query returns rows only while the breach holds; the rule threshold
+# ([0], ">") fires on row count, so the alert recovers alone when rows stop.
+# A2 consome counters cumulativos: calcula incrementos (valor final na janela −
+# baseline imediatamente anterior à janela, por série, com tratamento de reset)
+# em vez de somar snapshots — ver verify_a2_* abaixo.
+ALERT_RULE_TYPE_ID = ".es-query"
+ALERT_CONSUMER = "stackAlerts"
+ALERT_SCHEDULE_INTERVAL = "1m"
+ALERT_TIME_WINDOW_SIZE = 15
+ALERT_TIME_WINDOW_UNIT = "m"
+ALERT_TAG = "observabilidade-midia"
+ALERT_RULES = {
+    "midia-a1-video-preso": {
+        "code": "A1",
+        "name": "[Mídia] A1 · Vídeo preso",
+        "instruments": ("media.videos.stuck",),
+        "threshold_markers": ("stuck > 0",),
+        "esql": (
+            "FROM metrics-generic*"
+            " | WHERE @timestamp >= NOW() - 15 minutes"
+            " AND metrics.media.videos.stuck IS NOT NULL"
+            " | STATS stuck = MAX(metrics.media.videos.stuck)"
+            " | WHERE stuck > 0"
+        ),
+    },
+    "midia-a2-taxa-falha-preparacao": {
+        "code": "A2",
+        "name": "[Mídia] A2 · Taxa de falha de preparação",
+        "instruments": ("media.videos.completed", "media.videos.failed"),
+        "threshold_markers": ("total >= 4", "failure_rate > 0.10"),
+        # media.videos.completed/failed são counters cumulativos (o exportador OTLP
+        # .NET usa temporality cumulativa): cada snapshot repete o total acumulado,
+        # então SOMAR os pontos multiplica o valor. Os incrementos reais na janela
+        # são valor_final_na_janela − baseline_antes_da_janela por série ordenada
+        # por @timestamp (FIRST/LAST com sort field, GA desde o ES 9.4), com reset
+        # tratado como "acumulado desde o restart" (vale o final quando
+        # final < início, sempre ≥ 0), somados entre séries. `failed` tem a
+        # dimensão `reason` (uma série por motivo); `completed` não tem dimensão
+        # (série única "__completed__").
+        # O filtro busca 16 min (15 da janela + 1 de baseline) para capturar a
+        # amostra imediatamente anterior ao início da janela: sem ela, eventos
+        # entre o início da janela e o primeiro snapshot produziriam FIRST = LAST
+        # (incremento 0) e A2 perderia o disparo. O baseline é o LAST antes da
+        # janela (WHERE in_window == 0); sem amostra anterior, recai em FIRST na
+        # janela; sem nenhum ponto, em 0.
+        "esql": (
+            "FROM metrics-generic*"
+            " | WHERE @timestamp >= NOW() - 16 minutes"
+            " AND (metrics.media.videos.completed IS NOT NULL"
+            " OR metrics.media.videos.failed IS NOT NULL)"
+            " | EVAL reason = COALESCE(attributes.reason, \"__completed__\"),"
+            " in_window = CASE(@timestamp >= NOW() - 15 minutes, 1, 0)"
+            " | STATS c_base = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 0,"
+            " c_first = FIRST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1,"
+            " c_last = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1,"
+            " f_base = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 0,"
+            " f_first = FIRST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1,"
+            " f_last = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1 BY reason"
+            " | EVAL c_start = COALESCE(c_base, c_first, 0), c_end = COALESCE(c_last, c_start),"
+            " f_start = COALESCE(f_base, f_first, 0), f_end = COALESCE(f_last, f_start)"
+            " | EVAL c_inc = CASE(c_end >= c_start, c_end - c_start, c_end),"
+            " f_inc = CASE(f_end >= f_start, f_end - f_start, f_end)"
+            " | STATS completed = SUM(c_inc), failed = SUM(f_inc)"
+            " | EVAL c = COALESCE(completed, 0), f = COALESCE(failed, 0)"
+            " | EVAL total = c + f, failure_rate = f * 1.0 / total"
+            " | WHERE total >= 4 AND failure_rate > 0.10"
+        ),
+    },
+    "midia-a3-outbox": {
+        "code": "A3",
+        "name": "[Mídia] A3 · Outbox esgotado/atrasado",
+        "instruments": ("media.outbox.exhausted", "media.outbox.oldest_pending"),
+        "threshold_markers": ("exhausted > 0", "oldest_pending_seconds > 600"),
+        "esql": (
+            "FROM metrics-generic*"
+            " | WHERE @timestamp >= NOW() - 15 minutes"
+            " AND (metrics.media.outbox.exhausted IS NOT NULL"
+            " OR metrics.media.outbox.oldest_pending IS NOT NULL)"
+            " | STATS exhausted = MAX(metrics.media.outbox.exhausted),"
+            " oldest_pending_seconds = MAX(metrics.media.outbox.oldest_pending)"
+            " | WHERE exhausted > 0 OR oldest_pending_seconds > 600"
+        ),
+    },
+    "midia-a4-fila-parada": {
+        "code": "A4",
+        "name": "[Mídia] A4 · Fila parada",
+        "instruments": ("media.videos.oldest_waiting",),
+        "threshold_markers": ("oldest_waiting_seconds > 1800",),
+        "esql": (
+            "FROM metrics-generic*"
+            " | WHERE @timestamp >= NOW() - 15 minutes"
+            " AND metrics.media.videos.oldest_waiting IS NOT NULL"
+            " | STATS oldest_waiting_seconds = MAX(metrics.media.videos.oldest_waiting)"
+            " | WHERE oldest_waiting_seconds > 1800"
+        ),
+    },
+    "midia-a5-dlq": {
+        "code": "A5",
+        "name": "[Mídia] A5 · DLQ não vazia",
+        "instruments": ("media.messaging.dlq.messages",),
+        "threshold_markers": ("dlq_messages > 0",),
+        "esql": (
+            "FROM metrics-generic*"
+            " | WHERE @timestamp >= NOW() - 15 minutes"
+            " AND metrics.media.messaging.dlq.messages IS NOT NULL"
+            " | STATS dlq_messages = MAX(metrics.media.messaging.dlq.messages)"
+            " | WHERE dlq_messages > 0"
+        ),
+    },
+}
+ALERT_CORE_MIGRATION_VERSION = "8.8.0"
+ALERT_TYPE_MIGRATION_VERSION = "10.14.0"
+
 
 def stable_id(name: str) -> str:
     """Return the fixed child ID used by the dashboard definition."""
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"code-for-coders:{DASHBOARD_ID}:panel/{name}"))
+
+
+def alert_rule_params(esql: str) -> dict:
+    """Return the canonical .es-query params for an A1–A5 rule."""
+    return {
+        "aggType": "count",
+        "esqlQuery": {"esql": esql},
+        "excludeHitsFromPreviousRun": True,
+        "groupBy": "all",
+        "searchType": "esqlQuery",
+        "size": 0,
+        "threshold": [0],
+        "thresholdComparator": ">",
+        "timeField": TIME_FIELD,
+        "timeWindowSize": ALERT_TIME_WINDOW_SIZE,
+        "timeWindowUnit": ALERT_TIME_WINDOW_UNIT,
+    }
+
+
+def build_alert_saved_object(rule_id: str, rule: dict) -> dict:
+    """Return the versioned saved object for an A1–A5 alert rule."""
+    return {
+        "type": "alert",
+        "id": rule_id,
+        "attributes": {
+            "name": rule["name"],
+            "tags": [ALERT_TAG, rule["code"]],
+            "consumer": ALERT_CONSUMER,
+            "schedule": {"interval": ALERT_SCHEDULE_INTERVAL},
+            "alertTypeId": ALERT_RULE_TYPE_ID,
+            "params": alert_rule_params(rule["esql"]),
+            "actions": [],
+            "enabled": True,
+            "throttle": None,
+            "notifyWhen": None,
+            "muteAll": False,
+        },
+        "references": [],
+        "coreMigrationVersion": ALERT_CORE_MIGRATION_VERSION,
+        "typeMigrationVersion": ALERT_TYPE_MIGRATION_VERSION,
+    }
+
+
+def verify_a2_esql_shape(esql: str, rule_id: str) -> None:
+    """A2 consome counters cumulativos: exige final − baseline por série."""
+    required = (
+        "NOW() - 16 minutes",
+        "in_window",
+        "c_base = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 0",
+        "c_last = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1",
+        "f_base = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 0",
+        "f_last = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1",
+        "COALESCE(c_base, c_first, 0)",
+        "COALESCE(f_base, f_first, 0)",
+        "BY reason",
+    )
+    for snippet in required:
+        if snippet not in esql:
+            raise ValueError(
+                f"regra A2 ({rule_id}) precisa calcular incrementos por série "
+                f"(falta {snippet!r}); somar snapshots cumulativos multiplica o valor"
+            )
+    for forbidden in (
+        "SUM(metrics.media.videos.completed)",
+        "SUM(metrics.media.videos.failed)",
+    ):
+        if forbidden in esql:
+            raise ValueError(
+                f"regra A2 ({rule_id}) não pode usar {forbidden}: counters "
+                "cumulativos repetem o total acumulado em cada snapshot"
+            )
+
+
+def a2_old_window_totals(points: list[dict]) -> tuple[float, float, float, float]:
+    """Matemática antiga (incorreta) de A2: SUM dos snapshots cumulativos."""
+    completed = sum(0 if point.get("completed") is None else point["completed"] for point in points)
+    failed = sum(0 if point.get("failed") is None else point["failed"] for point in points)
+    total = completed + failed
+    return completed, failed, total, (failed / total if total else 0.0)
+
+
+def a2_window_increments(points: list[dict]) -> tuple[float, float, float, float]:
+    """Matemática sem baseline de A2 (FIRST − LAST só na janela): perde eventos
+    entre o início da janela e o primeiro snapshot — ver caso (d) abaixo."""
+    return a2_window_increments_with_baseline([p for p in points if p.get("in_window", True)], [])
+
+
+def a2_window_increments_with_baseline(
+    window_points: list[dict], baseline_points: list[dict]
+) -> tuple[float, float, float, float]:
+    """Matemática nova de A2, espelhando a query ES|QL: final − baseline por série.
+
+    `window_points` e `baseline_points` estão em ordem de @timestamp. Cada série
+    é a dimensão `reason` (`failed`) ou "__completed__" (`completed`, sem
+    dimensão). O início é o LAST do baseline, com fallback para FIRST na janela
+    e depois 0; o fim é o LAST na janela (fallback para o início). Reset
+    (fim < início) vale o fim — o acumulado desde o restart — sempre ≥ 0.
+    """
+    series: dict[str, dict[str, float | None]] = {}
+    for point in baseline_points:
+        key = point.get("reason") or "__completed__"
+        entry = series.setdefault(
+            key,
+            {"c_base": None, "c_first": None, "c_last": None, "f_base": None, "f_first": None, "f_last": None},
+        )
+        if point.get("completed") is not None:
+            entry["c_base"] = point["completed"]
+        if point.get("failed") is not None:
+            entry["f_base"] = point["failed"]
+    for point in window_points:
+        key = point.get("reason") or "__completed__"
+        entry = series.setdefault(
+            key,
+            {"c_base": None, "c_first": None, "c_last": None, "f_base": None, "f_first": None, "f_last": None},
+        )
+        completed, failed = point.get("completed"), point.get("failed")
+        if completed is not None:
+            if entry["c_first"] is None:
+                entry["c_first"] = completed
+            entry["c_last"] = completed
+        if failed is not None:
+            if entry["f_first"] is None:
+                entry["f_first"] = failed
+            entry["f_last"] = failed
+
+    def increment(start: float | None, first: float | None, last: float | None) -> float:
+        start = first if start is None else start
+        start = 0 if start is None else start
+        last = start if last is None else last
+        return (last - start) if last >= start else last
+
+    completed = sum(increment(entry["c_base"], entry["c_first"], entry["c_last"]) for entry in series.values())
+    failed = sum(increment(entry["f_base"], entry["f_first"], entry["f_last"]) for entry in series.values())
+    total = completed + failed
+    return completed, failed, total, (failed / total if total else 0.0)
+
+
+def verify_a2_counter_semantics() -> None:
+    """Demonstração offline de que A2 conta finalizações reais, não snapshots.
+
+    (a) Uma falha isolada repetida em 15 snapshots: a forma antiga (SUM) atinge o
+    mínimo e dispara com taxa 100%; a forma nova conta 0 incrementos e não dispara.
+    (b) 4 conclusões + 2 falhas reais na janela: a forma nova dispara (total 6,
+    taxa 1/3). (c) Reset de contador no meio da janela: a forma nova conta só o
+    acumulado pós-restart; a forma antiga multiplica os totais pré-reset.
+    (d) Eventos no início da janela: baseline conhecido + 4 finalizações entre o
+    início da janela e o primeiro snapshot → a forma sem baseline conta 0 (não
+    dispara) e a forma com baseline conta 4 (dispara).
+    """
+    # (a) Uma única falha (cumulativo failed=1), repetida a cada 60 s na janela.
+    lonely_failure = [
+        {"completed": 0, "failed": 1, "reason": "unreadable-file"} for _ in range(15)
+    ]
+    lonely_old = a2_old_window_totals(lonely_failure)
+    lonely_new = a2_window_increments(lonely_failure)
+    if not (lonely_old[2] >= 4 and lonely_old[3] > 0.10):
+        raise ValueError("demonstração A2(a) inconsistente: forma antiga deveria disparar")
+    if lonely_new[2] != 0:
+        raise ValueError(
+            f"demonstração A2(a) inconsistente: falha isolada repetida contou {lonely_new[2]} "
+            "finalizações na forma nova (esperado 0)"
+        )
+
+    # (b) Volume real: completed 100→104; failed em 2 motivos (50→51, 20→21).
+    real_volume = (
+        [{"completed": 100 + i, "failed": None, "reason": None} for i in range(5)]
+        + [{"completed": None, "failed": 50 + (i // 8), "reason": "unreadable-file"} for i in range(15)]
+        + [{"completed": None, "failed": 20 + (i // 8), "reason": "unsupported-format"} for i in range(15)]
+    )
+    volume_new = a2_window_increments(real_volume)
+    if not (volume_new[0] == 4 and volume_new[1] == 2 and volume_new[2] >= 4 and volume_new[3] > 0.10):
+        raise ValueError(
+            f"demonstração A2(b) inconsistente: forma nova contou "
+            f"completed={volume_new[0]} failed={volume_new[1]} (esperado 4 e 2)"
+        )
+
+    # (c) Reset no meio da janela: completed 100,101 → restart → 0,1,2.
+    with_reset = [
+        {"completed": value, "failed": None, "reason": None}
+        for value in (100, 101, 0, 1, 2)
+    ]
+    reset_old = a2_old_window_totals(with_reset)
+    reset_new = a2_window_increments(with_reset)
+    if reset_new[0] != 2:
+        raise ValueError(
+            f"demonstração A2(c) inconsistente: após reset a forma nova contou "
+            f"{reset_new[0]} conclusões (esperado 2, o acumulado pós-restart)"
+        )
+    if reset_old[2] != 204:
+        raise ValueError(
+            f"demonstração A2(c) inconsistente: forma antiga somou {reset_old[2]} (esperado 204)"
+        )
+
+    # (d) Eventos no início da janela: baseline completed=100 / failed=50 e,
+    # já no primeiro snapshot da janela, completed=103 / failed=51 (3 conclusões
+    # + 1 falha entre o início da janela e o primeiro snapshot; depois estável).
+    # Sem baseline, FIRST = LAST na janela → incremento 0, A2 perde o disparo.
+    early_baseline = [
+        {"completed": 100, "failed": None, "reason": None},
+        {"completed": None, "failed": 50, "reason": "unreadable-file"},
+    ]
+    early_window = (
+        [{"completed": 103, "failed": None, "reason": None} for _ in range(14)]
+        + [{"completed": None, "failed": 51, "reason": "unreadable-file"} for _ in range(14)]
+    )
+    early_without_baseline = a2_window_increments(early_window)
+    early_with_baseline = a2_window_increments_with_baseline(early_window, early_baseline)
+    if early_without_baseline[2] != 0:
+        raise ValueError(
+            "demonstração A2(d) inconsistente: forma sem baseline contou "
+            f"{early_without_baseline[2]} finalizações (esperado 0)"
+        )
+    if not (early_with_baseline[0] == 3 and early_with_baseline[1] == 1):
+        raise ValueError(
+            "demonstração A2(d) inconsistente: forma com baseline contou "
+            f"completed={early_with_baseline[0]} failed={early_with_baseline[1]} (esperado 3 e 1)"
+        )
+    if not (early_with_baseline[2] >= 4 and early_with_baseline[3] > 0.10):
+        raise ValueError(
+            "demonstração A2(d) inconsistente: forma com baseline deveria disparar "
+            f"(total={early_with_baseline[2]} taxa={early_with_baseline[3]:.2f})"
+        )
+
+    print(
+        "A2 (counters cumulativos): falha isolada repetida em 15 snapshots → "
+        f"forma antiga total={lonely_old[2]:.0f} taxa={lonely_old[3]:.2f} (dispararia), "
+        f"forma nova total={lonely_new[2]:.0f} (não dispara); 4 conclusões + 2 falhas "
+        f"reais → total={volume_new[2]:.0f} taxa={volume_new[3]:.2f} (dispara); reset "
+        f"100,101→0,1,2 → forma nova incrementos={reset_new[0]:.0f}, "
+        f"forma antiga {reset_old[2]:.0f}; eventos no início da janela "
+        f"(baseline + 4 finalizações antes do 1º snapshot) → sem baseline "
+        f"total={early_without_baseline[2]:.0f} (não dispara), com baseline "
+        f"total={early_with_baseline[2]:.0f} taxa={early_with_baseline[3]:.2f} (dispara)."
+    )
+
+
+def verify_alert_rules(by_type_and_id: dict) -> None:
+    """Validate the five A1–A5 rules against the TechSpec contract."""
+    allowed_fields = set(INSTRUMENT_FIELDS.values())
+    for rule_id, rule in ALERT_RULES.items():
+        saved_object = by_type_and_id.get(("alert", rule_id))
+        if saved_object is None:
+            raise ValueError(f"regra de alerta ausente no NDJSON: {rule['code']} ({rule_id})")
+        attributes = saved_object.get("attributes", {})
+        if attributes.get("name") != rule["name"]:
+            raise ValueError(f"nome da regra {rule['code']} divergente do versionado")
+        tags = attributes.get("tags", [])
+        if ALERT_TAG not in tags or rule["code"] not in tags:
+            raise ValueError(f"regra {rule['code']} precisa das tags {ALERT_TAG} e {rule['code']}")
+        if attributes.get("consumer") != ALERT_CONSUMER:
+            raise ValueError(f"regra {rule['code']} precisa do consumer {ALERT_CONSUMER}")
+        if attributes.get("schedule") != {"interval": ALERT_SCHEDULE_INTERVAL}:
+            raise ValueError(f"regra {rule['code']} precisa avaliar a cada {ALERT_SCHEDULE_INTERVAL}")
+        if attributes.get("alertTypeId") != ALERT_RULE_TYPE_ID:
+            raise ValueError(f"regra {rule['code']} precisa ser do tipo {ALERT_RULE_TYPE_ID}")
+        if attributes.get("actions") != []:
+            raise ValueError(f"regra {rule['code']} não pode ter conector de notificação (DP-02)")
+        if attributes.get("enabled") is not True:
+            raise ValueError(f"regra {rule['code']} precisa nascer habilitada")
+
+        params = attributes.get("params", {})
+        if params.get("searchType") != "esqlQuery":
+            raise ValueError(f"regra {rule['code']} precisa consultar por ES|QL")
+        esql = (params.get("esqlQuery") or {}).get("esql", "")
+        if not esql.startswith("FROM metrics-generic*"):
+            raise ValueError(f"regra {rule['code']} não consulta metrics-generic*")
+        if params.get("timeField") != TIME_FIELD:
+            raise ValueError(f"regra {rule['code']} precisa usar o campo temporal {TIME_FIELD}")
+        if params.get("timeWindowSize") != ALERT_TIME_WINDOW_SIZE or params.get("timeWindowUnit") != ALERT_TIME_WINDOW_UNIT:
+            raise ValueError(f"regra {rule['code']} precisa da janela de 15 min")
+        if params.get("threshold") != [0] or params.get("thresholdComparator") != ">":
+            raise ValueError(f"regra {rule['code']} dispara por contagem de linhas acima de zero")
+
+        expected_fields = {INSTRUMENT_FIELDS[name] for name in rule["instruments"]}
+        for field in expected_fields:
+            if field not in esql:
+                raise ValueError(f"regra {rule['code']} não referencia {field}")
+        for marker in rule["threshold_markers"]:
+            if marker not in esql:
+                raise ValueError(f"regra {rule['code']} com threshold divergente da TechSpec (falta {marker!r})")
+        referenced = set(re.findall(r"metrics\.[A-Za-z0-9_.]+", esql))
+        unknown = referenced - allowed_fields
+        if unknown:
+            raise ValueError(f"regra {rule['code']} referencia instrumentos fora da TechSpec: {sorted(unknown)}")
+        if rule["code"] == "A2":
+            verify_a2_esql_shape(esql, rule_id)
+
+    alert_ids = {key[1] for key in by_type_and_id if key[0] == "alert"}
+    if alert_ids != set(ALERT_RULES):
+        raise ValueError("o NDJSON deve conter exatamente as regras A1–A5 com IDs estáveis")
+    verify_a2_counter_semantics()
 
 
 def load_saved_objects(path: Path) -> tuple[list[dict], dict]:
@@ -157,9 +564,11 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     expected_objects = {
         ("index-pattern", DATA_VIEW_ID),
         ("dashboard", DASHBOARD_ID),
-    }
+    } | {("alert", rule_id) for rule_id in ALERT_RULES}
     if set(by_type_and_id) != expected_objects:
-        raise ValueError("o NDJSON deve conter somente o data view e o dashboard com IDs estáveis")
+        raise ValueError(
+            "o NDJSON deve conter o data view, o dashboard e as regras A1–A5 com IDs estáveis"
+        )
 
     data_view = by_type_and_id[("index-pattern", DATA_VIEW_ID)]
     data_view_attributes = data_view.get("attributes", {})
@@ -363,6 +772,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
 
     if summary.get("exportedCount") != len(saved_objects):
         raise ValueError("exportedCount não corresponde à quantidade de saved objects")
+    verify_alert_rules(by_type_and_id)
     return saved_objects, summary
 
 
@@ -574,6 +984,10 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
     )
 
     attributes["panelsJSON"] = json.dumps(list(existing_panels.values()), ensure_ascii=False, separators=(",", ":"))
+    by_id = {(item.get("type"), item.get("id")): item for item in saved_objects}
+    for rule_id, rule in ALERT_RULES.items():
+        by_id[("alert", rule_id)] = build_alert_saved_object(rule_id, rule)
+    saved_objects = [by_id[key] for key in sorted(by_id, key=lambda key: (key[0], key[1]))]
     summary["exportedCount"] = len(saved_objects)
     content = "\n".join(json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in [*saved_objects, summary]) + "\n"
     temporary_path = path.with_suffix(path.suffix + ".tmp")
@@ -641,6 +1055,139 @@ def safe_http_error(error: HTTPError, username: str, password: str) -> str:
     return f"HTTP {error.code}{detail}"
 
 
+def alerting_request(
+    method: str,
+    kibana_url: str,
+    authorization: str,
+    path: str,
+    username: str,
+    password: str,
+    payload: dict | None = None,
+) -> tuple[int | None, dict | str]:
+    """Call the Kibana Alerting API, returning (status, body). 404 yields (None, {})."""
+    data = json.dumps(payload, separators=(",", ":")).encode("utf-8") if payload is not None else None
+    request = Request(
+        f"{kibana_url}{path}",
+        data=data,
+        method=method,
+        headers={
+            "Authorization": f"Basic {authorization}",
+            "Content-Type": "application/json",
+            "kbn-xsrf": "true",
+        },
+    )
+    try:
+        with urlopen(request, timeout=30) as response:
+            raw = response.read().decode("utf-8")
+            return response.status, json.loads(raw) if raw else {}
+    except HTTPError as error:
+        if error.code == 404:
+            return None, {}
+        raise ValueError(
+            f"falha na API de alertas ({method} {path}): {safe_http_error(error, username, password)}"
+        ) from error
+    except URLError as error:
+        raise ValueError(f"não foi possível acessar Kibana: {error.reason}") from error
+    except TimeoutError as error:
+        raise ValueError("tempo limite ao falar com a API de alertas do Kibana") from error
+    except json.JSONDecodeError as error:
+        raise ValueError("Kibana retornou uma resposta inválida da API de alertas") from error
+
+
+def fetch_alert_rule(
+    kibana_url: str, authorization: str, username: str, password: str, rule_id: str
+) -> dict | None:
+    """Fetch a rule from the Alerting API, or None when it does not exist."""
+    status, body = alerting_request(
+        "GET", kibana_url, authorization, f"/api/alerting/rule/{rule_id}", username, password
+    )
+    if status is None:
+        return None
+    if not isinstance(body, dict):
+        raise ValueError(f"resposta inválida da API de alertas para a regra {rule_id}")
+    return body
+
+
+def upsert_alert_rule(
+    kibana_url: str, authorization: str, username: str, password: str, rule_id: str, rule: dict
+) -> str:
+    """Create or replace an A1–A5 rule via the Alerting API; returns created|updated."""
+    params = alert_rule_params(rule["esql"])
+    existing = fetch_alert_rule(kibana_url, authorization, username, password, rule_id)
+    if existing is None:
+        _, body = alerting_request(
+            "POST",
+            kibana_url,
+            authorization,
+            f"/api/alerting/rule/{rule_id}",
+            username,
+            password,
+            {
+                "name": rule["name"],
+                "tags": [ALERT_TAG, rule["code"]],
+                "rule_type_id": ALERT_RULE_TYPE_ID,
+                "consumer": ALERT_CONSUMER,
+                "schedule": {"interval": ALERT_SCHEDULE_INTERVAL},
+                "params": params,
+                "actions": [],
+                "enabled": True,
+            },
+        )
+        if not isinstance(body, dict) or body.get("id") != rule_id:
+            raise ValueError(f"criação da regra {rule['code']} retornou resposta inválida")
+        return "created"
+    _, body = alerting_request(
+        "PUT",
+        kibana_url,
+        authorization,
+        f"/api/alerting/rule/{rule_id}",
+        username,
+        password,
+        {
+            "name": rule["name"],
+            "tags": [ALERT_TAG, rule["code"]],
+            "schedule": {"interval": ALERT_SCHEDULE_INTERVAL},
+            "params": params,
+            "actions": [],
+            "throttle": None,
+            "notify_when": None,
+        },
+    )
+    if not isinstance(body, dict) or body.get("id") != rule_id:
+        raise ValueError(f"atualização da regra {rule['code']} retornou resposta inválida")
+    alerting_request(
+        "POST", kibana_url, authorization, f"/api/alerting/rule/{rule_id}/_enable", username, password, {}
+    )
+    return "updated"
+
+
+def rule_to_saved_object(rule_body: dict) -> dict:
+    """Map a live Alerting API rule to its versioned saved object shape."""
+    rule_id = rule_body.get("id", "")
+    expected = ALERT_RULES.get(rule_id, {})
+    params = rule_body.get("params", {})
+    return {
+        "type": "alert",
+        "id": rule_id,
+        "attributes": {
+            "name": rule_body.get("name", expected.get("name", rule_id)),
+            "tags": rule_body.get("tags", [ALERT_TAG, expected.get("code", "")]),
+            "consumer": rule_body.get("consumer", ALERT_CONSUMER),
+            "schedule": rule_body.get("schedule", {"interval": ALERT_SCHEDULE_INTERVAL}),
+            "alertTypeId": rule_body.get("rule_type_id", ALERT_RULE_TYPE_ID),
+            "params": params,
+            "actions": rule_body.get("actions", []),
+            "enabled": True,
+            "throttle": rule_body.get("throttle"),
+            "notifyWhen": rule_body.get("notify_when"),
+            "muteAll": rule_body.get("mute_all", False),
+        },
+        "references": [],
+        "coreMigrationVersion": ALERT_CORE_MIGRATION_VERSION,
+        "typeMigrationVersion": ALERT_TYPE_MIGRATION_VERSION,
+    }
+
+
 def export_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> None:
     username, password, kibana_url, authorization = kibana_connection()
     payload = json.dumps(
@@ -676,9 +1223,34 @@ def export_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> None:
     temporary_path = path.with_suffix(path.suffix + ".tmp")
     try:
         temporary_path.write_bytes(exported_ndjson)
-        saved_objects, _ = verify_saved_objects(temporary_path)
-        if len(saved_objects) != 2:
-            raise ValueError("o export do Kibana não retornou os dois saved objects esperados")
+        exported_objects, _ = load_saved_objects(temporary_path)
+        dashboard_objects = [
+            item
+            for item in exported_objects
+            if (item.get("type"), item.get("id"))
+            in {("index-pattern", DATA_VIEW_ID), ("dashboard", DASHBOARD_ID)}
+        ]
+        if len(dashboard_objects) != 2:
+            raise ValueError("o export do Kibana não retornou o data view e o dashboard esperados")
+        alert_objects = []
+        for rule_id in ALERT_RULES:
+            live = fetch_alert_rule(kibana_url, authorization, username, password, rule_id)
+            if live is None:
+                raise ValueError(f"regra {ALERT_RULES[rule_id]['code']} não existe no Kibana para exportar")
+            alert_objects.append(rule_to_saved_object(live))
+        saved_objects = dashboard_objects + sorted(alert_objects, key=lambda item: item["id"])
+        summary = {
+            "exportedCount": len(saved_objects),
+            "excludedObjects": [],
+            "excludedObjectsCount": 0,
+            "missingRefCount": 0,
+            "missingReferences": [],
+        }
+        content = "\n".join(
+            json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in [*saved_objects, summary]
+        ) + "\n"
+        temporary_path.write_text(content, encoding="utf-8")
+        verify_saved_objects(temporary_path)
         os.replace(temporary_path, path)
     except (OSError, ValueError):
         temporary_path.unlink(missing_ok=True)
@@ -688,13 +1260,16 @@ def export_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> None:
 def import_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> None:
     saved_objects, _ = verify_saved_objects(path)
     username, password, kibana_url, authorization = kibana_connection()
+    dashboard_objects = [item for item in saved_objects if item.get("type") != "alert"]
+    payload_ndjson = "\n".join(
+        json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in dashboard_objects
+    ) + "\n"
     boundary = "----codex-kibana-import-" + uuid.uuid4().hex
-    file_content = path.read_bytes()
     body = (
         f"--{boundary}\r\n"
         'Content-Disposition: form-data; name="file"; filename="observabilidade-midia.ndjson"\r\n'
         "Content-Type: application/ndjson\r\n\r\n"
-    ).encode("utf-8") + file_content + f"\r\n--{boundary}--\r\n".encode("ascii")
+    ).encode("utf-8") + payload_ndjson.encode("utf-8") + f"\r\n--{boundary}--\r\n".encode("ascii")
     request = Request(
         f"{kibana_url}/api/saved_objects/_import?overwrite=true",
         data=body,
@@ -720,17 +1295,20 @@ def import_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> None:
 
     errors = result.get("errors", [])
     imported_count = result.get("successCount")
-    if not result.get("success") or errors or imported_count != len(saved_objects):
+    if not result.get("success") or errors or imported_count != len(dashboard_objects):
         error_types = ", ".join(
             str(item.get("error", {}).get("type", "erro de importação"))
             for item in errors
             if isinstance(item, dict)
         )
         detail = f": {error_types}" if error_types else ""
-        raise ValueError(f"importação incompleta ({imported_count}/{len(saved_objects)} objetos){detail}")
+        raise ValueError(f"importação incompleta ({imported_count}/{len(dashboard_objects)} objetos){detail}")
 
     print(f"Importados {imported_count} saved objects com overwrite em {kibana_url}.")
     print(f"Dashboard: {DASHBOARD_TITLE} (ID {DASHBOARD_ID}).")
+    for rule_id, rule in ALERT_RULES.items():
+        outcome = upsert_alert_rule(kibana_url, authorization, username, password, rule_id, rule)
+        print(f"Regra {rule['code']}: {rule['name']} (ID {rule_id}) {outcome} e habilitada, sem conector.")
 
 
 def main() -> int:
@@ -739,23 +1317,23 @@ def main() -> int:
     actions.add_argument(
         "--verify-only",
         action="store_true",
-        help="valida o NDJSON, os IDs, as métricas e os painéis de envio, fila, preparação e outbox/DLQ; não usa rede",
+        help="valida o NDJSON, os IDs, as métricas, os painéis e as regras A1–A5 (IDs, instrumentos, thresholds, zero conectores); não usa rede",
     )
     actions.add_argument(
         "--generate-only",
         action="store_true",
-        help="gera os painéis de preparação e outbox/DLQ no NDJSON versionado e valida o resultado; não usa rede",
+        help="gera os painéis e as regras A1–A5 no NDJSON versionado e valida o resultado; não usa rede",
     )
     actions.add_argument(
         "--export",
         action="store_true",
-        help="exporta os dois saved objects atuais do Kibana para o NDJSON versionado",
+        help="exporta o data view, o dashboard e as regras A1–A5 atuais do Kibana para o NDJSON versionado",
     )
     actions.add_argument(
         "--import",
         dest="do_import",
         action="store_true",
-        help="importa os saved objects no Kibana configurado, sobrescrevendo IDs estáveis",
+        help="importa o dashboard e cria/atualiza as regras A1–A5 no Kibana configurado, habilitando-as sem conector",
     )
     args = parser.parse_args()
 
@@ -778,7 +1356,14 @@ def main() -> int:
         print(
             "Verificação estrutural passou: data view metrics-generic* e dashboard "
             f"{DASHBOARD_TITLE!r} com IDs estáveis; métricas verificadas contra o manifesto "
-            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de envio, fila, preparação e outbox/DLQ presentes. "
+            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de envio, fila, preparação e outbox/DLQ presentes; "
+            "regras A1–A5 presentes com IDs estáveis, cada uma referencia só instrumentos da tabela "
+            "da TechSpec, thresholds iguais aos da spec, nenhuma com conector de notificação. "
+            "A2 calcula incrementos de counters cumulativos na janela (valor final "
+            "na janela − baseline imediatamente anterior à janela, por série "
+            "ordenada por @timestamp, com tratamento de reset, somados entre as séries de reason), "
+            "em vez de somar snapshots; a demonstração offline acima confirma a semântica, "
+            "incluindo o caso de eventos no início da janela. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0
