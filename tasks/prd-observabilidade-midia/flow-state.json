@@ -4,10 +4,10 @@
   "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "target_ref": null,
-  "last_checkpoint": "679d75c",
+  "last_checkpoint": "223b9a8",
   "phase": "validate",
-  "active_task": "6.0",
-  "attempt": 3,
+  "active_task": "7.0",
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 0,
@@ -18,19 +18,19 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.VmqjHE22",
+    "run_id": "run.Twb42jB5",
     "role": "validator",
     "mode": "revalidation",
-    "task": "6.0",
-    "attempt": "3/3",
+    "task": "7.0",
+    "attempt": "1/3",
     "outcome": "approved",
-    "gate": "passed",
-    "report": "tasks/prd-observabilidade-midia/6.0_task_review.md"
+    "gate": "static_passed",
+    "report": "tasks/prd-observabilidade-midia/7.0_task_review.md"
   },
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "6.0",
+    "task": "7.0",
     "attempt": null
   },
   "history": [
@@ -194,6 +194,27 @@
       "task": "6.0",
       "run_id": "run.VmqjHE22",
       "note": "0 bloqueantes, 1 pendencia operacional; gate verify-only exit 0 (A1-A5 IDs estaveis, sem conectores); smokes A2/A4 ficam para rollout com owner equipe/plataforma"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "223b9a8",
+      "run_id": "run.rmZ3fR89",
+      "note": "A2 corrigida (incrementos com baseline + reset); Fase 4 fechada com smokes adiados por decisao do usuario"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "smoke_partial",
+      "task": "7.0",
+      "note": "usuario autorizou o smoke; imagem local antiga segfaultava (exit 139) e foi reconstruida; api+worker healthy com override ao endpoint dev; 0 erros de export; 192.168.0.5:4317 alcancavel; confirmacao dev limitada por APIs do Kibana desabilitadas + ES interno"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "7.0",
+      "run_id": "run.Twb42jB5",
+      "note": "0 bloqueantes, 1 pendencia operacional; gate static_passed (compose valido, default preservado, override nos 9 servicos); confirmacao visual no Kibana fica como 7.0-P1 com owner usuario/equipe"
     }
   ],
   "carryover": {
@@ -204,7 +225,10 @@
       "4.0-R1: flake de cold-start do fixture Postgres (testcontainers ~60s) — observar no CI; nao bloqueante"
     ],
     "6.0": [
-      "6.0-R1: smokes A2 (lote >=4 corrompidos) e A4 (worker parado/retomado) + confirmacao de ausencia de mensagens no rollout com owner equipe/plataforma — pendencia operacional adiada por decisao do usuario, nao bloqueante"
+      "6.0-P1 (adiado por decisao do usuario 2026-09-28): smokes operacionais A2 (lote >=4 videos corrompidos + resolucao) e A4 (parar/retomar media-worker + resolucao) e ausencia de mensagens; owner: equipe/plataforma no rollout; nao bloqueia o gate"
+    ],
+    "7.0": [
+      "7.0-P1: confirmacao visual no Kibana dev de que a stack local alimenta o dashboard (autorizado pelo usuario; APIs de busca do Kibana desabilitadas e ES interno impediram a leitura automatica); owner: usuario/equipe"
     ]
   }
 }

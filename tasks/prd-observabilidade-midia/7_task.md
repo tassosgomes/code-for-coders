@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
 gate: 'docker compose -f docker-compose.yml config --quiet && OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.0.5:4317 docker compose -f docker-compose.yml config | grep -q "192.168.0.5:4317"'
@@ -51,7 +51,7 @@ ao servidor dev).
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): compose válido, default intacto, override aplicado.
+- [x] Gate passa (exit 0): compose válido, default intacto, override aplicado.
 - [ ] Smoke: com a variável apontada e a stack local no ar, um vídeo enviado localmente aparece no
       dashboard "Pipeline de Mídia" em ≤ 2 min.
-- [ ] Sem a variável, `docker compose config` mostra `http://otel-collector:4317` como antes.
+- [x] Sem a variável, `docker compose config` mostra `http://otel-collector:4317` como antes.
