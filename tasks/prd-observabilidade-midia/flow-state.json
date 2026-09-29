@@ -243,6 +243,20 @@
       "task": "6.0",
       "run_id": "run.P9p49v9w",
       "note": "reabertura pos-full F3->6.0 (A2 perde primeira amostra sem baseline COALESCE(f_base,f_first,0)); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "2.0",
+      "run_id": "run.sOSfWVhn",
+      "note": "fix F2 (counter_increment_query FIRST/LAST + guardas verify_counter_increment_shape/verify_no_counter_sum); gate passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "2.0",
+      "run_id": "run.NyCE5kgx",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada; gate 5 testes + verify-only/format/build/unit/arch verdes; F2 corrigido sem regressao .NET"
     }
   ],
   "carryover": {

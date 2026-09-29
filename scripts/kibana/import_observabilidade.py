@@ -94,6 +94,117 @@ PANEL_VISUALIZATIONS = {
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
 
+# Counters cumulativos (temporality cumulativa no exportador OTLP .NET): cada
+# snapshot repete o total acumulado, então SOMAR os pontos com SUM() multiplica
+# o valor. Os painéis abaixo calculam incrementos na janela selecionada —
+# LAST − FIRST por série ordenada por @timestamp, com reset tratado como
+# "acumulado desde o restart" (vale o final quando final < início, sempre ≥ 0)
+# e 0 quando a série não tem ponto na janela — na mesma semântica da regra A2,
+# exceto pelo baseline anterior à janela: painéis Lens seguem o filtro temporal
+# do dashboard, que não expõe amostras fora da janela selecionada, então o
+# início é o FIRST dentro da janela.
+COUNTER_PANEL_FIELDS = {
+    "upload-funnel": (
+        "media.upload.created",
+        "media.upload.completed",
+        "media.upload.expired",
+    ),
+    "queue-claims": ("media.videos.claimed", "media.videos.retried"),
+    "preparation-outcomes": ("media.videos.completed", "media.videos.retried"),
+    "preparation-failures": ("media.videos.failed",),
+    "outbox-publishes": ("media.outbox.published", "media.outbox.publish_failed"),
+}
+COUNTER_PANEL_DIMENSION = {
+    "upload-funnel": None,
+    "queue-claims": None,
+    "preparation-outcomes": None,
+    "preparation-failures": "reason",
+    "outbox-publishes": "event",
+}
+CUMULATIVE_COUNTER_FIELDS = tuple(
+    dict.fromkeys(field for fields in COUNTER_PANEL_FIELDS.values() for field in fields)
+)
+
+
+def _counter_alias(instrument_name: str) -> str:
+    """Return the output column name for a counter (last path segment)."""
+    return instrument_name.rsplit(".", 1)[-1]
+
+
+def counter_increment_query(panel_key: str) -> str:
+    """Return the canonical ES|QL for a cumulative-counter panel.
+
+    Computes per-series window increments (LAST − FIRST ordered by @timestamp,
+    with reset handling, 0 when the series has no point) instead of SUM, which
+    would multiply the cumulative snapshots. Output column names match the
+    historical ones so the Lens column bindings stay valid.
+    """
+    fields = COUNTER_PANEL_FIELDS[panel_key]
+    dimension = COUNTER_PANEL_DIMENSION[panel_key]
+    where = " OR ".join(f"{INSTRUMENT_FIELDS[name]} IS NOT NULL" for name in fields)
+    aggregations = ", ".join(
+        f"{_counter_alias(name)}_first = FIRST({INSTRUMENT_FIELDS[name]}, @timestamp), "
+        f"{_counter_alias(name)}_last = LAST({INSTRUMENT_FIELDS[name]}, @timestamp)"
+        for name in fields
+    )
+    stats = f"STATS {aggregations}"
+    if dimension is not None:
+        stats += f" BY {dimension} = attributes.{dimension}"
+    increments = ", ".join(
+        f"{_counter_alias(name)} = COALESCE("
+        f"CASE({_counter_alias(name)}_last >= {_counter_alias(name)}_first, "
+        f"{_counter_alias(name)}_last - {_counter_alias(name)}_first, "
+        f"{_counter_alias(name)}_last), 0)"
+        for name in fields
+    )
+    query = (
+        f"FROM metrics-generic* | WHERE {where} | {stats} | EVAL {increments} | "
+        f"KEEP {', '.join(([dimension] if dimension is not None else []) + [_counter_alias(name) for name in fields])}"
+    )
+    if dimension is not None:
+        query += f" | SORT {dimension} ASC"
+    return query
+
+
+def verify_counter_increment_shape(query: str, panel_key: str, title: str) -> None:
+    """Require window increments (never SUM) over cumulative counters."""
+    fields = COUNTER_PANEL_FIELDS[panel_key]
+    dimension = COUNTER_PANEL_DIMENSION[panel_key]
+    for name in fields:
+        field = INSTRUMENT_FIELDS[name]
+        if f"SUM({field})" in query:
+            raise ValueError(
+                f"painel {title!r} não pode usar SUM({field}): counters cumulativos "
+                "repetem o total acumulado em cada snapshot; calcule incrementos na janela"
+            )
+        for aggregation in (f"FIRST({field}, @timestamp)", f"LAST({field}, @timestamp)"):
+            if aggregation not in query:
+                raise ValueError(
+                    f"painel {title!r} precisa calcular incrementos na janela com {aggregation}"
+                )
+        alias = _counter_alias(name)
+        expected = (
+            f"CASE({alias}_last >= {alias}_first, {alias}_last - {alias}_first, {alias}_last)"
+        )
+        if expected not in query:
+            raise ValueError(
+                f"painel {title!r} precisa tratar reset de contador em {alias} "
+                "(vale o final quando final < início)"
+            )
+    if dimension is not None and f"BY {dimension} = attributes.{dimension}" not in query:
+        raise ValueError(f"painel {title!r} precisa detalhar counters por {dimension}")
+
+
+def verify_no_counter_sum(panels_query_text: str) -> None:
+    """Reject SUM() over any cumulative counter in dashboard panels."""
+    for name in CUMULATIVE_COUNTER_FIELDS:
+        field = INSTRUMENT_FIELDS[name]
+        if f"SUM({field})" in panels_query_text:
+            raise ValueError(
+                f"SUM({field}) em painel soma snapshots cumulativos e multiplica o valor; "
+                "use incrementos na janela (LAST − FIRST por série, com tratamento de reset)"
+            )
+
 # Alert rules A1–A5 (TechSpec § Infraestrutura de visualização, tabela contratual).
 # Threshold rules over metrics-generic*, evaluated every 1 min on a 15 min window,
 # with NO notification connector (PRD DP-02: alcance é a tela de Alertas do Kibana).
@@ -649,11 +760,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     for instrument_name in funnel_instruments:
         if INSTRUMENT_FIELDS[instrument_name] not in funnel_query:
             raise ValueError(f"painel de funil não referencia {instrument_name}")
-    if any(
-        f"SUM({INSTRUMENT_FIELDS[instrument]})" not in funnel_query
-        for instrument in funnel_instruments
-    ):
-        raise ValueError("painel de funil deve comparar os três counters no mesmo período selecionado")
+    verify_counter_increment_shape(funnel_query, "upload-funnel", PANEL_TITLES["upload-funnel"])
 
     sizes_query = (
         panels_by_id[stable_id("upload-sizes")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
@@ -679,8 +786,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     claim_instruments = ("media.videos.claimed", "media.videos.retried")
     if any(INSTRUMENT_FIELDS[instrument] not in claims_query for instrument in claim_instruments):
         raise ValueError("painel da fila deve comparar media.videos.claimed e media.videos.retried")
-    if any(f"SUM({INSTRUMENT_FIELDS[instrument]})" not in claims_query for instrument in claim_instruments):
-        raise ValueError("painel da fila deve somar os counters de claim e retentativa")
+    verify_counter_increment_shape(claims_query, "queue-claims", PANEL_TITLES["queue-claims"])
 
     wait_query = (
         panels_by_id[stable_id("queue-wait")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
@@ -707,16 +813,16 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     outcome_instruments = ("media.videos.completed", "media.videos.retried")
     if any(INSTRUMENT_FIELDS[instrument] not in outcomes_query for instrument in outcome_instruments):
         raise ValueError("painel de preparação deve comparar conclusões e retentativas na janela")
-    if any(f"SUM({INSTRUMENT_FIELDS[instrument]})" not in outcomes_query for instrument in outcome_instruments):
-        raise ValueError("painel de preparação deve somar conclusões e retentativas")
+    verify_counter_increment_shape(
+        outcomes_query, "preparation-outcomes", PANEL_TITLES["preparation-outcomes"]
+    )
 
     failures_query = panel_query(panels_by_id[stable_id("preparation-failures")])
-    if (
-        INSTRUMENT_FIELDS["media.videos.failed"] not in failures_query
-        or "SUM(" + INSTRUMENT_FIELDS["media.videos.failed"] + ")" not in failures_query
-        or "BY reason = attributes.reason" not in failures_query
-    ):
-        raise ValueError("painel de preparação deve somar media.videos.failed por reason")
+    if INSTRUMENT_FIELDS["media.videos.failed"] not in failures_query:
+        raise ValueError("painel de preparação deve comparar media.videos.failed por reason")
+    verify_counter_increment_shape(
+        failures_query, "preparation-failures", PANEL_TITLES["preparation-failures"]
+    )
 
     outbox_snapshot_query = panel_query(panels_by_id[stable_id("outbox-snapshot")])
     outbox_gauges = ("media.outbox.pending", "media.outbox.oldest_pending", "media.outbox.exhausted")
@@ -732,13 +838,9 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     outbox_counters = ("media.outbox.published", "media.outbox.publish_failed")
     if any(INSTRUMENT_FIELDS[instrument] not in outbox_publishes_query for instrument in outbox_counters):
         raise ValueError("painel de outbox deve comparar publicações e falhas por evento na janela")
-    if any(
-        f"SUM({INSTRUMENT_FIELDS[instrument]})" not in outbox_publishes_query
-        for instrument in outbox_counters
-    ):
-        raise ValueError("painel de outbox deve somar os counters de publicação e falha")
-    if "BY event = attributes.event" not in outbox_publishes_query:
-        raise ValueError("painel de outbox deve detalhar publicações por event")
+    verify_counter_increment_shape(
+        outbox_publishes_query, "outbox-publishes", PANEL_TITLES["outbox-publishes"]
+    )
 
     dlq_query = panel_query(panels_by_id[stable_id("dlq-depth")])
     if (
@@ -772,6 +874,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
 
     if summary.get("exportedCount") != len(saved_objects):
         raise ValueError("exportedCount não corresponde à quantidade de saved objects")
+    verify_no_counter_sum(query_text)
     verify_alert_rules(by_type_and_id)
     return saved_objects, summary
 
@@ -927,14 +1030,14 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
         ),
         (
             "preparation-outcomes",
-            "FROM metrics-generic* | WHERE metrics.media.videos.completed IS NOT NULL OR metrics.media.videos.retried IS NOT NULL | STATS completed = SUM(metrics.media.videos.completed), retried = SUM(metrics.media.videos.retried)",
+            counter_increment_query("preparation-outcomes"),
             [("completed", "number"), ("retried", "number")],
             0,
             66,
         ),
         (
             "preparation-failures",
-            "FROM metrics-generic* | WHERE metrics.media.videos.failed IS NOT NULL | STATS failed = SUM(metrics.media.videos.failed) BY reason = attributes.reason | SORT reason ASC",
+            counter_increment_query("preparation-failures"),
             [("reason", "string"), ("failed", "number")],
             24,
             66,
@@ -948,12 +1051,34 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
         ),
         (
             "outbox-publishes",
-            "FROM metrics-generic* | WHERE metrics.media.outbox.published IS NOT NULL OR metrics.media.outbox.publish_failed IS NOT NULL | STATS published = SUM(metrics.media.outbox.published), publish_failed = SUM(metrics.media.outbox.publish_failed) BY event = attributes.event | SORT event ASC",
+            counter_increment_query("outbox-publishes"),
             [("event", "string"), ("published", "number"), ("publish_failed", "number")],
             24,
             78,
         ),
     ]
+    # Counter panels owned by earlier slices (funnel, claims) are rewritten in
+    # place with the canonical increment query, preserving their grid position.
+    counter_rewrites = {
+        "upload-funnel": [("created", "number"), ("completed", "number"), ("expired", "number")],
+        "queue-claims": [("claimed", "number"), ("retried", "number")],
+    }
+    for key, columns in counter_rewrites.items():
+        panel_id = stable_id(key)
+        existing = existing_panels[panel_id]
+        grid = existing.get("gridData", {})
+        existing_panels[panel_id] = make_lens_panel(
+            panel_id,
+            PANEL_TITLES[key],
+            counter_increment_query(key),
+            columns,
+            data_view_id,
+            data_view,
+            grid.get("x", 0),
+            grid.get("y", 0),
+            grid.get("w", 24),
+            grid.get("h", 12),
+        )
     for key, query, columns, x, y in panel_definitions:
         panel_id = stable_id(key)
         existing_panels[panel_id] = make_lens_panel(
@@ -1363,7 +1488,11 @@ def main() -> int:
             "na janela − baseline imediatamente anterior à janela, por série "
             "ordenada por @timestamp, com tratamento de reset, somados entre as séries de reason), "
             "em vez de somar snapshots; a demonstração offline acima confirma a semântica, "
-            "incluindo o caso de eventos no início da janela. "
+            "incluindo o caso de eventos no início da janela. Os painéis de funil, claims, "
+            "resultados, falhas por motivo e publicações por evento usam a mesma semântica de "
+            "incrementos na janela selecionada (LAST − FIRST por série, com tratamento de reset; "
+            "o início é o FIRST dentro da janela, pois o filtro temporal do dashboard não expõe "
+            "baseline anterior), e SUM() sobre counter cumulativo é reprovado. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0
