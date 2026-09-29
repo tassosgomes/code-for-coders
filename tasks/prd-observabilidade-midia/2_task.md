@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.MediaUploadFunnelMetricsTests --minimum-expected-tests 4'
@@ -66,7 +66,7 @@ mudança de comportamento do envio em si.
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 4 testes, incluindo o caso negativo da retomada.
-- [ ] Snapshot: 2 sessões pendentes no banco → gauge `media.uploads.pending` = 2, sem dimensão.
+- [x] Gate passa (exit 0) com pelo menos 4 testes, incluindo o caso negativo da retomada.
+- [x] Snapshot: 2 sessões pendentes no banco → gauge `media.uploads.pending` = 2, sem dimensão.
 - [ ] Smoke: um envio concluído e um abandonado (expirado) aparecem como tal na seção Envio do
       painel, nas mesmas janela e unidade.

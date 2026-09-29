@@ -94,15 +94,11 @@ PANEL_VISUALIZATIONS = {
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
 
-# Counters cumulativos (temporality cumulativa no exportador OTLP .NET): cada
-# snapshot repete o total acumulado, então SOMAR os pontos com SUM() multiplica
-# o valor. Os painéis abaixo calculam incrementos na janela selecionada —
-# LAST − FIRST por série ordenada por @timestamp, com reset tratado como
-# "acumulado desde o restart" (vale o final quando final < início, sempre ≥ 0)
-# e 0 quando a série não tem ponto na janela — na mesma semântica da regra A2,
-# exceto pelo baseline anterior à janela: painéis Lens seguem o filtro temporal
-# do dashboard, que não expõe amostras fora da janela selecionada, então o
-# início é o FIRST dentro da janela.
+# Counters OTLP são cumulativos. Cada painel busca a última amostra anterior à
+# janela e a última dentro dela por série; a soma só ocorre após o cálculo do
+# incremento. Os painéis de counter ignoram o filtro temporal automático do
+# Lens para que o baseline permaneça acessível, mas usam os limites do seletor
+# do dashboard (?_tstart/?_tend) na própria query.
 COUNTER_PANEL_FIELDS = {
     "upload-funnel": (
         "media.upload.created",
@@ -134,42 +130,65 @@ def _counter_alias(instrument_name: str) -> str:
 def counter_increment_query(panel_key: str) -> str:
     """Return the canonical ES|QL for a cumulative-counter panel.
 
-    Computes per-series window increments (LAST − FIRST ordered by @timestamp,
-    with reset handling, 0 when the series has no point) instead of SUM, which
-    would multiply the cumulative snapshots. Output column names match the
-    historical ones so the Lens column bindings stay valid.
+    Computes final-in-window minus the last pre-window sample for each resource
+    and metric attribute set. Service instance distinguishes api/worker and
+    replicas even when they share service.name. Missing baseline means a new
+    series (start at zero); missing window point means zero increment.
     """
     fields = COUNTER_PANEL_FIELDS[panel_key]
     dimension = COUNTER_PANEL_DIMENSION[panel_key]
     where = " OR ".join(f"{INSTRUMENT_FIELDS[name]} IS NOT NULL" for name in fields)
     aggregations = ", ".join(
-        f"{_counter_alias(name)}_first = FIRST({INSTRUMENT_FIELDS[name]}, @timestamp), "
-        f"{_counter_alias(name)}_last = LAST({INSTRUMENT_FIELDS[name]}, @timestamp)"
+        f"{_counter_alias(name)}_base = LAST({INSTRUMENT_FIELDS[name]}, @timestamp) "
+        f"WHERE in_window == 0, "
+        f"{_counter_alias(name)}_last = LAST({INSTRUMENT_FIELDS[name]}, @timestamp) "
+        f"WHERE in_window == 1"
         for name in fields
     )
-    stats = f"STATS {aggregations}"
+    series = [
+        "service = resource.attributes.service.name",
+        "instance = resource.attributes.service.instance.id",
+    ]
     if dimension is not None:
-        stats += f" BY {dimension} = attributes.{dimension}"
+        series.append(f"{dimension} = attributes.{dimension}")
     increments = ", ".join(
-        f"{_counter_alias(name)} = COALESCE("
-        f"CASE({_counter_alias(name)}_last >= {_counter_alias(name)}_first, "
-        f"{_counter_alias(name)}_last - {_counter_alias(name)}_first, "
-        f"{_counter_alias(name)}_last), 0)"
+        f"{_counter_alias(name)}_inc = CASE("
+        f"{_counter_alias(name)}_end >= {_counter_alias(name)}_start, "
+        f"{_counter_alias(name)}_end - {_counter_alias(name)}_start, "
+        f"{_counter_alias(name)}_end)"
         for name in fields
+    )
+    bounds = ", ".join(
+        f"{_counter_alias(name)}_start = COALESCE({_counter_alias(name)}_base, 0), "
+        f"{_counter_alias(name)}_end = COALESCE({_counter_alias(name)}_last, "
+        f"COALESCE({_counter_alias(name)}_base, 0))"
+        for name in fields
+    )
+    totals = ", ".join(
+        f"{_counter_alias(name)} = SUM({_counter_alias(name)}_inc)" for name in fields
     )
     query = (
-        f"FROM metrics-generic* | WHERE {where} | {stats} | EVAL {increments} | "
-        f"KEEP {', '.join(([dimension] if dimension is not None else []) + [_counter_alias(name) for name in fields])}"
+        "FROM metrics-generic* | WHERE @timestamp <= ?_tend "
+        f"AND ({where}) | EVAL in_window = CASE(@timestamp >= ?_tstart, 1, 0) "
+        f"| STATS {aggregations} BY {', '.join(series)} "
+        f"| EVAL {bounds} | EVAL {increments} | STATS {totals}"
     )
     if dimension is not None:
-        query += f" | SORT {dimension} ASC"
+        query += f" BY {dimension} | SORT {dimension} ASC"
     return query
 
 
 def verify_counter_increment_shape(query: str, panel_key: str, title: str) -> None:
-    """Require window increments (never SUM) over cumulative counters."""
+    """Require baseline and end per resource series before summing increments."""
     fields = COUNTER_PANEL_FIELDS[panel_key]
     dimension = COUNTER_PANEL_DIMENSION[panel_key]
+    required = (
+        "@timestamp <= ?_tend",
+        "in_window = CASE(@timestamp >= ?_tstart, 1, 0)",
+        "BY service = resource.attributes.service.name, instance = resource.attributes.service.instance.id",
+    )
+    if any(snippet not in query for snippet in required):
+        raise ValueError(f"painel {title!r} precisa preservar baseline e separar recursos/produtores")
     for name in fields:
         field = INSTRUMENT_FIELDS[name]
         if f"SUM({field})" in query:
@@ -177,21 +196,34 @@ def verify_counter_increment_shape(query: str, panel_key: str, title: str) -> No
                 f"painel {title!r} não pode usar SUM({field}): counters cumulativos "
                 "repetem o total acumulado em cada snapshot; calcule incrementos na janela"
             )
-        for aggregation in (f"FIRST({field}, @timestamp)", f"LAST({field}, @timestamp)"):
+        for aggregation in (
+            f"LAST({field}, @timestamp) WHERE in_window == 0",
+            f"LAST({field}, @timestamp) WHERE in_window == 1",
+        ):
             if aggregation not in query:
                 raise ValueError(
-                    f"painel {title!r} precisa calcular incrementos na janela com {aggregation}"
+                    f"painel {title!r} precisa calcular baseline e fim na janela com {aggregation}"
                 )
         alias = _counter_alias(name)
+        bounds = (
+            f"{alias}_start = COALESCE({alias}_base, 0)",
+            f"{alias}_end = COALESCE({alias}_last, COALESCE({alias}_base, 0))",
+        )
+        if any(bound not in query for bound in bounds):
+            raise ValueError(f"painel {title!r} precisa usar baseline como início de {alias}")
         expected = (
-            f"CASE({alias}_last >= {alias}_first, {alias}_last - {alias}_first, {alias}_last)"
+            f"CASE({alias}_end >= {alias}_start, {alias}_end - {alias}_start, {alias}_end)"
         )
         if expected not in query:
             raise ValueError(
                 f"painel {title!r} precisa tratar reset de contador em {alias} "
                 "(vale o final quando final < início)"
             )
-    if dimension is not None and f"BY {dimension} = attributes.{dimension}" not in query:
+        if f"{alias} = SUM({alias}_inc)" not in query:
+            raise ValueError(f"painel {title!r} precisa somar incrementos de {alias} entre séries")
+    if dimension is not None and (
+        f"{dimension} = attributes.{dimension}" not in query or f"BY {dimension} | SORT" not in query
+    ):
         raise ValueError(f"painel {title!r} precisa detalhar counters por {dimension}")
 
 
@@ -204,6 +236,63 @@ def verify_no_counter_sum(panels_query_text: str) -> None:
                 f"SUM({field}) em painel soma snapshots cumulativos e multiplica o valor; "
                 "use incrementos na janela (LAST − FIRST por série, com tratamento de reset)"
             )
+
+
+def counter_window_totals(
+    panel_key: str, window_points: list[dict], baseline_points: list[dict]
+) -> dict[str | None, dict[str, float]]:
+    """Mirror the per-resource ES|QL aggregation for offline counter checks."""
+    names = COUNTER_PANEL_FIELDS[panel_key]
+    dimension = COUNTER_PANEL_DIMENSION[panel_key]
+    series: dict[tuple, dict[str, dict[str, float | None]]] = {}
+    for points, slot in ((baseline_points, "base"), (window_points, "last")):
+        for point in points:
+            key = (point["service"], point["instance"], point.get(dimension) if dimension else None)
+            values = series.setdefault(
+                key, {name: {"base": None, "last": None} for name in names}
+            )
+            for name in names:
+                if name in point:
+                    values[name][slot] = point[name]
+
+    totals: dict[str | None, dict[str, float]] = {}
+    for (_, _, group), values in series.items():
+        row = totals.setdefault(group, {_counter_alias(name): 0.0 for name in names})
+        for name in names:
+            base = values[name]["base"] or 0
+            end = values[name]["last"]
+            if end is None:
+                end = base
+            row[_counter_alias(name)] += end - base if end >= base else end
+    return totals
+
+
+def verify_counter_panel_semantics() -> None:
+    """Catch a missing baseline, first-snapshot loss, and producer mixing."""
+    created = "media.upload.created"
+    funnel_baseline = [{"service": "media", "instance": "api", created: 10}]
+    funnel_window = [{"service": "media", "instance": "api", created: 14}]
+    if counter_window_totals("upload-funnel", funnel_window, funnel_baseline)[None]["created"] != 4:
+        raise ValueError("funil: um único snapshot após quatro eventos deve contar quatro")
+
+    # O primeiro snapshot na janela já contém os eventos; FIRST dentro dela
+    # subcontaria mesmo que uma segunda amostra estável fosse exportada.
+    funnel_window.append({"service": "media", "instance": "api", created: 14})
+    if counter_window_totals("upload-funnel", funnel_window, funnel_baseline)[None]["created"] != 4:
+        raise ValueError("funil: eventos antes do primeiro snapshot da janela foram perdidos")
+
+    published = "media.outbox.published"
+    outbox_baseline = [
+        {"service": "media", "instance": "api", "event": "ativo-pronto", published: 100},
+        {"service": "media", "instance": "worker", "event": "ativo-pronto", published: 5},
+    ]
+    outbox_window = [
+        {"service": "media", "instance": "api", "event": "ativo-pronto", published: 102},
+        {"service": "media", "instance": "worker", "event": "ativo-pronto", published: 8},
+    ]
+    if counter_window_totals("outbox-publishes", outbox_window, outbox_baseline)["ativo-pronto"]["published"] != 5:
+        raise ValueError("outbox: incrementos de api e worker devem somar cinco por evento")
+    print("Painéis de counters: baseline, primeiro snapshot e produtores api/worker verificados offline.")
 
 # Alert rules A1–A5 (TechSpec § Infraestrutura de visualização, tabela contratual).
 # Threshold rules over metrics-generic*, evaluated every 1 min on a 15 min window,
@@ -824,6 +913,8 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
         embeddable = panel.get("embeddableConfig", {})
         if embeddable.get("title") != title:
             raise ValueError(f"título do painel ausente ou divergente: {title}")
+        if key in COUNTER_PANEL_FIELDS and embeddable.get("ignoreTimerange") is not True:
+            raise ValueError(f"painel {title!r} precisa consultar o baseline anterior à janela")
         lens_attributes = embeddable.get("attributes", {})
         if lens_attributes.get("visualizationType") != PANEL_VISUALIZATIONS[key]:
             raise ValueError(f"tipo de visualização incorreto no painel {title!r}")
@@ -973,6 +1064,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     if summary.get("exportedCount") != len(saved_objects):
         raise ValueError("exportedCount não corresponde à quantidade de saved objects")
     verify_no_counter_sum(query_text)
+    verify_counter_panel_semantics()
     verify_alert_rules(by_type_and_id)
     return saved_objects, summary
 
@@ -993,6 +1085,7 @@ def make_lens_panel(
     y: int,
     width: int,
     height: int,
+    ignore_timerange: bool = False,
 ) -> dict:
     datasource_columns = []
     visualization_columns = []
@@ -1031,7 +1124,7 @@ def make_lens_panel(
         "query": {"esql": query},
         "filters": [],
     }
-    return {
+    panel = {
         "type": "vis",
         "embeddableConfig": {
             "title": title_text,
@@ -1046,6 +1139,9 @@ def make_lens_panel(
         "panelIndex": panel_id,
         "gridData": {"x": x, "y": y, "w": width, "h": height, "i": panel_id},
     }
+    if ignore_timerange:
+        panel["embeddableConfig"]["ignoreTimerange"] = True
+    return panel
 
 
 def make_lens_metric_panel(
@@ -1176,6 +1272,7 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             grid.get("y", 0),
             grid.get("w", 24),
             grid.get("h", 12),
+            ignore_timerange=True,
         )
     for key, query, columns, x, y in panel_definitions:
         panel_id = stable_id(key)
@@ -1190,6 +1287,7 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             y,
             24,
             12,
+            ignore_timerange=key in COUNTER_PANEL_FIELDS,
         )
 
     dlq_panel_id = stable_id("dlq-depth")
@@ -1588,10 +1686,11 @@ def main() -> int:
             "em vez de somar snapshots; a demonstração offline acima confirma a semântica, "
             "incluindo o caso de eventos no início da janela e o de série nova sem "
             "baseline (início 0). Os painéis de funil, claims, "
-            "resultados, falhas por motivo e publicações por evento usam a mesma semântica de "
-            "incrementos na janela selecionada (LAST − FIRST por série, com tratamento de reset; "
-            "o início é o FIRST dentro da janela, pois o filtro temporal do dashboard não expõe "
-            "baseline anterior), e SUM() sobre counter cumulativo é reprovado. "
+            "resultados, falhas por motivo e publicações por evento calculam fim na janela "
+            "menos o último baseline anterior por serviço, instância e atributo, tratam reset "
+            "e somam incrementos das séries. O filtro temporal automático é ignorado nesses "
+            "painéis para buscar o baseline; os limites do seletor entram via ?_tstart/?_tend. "
+            "SUM() sobre counter cumulativo é reprovado. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0

@@ -305,6 +305,20 @@
       "task": "2.0",
       "run_id": "run.VtdSJH9K",
       "note": "reabertura pos-full G1->2.0 (paineis subcontam na janela + outbox sem incremento por produtor RF-02/04/05); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "2.0",
+      "run_id": "run.Y1Mcomer",
+      "note": "fix G1 (counter baseline anterior a janela + incremento por produtor api/worker; NDJSON regenerado); gate passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "2.0",
+      "run_id": "run.yIpJ2zsL",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada; gate 5 testes + verify-only/format/build/unit/arch verdes; G1 corrigido sem regressao .NET"
     }
   ],
   "carryover": {
