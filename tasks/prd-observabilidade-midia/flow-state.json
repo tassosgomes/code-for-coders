@@ -4,9 +4,9 @@
   "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "target_ref": null,
-  "last_checkpoint": "f2137ff",
-  "phase": "implement",
-  "active_task": "2.0",
+  "last_checkpoint": "070d62a",
+  "phase": "validate",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,17 +18,17 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.fTjFAyIN",
+    "run_id": "run.3j1x1AbQ",
     "role": "validator",
     "mode": "focused",
-    "task": "2.0",
+    "task": "3.0",
     "outcome": "approved",
-    "report": "tasks/prd-observabilidade-midia/2.0_task_review.md"
+    "report": "tasks/prd-observabilidade-midia/3.0_task_review.md"
   },
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0",
+    "task": "3.0",
     "attempt": null
   },
   "history": [
@@ -78,6 +78,20 @@
       "task": "2.0",
       "run_id": "run.fTjFAyIN",
       "note": "0 bloqueantes, 1 recomendacao operacional; import remoto do NDJSON executado pelo orquestrador apos aprovacao (secao Envio publicada)"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "2.0",
+      "commit": "070d62a",
+      "run_id": "run.AAJeHgA9"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "focused_approved",
+      "task": "3.0",
+      "run_id": "run.3j1x1AbQ",
+      "note": "0 bloqueantes, 0 recomendacoes; gate com 4 testes sobre Postgres real + format/build/unit/architecture/verify-only verdes"
     }
   ],
   "carryover": {

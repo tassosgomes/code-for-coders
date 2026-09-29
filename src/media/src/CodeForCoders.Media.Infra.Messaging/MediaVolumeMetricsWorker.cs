@@ -15,7 +15,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
     private readonly IServiceScopeFactory scopeFactory;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<MediaVolumeMetricsWorker> logger;
-    private MetricsSnapshot snapshot = new(0, 0, [], 0);
+    private MetricsSnapshot snapshot = new(0, 0, [], 0, 0);
 
     public MediaVolumeMetricsWorker(
         IServiceScopeFactory scopeFactory,
@@ -29,6 +29,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         MediaTelemetry.Meter.CreateObservableGauge("media.videos.count", () => Volatile.Read(ref snapshot).Counts);
         MediaTelemetry.Meter.CreateObservableGauge("media.videos.stuck", () => Volatile.Read(ref snapshot).StuckCount, unit: "{video}");
         MediaTelemetry.Meter.CreateObservableGauge("media.uploads.pending", () => Volatile.Read(ref snapshot).PendingUploads, unit: "{upload}");
+        MediaTelemetry.Meter.CreateObservableGauge("media.videos.oldest_waiting", () => Volatile.Read(ref snapshot).OldestWaitingSeconds, unit: "s");
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
@@ -41,7 +42,13 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
             .ToListAsync(cancellationToken);
         var pendingUploads = await dbContext.VideoUploads.IgnoreQueryFilters().AsNoTracking()
             .LongCountAsync(upload => upload.CompletedAt == null && upload.ExpiredAt == null, cancellationToken);
+        var oldestWaiting = await dbContext.Videos.IgnoreQueryFilters().AsNoTracking()
+            .Where(video => video.Status == "received")
+            .MinAsync(video => (DateTimeOffset?)video.UploadedAt, cancellationToken);
         var now = timeProvider.GetUtcNow();
+        var oldestWaitingSeconds = oldestWaiting is null
+            ? 0
+            : Math.Max(0, (now - oldestWaiting.Value).TotalSeconds);
         var stuck = await dbContext.Videos.FromSqlInterpolated($"""
                 SELECT * FROM media_access.videos
                 WHERE status IN ('received', 'preparing')
@@ -53,7 +60,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         var counts = KnownStatuses.Select(status => new Measurement<long>(
             statusCounts.GetValueOrDefault(status),
             new KeyValuePair<string, object?>("status", status))).ToArray();
-        Volatile.Write(ref snapshot, new MetricsSnapshot(rows.Sum(row => row.Bytes), stuck, counts, pendingUploads));
+        Volatile.Write(ref snapshot, new MetricsSnapshot(rows.Sum(row => row.Bytes), stuck, counts, pendingUploads, oldestWaitingSeconds));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,5 +90,10 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         }
     }
 
-    private sealed record MetricsSnapshot(long StoredBytes, long StuckCount, Measurement<long>[] Counts, long PendingUploads);
+    private sealed record MetricsSnapshot(
+        long StoredBytes,
+        long StuckCount,
+        Measurement<long>[] Counts,
+        long PendingUploads,
+        double OldestWaitingSeconds);
 }

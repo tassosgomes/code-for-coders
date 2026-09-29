@@ -36,16 +36,23 @@ INSTRUMENT_FIELDS = {
     "media.upload.size": "metrics.media.upload.size",
     "media.upload.expired": "metrics.media.upload.expired",
     "media.uploads.pending": "metrics.media.uploads.pending",
+    "media.videos.oldest_waiting": "metrics.media.videos.oldest_waiting",
+    "media.videos.claimed": "metrics.media.videos.claimed",
+    "media.videos.retried": "metrics.media.videos.retried",
+    "media.videos.wait": "metrics.media.videos.wait",
 }
 
 PANEL_TITLES = {
-    "videos-by-state": "Vídeos por estado",
-    "videos-stuck": "Vídeos presos",
+    "videos-by-state": "Fila · Profundidade por estado",
+    "videos-stuck": "Fila · Vídeos presos",
     "storage-used": "Armazenamento usado (bytes)",
     "snapshot-staleness": "Idade do último snapshot",
     "upload-funnel": "Envio · Funil na janela",
     "upload-sizes": "Envio · Distribuição de tamanho (bytes)",
     "upload-pending": "Envio · Sessões pendentes",
+    "queue-oldest-waiting": "Fila · Idade do vídeo mais antigo",
+    "queue-claims": "Fila · Claims e retentativas",
+    "queue-wait": "Fila · Tempo de espera (s)",
 }
 PANEL_VISUALIZATIONS = {
     "videos-by-state": "lnsDatatable",
@@ -55,6 +62,9 @@ PANEL_VISUALIZATIONS = {
     "upload-funnel": "lnsDatatable",
     "upload-sizes": "lnsDatatable",
     "upload-pending": "lnsMetric",
+    "queue-oldest-waiting": "lnsMetric",
+    "queue-claims": "lnsDatatable",
+    "queue-wait": "lnsDatatable",
 }
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
@@ -189,6 +199,14 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
         ad_hoc_view = state.get("adHocDataViews", {}).get(data_view_id, {})
         if ad_hoc_view.get("title") != DATA_VIEW_TITLE:
             raise ValueError(f"painel {title!r} não usa o data view {DATA_VIEW_TITLE}")
+        internal_references = state.get("internalReferences", [])
+        if not any(
+            reference.get("type") == "index-pattern"
+            and reference.get("id") == data_view_id
+            and reference.get("name") == f"indexpattern-datasource-layer-{layer_id}"
+            for reference in internal_references
+        ):
+            raise ValueError(f"referência ES|QL do data view ausente no painel {title!r}")
 
     funnel_query = (
         panels_by_id[stable_id("upload-funnel")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
@@ -214,14 +232,27 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     )
     if INSTRUMENT_FIELDS["media.uploads.pending"] not in pending_query or "LATEST(" not in pending_query:
         raise ValueError("painel de pendências deve exibir o snapshot mais recente de media.uploads.pending")
-        internal_references = state.get("internalReferences", [])
-        if not any(
-            reference.get("type") == "index-pattern"
-            and reference.get("id") == data_view_id
-            and reference.get("name") == f"indexpattern-datasource-layer-{layer_id}"
-            for reference in internal_references
-        ):
-            raise ValueError(f"referência ES|QL do data view ausente no painel {title!r}")
+
+    oldest_waiting_query = (
+        panels_by_id[stable_id("queue-oldest-waiting")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
+    )
+    if INSTRUMENT_FIELDS["media.videos.oldest_waiting"] not in oldest_waiting_query or "LATEST(" not in oldest_waiting_query:
+        raise ValueError("painel da fila deve exibir o snapshot mais recente de media.videos.oldest_waiting")
+
+    claims_query = (
+        panels_by_id[stable_id("queue-claims")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
+    )
+    claim_instruments = ("media.videos.claimed", "media.videos.retried")
+    if any(INSTRUMENT_FIELDS[instrument] not in claims_query for instrument in claim_instruments):
+        raise ValueError("painel da fila deve comparar media.videos.claimed e media.videos.retried")
+    if any(f"SUM({INSTRUMENT_FIELDS[instrument]})" not in claims_query for instrument in claim_instruments):
+        raise ValueError("painel da fila deve somar os counters de claim e retentativa")
+
+    wait_query = (
+        panels_by_id[stable_id("queue-wait")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
+    )
+    if INSTRUMENT_FIELDS["media.videos.wait"] not in wait_query or "PERCENTILE(" not in wait_query:
+        raise ValueError("painel da fila deve calcular percentis de media.videos.wait")
 
     status_panel = panels_by_id[stable_id("videos-by-state")]
     status_state = status_panel["embeddableConfig"]["attributes"]["state"]
@@ -403,7 +434,7 @@ def main() -> int:
     actions.add_argument(
         "--verify-only",
         action="store_true",
-        help="valida o NDJSON, os IDs, as métricas e os painéis de staleness e envio; não usa rede",
+        help="valida o NDJSON, os IDs, as métricas e os painéis de staleness, envio e fila; não usa rede",
     )
     actions.add_argument(
         "--export",
@@ -432,7 +463,7 @@ def main() -> int:
         print(
             "Verificação estrutural passou: data view metrics-generic* e dashboard "
             f"{DASHBOARD_TITLE!r} com IDs estáveis; métricas verificadas contra o manifesto "
-            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de staleness e envio presentes. "
+            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de staleness, envio e fila presentes. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0

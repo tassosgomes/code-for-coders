@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.MediaQueueMetricsTests --minimum-expected-tests 4'
@@ -65,7 +65,7 @@ consome `oldest_waiting` desta task). Nenhuma mudança na régua de preso nem na
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 4 testes.
-- [ ] Fila com dois `received` (10 min e 2 h) → `oldest_waiting` ≈ 2 h; fila vazia → 0.
+- [x] Gate passa (exit 0) com pelo menos 4 testes.
+- [x] Fila com dois `received` (10 min e 2 h) → `oldest_waiting` ≈ 2 h; fila vazia → 0.
 - [ ] Smoke: vídeo enviado aparece na profundidade, sai dela ao ser reclamado, e `wait` registra
       uma observação coerente com a espera.

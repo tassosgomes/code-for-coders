@@ -49,4 +49,17 @@ public static class MediaTelemetry
     public static readonly Counter<long> UploadsExpired = Meter.CreateCounter<long>(
         "media.upload.expired",
         unit: "{upload}");
+    public static readonly Counter<long> VideosClaimed = Meter.CreateCounter<long>(
+        "media.videos.claimed",
+        unit: "{video}");
+    public static readonly Counter<long> VideosRetried = Meter.CreateCounter<long>(
+        "media.videos.retried",
+        unit: "{video}");
+    public static readonly Histogram<double> VideoWait = Meter.CreateHistogram<double>(
+        "media.videos.wait",
+        unit: "s",
+        advice: new InstrumentAdvice<double>
+        {
+            HistogramBucketBoundaries = [1, 5, 10, 30, 60, 300, 600, 1800, 3600],
+        });
 }

@@ -51,7 +51,8 @@ public sealed class VideoPreparationRepository(MediaDbContext dbContext) : IVide
                     preparation_attempts = preparation_attempts + 1
                 FROM candidate
                 WHERE video.video_id = candidate.video_id
-                RETURNING video.video_id, video.original_object_key, video.original_size_bytes, video.correlation_id
+                RETURNING video.video_id, video.original_object_key, video.original_size_bytes,
+                          video.correlation_id, video.uploaded_at, video.preparation_attempts
                 """;
             AddParameter(command, "now", now);
             AddParameter(command, "maximum_original_size", availableDiskBytes / 3);
@@ -69,7 +70,9 @@ public sealed class VideoPreparationRepository(MediaDbContext dbContext) : IVide
                 leaseId,
                 reader.GetString(1),
                 reader.GetInt64(2),
-                reader.IsDBNull(3) ? null : reader.GetString(3));
+                reader.IsDBNull(3) ? null : reader.GetString(3),
+                reader.GetFieldValue<DateTimeOffset>(4),
+                reader.GetInt32(5));
         }
         finally
         {
@@ -126,6 +129,8 @@ public sealed class VideoPreparationRepository(MediaDbContext dbContext) : IVide
                 video.OriginalObjectKey,
                 video.OriginalSizeBytes,
                 video.CorrelationId,
+                video.UploadedAt,
+                video.PreparationAttempts,
             })
             .ToArrayAsync(cancellationToken))
             .Select(video => new VideoPreparationLease(
@@ -133,7 +138,9 @@ public sealed class VideoPreparationRepository(MediaDbContext dbContext) : IVide
                 video.PreparationLeaseId!.Value,
                 video.OriginalObjectKey,
                 video.OriginalSizeBytes,
-                video.CorrelationId))
+                video.CorrelationId,
+                video.UploadedAt,
+                video.PreparationAttempts))
             .ToArray();
 
     public async Task<IReadOnlyList<VideoOriginalCleanup>> GetFinalOriginalsForCleanupAsync(

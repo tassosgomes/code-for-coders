@@ -34,6 +34,13 @@ public sealed class PrepareVideo(
             return false;
         }
 
+        MediaTelemetry.VideosClaimed.Add(1);
+        MediaTelemetry.VideoWait.Record(Math.Max(0, (now - lease.UploadedAt).TotalSeconds));
+        if (lease.PreparationAttempts > 1)
+        {
+            MediaTelemetry.VideosRetried.Add(1);
+        }
+
         await PrepareClaimedVideoAsync(lease, workDirectory, leaseDuration, leaseRenewalInterval, cancellationToken);
         return true;
     }
