@@ -41,6 +41,36 @@ apps (OTLP) ──► collector:4317/4318 ──► traces  ──► traces-gen
 - APM UI do Kibana (traces-apm.*) é evolução futura: exigiria apm-server ou o modo `ecs` do exporter (instável no collector 0.145).
 - Os endpoints OTLP são idênticos aos do compose local (`http://otel-collector:4317` → `http://192.168.0.5:4317`).
 
+### Provisionamento do dashboard de mídia
+
+Os saved objects do dashboard **Pipeline de Mídia** e do data view `metrics-generic*` são mantidos
+em `scripts/kibana/observabilidade-midia.ndjson`. O manifesto e o importador usam IDs fixos, então
+uma nova importação atualiza os mesmos objetos sem criar duplicatas.
+
+Na raiz do repositório, verifique localmente a estrutura e os nomes dos instrumentos:
+
+```bash
+python3 scripts/kibana/import_observabilidade.py --verify-only
+```
+
+Para provisionar ou atualizar os objetos no Kibana de desenvolvimento, mantenha
+`ELASTIC_USERNAME` e `ELASTIC_PASSWORD` no `.env` e execute:
+
+```bash
+python3 scripts/kibana/import_observabilidade.py --import
+```
+
+O import usa `https://kibana.tasso.dev.br` por padrão e aceita `KIBANA_URL` como override. A opção
+`--verify-only` não lê credenciais nem acessa a rede.
+
+Se uma alteração aprovada for feita pela interface do Kibana, exporte os objetos de volta ao
+repositório e rode novamente a verificação local:
+
+```bash
+python3 scripts/kibana/import_observabilidade.py --export
+python3 scripts/kibana/import_observabilidade.py --verify-only
+```
+
 ## Transversal
 
 - **Backup** diário 03:00: `pg_dumpall` (postgres + komodo-db) + definições RabbitMQ; retenção 7 dias em `~/infra/backups/daily`. ES/Kibana/smtp4dev ficam fora (dados efêmeros de dev).

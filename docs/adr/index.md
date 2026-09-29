@@ -13,3 +13,4 @@ usado.
 | ADR-0005 | Sessão do ator interno e autenticação de serviço do BFF do backoffice | Accepted | Sessão do backoffice, bff-admin, Identity, JWKS e serviços de domínio | [0005-sessao-e-servico-do-backoffice.md](0005-sessao-e-servico-do-backoffice.md) |
 | ADR-0006 | Preparação de vídeo em worker próprio do media e custódia da chave HLS | Accepted | Preparação ffmpeg, fila de preparação, chave AES por vídeo | [0006-preparacao-de-video-e-custodia-de-chave.md](0006-preparacao-de-video-e-custodia-de-chave.md) |
 | ADR-0007 | Snapshots efêmeros da consulta de Auditoria | Accepted | Paginação estável do serviço audit em Valkey | [0007-snapshots-efemeros-da-consulta-de-auditoria.md](0007-snapshots-efemeros-da-consulta-de-auditoria.md) |
+| ADR-0008 | Observabilidade do Kibana provisionada como código | Accepted | Dashboards, alertas e data views como saved objects versionados | [0008-observabilidade-kibana-como-codigo.md](0008-observabilidade-kibana-como-codigo.md) |

@@ -1,8 +1,8 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-27",
-  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. Validado por .agents/skills/tsg-flow-next/scripts/validate_state.py.",
+  "updated": "2026-09-28",
+  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/prd-ingestao-midia, fora do indice por colisao de chave unica.",
   "artifacts": {
     "vision": "vision.md",
     "domain-map": "context/domain-map.md",
@@ -62,12 +62,12 @@
     },
     {
       "id": "CAP-006",
-      "stage": "done",
+      "stage": "tasks",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
-        "prd": "tasks/prd-ingestao-midia/prd.md",
-        "contract": "tasks/prd-ingestao-midia/contracts.md",
-        "techspec": "tasks/prd-ingestao-midia/techspec.md"
+        "prd": "tasks/prd-observabilidade-midia/prd.md",
+        "techspec": "tasks/prd-observabilidade-midia/techspec.md",
+        "tasks": "tasks/prd-observabilidade-midia/tasks.md"
       },
       "mvp_order": 3
     },
