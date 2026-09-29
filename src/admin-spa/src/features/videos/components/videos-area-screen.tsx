@@ -137,7 +137,7 @@ export const VideosAreaScreen = ({
       <div>
         <p className="eyebrow">Vídeos</p>
         <h1>Vídeos da escola</h1>
-        <p className="page-subtitle">Envie as gravações das aulas e acompanhe até ficarem prontas.</p>
+        <p className="page-subtitle"><span className="video-subtitle-desktop">Envie as gravações das aulas e acompanhe até ficarem prontas.</span><span className="video-subtitle-mobile">Envie as gravações e acompanhe até ficarem prontas.</span></p>
       </div>
       <div className="video-header-action">
         {sendButton}

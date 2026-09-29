@@ -29,6 +29,16 @@ const formatExpiry = (value: string) => {
 export const PendingVideoUploadsAlert = ({ uploads, onSelectFile }: PendingVideoUploadsAlertProps) => {
   if (uploads.length === 0) return null;
 
+  if (uploads.length > 1) return <section aria-label="Envios incompletos" className="pending-video-uploads">
+    <div className="pending-video-upload pending-video-upload-group" role="status">
+      <p className="pending-video-upload-title"><strong>{uploads.length} envios incompletos — selecione o mesmo arquivo para continuar cada um.</strong></p>
+      {uploads.map((upload) => <div className="pending-video-upload-row" key={upload.uploadId}>
+        <p>{upload.fileName} · {formatBytes(receivedBytes(upload))} de {formatBytes(upload.fileSize)} · até {formatExpiry(upload.expiresAt)}</p>
+        <button className="outline-button" onClick={onSelectFile} type="button">Selecionar<span className="visually-hidden"> {upload.fileName}</span></button>
+      </div>)}
+    </div>
+  </section>;
+
   return <section aria-label="Envios incompletos" className="pending-video-uploads">
     {uploads.map((upload) => <div aria-label={`Envio incompleto: ${upload.fileName}`} className="pending-video-upload" key={upload.uploadId} role="status">
       <p className="pending-video-upload-title">

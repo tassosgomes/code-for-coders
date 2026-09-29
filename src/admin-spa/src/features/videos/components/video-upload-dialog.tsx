@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Film, Info, ShieldCheck, Upload, X } from 'lucide-react';
+import { Film, Info, ShieldCheck, TriangleAlert, Upload, X } from 'lucide-react';
 import { useRef, useState, type DragEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -21,10 +21,21 @@ type VideoUploadDialogProps = {
   pendingUploads?: readonly PendingVideoUpload[];
 };
 
+const getFileProblemMessage = (problem: string, fileName: string) => {
+  if (problem === 'O arquivo deve ter até 5 GiB.') {
+    return 'O limite é 5 GB. Divida a gravação ou exporte em qualidade menor.';
+  }
+  if (problem === 'Formato não aceito. Escolha um arquivo MP4, MOV ou MKV.') {
+    return `${fileName} não é um formato aceito. Envie MP4, MOV ou MKV.`;
+  }
+  return problem;
+};
+
 export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUploads = [] }: VideoUploadDialogProps) => {
   const fileInput = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileProblem, setFileProblem] = useState<string | null>(null);
+  const [rejectedFile, setRejectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [title, setTitle] = useState('');
   const hasMatchingPendingUpload = file && pendingUploads.some(
@@ -36,11 +47,13 @@ export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUpload
   const form = useForm<VideoTitleForm>({
     defaultValues: { title: '' },
     resolver: zodResolver(videoTitleSchema),
+    mode: 'onChange',
   });
   const selectFile = (selected: File | undefined) => {
     if (!selected) return;
     const problem = getVideoFileProblem(selected);
     setFileProblem(problem);
+    setRejectedFile(problem ? selected : null);
     setFile(problem ? null : selected);
     const suggestedTitle = problem ? '' : selected.name.replace(/\.[^.]+$/, '');
     setTitle(suggestedTitle);
@@ -100,18 +113,28 @@ export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUpload
           {error ? <p className="video-upload-alert error" role="alert">{error}</p> : null}
           <p className="video-duration-note"><Info aria-hidden="true" size={16} /><span>A duração só é conferida depois do envio: vídeos acima de 3 horas falham na preparação.</span></p>
         </> : <>
-          {fileProblem ? <p className="video-upload-alert error" role="alert">{fileProblem}</p> : null}
           <div
-            className={`video-file-dropzone ${isDragging ? 'is-dragging' : ''}`}
+            className={`video-file-dropzone ${isDragging ? 'is-dragging' : ''} ${fileProblem && !isDragging ? 'is-rejected' : ''}`}
             onDragEnter={(event) => { event.preventDefault(); setIsDragging(true); }}
             onDragLeave={(event) => { event.preventDefault(); setIsDragging(false); }}
             onDragOver={(event) => event.preventDefault()}
             onDrop={handleDrop}
           >
-            <span aria-hidden="true" className="video-dropzone-icon"><Upload size={16} /></span>
-            <strong>Arraste o vídeo para cá</strong>
-            <label className="video-choose-file" htmlFor="video-file">Escolher arquivo</label>
-            <span className="video-file-rules">MP4, MOV ou MKV · até 5 GB e 3 horas</span>
+            {isDragging ? <>
+              <span aria-hidden="true" className="video-dropzone-icon"><Upload size={22} /></span>
+              <strong>Solte para enviar</strong>
+              <span className="video-file-rules">MP4, MOV ou MKV · até 5 GB e 3 horas</span>
+            </> : fileProblem ? <>
+              <span aria-hidden="true" className="video-dropzone-icon video-rejected-tile"><TriangleAlert size={22} /></span>
+              <strong>{rejectedFile?.name}{rejectedFile ? ` · ${formatSize(rejectedFile.size)}` : ''}</strong>
+              <span className="video-file-problem" role="alert">{getFileProblemMessage(fileProblem, rejectedFile?.name ?? '')}</span>
+              <label className="video-choose-file" htmlFor="video-file">Escolher outro arquivo</label>
+            </> : <>
+              <span aria-hidden="true" className="video-dropzone-icon"><Upload size={22} /></span>
+              <strong>Arraste o vídeo para cá</strong>
+              <label className="video-choose-file" htmlFor="video-file">Escolher arquivo</label>
+              <span className="video-file-rules">MP4, MOV ou MKV · até 5 GB e 3 horas</span>
+            </>}
           </div>
           <p className="video-privacy-note"><ShieldCheck aria-hidden="true" size={16} />O vídeo não fica público: ele só é entregue a quem tem acesso à aula.</p>
         </>}
@@ -126,7 +149,7 @@ export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUpload
         />
         <div className="dialog-actions video-upload-actions">
           <button className="outline-button" disabled={busy} onClick={onClose} type="button">Cancelar</button>
-          {file ? <button className="primary-button" disabled={busy} type="submit">{busy ? 'Preparando o envio…' : 'Enviar'}</button> : null}
+          {file ? <button className="primary-button" disabled={busy || !title.trim()} type="submit">{busy ? 'Preparando o envio…' : 'Enviar'}</button> : null}
         </div>
       </form>
     </section>
