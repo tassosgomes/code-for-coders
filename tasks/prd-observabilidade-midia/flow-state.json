@@ -326,6 +326,20 @@
       "task": "7.0",
       "run_id": "run.tYxj54Dc",
       "note": "reabertura pos-full G2->7.0 (mutante V-07 sobreviveu — default otel-collector:4317 nao discriminado); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "7.0",
+      "run_id": "run.fWHcbiPQ",
+      "note": "fix G2 (gate discrimina default otel-collector:4317 + override dev em 7_task.md; mutante invalid-host reprova); gate static_passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "7.0",
+      "run_id": "run.96j5Mnkc",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada 7.0-P1; gate static_passed (compose valido, default preservado, override 9 servicos); G2 corrigido sem regressao"
     }
   ],
   "carryover": {

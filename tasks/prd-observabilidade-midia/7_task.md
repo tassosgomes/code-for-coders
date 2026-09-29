@@ -1,9 +1,9 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["1.0"]
-gate: 'docker compose -f docker-compose.yml config --quiet && OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.0.5:4317 docker compose -f docker-compose.yml config | grep -q "192.168.0.5:4317"'
-gate_expect: "exit 0: compose válido com o default http://otel-collector:4317 preservado, e o override da variável aparece na configuração interpolada dos serviços"
+gate: 'docker compose -f docker-compose.yml config --quiet && env -u OTEL_EXPORTER_OTLP_ENDPOINT docker compose -f docker-compose.yml config | grep -Fq "OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317" && OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.0.5:4317 docker compose -f docker-compose.yml config | grep -Fq "OTEL_EXPORTER_OTLP_ENDPOINT: http://192.168.0.5:4317"'
+gate_expect: "exit 0: compose válido; sem OTEL_EXPORTER_OTLP_ENDPOINT, a configuração interpolada contém o default http://otel-collector:4317; com override, contém http://192.168.0.5:4317"
 ---
 
 # 7.0 Paridade local: endpoint OTLP interpolável no Compose
@@ -46,12 +46,13 @@ ao servidor dev).
 
 | Componente | Comando | Resultado esperado | Fonte |
 |---|---|---|---|
-| `docker-compose.yml` | `docker compose -f docker-compose.yml config --quiet` | exit 0, default preservado | Gate desta task (sem CI de compose — limitação registrada) |
-| `docker-compose.yml` | `OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.0.5:4317 docker compose -f docker-compose.yml config \| grep -c "192.168.0.5:4317"` | ≥ 1 (exit 0) | Idem |
+| `docker-compose.yml` | `docker compose -f docker-compose.yml config --quiet` | exit 0, compose válido | Gate desta task (sem CI de compose — limitação registrada) |
+| `docker-compose.yml` | `env -u OTEL_EXPORTER_OTLP_ENDPOINT docker compose -f docker-compose.yml config \| grep -F -c "OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317"` | ≥ 1 (exit 0), default preservado | Idem |
+| `docker-compose.yml` | `OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.0.5:4317 docker compose -f docker-compose.yml config \| grep -F -c "OTEL_EXPORTER_OTLP_ENDPOINT: http://192.168.0.5:4317"` | ≥ 1 (exit 0), override aplicado | Idem |
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0): compose válido, default intacto, override aplicado.
+- [x] Gate passa (exit 0): compose válido, default intacto, override aplicado.
 - [ ] Smoke: com a variável apontada e a stack local no ar, um vídeo enviado localmente aparece no
       dashboard "Pipeline de Mídia" em ≤ 2 min.
-- [ ] Sem a variável, `docker compose config` mostra `http://otel-collector:4317` como antes.
+- [x] Sem a variável, `docker compose config` mostra `http://otel-collector:4317` como antes.
