@@ -3,13 +3,13 @@
   "branch": "feature/observabilidade-midia",
   "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
-  "target_ref": null,
-  "last_checkpoint": "223b9a8",
-  "phase": "validate",
-  "active_task": "7.0",
+  "target_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
+  "last_checkpoint": "4b0b38f",
+  "phase": "fix-full",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
@@ -18,21 +18,15 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.Twb42jB5",
-    "role": "validator",
-    "mode": "revalidation",
-    "task": "7.0",
-    "attempt": "1/3",
-    "outcome": "approved",
-    "gate": "static_passed",
-    "report": "tasks/prd-observabilidade-midia/7.0_task_review.md"
-  },
-  "pending_delegation": {
+    "run_id": "run.nhkPJcaB",
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "7.0",
-    "attempt": null
+    "mode": "reopen-task",
+    "task": "2.0",
+    "attempt": null,
+    "outcome": "task_reopened",
+    "gate": "not_run"
   },
+  "pending_delegation": null,
   "history": [
     {
       "ts": "2026-09-28",
@@ -215,6 +209,33 @@
       "task": "7.0",
       "run_id": "run.Twb42jB5",
       "note": "0 bloqueantes, 1 pendencia operacional; gate static_passed (compose valido, default preservado, override nos 9 servicos); confirmacao visual no Kibana fica como 7.0-P1 com owner usuario/equipe"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "7.0",
+      "commit": "4b0b38f",
+      "run_id": "run.vSY05Qhj",
+      "note": "todas as 7 tasks concluidas; inicio da integracao"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "integration_ready",
+      "run_id": "run.rBw90fTq",
+      "note": "base_ref=695f3f8 (origin/main), target_ref=b1578d3, HEAD=4b0b38f"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "full_rejected",
+      "run_id": "run.dehQCWsM",
+      "note": "5 bloqueantes (F1->5.0, F2->2.0, F3->6.0, F4->5.0, F5 integracao); full_attempt=1"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "2.0",
+      "run_id": "run.nhkPJcaB",
+      "note": "reabertura pos-full F2->2.0 (SUM sobre counters cumulativos distorce RF-02/04/05); codigo preservado"
     }
   ],
   "carryover": {
@@ -229,6 +250,13 @@
     ],
     "7.0": [
       "7.0-P1: confirmacao visual no Kibana dev de que a stack local alimenta o dashboard (autorizado pelo usuario; APIs de busca do Kibana desabilitadas e ES interno impediram a leitura automatica); owner: usuario/equipe"
+    ],
+    "full-1": [
+      "F1 -> 5.0: suite agregada reprova — MediaVolumeMetricsTests espera 3 instrumentos e recebe 6; MediaQueueMetricsTests recebe 4 medicoes de oldest_waiting (interferencia de listener/Meter estatico)",
+      "F2 -> 2.0: paineis de funil/claims/resultados/publicacoes somam amostras Counter com SUM (import_observabilidade.py:654,682,710,737,930,937,951) — distorce RF-02/04/05",
+      "F3 -> 6.0: A2 perde a primeira amostra sem baseline (COALESCE(f_base,f_first,0)) — serie nova de motivo pode contar 3 de 4 falhas",
+      "F4 -> 5.0: Gitleaks FP generic-api-key em MediaOutboxMetricsTests.cs:23 (routing key); workflow enforce low — precisa supressao pontual",
+      "F5 (integracao): base avancou — target_ref b1578d3 vs base validada 695f3f8; repreparar e rodar full de novo"
     ]
   }
 }
