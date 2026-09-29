@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.MediaOutboxMetricsTests --minimum-expected-tests 5'
@@ -71,8 +71,8 @@ daqui). O comportamento de publicação não muda: só passa a se reportar.
 
 ## Pronto quando
 
-- [x] Gate passa (exit 0) com pelo menos 5 testes, incluindo o caso negativo do papel api (não
+- [ ] Gate passa (exit 0) com pelo menos 5 testes, incluindo o caso negativo do papel api (não
       emite gauge de outbox) e o adaptador real de Management API.
-- [x] Snapshot com 3 pendentes (1 esgotada) → pending 3, exhausted 1, oldest_pending coerente;
+- [ ] Snapshot com 3 pendentes (1 esgotada) → pending 3, exhausted 1, oldest_pending coerente;
       outbox saudável → pending ≈ 0 abaixo da janela de polling.
 - [ ] Smoke: mensagem na DLQ do heartbeat → gauge > 0 na seção Outbox e DLQ do painel.

@@ -6,7 +6,7 @@
   "target_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
   "last_checkpoint": "4b0b38f",
   "phase": "fix-full",
-  "active_task": "6.0",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -18,10 +18,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.P9p49v9w",
+    "run_id": "run.mNZZL5EK",
     "role": "integrator",
     "mode": "reopen-task",
-    "task": "6.0",
+    "task": "5.0",
     "attempt": null,
     "outcome": "task_reopened",
     "gate": "not_run"
@@ -271,6 +271,13 @@
       "task": "6.0",
       "run_id": "run.tMg9FCf6",
       "note": "0 bloqueantes, 1 pendencia operacional herdada 6.0-P1; gate verify-only exit 0 (A1-A5 IDs estaveis, sem conectores)"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "5.0",
+      "run_id": "run.mNZZL5EK",
+      "note": "reabertura pos-full F1+F4->5.0 (suite agregada com Meter estatico + Gitleaks FP routing key); codigo preservado"
     }
   ],
   "carryover": {
