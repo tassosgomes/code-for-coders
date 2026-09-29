@@ -6,10 +6,10 @@
   "target_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
   "last_checkpoint": "4b0b38f",
   "phase": "fix-full",
-  "active_task": "5.0",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
@@ -18,10 +18,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.mNZZL5EK",
+    "run_id": "run.VtdSJH9K",
     "role": "integrator",
     "mode": "reopen-task",
-    "task": "5.0",
+    "task": "2.0",
     "attempt": null,
     "outcome": "task_reopened",
     "gate": "not_run"
@@ -292,6 +292,19 @@
       "task": "5.0",
       "run_id": "run.Wi6v0IxC",
       "note": "0 bloqueantes, 0 recomendacoes; gate 5 testes + format/build/unit/arch/compose/verify-only verdes; F1+F4 corrigidos sem regressao"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "full_rejected",
+      "run_id": "run.KxoQ3hg1",
+      "note": "full_attempt=2: suite 125/125, gitleaks 0, A2 ok; restam paineis (edge + por produtor), gate V-07 discriminar default, e rebase sobre b1578d3"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "2.0",
+      "run_id": "run.VtdSJH9K",
+      "note": "reabertura pos-full G1->2.0 (paineis subcontam na janela + outbox sem incremento por produtor RF-02/04/05); codigo preservado"
     }
   ],
   "carryover": {
@@ -313,6 +326,11 @@
       "F3 -> 6.0: A2 perde a primeira amostra sem baseline (COALESCE(f_base,f_first,0)) — serie nova de motivo pode contar 3 de 4 falhas",
       "F4 -> 5.0: Gitleaks FP generic-api-key em MediaOutboxMetricsTests.cs:23 (routing key); workflow enforce low — precisa supressao pontual",
       "F5 (integracao): base avancou — target_ref b1578d3 vs base validada 695f3f8; repreparar e rodar full de novo"
+    ],
+    "full-2": [
+      "G1 -> 2.0: paineis ainda subcontam na janela (LAST-FIRST dentro do filtro; snapshot unico retorna zero) e o painel de outbox agrega api+worker so por event, sem incremento por produtor (RF-02/04/05)",
+      "G2 -> 7.0: mutante V-07 sobreviveu — trocar o default otel-collector:4317 por host invalido ainda passa o gate; falta discriminar o default exigido",
+      "G3 (integracao): branch 2 commits atras da target_ref b1578d3; repreparar sobre b1578d3 e rodar full de novo"
     ]
   }
 }
