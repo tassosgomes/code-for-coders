@@ -31,6 +31,11 @@ INSTRUMENT_FIELDS = {
     "media.videos.count": "metrics.media.videos.count",
     "media.videos.stuck": "metrics.media.videos.stuck",
     "media.storage.used": "metrics.media.storage.used",
+    "media.upload.created": "metrics.media.upload.created",
+    "media.upload.completed": "metrics.media.upload.completed",
+    "media.upload.size": "metrics.media.upload.size",
+    "media.upload.expired": "metrics.media.upload.expired",
+    "media.uploads.pending": "metrics.media.uploads.pending",
 }
 
 PANEL_TITLES = {
@@ -38,12 +43,18 @@ PANEL_TITLES = {
     "videos-stuck": "Vídeos presos",
     "storage-used": "Armazenamento usado (bytes)",
     "snapshot-staleness": "Idade do último snapshot",
+    "upload-funnel": "Envio · Funil na janela",
+    "upload-sizes": "Envio · Distribuição de tamanho (bytes)",
+    "upload-pending": "Envio · Sessões pendentes",
 }
 PANEL_VISUALIZATIONS = {
     "videos-by-state": "lnsDatatable",
     "videos-stuck": "lnsMetric",
     "storage-used": "lnsMetric",
     "snapshot-staleness": "lnsMetric",
+    "upload-funnel": "lnsDatatable",
+    "upload-sizes": "lnsDatatable",
+    "upload-pending": "lnsMetric",
 }
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
@@ -178,6 +189,31 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
         ad_hoc_view = state.get("adHocDataViews", {}).get(data_view_id, {})
         if ad_hoc_view.get("title") != DATA_VIEW_TITLE:
             raise ValueError(f"painel {title!r} não usa o data view {DATA_VIEW_TITLE}")
+
+    funnel_query = (
+        panels_by_id[stable_id("upload-funnel")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
+    )
+    funnel_instruments = ("media.upload.created", "media.upload.completed", "media.upload.expired")
+    for instrument_name in funnel_instruments:
+        if INSTRUMENT_FIELDS[instrument_name] not in funnel_query:
+            raise ValueError(f"painel de funil não referencia {instrument_name}")
+    if any(
+        f"SUM({INSTRUMENT_FIELDS[instrument]})" not in funnel_query
+        for instrument in funnel_instruments
+    ):
+        raise ValueError("painel de funil deve comparar os três counters no mesmo período selecionado")
+
+    sizes_query = (
+        panels_by_id[stable_id("upload-sizes")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
+    )
+    if INSTRUMENT_FIELDS["media.upload.size"] not in sizes_query or "PERCENTILE(" not in sizes_query:
+        raise ValueError("painel de tamanho deve calcular percentis do histograma media.upload.size")
+
+    pending_query = (
+        panels_by_id[stable_id("upload-pending")]["embeddableConfig"]["attributes"]["state"]["query"]["esql"]
+    )
+    if INSTRUMENT_FIELDS["media.uploads.pending"] not in pending_query or "LATEST(" not in pending_query:
+        raise ValueError("painel de pendências deve exibir o snapshot mais recente de media.uploads.pending")
         internal_references = state.get("internalReferences", [])
         if not any(
             reference.get("type") == "index-pattern"
@@ -367,7 +403,7 @@ def main() -> int:
     actions.add_argument(
         "--verify-only",
         action="store_true",
-        help="valida localmente o NDJSON, os IDs, as métricas e o painel de staleness; não usa rede",
+        help="valida o NDJSON, os IDs, as métricas e os painéis de staleness e envio; não usa rede",
     )
     actions.add_argument(
         "--export",
@@ -396,7 +432,7 @@ def main() -> int:
         print(
             "Verificação estrutural passou: data view metrics-generic* e dashboard "
             f"{DASHBOARD_TITLE!r} com IDs estáveis; métricas verificadas contra o manifesto "
-            f"({', '.join(INSTRUMENT_FIELDS)}); painel de staleness presente. "
+            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de staleness e envio presentes. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0

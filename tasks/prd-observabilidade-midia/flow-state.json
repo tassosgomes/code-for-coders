@@ -4,9 +4,9 @@
   "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "target_ref": null,
-  "last_checkpoint": null,
-  "phase": "validate",
-  "active_task": "1.0",
+  "last_checkpoint": "f2137ff",
+  "phase": "implement",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,18 +18,17 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.tI9pVlNI",
+    "run_id": "run.fTjFAyIN",
     "role": "validator",
     "mode": "focused",
-    "task": "1.0",
+    "task": "2.0",
     "outcome": "approved",
-    "gate": "passed",
-    "report": "tasks/prd-observabilidade-midia/1.0_task_review.md"
+    "report": "tasks/prd-observabilidade-midia/2.0_task_review.md"
   },
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "1.0",
+    "task": "2.0",
     "attempt": null
   },
   "history": [
@@ -57,6 +56,33 @@
       "task": "1.0",
       "run_id": "run.tI9pVlNI",
       "note": "validator opencode (kind explicit: claude sem cota semanal, pane fechado); 0 bloqueantes, 0 recomendacoes; smoke de import real e reimport por segunda pessoa ficam como evidencia operacional (import ja executado 2x pelo implementer com successCount=2)"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "1.0",
+      "commit": "f2137ff",
+      "run_id": "run.sdKQ1qTl",
+      "note": "primeiro checkpoint incluiu artefatos de planejamento; routing.default.json excluido conforme contexto"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "2.0",
+      "run_id": "run.Q8klesGG",
+      "note": "timeout do delegate com codex trabalhando; agente concluiu sozinho e gravou result.json (5 testes no gate, checks verdes); sem intervencao desta vez"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "focused_approved",
+      "task": "2.0",
+      "run_id": "run.fTjFAyIN",
+      "note": "0 bloqueantes, 1 recomendacao operacional; import remoto do NDJSON executado pelo orquestrador apos aprovacao (secao Envio publicada)"
     }
-  ]
+  ],
+  "carryover": {
+    "2.0": [
+      "2.0-R1: smoke visual da seção Envio no Kibana dev (um concluído e um expirado na mesma janela) quando houver tráfega real — recomendacao do validator, nao bloqueante"
+    ]
+  }
 }

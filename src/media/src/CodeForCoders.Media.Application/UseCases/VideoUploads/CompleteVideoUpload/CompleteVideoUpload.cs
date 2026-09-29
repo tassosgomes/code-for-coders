@@ -56,7 +56,7 @@ public sealed class CompleteVideoUpload(
             upload.ObjectKey,
             upload.FileSize,
             Activity.Current?.Id));
-        var completedVideo = await videoUploads.CompleteAsync(
+        var (completedVideo, newlyCompleted) = await videoUploads.CompleteAsync(
             upload,
             video,
             now,
@@ -83,6 +83,12 @@ public sealed class CompleteVideoUpload(
         }
 
         await unitOfWork.CommitAsync(cancellationToken);
+        if (newlyCompleted)
+        {
+            MediaTelemetry.UploadsCompleted.Add(1);
+            MediaTelemetry.UploadSize.Record(upload.FileSize);
+        }
+
         return output;
     }
 

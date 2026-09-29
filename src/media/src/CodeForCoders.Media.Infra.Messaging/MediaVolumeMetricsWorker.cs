@@ -15,7 +15,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
     private readonly IServiceScopeFactory scopeFactory;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<MediaVolumeMetricsWorker> logger;
-    private MetricsSnapshot snapshot = new(0, 0, []);
+    private MetricsSnapshot snapshot = new(0, 0, [], 0);
 
     public MediaVolumeMetricsWorker(
         IServiceScopeFactory scopeFactory,
@@ -28,6 +28,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         MediaTelemetry.Meter.CreateObservableGauge("media.storage.used", () => Volatile.Read(ref snapshot).StoredBytes, unit: "By");
         MediaTelemetry.Meter.CreateObservableGauge("media.videos.count", () => Volatile.Read(ref snapshot).Counts);
         MediaTelemetry.Meter.CreateObservableGauge("media.videos.stuck", () => Volatile.Read(ref snapshot).StuckCount, unit: "{video}");
+        MediaTelemetry.Meter.CreateObservableGauge("media.uploads.pending", () => Volatile.Read(ref snapshot).PendingUploads, unit: "{upload}");
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
@@ -38,6 +39,8 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
             .GroupBy(video => video.Status)
             .Select(group => new { Status = group.Key, Count = group.LongCount(), Bytes = group.Sum(video => video.StoredBytes) })
             .ToListAsync(cancellationToken);
+        var pendingUploads = await dbContext.VideoUploads.IgnoreQueryFilters().AsNoTracking()
+            .LongCountAsync(upload => upload.CompletedAt == null && upload.ExpiredAt == null, cancellationToken);
         var now = timeProvider.GetUtcNow();
         var stuck = await dbContext.Videos.FromSqlInterpolated($"""
                 SELECT * FROM media_access.videos
@@ -50,7 +53,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         var counts = KnownStatuses.Select(status => new Measurement<long>(
             statusCounts.GetValueOrDefault(status),
             new KeyValuePair<string, object?>("status", status))).ToArray();
-        Volatile.Write(ref snapshot, new MetricsSnapshot(rows.Sum(row => row.Bytes), stuck, counts));
+        Volatile.Write(ref snapshot, new MetricsSnapshot(rows.Sum(row => row.Bytes), stuck, counts, pendingUploads));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -80,5 +83,5 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         }
     }
 
-    private sealed record MetricsSnapshot(long StoredBytes, long StuckCount, Measurement<long>[] Counts);
+    private sealed record MetricsSnapshot(long StoredBytes, long StuckCount, Measurement<long>[] Counts, long PendingUploads);
 }
