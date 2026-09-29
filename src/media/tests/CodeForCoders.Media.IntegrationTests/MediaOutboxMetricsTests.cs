@@ -321,7 +321,17 @@ public sealed class MediaOutboxMetricsTests(MediaIntegrationFixture fixture)
             "media.messaging.dlq.messages",
         ];
 
-        private readonly ConcurrentQueue<MetricValue> measurements = new();
+        private static readonly HashSet<string> ObservableNames =
+        [
+            "media.outbox.pending",
+            "media.outbox.oldest_pending",
+            "media.outbox.exhausted",
+            "media.messaging.dlq.messages",
+        ];
+
+        private readonly ConcurrentQueue<CapturedMeasurement> measurements = new();
+        private readonly ConcurrentDictionary<System.Diagnostics.Metrics.Instrument, byte> ownedInstruments = new();
+        private volatile bool acceptNewInstruments;
 
         public MetricCapture()
         {
@@ -330,19 +340,28 @@ public sealed class MediaOutboxMetricsTests(MediaIntegrationFixture fixture)
                 if (instrument.Meter == MediaTelemetry.Meter && InstrumentNames.Contains(instrument.Name))
                 {
                     listener.EnableMeasurementEvents(instrument);
+                    if (acceptNewInstruments)
+                    {
+                        ownedInstruments.TryAdd(instrument, 0);
+                    }
                 }
             };
             Listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
-                measurements.Enqueue(new MetricValue(instrument.Name, value, tags.ToArray())));
+                measurements.Enqueue(new CapturedMeasurement(instrument, instrument.Name, value, tags.ToArray())));
             Listener.SetMeasurementEventCallback<double>((instrument, value, tags, _) =>
-                measurements.Enqueue(new MetricValue(instrument.Name, value, tags.ToArray())));
+                measurements.Enqueue(new CapturedMeasurement(instrument, instrument.Name, value, tags.ToArray())));
             Listener.Start();
+            acceptNewInstruments = true;
         }
 
         private MeterListener Listener { get; } = new();
 
         public MetricValue[] Measurements(string name)
-            => measurements.Where(measurement => measurement.Name == name).ToArray();
+            => measurements
+                .Where(measurement => measurement.Name == name
+                    && (!ObservableNames.Contains(name) || ownedInstruments.ContainsKey(measurement.Source)))
+                .Select(measurement => new MetricValue(measurement.Name, measurement.Value, measurement.Tags))
+                .ToArray();
 
         public void Observe()
             => Listener.RecordObservableInstruments();
@@ -357,4 +376,10 @@ public sealed class MediaOutboxMetricsTests(MediaIntegrationFixture fixture)
 
         public string? Queue => Tags.SingleOrDefault(tag => tag.Key == "queue").Value as string;
     }
+
+    private sealed record CapturedMeasurement(
+        System.Diagnostics.Metrics.Instrument Source,
+        string Name,
+        double Value,
+        KeyValuePair<string, object?>[] Tags);
 }

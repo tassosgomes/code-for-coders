@@ -74,8 +74,24 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
         await ResetAsync();
         await SeedAsync(Video.Create(Guid.CreateVersion7(), "Private", Guid.CreateVersion7(), "Teacher", DateTimeOffset.UtcNow));
         var values = await CollectAsync();
-        Assert.Equal(3, values.Select(value => value.Name).Distinct().Count());
+        var names = values.Select(value => value.Name).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToArray();
+        Assert.Equal(
+            [
+                "media.outbox.exhausted",
+                "media.outbox.pending",
+                "media.storage.used",
+                "media.uploads.pending",
+                "media.videos.count",
+                "media.videos.stuck",
+            ],
+            names);
         Assert.All(values, value => Assert.All(value.Tags, tag => Assert.Equal("status", tag.Key)));
+        Assert.All(
+            values.Where(value => value.Name == "media.videos.count"),
+            value => Assert.Equal("status", Assert.Single(value.Tags).Key));
+        Assert.All(
+            values.Where(value => value.Name != "media.videos.count"),
+            value => Assert.Empty(value.Tags));
     }
 
     [Fact]

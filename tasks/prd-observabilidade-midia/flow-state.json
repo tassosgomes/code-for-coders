@@ -278,6 +278,20 @@
       "task": "5.0",
       "run_id": "run.mNZZL5EK",
       "note": "reabertura pos-full F1+F4->5.0 (suite agregada com Meter estatico + Gitleaks FP routing key); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "5.0",
+      "run_id": "run.Dkcdl8EY",
+      "note": "fix F1+F4 (Meter estatico isolado nos 3 testes + supressao gitleaks routing key); gate passed, suite 101/101"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "5.0",
+      "run_id": "run.Wi6v0IxC",
+      "note": "0 bloqueantes, 0 recomendacoes; gate 5 testes + format/build/unit/arch/compose/verify-only verdes; F1+F4 corrigidos sem regressao"
     }
   ],
   "carryover": {

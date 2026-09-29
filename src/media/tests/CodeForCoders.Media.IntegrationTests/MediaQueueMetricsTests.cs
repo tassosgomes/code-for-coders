@@ -152,7 +152,14 @@ public sealed class MediaQueueMetricsTests(VideoLibraryApiFactory factory)
             "media.videos.oldest_waiting",
         ];
 
-        private readonly ConcurrentQueue<MetricValue> measurements = new();
+        private static readonly HashSet<string> ObservableNames =
+        [
+            "media.videos.oldest_waiting",
+        ];
+
+        private readonly ConcurrentQueue<CapturedMeasurement> measurements = new();
+        private readonly ConcurrentDictionary<System.Diagnostics.Metrics.Instrument, byte> ownedInstruments = new();
+        private volatile bool acceptNewInstruments;
 
         public MetricCapture()
         {
@@ -161,19 +168,28 @@ public sealed class MediaQueueMetricsTests(VideoLibraryApiFactory factory)
                 if (instrument.Meter == MediaTelemetry.Meter && InstrumentNames.Contains(instrument.Name))
                 {
                     listener.EnableMeasurementEvents(instrument);
+                    if (acceptNewInstruments)
+                    {
+                        ownedInstruments.TryAdd(instrument, 0);
+                    }
                 }
             };
             Listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
-                measurements.Enqueue(new MetricValue(instrument.Name, value, tags.ToArray())));
+                measurements.Enqueue(new CapturedMeasurement(instrument, instrument.Name, value, tags.ToArray())));
             Listener.SetMeasurementEventCallback<double>((instrument, value, tags, _) =>
-                measurements.Enqueue(new MetricValue(instrument.Name, value, tags.ToArray())));
+                measurements.Enqueue(new CapturedMeasurement(instrument, instrument.Name, value, tags.ToArray())));
             Listener.Start();
+            acceptNewInstruments = true;
         }
 
         private MeterListener Listener { get; } = new();
 
         public MetricValue[] Measurements(string name)
-            => measurements.Where(measurement => measurement.Name == name).ToArray();
+            => measurements
+                .Where(measurement => measurement.Name == name
+                    && (!ObservableNames.Contains(name) || ownedInstruments.ContainsKey(measurement.Source)))
+                .Select(measurement => new MetricValue(measurement.Name, measurement.Value, measurement.Tags))
+                .ToArray();
 
         public MetricValue[] Observe(string name)
         {
@@ -189,4 +205,10 @@ public sealed class MediaQueueMetricsTests(VideoLibraryApiFactory factory)
     }
 
     private sealed record MetricValue(string Name, double Value, KeyValuePair<string, object?>[] Tags);
+
+    private sealed record CapturedMeasurement(
+        System.Diagnostics.Metrics.Instrument Source,
+        string Name,
+        double Value,
+        KeyValuePair<string, object?>[] Tags);
 }
