@@ -82,9 +82,36 @@ public static class MediaTelemetry
         {
             HistogramBucketBoundaries = [10, 30, 60, 300, 600, 1800, 3600, 10800, 21600, 43200, 86400],
         });
+    public static readonly Counter<long> OutboxPublished = Meter.CreateCounter<long>(
+        "media.outbox.published",
+        unit: "{message}");
+    public static readonly Counter<long> OutboxPublishFailed = Meter.CreateCounter<long>(
+        "media.outbox.publish_failed",
+        unit: "{message}");
+
+    public static void RecordOutboxPublished(string routingKey)
+        => RecordOutboxEvent(OutboxPublished, routingKey);
+
+    public static void RecordOutboxPublishFailed(string routingKey)
+        => RecordOutboxEvent(OutboxPublishFailed, routingKey);
 
     public static void RecordVideoPrepareDuration(string stage, long startedAt)
         => VideoPrepareDuration.Record(
             Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
             new KeyValuePair<string, object?>("stage", stage));
+
+    private static void RecordOutboxEvent(Counter<long> instrument, string routingKey)
+    {
+        var eventName = routingKey switch
+        {
+            "midia.ativo-pronto.v1" => "ativo-pronto",
+            "midia.preparacao-falhou.v1" => "preparacao-falhou",
+            _ => null,
+        };
+
+        if (eventName is not null)
+        {
+            instrument.Add(1, new KeyValuePair<string, object?>("event", eventName));
+        }
+    }
 }

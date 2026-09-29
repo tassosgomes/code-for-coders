@@ -31,6 +31,7 @@ public sealed class MediaIntegrationFixture : IAsyncLifetime
     public RabbitMqContainer RabbitMq { get; } = new RabbitMqBuilder("rabbitmq:4.3-management-alpine")
         .WithUsername("code_for_coders")
         .WithPassword("code_for_coders")
+        .WithPortBinding(15672, true)
         .Build();
 
     public IContainer Minio { get; } = new ContainerBuilder("ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z")

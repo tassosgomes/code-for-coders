@@ -4,6 +4,7 @@ using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data;
 using CodeForCoders.Media.Infra.Messaging;
+using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -114,6 +115,7 @@ public sealed class MediaQueueMetricsTests(VideoLibraryApiFactory factory)
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.Configure<OutboxOptions>(_ => { });
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddDbContext<MediaDbContext>(options => options.UseNpgsql(factory.VideoPreparationConnectionString));
         services.AddSingleton<MediaVolumeMetricsWorker>();

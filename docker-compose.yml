@@ -209,6 +209,7 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: api
+      RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-http://rabbitmq:15672}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
@@ -238,6 +239,7 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: worker
+      RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-http://rabbitmq:15672}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks

@@ -45,6 +45,12 @@ INSTRUMENT_FIELDS = {
     "media.videos.failed": "metrics.media.videos.failed",
     "media.videos.prepare_duration": "metrics.media.videos.prepare_duration",
     "media.videos.time_to_ready": "metrics.media.videos.time_to_ready",
+    "media.outbox.pending": "metrics.media.outbox.pending",
+    "media.outbox.oldest_pending": "metrics.media.outbox.oldest_pending",
+    "media.outbox.exhausted": "metrics.media.outbox.exhausted",
+    "media.outbox.published": "metrics.media.outbox.published",
+    "media.outbox.publish_failed": "metrics.media.outbox.publish_failed",
+    "media.messaging.dlq.messages": "metrics.media.messaging.dlq.messages",
 }
 
 PANEL_TITLES = {
@@ -62,6 +68,9 @@ PANEL_TITLES = {
     "preparation-time-to-ready": "Preparação · Tempo até pronto (s)",
     "preparation-outcomes": "Preparação · Conclusões e tentativas na janela",
     "preparation-failures": "Preparação · Falhas por motivo na janela",
+    "outbox-snapshot": "Outbox · Pendentes, idade e esgotados",
+    "outbox-publishes": "Outbox · Publicações por evento na janela",
+    "dlq-depth": "Outbox · Profundidade da DLQ",
 }
 PANEL_VISUALIZATIONS = {
     "videos-by-state": "lnsDatatable",
@@ -78,6 +87,9 @@ PANEL_VISUALIZATIONS = {
     "preparation-time-to-ready": "lnsDatatable",
     "preparation-outcomes": "lnsDatatable",
     "preparation-failures": "lnsDatatable",
+    "outbox-snapshot": "lnsDatatable",
+    "outbox-publishes": "lnsDatatable",
+    "dlq-depth": "lnsMetric",
 }
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
@@ -297,6 +309,35 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     ):
         raise ValueError("painel de preparação deve somar media.videos.failed por reason")
 
+    outbox_snapshot_query = panel_query(panels_by_id[stable_id("outbox-snapshot")])
+    outbox_gauges = ("media.outbox.pending", "media.outbox.oldest_pending", "media.outbox.exhausted")
+    if any(INSTRUMENT_FIELDS[instrument] not in outbox_snapshot_query for instrument in outbox_gauges):
+        raise ValueError("painel de outbox deve exibir o snapshot de pendentes, idade e esgotados")
+    if any(
+        f"LATEST({INSTRUMENT_FIELDS[instrument]})" not in outbox_snapshot_query
+        for instrument in outbox_gauges
+    ):
+        raise ValueError("painel de outbox deve exibir o snapshot mais recente dos gauges de outbox")
+
+    outbox_publishes_query = panel_query(panels_by_id[stable_id("outbox-publishes")])
+    outbox_counters = ("media.outbox.published", "media.outbox.publish_failed")
+    if any(INSTRUMENT_FIELDS[instrument] not in outbox_publishes_query for instrument in outbox_counters):
+        raise ValueError("painel de outbox deve comparar publicações e falhas por evento na janela")
+    if any(
+        f"SUM({INSTRUMENT_FIELDS[instrument]})" not in outbox_publishes_query
+        for instrument in outbox_counters
+    ):
+        raise ValueError("painel de outbox deve somar os counters de publicação e falha")
+    if "BY event = attributes.event" not in outbox_publishes_query:
+        raise ValueError("painel de outbox deve detalhar publicações por event")
+
+    dlq_query = panel_query(panels_by_id[stable_id("dlq-depth")])
+    if (
+        INSTRUMENT_FIELDS["media.messaging.dlq.messages"] not in dlq_query
+        or "LATEST(" not in dlq_query
+    ):
+        raise ValueError("painel de outbox deve exibir o snapshot mais recente de media.messaging.dlq.messages")
+
     status_panel = panels_by_id[stable_id("videos-by-state")]
     status_state = status_panel["embeddableConfig"]["attributes"]["state"]
     status_query = next(iter(status_state["datasourceStates"]["textBased"]["layers"].values()))[
@@ -396,6 +437,57 @@ def make_lens_panel(
     }
 
 
+def make_lens_metric_panel(
+    panel_id: str,
+    title: str,
+    query: str,
+    metric_field: str,
+    data_view_id: str,
+    data_view: dict,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+) -> dict:
+    """Build a single-value Lens metric panel following the Kibana-exported shape."""
+    internal_reference_name = "indexpattern-datasource-layer-layer_0"
+    layer = {
+        "index": data_view_id,
+        "query": {"esql": query},
+        "columns": [{"columnId": "metric_accessor_metric", "fieldName": metric_field, "meta": {"type": "number"}}],
+        "ignoreGlobalFilters": False,
+    }
+    state = {
+        "datasourceStates": {"textBased": {"layers": {"layer_0": layer}}},
+        "internalReferences": [{"type": "index-pattern", "id": data_view_id, "name": internal_reference_name}],
+        "visualization": {
+            "layerId": "layer_0",
+            "layerType": "data",
+            "metricAccessor": "metric_accessor_metric",
+            "showBar": False,
+            "density": "default",
+        },
+        "adHocDataViews": {data_view_id: copy.deepcopy(data_view)},
+        "query": {"esql": query},
+        "filters": [],
+    }
+    return {
+        "type": "vis",
+        "embeddableConfig": {
+            "title": title,
+            "attributes": {
+                "visualizationType": "lnsMetric",
+                "title": "",
+                "references": [],
+                "version": 2,
+                "state": state,
+            },
+        },
+        "panelIndex": panel_id,
+        "gridData": {"x": x, "y": y, "w": width, "h": height, "i": panel_id},
+    }
+
+
 def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
     saved_objects, summary = load_saved_objects(path)
     dashboard = next(item for item in saved_objects if item["type"] == "dashboard" and item["id"] == DASHBOARD_ID)
@@ -437,6 +529,20 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             24,
             66,
         ),
+        (
+            "outbox-snapshot",
+            "FROM metrics-generic* | WHERE metrics.media.outbox.pending IS NOT NULL OR metrics.media.outbox.oldest_pending IS NOT NULL OR metrics.media.outbox.exhausted IS NOT NULL | STATS pending = LATEST(metrics.media.outbox.pending), oldest_pending_seconds = LATEST(metrics.media.outbox.oldest_pending), exhausted = LATEST(metrics.media.outbox.exhausted)",
+            [("pending", "number"), ("oldest_pending_seconds", "number"), ("exhausted", "number")],
+            0,
+            78,
+        ),
+        (
+            "outbox-publishes",
+            "FROM metrics-generic* | WHERE metrics.media.outbox.published IS NOT NULL OR metrics.media.outbox.publish_failed IS NOT NULL | STATS published = SUM(metrics.media.outbox.published), publish_failed = SUM(metrics.media.outbox.publish_failed) BY event = attributes.event | SORT event ASC",
+            [("event", "string"), ("published", "number"), ("publish_failed", "number")],
+            24,
+            78,
+        ),
     ]
     for key, query, columns, x, y in panel_definitions:
         panel_id = stable_id(key)
@@ -452,6 +558,20 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             24,
             12,
         )
+
+    dlq_panel_id = stable_id("dlq-depth")
+    existing_panels[dlq_panel_id] = make_lens_metric_panel(
+        dlq_panel_id,
+        PANEL_TITLES["dlq-depth"],
+        "FROM metrics-generic* | WHERE metrics.media.messaging.dlq.messages IS NOT NULL | STATS dlq_messages = LATEST(metrics.media.messaging.dlq.messages)",
+        "dlq_messages",
+        data_view_id,
+        data_view,
+        0,
+        90,
+        24,
+        10,
+    )
 
     attributes["panelsJSON"] = json.dumps(list(existing_panels.values()), ensure_ascii=False, separators=(",", ":"))
     summary["exportedCount"] = len(saved_objects)
@@ -619,12 +739,12 @@ def main() -> int:
     actions.add_argument(
         "--verify-only",
         action="store_true",
-        help="valida o NDJSON, os IDs, as métricas e os painéis de envio, fila e preparação; não usa rede",
+        help="valida o NDJSON, os IDs, as métricas e os painéis de envio, fila, preparação e outbox/DLQ; não usa rede",
     )
     actions.add_argument(
         "--generate-only",
         action="store_true",
-        help="gera os painéis de preparação no NDJSON versionado e valida o resultado; não usa rede",
+        help="gera os painéis de preparação e outbox/DLQ no NDJSON versionado e valida o resultado; não usa rede",
     )
     actions.add_argument(
         "--export",
@@ -658,7 +778,7 @@ def main() -> int:
         print(
             "Verificação estrutural passou: data view metrics-generic* e dashboard "
             f"{DASHBOARD_TITLE!r} com IDs estáveis; métricas verificadas contra o manifesto "
-            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de envio, fila e preparação presentes. "
+            f"({', '.join(INSTRUMENT_FIELDS)}); painéis de envio, fila, preparação e outbox/DLQ presentes. "
             f"Saved objects: {len(saved_objects)}."
         )
         return 0

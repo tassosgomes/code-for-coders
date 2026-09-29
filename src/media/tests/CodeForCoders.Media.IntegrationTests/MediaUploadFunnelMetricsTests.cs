@@ -8,12 +8,14 @@ using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Infra.Data;
 using CodeForCoders.Media.Infra.Messaging;
+using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
@@ -123,7 +125,8 @@ public sealed class MediaUploadFunnelMetricsTests(VideoLibraryApiFactory factory
         using var worker = new MediaVolumeMetricsWorker(
             factory.Services.GetRequiredService<IServiceScopeFactory>(),
             factory.Services.GetRequiredService<TimeProvider>(),
-            factory.Services.GetRequiredService<ILogger<MediaVolumeMetricsWorker>>());
+            factory.Services.GetRequiredService<ILogger<MediaVolumeMetricsWorker>>(),
+            factory.Services.GetRequiredService<IOptions<OutboxOptions>>());
         await worker.RefreshAsync(TestContext.Current.CancellationToken);
         metrics.Listener.RecordObservableInstruments();
 

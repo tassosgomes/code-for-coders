@@ -4,10 +4,10 @@
   "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
   "target_ref": null,
-  "last_checkpoint": "12f0e41",
+  "last_checkpoint": "f7f0d64",
   "phase": "validate",
-  "active_task": "4.0",
-  "attempt": 1,
+  "active_task": "5.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 0,
@@ -18,17 +18,19 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.8vRKOAKG",
+    "run_id": "run.vFsc3pJn",
     "role": "validator",
-    "mode": "focused",
-    "task": "4.0",
+    "mode": "revalidation",
+    "task": "5.0",
+    "attempt": "2/3",
     "outcome": "approved",
-    "report": "tasks/prd-observabilidade-midia/4.0_task_review.md"
+    "gate": "passed",
+    "report": "tasks/prd-observabilidade-midia/5.0_task_review.md"
   },
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "4.0",
+    "task": "5.0",
     "attempt": null
   },
   "history": [
@@ -114,6 +116,41 @@
       "task": "4.0",
       "run_id": "run.8vRKOAKG",
       "note": "0 bloqueantes, 1 recomendacao observacional; gate com 5 testes sobre Postgres/ffmpeg reais + format/build/unit/architecture/verify-only verdes"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "4.0",
+      "commit": "f7f0d64",
+      "run_id": "run.JAkWLUtw"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "5.0",
+      "run_id": "run.Cyii30pi",
+      "note": "timeout do delegate; checks verdes; intervencao do orquestrador para encerrar e gravar result.json"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "focused_rejected",
+      "task": "5.0",
+      "run_id": "run.0QJ1Pcz0",
+      "note": "1 bloqueante (5.0-B1 secao Outbox/DLQ ausente no dashboard); tentativa 1/3 consumida"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "fix_complete",
+      "task": "5.0",
+      "run_id": "run.ooUG6kRr",
+      "note": "fix do 5.0-B1 pela via opencode; revalidation com codex (claude sem cota; opencode escreveu o fix — anti-afinidade parcial, registrado)"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "5.0",
+      "run_id": "run.vFsc3pJn",
+      "note": "0 bloqueantes, 0 recomendacoes; gate com 5 testes sobre Postgres/RabbitMQ reais + format/build/unit/architecture/verify-only verdes; secao Outbox/DLQ publicada como codigo"
     }
   ],
   "carryover": {
@@ -121,7 +158,7 @@
       "2.0-R1: smoke visual da seção Envio no Kibana dev (um concluído e um expirado na mesma janela) quando houver tráfega real — recomendacao do validator, nao bloqueante"
     ],
     "4.0": [
-      "4.0-R1: flake de cold-start do fixture Postgres (testcontainers, primeira execução ~60 s) — considerar timeout maior ou retry no VideoLibraryApiFactory se voltar no CI; observacional, nao bloqueante"
+      "4.0-R1: flake de cold-start do fixture Postgres (testcontainers ~60s) — observar no CI; nao bloqueante"
     ]
   }
 }
