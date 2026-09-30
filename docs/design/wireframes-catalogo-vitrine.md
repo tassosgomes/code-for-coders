@@ -1,6 +1,7 @@
 # Wireframes ASCII — Catálogo do backoffice e vitrine pública (CAP-003, 1º PRD)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-09-30 (aprovação explícita "O wireframe tá aprovado", com as seis propostas da seção 7 mantidas como desenhadas). Figma pendente (task 2.0): o cabeçalho passa a `ASCII e Figma aprovados` só depois da aprovação do desenho.
+> **Status:** ASCII aprovado pelo responsável em 2026-09-30 (aprovação explícita "O wireframe tá aprovado", com as seis propostas da seção 7 mantidas como desenhadas). Figma desenhado em 2026-09-30 e aguardando a aprovação do responsável (task 2.0, seção 8): o cabeçalho passa a `ASCII e Figma aprovados` só depois dela.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5226) · frames por tela na [seção 8](#8-handoff-do-figma--aguardando-aprovação) · arquivo Code4Coders — Design System.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 3.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados das telas do Catálogo (`admin-spa`) e da área pública de cursos (`student-spa`) antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-vitrine-oferta/prd.md) v1.0 (RF-02…RF-10, Experiência do Usuário, DP-01…DP-05), [TechSpec](../../tasks/prd-vitrine-oferta/techspec.md) v1.0 (Bloco Frontend, V-01…V-10), [contrato do backoffice](../../tasks/prd-vitrine-oferta/api-contract.md) 1.0.0, [contrato da vitrine](../../tasks/prd-vitrine-oferta/api-contract-student.md) 1.0.0, [wireframes de Autoria](wireframes-autoria-curso.md), [wireframes de Auditoria](wireframes-auditoria.md), [wireframes de Acesso interno](wireframes-acesso-interno.md) (AppShell, B12, B13), [wireframes da conta do aluno](wireframes-conta-aluno.md) (layout público), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -722,3 +723,188 @@ Mesma tela para curso fora da vitrine, inexistente e de outra escola. Mobile 390
 4. **G22** — layout público **sem** ler a sessão: mostra sempre *Entrar* e *Criar conta*, inclusive para aluno autenticado (alternativa: leitura opcional da sessão para mostrar "Minha conta", sem redirecionar).
 5. **G23** — nenhum card novo no Início do backoffice.
 6. Endereço do filtro em português (`?nivel=iniciante`), traduzido para o enum do contrato no cliente.
+
+---
+
+## 8. Handoff do Figma — aguardando aprovação
+
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-09-30, nas páginas `Fluxo — Catálogo e vitrine` e `Screens — Catálogo e vitrine`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5226).
+
+> **Aprovação:** o desenho aguarda a aprovação explícita do responsável (task 2.0). Só depois dela a linha `Status` do cabeçalho passa a `ASCII e Figma aprovados pelo responsável em <AAAA-MM-DD>`. Pedido de ajuste volta ao Figma antes do registro.
+
+### 8.1 Fluxos e navegação
+
+| Artefato | Link e `node-id` |
+|---|---|
+| Índice de revisão | [220:5226](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5226) |
+| Fluxo 1 · Financeiro — montar, publicar e manter uma oferta | [220:5271](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5271) |
+| Fluxo 2 · Visitante — descobrir, avaliar e manifestar interesse | [220:5468](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5468) |
+| Fluxo 3 · Administrador — atos de oferta na trilha | [220:5597](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5597) |
+| Página Fluxo — Catálogo e vitrine | [205:5897](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=205-5897) |
+| Página Screens — Catálogo e vitrine | [205:5898](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=205-5898) |
+
+Cada nó dos fluxos tem o botão **Revisar tela →**, que abre o frame correspondente pelo link do arquivo. Os dados são ilustrativos e o desenho não executa escritas, busca nem autorização; foco, teclado, idempotência e regras do servidor seguem as seções 1 a 6.
+
+### 8.2 Inventário de telas e estados
+
+Desktop em 1440 de largura (altura 900, ou a do conteúdo quando ele passa disso); mobile em 390. Light em todas as telas; Dark em C2.a, C4.a, P1.a e P2.a. Os diálogos do backoffice mostram a ficha C2 ao fundo e os da área pública, a página P2.
+
+#### C1 · Catálogo — `/admin/catalogo` — [grupo 207:55](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=207-55)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C1.a · Lista de cursos | 1440 × 900 | [209:214](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=209-214) |
+| C1.b · Escola sem curso publicado | 1440 × 900 | [209:338](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=209-338) |
+| C1.c · Carregando | 1440 × 900 | [209:401](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=209-401) |
+| C1.d · Erro ao carregar | 1440 × 900 | [209:518](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=209-518) |
+
+#### C2 · Ficha do curso — `/admin/catalogo/{courseId}` — [grupo 210:214](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-214)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C2.a · Com ofertas, curso na vitrine | 1440 × 1052 | [210:215](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-215) |
+| C2.b · Sem nível, só rascunho | 1440 × 972 | [210:373](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-373) |
+| C2.c · Perdeu o nível com ofertas publicadas (DP-04) | 1440 × 1081 | [210:518](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-518) |
+| C2.d · Sem nenhuma oferta | 1440 × 918 | [210:677](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-677) |
+| C2.e · Carregando | 1440 × 900 | [210:776](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-776) |
+| C2.f · Erro ao carregar | 1440 × 900 | [210:842](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-842) |
+| C2.g · Curso não encontrado | 1440 × 900 | [210:925](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-925) |
+| C2.h · Chamada acima de 160 caracteres | 1440 × 1072 | [210:986](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=210-986) |
+
+#### C3 · Oferta — criar e editar (Dialog sobre C2) — [grupo 211:727](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-727)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C3.a · Nova oferta | 1440 × 900 | [211:780](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-780) |
+| C3.b · Nova oferta vitalícia | 1440 × 900 | [211:889](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-889) |
+| C3.c · Campos inválidos | 1440 × 900 | [211:1015](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-1015) |
+| C3.d · Limite de 50 ofertas | 1440 × 900 | [211:1152](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-1152) |
+| C3.e · Editando oferta publicada | 1440 × 900 | [211:1294](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-1294) |
+| C3.f · Editando só o nome | 1440 × 900 | [211:1427](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-1427) |
+| C3.g · Salvando | 1440 × 900 | [211:1543](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-1543) |
+| C3.h · Erro ao salvar — campos mantidos | 1440 × 900 | [211:1676](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=211-1676) |
+
+#### C4 · Publicar oferta (Dialog sobre C2) — [grupo 212:1672](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-1672)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C4.a · Conferir o cartão | 1440 × 900 | [212:1697](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-1697) |
+| C4.b · Publicando | 1440 × 900 | [212:1901](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-1901) |
+| C4.c · Recusada: curso sem nível | 1440 × 900 | [212:2123](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2123) |
+| C4.d · Falha de rede | 1440 × 900 | [212:2221](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2221) |
+| C4.e · Oferta publicada (toast) | 1440 × 900 | [212:2400](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2400) |
+
+#### C5 · Alterar preço ou vigência (Dialog sobre C2) — [grupo 212:2469](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2469)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C5.a · Preço mudou | 1440 × 900 | [212:2519](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2519) |
+| C5.b · Vigência mudou | 1440 × 900 | [212:2625](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2625) |
+| C5.c · Preço e vigência mudaram | 1440 × 900 | [212:2731](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2731) |
+| C5.d · Salvando | 1440 × 900 | [212:2838](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2838) |
+| C5.e · Erro ao salvar | 1440 × 900 | [212:2944](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-2944) |
+
+#### C6 e C7 · Despublicar e excluir rascunho (AlertDialog sobre C2) — [grupo 212:3007](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3007)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C6.a · Despublicar | 1440 × 900 | [212:3019](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3019) |
+| C6.b · Despublicar a última oferta publicada | 1440 × 900 | [212:3111](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3111) |
+| C6.c · Despublicando | 1440 × 900 | [212:3186](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3186) |
+| C6.d · Erro ao despublicar | 1440 × 900 | [212:3278](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3278) |
+| C7.a · Excluir rascunho | 1440 × 900 | [212:3352](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3352) |
+| C7.b · Erro ao excluir | 1440 × 900 | [212:3560](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=212-3560) |
+
+#### C8 · Trilha de auditoria — atos de oferta (telas existentes de CAP-030) — [grupo 213:3451](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-3451)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C8.a · Filtro Tipo com os três atos de oferta | 1440 × 960 | [213:3452](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-3452) |
+| C8.b · Lista com atos de oferta | 1440 × 960 | [213:3523](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-3523) |
+| C8.c · Detalhe de Oferta alterada (preço) | 1440 × 1100 | [213:3813](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-3813) |
+| C8.d · Detalhe de Oferta alterada (preço e vigência) | 1440 × 1100 | [213:3923](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-3923) |
+| C8.e · Detalhe de Oferta publicada | 1440 × 1100 | [213:4041](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-4041) |
+| C8.f · Detalhe de Oferta despublicada, alvo sem rótulo | 1440 × 1100 | [213:4143](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=213-4143) |
+
+#### Mobile 390 — Backoffice — [grupo 214:4053](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4053)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C1.e · Lista de cursos | 390 × 844 | [214:4054](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4054) |
+| C2.i · Ficha com ofertas | 390 × 1420 | [214:4121](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4121) |
+| C3.i · Nova oferta (Sheet) | 390 × 844 | [214:4288](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4288) |
+| C4.f · Publicar oferta (Sheet) | 390 × 844 | [214:4381](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4381) |
+| C5.f · Antes e depois (Sheet) | 390 × 844 | [214:4498](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4498) |
+| C6.e · Despublicar (AlertDialog) | 390 × 844 | [214:4567](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=214-4567) |
+
+#### P1 · Vitrine — `/student/cursos` — [grupo 216:4371](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4371)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| P1.a · Vitrine com cursos | 1440 × 900 | [216:4372](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4372) |
+| P1.b · Filtrada por Iniciante (`?nivel=iniciante`) | 1440 × 900 | [216:4477](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4477) |
+| P1.c · Filtro sem nenhum curso | 1440 × 900 | [216:4549](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4549) |
+| P1.d · Vitrine sem nenhum curso | 1440 × 900 | [216:4608](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4608) |
+| P1.e · Carregando | 1440 × 1116 | [216:4647](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4647) |
+| P1.f · Erro ao carregar | 1440 × 900 | [216:4746](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=216-4746) |
+
+#### P2 · Página do curso — `/student/cursos/{courseId}` — [grupo 217:4617](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4617)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| P2.a · Duas opções, um recomendado na vitrine | 1440 × 905 | [217:4618](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4618) |
+| P2.b · Uma opção, sem pré-requisito | 1440 × 900 | [217:4700](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4700) |
+| P2.c · Carregando | 1440 × 900 | [217:4760](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4760) |
+| P2.d · Erro ao carregar | 1440 × 900 | [217:4801](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4801) |
+
+#### P3 e P4 · Aviso de compra em breve e curso indisponível — [grupo 217:4850](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4850)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| P3 · Aviso "compra em breve" (Dialog sobre P2) | 1440 × 900 | [217:4851](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4851) |
+| P4 · Curso não disponível | 1440 × 900 | [217:4918](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=217-4918) |
+
+#### Mobile 390 — Área pública — [grupo 219:4767](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-4767)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| P1.h · Vitrine | 390 × 952 | [219:4768](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-4768) |
+| P2.e · Página do curso (mobile do P2.b do ASCII) | 390 × 1132 | [219:4853](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-4853) |
+| P3.m · Aviso "compra em breve" (Sheet) | 390 × 844 | [219:4928](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-4928) |
+| P4.m · Curso não disponível | 390 × 844 | [219:5016](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-5016) |
+| P0.m · Menu (Sheet com Cursos, Entrar e Criar conta) | 390 × 844 | [219:5050](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-5050) |
+
+#### Dark mode — validação de tokens — [grupo 219:29699](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-29699)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C2.a · Ficha com ofertas · Dark | 1440 × 1052 | [219:29700](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-29700) |
+| C4.a · Conferir o cartão · Dark | 1440 × 900 | [219:29762](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-29762) |
+| P1.a · Vitrine com cursos · Dark | 1440 × 900 | [219:29833](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-29833) |
+| P2.a · Página do curso · Dark | 1440 × 905 | [219:29861](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=219-29861) |
+
+### 8.3 Composições novas e reuso
+
+Componentes do design system existente têm precedência (`Button`, `Badge`, `Avatar`, `Alert`, `Toast`, `Skeleton`, `Code Window`, `Dialog Header`, `Radio Option`, `Sidebar Nav Item`, `Brand Logo`, `Select`, `Audit Row`, `Evidence Field`, `Identity Ref`). As composições abaixo são **propostas** da seção 3.3 e moram na seção `🧩 Composições propostas — Catálogo e vitrine` da página Screens; nenhuma delas substitui componente existente.
+
+| Composição | Link e `node-id` |
+|---|---|
+| `OfferStatusBadge` (Rascunho · Publicada · Despublicada) | [206:104](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=206-104) |
+| `LevelBadge` (Iniciante · Intermediário · Avançado · Sem nível) | [206:121](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=206-121) |
+| `OfferOption` (opção de acesso; o botão *Comprar* é opcional) | [206:129](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=206-129) |
+| `BeforeAfter` (Antes e Depois, C5) | [206:139](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=206-139) |
+| `ShowcaseCard` (cartão da vitrine; miniatura e linha extra opcionais) | [206:155](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=206-155) |
+| `OfferRow` (linha da oferta na ficha, por estado) | [206:213](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=206-213) |
+| `Icon/tag` (item Catálogo do menu) | [205:5902](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=205-5902) |
+
+### 8.4 Notas de revisão
+
+- **C8** parte dos frames aprovados de Auditoria (lista e registro, CAP-030): mesmo layout, acrescidos os três tipos de oferta, o alvo "curso — opção" e as linhas de valor de *Oferta alterada*. O administrador vê o menu do administrador, sem o grupo **Comercial**.
+
+- **B12 (sem permissão) e B1 (sessão encerrada)** reusam os frames de Acesso interno: [B12.a · Sem permissão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=90-2842) e [B1.c · Sessão encerrada](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=70-199). Não foram redesenhados.
+
+- **C2.a** mostra o link *Abrir na Autoria* (financeiro que também tem `autoria.ler`); nos demais frames da ficha ele está ausente, como no usuário só com `oferta.editar` (G3).
+
+- **P2.b do ASCII (mobile)** corresponde ao frame **P2.e**; o **P2.b** do Figma é o estado desktop de uma única opção, sem pré-requisito (P2.c do ASCII). O botão fixo *Ver opções de acesso* do mobile fica no rodapé da primeira tela.
+
+- A escala de tipografia da área pública segue `DESIGN.md` (H1 de 36/42 no desktop; H2 de 30/36 no mobile) e o estado do filtro de nível usa o componente `Radio Option` do design system.
