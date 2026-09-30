@@ -96,7 +96,7 @@ A implementação deve verificar:
 
 ## Pendências e handoff
 
-1. **Errata do PRD (RF-06):** "leitura sob demanda pelo Catálogo" passa a ser "carga inicial por reenvio" (C-01). Não bloqueia a TechSpec; vai numa revisão 1.1 do PRD.
+1. **Errata do PRD (RF-06):** "leitura sob demanda pelo Catálogo" passa a ser "carga inicial por reenvio" (C-01). **Aplicada** no [PRD](prd.md) 1.1 em 2026-09-30.
 2. **Para a TechSpec:** mecanismo do reenvio (comando de implantação, idempotência, ordem em relação ao consumidor do Catálogo) e do filtro por título sem acento.
 
 Para `tsg-flow-techspec-creator`: usar este índice, [api-contract.yaml](api-contract.yaml), [internal-api-contract-learning.yaml](internal-api-contract-learning.yaml) e [asyncapi-contract.yaml](asyncapi-contract.yaml), sem duplicar schemas.

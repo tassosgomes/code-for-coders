@@ -239,7 +239,7 @@ Schemas, parâmetros e respostas vivem nos três documentos aprovados de [contra
 
 ## Questões em Aberto
 
-- [ ] Errata do PRD, RF-06: "leitura sob demanda" → "carga inicial por reenvio" (OD56) — responsável pelo PRD — não bloqueia; só a letra do PRD fica defasada.
+- [x] Errata do PRD, RF-06: "leitura sob demanda" → "carga inicial por reenvio" (OD56) — aplicada no [PRD](prd.md) 1.1 em 2026-09-30.
 - [ ] Aprovação do adendo de design (EN-01) — responsável pelo produto — bloqueia apenas o código de tela.
 
 ## Architecture Decision Records

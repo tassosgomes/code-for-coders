@@ -63,12 +63,13 @@
     },
     {
       "id": "CAP-005",
-      "stage": "techspec",
+      "stage": "tasks",
       "artifacts": {
         "domain": "domains/conteudo-e-curriculo/domain.md",
         "prd": "tasks/prd-nivel-prerequisito-curso/prd.md",
         "contract": "tasks/prd-nivel-prerequisito-curso/contracts.md",
-        "techspec": "tasks/prd-nivel-prerequisito-curso/techspec.md"
+        "techspec": "tasks/prd-nivel-prerequisito-curso/techspec.md",
+        "tasks": "tasks/prd-nivel-prerequisito-curso/tasks.md"
       },
       "mvp_order": 4,
       "delivered": [
@@ -236,8 +237,8 @@
   "next_actions": [
     {
       "id": "NA28",
-      "what": "Tasks do 2o PRD de CAP-005 (tasks/prd-nivel-prerequisito-curso/techspec.md), com EN-01 de design primeiro",
-      "skill": "tsg-flow-task-creator",
+      "what": "Executar o plano do 2o PRD de CAP-005 (tasks/prd-nivel-prerequisito-curso/tasks.md, aprovado em 2026-09-30; PRD 1.1 com errata do RF-06): 1.0 ASCII aprovado, proxima 2.0 Figma",
+      "skill": "tsg-flow-orchestrator",
       "blocked_by": []
     },
     {

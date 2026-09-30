@@ -5,7 +5,7 @@
 > **ADRs pertinentes:** [0001](../../docs/adr/0001-monorepo-de-codigo.md), [0005](../../docs/adr/0005-sessao-e-servico-do-backoffice.md)
 > **Contratos:** [contracts.md](contracts.md) 1.0 — OpenAPI BFF 1.1.0, OpenAPI interno de `learning` 1.1.0, AsyncAPI de `learning` 1.1.0
 > **Design:** adendo em [wireframes-autoria-curso.md](../../docs/design/wireframes-autoria-curso.md) (a produzir em 1.0 e 2.0), sobre o design aprovado do 1º PRD
-> **Status do plano:** Em revisão
+> **Status do plano:** Confirmado para implementação (aprovado pelo responsável em 2026-09-30)
 
 ## Visão Geral
 
@@ -163,9 +163,9 @@ de `learning` dependem de Docker (Testcontainers de PostgreSQL e RabbitMQ), disp
 
 `US-01` a `US-05` seguem a ordem das histórias do PRD. `RN-C*` são de Conteúdo e Currículo v1.1,
 `RN-O*` de Catálogo e Oferta v1.1, `RN-12`/`RN-18` de Identidade e Acesso. Decisões de contrato: C-01 em
-6.0; C-02 e C-03 em 5.0; C-04 em 4.0; C-05 em 3.0 e 4.0. RF-06 segue a errata pendente do PRD: a
-"leitura sob demanda" do Catálogo é a carga inicial por reenvio (C-01, OD56), coberta por 6.0; a errata
-é do responsável pelo PRD e não bloqueia o plano.
+6.0; C-02 e C-03 em 5.0; C-04 em 4.0; C-05 em 3.0 e 4.0. RF-06 segue a errata do PRD 1.1
+(2026-09-30): a carga inicial do Catálogo é o reenvio do fato da versão vigente (C-01, OD56), coberto
+por 6.0; o fato 1.1.0 e o isolamento por escola dele, por 5.0.
 
 Experiência do Usuário do PRD (seção "Para quem é este curso", linguagem de recomendação, ajuda que
 passa a dizer que preço e vigência são da oferta, acessibilidade) entra no design de 1.0/2.0 e nas telas

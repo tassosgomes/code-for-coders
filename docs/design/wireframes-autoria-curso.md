@@ -1,6 +1,7 @@
 # Wireframes ASCII — Autoria de curso (CAP-005)
 
 > **Status:** ASCII e Figma aprovados pelo responsável em 2026-09-29.
+> **Adendo nível e pré-requisito:** ASCII e Figma aprovados pelo responsável em 2026-09-30 (seção 7; aprovações explícitas “Está aprovado” e “Tá aprovado”; frames na seção 7.12).
 > **Responsável:** responsável pelo produto (usuário desta conversa), com aprovação explícita “Está aprovado” após receber o link do desenho real.
 > **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040) · task_01 concluída; gate visual das tasks 2.0–7.0 satisfeito, preservadas as demais dependências.
 > **Handoff:** usar estes fluxos, telas, estados e decisões no Figma; submeter o desenho visual à aprovação antes da implementação.
@@ -797,3 +798,390 @@ suas demais dependências e verificações de implementação permanecem obrigat
 6. **G9:** Histórico como aba no editor e versão imutável em rota própria.
 7. **G10:** exclusão só do rascunho nunca publicado; remoção de módulo/aula sempre confirmada.
 8. **G13:** card Autoria no Início do professor, sem contagem, conforme a permissão de leitura.
+
+
+---
+
+## 7. Adendo — Nível e pré-requisito do curso (CAP-005, 2º PRD)
+
+> **Situação do adendo:** ASCII e Figma aprovados pelo responsável em 2026-09-30 (“Está aprovado” e
+> “Tá aprovado”), registrados na linha `> **Adendo nível e pré-requisito:** …` do cabeçalho.
+> **Fontes:** [PRD](../../tasks/prd-nivel-prerequisito-curso/prd.md) v1.0 (RF-01…RF-05, Experiência do
+> Usuário, DP-01, DP-02), [TechSpec](../../tasks/prd-nivel-prerequisito-curso/techspec.md) (Bloco
+> Frontend, V-01…V-03, EN-01), [contrato HTTP](../../tasks/prd-nivel-prerequisito-curso/api-contract.yaml).
+
+Este adendo acrescenta telas e estados sobre A1, A3, A7, A10 e G12, **sem reabrir** as decisões G1–G13
+das seções 1–6, exceto o texto de G12 (7.2, N8). Convenções, legenda, componentes e AppShell são os
+das seções 3 e 4. Nível e pré-requisito são **recomendação**: nenhum texto abaixo sugere que
+impedem compra ou acesso (DE04).
+
+### 7.1 O que muda em cada tela
+
+| Tela | Mudança | RF |
+|---|---|---|
+| A3 · Editor | Seção **Para quem é este curso** (nível, texto do pré-requisito, cursos recomendados), abaixo do cabeçalho e acima de **Módulos**; estados editável, erro, salvando e somente leitura | RF-01, RF-02 |
+| A13 · Escolher cursos recomendados | `Sheet` novo sobre A3 (lateral no desktop, inferior no mobile), como A6 | RF-02 |
+| A3 · Aviso de curso sem nível | `Alert` permanente no editor, duas variantes (sem nível em lugar nenhum · nível só no rascunho) | RF-04 |
+| A7 · Publicar/republicar | Mesmo aviso dentro da janela, botão habilitado; resumo ganha linhas de nível e pré-requisito | RF-04, RF-03 |
+| A1 · Lista | Texto **Sem nível** em curso publicado cuja versão vigente não tem nível | RF-04 |
+| A10 · Versão | Bloco **Nível e pré-requisito** da versão, com títulos da época; versões antigas: "Sem nível" e "Sem pré-requisito" | RF-05 |
+| G12 | Ajuda contextual passa a dizer que **preço e vigência** são da oferta | — |
+
+Não mudam: A9 (histórico em lista), A2 (criar curso não pede nível; ver N7), A4–A6, A8, A11, A12.
+Fora do escopo: vitrine, filtro por nível e links para os recomendados (`CAP-003`).
+
+### 7.2 Decisões de desenho propostas (N1–N8)
+
+| # | Ponto | Proposta e fundamento |
+|---|---|---|
+| N1 | Lugar | Seção `Card` **Para quem é este curso** no A3, logo abaixo do cabeçalho do curso (título, descrição, status) e acima das abas e de **Módulos**. Fica na aba **Rascunho**; a aba Histórico não a mostra (A10 cobre a versão). |
+| N2 | Gravação, coerente com G5 (sem "Salvar curso") | **Nível** salva ao escolher a opção (uma intenção, um `updateCourse`), com toast "Nível salvo". **Pré-requisito** (texto + cursos recomendados) é um bloco com botão próprio **Salvar pré-requisito**, que grava texto e lista na mesma chamada; enquanto houver edição pendente, o bloco mostra "Alterações não salvas" e **Desfazer**. A resposta integral do servidor substitui o curso exibido. |
+| N3 | Nível | Grupo de opções (`RadioGroup`) com rótulo **Nível do curso**: Iniciante · Intermediário · Avançado · Sem nível. **Sem nível** limpa o valor (`null`). Ajuda: "Uma recomendação para quem está escolhendo o curso." |
+| N4 | Pré-requisito em texto | `Textarea` **O que a pessoa deveria saber antes (opcional)**, contador até 1 000. Ajuda: "É uma recomendação; não impede a compra nem o acesso." |
+| N5 | Cursos recomendados | Lista **ordenada** (até 5) de cursos da escola; cada linha: posição, título, `[ ↑ ] [ ↓ ] [ Remover ]`. Reordenar é por botões (teclado), sem arrastar; o foco permanece no item movido. **Adicionar curso** abre A13. Com 5, **Adicionar curso** fica desabilitado com o motivo em texto visível. No rascunho o recomendado aparece com o **título atual** dele. |
+| N6 | Seletor A13 | Busca por título a partir de 2 caracteres; só cursos **publicados da escola**, sem o próprio curso e sem os já escolhidos; 20 por página (G11). Escolher um curso o acrescenta à lista **local** (ainda não salva) e o tira dos resultados; o Sheet fica aberto até **Concluir**. |
+| N7 | Criação de curso | A2 **não** ganha campos: o professor declara nível e pré-requisito no editor, depois de criar. O aviso de "sem nível" já o orienta. |
+| N8 | G12 revisto | Texto novo: “**Preço e vigência** pertencem à oferta do curso, prevista para uma etapa futura. **Nível e pré-requisito** são do professor e ficam na seção Para quem é este curso.” Vale onde G12 aparece (A2). |
+| N9 | Linguagem | Sempre "recomendado", "recomendação", "sugerido". Nunca "obrigatório", "necessário", "exige", "bloqueia". |
+
+### 7.3 A3 · Seção “Para quem é este curso”
+
+```text
+A3.h  Editável (autoria.editar) — curso publicado v2, nível só no rascunho
+┌──────────────────────┬──────────────────────────────────────────────────────────────────────┐
+│ ▤ Autoria ◀          │  Autoria › Cursos › .NET do zero à API                               │
+│                      │  .NET do zero à API        (Publicado · v2 · alterações não publicadas)│
+│                      │  Do primeiro projeto à API e aos testes.         [ Editar dados ]     │
+│                      │  Criado por Rafael Souza · Editado por Marina hoje, 10:20             │
+│                      │                                                                      │
+│                      │  (!) O nível Iniciante só vale depois de publicar.  (aviso 7.5 · W2)  │
+│                      │                                                                      │
+│                      │  ┌─ Card · Para quem é este curso ──────────────────────────────────┐ │
+│                      │  │ Recomendações para quem está escolhendo o curso. Não impedem a   │ │
+│                      │  │ compra nem o acesso.                                              │ │
+│                      │  │                                                                   │ │
+│                      │  │ Nível do curso                                          (grupo)   │ │
+│                      │  │ (●) Iniciante  ( ) Intermediário  ( ) Avançado  ( ) Sem nível     │ │
+│                      │  │                                                                   │ │
+│                      │  │ O que a pessoa deveria saber antes (opcional)                     │ │
+│                      │  │ [Lógica de programação e noções de Git._________________]          │ │
+│                      │  │ [______________________________________________________]          │ │
+│                      │  │ É uma recomendação; não impede a compra nem o acesso.  38/1000    │ │
+│                      │  │                                                                   │ │
+│                      │  │ Cursos recomendados (até 5)                                       │ │
+│                      │  │ ┌──────────────────────────────────────────────────────────────┐ │ │
+│                      │  │ │ 1  Fundamentos de C#              [ ↑ ] [ ↓ ] [ Remover ]     │ │ │
+│                      │  │ │ 2  Git para times                 [ ↑ ] [ ↓ ] [ Remover ]     │ │ │
+│                      │  │ └──────────────────────────────────────────────────────────────┘ │ │
+│                      │  │ [ + Adicionar curso ]  2 de 5                                     │ │
+│                      │  │                                                                   │ │
+│                      │  │ Alterações não salvas no pré-requisito.                           │ │
+│                      │  │                        [ Desfazer ] [ Salvar pré-requisito ]      │ │
+│                      │  └───────────────────────────────────────────────────────────────────┘ │
+│                      │  [ Rascunho ] [ Histórico ]                [ Publicar nova versão ]   │
+│                      │  Módulos … (A3.b)                                                     │
+└──────────────────────┴──────────────────────────────────────────────────────────────────────┘
+Escolher uma opção de nível salva na hora (toast “Nível salvo”); o foco fica na opção escolhida.
+“Alterações não salvas…”, [ Desfazer ] e [ Salvar pré-requisito ] só aparecem com edição pendente
+no texto ou na lista; sem pendência, o botão fica oculto.
+```
+
+```text
+A3.i  Curso novo, nada declarado                    A3.j  Sem pré-requisito (válido)
+┌─ Card · Para quem é este curso ─────────────┐     ┌─ Card · Para quem é este curso ───────────┐
+│ Nível do curso                               │     │ Nível do curso: ( ) … (●) Intermediário … │
+│ ( ) Iniciante ( ) Intermediário              │     │ O que a pessoa deveria saber antes        │
+│ ( ) Avançado  (●) Sem nível                  │     │ [ (vazio) ____________________ ]  0/1000  │
+│                                              │     │ Cursos recomendados (até 5)               │
+│ O que a pessoa deveria saber antes (opcional)│     │ Nenhum curso recomendado.                 │
+│ [ ____________________________ ]      0/1000 │     │ [ + Adicionar curso ]  0 de 5             │
+│ Cursos recomendados (até 5)                  │     └───────────────────────────────────────────┘
+│ Nenhum curso recomendado.                    │     Texto vazio e lista vazia são válidos: o
+│ [ + Adicionar curso ]  0 de 5                │     rascunho fica sem pré-requisito.
+└──────────────────────────────────────────────┘
+```
+
+```text
+A3.k  Erros (junto do campo; valores preservados)
+┌─ Card · Para quem é este curso ─────────────────────────────────────────────────────┐
+│ O que a pessoa deveria saber antes (opcional)                                        │
+│ [ …texto com 1 012 caracteres… ]                          (!) 1012/1000              │
+│ (!) O pré-requisito deve ter até 1 000 caracteres.          ← FIELD_INVALID          │
+│                                                                                       │
+│ Cursos recomendados (até 5)                                                           │
+│ ┌──────────────────────────────────────────────────────────────────────────────────┐ │
+│ │ 1  Fundamentos de C#                               [ ↑ ] [ ↓ ] [ Remover ]        │ │
+│ │ 2  Curso antigo         (!) Este curso não está mais disponível para recomendação.│ │
+│ │                                                    [ ↑ ] [ ↓ ] [ Remover ]        │ │
+│ └──────────────────────────────────────────────────────────────────────────────────┘ │
+│ (!) Não foi possível salvar: um curso recomendado não está disponível. Remova-o ou    │
+│     escolha outro.                                   ← RECOMMENDED_COURSE_INVALID     │
+│                                          [ Desfazer ] [ Salvar pré-requisito ]        │
+└───────────────────────────────────────────────────────────────────────────────────────┘
+Nível inválido (chamada direta) → FIELD_INVALID no grupo: “Escolha um dos níveis.” Nenhum erro
+apaga o que foi digitado ou escolhido; o foco vai ao primeiro campo com erro e a mensagem é anunciada
+(`aria-live`). Falha de rede/serviço: Alert “Não foi possível salvar. Tente de novo.” [ Tentar de
+novo ], valores mantidos. A linha marcada usa o índice devolvido pelo servidor. Texto acima de
+1 000 bloqueia [ Salvar pré-requisito ] antes do envio, com a mesma mensagem.
+
+A3.l  Salvando: [ Salvar pré-requisito ] vira “Salvando…” e desabilita contra clique duplo; no nível,
+      o grupo fica desabilitado até a resposta. Sucesso: toast “Pré-requisito salvo”.
+```
+
+```text
+A3.m  Somente leitura (autoria.ler sem autoria.editar)
+┌─ Card · Para quem é este curso ─────────────────────────────────────────────────────┐
+│ Nível do curso                                                                       │
+│ Iniciante                                                                            │
+│ O que a pessoa deveria saber antes                                                   │
+│ Lógica de programação e noções de Git.                                               │
+│ Cursos recomendados                                                                  │
+│ 1  Fundamentos de C#        2  Git para times                                        │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+Sem grupo editável, sem textarea, sem [ + Adicionar curso ], sem [ ↑ ] [ ↓ ] [ Remover ], sem
+[ Salvar pré-requisito ] e sem [ Desfazer ]. Campos vazios: “Sem nível”, “Sem pré-requisito”.
+```
+
+### 7.4 A13 · Escolher cursos recomendados — Sheet sobre A3
+
+```text
+A13.a  Resultados (desktop: lateral; mobile: inferior)
+┌─ Sheet · Cursos recomendados ──────────────────────────────────────────── ✕ ┐
+│ Só cursos publicados da sua escola. Você pode recomendar até 5.  2 de 5      │
+│ [ Buscar por título (2+ letras): fund________________________________ ]      │
+│                                                                              │
+│ Fundamentos de C#                        (Publicado · v3)    [ Adicionar ]   │
+│ Fundamentos de APIs                      (Publicado · v1)    [ Adicionar ]   │
+│ Fundamentos de testes                    (Publicado · v2)    [ Adicionar ]   │
+│                                                                              │
+│                                              ‹ 1 2 › · 20 por página         │
+│                                                              [ Concluir ]    │
+└──────────────────────────────────────────────────────────────────────────────┘
+Ao adicionar, a linha sai dos resultados, o contador sobe (“3 de 5”), o foco vai ao próximo
+resultado e o leitor de tela anuncia “Fundamentos de C# adicionado à lista”. Nada é gravado aqui: a
+lista só persiste em [ Salvar pré-requisito ]. O próprio curso, os não publicados e os já escolhidos
+não aparecem. Concluir ou ✕ devolve o foco a [ + Adicionar curso ].
+
+A13.b  Termo curto: campo vazio ou 1 letra → “Digite ao menos 2 letras para buscar.” (sem consulta).
+A13.c  Sem resultado: “Nenhum curso publicado com esse título.” [ Limpar busca ].
+A13.d  Escola sem outro curso publicado: “Ainda não há outros cursos publicados para recomendar.
+       Publique um curso e volte aqui.” [ Concluir ]. (Mostrado com o campo de busca vazio.)
+A13.e  Carregando: Skeleton de 4 linhas; falha: Alert “Não foi possível carregar os cursos.”
+       [ Tentar de novo ]. A lista do editor não muda.
+A13.f  Limite atingido (5 escolhidos): [ Adicionar ] desabilitado em todas as linhas, com o motivo em
+       texto fixo no topo: “Você já escolheu 5 cursos. Remova um para adicionar outro.” O Sheet
+       continua navegável; [ + Adicionar curso ] no editor também fica desabilitado, com esse motivo.
+```
+
+### 7.5 Aviso de curso sem nível
+
+```text
+W1  Sem nível (rascunho ou versão vigente sem nível)   — `Alert` permanente, `role="status"`
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ (!) Sem nível, este curso não pode entrar na vitrine.                               │
+│     Você ainda pode publicar e corrigir aulas normalmente.   [ Escolher nível ]     │
+└────────────────────────────────────────────────────────────────────────────────────┘
+
+W2  Nível só no rascunho (a versão vigente não tem nível)
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ (!) O nível Iniciante só vale depois de publicar. A versão vigente está sem nível  │
+│     e, por isso, o curso ainda não pode entrar na vitrine.   [ Publicar nova versão ]│
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Onde:** no A3, acima da seção (A3.h). Some quando a versão vigente tem nível (curso com nível
+  publicado não mostra aviso, inclusive com alterações não publicadas de outros campos).
+- **Curso nunca publicado, sem nível:** W1 com “…não poderá entrar na vitrine depois de publicado.”
+- **Atalho:** [ Escolher nível ] rola até o grupo **Nível do curso** e leva o foco à opção marcada (ou à
+  primeira). Em W2, [ Publicar nova versão ] abre A7.c.
+- **Somente leitura:** o texto permanece; em vez de botão, “Peça a quem edita o curso para
+  declarar o nível.” e nenhum atalho para campo desabilitado.
+- **Acessibilidade:** o aviso é texto (não só cor, nem só ícone), tem `role="status"`/`aria-live="polite"`
+  e é anunciado ao carregar o editor e ao mudar de W1 para W2 (ou para nenhum) depois de salvar o nível.
+- **Nunca** impede publicar: A7 mantém o botão habilitado (7.6).
+
+### 7.6 A7 · Publicar/republicar — aviso e resumo
+
+```text
+A7.h  Republicação sem nível na versão vigente (a mesma janela de A7.c)
+┌─ Dialog ────────────────────────────────────────────────────────────────── ✕ ┐
+│ Publicar nova versão                                                          │
+│ Confira o que será publicado. A versão 3 ficará vigente; a versão 2 continua  │
+│ no histórico.                                                                 │
+│                                                                               │
+│ .NET do zero à API · 2 módulos · 3 aulas com vídeo                             │
+│ Nível: Sem nível        Pré-requisito: texto + 2 cursos recomendados          │
+│ 1  Fundamentos da linguagem …                                                 │
+│                                                                               │
+│ (!) Sem nível, este curso não pode entrar na vitrine. Você pode publicar       │
+│     agora e declarar o nível depois.        _Escolher nível_ (fecha a janela) │
+│                                                                               │
+│ Nota de versão (opcional)  [ ____________________________________ ]  0/1000   │
+│                              [ Cancelar ] [ Publicar versão 3 ]   ← habilitado │
+└───────────────────────────────────────────────────────────────────────────────┘
+Com nível no rascunho, a linha diz “Nível: Iniciante” e o aviso não aparece. Sem nível e sem
+pré-requisito: “Nível: Sem nível · Pré-requisito: Sem pré-requisito”. O aviso repete W1 (nunca
+W2: o rascunho sem nível é o caso desta janela). Republicar só porque o nível ou o pré-requisito
+mudou é válido; o resumo mostra esses campos para que a mudança seja visível. Demais estados de A7
+(a–g) não mudam. O link “Escolher nível” fecha o Dialog e leva o foco ao grupo de nível no A3.
+```
+
+### 7.7 A1 · Lista — “Sem nível”
+
+```text
+A1.g  Linha de curso publicado cuja versão vigente não tem nível
+│ Introdução a APIs       (Publicado · v1)  (!) Sem nível   Júlia Lima    24/09, 09:30  [ Abrir → ] │
+│ .NET do zero à API      (Publicado · v2 · alterações não publicadas)                               │
+│                         (!) Sem nível                     Marina Alves  hoje, 10:20   [ Abrir → ] │
+Curso publicado com nível: sem marcação nova. Rascunhos nunca publicados: sem “Sem nível” (ainda não
+há versão vigente; o aviso está no editor). “Sem nível” é texto num `Badge` outline com ícone (!), nunca
+só cor; o leitor de tela lê “Sem nível” dentro da linha. Um curso com nível só no rascunho (W2)
+continua “Sem nível” na lista, porque a lista mostra a versão vigente.
+```
+
+### 7.8 A10 · Versão publicada — nível e pré-requisito
+
+```text
+A10.h  Versão 3 (Vigente)
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Autoria › .NET do zero à API › Histórico › Versão 3                       │
+│ Versão 3  (Vigente)                  _Voltar ao rascunho_                 │
+│ Publicada por Rafael Souza · 05/10/2026 10:00                             │
+│ Nota: “Aula 4 regravada com o SDK novo”                                   │
+│ (!) Retrato da publicação. Alterações posteriores não mudam esta versão. │
+│                                                                          │
+│ ┌─ Card · Nível e pré-requisito desta versão ─────────────────────────┐  │
+│ │ Nível: Iniciante                                                     │  │
+│ │ Pré-requisito: Lógica de programação e noções de Git.               │  │
+│ │ Cursos recomendados (título na época da publicação):                │  │
+│ │ 1  Fundamentos de C#     2  Git para times                          │  │
+│ └──────────────────────────────────────────────────────────────────────┘  │
+│ 1  Fundamentos da linguagem …                                             │
+└──────────────────────────────────────────────────────────────────────────┘
+A10.i  Versão anterior a esta entrega: Nível: Sem nível · Pré-requisito: Sem pré-requisito.
+A10.j  Só texto ou só cursos: a parte ausente mostra “Sem texto de pré-requisito” ou “Nenhum curso
+       recomendado”. Sem nível mas com pré-requisito: “Nível: Sem nível”.
+```
+
+Os cursos recomendados aparecem como **texto**, com o título guardado na publicação, mesmo que o
+curso tenha sido renomeado depois; não são links (vitrine e navegação entre cursos são de `CAP-003`).
+A10 continua somente leitura e sem player. O histórico em lista (A9) não muda.
+
+### 7.9 Mobile · 390 px
+
+```text
+A3.mobile (seção)                              A13.mobile (Sheet inferior)
+┌──────────────────────────────────────┐      ┌──────────────────────────────────────┐
+│ ☰  AUTORIA                    (RS)   │      │ Cursos recomendados              ✕   │
+│ ‹ Cursos                             │      │ Só cursos publicados da sua escola.  │
+│ .NET do zero à API                   │      │ Até 5 · 2 de 5                       │
+│ (Publicado · v2 · alterações não    │      │ [ Buscar por título__________ ]      │
+│  publicadas)                        │      │ ┌─ Fundamentos de C# ─────────────┐ │
+│ (!) O nível Iniciante só vale       │      │ │ (Publicado · v3) [ Adicionar ]  │ │
+│     depois de publicar.             │      │ └──────────────────────────────────┘ │
+│     [ Publicar nova versão ]        │      │ ┌─ Fundamentos de APIs ───────────┐ │
+│ ┌─ Para quem é este curso ────────┐ │      │ │ (Publicado · v1) [ Adicionar ]  │ │
+│ │ Nível do curso                  │ │      │ └──────────────────────────────────┘ │
+│ │ (●) Iniciante                   │ │      │            ‹ 1 2 ›                   │
+│ │ ( ) Intermediário               │ │      │                        [ Concluir ]  │
+│ │ ( ) Avançado                    │ │      └──────────────────────────────────────┘
+│ │ ( ) Sem nível                   │ │
+│ │ Pré-requisito (opcional)        │ │
+│ │ [ Lógica de programação…_ ]    │ │
+│ │ 38/1000                         │ │
+│ │ Cursos recomendados (até 5)     │ │
+│ │ 1 Fundamentos de C#             │ │
+│ │   [ ↑ ][ ↓ ][ Remover ]         │ │
+│ │ [ + Adicionar curso ] 1 de 5    │ │
+│ │ [ Desfazer ][ Salvar pré-req. ] │ │
+│ └──────────────────────────────────┘ │
+└──────────────────────────────────────┘
+Opções de nível empilhadas (alvo de toque ≥ 44 px); ações da lista em linha própria; botões de
+ação em largura total ou lado a lado conforme caibam. A7.h e A10.h seguem o padrão mobile de A7/A10:
+Dialog com rolagem interna e ações alcançáveis por teclado. W1/W2 e “Sem nível” na lista quebram
+linha sem truncar o texto.
+```
+
+### 7.10 Estados transversais e acessibilidade do adendo
+
+- **Permissão:** `autoria.ler` sem `autoria.editar` vê a seção (A3.m), o aviso sem atalho, o
+  resumo de A7 (sem botão de publicar, como hoje), “Sem nível” em A1 e o bloco de A10; nenhuma
+  ação de escrita. Esconder controle nunca substitui a autorização do servidor.
+- **Teclado e foco:** o grupo de nível é um `RadioGroup` com rótulo; setas mudam a opção. Reordenar
+  usa [ ↑ ] [ ↓ ] (sem arrastar); o foco permanece no item movido; ao remover, o foco vai ao item
+  seguinte ou, se não houver, a [ + Adicionar curso ]. A13 abre focando o campo de busca e devolve o
+  foco ao gatilho.
+- **Leitor de tela:** posição e total nas linhas (“Curso recomendado 1 de 2: Fundamentos de C#”);
+  contador do texto e do limite anunciados; W1/W2 em `aria-live="polite"`; erros junto do campo com
+  `aria-describedby` e anúncio ao salvar.
+- **Sem cor como único sinal:** “Sem nível”, os avisos e os erros são texto com ícone.
+- **Resposta do servidor:** toda escrita substitui o curso exibido pela resposta completa e atualiza
+  `hasUnpublishedChanges`; escrever só o nível num curso publicado o põe em “alterações não publicadas”.
+- **Linguagem:** ver N9. Nenhum texto de A1, A3, A7, A10 ou A13 sugere que o pré-requisito impeça
+  compra, matrícula ou acesso.
+- **Sem escopo novo:** vitrine, filtro por nível, links para recomendados, oferta e material
+  complementar ficam fora.
+
+### 7.11 Handoff para o Figma (task 2.0)
+
+Desenhar sobre o arquivo **Code4Coders — Design System** e os frames aprovados do 1º PRD:
+A3.h–A3.m (desktop, Light; A3.h também em Dark e 390 px), A13.a–A13.f (desktop; A13.a e A13.f em
+390 px), W1 e W2, A7.h (desktop e 390 px), A1.g, A10.h–A10.j (desktop; A10.h em 390 px) e o
+G12 revisto (A2). Reusar `Card`, `RadioGroup`/Radio Option, `Textarea`, `Badge`, `Alert`, `Sheet`,
+`Dialog`, `Button` e `Skeleton`; a linha de curso recomendado e o seletor são composições visuais
+propostas, sujeitas à regra de três usos de `Components.md`.
+
+### 7.12 Figma do adendo — aprovado
+
+O desenho foi materializado em **2026-09-30** no arquivo **Code4Coders — Design System**, página
+**Screens — Autoria**, na seção **“🎓 Nível e pré-requisito — adendo (CAP-005 · 2º PRD)”**
+([189:11328](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=189-11328)). Os frames reaproveitam os componentes e os tokens já aprovados
+em Autoria (Button, Badge, Alert, Radio Option, Reason Field, Sheet, Dialog, Skeleton, Toast e as
+composições `CourseStatusBadge`, `ModuleAccordionHeader` e `LessonItem`); os frames de tela são clones
+dos frames aprovados do 1º PRD, alterados só onde o adendo manda. Os dados são ilustrativos e o
+protótipo não executa escrita real, busca, reordenação ou autorização do servidor; foco, teclado e
+leitor de tela seguem a seção 7.10.
+
+**Situação:** 26 frames entregues para revisão; aprovados pelo responsável em 2026-09-30 (“Tá aprovado”).
+
+**Desktop · Light**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A3.h · Seção Para quem é este curso — editável (aviso W2) | 1440 × 1653 | [193:22487](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-22487) |
+| A3.i · Curso novo — nada declarado (aviso W1) | 1440 × 1414 | [193:24006](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24006) |
+| A3.n · Publicado sem nível (aviso W1 permanente) | 1440 × 1537 | [193:24168](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24168) |
+| A3.k · Erros `FIELD_INVALID` e `RECOMMENDED_COURSE_INVALID` | 1440 × 1641 | [193:24327](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24327) |
+| A3.l · Salvando pré-requisito | 1440 × 1653 | [193:24495](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24495) |
+| A3.m · Somente leitura (`autoria.ler`) | 1440 × 1228 | [193:24639](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24639) |
+| A13.a · Seletor de cursos recomendados — resultados | 1440 × 900 | [194:12148](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12148) |
+| A13.b · Seletor — termo curto | 1440 × 900 | [194:12266](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12266) |
+| A13.c · Seletor — sem resultado | 1440 × 900 | [194:12364](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12364) |
+| A13.d · Seletor — escola sem outro curso publicado | 1440 × 900 | [194:12465](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12465) |
+| A13.e · Seletor — carregando | 1440 × 900 | [194:12563](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12563) |
+| A13.e2 · Seletor — erro ao carregar | 1440 × 900 | [194:12664](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12664) |
+| A13.f · Seletor — limite de 5 atingido | 1440 × 900 | [194:12785](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12785) |
+| A7.h · Republicar sem nível (aviso W1, botão habilitado) | 1440 × 900 | [196:13940](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-13940) |
+| A1.g · Lista — “Sem nível” em curso publicado | 1440 × 900 | [196:14116](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14116) |
+| A10.h · Versão vigente com nível e pré-requisito | 1440 × 1068 | [196:14175](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14175) |
+| A10.i · Versão anterior a esta entrega (Sem nível · Sem pré-requisito) | 1440 × 1102 | [196:14236](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14236) |
+| A10.j · Versão só com texto de pré-requisito | 1440 × 1068 | [196:14298](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14298) |
+| A2 · Novo curso — ajuda G12 revista | 1440 × 900 | [196:14359](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14359) |
+
+**Mobile · Light · 390 px**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A3.h · Seção Para quem é este curso | 390 × 2093 | [197:13879](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=197-13879) |
+| A13.a · Seletor em Sheet inferior | 390 × 844 | [197:14035](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=197-14035) |
+| A7.h · Republicar sem nível | 390 × 844 | [197:14139](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=197-14139) |
+| A10.h · Versão vigente com nível e pré-requisito | 390 × 1086 | [197:14220](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=197-14220) |
+
+**Desktop · Dark**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A3.h · Seção Para quem é este curso | 1440 × 1653 | [193:24792](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24792) |
+| A13.a · Seletor — resultados | 1440 × 900 | [194:12927](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12927) |
+| A7.h · Republicar sem nível | 1440 × 900 | [196:14028](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14028) |
+

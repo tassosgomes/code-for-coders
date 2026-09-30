@@ -2,7 +2,7 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-005
-version: 1.0
+version: 1.1
 status: approved
 updated: 2026-09-30
 sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/conteudo-e-curriculo/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1, domains/identidade-e-acesso/domain.md@1.1
@@ -285,9 +285,11 @@ pré-requisito*.
 
 **Descrição**: O fato `conteudo.versao-publicada` passa a levar o nível e o pré-requisito da versão
 (texto e cursos recomendados, por identificador). É mudança **aditiva** (G14): quem já consome o
-fato — Mídia — continua funcionando sem mudança. O Catálogo também consegue ler nível e pré-requisito
-da versão vigente de um curso sob demanda, para exibir a vitrine sem depender de ter recebido cada
-fato. Nenhum dado pessoal vai no fato: o autor segue por referência, como hoje.
+fato — Mídia — continua funcionando sem mudança. Para que o Catálogo comece com os cursos já
+publicados antes desta entrega, há uma **carga inicial por reenvio**: uma única vez, na implantação,
+o fato da versão vigente de cada curso publicado é reenviado com o mesmo identificador de evento; o
+Catálogo mantém a própria visão a partir dos fatos e não lê o Conteúdo sob demanda (errata 1.1, OD56).
+Nenhum dado pessoal vai no fato: o autor segue por referência, como hoje.
 
 **Critérios de Aceitação**:
 
@@ -303,13 +305,23 @@ fato. Nenhum dado pessoal vai no fato: o autor segue por referência, como hoje.
   **When** recebe um fato com os campos novos
   **Then** registra as Referências de Uso como antes
 
-- **Given** um curso publicado de outra escola
-  **When** o Catálogo pede nível e pré-requisito dele
-  **Then** a resposta é a de curso inexistente (G07)
+- **Given** cursos publicados antes desta entrega
+  **When** a carga inicial é executada na implantação
+  **Then** o fato da versão vigente de cada um é reenviado uma única vez, com o mesmo identificador de
+  evento da publicação original; cursos nunca publicados ficam de fora; uma segunda execução não
+  reenvia nada
+
+- **Given** a Mídia, que já aplicou essas versões
+  **When** recebe o reenvio
+  **Then** confirma sem alterar as Referências de Uso
+
+- **Given** um curso publicado de uma escola
+  **When** o fato (original ou reenviado) é publicado
+  **Then** ele leva a escola do curso, e o Catálogo o aplica só a ela (G07)
 
 **Prioridade**: Must Have
 
-**Rastreabilidade**: Conteúdo RN-C12, RN-C18; Catálogo RN-O03; G14
+**Rastreabilidade**: Conteúdo RN-C12, RN-C18; Catálogo RN-O03; G14; OD56 (carga inicial por reenvio)
 
 ---
 
@@ -354,8 +366,9 @@ permissão cobre editar e publicar (DP-02 do primeiro PRD).
 
 - Serviços com mudança: o dono de Conteúdo e Currículo e `bff-admin`/`admin-spa` (editor). Mídia não
   muda. Auditoria não muda: o ato de publicação já existe (RN-C13).
-- O fato `conteudo.versao-publicada` evolui de forma aditiva (G14); a leitura sob demanda pelo
-  Catálogo é nova operação interna. Contratos na etapa seguinte.
+- O fato `conteudo.versao-publicada` evolui de forma aditiva (G14); a carga inicial do Catálogo é o
+  reenvio único do fato da versão vigente, sem operação de leitura sob demanda (OD56). Contratos em
+  [contracts.md](contracts.md).
 - Tudo isolado por escola (G07).
 
 ---
@@ -424,5 +437,9 @@ permissão cobre editar e publicar (DP-02 do primeiro PRD).
 
 ## Questões em Aberto
 
-Nenhuma bloqueante. Próxima etapa: contratos (`conteudo.versao-publicada` aditivo e leitura sob
-demanda pelo Catálogo) com `tsg-flow-contract-creator`.
+Nenhuma.
+
+**Revisão 1.1 (2026-09-30), errata do RF-06:** a "leitura sob demanda pelo Catálogo" passa a ser a
+carga inicial por reenvio do fato da versão vigente, com o mesmo identificador de evento (C-01 de
+[contracts.md](contracts.md), OD56). O critério de isolamento por escola passa a valer para o fato.
+Nenhum outro requisito muda.
