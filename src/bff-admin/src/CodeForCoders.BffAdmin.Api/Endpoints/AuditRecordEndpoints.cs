@@ -131,6 +131,7 @@ public static class AuditRecordEndpoints
         IStaffSessionIdentityClient identityClient,
         IAuditRecordClient auditClient,
         IAuditIdentityReferenceClient identityReferenceClient,
+        CourseAuditReferenceEnricher courseReferences,
         CancellationToken cancellationToken)
     {
         var access = await ValidateAdministratorSessionAsync(httpContext, identityClient, cancellationToken);
@@ -153,6 +154,8 @@ public static class AuditRecordEndpoints
         }
 
         var detail = audit.Detail;
+        var courseLabels = await courseReferences.ResolveAsync(access.SessionId, [detail.Target], cancellationToken);
+        detail = detail with { Target = CourseAuditReferenceEnricher.AddLabel(detail.Target, courseLabels) };
         var references = detail.Complements
             .Select(complement => complement.Author)
             .Prepend(detail.Target)
@@ -281,6 +284,7 @@ public static class AuditRecordEndpoints
         IStaffSessionIdentityClient identityClient,
         IAuditRecordClient auditClient,
         IAuditIdentityReferenceClient identityReferenceClient,
+        CourseAuditReferenceEnricher courseReferences,
         CancellationToken cancellationToken)
     {
         var session = BffSessionContext.Get(httpContext);
@@ -341,7 +345,9 @@ public static class AuditRecordEndpoints
             return Problem(httpContext, audit.StatusCode, audit.Code ?? "AUDIT_UNAVAILABLE", title);
         }
 
-        var references = audit.Page.Data
+        var courseLabels = await courseReferences.ResolveAsync(session.IdentitySessionId, audit.Page.Data.Select(record => record.Target), cancellationToken);
+        var page = audit.Page with { Data = audit.Page.Data.Select(record => record with { Target = CourseAuditReferenceEnricher.AddLabel(record.Target, courseLabels) }).ToArray() };
+        var references = page.Data
             .SelectMany(record => new[] { record.Author, record.Target })
             .Where(reference => reference is not null
                 && reference.Id != Guid.Empty
@@ -351,7 +357,7 @@ public static class AuditRecordEndpoints
             .ToArray();
         if (references.Length == 0)
         {
-            return Results.Ok(audit.Page);
+            return Results.Ok(page);
         }
 
         var labels = new Dictionary<(string Type, Guid Id), string>();
@@ -375,7 +381,7 @@ public static class AuditRecordEndpoints
 
             if (lookup.StatusCode != StatusCodes.Status200OK || lookup.Data is null)
             {
-                return Results.Ok(audit.Page);
+                return Results.Ok(page);
             }
 
             foreach (var reference in lookup.Data)
@@ -387,9 +393,9 @@ public static class AuditRecordEndpoints
             }
         }
 
-        return Results.Ok(audit.Page with
+        return Results.Ok(page with
         {
-            Data = audit.Page.Data.Select(record => record with
+            Data = page.Data.Select(record => record with
             {
                 Author = AddLabel(record.Author, labels),
                 Target = AddLabel(record.Target, labels),

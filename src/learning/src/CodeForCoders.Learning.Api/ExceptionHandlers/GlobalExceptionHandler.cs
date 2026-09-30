@@ -17,6 +17,8 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail) = exception switch
         {
+            DraftChangedException => (409, "/problems/draft-changed", "Draft changed", exception.Message),
+            CourseIncompleteException => (422, "/problems/course-incomplete", "Course incomplete", exception.Message),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",
@@ -41,7 +43,9 @@ public sealed class GlobalExceptionHandler(
 
         if (status >= StatusCodes.Status500InternalServerError)
         {
-            logger.LogError(exception, "Unhandled exception while processing {Path}.", httpContext.Request.Path);
+            if (httpContext.Request.Path.Value?.EndsWith("/versions", StringComparison.Ordinal) == true)
+                logger.LogError("Publication failed with {ErrorType}.", exception.GetType().Name);
+            else logger.LogError(exception, "Unhandled exception while processing {Path}.", httpContext.Request.Path);
         }
         else
         {
@@ -58,12 +62,15 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["code"] = exception switch
         {
+            DraftChangedException => "DRAFT_CHANGED",
+            CourseIncompleteException => "COURSE_INCOMPLETE",
             CourseItemNotFoundException item => item.Code,
             CourseRuleException rule => rule.Code,
             NotFoundException => "COURSE_NOT_FOUND",
             ValidationException => "INVALID_REQUEST",
             _ => "UNEXPECTED_ERROR",
         };
+        if (exception is CourseIncompleteException incomplete) problemDetails.Extensions["pendencies"] = incomplete.Pendencies;
         if (exception is CourseRuleException { Code: "TITLE_REQUIRED" })
             problemDetails.Extensions["errors"] = new Dictionary<string, string[]> { ["title"] = ["Informe o título do curso."] };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()

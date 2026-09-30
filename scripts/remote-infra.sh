@@ -140,7 +140,7 @@ else
 fi
 ctl set_permissions -p '$rabbitmq_vhost' '$bff_admin_rabbitmq_user' \
   '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' \
-  '^(bff-admin\.events|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq|audit\.events)$' \
+  '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq|audit\.events)$' \
   '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' >/dev/null
 EOF
 

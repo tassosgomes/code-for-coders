@@ -23,6 +23,16 @@ public sealed class CourseAuthoringClient(HttpClient httpClient) : ICourseAuthor
             using var response = await httpClient.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
+                if (input.Path == "internal/v1/course-references/resolve")
+                {
+                    var references = await response.Content.ReadFromJsonAsync<CourseReferencePage>(cancellationToken);
+                    return references is null ? Unavailable(502) : new((int)response.StatusCode, null, null, null, null, References: references);
+                }
+                if (input.Path.EndsWith("/versions", StringComparison.Ordinal) && input.Method == "POST")
+                {
+                    var version = await response.Content.ReadFromJsonAsync<CourseVersion>(cancellationToken);
+                    return version is null ? Unavailable(502) : new((int)response.StatusCode, null, null, null, null, response.Headers.Location?.OriginalString, version);
+                }
                 if (input.Path.Contains('?', StringComparison.Ordinal))
                 {
                     var page = await response.Content.ReadFromJsonAsync<CoursePage>(cancellationToken);
@@ -36,7 +46,8 @@ public sealed class CourseAuthoringClient(HttpClient httpClient) : ICourseAuthor
             var root = problem.RootElement;
             return new((int)response.StatusCode, null, null,
                 root.TryGetProperty("code", out var code) ? code.GetString() : "INVALID_REQUEST",
-                root.TryGetProperty("errors", out var errors) ? errors.Clone() : null);
+                root.TryGetProperty("errors", out var errors) ? errors.Clone() : null,
+                Pendencies: root.TryGetProperty("pendencies", out var pendencies) ? pendencies.Clone() : null);
         }
         catch (JsonException) { return Unavailable(502); }
         catch (HttpRequestException) { return Unavailable(502); }

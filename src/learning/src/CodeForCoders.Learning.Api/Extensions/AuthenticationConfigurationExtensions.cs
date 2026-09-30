@@ -25,6 +25,7 @@ public static class AuthenticationConfigurationExtensions
         services.AddSingleton<IConfigureOptions<JwtBearerOptions>, LearningJwtBearerOptionsSetup>();
         services.AddAuthorization(options =>
         {
+            options.AddPolicy(LearningAuthorization.Administrator, policy => policy.RequireAuthenticatedUser().RequireClaim("roles", "administrador"));
             options.AddPolicy(LearningAuthorization.Read, policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", "autoria.ler"));
             options.AddPolicy(LearningAuthorization.Edit, policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", "autoria.editar"));
         });

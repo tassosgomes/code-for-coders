@@ -13,6 +13,7 @@ public static class CourseAuthoringEndpoints
         group.MapGet("", ListAsync);
         group.MapGet("/{courseId:guid}", GetAsync);
         group.MapPost("", CreateAsync);
+        group.MapPost("/{courseId:guid}/versions", PublishAsync);
         group.MapPatch("/{courseId:guid}", UpdateCourseAsync);
         group.MapPost("/{courseId:guid}/modules", CreateModuleAsync);
         group.MapPatch("/{courseId:guid}/modules/{moduleId:guid}", UpdateModuleAsync);
@@ -40,6 +41,10 @@ public static class CourseAuthoringEndpoints
     private static Task<IResult> CreateAsync(CourseCreateBody body, HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken)
         => SendAsync(new CourseOperation("internal/v1/courses", body, "POST"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> PublishAsync(Guid courseId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}/versions", body, "POST"), context, identity, learning, cancellationToken);
 
     private static Task<IResult> UpdateCourseAsync(Guid courseId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
         => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}", body, "PATCH"), context, identity, learning, cancellationToken);
@@ -83,20 +88,23 @@ public static class CourseAuthoringEndpoints
         if (!validation.Session.Permissions.Contains(permission, StringComparer.Ordinal)) return Problem(403, "PERMISSION_DENIED");
         var result = await learning.SendAsync(new CourseClientRequest(operation.Path, validation.Session.AccessToken,
             validation.Session.Name, key, operation.Body, operation.Method), cancellationToken);
+        if (result.Status == 201 && result.Version is not null)
+            return Results.Created($"/api/v1/courses/{result.Version.CourseId:D}/versions/{result.Version.VersionNumber}", result.Version);
         if (result.Status == 201 && result.Course is not null)
             return Results.Created(result.Location?.Replace("/internal/v1", "/api/v1", StringComparison.Ordinal) ?? $"/api/v1/courses/{result.Course.CourseId:D}", result.Course);
         if (result.Status == 200 && result.Page is not null) return Results.Ok(result.Page);
         if (result.Status == 200 && result.Course is not null)
             return Results.Ok(videos is null ? result.Course : await videos.EnrichAsync(result.Course, session.IdentitySessionId, cancellationToken));
-        return Problem(result.Status, result.Code ?? "LEARNING_UNAVAILABLE", result.Errors);
+        return Problem(result.Status, result.Code ?? "LEARNING_UNAVAILABLE", result.Errors, result.Pendencies);
     }
 
-    private static IResult Problem(int status, string code, System.Text.Json.JsonElement? errors = null)
+    private static IResult Problem(int status, string code, System.Text.Json.JsonElement? errors = null, JsonElement? pendencies = null)
         => Results.Problem(statusCode: status, title: "The course request could not be completed.",
             extensions: new Dictionary<string, object?>
             {
                 ["code"] = code,
                 ["errors"] = errors,
+                ["pendencies"] = pendencies,
                 ["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             });
 }

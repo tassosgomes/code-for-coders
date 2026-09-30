@@ -9,6 +9,8 @@ public sealed class CourseLearningHandler : HttpMessageHandler
 {
     public HttpMethod? Method { get; private set; }
     public JsonElement? Payload { get; private set; }
+    public JsonElement? Pendencies { get; set; }
+    public bool ReferencesUnavailable { get; set; }
     public string ProblemCode { get; set; } = "COURSE_NOT_FOUND";
     public string? Location { get; set; }
     public IReadOnlyList<JsonElement> Modules { get; set; } = [];
@@ -34,10 +36,14 @@ public sealed class CourseLearningHandler : HttpMessageHandler
             Body = request.RequestUri!.AbsolutePath == "/internal/v1/courses" && Payload.Value.TryGetProperty("title", out _) ? Payload.Value.Deserialize<CourseCreateBody>(new JsonSerializerOptions(JsonSerializerDefaults.Web)) : null;
         }
         if (Malformed) return new(HttpStatusCode.OK) { Content = new StringContent("invalid json") };
-        if (Status != HttpStatusCode.OK) return new(Status) { Content = JsonContent.Create(new { code = ProblemCode, errors = new { title = new[] { "Title is required." } } }) };
+        if (Status != HttpStatusCode.OK) return new(Status) { Content = JsonContent.Create(new { code = ProblemCode, pendencies = Pendencies, errors = new { title = new[] { "Title is required." } } }) };
+        if (request.RequestUri!.AbsolutePath == "/internal/v1/course-references/resolve")
+            return new(ReferencesUnavailable ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK) { Content = JsonContent.Create(new { data = new[] { new { courseId = CourseId, title = "School course" } } }) };
         var actor = new CourseActor("Validated teacher");
         var now = DateTimeOffset.UtcNow;
         var detail = new CourseDetail(CourseId, Body?.Title ?? "School course", Body?.Description, "draft", null, false, 1, now, actor, now, actor, Modules);
+        if (request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal))
+            return new(HttpStatusCode.Created) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "School course", null, now, actor, "Note", true, [])), Headers = { Location = new Uri($"/internal/v1/courses/{CourseId}/versions/1", UriKind.Relative) } };
         if (request.Method == HttpMethod.Post)
         {
             var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = JsonContent.Create(detail) };

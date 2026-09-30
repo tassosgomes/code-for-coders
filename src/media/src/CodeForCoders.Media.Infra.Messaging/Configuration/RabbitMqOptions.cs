@@ -22,6 +22,12 @@ public sealed class RabbitMqOptions
     public string VirtualHost { get; set; } = "/";
 
     [Required]
+    public string LearningExchange { get; set; } = "learning.events";
+
+    [Required]
+    public string CoursePublicationsQueue { get; set; } = "media.course-publications";
+
+    [Required]
     public string Exchange { get; set; } = "media.events";
 
     [Required]

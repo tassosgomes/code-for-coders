@@ -6,6 +6,7 @@ namespace CodeForCoders.BffAdmin.IntegrationTests;
 
 public sealed class CourseIdentityHandler : HttpMessageHandler
 {
+    public string[] Roles { get; set; } = ["professor"];
     public string[] Permissions { get; set; } = ["autoria.ler", "autoria.editar"];
     public bool Revoked { get; set; }
     public string? LastAudience { get; private set; }
@@ -18,8 +19,8 @@ public sealed class CourseIdentityHandler : HttpMessageHandler
         return new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new StaffSessionValidatedV1(
-            Guid.Parse("00000000-0000-7000-8000-000000000002"), "Validated teacher", ["professor"], Permissions,
-            DateTimeOffset.UtcNow.AddHours(1), input?.Audience == "learning" ? "server-learning-token" : input?.Audience == "media" ? "server-media-token" : null))
+            Guid.Parse("00000000-0000-7000-8000-000000000002"), "Validated teacher", Roles, Permissions,
+            DateTimeOffset.UtcNow.AddHours(1), input?.Audience == "learning" ? "server-learning-token" : input?.Audience == "media" ? "server-media-token" : input?.Audience == "audit" ? "server-audit-token" : null))
         };
     }
 }

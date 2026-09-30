@@ -16,6 +16,7 @@ public static class AdministrativeActPolicy
     private static readonly IReadOnlyDictionary<string, bool> AcceptedTypes =
         new Dictionary<string, bool>(StringComparer.Ordinal)
         {
+            ["versao-publicada"] = false,
             ["convite-interno-emitido"] = true,
             ["convite-interno-aceito"] = false,
             ["papel-concedido"] = true,
@@ -31,7 +32,7 @@ public static class AdministrativeActPolicy
     public static string[] GetNonConformityReasons(AdministrativeAct act)
     {
         var reasons = new List<string>(capacity: 7);
-        if (!IsAcceptedType(act.Type))
+        if (!IsAcceptedType(act.Type) || (act.Type == "versao-publicada" && act.Origin != "conteudo"))
         {
             reasons.Add(UnknownType);
         }
@@ -41,7 +42,7 @@ public static class AdministrativeActPolicy
             reasons.Add(MissingAuthor);
         }
 
-        if (!IsValidReference(act.Target))
+        if (!IsValidReference(act.Target) || (act.Type == "versao-publicada" && act.Target?.Type != "curso"))
         {
             reasons.Add(MissingTarget);
         }

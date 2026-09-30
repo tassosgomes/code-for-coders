@@ -22,6 +22,9 @@ public sealed class RabbitMqOptions
     public string VirtualHost { get; set; } = "/";
 
     [Required]
+    public string AuditExchange { get; set; } = "audit.events";
+
+    [Required]
     public string Exchange { get; set; } = "learning.events";
 
     [Required]

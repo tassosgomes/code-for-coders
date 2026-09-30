@@ -5,6 +5,13 @@ namespace CodeForCoders.Learning.Infra.Data.Queries;
 
 public sealed class CourseQueries(LearningDbContext dbContext) : ICourseQueries
 {
+    public async Task<IReadOnlyList<CourseReference>> ResolveAsync(Guid[] ids, CancellationToken cancellationToken)
+    {
+        var titles = await dbContext.Courses.AsNoTracking().Where(course => ids.Contains(course.Id))
+            .ToDictionaryAsync(course => course.Id, course => course.Title, cancellationToken);
+        return ids.Distinct().Select(id => new CourseReference(id, titles.GetValueOrDefault(id))).ToArray();
+    }
+
     public async Task<CoursePage> ListAsync(CourseListQuery query, CancellationToken cancellationToken)
     {
         var courses = dbContext.Courses.AsNoTracking();

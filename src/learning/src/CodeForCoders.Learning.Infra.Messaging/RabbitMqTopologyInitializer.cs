@@ -28,6 +28,8 @@ public sealed class RabbitMqTopologyInitializer(
             arguments: null,
             cancellationToken: cancellationToken);
 
+        await channel.ExchangeDeclareAsync(settings.AuditExchange, ExchangeType.Topic, true, false, cancellationToken: cancellationToken);
+
         var deadLetterQueue = $"{settings.HeartbeatQueue}.dlq";
         await channel.QueueDeclareAsync(
             deadLetterQueue,

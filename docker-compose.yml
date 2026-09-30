@@ -59,13 +59,14 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: code_for_coders
       RABBITMQ_DEFAULT_PASS: code-for-coders-local
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit max_message_size 67108864"
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
       - code-for-coders-rabbitmq:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -170,9 +171,15 @@ services:
       LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       RabbitMq__MediaExchange: media.events
       RabbitMq__VideoFactsQueue: learning.video-availability
+      RabbitMq__AuditExchange: audit.events
     ports:
       - "5102:8080"
-    depends_on: *api-dependencies
+    depends_on:
+      <<: *api-dependencies
+      audit:
+        condition: service_healthy
+      media-worker:
+        condition: service_healthy
     healthcheck: *api-healthcheck
 
   minio:
@@ -244,6 +251,8 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: worker
+      RabbitMq__LearningExchange: learning.events
+      RabbitMq__CoursePublicationsQueue: media.course-publications
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks

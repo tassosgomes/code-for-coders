@@ -19,6 +19,9 @@ namespace CodeForCoders.Learning.IntegrationTests;
 
 public sealed class CourseApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    public string DatabaseConnection => database.GetConnectionString();
+    public bool FailPublicationOutbox { get; set; }
+
     private readonly RSA key = RSA.Create(2048);
     private readonly PostgreSqlContainer database = new PostgreSqlBuilder("postgres:18").Build();
 
@@ -41,6 +44,8 @@ public sealed class CourseApiFactory : WebApplicationFactory<Program>, IAsyncLif
         {
             foreach (var registration in services.Where(item => item.ServiceType == typeof(IHostedService)).ToList())
                 services.Remove(registration);
+            services.AddScoped<CodeForCoders.Learning.Application.Interfaces.IOutboxMessageWriter>(provider =>
+                new PublicationOutboxFailureWriter(new CodeForCoders.Learning.Infra.Data.Outbox.OutboxMessageWriter(provider.GetRequiredService<LearningDbContext>()), () => FailPublicationOutbox));
             var parameters = key.ExportParameters(false);
             var document = JsonSerializer.Serialize(new
             {

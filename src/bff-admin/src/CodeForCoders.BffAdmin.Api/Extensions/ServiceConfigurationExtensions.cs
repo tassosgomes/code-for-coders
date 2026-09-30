@@ -14,6 +14,7 @@ public static class ServiceConfigurationExtensions
     {
         builder.Services.AddApplicationConfiguration();
         builder.Services.AddScoped<CourseVideoEnricher>();
+        builder.Services.AddScoped<CourseAuditReferenceEnricher>();
         builder.Services.AddOptions<LearningApiOptions>()
             .Bind(builder.Configuration.GetSection(LearningApiOptions.SectionName))
             .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)

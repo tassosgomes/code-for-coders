@@ -128,6 +128,26 @@ public sealed class Course
         HasUnpublishedChanges = CurrentVersion.HasValue;
     }
 
+    public CourseVersion Publish(CoursePublication input)
+    {
+        if (input.DraftRevision != DraftRevision) throw new DraftChangedException();
+        if (input.VersionNote is not null && (string.IsNullOrWhiteSpace(input.VersionNote) || input.VersionNote.Length > 1000))
+            throw new CourseRuleException("INVALID_REQUEST");
+        var pendencies = new List<PublicationPendency>();
+        if (Modules.Count == 0) pendencies.Add(new("course-without-modules"));
+        foreach (var module in Modules.OrderBy(item => item.Position))
+        {
+            if (module.Lessons.Count == 0) pendencies.Add(new("module-without-lessons", module.Id));
+            foreach (var lesson in module.Lessons.OrderBy(item => item.Position))
+                if (!lesson.VideoId.HasValue) pendencies.Add(new("lesson-without-video", module.Id, lesson.Id));
+        }
+        if (pendencies.Count > 0) throw new CourseIncompleteException(pendencies);
+        var version = CourseVersion.Create(this, input, (CurrentVersion ?? 0) + 1);
+        CurrentVersion = version.VersionNumber;
+        HasUnpublishedChanges = false;
+        return version;
+    }
+
     private CourseModule FindModule(Guid id) => Modules.SingleOrDefault(module => module.Id == id)
         ?? throw new CourseItemNotFoundException("MODULE_NOT_FOUND");
 

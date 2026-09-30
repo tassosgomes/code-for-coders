@@ -10,7 +10,9 @@ public sealed class OutboxMessageWriter(LearningDbContext dbContext) : IOutboxMe
     public Task AppendAsync(OutboxMessageDraft message, CancellationToken cancellationToken)
     {
         var payload = JsonSerializer.Serialize(message.Payload, JsonOptions);
-        dbContext.OutboxMessages.Add(OutboxMessage.Create(message, payload));
+        if (message.RoutingKey is "conteudo.versao-publicada.v1" or "auditoria.ato-praticado.v1")
+            dbContext.ContentOutboxMessages.Add(ContentOutboxMessage.Create(message, payload));
+        else dbContext.OutboxMessages.Add(OutboxMessage.Create(message, payload));
         return Task.CompletedTask;
     }
 }

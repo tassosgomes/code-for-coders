@@ -240,7 +240,70 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                     b.ToTable("course_modules", "content");
                 });
 
-            modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.Outbox.OutboxMessage", b =>
+            modelBuilder.Entity("CodeForCoders.Learning.Domain.Entities.CourseVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Modules")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("modules");
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<Guid>("PublishedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("published_by_id");
+
+                    b.Property<string>("PublishedByName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("published_by_name");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("VersionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("version_note");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("TenantId", "CourseId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("course_versions", "content");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.Outbox.ContentOutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -290,6 +353,68 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .HasColumnName("type");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .HasDatabaseName("ix_content_outbox_messages_pending")
+                        .HasFilter("processed_on IS NULL");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_content_outbox_messages_tenant_id");
+
+                    b.ToTable("outbox_messages", "content");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset>("OccurredOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset?>("ProcessedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_on");
+
+                    b.Property<string>("RoutingKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("routing_key");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(55)
+                        .HasColumnType("character varying(55)")
+                        .HasColumnName("trace_parent");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("PK_outbox_messages1");
 
                     b.HasIndex("Id")
                         .HasDatabaseName("ix_outbox_messages_pending")
@@ -362,6 +487,15 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .WithMany("Modules")
                         .HasForeignKey("CourseId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Learning.Domain.Entities.CourseVersion", b =>
+                {
+                    b.HasOne("CodeForCoders.Learning.Domain.Entities.Course", null)
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

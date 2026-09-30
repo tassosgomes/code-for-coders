@@ -2,6 +2,9 @@ import { useRef, useState, type ReactNode } from 'react';
 import { BookOpen, GripVertical } from 'lucide-react';
 
 import { Dialog } from '@/components/ui/dialog';
+import { CoursePublication } from '@/features/course-authoring/components/course-publication';
+import { useCourse } from '@/features/course-authoring/api/get-course';
+import type { PublicationPendency } from '@/features/course-authoring/utils/publication-pendencies';
 import { CourseVideoPicker } from '@/features/course-authoring/components/course-video-picker';
 import { CourseEditDialog } from '@/features/course-authoring/components/course-edit-dialog';
 import { CourseItemActions } from '@/features/course-authoring/components/course-item-actions';
@@ -12,6 +15,12 @@ type CourseCurriculumProps = { course: Course; canEdit: boolean; canChooseVideo:
 type DraggedItem = { kind: 'module' | 'lesson'; id: string };
 export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: CourseCurriculumProps) => {
   const editor = useCourseStructure(course);
+  const query = useCourse(course.courseId);
+  const focusPendency = (pendency: PublicationPendency) => {
+    if (pendency.moduleId) setCollapsed((current) => { const next = new Set(current); next.delete(pendency.moduleId!); return next; });
+    const id = pendency.lessonId ? `aula-${pendency.lessonId}` : pendency.moduleId ? `modulo-${pendency.moduleId}` : 'course-modules';
+    requestAnimationFrame(() => { document.getElementById(id)?.focus(); window.history.replaceState(null, '', `#${id}`); });
+  };
   const [collapsed, setCollapsed] = useState(new Set<string>());
   const dragged = useRef<DraggedItem | null>(null);
   const moveLesson = (lessonId: string, input: { moduleId?: string; position?: number }) => {
@@ -38,8 +47,9 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: 
   const moveButton = (label: string, disabled: boolean, action: () => void) => <button type="button" disabled={disabled || editor.busy} title={disabled ? 'Item já está no limite da lista.' : undefined} onClick={action}>{label}</button>;
   return <>
     <div className="course-editor-overview"><div>{children}</div>{canEdit ? <button className="primary-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'course' })}>Editar dados</button> : null}</div>
+    {canEdit ? <CoursePublication course={course} onFocusPendency={focusPendency} onReload={query.refetch} /> : null}
     <div className="course-filters"><span className="course-draft-tab">Rascunho</span></div>
-    <div className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div>
+    <div id="course-modules" tabIndex={-1} className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div>
     <p role="status" aria-live="polite">{editor.notice}</p>
     {editor.error && !editor.editTarget && !editor.removeTarget && !editor.videoTarget ? <p className="inline-alert" role="alert">{editor.error}</p> : null}
     {!course.modules.length ? <section className="empty-state course-curriculum"><BookOpen size={32} /><h3>Comece pelos módulos.</h3><p>Cada módulo terá ao menos uma aula com vídeo antes da publicação.</p></section> : null}

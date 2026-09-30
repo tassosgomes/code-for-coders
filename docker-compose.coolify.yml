@@ -76,6 +76,11 @@ services:
       start_period: 30s
 
   learning:
+    depends_on:
+      audit:
+        condition: service_healthy
+      media-worker:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/learning/Dockerfile
@@ -90,6 +95,7 @@ services:
       LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       RabbitMq__MediaExchange: media.events
       RabbitMq__VideoFactsQueue: learning.video-availability
+      RabbitMq__AuditExchange: audit.events
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -151,6 +157,8 @@ services:
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Media__Role: worker
+      RabbitMq__LearningExchange: learning.events
+      RabbitMq__CoursePublicationsQueue: media.course-publications
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks

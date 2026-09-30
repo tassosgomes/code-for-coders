@@ -28,6 +28,8 @@ public sealed class RabbitMqTopologyInitializer(
             arguments: null,
             cancellationToken: cancellationToken);
 
+        await DeclareCoursePublicationsAsync(channel, settings, cancellationToken);
+
         var deadLetterQueue = $"{settings.HeartbeatQueue}.dlq";
         await channel.QueueDeclareAsync(
             deadLetterQueue,
@@ -88,6 +90,23 @@ public sealed class RabbitMqTopologyInitializer(
                 arguments: null,
                 cancellationToken: cancellationToken);
         }
+    }
+
+    private static async Task DeclareCoursePublicationsAsync(IChannel channel, RabbitMqOptions settings, CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(settings.LearningExchange, ExchangeType.Topic, true, false, cancellationToken: cancellationToken);
+        var queue = settings.CoursePublicationsQueue;
+        await channel.QueueDeclareAsync(queue + ".dlq", true, false, false,
+            new Dictionary<string, object?> { ["x-queue-type"] = "quorum" }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(queue + ".dlq", settings.DeadLetterExchange, queue, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(queue, true, false, false, new Dictionary<string, object?>
+        {
+            ["x-queue-type"] = "quorum",
+            ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+            ["x-dead-letter-routing-key"] = queue,
+            ["x-delivery-limit"] = settings.DeliveryLimit,
+        }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(queue, settings.LearningExchange, PublishedCourseFact.Route, cancellationToken: cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
