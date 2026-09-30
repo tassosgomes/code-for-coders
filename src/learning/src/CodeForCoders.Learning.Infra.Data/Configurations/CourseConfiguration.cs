@@ -23,6 +23,7 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(course => course.LastEditedById).HasColumnName("last_edited_by_id");
         builder.Property(course => course.LastEditedByName).HasColumnName("last_edited_by_name").HasMaxLength(200);
         builder.Property(course => course.LastEditedAt).HasColumnName("last_edited_at");
+        builder.HasMany(course => course.Modules).WithOne().HasForeignKey(module => module.CourseId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(course => new { course.TenantId, course.LastEditedAt, course.Id });
     }
 }

@@ -10,13 +10,13 @@ public sealed class CourseAuthoringClient(HttpClient httpClient) : ICourseAuthor
 {
     public async Task<CourseClientResult> SendAsync(CourseClientRequest input, CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(input.Body is null ? HttpMethod.Get : HttpMethod.Post, input.Path);
+        using var request = new HttpRequestMessage(new HttpMethod(input.Method == "GET" && input.Body is not null ? "POST" : input.Method), input.Path);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", input.AccessToken);
-        if (input.Body is not null)
+        if (request.Method != HttpMethod.Get)
         {
             request.Headers.Add("X-Actor-Name", input.ActorName);
             request.Headers.Add("Idempotency-Key", input.IdempotencyKey);
-            request.Content = JsonContent.Create(input.Body);
+            if (input.Body is not null) request.Content = JsonContent.Create(input.Body);
         }
         try
         {
@@ -29,7 +29,7 @@ public sealed class CourseAuthoringClient(HttpClient httpClient) : ICourseAuthor
                     return page is null ? Unavailable(502) : new((int)response.StatusCode, page, null, null, null);
                 }
                 var course = await response.Content.ReadFromJsonAsync<CourseDetail>(cancellationToken);
-                return course is null ? Unavailable(502) : new((int)response.StatusCode, null, course, null, null);
+                return course is null ? Unavailable(502) : new((int)response.StatusCode, null, CourseDraftMapper.ToPublic(course), null, null, response.Headers.Location?.OriginalString);
             }
             if ((int)response.StatusCode >= 500) return Unavailable(response.StatusCode == System.Net.HttpStatusCode.GatewayTimeout ? 504 : 502);
             using var problem = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);

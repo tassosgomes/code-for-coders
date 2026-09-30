@@ -11,6 +11,7 @@ public sealed class LearningDbContext(
     ITenantContext tenantContext) : DbContext(options)
 {
     public DbSet<Course> Courses => Set<Course>();
+    public DbSet<CourseEditReceipt> CourseEditReceipts => Set<CourseEditReceipt>();
     public DbSet<CourseCreationReceipt> CourseCreationReceipts => Set<CourseCreationReceipt>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -20,6 +21,7 @@ public sealed class LearningDbContext(
         modelBuilder.HasDefaultSchema(LearningSchemas.Content);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LearningDbContext).Assembly);
         modelBuilder.Entity<Course>().HasQueryFilter(course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CourseEditReceipt>().HasQueryFilter(receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CourseCreationReceipt>().HasQueryFilter(receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
             message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);

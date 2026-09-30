@@ -22,7 +22,7 @@ public sealed class GlobalExceptionHandler(
                 "/problems/validation-error",
                 "Validation failed",
                 "One or more validation errors occurred."),
-            NotFoundException => (
+            CourseItemNotFoundException or NotFoundException => (
                 StatusCodes.Status404NotFound,
                 "/problems/not-found",
                 "Resource not found",
@@ -58,6 +58,7 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["code"] = exception switch
         {
+            CourseItemNotFoundException item => item.Code,
             CourseRuleException rule => rule.Code,
             NotFoundException => "COURSE_NOT_FOUND",
             ValidationException => "INVALID_REQUEST",

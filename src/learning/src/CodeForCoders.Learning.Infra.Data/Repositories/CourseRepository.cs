@@ -6,8 +6,17 @@ namespace CodeForCoders.Learning.Infra.Data.Repositories;
 
 public sealed class CourseRepository(LearningDbContext dbContext) : ICourseRepository
 {
-    public Task<Course?> GetAsync(Guid courseId, CancellationToken cancellationToken)
-        => dbContext.Courses.AsNoTracking().SingleOrDefaultAsync(course => course.Id == courseId, cancellationToken);
+    public async Task<Course?> GetAsync(Guid courseId, CancellationToken cancellationToken)
+    {
+        var course = await dbContext.Courses.Include(course => course.Modules).ThenInclude(module => module.Lessons)
+            .SingleOrDefaultAsync(course => course.Id == courseId, cancellationToken);
+        if (course is not null)
+        {
+            course.Modules.Sort((left, right) => left.Position.CompareTo(right.Position));
+            foreach (var module in course.Modules) module.Lessons.Sort((left, right) => left.Position.CompareTo(right.Position));
+        }
+        return course;
+    }
 
     public Task AddAsync(Course course, CancellationToken cancellationToken)
     {

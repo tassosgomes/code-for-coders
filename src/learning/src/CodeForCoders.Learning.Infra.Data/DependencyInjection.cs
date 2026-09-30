@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, LearningUnitOfWork>();
         services.AddScoped<CodeForCoders.Learning.Domain.Repositories.ICourseRepository, Repositories.CourseRepository>();
         services.AddScoped<ICourseQueries, Queries.CourseQueries>();
+        services.AddScoped<ICourseEditStore, Idempotency.CourseEditStore>();
         services.AddScoped<ICourseCreationStore, Idempotency.CourseCreationStore>();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))

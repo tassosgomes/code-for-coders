@@ -14,6 +14,7 @@ public static class CourseEndpoints
         group.MapGet("", ListAsync).RequireAuthorization(LearningAuthorization.Read);
         group.MapGet("/{courseId:guid}", GetAsync).RequireAuthorization(LearningAuthorization.Read);
         group.MapPost("", CreateAsync).RequireAuthorization(LearningAuthorization.Edit);
+        group.MapCourseStructureEndpoints();
     }
 
     private static async Task<IResult> ListAsync(HttpContext context, IListCourses useCase, CancellationToken cancellationToken,

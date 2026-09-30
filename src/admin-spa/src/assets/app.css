@@ -4229,3 +4229,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .course-status .role-badge { white-space: normal; }
   .course-create-dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
 }
+
+.course-curriculum-heading, .course-module-heading, .course-lesson { display: flex; align-items: center; gap: 12px; }
+.course-curriculum-heading { flex-wrap: wrap; margin-top: 20px; }
+.course-module-list { display: grid; gap: 16px; }
+.course-module { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
+.course-module-heading { padding: 16px; flex-wrap: wrap; }
+.course-module-heading h3 { flex: 1; min-width: 120px; overflow-wrap: anywhere; margin: 0; }
+
+.course-empty-lessons { padding: 0 16px 16px; }
+.course-lesson { border-top: 1px solid var(--border); padding: 16px; }
+.course-lesson-details { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.course-lesson h4 { margin: 0; }
+.course-lesson p { color: var(--muted); margin: 8px 0; }
+.course-video-state { color: var(--muted); font-size: 13px; }
+.course-drag-handle { padding: 6px; background: transparent; color: inherit; border: 0; cursor: grab; flex-shrink: 0; }
+.course-item-actions { position: relative; flex-shrink: 0; }
+.course-action-trigger { border: 0; color: inherit; background: transparent; cursor: pointer; padding: 4px 12px; font-size: 24px; }
+.course-action-menu { position: absolute; right: 0; top: 100%; z-index: 3; min-width: 210px; display: grid; gap: 4px; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 20px #0002; }
+.course-action-menu button, .course-action-menu > span { padding: 8px 12px; text-align: left; background: transparent; color: inherit; border: 0; border-radius: 6px; }
+.course-action-menu button { cursor: pointer; }
+.course-action-menu button:hover { background: var(--border); }
+.course-action-menu button:disabled { opacity: .5; cursor: default; }
+.course-module:focus, .course-lesson:focus { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (max-width: 640px) { .course-module-heading, .course-lesson { gap: 8px; padding: 12px; } .course-module-heading > span { font-size: 12px; } }
+
+.course-editor-overview { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.course-editor-overview > div { display: grid; gap: 16px; flex: 1; min-width: 180px; }
+.course-collapse-button { border: 0; color: inherit; background: transparent; font-size: 20px; padding: 6px; }
+.course-module-heading { background: var(--video-page, #f8f7fc); border-radius: 12px; }
+.course-video-state { color: var(--warning-soft-foreground, #b45309); }

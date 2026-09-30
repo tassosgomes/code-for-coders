@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CodeForCoders.BffAdmin.Api.Clients;
 using CodeForCoders.BffAdmin.Api.Security;
 using CodeForCoders.BffAdmin.Application.Interfaces;
@@ -12,6 +13,14 @@ public static class CourseAuthoringEndpoints
         group.MapGet("", ListAsync);
         group.MapGet("/{courseId:guid}", GetAsync);
         group.MapPost("", CreateAsync);
+        group.MapPatch("/{courseId:guid}", UpdateCourseAsync);
+        group.MapPost("/{courseId:guid}/modules", CreateModuleAsync);
+        group.MapPatch("/{courseId:guid}/modules/{moduleId:guid}", UpdateModuleAsync);
+        group.MapDelete("/{courseId:guid}/modules/{moduleId:guid}", DeleteModuleAsync);
+        group.MapPost("/{courseId:guid}/modules/{moduleId:guid}/lessons", CreateLessonAsync);
+        group.MapPatch("/{courseId:guid}/lessons/{lessonId:guid}", UpdateLessonAsync);
+        group.MapDelete("/{courseId:guid}/lessons/{lessonId:guid}", DeleteLessonAsync);
+
     }
 
     private static async Task<IResult> ListAsync(HttpContext context, IStaffSessionIdentityClient identity,
@@ -30,7 +39,28 @@ public static class CourseAuthoringEndpoints
 
     private static Task<IResult> CreateAsync(CourseCreateBody body, HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken)
-        => SendAsync(new CourseOperation("internal/v1/courses", body), context, identity, learning, cancellationToken);
+        => SendAsync(new CourseOperation("internal/v1/courses", body, "POST"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> UpdateCourseAsync(Guid courseId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}", body, "PATCH"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> CreateModuleAsync(Guid courseId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/modules", body, "POST"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> UpdateModuleAsync(Guid courseId, Guid moduleId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/modules/{moduleId}", body, "PATCH"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> DeleteModuleAsync(Guid courseId, Guid moduleId, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/modules/{moduleId}", null, "DELETE"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> CreateLessonAsync(Guid courseId, Guid moduleId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/modules/{moduleId}/lessons", body, "POST"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> UpdateLessonAsync(Guid courseId, Guid lessonId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/lessons/{lessonId}", body, "PATCH"), context, identity, learning, cancellationToken);
+
+    private static Task<IResult> DeleteLessonAsync(Guid courseId, Guid lessonId, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/lessons/{lessonId}", null, "DELETE"), context, identity, learning, cancellationToken);
 
     private static async Task<IResult> SendAsync(CourseOperation operation, HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken)
@@ -38,19 +68,19 @@ public static class CourseAuthoringEndpoints
         var session = BffSessionContext.Get(context);
         var validated = BffSessionContext.GetValidatedSession(context);
         if (session is null || validated is null) return Problem(401, "SESSION_REQUIRED");
-        var permission = operation.Body is null ? "autoria.ler" : "autoria.editar";
+        var permission = operation.Method == "GET" ? "autoria.ler" : "autoria.editar";
         if (!validated.Permissions.Contains(permission, StringComparer.Ordinal)) return Problem(403, "PERMISSION_DENIED");
         var key = context.Request.Headers["Idempotency-Key"].ToString();
-        if (operation.Body is not null && (string.IsNullOrWhiteSpace(key) || key.Length > 128)) return Problem(400, "INVALID_REQUEST");
+        if (operation.Method != "GET" && (string.IsNullOrWhiteSpace(key) || key.Length > 128)) return Problem(400, "INVALID_REQUEST");
         var validation = await identity.ValidateSessionAsync(session.IdentitySessionId, "learning", cancellationToken);
         if (validation.StatusCode == 401) return Problem(401, "SESSION_REQUIRED");
         if (validation.StatusCode != 200 || validation.Session is null || string.IsNullOrWhiteSpace(validation.Session.AccessToken))
             return Problem(validation.StatusCode == 504 ? 504 : 502, "IDENTITY_UNAVAILABLE");
         if (!validation.Session.Permissions.Contains(permission, StringComparer.Ordinal)) return Problem(403, "PERMISSION_DENIED");
         var result = await learning.SendAsync(new CourseClientRequest(operation.Path, validation.Session.AccessToken,
-            validation.Session.Name, key, operation.Body), cancellationToken);
+            validation.Session.Name, key, operation.Body, operation.Method), cancellationToken);
         if (result.Status == 201 && result.Course is not null)
-            return Results.Created($"/api/v1/courses/{result.Course.CourseId:D}", result.Course);
+            return Results.Created(result.Location?.Replace("/internal/v1", "/api/v1", StringComparison.Ordinal) ?? $"/api/v1/courses/{result.Course.CourseId:D}", result.Course);
         if (result.Status == 200 && result.Page is not null) return Results.Ok(result.Page);
         if (result.Status == 200 && result.Course is not null) return Results.Ok(result.Course);
         return Problem(result.Status, result.Code ?? "LEARNING_UNAVAILABLE", result.Errors);
