@@ -26,6 +26,9 @@ src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuin
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:133
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffPasswordResetTests.cs:generic-api-key:68
 src/media/tests/CodeForCoders.Media.IntegrationTests/VideoPreparationTests.cs:generic-api-key:484
+# Falso positivo: routing key do RabbitMQ ("midia.ativo-pronto.v1") no teste de outbox,
+# nao credencial. Mesma heuristica generic-api-key das entradas acima.
+src/media/tests/CodeForCoders.Media.IntegrationTests/MediaOutboxMetricsTests.cs:generic-api-key:23
 # Fixtures de teste, não segredos: token fictício de convite e Idempotency-Key literal.
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:26
 src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/StaffInvitationAcceptanceTests.cs:generic-api-key:61

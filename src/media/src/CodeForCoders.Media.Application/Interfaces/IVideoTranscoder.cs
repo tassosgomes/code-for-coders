@@ -3,6 +3,7 @@ namespace CodeForCoders.Media.Application.Interfaces;
 public interface IVideoTranscoder
 {
     Task<VideoTranscodeResult> TranscodeAsync(
+        Guid videoId,
         string sourcePath,
         string outputDirectory,
         string keyInfoPath,

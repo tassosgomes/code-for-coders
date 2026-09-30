@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 
 namespace CodeForCoders.Media.Application.UseCases.VideoUploads.ExpirePendingVideoUploads;
@@ -33,8 +34,9 @@ public sealed class ExpirePendingVideoUploads(
     public Task<bool> ExpireAsync(Guid uploadId, CancellationToken cancellationToken)
         => ExpireAsync(uploadId, timeProvider.GetUtcNow(), cancellationToken);
 
-    private Task<bool> ExpireAsync(Guid uploadId, DateTimeOffset now, CancellationToken cancellationToken)
-        => videoUploads.ExpireAsync(
+    private async Task<bool> ExpireAsync(Guid uploadId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var expired = await videoUploads.ExpireAsync(
             uploadId,
             now,
             (upload, token) => mediaStorage.AbortMultipartUploadAsync(
@@ -42,4 +44,11 @@ public sealed class ExpirePendingVideoUploads(
                 upload.StorageUploadId,
                 token),
             cancellationToken);
+        if (expired)
+        {
+            MediaTelemetry.UploadsExpired.Add(1);
+        }
+
+        return expired;
+    }
 }

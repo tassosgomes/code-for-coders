@@ -1,0 +1,389 @@
+{
+  "schema_version": 1,
+  "branch": "feature/observabilidade-midia",
+  "original_base_ref": "695f3f857254def4c844c9f90255369c6f8ffc41",
+  "base_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
+  "target_ref": "b1578d33e9c7823ec78d68bfad49b1de23635928",
+  "last_checkpoint": "4b0b38f",
+  "phase": "complete",
+  "active_task": "7.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 3,
+  "transport_retries": 0,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "validated_commit": "92330a4fbdcc8e5837198be1cb3c470d8218c317",
+  "validated_tree": "7bfaa833c207615626ce2d3c96f51f6142c76c90",
+  "last_result": {
+    "run_id": "run.OFJqDMrc",
+    "role": "validator",
+    "mode": "full",
+    "outcome": "approved",
+    "gate": "passed",
+    "report": "tasks/prd-observabilidade-midia/prd_review.md",
+    "commit": "92330a4fbdcc8e5837198be1cb3c470d8218c317",
+    "tree": "7bfaa833c207615626ce2d3c96f51f6142c76c90"
+  },
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "complete-prd",
+    "task": null,
+    "attempt": null
+  },
+  "history": [
+    {
+      "ts": "2026-09-28",
+      "event": "start",
+      "note": "PRD/TechSpec/plano aprovados pelo usuário na mesma sessão (sem revisão high adicional de plano exigida); execução autorizada com transporte herdr e entrega por PR (precedente ingestao). RABBITMQ_MANAGEMENT_URI copiado ao .env da worktree; ILM 30d do metrics-generic é ação de plataforma antes do checkpoint da Fase 2."
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "branch_ready",
+      "run_id": "run.m3rsXi7S",
+      "note": "worktree reutilizada; branch feature/observabilidade-midia em 695f3f8 (origin/main); artefatos de planejamento ainda não commitados, entram no checkpoint da 1.0"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "1.0",
+      "run_id": "run.ND51KJcx",
+      "note": "tsg-delegate atingiu timeout com codex gpt-6-luna max ainda trabalhando (debug do HTTP 500 do import Kibana); agente concluiu no mesmo pane apos intervencao do orquestrador pedindo encerramento pelo protocolo; result.json valido (implementation_complete, gate passed); dashboard Pipeline de Mídia importado no servidor dev (4 paineis). Tentativa nao consumida."
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "focused_approved",
+      "task": "1.0",
+      "run_id": "run.tI9pVlNI",
+      "note": "validator opencode (kind explicit: claude sem cota semanal, pane fechado); 0 bloqueantes, 0 recomendacoes; smoke de import real e reimport por segunda pessoa ficam como evidencia operacional (import ja executado 2x pelo implementer com successCount=2)"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "1.0",
+      "commit": "f2137ff",
+      "run_id": "run.sdKQ1qTl",
+      "note": "primeiro checkpoint incluiu artefatos de planejamento; routing.default.json excluido conforme contexto"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "2.0",
+      "run_id": "run.Q8klesGG",
+      "note": "timeout do delegate com codex trabalhando; agente concluiu sozinho e gravou result.json (5 testes no gate, checks verdes); sem intervencao desta vez"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "focused_approved",
+      "task": "2.0",
+      "run_id": "run.fTjFAyIN",
+      "note": "0 bloqueantes, 1 recomendacao operacional; import remoto do NDJSON executado pelo orquestrador apos aprovacao (secao Envio publicada)"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "2.0",
+      "commit": "070d62a",
+      "run_id": "run.AAJeHgA9"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "focused_approved",
+      "task": "3.0",
+      "run_id": "run.3j1x1AbQ",
+      "note": "0 bloqueantes, 0 recomendacoes; gate com 4 testes sobre Postgres real + format/build/unit/architecture/verify-only verdes"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "3.0",
+      "commit": "12f0e41",
+      "run_id": "run.LdofGzo2",
+      "note": "Fase 2 fechada: secoes Envio e Fila publicadas no Kibana dev pelo orquestrador"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "4.0",
+      "run_id": "run.ifaAIfDZ",
+      "note": "timeout do delegate com codex; agente gravou result.json valido (5 testes, checks verdes)"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "focused_approved",
+      "task": "4.0",
+      "run_id": "run.8vRKOAKG",
+      "note": "0 bloqueantes, 1 recomendacao observacional; gate com 5 testes sobre Postgres/ffmpeg reais + format/build/unit/architecture/verify-only verdes"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "4.0",
+      "commit": "f7f0d64",
+      "run_id": "run.JAkWLUtw"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "5.0",
+      "run_id": "run.Cyii30pi",
+      "note": "timeout do delegate; checks verdes; intervencao do orquestrador para encerrar e gravar result.json"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "focused_rejected",
+      "task": "5.0",
+      "run_id": "run.0QJ1Pcz0",
+      "note": "1 bloqueante (5.0-B1 secao Outbox/DLQ ausente no dashboard); tentativa 1/3 consumida"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "fix_complete",
+      "task": "5.0",
+      "run_id": "run.ooUG6kRr",
+      "note": "fix do 5.0-B1 pela via opencode; revalidation com codex (claude sem cota; opencode escreveu o fix — anti-afinidade parcial, registrado)"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "5.0",
+      "run_id": "run.vFsc3pJn",
+      "note": "0 bloqueantes, 0 recomendacoes; gate com 5 testes sobre Postgres/RabbitMQ reais + format/build/unit/architecture/verify-only verdes; secao Outbox/DLQ publicada como codigo"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "5.0",
+      "commit": "679d75c",
+      "run_id": "run.2nW8Eck9",
+      "note": "secao Outbox/DLQ publicada; Fase 3 fechada"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "transport_failure_reconciled",
+      "task": "6.0",
+      "run_id": "run.FqP9xUUh",
+      "note": "timeout do delegate; agente concluiu e gravou result.json"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "focused_rejected",
+      "task": "6.0",
+      "run_id": "run.3lvOfKDc",
+      "note": "B1: A2 soma counters cumulativos (snapshots repetem o total) — taxa e minimo de 4 incorretos; tentativa 1/3 consumida; smokes A2/A4 pendentes de autorizacao do orquestrador"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "revalidation_rejected",
+      "task": "6.0",
+      "run_id": "run.irBn4bjI",
+      "note": "B1 novo (eventos no inicio da janela: FIRST=LAST sem baseline) + evidencia operacional dos smokes; usuario decidiu fechar sem os smokes registrando pendencia; tentativa 2/3 consumida; resta 3/3"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "6.0",
+      "run_id": "run.OeaKNbAU",
+      "note": "fix do B1 inicio-da-janela (baseline 16min + in_window) pela via opencode; smokes A2/A4 adiados para rollout por decisao do usuario"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "6.0",
+      "run_id": "run.VmqjHE22",
+      "note": "0 bloqueantes, 1 pendencia operacional; gate verify-only exit 0 (A1-A5 IDs estaveis, sem conectores); smokes A2/A4 ficam para rollout com owner equipe/plataforma"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "6.0",
+      "commit": "223b9a8",
+      "run_id": "run.rmZ3fR89",
+      "note": "A2 corrigida (incrementos com baseline + reset); Fase 4 fechada com smokes adiados por decisao do usuario"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "smoke_partial",
+      "task": "7.0",
+      "note": "usuario autorizou o smoke; imagem local antiga segfaultava (exit 139) e foi reconstruida; api+worker healthy com override ao endpoint dev; 0 erros de export; 192.168.0.5:4317 alcancavel; confirmacao dev limitada por APIs do Kibana desabilitadas + ES interno"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "7.0",
+      "run_id": "run.Twb42jB5",
+      "note": "0 bloqueantes, 1 pendencia operacional; gate static_passed (compose valido, default preservado, override nos 9 servicos); confirmacao visual no Kibana fica como 7.0-P1 com owner usuario/equipe"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "checkpoint",
+      "task": "7.0",
+      "commit": "4b0b38f",
+      "run_id": "run.vSY05Qhj",
+      "note": "todas as 7 tasks concluidas; inicio da integracao"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "integration_ready",
+      "run_id": "run.rBw90fTq",
+      "note": "base_ref=695f3f8 (origin/main), target_ref=b1578d3, HEAD=4b0b38f"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "full_rejected",
+      "run_id": "run.dehQCWsM",
+      "note": "5 bloqueantes (F1->5.0, F2->2.0, F3->6.0, F4->5.0, F5 integracao); full_attempt=1"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "2.0",
+      "run_id": "run.nhkPJcaB",
+      "note": "reabertura pos-full F2->2.0 (SUM sobre counters cumulativos distorce RF-02/04/05); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "6.0",
+      "run_id": "run.P9p49v9w",
+      "note": "reabertura pos-full F3->6.0 (A2 perde primeira amostra sem baseline COALESCE(f_base,f_first,0)); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "2.0",
+      "run_id": "run.sOSfWVhn",
+      "note": "fix F2 (counter_increment_query FIRST/LAST + guardas verify_counter_increment_shape/verify_no_counter_sum); gate passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "2.0",
+      "run_id": "run.NyCE5kgx",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada; gate 5 testes + verify-only/format/build/unit/arch verdes; F2 corrigido sem regressao .NET"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "6.0",
+      "run_id": "run.Got70VSW",
+      "note": "fix F3 (A2 COALESCE(base,0) serie nova + caso offline e; NDJSON regenerado, zero conectores); gate passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "6.0",
+      "run_id": "run.tMg9FCf6",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada 6.0-P1; gate verify-only exit 0 (A1-A5 IDs estaveis, sem conectores)"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "5.0",
+      "run_id": "run.mNZZL5EK",
+      "note": "reabertura pos-full F1+F4->5.0 (suite agregada com Meter estatico + Gitleaks FP routing key); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "5.0",
+      "run_id": "run.Dkcdl8EY",
+      "note": "fix F1+F4 (Meter estatico isolado nos 3 testes + supressao gitleaks routing key); gate passed, suite 101/101"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "5.0",
+      "run_id": "run.Wi6v0IxC",
+      "note": "0 bloqueantes, 0 recomendacoes; gate 5 testes + format/build/unit/arch/compose/verify-only verdes; F1+F4 corrigidos sem regressao"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "full_rejected",
+      "run_id": "run.KxoQ3hg1",
+      "note": "full_attempt=2: suite 125/125, gitleaks 0, A2 ok; restam paineis (edge + por produtor), gate V-07 discriminar default, e rebase sobre b1578d3"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "2.0",
+      "run_id": "run.VtdSJH9K",
+      "note": "reabertura pos-full G1->2.0 (paineis subcontam na janela + outbox sem incremento por produtor RF-02/04/05); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "2.0",
+      "run_id": "run.Y1Mcomer",
+      "note": "fix G1 (counter baseline anterior a janela + incremento por produtor api/worker; NDJSON regenerado); gate passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "2.0",
+      "run_id": "run.yIpJ2zsL",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada; gate 5 testes + verify-only/format/build/unit/arch verdes; G1 corrigido sem regressao .NET"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "reopen",
+      "task": "7.0",
+      "run_id": "run.tYxj54Dc",
+      "note": "reabertura pos-full G2->7.0 (mutante V-07 sobreviveu — default otel-collector:4317 nao discriminado); codigo preservado"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "fix_complete",
+      "task": "7.0",
+      "run_id": "run.fWHcbiPQ",
+      "note": "fix G2 (gate discrimina default otel-collector:4317 + override dev em 7_task.md; mutante invalid-host reprova); gate static_passed"
+    },
+    {
+      "ts": "2026-09-29",
+      "event": "revalidation_approved",
+      "task": "7.0",
+      "run_id": "run.96j5Mnkc",
+      "note": "0 bloqueantes, 1 pendencia operacional herdada 7.0-P1; gate static_passed (compose valido, default preservado, override 9 servicos); G2 corrigido sem regressao"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "integration_ready",
+      "run_id": "run.OeEr7T9P",
+      "note": "rebase sobre b1578d3 aplicado (G3 resolvido); HEAD 92330a4"
+    },
+    {
+      "ts": "2026-09-28",
+      "event": "full_approved",
+      "run_id": "run.OFJqDMrc",
+      "note": "full #3 aprovada (0 bloqueantes; suite 125/125, cobertura 90,09%, gitleaks 0, sensor 6/6); validated_commit=92330a4 tree=7bfaa83"
+    }
+  ],
+  "carryover": {
+    "2.0": [
+      "2.0-R1: smoke visual da seção Envio no Kibana dev (um concluído e um expirado na mesma janela) quando houver tráfega real — recomendacao do validator, nao bloqueante"
+    ],
+    "4.0": [
+      "4.0-R1: flake de cold-start do fixture Postgres (testcontainers ~60s) — observar no CI; nao bloqueante"
+    ],
+    "6.0": [
+      "6.0-P1 (adiado por decisao do usuario 2026-09-28): smokes operacionais A2 (lote >=4 videos corrompidos + resolucao) e A4 (parar/retomar media-worker + resolucao) e ausencia de mensagens; owner: equipe/plataforma no rollout; nao bloqueia o gate"
+    ],
+    "7.0": [
+      "7.0-P1: confirmacao visual no Kibana dev de que a stack local alimenta o dashboard (autorizado pelo usuario; APIs de busca do Kibana desabilitadas e ES interno impediram a leitura automatica); owner: usuario/equipe"
+    ],
+    "full-1": [
+      "F1 -> 5.0: suite agregada reprova — MediaVolumeMetricsTests espera 3 instrumentos e recebe 6; MediaQueueMetricsTests recebe 4 medicoes de oldest_waiting (interferencia de listener/Meter estatico)",
+      "F2 -> 2.0: paineis de funil/claims/resultados/publicacoes somam amostras Counter com SUM (import_observabilidade.py:654,682,710,737,930,937,951) — distorce RF-02/04/05",
+      "F3 -> 6.0: A2 perde a primeira amostra sem baseline (COALESCE(f_base,f_first,0)) — serie nova de motivo pode contar 3 de 4 falhas",
+      "F4 -> 5.0: Gitleaks FP generic-api-key em MediaOutboxMetricsTests.cs:23 (routing key); workflow enforce low — precisa supressao pontual",
+      "F5 (integracao): base avancou — target_ref b1578d3 vs base validada 695f3f8; repreparar e rodar full de novo"
+    ],
+    "full-2": [
+      "G1 -> 2.0: paineis ainda subcontam na janela (LAST-FIRST dentro do filtro; snapshot unico retorna zero) e o painel de outbox agrega api+worker so por event, sem incremento por produtor (RF-02/04/05)",
+      "G2 -> 7.0: mutante V-07 sobreviveu — trocar o default otel-collector:4317 por host invalido ainda passa o gate; falta discriminar o default exigido",
+      "G3 (integracao): branch 2 commits atras da target_ref b1578d3; repreparar sobre b1578d3 e rodar full de novo"
+    ]
+  }
+}

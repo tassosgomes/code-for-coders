@@ -3,6 +3,7 @@ using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data;
 using CodeForCoders.Media.Infra.Messaging;
+using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,8 +74,24 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
         await ResetAsync();
         await SeedAsync(Video.Create(Guid.CreateVersion7(), "Private", Guid.CreateVersion7(), "Teacher", DateTimeOffset.UtcNow));
         var values = await CollectAsync();
-        Assert.Equal(3, values.Select(value => value.Name).Distinct().Count());
+        var names = values.Select(value => value.Name).Distinct().OrderBy(name => name, StringComparer.Ordinal).ToArray();
+        Assert.Equal(
+            [
+                "media.outbox.exhausted",
+                "media.outbox.pending",
+                "media.storage.used",
+                "media.uploads.pending",
+                "media.videos.count",
+                "media.videos.stuck",
+            ],
+            names);
         Assert.All(values, value => Assert.All(value.Tags, tag => Assert.Equal("status", tag.Key)));
+        Assert.All(
+            values.Where(value => value.Name == "media.videos.count"),
+            value => Assert.Equal("status", Assert.Single(value.Tags).Key));
+        Assert.All(
+            values.Where(value => value.Name != "media.videos.count"),
+            value => Assert.Empty(value.Tags));
     }
 
     [Fact]
@@ -83,6 +100,7 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(TimeProvider.System);
+        services.Configure<OutboxOptions>(_ => { });
         services.AddSingleton<MediaVolumeMetricsWorker>();
         await using var provider = services.BuildServiceProvider();
         var worker = provider.GetRequiredService<MediaVolumeMetricsWorker>();
@@ -115,6 +133,7 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(TimeProvider.System);
+        services.Configure<OutboxOptions>(_ => { });
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddDbContext<MediaDbContext>(options => options.UseNpgsql(fixture.PostgreSql.GetConnectionString()));
         services.AddSingleton<MediaVolumeMetricsWorker>();

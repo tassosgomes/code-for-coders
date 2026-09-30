@@ -204,6 +204,12 @@ public sealed class CreateVideoUpload(
             await idempotencyRecords.AddAsync(record, cancellationToken);
         }
 
-        return await unitOfWork.TryCommitAsync(cancellationToken);
+        var committed = await unitOfWork.TryCommitAsync(cancellationToken);
+        if (committed && !output.Resumed)
+        {
+            MediaTelemetry.UploadsCreated.Add(1);
+        }
+
+        return committed;
     }
 }

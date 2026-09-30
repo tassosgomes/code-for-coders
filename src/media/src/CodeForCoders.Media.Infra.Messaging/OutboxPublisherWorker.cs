@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Infra.Data;
 using CodeForCoders.Media.Infra.Data.Configuration;
 using CodeForCoders.Media.Infra.Data.Outbox;
@@ -87,6 +88,7 @@ public sealed class OutboxPublisherWorker(
         try
         {
             await publisher.PublishAsync(message, cancellationToken);
+            MediaTelemetry.RecordOutboxPublished(message.RoutingKey);
             message.MarkProcessed();
             await dbContext.SaveChangesAsync(CancellationToken.None);
             await transaction.CommitAsync(CancellationToken.None);
@@ -94,6 +96,7 @@ public sealed class OutboxPublisherWorker(
         catch (OutboxPublishException exception)
         {
             message.RegisterFailure(exception);
+            MediaTelemetry.RecordOutboxPublishFailed(message.RoutingKey);
             await dbContext.SaveChangesAsync(CancellationToken.None);
             await transaction.CommitAsync(CancellationToken.None);
             throw;
