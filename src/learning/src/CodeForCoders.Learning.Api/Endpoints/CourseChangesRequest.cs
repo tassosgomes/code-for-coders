@@ -34,7 +34,14 @@ internal static class CourseChangesRequest
             if (moduleValue.ValueKind != JsonValueKind.String || !moduleValue.TryGetGuid(out var value)) throw Invalid();
             moduleId = value;
         }
-        return new CourseChanges(title, description, hasDescription, position, moduleId);
+        var hasVideoId = body.TryGetProperty("videoId", out var videoValue);
+        Guid? videoId = null;
+        if (hasVideoId && videoValue.ValueKind != JsonValueKind.Null)
+        {
+            if (videoValue.ValueKind != JsonValueKind.String || !videoValue.TryGetGuid(out var value)) throw Invalid();
+            videoId = value;
+        }
+        return new CourseChanges(title, description, hasDescription, position, moduleId, videoId, hasVideoId);
     }
 
     private static ValidationException Invalid() => new("Invalid course changes.");

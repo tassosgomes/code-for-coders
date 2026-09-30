@@ -8,7 +8,7 @@ import { useDeleteModule } from '@/features/course-authoring/api/delete-module';
 import { useUpdateCourse } from '@/features/course-authoring/api/update-course';
 import { useUpdateLesson, type UpdateLessonInput } from '@/features/course-authoring/api/update-lesson';
 import { useUpdateModule, type UpdateModuleInput } from '@/features/course-authoring/api/update-module';
-import type { Course } from '@/features/course-authoring/types/course';
+import type { Course, CourseLesson } from '@/features/course-authoring/types/course';
 import type { CourseEditTarget, CourseRemoveTarget } from '@/features/course-authoring/types/course-edit-target';
 
 export const useCourseStructure = (course: Course) => {
@@ -16,6 +16,7 @@ export const useCourseStructure = (course: Course) => {
   const deleteModule = useDeleteModule(); const createLesson = useCreateLesson(); const updateLesson = useUpdateLesson(); const deleteLesson = useDeleteLesson();
   const [editTarget, setEditTarget] = useState<CourseEditTarget | null>(null);
   const [removeTarget, setRemoveTarget] = useState<CourseRemoveTarget | null>(null);
+  const [videoTarget, setVideoTarget] = useState<CourseLesson | null>(null);
   const [error, setError] = useState<string>(); const [notice, setNotice] = useState('');
   const intent = useRef<{ body: string; key: string } | null>(null);
   const pendingFocus = useRef<string | null>(null); const elements = useRef(new Map<string, HTMLElement>());
@@ -36,7 +37,7 @@ export const useCourseStructure = (course: Course) => {
     } catch (failure) {
       pendingFocus.current = null;
       const code = axios.isAxiosError<{ code?: string }>(failure) ? failure.response?.data.code : undefined;
-      setError(code === 'STRUCTURE_LIMIT_REACHED' ? 'Limite atingido: até 100 módulos por curso e 200 aulas por módulo.' : code === 'INVALID_POSITION' ? 'A ordem mudou. Atualize o curso e tente novamente.' : code === 'TITLE_REQUIRED' ? 'Informe o título.' : 'Não foi possível salvar. Seus dados foram mantidos. Tente novamente.');
+      setError(code === 'VIDEO_NOT_AVAILABLE' ? 'Este vídeo ainda não está disponível para vínculo. Aguarde alguns instantes e tente de novo.' : code === 'STRUCTURE_LIMIT_REACHED' ? 'Limite atingido: até 100 módulos por curso e 200 aulas por módulo.' : code === 'INVALID_POSITION' ? 'A ordem mudou. Atualize o curso e tente novamente.' : code === 'TITLE_REQUIRED' ? 'Informe o título.' : 'Não foi possível salvar. Seus dados foram mantidos. Tente novamente.');
       return false;
     }
   };
@@ -62,7 +63,9 @@ export const useCourseStructure = (course: Course) => {
       : await run(`remove-lesson:${removeTarget.lesson.lessonId}`, null, (idempotencyKey) => deleteLesson.mutateAsync({ courseId: course.courseId, lessonId: removeTarget.lesson.lessonId, idempotencyKey }));
     if (saved) setRemoveTarget(null);
   };
-  return { busy, error, notice, elements, editTarget, removeTarget, saveDetails, remove, editModule, editLesson,
+  return { busy, error, notice, elements, editTarget, removeTarget, videoTarget,
+    openVideo: (lesson: CourseLesson) => { setError(undefined); setVideoTarget(lesson); },
+    closeVideo: () => { intent.current = null; setError(undefined); setVideoTarget(null); }, saveDetails, remove, editModule, editLesson,
     openEdit: (target: CourseEditTarget) => { setError(undefined); setEditTarget(target); },
     openRemove: (target: CourseRemoveTarget) => { setError(undefined); setRemoveTarget(target); },
     closeEdit: () => { intent.current = null; setEditTarget(null); }, closeRemove: () => { intent.current = null; setRemoveTarget(null); } };

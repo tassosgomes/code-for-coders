@@ -80,7 +80,7 @@ vínculo de vídeo pronto já existente. Isso evita uma task horizontal sem feed
 - [x] 1.0 Desenhar Autoria no Figma e obter aprovação explícita do responsável
 - [x] 2.0 Professor cria e encontra cursos da escola com autorização
 - [x] 3.0 Professor organiza módulos e aulas do rascunho sem mudar identidades
-- [ ] 4.0 Professor vincula apenas vídeo pronto da escola
+- [x] 4.0 Professor vincula apenas vídeo pronto da escola
 - [ ] 5.0 Professor publica versão com ato conforme e Referências de Uso
 - [ ] 6.0 Professor republica, descarta alterações e consulta versões imutáveis
 - [ ] 7.0 Professor exclui somente curso nunca publicado

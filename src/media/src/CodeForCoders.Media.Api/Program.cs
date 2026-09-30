@@ -7,6 +7,6 @@ var app = builder.Build();
 app.UseApplicationPipeline();
 app.MapApiEndpoints();
 app.MapHealthEndpoints();
-app.Run();
+await app.RunWithVideoReplayOperationsAsync();
 
 public partial class Program;

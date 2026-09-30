@@ -50,13 +50,13 @@ public static class CourseStructureEndpoints
 
     private static async Task<IResult> CreateLessonAsync(Guid courseId, Guid moduleId, JsonElement body, HttpContext context, ICreateLesson useCase, CancellationToken cancellationToken)
     {
-        var output = await useCase.ExecuteAsync(new CreateLessonInput(WriteContext(courseId, context, body.GetRawText()), moduleId, CourseChangesRequest.Parse(body, ["title", "description", "position"], true)), cancellationToken);
+        var output = await useCase.ExecuteAsync(new CreateLessonInput(WriteContext(courseId, context, body.GetRawText()), moduleId, CourseChangesRequest.Parse(body, ["title", "description", "position", "videoId"], true)), cancellationToken);
         return Results.Created($"/internal/v1/courses/{courseId:D}/modules/{moduleId:D}/lessons/{output.CreatedId:D}", output.Course);
     }
 
     private static async Task<IResult> UpdateLessonAsync(Guid courseId, Guid lessonId, JsonElement body, HttpContext context, IUpdateLesson useCase, CancellationToken cancellationToken)
     {
-        var output = await useCase.ExecuteAsync(new UpdateLessonInput(WriteContext(courseId, context, body.GetRawText()), lessonId, CourseChangesRequest.Parse(body, ["title", "description", "position", "moduleId"], false)), cancellationToken);
+        var output = await useCase.ExecuteAsync(new UpdateLessonInput(WriteContext(courseId, context, body.GetRawText()), lessonId, CourseChangesRequest.Parse(body, ["title", "description", "position", "moduleId", "videoId"], false)), cancellationToken);
         return Results.Ok(output.Course);
     }
 

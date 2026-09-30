@@ -12,15 +12,15 @@ export const AuthoringCourseRoute = () => {
   const { courseId } = useParams();
   if (!session.permissions.includes('autoria.ler')) return <main className="page-shell"><h1>Esta área não é do seu papel</h1></main>;
   if (!courseId) return null;
-  return <AuthoringCourseContent courseId={courseId} canEdit={session.permissions.includes('autoria.editar')} />;
+  return <AuthoringCourseContent courseId={courseId} canEdit={session.permissions.includes('autoria.editar')} canChooseVideo={session.permissions.includes('midia.enviar')} />;
 };
-const AuthoringCourseContent = ({ courseId, canEdit }: { courseId: string; canEdit: boolean }) => {
+const AuthoringCourseContent = ({ courseId, canEdit, canChooseVideo }: { courseId: string; canEdit: boolean; canChooseVideo: boolean }) => {
   const course = useCourse(courseId);
   if (course.isPending) return <main className="page-shell"><p role="status">Carregando curso…</p></main>;
   if (course.isError) return <main className="page-shell"><h1>{axios.isAxiosError(course.error) && course.error.response?.status === 404 ? 'Curso não encontrado' : 'Não foi possível carregar o curso'}</h1><Link to={paths.authoring.getHref()}>Voltar aos cursos</Link><button className="outline-button" onClick={() => void course.refetch()} type="button">Tentar novamente</button></main>;
   return <main className="page-shell authoring-page">
     <nav aria-label="Caminho" className="course-breadcrumb"><Link to={paths.authoring.getHref()}>Autoria · Cursos</Link><span>› {course.data.title}</span></nav>
-    <CourseCurriculum course={course.data} canEdit={canEdit}>
+    <CourseCurriculum course={course.data} canEdit={canEdit} canChooseVideo={canChooseVideo}>
     <p className="eyebrow">Autoria</p><h1>{course.data.title}</h1>
     {course.data.description ? <p className="page-subtitle">{course.data.description}</p> : null}
     <CourseStatusBadge course={course.data} />

@@ -9,6 +9,7 @@ export const useCourseWrite = <T,>(mutationFn: (input: T) => Promise<Course>, mu
   const client = useQueryClient();
   return useMutation({ mutationFn, onSuccess: async (course) => {
     client.setQueryData(getCourseQueryOptions(course.courseId).queryKey, course);
+    await client.invalidateQueries(getCourseQueryOptions(course.courseId));
     await client.invalidateQueries({ queryKey: getCoursesQueryOptions().queryKey.slice(0, 1) });
     mutationConfig?.onSuccess?.(course);
   } });

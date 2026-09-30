@@ -15,9 +15,12 @@ internal static class CourseDraftMapper
         foreach (var lesson in node["lessons"]!.AsArray())
         {
             var item = lesson!.AsObject();
-            var videoId = item["videoId"]?.DeepClone();
-            item.Remove("videoId");
-            item["video"] = videoId is null ? null : new JsonObject { ["videoId"] = videoId };
+            if (item.ContainsKey("videoId"))
+            {
+                var videoId = item["videoId"]?.DeepClone();
+                item.Remove("videoId");
+                item["video"] = videoId is null ? null : new JsonObject { ["videoId"] = videoId };
+            }
             if (item["description"] is null) item.Remove("description");
         }
         return JsonSerializer.SerializeToElement(node);

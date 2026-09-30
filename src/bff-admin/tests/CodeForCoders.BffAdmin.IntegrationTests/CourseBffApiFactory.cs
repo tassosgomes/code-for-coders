@@ -15,14 +15,17 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
 {
     public CourseIdentityHandler Identity { get; } = new();
     public CourseLearningHandler Learning { get; } = new();
+    public CourseMediaHandler Media { get; } = new();
     public CourseBffSessionStore Sessions { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTest");
+        builder.UseSetting("CourseAuthoring:Enabled", "true");
         builder.UseSetting("RabbitMq:Username", "test"); builder.UseSetting("RabbitMq:Password", "test");
         builder.UseSetting("StaffIdentity:BaseAddress", "http://identity.test/");
         builder.UseSetting("Learning:BaseAddress", "http://learning.test/");
+        builder.UseSetting("Media:BaseAddress", "http://media.test/");
         builder.UseSetting("StaffIdentity:TenantId", "00000000-0000-7000-8000-000000000001");
         using var rsa = RSA.Create(2048);
         builder.UseSetting("StaffIdentity:SigningKeyBase64", Convert.ToBase64String(rsa.ExportPkcs8PrivateKey()));
@@ -34,6 +37,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
             services.AddHttpClient<IStaffSessionIdentityClient, StaffSessionIdentityClient>().ConfigurePrimaryHttpMessageHandler(() => Identity);
             // Keep the production typed client registration and resilience pipeline; replace only the HTTP boundary.
             services.AddHttpClient<ICourseAuthoringClient, CourseAuthoringClient>().ConfigurePrimaryHttpMessageHandler(() => Learning);
+            services.AddHttpClient<IVideoLibraryClient, VideoLibraryClient>().ConfigurePrimaryHttpMessageHandler(() => Media);
         });
     }
 

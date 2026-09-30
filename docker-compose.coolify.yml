@@ -88,6 +88,8 @@ services:
       LearningTokens__Issuer: identity
       LearningTokens__Audience: learning
       LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      RabbitMq__MediaExchange: media.events
+      RabbitMq__VideoFactsQueue: learning.video-availability
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -298,6 +300,7 @@ services:
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
       Media__BaseAddress: http://media:8080/
       Learning__BaseAddress: http://learning:8080/
+      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-false}
       Audit__BaseAddress: http://audit:8080/
       Commerce__BaseAddress: http://commerce:8080/
     depends_on:

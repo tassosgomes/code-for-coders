@@ -2,14 +2,15 @@ import { useRef, useState, type ReactNode } from 'react';
 import { BookOpen, GripVertical } from 'lucide-react';
 
 import { Dialog } from '@/components/ui/dialog';
+import { CourseVideoPicker } from '@/features/course-authoring/components/course-video-picker';
 import { CourseEditDialog } from '@/features/course-authoring/components/course-edit-dialog';
 import { CourseItemActions } from '@/features/course-authoring/components/course-item-actions';
 import { useCourseStructure } from '@/features/course-authoring/hooks/use-course-structure';
 import type { Course, CourseLesson, CourseModule } from '@/features/course-authoring/types/course';
 
-type CourseCurriculumProps = { course: Course; canEdit: boolean; children: ReactNode };
+type CourseCurriculumProps = { course: Course; canEdit: boolean; canChooseVideo: boolean; children: ReactNode };
 type DraggedItem = { kind: 'module' | 'lesson'; id: string };
-export const CourseCurriculum = ({ course, canEdit, children }: CourseCurriculumProps) => {
+export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: CourseCurriculumProps) => {
   const editor = useCourseStructure(course);
   const [collapsed, setCollapsed] = useState(new Set<string>());
   const dragged = useRef<DraggedItem | null>(null);
@@ -40,7 +41,7 @@ export const CourseCurriculum = ({ course, canEdit, children }: CourseCurriculum
     <div className="course-filters"><span className="course-draft-tab">Rascunho</span></div>
     <div className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div>
     <p role="status" aria-live="polite">{editor.notice}</p>
-    {editor.error && !editor.editTarget && !editor.removeTarget ? <p className="inline-alert" role="alert">{editor.error}</p> : null}
+    {editor.error && !editor.editTarget && !editor.removeTarget && !editor.videoTarget ? <p className="inline-alert" role="alert">{editor.error}</p> : null}
     {!course.modules.length ? <section className="empty-state course-curriculum"><BookOpen size={32} /><h3>Comece pelos módulos.</h3><p>Cada módulo terá ao menos uma aula com vídeo antes da publicação.</p></section> : null}
     <div className="course-module-list">
       {course.modules.map((module) => <section key={module.moduleId} id={`modulo-${module.moduleId}`} aria-label={module.title} tabIndex={-1} ref={itemRef(`modulo-${module.moduleId}`)} className="course-module" onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => drop(event, module)}>
@@ -60,7 +61,8 @@ export const CourseCurriculum = ({ course, canEdit, children }: CourseCurriculum
           {!module.lessons.length ? <p className="course-empty-lessons">Este módulo ainda não tem aulas.</p> : null}
           {module.lessons.map((lesson) => <article key={lesson.lessonId} id={`aula-${lesson.lessonId}`} aria-label={lesson.title} tabIndex={-1} ref={itemRef(`aula-${lesson.lessonId}`)} className="course-lesson" onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => drop(event, module, lesson)}>
             {canEdit ? <button type="button" className="course-drag-handle" aria-label={`Arrastar aula ${lesson.title}`} draggable={!editor.busy} disabled={editor.busy} onDragStart={(event) => { event.stopPropagation(); startDrag(event, { kind: 'lesson', id: lesson.lessonId }); }} onDragEnd={() => { dragged.current = null; }}><GripVertical size={18} /></button> : null}
-            <div className="course-lesson-details"><h4>{lesson.position}. {lesson.title}</h4>{lesson.description ? <p>{lesson.description}</p> : null}<span className="course-video-state">{lesson.video ? `Vídeo: ${lesson.video.title ?? lesson.video.videoId}` : 'Sem vídeo'}</span></div>
+            <div className="course-lesson-details"><h4>{lesson.position}. {lesson.title}</h4>{lesson.description ? <p>{lesson.description}</p> : null}<span className="course-video-state">{lesson.video ? (lesson.video.title ? `Vídeo: ${lesson.video.title}${lesson.video.durationSeconds ? ` · ${Math.floor(lesson.video.durationSeconds / 60)}:${String(lesson.video.durationSeconds % 60).padStart(2, '0')}` : ''}` : `Vídeo vinculado · ID ${lesson.video.videoId}`) : 'Sem vídeo'}</span>{lesson.video && !lesson.video.title ? <p className="inline-alert">Os detalhes deste vídeo não estão disponíveis agora.</p> : null}</div>
+            {canEdit ? <button className="outline-button" type="button" disabled={editor.busy || !canChooseVideo} title={canChooseVideo ? undefined : 'Seu papel precisa de acesso à área Vídeos.'} onClick={() => editor.openVideo(lesson)}>{lesson.video ? 'Trocar vídeo' : 'Escolher vídeo'}</button> : null}
             {canEdit ? <CourseItemActions title={lesson.title} disabled={editor.busy}>
               <button type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'lesson', lesson })}>Editar aula</button>
               {moveButton('Mover para cima', lesson.position === 1, () => void moveLesson(lesson.lessonId, { position: lesson.position - 1 }))}
@@ -74,6 +76,7 @@ export const CourseCurriculum = ({ course, canEdit, children }: CourseCurriculum
         </div>
       </section>)}
     </div>
+    {editor.videoTarget ? <CourseVideoPicker lesson={editor.videoTarget} busy={editor.busy} error={editor.error} onClose={editor.closeVideo} onSave={(videoId) => editor.editLesson(editor.videoTarget!.lessonId, { videoId })} /> : null}
     {editor.editTarget ? <CourseEditDialog target={editor.editTarget} course={course} busy={editor.busy} error={editor.error} onClose={editor.closeEdit} onSubmit={editor.saveDetails} /> : null}
     {editor.removeTarget ? <Dialog title={`Remover “${editor.removeTarget.kind === 'module' ? editor.removeTarget.module.title : editor.removeTarget.lesson.title}”?`} description={editor.removeTarget.kind === 'module' ? `As ${editor.removeTarget.module.lessons.length} aulas deste módulo também saem do rascunho. Uma versão já publicada continua como estava.` : 'Ela sairá do rascunho. Uma aula nova terá outra identidade, mesmo com o mesmo título.'} busy={editor.busy} onClose={editor.closeRemove}>
       {editor.error ? <p role="alert" className="inline-alert">{editor.error}</p> : null}

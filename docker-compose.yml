@@ -168,6 +168,8 @@ services:
       LearningTokens__Issuer: identity
       LearningTokens__Audience: learning
       LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      RabbitMq__MediaExchange: media.events
+      RabbitMq__VideoFactsQueue: learning.video-availability
     ports:
       - "5102:8080"
     depends_on: *api-dependencies
@@ -361,6 +363,7 @@ services:
       Commerce__BaseAddress: http://commerce:8080/
       Media__BaseAddress: http://media:8080/
       Learning__BaseAddress: http://learning:8080/
+      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-false}
     ports:
       - "5107:8080"
     depends_on:

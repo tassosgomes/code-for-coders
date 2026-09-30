@@ -10,6 +10,7 @@ public static class HealthExtensions
     public static IServiceCollection AddHealthConfiguration(this IServiceCollection services)
     {
         services.AddHealthChecks()
+            .AddCheck<VideoProjectionHealthCheck>("video_projection", failureStatus: HealthStatus.Unhealthy, tags: new[] { "ready" })
             .AddCheck(
                 "self",
                 () => HealthCheckResult.Healthy(),

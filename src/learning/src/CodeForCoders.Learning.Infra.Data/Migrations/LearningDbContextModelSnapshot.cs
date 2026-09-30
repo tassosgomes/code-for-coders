@@ -301,6 +301,52 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                     b.ToTable("outbox_messages", "progress");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.VideoProjection.ProjectedVideo", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<bool>("IsReady")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_ready");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.HasKey("TenantId", "VideoId");
+
+                    b.ToTable("projected_videos", "content");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.VideoProjection.VideoFactReceipt", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("EventId");
+
+                    b.ToTable("video_fact_receipts", "content");
+                });
+
             modelBuilder.Entity("CodeForCoders.Learning.Domain.Entities.CourseLesson", b =>
                 {
                     b.HasOne("CodeForCoders.Learning.Domain.Entities.CourseModule", null)

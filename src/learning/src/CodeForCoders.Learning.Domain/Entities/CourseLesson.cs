@@ -11,11 +11,12 @@ public sealed class CourseLesson
     public Guid? VideoId { get; private set; }
 
     internal static CourseLesson Create(Guid moduleId, CourseChanges changes) => new()
-    { Id = Guid.CreateVersion7(), ModuleId = moduleId, Title = changes.Title!.Trim(), Description = changes.Description };
+    { Id = Guid.CreateVersion7(), ModuleId = moduleId, Title = changes.Title!.Trim(), Description = changes.Description, VideoId = changes.VideoId };
     internal void Update(CourseChanges changes)
     {
         if (changes.Title is not null) Title = changes.Title.Trim();
         if (changes.HasDescription) Description = changes.Description;
+        if (changes.HasVideoId) VideoId = changes.VideoId;
     }
     internal void MoveTo(Guid moduleId) => ModuleId = moduleId;
     internal void SetPosition(int position) => Position = position;

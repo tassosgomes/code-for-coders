@@ -34,8 +34,8 @@ public static class CourseAuthoringEndpoints
     }
 
     private static Task<IResult> GetAsync(Guid courseId, HttpContext context, IStaffSessionIdentityClient identity,
-        ICourseAuthoringClient learning, CancellationToken cancellationToken)
-        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}", null), context, identity, learning, cancellationToken);
+        ICourseAuthoringClient learning, CourseVideoEnricher videos, CancellationToken cancellationToken)
+        => SendCoreAsync(new CourseOperation($"internal/v1/courses/{courseId:D}", null), context, identity, learning, videos, cancellationToken);
 
     private static Task<IResult> CreateAsync(CourseCreateBody body, HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken)
@@ -62,8 +62,12 @@ public static class CourseAuthoringEndpoints
     private static Task<IResult> DeleteLessonAsync(Guid courseId, Guid lessonId, HttpContext context, IStaffSessionIdentityClient identity, ICourseAuthoringClient learning, CancellationToken cancellationToken)
         => SendAsync(new CourseOperation($"internal/v1/courses/{courseId}/lessons/{lessonId}", null, "DELETE"), context, identity, learning, cancellationToken);
 
-    private static async Task<IResult> SendAsync(CourseOperation operation, HttpContext context, IStaffSessionIdentityClient identity,
+    private static Task<IResult> SendAsync(CourseOperation operation, HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendCoreAsync(operation, context, identity, learning, null, cancellationToken);
+
+    private static async Task<IResult> SendCoreAsync(CourseOperation operation, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourseAuthoringClient learning, CourseVideoEnricher? videos, CancellationToken cancellationToken)
     {
         var session = BffSessionContext.Get(context);
         var validated = BffSessionContext.GetValidatedSession(context);
@@ -82,7 +86,8 @@ public static class CourseAuthoringEndpoints
         if (result.Status == 201 && result.Course is not null)
             return Results.Created(result.Location?.Replace("/internal/v1", "/api/v1", StringComparison.Ordinal) ?? $"/api/v1/courses/{result.Course.CourseId:D}", result.Course);
         if (result.Status == 200 && result.Page is not null) return Results.Ok(result.Page);
-        if (result.Status == 200 && result.Course is not null) return Results.Ok(result.Course);
+        if (result.Status == 200 && result.Course is not null)
+            return Results.Ok(videos is null ? result.Course : await videos.EnrichAsync(result.Course, session.IdentitySessionId, cancellationToken));
         return Problem(result.Status, result.Code ?? "LEARNING_UNAVAILABLE", result.Errors);
     }
 

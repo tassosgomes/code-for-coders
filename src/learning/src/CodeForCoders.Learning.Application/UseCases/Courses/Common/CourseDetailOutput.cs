@@ -13,5 +13,5 @@ public sealed record CourseDetailOutput(
             course.CurrentVersion, course.HasUnpublishedChanges, course.DraftRevision, course.CreatedAt,
             new CourseActor(course.CreatedByName), course.LastEditedAt, new CourseActor(course.LastEditedByName), course.Modules.OrderBy(module => module.Position).Select(module =>
                 new CourseModuleOutput(module.Id, module.Title, module.Position, module.Lessons.OrderBy(lesson => lesson.Position)
-                    .Select(lesson => new CourseLessonOutput(lesson.Id, lesson.Title, lesson.Description, lesson.Position, lesson.VideoId)).ToList())).ToList());
+                    .Select(lesson => new CourseLessonOutput(lesson.Id, lesson.Title, lesson.Description, lesson.Position, lesson.VideoId.HasValue ? new CourseVideoOutput(lesson.VideoId.Value) : null)).ToList())).ToList());
 }

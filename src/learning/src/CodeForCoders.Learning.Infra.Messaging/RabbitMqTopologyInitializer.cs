@@ -65,7 +65,26 @@ public sealed class RabbitMqTopologyInitializer(
             "learning.platform.heartbeat.v1",
             arguments: null,
             cancellationToken: cancellationToken);
+        await DeclareVideoFactsAsync(channel, settings, cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    private static async Task DeclareVideoFactsAsync(IChannel channel, RabbitMqOptions settings, CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(settings.MediaExchange, ExchangeType.Topic, true, false, cancellationToken: cancellationToken);
+        var dlq = settings.VideoFactsQueue + ".dlq";
+        await channel.QueueDeclareAsync(dlq, true, false, false,
+            new Dictionary<string, object?> { ["x-queue-type"] = "quorum" }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(dlq, settings.DeadLetterExchange, settings.VideoFactsQueue, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(settings.VideoFactsQueue, true, false, false, new Dictionary<string, object?>
+        {
+            ["x-queue-type"] = "quorum",
+            ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+            ["x-dead-letter-routing-key"] = settings.VideoFactsQueue,
+            ["x-delivery-limit"] = settings.DeliveryLimit,
+        }, cancellationToken: cancellationToken);
+        foreach (var route in new[] { VideoAvailabilityFact.ReadyRoute, VideoAvailabilityFact.FailedRoute })
+            await channel.QueueBindAsync(settings.VideoFactsQueue, settings.MediaExchange, route, cancellationToken: cancellationToken);
+    }
 }

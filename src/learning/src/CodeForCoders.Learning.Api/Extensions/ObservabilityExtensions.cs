@@ -39,6 +39,7 @@ public static class ObservabilityExtensions
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
                 .AddMeter(LearningTelemetry.MeterName)
+                .AddMeter("CodeForCoders.Learning.VideoProjection")
                 .AddOtlpExporter());
 
         services.AddLogging(logging => logging.AddOpenTelemetry(options =>

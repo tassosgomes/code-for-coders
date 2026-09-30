@@ -13,6 +13,7 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddBffAdminConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddScoped<CourseVideoEnricher>();
         builder.Services.AddOptions<LearningApiOptions>()
             .Bind(builder.Configuration.GetSection(LearningApiOptions.SectionName))
             .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)

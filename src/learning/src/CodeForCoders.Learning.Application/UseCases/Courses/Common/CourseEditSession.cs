@@ -12,12 +12,20 @@ namespace CodeForCoders.Learning.Application.UseCases.Courses.Common;
 
 public sealed class CourseEditSession(
     ICourseRepository courses, ICourseEditStore edits,
-    IUnitOfWork unitOfWork, IValidator<CourseWriteContext> validator, TimeProvider timeProvider)
+    IUnitOfWork unitOfWork, IValidator<CourseWriteContext> validator, TimeProvider timeProvider, IReadyVideoQueries videos)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public async Task<CourseEditOutput> ExecuteAsync(CourseWriteContext input, string operation,
+    public Task<CourseEditOutput> ExecuteAsync(CourseWriteContext input, string operation,
         Func<Course, Guid?> edit, CancellationToken cancellationToken)
+        => ExecuteCoreAsync(input, operation, edit, null, cancellationToken);
+
+    public Task<CourseEditOutput> ExecuteWithVideoAsync(CourseWriteContext input, string operation,
+        Func<Course, Guid?> edit, CourseChanges changes, CancellationToken cancellationToken)
+        => ExecuteCoreAsync(input, operation, edit, changes.VideoId, cancellationToken);
+
+    private async Task<CourseEditOutput> ExecuteCoreAsync(CourseWriteContext input, string operation,
+        Func<Course, Guid?> edit, Guid? videoId, CancellationToken cancellationToken)
     {
         await validator.ValidateAndThrowAsync(input, cancellationToken);
         await using var transaction = await edits.LockAsync(input.CourseId, cancellationToken);
@@ -33,6 +41,8 @@ public sealed class CourseEditSession(
             if (receipt.RequestHash != hash) throw new CourseRuleException("IDEMPOTENCY_KEY_REUSED");
             return JsonSerializer.Deserialize<CourseEditOutput>(receipt.ResponseJson, JsonOptions)!;
         }
+        if (videoId.HasValue && !await videos.IsReadyAsync(videoId.Value, cancellationToken))
+            throw new CourseRuleException("VIDEO_NOT_AVAILABLE");
         var createdId = edit(course!);
         course!.RecordEdit(new CourseCreation(input.TenantId, input.ActorId, input.ActorName, course.Title, course.Description, now));
         var output = new CourseEditOutput(CourseDetailOutput.FromCourse(course), createdId);
