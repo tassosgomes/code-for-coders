@@ -1,7 +1,7 @@
 # Wireframes ASCII — Catálogo do backoffice e vitrine pública (CAP-003, 1º PRD)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-09-30 (aprovação explícita "O wireframe tá aprovado", com as seis propostas da seção 7 mantidas como desenhadas). Figma desenhado em 2026-09-30 e aguardando a aprovação do responsável (task 2.0, seção 8): o cabeçalho passa a `ASCII e Figma aprovados` só depois dela.
-> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5226) · frames por tela na [seção 8](#8-handoff-do-figma--aguardando-aprovação) · arquivo Code4Coders — Design System.
+> **Status:** ASCII e Figma aprovados pelo responsável em 2026-09-30 (aprovações explícitas "O wireframe tá aprovado" e "Telas estão aprovadas"; frames na [seção 8](#8-handoff-do-figma--aprovado)). Código de tela liberado a partir da task 3.0.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5226) · frames por tela na [seção 8](#8-handoff-do-figma--aprovado) · arquivo Code4Coders — Design System.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 3.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados das telas do Catálogo (`admin-spa`) e da área pública de cursos (`student-spa`) antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-vitrine-oferta/prd.md) v1.0 (RF-02…RF-10, Experiência do Usuário, DP-01…DP-05), [TechSpec](../../tasks/prd-vitrine-oferta/techspec.md) v1.0 (Bloco Frontend, V-01…V-10), [contrato do backoffice](../../tasks/prd-vitrine-oferta/api-contract.md) 1.0.0, [contrato da vitrine](../../tasks/prd-vitrine-oferta/api-contract-student.md) 1.0.0, [wireframes de Autoria](wireframes-autoria-curso.md), [wireframes de Auditoria](wireframes-auditoria.md), [wireframes de Acesso interno](wireframes-acesso-interno.md) (AppShell, B12, B13), [wireframes da conta do aluno](wireframes-conta-aluno.md) (layout público), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -726,11 +726,11 @@ Mesma tela para curso fora da vitrine, inexistente e de outra escola. Mobile 390
 
 ---
 
-## 8. Handoff do Figma — aguardando aprovação
+## 8. Handoff do Figma — aprovado
 
 O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-09-30, nas páginas `Fluxo — Catálogo e vitrine` e `Screens — Catálogo e vitrine`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=220-5226).
 
-> **Aprovação:** o desenho aguarda a aprovação explícita do responsável (task 2.0). Só depois dela a linha `Status` do cabeçalho passa a `ASCII e Figma aprovados pelo responsável em <AAAA-MM-DD>`. Pedido de ajuste volta ao Figma antes do registro.
+> **Aprovação:** o responsável aprovou o Figma explicitamente em 2026-09-30 ("Telas estão aprovadas"), sem pedido de ajuste. O desenho é a referência visual para as tasks de tela (3.0 em diante).
 
 ### 8.1 Fluxos e navegação
 
