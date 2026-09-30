@@ -13,6 +13,7 @@ public sealed class CourseLearningHandler : HttpMessageHandler
     public JsonElement? ProblemErrors { get; set; }
     public string? Level { get; set; }
     public string? CurrentLevel { get; set; }
+    public CoursePrerequisite Prerequisite { get; set; } = new(null, []);
     public bool ReferencesUnavailable { get; set; }
     public string ProblemCode { get; set; } = "COURSE_NOT_FOUND";
     public string? Location { get; set; }
@@ -45,7 +46,7 @@ public sealed class CourseLearningHandler : HttpMessageHandler
             return new(ReferencesUnavailable ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK) { Content = JsonContent.Create(new { data = new[] { new { courseId = CourseId, title = "School course" } } }) };
         var actor = new CourseActor("Validated teacher");
         var now = DateTimeOffset.UtcNow;
-        var detail = new CourseDetail(CourseId, Body?.Title ?? "School course", Body?.Description, "draft", null, false, 1, now, actor, now, actor, Modules, Level, CurrentLevel);
+        var detail = new CourseDetail(CourseId, Body?.Title ?? "School course", Body?.Description, "draft", null, false, 1, now, actor, now, actor, Modules, Level, CurrentLevel, Prerequisite);
         if (request.RequestUri!.AbsolutePath.Contains("/versions/", StringComparison.Ordinal))
             return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "Historical title", "Historical description", now, actor, "First note", false, [])) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/discard-draft", StringComparison.Ordinal))

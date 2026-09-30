@@ -1,10 +1,14 @@
 using CodeForCoders.Learning.Application.Interfaces;
+using CodeForCoders.Learning.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeForCoders.Learning.Infra.Data.Queries;
 
 public sealed class CourseQueries(LearningDbContext dbContext) : ICourseQueries
 {
+    public async Task<IReadOnlyList<Guid>> PublishedIdsAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
+        => await dbContext.Courses.AsNoTracking().Where(course => ids.Contains(course.Id) && course.CurrentVersion != null)
+            .Select(course => course.Id).ToListAsync(cancellationToken);
     public async Task<IReadOnlyList<CourseReference>> ResolveAsync(Guid[] ids, CancellationToken cancellationToken)
     {
         var titles = await dbContext.Courses.AsNoTracking().Where(course => ids.Contains(course.Id))
@@ -17,6 +21,12 @@ public sealed class CourseQueries(LearningDbContext dbContext) : ICourseQueries
         var courses = dbContext.Courses.AsNoTracking();
         if (query.Status is not null)
             courses = courses.Where(course => (course.CurrentVersion != null) == (query.Status == "published"));
+        if (query.Title is not null)
+        {
+            var term = CourseTitleSearch.Normalize(query.Title).Replace("\\", "\\\\", StringComparison.Ordinal)
+                .Replace("%", "\\%", StringComparison.Ordinal).Replace("_", "\\_", StringComparison.Ordinal);
+            courses = courses.Where(course => EF.Functions.Like(course.TitleSearch, "%" + term + "%", "\\"));
+        }
         var total = await courses.LongCountAsync(cancellationToken);
         var data = await courses.OrderByDescending(course => course.LastEditedAt).ThenByDescending(course => course.Id)
             .Skip((query.Page - 1) * query.Size).Take(query.Size)

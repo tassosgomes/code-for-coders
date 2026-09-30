@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 const actorSchema = z.object({ name: z.string() }).strict();
 export const courseLevelSchema = z.enum(['beginner', 'intermediate', 'advanced']).nullable();
+export const recommendedCourseSchema = z.object({ courseId: z.string().uuid(), title: z.string() }).strict();
+export type RecommendedCourse = z.infer<typeof recommendedCourseSchema>;
 export const courseSummarySchema = z.object({
   courseId: z.string().uuid(), title: z.string(), status: z.enum(['draft', 'published']),
   currentVersion: z.number().int().positive().nullable(), hasUnpublishedChanges: z.boolean(),
@@ -20,7 +22,7 @@ export type CourseLesson = z.infer<typeof lessonSchema>;
 export const courseSchema = courseSummarySchema.extend({
   description: z.string().nullable().optional(), draftRevision: z.number().int().positive(),
   level: courseLevelSchema,
-  prerequisite: z.object({ text: z.string().nullable(), recommendedCourses: z.array(z.object({ courseId: z.string().uuid(), title: z.string() }).strict()).max(5) }).strict().optional(),
+  prerequisite: z.object({ text: z.string().nullable(), recommendedCourses: z.array(recommendedCourseSchema).max(5) }).strict(),
   createdAt: z.string().datetime({ offset: true }), createdBy: actorSchema, modules: z.array(moduleSchema).max(100),
 }).strict();
 export const coursePageSchema = z.object({

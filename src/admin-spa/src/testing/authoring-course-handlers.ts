@@ -6,6 +6,7 @@ export const authoringCourseFixture = {
   courseId: '0198dfac-674a-7000-8000-000000000001', title: '.NET do zero à API', description: 'Do primeiro projeto à API e aos testes.',
   status: 'draft', currentVersion: null, hasUnpublishedChanges: false, draftRevision: 1,
   level: null, currentLevel: null,
+  prerequisite: { text: null, recommendedCourses: [] },
   createdAt: '2026-09-29T12:00:00Z', createdBy: { name: 'Professor A' },
   lastEditedAt: '2026-09-29T12:00:00Z', lastEditedBy: { name: 'Professor B' }, modules: [],
 };

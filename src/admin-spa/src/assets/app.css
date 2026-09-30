@@ -4261,6 +4261,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-editor-overview { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .course-editor-overview > div { display: grid; gap: 16px; flex: 1; min-width: 180px; }
 .course-audience { margin: 24px 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; }
+.course-recommended-list, .course-recommendation-results { list-style: none; padding: 0; display: grid; gap: 12px; }
+.course-recommended-list li, .course-recommendation-results li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex-wrap: wrap; }
+.course-recommended-list li:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+.course-recommended-list li > div { display: flex; gap: 8px; }
+.course-recommendation-results small { display: block; color: var(--muted); }
 .course-audience .single-choice-options { display: flex; flex-wrap: wrap; gap: 12px; }
 .course-audience .single-choice-options legend { margin-bottom: 12px; font-weight: 600; }
 .course-audience .single-choice-option { flex: 1 1 140px; }

@@ -46,7 +46,23 @@ internal static class CourseChangesRequest
         if (hasLevel && levelValue.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
             throw new CourseRuleException("FIELD_INVALID", "level");
         var level = hasLevel && levelValue.ValueKind != JsonValueKind.Null ? levelValue.GetString() : null;
-        return new CourseChanges(title, description, hasDescription, position, moduleId, videoId, hasVideoId, level, hasLevel);
+        var hasPrerequisiteText = body.TryGetProperty("prerequisiteText", out var textValue);
+        if (hasPrerequisiteText && textValue.ValueKind is not (JsonValueKind.String or JsonValueKind.Null)) throw Invalid();
+        var prerequisiteText = hasPrerequisiteText && textValue.ValueKind != JsonValueKind.Null ? textValue.GetString() : null;
+        IReadOnlyList<Guid>? recommended = null;
+        if (body.TryGetProperty("recommendedCourseIds", out var ids))
+        {
+            if (ids.ValueKind != JsonValueKind.Array || ids.GetArrayLength() > 5) throw Invalid();
+            var values = new List<Guid>();
+            foreach (var id in ids.EnumerateArray())
+            {
+                if (id.ValueKind != JsonValueKind.String || !id.TryGetGuid(out var value) || values.Contains(value)) throw Invalid();
+                values.Add(value);
+            }
+            recommended = values;
+        }
+        return new CourseChanges(title, description, hasDescription, position, moduleId, videoId, hasVideoId, level, hasLevel,
+            prerequisiteText, hasPrerequisiteText, recommended);
     }
 
     private static ValidationException Invalid() => new("Invalid course changes.");
