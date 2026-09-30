@@ -1,6 +1,6 @@
 # Wireframes ASCII — Catálogo do backoffice e vitrine pública (CAP-003, 1º PRD)
 
-> **Status:** ASCII em revisão — aguardando aprovação explícita do responsável pelo produto. Este cabeçalho só passa a registrar `ASCII aprovado pelo responsável em <AAAA-MM-DD>` depois dessa aprovação (task 1.0 do plano).
+> **Status:** ASCII aprovado pelo responsável em 2026-09-30 (aprovação explícita "O wireframe tá aprovado", com as seis propostas da seção 7 mantidas como desenhadas). Figma pendente (task 2.0): o cabeçalho passa a `ASCII e Figma aprovados` só depois da aprovação do desenho.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 3.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados das telas do Catálogo (`admin-spa`) e da área pública de cursos (`student-spa`) antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-vitrine-oferta/prd.md) v1.0 (RF-02…RF-10, Experiência do Usuário, DP-01…DP-05), [TechSpec](../../tasks/prd-vitrine-oferta/techspec.md) v1.0 (Bloco Frontend, V-01…V-10), [contrato do backoffice](../../tasks/prd-vitrine-oferta/api-contract.md) 1.0.0, [contrato da vitrine](../../tasks/prd-vitrine-oferta/api-contract-student.md) 1.0.0, [wireframes de Autoria](wireframes-autoria-curso.md), [wireframes de Auditoria](wireframes-auditoria.md), [wireframes de Acesso interno](wireframes-acesso-interno.md) (AppShell, B12, B13), [wireframes da conta do aluno](wireframes-conta-aluno.md) (layout público), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -714,7 +714,7 @@ Mesma tela para curso fora da vitrine, inexistente e de outra escola. Mobile 390
 
 ---
 
-## 7. Pontos a confirmar na aprovação
+## 7. Pontos confirmados na aprovação (2026-09-30)
 
 1. **G1** — grupo **Comercial** no menu, com **Catálogo** acima de **Financeiro** (alternativa: item solto abaixo de Autoria).
 2. **G7** — *Publicar* habilitado em curso sem nível, com a recusa explicada dentro do diálogo (alternativa: botão desabilitado com tooltip).
