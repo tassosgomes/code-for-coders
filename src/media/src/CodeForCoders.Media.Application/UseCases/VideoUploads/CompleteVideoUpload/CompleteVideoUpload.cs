@@ -5,6 +5,7 @@ using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Application.UseCases.VideoUploads;
 using CodeForCoders.Media.Application.UseCases.Videos;
 using CodeForCoders.Media.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace CodeForCoders.Media.Application.UseCases.VideoUploads.CompleteVideoUpload;
 
@@ -14,7 +15,8 @@ public sealed class CompleteVideoUpload(
     IOperationIdempotencyRepository idempotencyRecords,
     IMediaStoragePort mediaStorage,
     IUnitOfWork unitOfWork,
-    TimeProvider timeProvider) : ICompleteVideoUpload
+    TimeProvider timeProvider,
+    ILogger<CompleteVideoUpload> logger) : ICompleteVideoUpload
 {
     public async Task<CompletedVideoOutput> ExecuteAsync(
         CompleteVideoUploadInput input,
@@ -46,6 +48,8 @@ public sealed class CompleteVideoUpload(
             throw VideoUploadUseCaseHelpers.UploadNotFound();
         }
 
+        using var logScope = logger.BeginScope(new Dictionary<string, object?> { ["VideoId"] = upload.VideoId });
+
         var video = Video.Create(new VideoCreateInput(
             upload.VideoId,
             upload.TenantId,
@@ -56,7 +60,7 @@ public sealed class CompleteVideoUpload(
             upload.ObjectKey,
             upload.FileSize,
             Activity.Current?.Id));
-        var completedVideo = await videoUploads.CompleteAsync(
+        var (completedVideo, newlyCompleted) = await videoUploads.CompleteAsync(
             upload,
             video,
             now,
@@ -83,6 +87,12 @@ public sealed class CompleteVideoUpload(
         }
 
         await unitOfWork.CommitAsync(cancellationToken);
+        if (newlyCompleted)
+        {
+            MediaTelemetry.UploadsCompleted.Add(1);
+            MediaTelemetry.UploadSize.Record(upload.FileSize);
+        }
+
         return output;
     }
 

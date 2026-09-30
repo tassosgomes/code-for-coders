@@ -35,6 +35,8 @@ public sealed record VideoPreparationLease(
     Guid LeaseId,
     string OriginalObjectKey,
     long OriginalSizeBytes,
-    string? CorrelationId);
+    string? CorrelationId,
+    DateTimeOffset UploadedAt,
+    int PreparationAttempts);
 
 public sealed record VideoOriginalCleanup(Guid VideoId, string OriginalObjectKey, string Status);

@@ -157,7 +157,7 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
             : await dbContext.Videos.SingleOrDefaultAsync(video => video.VideoId == upload.VideoId, cancellationToken);
     }
 
-    public async Task<Video?> CompleteAsync(
+    public async Task<(Video? Video, bool NewlyCompleted)> CompleteAsync(
         VideoUpload upload,
         Video video,
         DateTimeOffset completedAt,
@@ -177,14 +177,14 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
         if (current is null)
         {
             await transaction.CommitAsync(cancellationToken);
-            return null;
+            return (null, false);
         }
 
         await dbContext.Entry(current).ReloadAsync(cancellationToken);
         if (current.ExpiredAt is not null)
         {
             await transaction.CommitAsync(cancellationToken);
-            return null;
+            return (null, false);
         }
 
         if (current.CompletedAt is not null)
@@ -193,7 +193,7 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
                 candidate => candidate.VideoId == current.VideoId,
                 cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return existing;
+            return (existing, false);
         }
 
         await completeStorage(current, cancellationToken);
@@ -201,6 +201,6 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
         current.MarkCompleted(completedAt);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return video;
+        return (video, true);
     }
 }

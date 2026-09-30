@@ -41,6 +41,59 @@ apps (OTLP) ──► collector:4317/4318 ──► traces  ──► traces-gen
 - APM UI do Kibana (traces-apm.*) é evolução futura: exigiria apm-server ou o modo `ecs` do exporter (instável no collector 0.145).
 - Os endpoints OTLP são idênticos aos do compose local (`http://otel-collector:4317` → `http://192.168.0.5:4317`).
 
+### Provisionamento do dashboard e dos alertas de mídia
+
+Os saved objects do dashboard **Pipeline de Mídia**, do data view `metrics-generic*` e das
+**5 regras de alerta A1–A5** (vídeo preso, taxa de falha de preparação, outbox esgotado/atrasado,
+fila parada, DLQ não vazia) são mantidos em `scripts/kibana/observabilidade-midia.ndjson`. O
+manifesto e o importador usam IDs fixos, então uma nova importação atualiza os mesmos objetos sem
+criar duplicatas. As regras avaliam a cada 1 min sobre `metrics-generic*` (janela de 15 min),
+resolvem sozinhas e **não têm conector de notificação** (o alcance é a tela de Alertas do Kibana).
+
+Na raiz do repositório, verifique localmente a estrutura, os nomes dos instrumentos e as regras:
+
+```bash
+python3 scripts/kibana/import_observabilidade.py --verify-only
+```
+
+Para provisionar ou atualizar os objetos no Kibana de desenvolvimento, mantenha
+`ELASTIC_USERNAME` e `ELASTIC_PASSWORD` no `.env` e execute:
+
+```bash
+python3 scripts/kibana/import_observabilidade.py --import
+```
+
+O import usa `https://kibana.tasso.dev.br` por padrão e aceita `KIBANA_URL` como override. A opção
+`--verify-only` não lê credenciais nem acessa a rede. O `--import` sobe o data view e o dashboard
+pela API de saved objects e cria/atualiza as regras pela API de alertas (habilitadas, sem conector).
+
+Se uma alteração aprovada for feita pela interface do Kibana, exporte os objetos de volta ao
+repositório e rode novamente a verificação local:
+
+```bash
+python3 scripts/kibana/import_observabilidade.py --export
+python3 scripts/kibana/import_observabilidade.py --verify-only
+```
+
+### Paridade local: stack local enviando ao Elastic do servidor dev
+
+O `docker-compose.yml` interpola o endpoint OTLP dos serviços
+(`OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}`).
+Sem a variável, nada muda: a telemetria vai ao collector local (modo `debug`). Para espelhar
+no dashboard **Pipeline de Mídia** o que acontece na stack local, aponte ao collector do
+servidor dev no `.env`:
+
+```bash
+OTEL_EXPORTER_OTLP_ENDPOINT=http://192.168.0.5:4317
+```
+
+Quando usar: validar instrumentação ou reproduzir localmente um comportamento visível no
+Kibana sem publicar nada — mesma régua, mesmo painel. O que esperar: com a stack local no ar
+e a variável apontada, um vídeo enviado localmente aparece no dashboard em ≤ 2 min (o
+collector local continua `debug` e inalterado; só o destino dos exporters muda). Pré-requisito
+de rede: a máquina precisa alcançar `192.168.0.5:4317` (gRPC OTLP) e o Kibana em
+[kibana.tasso.dev.br](https://kibana.tasso.dev.br).
+
 ## Transversal
 
 - **Backup** diário 03:00: `pg_dumpall` (postgres + komodo-db) + definições RabbitMQ; retenção 7 dias em `~/infra/backups/daily`. ES/Kibana/smtp4dev ficam fora (dados efêmeros de dev).

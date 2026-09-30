@@ -52,7 +52,7 @@ public interface IVideoUploadRepository
         Guid uploaderAccountId,
         CancellationToken cancellationToken);
 
-    Task<Video?> CompleteAsync(
+    Task<(Video? Video, bool NewlyCompleted)> CompleteAsync(
         VideoUpload upload,
         Video video,
         DateTimeOffset completedAt,

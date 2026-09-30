@@ -10,6 +10,7 @@
     <ProjectReference Include="../CodeForCoders.Media.Contracts/CodeForCoders.Media.Contracts.csproj" />
     <ProjectReference Include="../CodeForCoders.Media.Infra.Data/CodeForCoders.Media.Infra.Data.csproj" />
     <PackageReference Include="RabbitMQ.Client" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />

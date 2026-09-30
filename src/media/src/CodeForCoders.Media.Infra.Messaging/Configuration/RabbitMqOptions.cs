@@ -19,6 +19,9 @@ public sealed class RabbitMqOptions
     public string Password { get; set; } = string.Empty;
 
     [Required]
+    public string ManagementUri { get; set; } = "http://localhost:15672";
+
+    [Required]
     public string VirtualHost { get; set; } = "/";
 
     [Required]
@@ -44,4 +47,9 @@ public sealed class RabbitMqOptions
 
     [Range(1, 100)]
     public int DeliveryLimit { get; set; } = 5;
+
+    public bool HasValidManagementUri()
+        => Uri.TryCreate(ManagementUri, UriKind.Absolute, out var uri)
+            && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            && string.IsNullOrEmpty(uri.UserInfo);
 }

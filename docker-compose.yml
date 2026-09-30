@@ -9,7 +9,7 @@ x-api-environment: &api-environment
   RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
   RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
   Valkey__ConnectionString: valkey:6379,abortConnect=false
-  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
 
 x-api-dependencies: &api-dependencies
   postgres:
@@ -209,6 +209,7 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: api
+      RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-http://rabbitmq:15672}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
@@ -238,6 +239,7 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: worker
+      RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-http://rabbitmq:15672}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
