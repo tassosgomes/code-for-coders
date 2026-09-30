@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "branch": "feature/prd-autoria-curso",
+  "original_base_ref": "79ad0331124457b75e192afa0f261d8673022ee5",
+  "base_ref": "79ad0331124457b75e192afa0f261d8673022ee5",
+  "target_ref": "79ad0331124457b75e192afa0f261d8673022ee5",
+  "last_checkpoint": "5aef6be23ee7b6d9f0d572be6828551b45b46539",
+  "phase": "completion",
+  "active_task": null,
+  "attempt": 0,
+  "max_attempts": 3,
+  "full_attempt": 3,
+  "transport_retries": 0,
+  "pending_delegation": {
+    "transport": "herdr",
+    "role": "integrator",
+    "mode": "complete-prd",
+    "launched": "2026-09-30"
+  },
+  "specs": ["techspec.md"],
+  "delivery": "branch",
+  "validated_commit": "5aef6be23ee7b6d9f0d572be6828551b45b46539",
+  "validated_tree": "7b809404352bc564570fe7533aff3c2e2aec9cbe",
+  "last_result": {
+    "role": "validator",
+    "mode": "full",
+    "outcome": "approved",
+    "run_id": "run.z20UhGJS",
+    "detail": "FULL VALIDATION APROVADA attempt 3: cobertura uniao >=70% nos 6 componentes (identity 79,63 / learning 94,02 / media 90,49 / audit 81,18 / bff-admin 82,85 / spa 88,62), 6/6 imagens docker exit 0, 564 .NET + 126 SPA verdes, publish 5/5, sensor 4/4 herdado sobre arvore identica. Aceita pelo orquestrador."
+  },
+  "history": [
+    {
+      "when": "2026-09-29",
+      "event": "init",
+      "detail": "Plano aprovado pelo responsavel nesta conversa; 1.0 done (Figma aprovado, commit 79ad033). Delegacao pendente: prepare-prd-branch (integrator, subagent). Pre-clean autorizado pelo usuario: git restore das delecoes nao commitadas de .agents/skills/herdr/SKILL.md e .tsg-flow/delegate-logs/**."
+    },
+    {
+      "when": "2026-09-29",
+      "event": "branch_ready",
+      "detail": "feature/prd-autoria-curso criada sobre main 79ad0331124457b75e192afa0f261d8673022ee5. Proxima: 2.0 implement attempt 1."
+    },
+    {
+      "when": "2026-09-29",
+      "event": "transport_failure_reconciled",
+      "detail": "2.0 implement attempt 1 (run.6Kk2q4GG, codex): transporte timeout_or_blocked apos 2457s, mas worker concluiu protocolo (result.json implementation_complete, gate passed, pane done). Sem repeticao; pane wC:p3 fechado. Nao consumiu tentativa adicional."
+    },
+    {
+      "when": "2026-09-29",
+      "event": "transport_failure_reconciled",
+      "detail": "5.0 implement attempt 1 (run.TDLCPE8Y, codex): transporte timeout aos 2454s com pane ainda working; polling manual 15min ate result.json (implementation_complete, gate passed 13 testes min 10). Sem re-delegacao; pane wC:pC fechado. Checkpoints intermediarios: 2.0 e3db4bc, 3.0 6072c70, 4.0 2a58deab."
+    },
+    {
+      "when": "2026-09-30",
+      "event": "full_rejected",
+      "detail": "Full attempt 1 (run.J2YcF5Oh) REPROVADA: B-01 regressao Identity atribuida a 2.0; B-02 regressao Media atribuida a 5.0. Gates focalizados das 6 fatias reexecutados exit 0. Ciclo de correcao: reopen 2.0 e 5.0, fix, revalidacao, checkpoint, nova full."
+    }
+  ]
+}
