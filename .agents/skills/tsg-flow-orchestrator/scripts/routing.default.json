@@ -94,7 +94,7 @@
     },
     {
       "role": "validator",
-      "kind": "opencode",
+      "kind": "claude",
       "model": "claude-sonnet-5-5"
     }
   ],
