@@ -67,7 +67,7 @@ a coluna `message_id` nasce em V-04, que é a única fatia que precisa dela.
 ## Tasks
 
 - [x] 1.0 Adendo ASCII de nível e pré-requisito aprovado
-- [ ] 2.0 Adendo de nível e pré-requisito no Figma aprovado
+- [x] 2.0 Adendo de nível e pré-requisito no Figma aprovado
 - [ ] 3.0 Professor declara o nível do curso e vê o aviso de curso sem nível
 - [ ] 4.0 Professor recomenda o pré-requisito em texto e cursos publicados da escola
 - [ ] 5.0 Publicação leva nível e pré-requisito à versão, ao histórico e ao fato 1.1.0
