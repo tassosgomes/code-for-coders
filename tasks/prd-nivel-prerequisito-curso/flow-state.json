@@ -2,31 +2,29 @@
   "schema_version": 1,
   "branch": "feature/nivel-prerequisito-curso",
   "original_base_ref": "1e08225eb26426201e527d58719d7d31177d5061",
-  "base_ref": "1e08225eb26426201e527d58719d7d31177d5061",
-  "target_ref": null,
-  "last_checkpoint": "09dd9dbe177cc266474fd072f361c142a34a633b",
-  "phase": "checkpoint",
-  "active_task": "6.0",
+  "base_ref": "b9fd745a39017aa9da1d684bc43149b5f6ec3d9b",
+  "target_ref": "b9fd745a39017aa9da1d684bc43149b5f6ec3d9b",
+  "last_checkpoint": "c207ba499422ddbbb1b997571f12bb6b66313414",
+  "phase": "complete_prd",
+  "active_task": null,
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "c207ba499422ddbbb1b997571f12bb6b66313414",
+  "validated_tree": "3a172a420e808f81b9f381511b66a11e344486d2",
   "last_result": {
-    "run_id": "run.WCDxj7C2",
+    "run_id": "run.03Ldwp6t",
     "role": "validator",
-    "mode": "focused",
-    "task": "6.0",
-    "attempt": "1/3",
+    "mode": "full",
     "outcome": "approved",
-    "review": "6.0_task_review.md",
+    "review": "prd_review.md",
     "blockers": 0,
-    "recommendations": 3,
+    "recommendations": 5,
     "route": "explicit claude/claude-sonnet-5-5/high"
   },
   "history": [
@@ -77,6 +75,18 @@
     {
       "ts": "2026-09-30T21:35:45Z",
       "event": "6.0 implement completa (gate passed; verificacoes obrigatorias exit 0; MSB1025 transitatorio resolvido, resultados finais exit 0)"
+    },
+    {
+      "ts": "2026-09-30T21:43:06Z",
+      "event": "checkpoint 6.0 ok; todas as tasks done; iniciando prepare-integration"
+    },
+    {
+      "ts": "2026-09-30T21:46:59Z",
+      "event": "prepare-integration ok: main atualizado para b9fd745 e branch rebaseada; checkpoint 6.0 reescrito a9dbb4e -> c207ba4; full_attempt 1/3"
+    },
+    {
+      "ts": "2026-09-30T22:11:25Z",
+      "event": "FULL VALIDATION APROVADA (0 bloqueantes, 5 recomendacoes); matriz CI completa com cobertura>=70 em todos os componentes; passos de runner (SAST/Trivy/GHCR) declarados observacionais e serao cobertos pelo CI do PR"
     }
   ],
   "validator_override": {
