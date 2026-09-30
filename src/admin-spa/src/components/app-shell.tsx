@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CodeXml, ChevronDown, Clapperboard, House, Menu, ScrollText, Users, Wallet, X } from 'lucide-react';
+import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Menu, ScrollText, Users, Wallet, X } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 
 import { paths } from '@/config/paths';
@@ -32,20 +32,18 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
         <Link aria-label={`${serviceName} — início`} className="backoffice-brand" to={paths.home.getHref()}>
           <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
         </Link>
-        <p className="sidebar-heading">Operação</p>
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
           <NavLink end to={paths.home.getHref()}><House size={18} />Início</NavLink>
-          {areas.map((area) => area.href ? (
-            <NavLink key={area.permission ?? area.role ?? area.label} to={area.href}>
-              {area.permission === 'financeiro.ler'
-                ? <Wallet size={18} />
-                : area.permission === 'midia.enviar'
-                  ? <Clapperboard size={18} />
-                  : area.role === 'administrador'
-                    ? <ScrollText size={18} />
-                  : <Users size={18} />}{area.label}
-            </NavLink>
-          ) : null)}
+          {[true, false].map((content) => {
+            const group = areas.filter((area) => Boolean(area.permission === 'autoria.ler' || area.permission === 'midia.enviar') === content && area.href);
+            if (group.length === 0) return null;
+            return <div className="sidebar-group" key={String(content)}><p className="sidebar-heading">{content ? 'Conteúdo' : 'Operação'}</p>
+              {group.map((area) => <NavLink key={area.label} to={area.href!}>
+                {area.permission === 'autoria.ler' ? <BookOpen size={18} /> : area.permission === 'midia.enviar' ? <Clapperboard size={18} /> : area.permission === 'financeiro.ler' ? <Wallet size={18} /> : area.role === 'administrador' ? <ScrollText size={18} /> : <Users size={18} />}
+                {area.label}
+              </NavLink>)}
+            </div>;
+          })}
         </nav>
       </aside>
       <div className="app-main">

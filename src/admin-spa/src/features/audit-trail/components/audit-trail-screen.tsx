@@ -12,6 +12,7 @@ import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-tra
 const initialDraft: AuditTrailDraftFilters = { from: '', to: '', type: '' };
 const pageSize = 20;
 const typeOptions = [
+  { value: 'versao-publicada', label: 'Versão publicada' },
   { value: 'papel-concedido', label: 'Papel concedido' },
   { value: 'papel-revogado', label: 'Papel revogado' },
   { value: 'convite-interno-emitido', label: 'Convite emitido' },
@@ -479,8 +480,8 @@ const getTypeLabel = (type: string | null) => type
 
 const formatIdentityReference = (reference: AuditRecordSummary['author']) => {
   if (!reference) return '— ausente';
-  if (reference.label) return reference.label;
-  return `Nome não disponível · ${shortReference(reference.id)}`;
+  if (reference.label) return reference.type === 'curso' ? `Curso · ${reference.label}` : reference.label;
+  return `${reference.type === 'curso' ? 'Curso · título não disponível' : 'Nome não disponível'} · ${shortReference(reference.id)}`;
 };
 
 const formatRoleLabel = (role: string) => roleLabels[role] ?? role;
@@ -502,7 +503,7 @@ const getPaginationItems = (currentPage: number, totalPages: number): Array<numb
 const IdentityReference = ({ reference }: { reference: AuditRecordSummary['author'] }) => {
   if (!reference) return <span className="audit-missing">— ausente</span>;
   if (reference.label) return <span>{reference.label}</span>;
-  return <span className="audit-reference-missing">Nome não disponível · {shortReference(reference.id)}</span>;
+  return <span className="audit-reference-missing">{reference.type === 'curso' ? 'Curso · título não disponível' : 'Nome não disponível'} · {shortReference(reference.id)}</span>;
 };
 
 const shortReference = (id: string) => `${id.slice(0, 4)}…${id.slice(-4)}`;

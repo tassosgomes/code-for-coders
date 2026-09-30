@@ -39,6 +39,7 @@ public static class ObservabilityExtensions
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
                 .AddMeter(MediaTelemetry.MeterName)
+                .AddMeter("CodeForCoders.Media.CourseReferences")
                 .AddOtlpExporter());
 
         services.AddLogging(logging => logging.AddOpenTelemetry(options =>

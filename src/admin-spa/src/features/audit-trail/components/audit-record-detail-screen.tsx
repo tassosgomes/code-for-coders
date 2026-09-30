@@ -10,6 +10,7 @@ import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-tra
 import { parseAuditTrailNavigationState, type AuditTrailPersonFilter } from '@/features/audit-trail/types/audit-trail-navigation';
 
 const typeLabels: Record<string, string> = {
+  'versao-publicada': 'Versão publicada',
   'papel-concedido': 'Papel concedido',
   'papel-revogado': 'Papel revogado',
   'convite-interno-emitido': 'Convite emitido',
@@ -228,7 +229,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
         <DetailField label="Origem">
           {query.data.origin === 'identidade'
             ? 'Identidade e Acesso'
-            : <code className="audit-mono">{query.data.origin}</code>}
+            : query.data.origin === 'conteudo' ? 'Conteúdo e Currículo' : <code className="audit-mono">{query.data.origin}</code>}
         </DetailField>
         <DetailField label="Tipo">
           {query.data.type
@@ -249,7 +250,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
         <DetailField label="Motivo">
           {query.data.reason !== null
             ? <span className="audit-detail-reason">{query.data.reason}</span>
-            : query.data.type === 'convite-interno-aceito'
+            : (query.data.type === 'convite-interno-aceito' || query.data.type === 'versao-publicada')
               ? <span className="audit-not-applicable">Não se aplica a este tipo</span>
               : <MissingValue />}
         </DetailField>
@@ -374,11 +375,12 @@ const IdentityReference = ({ recordId, reference, filterKind }: IdentityReferenc
   const navigate = useNavigate();
   if (!reference) return <MissingValue />;
 
-  const label = reference.label ?? 'Nome não disponível';
+  const label = reference.label ?? (reference.type === 'curso' ? 'Título não disponível' : 'Nome não disponível');
   const referenceId = reference.id;
 
   return <div className="audit-detail-reference">
     <span>{label}</span>
+    {reference.type === 'curso' ? <span className="audit-reference-kind">Curso</span> : null}
     {!reference.label && referenceId ? <span className="audit-reference-missing">
       {referenceTypeLabel(reference.type)} · {shortReference(referenceId)}
     </span> : null}
@@ -390,7 +392,7 @@ const IdentityReference = ({ recordId, reference, filterKind }: IdentityReferenc
         type="button"
       ><Copy aria-hidden="true" size={14} /></button> : null}
       <button
-        aria-label={`Ver atos desta pessoa (${filterKind === 'author' ? 'autor' : 'alvo'})`}
+        aria-label={reference.type === 'curso' ? 'Ver atos deste curso (alvo)' : `Ver atos desta pessoa (${filterKind === 'author' ? 'autor' : 'alvo'})`}
         className="audit-person-filter-link"
         onClick={() => navigate(paths.auditTrail.getHref(), {
           state: {
@@ -399,7 +401,7 @@ const IdentityReference = ({ recordId, reference, filterKind }: IdentityReferenc
           },
         })}
         type="button"
-      >Ver atos desta pessoa</button>
+      >{reference.type === 'curso' ? 'Ver atos deste curso' : 'Ver atos desta pessoa'}</button>
     </div> : null}
   </div>;
 };
@@ -413,9 +415,10 @@ const roleLabels: Record<string, string> = {
   suporte: 'Suporte',
 };
 
-const attributeLabel = (key: string) => key === 'papel' ? 'Papel' : key;
+const attributeLabel = (key: string) => key === 'papel' ? 'Papel' : key === 'versao' ? 'Versão' : key;
 
 const referenceTypeLabel = (type: string | null) => {
+  if (type === 'curso') return 'Curso';
   if (type === 'conta-interna') return 'Conta interna';
   if (type === 'convite-interno') return 'Convite interno';
   return type ?? 'Referência';

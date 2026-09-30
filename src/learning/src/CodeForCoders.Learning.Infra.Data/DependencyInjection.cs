@@ -27,11 +27,16 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
             }
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, LearningUnitOfWork>();
+        services.AddScoped<CodeForCoders.Learning.Domain.Repositories.ICourseRepository, Repositories.CourseRepository>();
+        services.AddScoped<ICourseVersionStore, Repositories.CourseVersionStore>();
+        services.AddScoped<ICourseQueries, Queries.CourseQueries>();
+        services.AddScoped<IReadyVideoQueries, VideoProjection.ReadyVideoQueries>();
+        services.AddScoped<ICourseEditStore, Idempotency.CourseEditStore>();
+        services.AddScoped<ICourseCreationStore, Idempotency.CourseCreationStore>();
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Valkey connection string is required.")

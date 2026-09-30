@@ -14,4 +14,10 @@ public sealed class OutboxOptions
 
     [Range(1, 100)]
     public int MaxAttempts { get; set; } = 10;
+
+    // Explicit, tenant-scoped operator request; leave unset in normal deployments.
+    public Guid? VideoFactReplayTenantId { get; set; }
+
+    [Required]
+    public string VideoFactReplayQueue { get; set; } = "learning.video-availability";
 }

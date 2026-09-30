@@ -4178,3 +4178,105 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     color:var(--video-foreground);
   }
 }
+
+/* Course authoring follows the approved content area composition. */
+.sidebar-group { display: grid; gap: 8px; }
+.authoring-page { display: grid; gap: 24px; align-content: start; }
+.authoring-page h1, .authoring-page .eyebrow, .authoring-page .page-subtitle { margin: 0; }
+.course-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.course-page-heading .page-subtitle { margin-top: 8px; }
+.course-filters { display: flex; gap: 4px; align-items: center; }
+.course-filters button, .course-draft-tab { padding: 6px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; }
+.course-filters button[aria-pressed=true], .course-filters button[aria-selected=true], .course-draft-tab { background: var(--surface); color: inherit; box-shadow: 0 1px 3px rgb(22 19 31 / 8%); }
+.course-table-wrap { overflow-x: auto; }
+.course-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.course-table th { text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); padding: 16px; }
+.course-table td { padding: 16px; background: var(--surface); border-block: 1px solid var(--border); }
+.course-table td:first-child { border-left: 1px solid var(--border); width: 28%; }
+.course-table td:last-child { border-right: 1px solid var(--border); white-space: nowrap; }
+.course-table td:nth-child(3) { font-size: 12px; color: var(--muted); }
+.course-table a { color: inherit; text-decoration: none; }
+.course-status { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+.course-status svg { flex-shrink: 0; }
+.course-status-draft .role-badge { color: inherit; background: transparent; border: 1px solid var(--border); }
+.course-status-published .role-badge { color: var(--success-soft-foreground, #047857); background: var(--success-soft, #ecfdf5); }
+.course-status-warning .role-badge { color: var(--warning-soft-foreground, #b45309); background: var(--warning-soft, #fffbeb); }
+.course-pagination { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 12px; }
+.course-pagination button { min-height: 32px; }
+.course-create-dialog { width: min(520px, calc(100vw - 32px)); }
+.course-dialog-heading { display: flex; gap: 16px; justify-content: space-between; margin-bottom: 24px; }
+.course-dialog-heading h2 { font-size: 20px; margin: 0 0 8px; }
+.course-dialog-heading p { font-size: 14px; color: var(--muted); margin: 0; }
+.text-details-form { display: grid; gap: 12px; }
+.text-details-form label { font-size: 14px; }
+.text-details-form input, .text-details-form textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: inherit; background: var(--surface); font: inherit; }
+.text-details-form textarea { resize: vertical; }
+.text-details-form small { color: var(--muted); font-size: 12px; }
+.course-breadcrumb { display: flex; gap: 8px; color: var(--muted); font-size: 12px; }
+.course-edit-metadata { font-size: 12px; color: var(--muted); margin: 0; }
+.course-curriculum { border: 1px solid var(--border); background: var(--surface); border-radius: 16px; }
+.course-curriculum svg { color: var(--primary); }
+@media (max-width: 640px) {
+  .authoring-page { gap: 24px; }
+  .authoring-page h1 { font-size: 24px; line-height: 30px; }
+  .authoring-page .page-subtitle { font-size: 14px; line-height: 20px; }
+  .course-page-heading { align-items: flex-start; flex-direction: column; }
+  .course-table, .course-table tbody { display: block; }
+  .course-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .course-table tr { display: grid; gap: 16px; padding: 16px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+  .course-table td, .course-table td:first-child, .course-table td:last-child { display: block; width: auto; padding: 0; border: 0; background: transparent; }
+  .course-table td:last-child a { display: inline-flex; align-items: center; min-height: 32px; padding-inline: 12px; font-size: 12px; }
+  .course-status .role-badge { white-space: normal; }
+  .course-create-dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+}
+
+.course-curriculum-heading, .course-module-heading, .course-lesson { display: flex; align-items: center; gap: 12px; }
+.course-curriculum-heading { flex-wrap: wrap; margin-top: 20px; }
+.course-module-list { display: grid; gap: 16px; }
+.course-module { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
+.course-module-heading { padding: 16px; flex-wrap: wrap; }
+.course-module-heading h3 { flex: 1; min-width: 120px; overflow-wrap: anywhere; margin: 0; }
+
+.course-empty-lessons { padding: 0 16px 16px; }
+.course-lesson { border-top: 1px solid var(--border); padding: 16px; }
+.course-lesson-details { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.course-lesson h4 { margin: 0; }
+.course-lesson p { color: var(--muted); margin: 8px 0; }
+.course-video-state { color: var(--muted); font-size: 13px; }
+.course-drag-handle { padding: 6px; background: transparent; color: inherit; border: 0; cursor: grab; flex-shrink: 0; }
+.course-item-actions { position: relative; flex-shrink: 0; }
+.course-action-trigger { border: 0; color: inherit; background: transparent; cursor: pointer; padding: 4px 12px; font-size: 24px; }
+.course-action-menu { position: absolute; right: 0; top: 100%; z-index: 3; min-width: 210px; display: grid; gap: 4px; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 20px #0002; }
+.course-action-menu button, .course-action-menu > span { padding: 8px 12px; text-align: left; background: transparent; color: inherit; border: 0; border-radius: 6px; }
+.course-action-menu button { cursor: pointer; }
+.course-action-menu button:hover { background: var(--border); }
+.course-action-menu button:disabled { opacity: .5; cursor: default; }
+.course-module:focus, .course-lesson:focus { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (max-width: 640px) { .course-module-heading, .course-lesson { gap: 8px; padding: 12px; } .course-module-heading > span { font-size: 12px; } }
+
+.course-delete-dialog .dialog-card { max-width: 560px; white-space: normal; }
+.course-delete-dialog .dialog-actions { justify-content: flex-start; }
+.primary-button.course-delete-confirm { background: #dc2626; border-color: #dc2626; color: #fff; }
+.primary-button.course-delete-confirm:hover { background: #b91c1c; border-color: #b91c1c; }
+.course-editor-overview { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.course-editor-overview > div { display: grid; gap: 16px; flex: 1; min-width: 180px; }
+.course-collapse-button { border: 0; color: inherit; background: transparent; font-size: 20px; padding: 6px; }
+.course-module-heading { background: var(--video-page, #f8f7fc); border-radius: 12px; }
+.course-video-state { color: var(--warning-soft-foreground, #b45309); }
+
+.course-video-sheet { justify-content: flex-end; align-items: stretch; }
+.course-video-sheet .dialog-card { width: min(38rem, 100%); max-height: 100dvh; margin: 0; border-radius: 0; overflow-y: auto; }
+.course-video-search { display: grid; gap: .5rem; }
+.course-video-search input { width: 100%; padding: .75rem; background: var(--surface); color: inherit; border: 1px solid var(--border); border-radius: .5rem; }
+.single-choice-options { border: 0; padding: 1rem 0; display: grid; gap: .75rem; }
+.single-choice-option { display: flex; gap: .75rem; align-items: center; padding: 1rem; border: 1px solid var(--border); border-radius: .75rem; cursor: pointer; }
+.single-choice-option > span { display: grid; gap: .4rem; }
+.course-video-pagination { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
+@media (max-width: 640px) {
+  .course-video-sheet { align-items: flex-end; }
+  .course-video-sheet .dialog-card { width: 100%; max-height: 90dvh; border-radius: 1rem 1rem 0 0; }
+  .course-video-sheet .dialog-actions { flex-wrap: wrap; }
+}
+
+.course-history-list { list-style: none; padding: 0; }
+.course-history-item, .course-version-module { padding: 16px; overflow-wrap: anywhere; }

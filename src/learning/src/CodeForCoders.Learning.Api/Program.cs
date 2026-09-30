@@ -7,6 +7,6 @@ var app = builder.Build();
 app.UseApplicationPipeline();
 app.MapApiEndpoints();
 app.MapHealthEndpoints();
-app.Run();
+await app.RunWithVideoProjectionOperationsAsync();
 
 public partial class Program;

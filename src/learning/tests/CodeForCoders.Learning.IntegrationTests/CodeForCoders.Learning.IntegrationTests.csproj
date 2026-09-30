@@ -8,12 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Learning.Api/CodeForCoders.Learning.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Learning.Application/CodeForCoders.Learning.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Learning.Contracts/CodeForCoders.Learning.Contracts.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Learning.Infra.Data/CodeForCoders.Learning.Infra.Data.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Learning.Infra.Messaging/CodeForCoders.Learning.Infra.Messaging.csproj" />
     <ProjectReference Include="../CodeForCoders.Learning.Tests.Common/CodeForCoders.Learning.Tests.Common.csproj" />
     <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

@@ -59,13 +59,14 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: code_for_coders
       RABBITMQ_DEFAULT_PASS: code-for-coders-local
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit max_message_size 67108864"
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
       - code-for-coders-rabbitmq:/var/lib/rabbitmq
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -124,6 +125,7 @@ services:
       StaffSessionTokens__LifetimeMinutes: "5"
       StaffSessionTokens__AudienceScopes__commerce: finance-area:read
       StaffSessionTokens__AudienceScopes__media: videos:write
+      StaffSessionTokens__AudienceScopes__learning: courses:authoring
       StaffSessionTokens__AudienceScopes__audit: audit-records:read
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?run scripts/generate-local-env.sh}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?run scripts/generate-local-env.sh}
@@ -164,9 +166,20 @@ services:
     environment:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=code-for-coders-local
+      LearningTokens__Issuer: identity
+      LearningTokens__Audience: learning
+      LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      RabbitMq__MediaExchange: media.events
+      RabbitMq__VideoFactsQueue: learning.video-availability
+      RabbitMq__AuditExchange: audit.events
     ports:
       - "5102:8080"
-    depends_on: *api-dependencies
+    depends_on:
+      <<: *api-dependencies
+      audit:
+        condition: service_healthy
+      media-worker:
+        condition: service_healthy
     healthcheck: *api-healthcheck
 
   minio:
@@ -239,6 +252,8 @@ services:
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: worker
+      RabbitMq__LearningExchange: learning.events
+      RabbitMq__CoursePublicationsQueue: media.course-publications
       RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-http://rabbitmq:15672}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
@@ -358,6 +373,8 @@ services:
       Audit__BaseAddress: http://audit:8080/
       Commerce__BaseAddress: http://commerce:8080/
       Media__BaseAddress: http://media:8080/
+      Learning__BaseAddress: http://learning:8080/
+      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-false}
     ports:
       - "5107:8080"
     depends_on:

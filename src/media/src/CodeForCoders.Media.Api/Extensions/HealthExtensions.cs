@@ -24,6 +24,11 @@ public static class HealthExtensions
                 failureStatus: HealthStatus.Unhealthy,
                 tags: new[] { "ready" },
                 timeout: TimeSpan.FromSeconds(5))
+            .AddCheck<CourseReferencesHealthCheck>(
+                "course-references",
+                failureStatus: HealthStatus.Unhealthy,
+                tags: new[] { "ready" },
+                timeout: TimeSpan.FromSeconds(5))
             .AddCheck<ValkeyHealthCheck>(
                 "valkey",
                 failureStatus: HealthStatus.Degraded,

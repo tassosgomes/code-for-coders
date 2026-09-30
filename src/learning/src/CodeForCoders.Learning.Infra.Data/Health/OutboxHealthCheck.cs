@@ -20,6 +20,11 @@ public sealed class OutboxHealthCheck(LearningDbContext dbContext) : IHealthChec
             .Select(message => (DateTimeOffset?)message.OccurredOn)
             .MinAsync(cancellationToken);
 
+        var content = dbContext.ContentOutboxMessages.IgnoreQueryFilters().Where(message => message.ProcessedOn == null);
+        exhausted += await content.CountAsync(message => message.Attempts >= MaximumAttempts, cancellationToken);
+        var oldestContent = await content.Select(message => (DateTimeOffset?)message.OccurredOn).MinAsync(cancellationToken);
+        if (oldestContent.HasValue && (!oldest.HasValue || oldestContent < oldest)) oldest = oldestContent;
+
         var data = new Dictionary<string, object>
         {
             ["exhausted"] = exhausted,

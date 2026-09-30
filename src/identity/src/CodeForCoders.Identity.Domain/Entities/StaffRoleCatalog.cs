@@ -7,7 +7,7 @@ public static class StaffRoleCatalog
         {
             [Administrator] = [ManageAccess],
             [Finance] = [ReadFinance],
-            [Teacher] = [ReadAuthoring, SendVideos],
+            [Teacher] = [ReadAuthoring, EditAuthoring, SendVideos],
             [Support] = [HandleSupport],
         };
 
@@ -18,6 +18,7 @@ public static class StaffRoleCatalog
 
     public const string ManageAccess = "acesso.gerir";
     public const string ReadFinance = "financeiro.ler";
+    public const string EditAuthoring = "autoria.editar";
     public const string ReadAuthoring = "autoria.ler";
     public const string HandleSupport = "suporte.atender";
     public const string SendVideos = "midia.enviar";

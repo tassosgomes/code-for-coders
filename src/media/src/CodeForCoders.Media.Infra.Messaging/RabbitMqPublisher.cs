@@ -11,6 +11,12 @@ public sealed class RabbitMqPublisher(
     RabbitMqConnectionProvider connectionProvider,
     IOptions<RabbitMqOptions> options)
 {
+    public async Task EnsureReplayQueueAsync(string queue, CancellationToken cancellationToken)
+    {
+        await using var channel = await connectionProvider.CreateChannelAsync(cancellationToken);
+        await channel.QueueDeclarePassiveAsync(queue, cancellationToken);
+    }
+
     public async Task PublishAsync(OutboxMessage message, CancellationToken cancellationToken)
     {
         try

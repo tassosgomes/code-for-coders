@@ -27,6 +27,7 @@ services:
       StaffSessionTokens__LifetimeMinutes: "5"
       StaffSessionTokens__AudienceScopes__commerce: finance-area:read
       StaffSessionTokens__AudienceScopes__media: videos:write
+      StaffSessionTokens__AudienceScopes__learning: courses:authoring
       StaffSessionTokens__AudienceScopes__audit: audit-records:read
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
@@ -75,6 +76,11 @@ services:
       start_period: 30s
 
   learning:
+    depends_on:
+      audit:
+        condition: service_healthy
+      media-worker:
+        condition: service_healthy
     build:
       context: .
       dockerfile: src/learning/Dockerfile
@@ -84,6 +90,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      LearningTokens__Issuer: identity
+      LearningTokens__Audience: learning
+      LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      RabbitMq__MediaExchange: media.events
+      RabbitMq__VideoFactsQueue: learning.video-availability
+      RabbitMq__AuditExchange: audit.events
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -146,6 +158,8 @@ services:
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Media__Role: worker
+      RabbitMq__LearningExchange: learning.events
+      RabbitMq__CoursePublicationsQueue: media.course-publications
       RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-https://rabbit.tasso.dev.br}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
@@ -295,6 +309,8 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
       Media__BaseAddress: http://media:8080/
+      Learning__BaseAddress: http://learning:8080/
+      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-false}
       Audit__BaseAddress: http://audit:8080/
       Commerce__BaseAddress: http://commerce:8080/
     depends_on:

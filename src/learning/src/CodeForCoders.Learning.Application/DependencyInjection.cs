@@ -11,10 +11,17 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.AddScoped<IValidator<UseCases.Courses.CreateCourse.CreateCourseInput>, UseCases.Courses.CreateCourse.CreateCourseInputValidator>();
+        services.AddScoped<UseCases.Courses.Common.CourseEditSession>();
+        services.AddScoped<IValidator<UseCases.Courses.Common.CourseWriteContext>, UseCases.Courses.Common.CourseWriteContextValidator>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()
             .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<,>)))
+            .AsMatchingInterface()
+            .WithScopedLifetime()
+            .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<>)))
             .AsMatchingInterface()
             .WithScopedLifetime());
 

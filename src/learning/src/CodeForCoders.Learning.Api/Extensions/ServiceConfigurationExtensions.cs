@@ -9,6 +9,7 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddLearningConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddCourseAuthentication(builder.Configuration);
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddMessagingConfiguration(builder.Configuration);
         builder.Services.AddErrorHandlingConfiguration();

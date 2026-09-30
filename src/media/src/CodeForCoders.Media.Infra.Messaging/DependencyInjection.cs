@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<HeartbeatReceiptStore>();
+        services.AddScoped<CourseReferenceStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
         if (MediaRoleOptions.ReadRole(configuration) == MediaServiceRole.Api)
@@ -39,6 +40,7 @@ public static class DependencyInjection
                 .ValidateOnStart();
             services.AddSingleton<IVideoKeyProtector, AesVideoKeyProtector>();
             services.AddSingleton<IVideoTranscoder, FfmpegVideoTranscoder>();
+            services.AddHostedService<CourseReferenceConsumerWorker>();
             services.AddHostedService<ExpiredVideoUploadWorker>();
             services.AddHostedService<VideoPreparationWorker>();
             services.AddHostedService<MediaVolumeMetricsWorker>();

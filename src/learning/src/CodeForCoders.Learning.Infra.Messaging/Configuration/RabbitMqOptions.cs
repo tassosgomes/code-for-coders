@@ -22,6 +22,9 @@ public sealed class RabbitMqOptions
     public string VirtualHost { get; set; } = "/";
 
     [Required]
+    public string AuditExchange { get; set; } = "audit.events";
+
+    [Required]
     public string Exchange { get; set; } = "learning.events";
 
     [Required]
@@ -29,6 +32,12 @@ public sealed class RabbitMqOptions
 
     [Required]
     public string HeartbeatQueue { get; set; } = "learning.platform-heartbeat";
+
+    [Required]
+    public string MediaExchange { get; set; } = "media.events";
+
+    [Required]
+    public string VideoFactsQueue { get; set; } = "learning.video-availability";
 
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;

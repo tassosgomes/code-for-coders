@@ -23,6 +23,9 @@ export const paths = {
     path: '/auditoria/:recordId',
     getHref: (recordId: string) => `/auditoria/${recordId}`,
   },
+  authoring: { path: '/autoria', getHref: () => '/autoria' },
+  authoringCourse: { path: '/autoria/:courseId', getHref: (courseId: string) => `/autoria/${courseId}` },
+  authoringVersion: { path: '/autoria/:courseId/versoes/:versionNumber', getHref: (courseId: string, versionNumber: number) => `/autoria/${courseId}/versoes/${versionNumber}` },
   videos: {
     path: '/videos',
     getHref: () => '/videos',

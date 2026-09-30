@@ -104,4 +104,30 @@ public sealed class OutboxPublisherWorker(
 
         return true;
     }
+
+    public async Task<int> ReplayVideoFactsAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(tenantId, Guid.Empty);
+        await publisher.EnsureReplayQueueAsync(options.Value.VideoFactReplayQueue, cancellationToken);
+        var count = 0;
+        Guid? after = null;
+        while (true)
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+            var query = dbContext.OutboxMessages.IgnoreQueryFilters().AsNoTracking()
+                .Where(message => message.TenantId == tenantId
+                    && (message.RoutingKey == "midia.ativo-pronto.v1" || message.RoutingKey == "midia.preparacao-falhou.v1")); // gitleaks:allow - routing keys RabbitMQ, nao segredos
+            if (after.HasValue) query = query.Where(message => message.Id.CompareTo(after.Value) > 0);
+            var batch = await query.OrderBy(message => message.Id).Take(options.Value.BatchSize).ToListAsync(cancellationToken);
+            if (batch.Count == 0) return count;
+            foreach (var message in batch)
+            {
+                // Republish the retained row verbatim; never reset the live outbox or mint a new event.
+                await publisher.PublishAsync(message, cancellationToken);
+                count++;
+            }
+            after = batch[^1].Id;
+        }
+    }
 }

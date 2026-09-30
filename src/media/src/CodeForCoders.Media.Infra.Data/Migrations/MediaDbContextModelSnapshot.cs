@@ -301,6 +301,48 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                     b.ToTable("video_uploads", "media_access");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Media.Infra.Data.CourseReferences.CourseReferenceVersion", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("TenantId", "CourseId");
+
+                    b.ToTable("course_reference_versions", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Infra.Data.CourseReferences.CourseVideoReference", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.HasKey("TenantId", "CourseId", "LessonId");
+
+                    b.ToTable("course_video_references", "media_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Media.Infra.Data.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")

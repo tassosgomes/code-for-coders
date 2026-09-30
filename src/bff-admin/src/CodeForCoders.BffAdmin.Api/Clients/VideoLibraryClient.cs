@@ -72,6 +72,10 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         {
             return Unavailable(HttpStatusCode.BadGateway);
         }
+        catch (Polly.ExecutionRejectedException)
+        {
+            return Unavailable(HttpStatusCode.BadGateway);
+        }
     }
 
     private static async Task<VideoLibraryResult> ReadResponseAsync(

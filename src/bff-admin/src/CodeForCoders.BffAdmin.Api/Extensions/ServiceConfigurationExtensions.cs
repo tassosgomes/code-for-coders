@@ -4,6 +4,7 @@ using CodeForCoders.BffAdmin.Infra.Data;
 using CodeForCoders.BffAdmin.Infra.Messaging;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
+using CodeForCoders.BffAdmin.Application.Interfaces;
 
 namespace CodeForCoders.BffAdmin.Api.Extensions;
 
@@ -12,6 +13,22 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddBffAdminConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddScoped<CourseVideoEnricher>();
+        builder.Services.AddScoped<CourseAuditReferenceEnricher>();
+        builder.Services.AddOptions<LearningApiOptions>()
+            .Bind(builder.Configuration.GetSection(LearningApiOptions.SectionName))
+            .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)
+                && uri.Scheme is "http" or "https" && options.BaseAddress.EndsWith("/", StringComparison.Ordinal),
+                "Learning base address must be an absolute HTTP(S) URL ending in a slash.").ValidateOnStart();
+        builder.Services.AddHttpClient<ICourseAuthoringClient, CourseAuthoringClient>((services, client) =>
+            client.BaseAddress = new Uri(services.GetRequiredService<IOptions<LearningApiOptions>>().Value.BaseAddress))
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddMessagingConfiguration(builder.Configuration);
         builder.Services.AddErrorHandlingConfiguration();
