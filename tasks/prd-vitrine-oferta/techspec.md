@@ -2,8 +2,8 @@
 tsg_artifact: techspec
 product: code-4-coders
 capability: CAP-003
-version: 1.0-draft
-status: in_review
+version: 1.0
+status: approved
 updated: 2026-09-30
 sources: tasks/prd-vitrine-oferta/prd.md@1.0, tasks/prd-vitrine-oferta/contracts.md@1.0, context/architecture-baseline.md@1.2, domains/catalogo-e-oferta/domain.md@1.1, tasks/prd-nivel-prerequisito-curso/contracts.md@1.0
 ---
@@ -15,8 +15,8 @@ sources: tasks/prd-vitrine-oferta/prd.md@1.0, tasks/prd-vitrine-oferta/contracts
 > **PRD de origem:** [prd.md](prd.md), v1.0, aprovado em 2026-09-30
 > **Contratos de integração:** [contracts.md](contracts.md) 1.0; OpenAPI [do backoffice](api-contract.yaml) 1.0.0, [da vitrine](api-contract-student.yaml) 1.0.0 e [interno de `commerce`](internal-api-contract-commerce.yaml) 1.1.0; AsyncAPI [de `commerce`](asyncapi-contract.yaml) 1.0.0 e [da Auditoria](asyncapi-contract-audit.yaml) 1.3.0 — todos aprovados em 2026-09-30
 > **Data:** 2026-09-30
-> **Status:** Em Revisão
-> **Handoff:** draft — não gerar Tasks
+> **Status:** Aprovada em 2026-09-30
+> **Handoff:** liberado para geração de Tasks
 
 ## Resumo Executivo
 
@@ -408,7 +408,7 @@ Duas camadas por operação, como nas demais áreas: BFF público ↔ interno de
 
 ## Architecture Decision Records
 
-- [ADR-0009: Autenticação de serviço do BFF do aluno em serviços de domínio](../../docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md) (**Proposed**, nova) — o `bff-student` chama `commerce` por asserção de serviço nas rotas públicas; estende a ADR-0004 sem substituí-la.
+- [ADR-0009: Autenticação de serviço do BFF do aluno em serviços de domínio](../../docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md) (**Accepted** em 2026-09-30, nova) — o `bff-student` chama `commerce` por asserção de serviço nas rotas públicas; estende a ADR-0004 sem substituí-la.
 - [ADR-0001](../../docs/adr/0001-monorepo-de-codigo.md) — serviços com deploy independente; a coordenação é a ordem de implantação acima; o verificador de asserção é uma cópia por serviço.
 - [ADR-0002](../../docs/adr/0002-plataforma-de-runtime-coolify.md) — segredos (chaves do BFF e do emissor) pelo secret manager do ambiente.
 - [ADR-0004](../../docs/adr/0004-autenticacao-de-servico-bff-identity.md) — mecanismo de asserção, estendido pela ADR-0009.
