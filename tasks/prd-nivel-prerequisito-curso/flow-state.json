@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "branch": "feature/nivel-prerequisito-curso",
+  "original_base_ref": "1e08225eb26426201e527d58719d7d31177d5061",
+  "base_ref": "1e08225eb26426201e527d58719d7d31177d5061",
+  "target_ref": null,
+  "last_checkpoint": null,
+  "phase": "reconcile",
+  "active_task": "1.0",
+  "attempt": 0,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "validated_commit": null,
+  "validated_tree": null,
+  "last_result": {
+    "run_id": "run.iY0S5tTU",
+    "role": "integrator",
+    "mode": "prepare-prd-branch",
+    "outcome": "branch_ready",
+    "worktree": "/home/tsgomes/github-tassosgomes/code-for-coders-nivel-prerequisito"
+  },
+  "history": [
+    {
+      "ts": "2026-09-30T17:17:19Z",
+      "event": "prepare-prd-branch ok; worktree nova criada; reconciliar 1.0/2.0 (aprovadas pelo responsavel, artefatos na base, gates ok) antes de 3.0"
+    }
+  ]
+}
