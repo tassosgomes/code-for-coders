@@ -33,6 +33,7 @@ public sealed class MediaInfrastructureTests(MediaIntegrationFixture fixture)
             DeadLetterExchange = $"media.integration.audit.dlx.{suffix}",
             HeartbeatQueue = $"media.integration.heartbeat.{suffix}",
             AuditQueue = $"media.integration.events.audit.{suffix}",
+            CoursePublicationsQueue = $"media.integration.course-publications.{suffix}",
         });
         await using var connection = new RabbitMqConnectionProvider(settings);
         var topology = new RabbitMqTopologyInitializer(connection, settings);
@@ -78,6 +79,7 @@ public sealed class MediaInfrastructureTests(MediaIntegrationFixture fixture)
             ["RabbitMq:Exchange"] = "media.integration.events",
             ["RabbitMq:DeadLetterExchange"] = "media.integration.events.dlx",
             ["RabbitMq:HeartbeatQueue"] = "media.integration.platform-heartbeat",
+            ["RabbitMq:CoursePublicationsQueue"] = "media.integration.course-publications",
             ["Outbox:PollingIntervalSeconds"] = "5",
             ["Outbox:BatchSize"] = "10",
             ["Outbox:MaxAttempts"] = "3",
