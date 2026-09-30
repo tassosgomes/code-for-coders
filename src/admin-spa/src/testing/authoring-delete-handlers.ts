@@ -17,8 +17,8 @@ export const createDeletionBoundary = (published = false, canEdit = true) => {
         permissions: canEdit ? ['autoria.ler', 'autoria.editar'] : ['autoria.ler'], csrfToken: 'delete-csrf',
       })),
       http.get(`${env.API_URL}/api/v1/courses`, () => {
-        const { courseId, title, status, currentVersion, hasUnpublishedChanges, lastEditedAt, lastEditedBy } = course();
-        return HttpResponse.json({ data: deleted ? [] : [{ courseId, title, status, currentVersion, hasUnpublishedChanges, lastEditedAt, lastEditedBy }], pagination: { page: 1, size: 20, total: deleted ? 0 : 1, totalPages: deleted ? 0 : 1 } });
+        const { courseId, title, status, currentVersion, currentLevel, hasUnpublishedChanges, lastEditedAt, lastEditedBy } = course();
+        return HttpResponse.json({ data: deleted ? [] : [{ courseId, title, status, currentVersion, currentLevel, hasUnpublishedChanges, lastEditedAt, lastEditedBy }], pagination: { page: 1, size: 20, total: deleted ? 0 : 1, totalPages: deleted ? 0 : 1 } });
       }),
       http.get(`${env.API_URL}/api/v1/courses/:courseId`, () => deleted ? HttpResponse.json({ code: 'COURSE_NOT_FOUND' }, { status: 404 }) : HttpResponse.json(course())),
       http.delete(`${env.API_URL}/api/v1/courses/:courseId`, ({ request }) => {

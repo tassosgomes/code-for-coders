@@ -73,6 +73,8 @@ public sealed class GlobalExceptionHandler(
             _ => "UNEXPECTED_ERROR",
         };
         if (exception is CourseIncompleteException incomplete) problemDetails.Extensions["pendencies"] = incomplete.Pendencies;
+        if (exception is CourseRuleException { Field: not null } fieldError)
+            problemDetails.Extensions["errors"] = new Dictionary<string, string[]> { [fieldError.Field] = [fieldError.Message] };
         if (exception is CourseRuleException { Code: "TITLE_REQUIRED" })
             problemDetails.Extensions["errors"] = new Dictionary<string, string[]> { ["title"] = ["Informe o título do curso."] };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()

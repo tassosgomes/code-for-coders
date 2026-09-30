@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0"]
 gate: 'dotnet test --project src/learning/tests/CodeForCoders.Learning.UnitTests/CodeForCoders.Learning.UnitTests.csproj -- --filter-class CodeForCoders.Learning.UnitTests.CourseLevelRuleTests --minimum-expected-tests 4 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.CourseLevelTests --minimum-expected-tests 9 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj -- --filter-class CodeForCoders.BffAdmin.IntegrationTests.CourseLevelProxyTests --minimum-expected-tests 4 && npm --prefix src/admin-spa run test -- authoring-course-level'

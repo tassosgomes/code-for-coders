@@ -4260,6 +4260,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .primary-button.course-delete-confirm:hover { background: #b91c1c; border-color: #b91c1c; }
 .course-editor-overview { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .course-editor-overview > div { display: grid; gap: 16px; flex: 1; min-width: 180px; }
+.course-audience { margin: 24px 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; }
+.course-audience .single-choice-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.course-audience .single-choice-options legend { margin-bottom: 12px; font-weight: 600; }
+.course-audience .single-choice-option { flex: 1 1 140px; }
+.course-level-indicator { display: block; margin-top: 8px; }
 .course-collapse-button { border: 0; color: inherit; background: transparent; font-size: 20px; padding: 6px; }
 .course-module-heading { background: var(--video-page, #f8f7fc); border-radius: 12px; }
 .course-video-state { color: var(--warning-soft-foreground, #b45309); }

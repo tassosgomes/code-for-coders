@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CodeForCoders.Learning.Domain.Entities;
+using CodeForCoders.Learning.Domain.SeedWork;
 using FluentValidation;
 
 namespace CodeForCoders.Learning.Api.Endpoints;
@@ -41,7 +42,11 @@ internal static class CourseChangesRequest
             if (videoValue.ValueKind != JsonValueKind.String || !videoValue.TryGetGuid(out var value)) throw Invalid();
             videoId = value;
         }
-        return new CourseChanges(title, description, hasDescription, position, moduleId, videoId, hasVideoId);
+        var hasLevel = body.TryGetProperty("level", out var levelValue);
+        if (hasLevel && levelValue.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
+            throw new CourseRuleException("FIELD_INVALID", "level");
+        var level = hasLevel && levelValue.ValueKind != JsonValueKind.Null ? levelValue.GetString() : null;
+        return new CourseChanges(title, description, hasDescription, position, moduleId, videoId, hasVideoId, level, hasLevel);
     }
 
     private static ValidationException Invalid() => new("Invalid course changes.");

@@ -24,6 +24,6 @@ export const CreateCourseDialog = ({ onClose, onCreated }: CreateCourseDialogPro
     }
   };
   return <Dialog title="Novo curso" description="Crie o rascunho. Você poderá montar as aulas depois." busy={create.isPending} onClose={onClose}>
-    <TextDetailsForm schema={createCourseInputSchema} busy={create.isPending} titleError={titleError} error={error} onSubmit={submit} onCancel={onClose} />
+    <TextDetailsForm schema={createCourseInputSchema} busy={create.isPending} titleError={titleError} error={error} onSubmit={submit} onCancel={onClose} contextHint="Preço e vigência pertencem à oferta do curso, prevista para uma etapa futura. Nível e pré-requisito são do professor e ficam na seção Para quem é este curso." />
   </Dialog>;
 };

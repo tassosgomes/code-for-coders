@@ -12,6 +12,8 @@ public sealed class Course
     public Guid TenantId { get; private set; }
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public string? Level { get; private set; }
+    public string? CurrentLevel { get; private set; }
     public int DraftRevision { get; private set; }
     public int? CurrentVersion { get; private set; }
     public bool HasUnpublishedChanges { get; private set; }
@@ -56,6 +58,7 @@ public sealed class Course
         ValidateChanges(changes);
         if (changes.Title is not null) Title = changes.Title.Trim();
         if (changes.HasDescription) Description = changes.Description;
+        if (changes.HasLevel) Level = changes.Level;
     }
 
     public Guid AddModule(CourseChanges changes)
@@ -142,6 +145,7 @@ public sealed class Course
         if (revision != DraftRevision) throw new DraftChangedException();
         Title = version.Title;
         Description = version.Description;
+        Level = CurrentLevel;
         var modules = Modules.ToDictionary(module => module.Id);
         var lessons = Modules.SelectMany(module => module.Lessons).ToDictionary(lesson => lesson.Id);
         foreach (var module in Modules) module.Lessons.Clear();
@@ -200,6 +204,8 @@ public sealed class Course
 
     private static void ValidateChanges(CourseChanges changes)
     {
+        if (changes.HasLevel && changes.Level is not (null or "beginner" or "intermediate" or "advanced"))
+            throw new CourseRuleException("FIELD_INVALID", "level");
         if (changes.Title is not null) ValidateTitle(changes.Title);
         if (changes.Description?.Length > 5000) throw new CourseRuleException("INVALID_REQUEST");
     }

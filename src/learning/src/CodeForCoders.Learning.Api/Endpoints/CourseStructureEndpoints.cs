@@ -26,7 +26,7 @@ public static class CourseStructureEndpoints
 
     private static async Task<IResult> UpdateCourseAsync(Guid courseId, JsonElement body, HttpContext context, IUpdateCourse useCase, CancellationToken cancellationToken)
     {
-        var output = await useCase.ExecuteAsync(new UpdateCourseInput(WriteContext(courseId, context, body.GetRawText()), CourseChangesRequest.Parse(body, ["title", "description"], false)), cancellationToken);
+        var output = await useCase.ExecuteAsync(new UpdateCourseInput(WriteContext(courseId, context, body.GetRawText()), CourseChangesRequest.Parse(body, ["title", "description", "level"], false)), cancellationToken);
         return Results.Ok(output.Course);
     }
 

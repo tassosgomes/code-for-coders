@@ -70,7 +70,7 @@ describe('authoring video picker', () => {
   it('unknown upstream status cannot appear as a selectable ready video', async () => {
     const user = userEvent.setup(); const boundary = renderPicker(); boundary.setUnknownStatus(true); await open(user);
     expect(await screen.findByText('Não foi possível carregar os vídeos.')).toBeInTheDocument();
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument(); expect(boundary.writes).toHaveLength(0);
+    expect(within(screen.getByRole('dialog')).queryByRole('radio')).not.toBeInTheDocument(); expect(boundary.writes).toHaveLength(0);
   });
 
   it('search without a match offers clear search and cancellation never writes', async () => {

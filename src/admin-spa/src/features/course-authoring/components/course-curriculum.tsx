@@ -7,6 +7,8 @@ import { CourseDiscard } from '@/features/course-authoring/components/course-dis
 import { Link } from 'react-router';
 import { paths } from '@/config/paths';
 import { CoursePublication } from '@/features/course-authoring/components/course-publication';
+import { CourseAudience } from '@/features/course-authoring/components/course-audience';
+import { CourseLevelNotice } from '@/features/course-authoring/components/course-level-notice';
 import { useCourse } from '@/features/course-authoring/api/get-course';
 import type { PublicationPendency } from '@/features/course-authoring/utils/publication-pendencies';
 import { CourseVideoPicker } from '@/features/course-authoring/components/course-video-picker';
@@ -21,6 +23,10 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: 
   const [tab, setTab] = useState<'draft' | 'history'>('draft');
   const editor = useCourseStructure(course);
   const query = useCourse(course.courseId);
+  const chooseLevel = () => {
+    setTab('draft');
+    requestAnimationFrame(() => document.querySelector<HTMLInputElement>('#level-options input:checked')?.focus());
+  };
   const focusPendency = (pendency: PublicationPendency) => {
     if (pendency.moduleId) setCollapsed((current) => { const next = new Set(current); next.delete(pendency.moduleId!); return next; });
     const id = pendency.lessonId ? `aula-${pendency.lessonId}` : pendency.moduleId ? `modulo-${pendency.moduleId}` : 'course-modules';
@@ -52,12 +58,14 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: 
   const moveButton = (label: string, disabled: boolean, action: () => void) => <button type="button" disabled={disabled || editor.busy} title={disabled ? 'Item já está no limite da lista.' : undefined} onClick={action}>{label}</button>;
   return <>
     <div className="course-editor-overview"><div>{children}</div>{canEdit ? <button className="primary-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'course' })}>Editar dados</button> : null}</div>
-    {canEdit ? <CoursePublication course={course} onFocusPendency={focusPendency} onReload={query.refetch} /> : null}
+    {canEdit ? <CoursePublication course={course} onFocusPendency={focusPendency} onChooseLevel={chooseLevel} onReload={query.refetch} /> : null}
     {canEdit ? <CourseDiscard course={course} onReload={query.refetch} /> : null}
     {course.currentVersion ? <Link to={paths.authoringVersion.getHref(course.courseId, course.currentVersion)}>Ver versão vigente</Link> : null}
     <div className="course-filters" role="tablist" aria-label="Conteúdo do curso"><button type="button" role="tab" aria-selected={tab === 'draft'} aria-controls="course-draft-panel" onClick={() => setTab('draft')}>Rascunho</button><button type="button" role="tab" aria-selected={tab === 'history'} aria-controls="course-history-panel" onClick={() => setTab('history')}>Histórico</button></div>
     {tab === 'history' ? <div id="course-history-panel" role="tabpanel" aria-label="Histórico"><CourseHistory courseId={course.courseId} /></div> : null}
     <div id="course-draft-panel" role="tabpanel" aria-label="Rascunho" hidden={tab !== 'draft'}>
+    <CourseLevelNotice course={course} canEdit={canEdit} onChooseLevel={chooseLevel} />
+    <CourseAudience course={course} canEdit={canEdit} />
     <div id="course-modules" tabIndex={-1} className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div>
     <p role="status" aria-live="polite">{editor.notice}</p>
     {editor.error && !editor.editTarget && !editor.removeTarget && !editor.videoTarget ? <p className="inline-alert" role="alert">{editor.error}</p> : null}
