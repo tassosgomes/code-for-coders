@@ -63,11 +63,12 @@
     },
     {
       "id": "CAP-005",
-      "stage": "contract",
+      "stage": "techspec",
       "artifacts": {
         "domain": "domains/conteudo-e-curriculo/domain.md",
         "prd": "tasks/prd-nivel-prerequisito-curso/prd.md",
-        "contract": "tasks/prd-nivel-prerequisito-curso/contracts.md"
+        "contract": "tasks/prd-nivel-prerequisito-curso/contracts.md",
+        "techspec": "tasks/prd-nivel-prerequisito-curso/techspec.md"
       },
       "mvp_order": 4,
       "delivered": [
@@ -235,17 +236,15 @@
   "next_actions": [
     {
       "id": "NA28",
-      "what": "Aprovar tasks/prd-nivel-prerequisito-curso/techspec.draft.md (decisoes locais: message_id no outbox de content, reenvio por flag com marcador, titulo do recomendado da versao vigente, title_search, current_level); depois tasks",
-      "skill": "tsg-flow-techspec-creator",
+      "what": "Tasks do 2o PRD de CAP-005 (tasks/prd-nivel-prerequisito-curso/techspec.md), com EN-01 de design primeiro",
+      "skill": "tsg-flow-task-creator",
       "blocked_by": []
     },
     {
       "id": "NA27",
       "what": "TechSpec do 1o PRD de CAP-003 (tasks/prd-vitrine-oferta) sobre contracts.md 1.0 aprovado, com ADR da assercao bff-student->commerce (OD57); depois da NA28",
       "skill": "tsg-flow-techspec-creator",
-      "blocked_by": [
-        "NA28"
-      ]
+      "blocked_by": []
     }
   ],
   "open_decisions": [
@@ -774,6 +773,14 @@
       "owner": "tasso",
       "decided_at": "2026-09-30",
       "decision": "conteudo.versao-publicada.v1 1.1.0 passa a levar a descricao (<= 5000), revisando a parte sem descricao de C-09 de CAP-005; a pagina publica sai inteira da visao do Catalogo. Descartado: bff-student ler a descricao em learning."
+    },
+    {
+      "id": "OD59",
+      "ref": "tasks/prd-nivel-prerequisito-curso/techspec.md Decisoes Tecnicas",
+      "what": "Decisoes locais da TechSpec de nivel e pre-requisito",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "message_id separado do id no outbox de content; reenvio por flag CatalogInitialLoad:Enabled com marcador de execucao unica, habilitado so apos o consumidor do Catalogo; titulo do recomendado na versao = titulo da versao vigente dele; busca sem acento por coluna title_search (sem unaccent); current_level em courses."
     }
   ]
 }
