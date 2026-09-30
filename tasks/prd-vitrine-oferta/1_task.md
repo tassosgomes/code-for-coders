@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: []
 gate: 'rg -q "^> \*\*Status:\*\* (ASCII aprovado|ASCII e Figma aprovados) pelo responsável em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-catalogo-vitrine.md'
@@ -65,6 +65,6 @@ Figma (2.0) e qualquer código. Fluxos de checkout, pedido e pagamento (`CAP-011
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0).
-- [ ] O documento cobre todas as telas e estados acima, em desktop e mobile 390 px.
-- [ ] O responsável aprovou o ASCII explicitamente.
+- [x] Gate passa (exit 0).
+- [x] O documento cobre todas as telas e estados acima, em desktop e mobile 390 px.
+- [x] O responsável aprovou o ASCII explicitamente.

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["1.0"]
 gate: 'rg -q "^> \*\*Status:\*\* ASCII e Figma aprovados pelo responsável em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-catalogo-vitrine.md'
@@ -42,6 +42,6 @@ Código de tela. Mudança de decisão já fechada no ASCII: se o Figma exigir, v
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0).
-- [ ] Toda tela do ASCII tem frame no Figma, em desktop e mobile, e o documento aponta para eles.
-- [ ] O responsável aprovou o Figma explicitamente.
+- [x] Gate passa (exit 0).
+- [x] Toda tela do ASCII tem frame no Figma, em desktop e mobile, e o documento aponta para eles.
+- [x] O responsável aprovou o Figma explicitamente.
