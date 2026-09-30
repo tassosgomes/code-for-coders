@@ -1,4 +1,5 @@
 using CodeForCoders.Learning.Application.Common;
+using CodeForCoders.Learning.Domain.Entities;
 using CodeForCoders.Learning.Infra.Data.Configuration;
 using CodeForCoders.Learning.Infra.Data.Outbox;
 using Microsoft.EntityFrameworkCore;
@@ -9,12 +10,17 @@ public sealed class LearningDbContext(
     DbContextOptions<LearningDbContext> options,
     ITenantContext tenantContext) : DbContext(options)
 {
+    public DbSet<Course> Courses => Set<Course>();
+    public DbSet<CourseCreationReceipt> CourseCreationReceipts => Set<CourseCreationReceipt>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(LearningSchemas.Content);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LearningDbContext).Assembly);
+        modelBuilder.Entity<Course>().HasQueryFilter(course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CourseCreationReceipt>().HasQueryFilter(receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
             message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
     }

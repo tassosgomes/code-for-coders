@@ -6,7 +6,7 @@ const staffAreas = [
   { label: 'Acessos', permission: 'acesso.gerir', href: paths.staffAccess.getHref() },
   { label: 'Auditoria', role: 'administrador', href: paths.auditTrail.getHref() },
   { label: 'Financeiro', permission: 'financeiro.ler', href: paths.staffFinance.getHref() },
-  { label: 'Autoria', permission: 'autoria.ler' },
+  { label: 'Autoria', permission: 'autoria.ler', href: paths.authoring.getHref() },
   { label: 'Suporte', permission: 'suporte.atender' },
 ] satisfies readonly StaffArea[];
 

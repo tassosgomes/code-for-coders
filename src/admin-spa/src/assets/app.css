@@ -4178,3 +4178,54 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     color:var(--video-foreground);
   }
 }
+
+/* Course authoring follows the approved content area composition. */
+.sidebar-group { display: grid; gap: 8px; }
+.authoring-page { display: grid; gap: 24px; align-content: start; }
+.authoring-page h1, .authoring-page .eyebrow, .authoring-page .page-subtitle { margin: 0; }
+.course-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.course-page-heading .page-subtitle { margin-top: 8px; }
+.course-filters { display: flex; gap: 4px; align-items: center; }
+.course-filters button, .course-draft-tab { padding: 6px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; }
+.course-filters button[aria-pressed=true], .course-draft-tab { background: var(--surface); color: inherit; box-shadow: 0 1px 3px rgb(22 19 31 / 8%); }
+.course-table-wrap { overflow-x: auto; }
+.course-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.course-table th { text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); padding: 16px; }
+.course-table td { padding: 16px; background: var(--surface); border-block: 1px solid var(--border); }
+.course-table td:first-child { border-left: 1px solid var(--border); width: 28%; }
+.course-table td:last-child { border-right: 1px solid var(--border); white-space: nowrap; }
+.course-table td:nth-child(3) { font-size: 12px; color: var(--muted); }
+.course-table a { color: inherit; text-decoration: none; }
+.course-status { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+.course-status svg { flex-shrink: 0; }
+.course-status-draft .role-badge { color: inherit; background: transparent; border: 1px solid var(--border); }
+.course-status-published .role-badge { color: var(--success-soft-foreground, #047857); background: var(--success-soft, #ecfdf5); }
+.course-status-warning .role-badge { color: var(--warning-soft-foreground, #b45309); background: var(--warning-soft, #fffbeb); }
+.course-pagination { display: flex; gap: 12px; align-items: center; color: var(--muted); font-size: 12px; }
+.course-pagination button { min-height: 32px; }
+.course-create-dialog { width: min(520px, calc(100vw - 32px)); }
+.course-dialog-heading { display: flex; gap: 16px; justify-content: space-between; margin-bottom: 24px; }
+.course-dialog-heading h2 { font-size: 20px; margin: 0 0 8px; }
+.course-dialog-heading p { font-size: 14px; color: var(--muted); margin: 0; }
+.text-details-form { display: grid; gap: 12px; }
+.text-details-form label { font-size: 14px; }
+.text-details-form input, .text-details-form textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: inherit; background: var(--surface); font: inherit; }
+.text-details-form textarea { resize: vertical; }
+.text-details-form small { color: var(--muted); font-size: 12px; }
+.course-breadcrumb { display: flex; gap: 8px; color: var(--muted); font-size: 12px; }
+.course-edit-metadata { font-size: 12px; color: var(--muted); margin: 0; }
+.course-curriculum { border: 1px solid var(--border); background: var(--surface); border-radius: 16px; }
+.course-curriculum svg { color: var(--primary); }
+@media (max-width: 640px) {
+  .authoring-page { gap: 24px; }
+  .authoring-page h1 { font-size: 24px; line-height: 30px; }
+  .authoring-page .page-subtitle { font-size: 14px; line-height: 20px; }
+  .course-page-heading { align-items: flex-start; flex-direction: column; }
+  .course-table, .course-table tbody { display: block; }
+  .course-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .course-table tr { display: grid; gap: 16px; padding: 16px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+  .course-table td, .course-table td:first-child, .course-table td:last-child { display: block; width: auto; padding: 0; border: 0; background: transparent; }
+  .course-table td:last-child a { display: inline-flex; align-items: center; min-height: 32px; padding-inline: 12px; font-size: 12px; }
+  .course-status .role-badge { white-space: normal; }
+  .course-create-dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+}

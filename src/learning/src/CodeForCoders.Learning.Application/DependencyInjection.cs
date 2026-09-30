@@ -11,6 +11,8 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.AddScoped<IValidator<UseCases.Courses.CreateCourse.CreateCourseInput>, UseCases.Courses.CreateCourse.CreateCourseInputValidator>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()

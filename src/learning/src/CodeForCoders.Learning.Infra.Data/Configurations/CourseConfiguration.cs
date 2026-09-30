@@ -1,0 +1,28 @@
+using CodeForCoders.Learning.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace CodeForCoders.Learning.Infra.Data.Configurations;
+
+public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
+{
+    public void Configure(EntityTypeBuilder<Course> builder)
+    {
+        builder.ToTable("courses", "content");
+        builder.HasKey(course => course.Id);
+        builder.Property(course => course.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(course => course.TenantId).HasColumnName("tenant_id");
+        builder.Property(course => course.Title).HasColumnName("title").HasMaxLength(200);
+        builder.Property(course => course.Description).HasColumnName("description").HasMaxLength(5000);
+        builder.Property(course => course.DraftRevision).HasColumnName("draft_revision");
+        builder.Property(course => course.CurrentVersion).HasColumnName("current_version");
+        builder.Property(course => course.HasUnpublishedChanges).HasColumnName("has_unpublished_changes");
+        builder.Property(course => course.CreatedById).HasColumnName("created_by_id");
+        builder.Property(course => course.CreatedByName).HasColumnName("created_by_name").HasMaxLength(200);
+        builder.Property(course => course.CreatedAt).HasColumnName("created_at");
+        builder.Property(course => course.LastEditedById).HasColumnName("last_edited_by_id");
+        builder.Property(course => course.LastEditedByName).HasColumnName("last_edited_by_name").HasMaxLength(200);
+        builder.Property(course => course.LastEditedAt).HasColumnName("last_edited_at");
+        builder.HasIndex(course => new { course.TenantId, course.LastEditedAt, course.Id });
+    }
+}

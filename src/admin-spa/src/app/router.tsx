@@ -17,6 +17,9 @@ import { AuditTrailRoute } from '@/app/routes/audit-trail-route';
 import { AuditRecordDetailRoute } from '@/app/routes/audit-record-detail-route';
 import { AuditTrailScreen } from '@/features/audit-trail/components/audit-trail-screen';
 
+import { AuthoringCoursesRoute } from '@/app/routes/authoring-courses-route';
+import { AuthoringCourseRoute } from '@/app/routes/authoring-course-route';
+
 const routes: RouteObject[] = [
   {
     path: paths.home.path,
@@ -28,6 +31,8 @@ const routes: RouteObject[] = [
       { index: true, element: <DashboardRoute /> },
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
       { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
+      { path: paths.authoring.path.slice(1), element: <AuthoringCoursesRoute /> },
+      { path: paths.authoringCourse.path.slice(1), element: <AuthoringCourseRoute /> },
       { path: paths.videos.path.slice(1), element: <VideosAreaRoute /> },
       {
         path: paths.auditTrail.path.slice(1),

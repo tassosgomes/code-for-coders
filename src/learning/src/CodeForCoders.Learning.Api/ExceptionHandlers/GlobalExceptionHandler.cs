@@ -27,7 +27,7 @@ public sealed class GlobalExceptionHandler(
                 "/problems/not-found",
                 "Resource not found",
                 exception.Message),
-            EntityValidationException or RelatedAggregateException => (
+            CourseRuleException or EntityValidationException or RelatedAggregateException => (
                 StatusCodes.Status422UnprocessableEntity,
                 "/problems/business-rule-violation",
                 "Business rule violation",
@@ -56,6 +56,15 @@ public sealed class GlobalExceptionHandler(
             Detail = detail,
             Instance = httpContext.Request.Path,
         };
+        problemDetails.Extensions["code"] = exception switch
+        {
+            CourseRuleException rule => rule.Code,
+            NotFoundException => "COURSE_NOT_FOUND",
+            ValidationException => "INVALID_REQUEST",
+            _ => "UNEXPECTED_ERROR",
+        };
+        if (exception is CourseRuleException { Code: "TITLE_REQUIRED" })
+            problemDetails.Extensions["errors"] = new Dictionary<string, string[]> { ["title"] = ["Informe o título do curso."] };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
         if (exception is ValidationException validationException)

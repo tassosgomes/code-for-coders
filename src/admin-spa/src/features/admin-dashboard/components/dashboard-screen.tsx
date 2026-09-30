@@ -1,4 +1,4 @@
-import { ArrowRight, Clapperboard, ScrollText, Users, Wallet } from 'lucide-react';
+import { ArrowRight, BookOpen, Clapperboard, ScrollText, Users, Wallet } from 'lucide-react';
 import { Link } from 'react-router';
 
 import type { StaffArea } from '@/types/staff-area';
@@ -20,6 +20,7 @@ export const DashboardScreen = ({ areas = [], name = '', roles = [] }: Dashboard
     {linkedAreas.length ? <div className="area-grid">{linkedAreas.map((area) => <article className={area.permission === 'midia.enviar' ? 'area-card videos-area-card' : 'area-card'} key={area.permission ?? area.role ?? area.label}>
       <span className="area-icon">{area.permission === 'financeiro.ler'
         ? <Wallet size={22} />
+        : area.permission === 'autoria.ler' ? <BookOpen size={24} />
         : area.permission === 'midia.enviar'
           ? <Clapperboard size={24} />
           : area.role === 'administrador'
@@ -28,6 +29,7 @@ export const DashboardScreen = ({ areas = [], name = '', roles = [] }: Dashboard
       <h2>{area.label}</h2>
       <p>{area.permission === 'acesso.gerir'
         ? 'Convide pessoas e ajuste os papéis da equipe.'
+        : area.permission === 'autoria.ler' ? 'Monte o currículo e publique os cursos da escola.'
         : area.permission === 'midia.enviar'
           ? 'Envie as gravações das aulas e acompanhe a preparação.'
           : area.role === 'administrador'

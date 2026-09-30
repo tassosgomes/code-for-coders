@@ -14,6 +14,9 @@ public static class PipelineExtensions
         }
 
         app.UseRouting();
+        app.UseAuthentication();
+        app.UseMiddleware<CodeForCoders.Learning.Api.Security.TenantContextMiddleware>();
+        app.UseAuthorization();
         return app;
     }
 }
