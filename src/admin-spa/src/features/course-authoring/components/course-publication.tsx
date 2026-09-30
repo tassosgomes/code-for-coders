@@ -28,20 +28,20 @@ export const CoursePublication = ({ course, onFocusPendency, onReload }: CourseP
         if (parsed.success) setPendencies(parsed.data);
         setError('O curso ainda tem pendências. Revise os itens abaixo.');
       } else if (problem?.code === 'DRAFT_CHANGED') {
-        setChanged(true); setIntent(null); setError('O rascunho mudou. Recarregue e confira antes de publicar.');
+        setChanged(true); setIntent(null); await onReload(); setError('O rascunho mudou. Recarregue e confira antes de publicar.');
       } else setError('Não foi possível publicar. Sua nota foi mantida. Tente novamente.');
     }
   };
   const reload = async () => { await onReload(); setConfirmation(null); };
   return <>
-    {!course.currentVersion ? <button type="button" className="primary-button" onClick={open}>Publicar</button> : null}
+    {!course.currentVersion || course.hasUnpublishedChanges ? <button type="button" className="primary-button" onClick={open}>{course.currentVersion ? 'Publicar nova versão' : 'Publicar'}</button> : null}
     {publish.data ? <p className="inline-alert" role="status">Versão {publish.data.versionNumber} publicada por {publish.data.publishedBy.name} em <time dateTime={publish.data.publishedAt}>{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(publish.data.publishedAt))}</time>. A propagação para outros serviços pode levar alguns instantes.</p> : null}
-    {confirmation ? <Dialog title={pendencies.length ? 'Antes de publicar' : 'Publicar versão 1'} description="Confira o currículo. Esta versão será um retrato imutável do curso." busy={publish.isPending} onClose={() => setConfirmation(null)}>
+    {confirmation ? <Dialog title={pendencies.length ? 'Antes de publicar' : `Publicar versão ${(confirmation.currentVersion ?? 0) + 1}`} description="Confira o currículo. Esta versão será um retrato imutável do curso." busy={publish.isPending} onClose={() => setConfirmation(null)}>
       <p>{confirmation.title} · {confirmation.modules.length} módulos · {confirmation.modules.reduce((count, module) => count + module.lessons.length, 0)} aulas · Revisão {confirmation.draftRevision}</p>
       {error ? <p role="alert" className="inline-alert">{error}</p> : null}
       {pendencies.length ? <><p role="alert">Resolva estas pendências antes de publicar.</p><ul>{pendencies.map((pendency, index) => <li key={`${pendency.code}-${index}`}><button type="button" className="text-button" onClick={() => { setConfirmation(null); onFocusPendency(pendency); }}>{pendencyLabel(pendency, confirmation)}</button></li>)}</ul><button type="button" className="outline-button" onClick={() => setConfirmation(null)}>Voltar ao rascunho</button></>
         : changed ? <button type="button" className="primary-button" onClick={() => void reload()}>Recarregar rascunho</button>
-          : <RevisionNoteForm schema={publishCourseInputSchema} revision={confirmation.draftRevision} busy={publish.isPending} onSubmit={submit} onCancel={() => setConfirmation(null)} />}
+          : <RevisionNoteForm schema={publishCourseInputSchema} revision={confirmation.draftRevision} versionNumber={(confirmation.currentVersion ?? 0) + 1} busy={publish.isPending} onSubmit={submit} onCancel={() => setConfirmation(null)} />}
     </Dialog> : null}
   </>;
 };

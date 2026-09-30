@@ -12,20 +12,24 @@ namespace CodeForCoders.Learning.Application.UseCases.Courses.Common;
 
 public sealed class CourseEditSession(
     ICourseRepository courses, ICourseEditStore edits,
-    IUnitOfWork unitOfWork, IValidator<CourseWriteContext> validator, TimeProvider timeProvider, IReadyVideoQueries videos)
+    IUnitOfWork unitOfWork, IValidator<CourseWriteContext> validator, TimeProvider timeProvider, IReadyVideoQueries videos, ICourseVersionStore versions)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public Task<CourseEditOutput> ExecuteAsync(CourseWriteContext input, string operation,
         Func<Course, Guid?> edit, CancellationToken cancellationToken)
+        => ExecuteCoreAsync(input, operation, (course, _) => Task.FromResult(edit(course)), null, cancellationToken);
+
+    public Task<CourseEditOutput> ExecuteAsync(CourseWriteContext input, string operation,
+        Func<Course, CancellationToken, Task<Guid?>> edit, CancellationToken cancellationToken)
         => ExecuteCoreAsync(input, operation, edit, null, cancellationToken);
 
     public Task<CourseEditOutput> ExecuteWithVideoAsync(CourseWriteContext input, string operation,
         Func<Course, Guid?> edit, CourseChanges changes, CancellationToken cancellationToken)
-        => ExecuteCoreAsync(input, operation, edit, changes.VideoId, cancellationToken);
+        => ExecuteCoreAsync(input, operation, (course, _) => Task.FromResult(edit(course)), changes.VideoId, cancellationToken);
 
     private async Task<CourseEditOutput> ExecuteCoreAsync(CourseWriteContext input, string operation,
-        Func<Course, Guid?> edit, Guid? videoId, CancellationToken cancellationToken)
+        Func<Course, CancellationToken, Task<Guid?>> edit, Guid? videoId, CancellationToken cancellationToken)
     {
         await validator.ValidateAndThrowAsync(input, cancellationToken);
         await using var transaction = await edits.LockAsync(input.CourseId, cancellationToken);
@@ -43,7 +47,12 @@ public sealed class CourseEditSession(
         }
         if (videoId.HasValue && !await videos.IsReadyAsync(videoId.Value, cancellationToken))
             throw new CourseRuleException("VIDEO_NOT_AVAILABLE");
-        var createdId = edit(course!);
+        if (course!.CurrentVersion.HasValue && course.PublishedFingerprint is null)
+        {
+            var current = await versions.GetAsync(course.Id, course.CurrentVersion.Value, cancellationToken);
+            if (current is not null) course.EnsurePublishedFingerprint(current);
+        }
+        var createdId = await edit(course, cancellationToken);
         course!.RecordEdit(new CourseCreation(input.TenantId, input.ActorId, input.ActorName, course.Title, course.Description, now));
         var output = new CourseEditOutput(CourseDetailOutput.FromCourse(course), createdId);
         if (receipt is null) { receipt = CourseEditReceipt.Create(input.TenantId, input.ActorId, key); edits.Add(receipt); }

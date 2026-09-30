@@ -10,7 +10,10 @@ no BFF. `COURSE_AUTHORING_ENABLED` continua false por padrão nos dois Compose.
    deve ser aplicada nela antes da liberação. O teste `CoursePublicationTests` mede e entrega
    o payload no limite por RabbitMQ real com esse mesmo teto.
 2. Gerar/aplicar migrations somente pelo EF. Nesta entrega, aplicar `AddCoursePublication` e `AddContentPublicationOutbox` em
-   Learning e `AddCourseReferences` em Media. Audit não teve mudança de modelo. Seguir o step
+   Learning e `AddCourseReferences` em Media. Para histórico e descarte, aplicar também
+   `AddPublishedContentFingerprint` em Learning antes de atualizar a API. Cursos já publicados
+   recuperam a impressão do snapshot vigente na primeira edição após a atualização.
+   Audit não teve mudança de modelo. Seguir o step
    de migration de `docs/student-registration-local-development.md` ou
    `scripts/remote-infra.sh migrate` no ambiente remoto; APIs não migram no boot.
 3. Iniciar Audit e o papel worker de Media. Conferir os bindings
@@ -32,6 +35,15 @@ no BFF. `COURSE_AUTHORING_ENABLED` continua false por padrão nos dois Compose.
    atraso do outbox de Learning e filas `media.course-publications.dlq` / `audit.acts.dlq`.
    Readiness de Media acusa ausência de consumidor ou DLQ com mensagens. Recuperação preserva
    tenant, eventId e versionNumber; duplicata/versão anterior não muda a projeção.
+8. Publicar um currículo com duas aulas, remover uma no rascunho e confirmar uma nova publicação.
+   O histórico deve listar v2 vigente e v1 anterior com autor, momento e nota. Abrir e atualizar
+   `/admin/autoria/{courseId}/versoes/1` deve manter o retrato original, com as duas aulas e sem
+   controles de edição. Media deve manter apenas as referências da v2, inclusive após reentrega
+   do fato v1; Auditoria deve ter os dois atos conformes.
+9. Editar e retornar ao conteúdo anterior deve retirar “alterações não publicadas”, mesmo com
+   revisão maior. Editar novamente e confirmar descarte deve restaurar a vigente, preservando
+   IDs e incrementando revisão. Uma revisão desatualizada recebe `DRAFT_CHANGED`; a tela atualiza
+   o curso e exige confirmação nova. Curso nunca publicado recusa descarte.
 
 Não registrar nota, título, nome, token ou payload em logs, métricas ou erros. O payload do fato
 contém somente IDs, títulos do currículo e metadados de publicação; descrição/nota ficam no

@@ -17,6 +17,7 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(course => course.DraftRevision).HasColumnName("draft_revision");
         builder.Property(course => course.CurrentVersion).HasColumnName("current_version");
         builder.Property(course => course.HasUnpublishedChanges).HasColumnName("has_unpublished_changes");
+        builder.Property(course => course.PublishedFingerprint).HasColumnName("published_fingerprint").HasMaxLength(64);
         builder.Property(course => course.CreatedById).HasColumnName("created_by_id");
         builder.Property(course => course.CreatedByName).HasColumnName("created_by_name").HasMaxLength(200);
         builder.Property(course => course.CreatedAt).HasColumnName("created_at");

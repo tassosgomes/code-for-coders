@@ -5,4 +5,6 @@ namespace CodeForCoders.Learning.Application.Interfaces;
 public interface ICourseVersionStore
 {
     void Add(CourseVersion version);
+    Task<CourseVersion?> GetAsync(Guid courseId, int versionNumber, CancellationToken cancellationToken);
+    Task<CourseVersionSummaryPage> ListAsync(Guid courseId, int currentVersion, int page, int size, CancellationToken cancellationToken);
 }

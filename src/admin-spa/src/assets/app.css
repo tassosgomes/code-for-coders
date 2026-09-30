@@ -4187,7 +4187,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-page-heading .page-subtitle { margin-top: 8px; }
 .course-filters { display: flex; gap: 4px; align-items: center; }
 .course-filters button, .course-draft-tab { padding: 6px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; }
-.course-filters button[aria-pressed=true], .course-draft-tab { background: var(--surface); color: inherit; box-shadow: 0 1px 3px rgb(22 19 31 / 8%); }
+.course-filters button[aria-pressed=true], .course-filters button[aria-selected=true], .course-draft-tab { background: var(--surface); color: inherit; box-shadow: 0 1px 3px rgb(22 19 31 / 8%); }
 .course-table-wrap { overflow-x: auto; }
 .course-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .course-table th { text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); padding: 16px; }
@@ -4273,3 +4273,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .course-video-sheet .dialog-card { width: 100%; max-height: 90dvh; border-radius: 1rem 1rem 0 0; }
   .course-video-sheet .dialog-actions { flex-wrap: wrap; }
 }
+
+.course-history-list { list-style: none; padding: 0; }
+.course-history-item, .course-version-module { padding: 16px; overflow-wrap: anywhere; }

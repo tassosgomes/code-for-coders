@@ -28,7 +28,12 @@ public sealed class CourseAuthoringClient(HttpClient httpClient) : ICourseAuthor
                     var references = await response.Content.ReadFromJsonAsync<CourseReferencePage>(cancellationToken);
                     return references is null ? Unavailable(502) : new((int)response.StatusCode, null, null, null, null, References: references);
                 }
-                if (input.Path.EndsWith("/versions", StringComparison.Ordinal) && input.Method == "POST")
+                if (input.Path.Contains("/versions?", StringComparison.Ordinal))
+                {
+                    var versions = await response.Content.ReadFromJsonAsync<CourseVersionSummaryPage>(cancellationToken);
+                    return versions is null ? Unavailable(502) : new((int)response.StatusCode, null, null, null, null, Versions: versions);
+                }
+                if (input.Path.Contains("/versions/", StringComparison.Ordinal) || (input.Path.EndsWith("/versions", StringComparison.Ordinal) && input.Method == "POST"))
                 {
                     var version = await response.Content.ReadFromJsonAsync<CourseVersion>(cancellationToken);
                     return version is null ? Unavailable(502) : new((int)response.StatusCode, null, null, null, null, response.Headers.Location?.OriginalString, version);

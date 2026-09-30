@@ -10,6 +10,8 @@ public sealed class CourseModule
     public List<CourseLesson> Lessons { get; private set; } = [];
 
     internal static CourseModule Create(Guid courseId, string title) => new() { Id = Guid.CreateVersion7(), CourseId = courseId, Title = title.Trim() };
+    internal static CourseModule Restore(Guid courseId, PublishedModule module)
+        => new() { Id = module.ModuleId, CourseId = courseId, Title = module.Title, Position = module.Position };
     internal void Rename(string title) => Title = title.Trim();
     internal void SetPosition(int position) => Position = position;
     internal void RenumberLessons()

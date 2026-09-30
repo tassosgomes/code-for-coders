@@ -14,6 +14,9 @@ public static class CourseAuthoringEndpoints
         group.MapGet("/{courseId:guid}", GetAsync);
         group.MapPost("", CreateAsync);
         group.MapPost("/{courseId:guid}/versions", PublishAsync);
+        group.MapGet("/{courseId:guid}/versions", ListVersionsAsync);
+        group.MapGet("/{courseId:guid}/versions/{versionNumber:int}", GetVersionAsync);
+        group.MapPost("/{courseId:guid}/discard-draft", DiscardAsync);
         group.MapPatch("/{courseId:guid}", UpdateCourseAsync);
         group.MapPost("/{courseId:guid}/modules", CreateModuleAsync);
         group.MapPatch("/{courseId:guid}/modules/{moduleId:guid}", UpdateModuleAsync);
@@ -23,6 +26,21 @@ public static class CourseAuthoringEndpoints
         group.MapDelete("/{courseId:guid}/lessons/{lessonId:guid}", DeleteLessonAsync);
 
     }
+
+    private static Task<IResult> GetVersionAsync(Guid courseId, int versionNumber, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}/versions/{versionNumber}", null), context, identity, learning, cancellationToken);
+
+    private static async Task<IResult> ListVersionsAsync(Guid courseId, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourseAuthoringClient learning, CancellationToken cancellationToken, int _page = 1, int _size = 20)
+    {
+        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue) return Problem(400, "INVALID_REQUEST");
+        return await SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}/versions?_page={_page}&_size={_size}", null), context, identity, learning, cancellationToken);
+    }
+
+    private static Task<IResult> DiscardAsync(Guid courseId, JsonElement body, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}/discard-draft", body, "POST"), context, identity, learning, cancellationToken);
 
     private static async Task<IResult> ListAsync(HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken, int _page = 1, int _size = 20, string? status = null)
@@ -93,6 +111,8 @@ public static class CourseAuthoringEndpoints
         if (result.Status == 201 && result.Course is not null)
             return Results.Created(result.Location?.Replace("/internal/v1", "/api/v1", StringComparison.Ordinal) ?? $"/api/v1/courses/{result.Course.CourseId:D}", result.Course);
         if (result.Status == 200 && result.Page is not null) return Results.Ok(result.Page);
+        if (result.Status == 200 && result.Version is not null) return Results.Ok(result.Version);
+        if (result.Status == 200 && result.Versions is not null) return Results.Ok(result.Versions);
         if (result.Status == 200 && result.Course is not null)
             return Results.Ok(videos is null ? result.Course : await videos.EnrichAsync(result.Course, session.IdentitySessionId, cancellationToken));
         return Problem(result.Status, result.Code ?? "LEARNING_UNAVAILABLE", result.Errors, result.Pendencies);

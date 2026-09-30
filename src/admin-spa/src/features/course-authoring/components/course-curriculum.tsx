@@ -2,6 +2,10 @@ import { useRef, useState, type ReactNode } from 'react';
 import { BookOpen, GripVertical } from 'lucide-react';
 
 import { Dialog } from '@/components/ui/dialog';
+import { CourseHistory } from '@/features/course-authoring/components/course-history';
+import { CourseDiscard } from '@/features/course-authoring/components/course-discard';
+import { Link } from 'react-router';
+import { paths } from '@/config/paths';
 import { CoursePublication } from '@/features/course-authoring/components/course-publication';
 import { useCourse } from '@/features/course-authoring/api/get-course';
 import type { PublicationPendency } from '@/features/course-authoring/utils/publication-pendencies';
@@ -14,6 +18,7 @@ import type { Course, CourseLesson, CourseModule } from '@/features/course-autho
 type CourseCurriculumProps = { course: Course; canEdit: boolean; canChooseVideo: boolean; children: ReactNode };
 type DraggedItem = { kind: 'module' | 'lesson'; id: string };
 export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: CourseCurriculumProps) => {
+  const [tab, setTab] = useState<'draft' | 'history'>('draft');
   const editor = useCourseStructure(course);
   const query = useCourse(course.courseId);
   const focusPendency = (pendency: PublicationPendency) => {
@@ -48,7 +53,11 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: 
   return <>
     <div className="course-editor-overview"><div>{children}</div>{canEdit ? <button className="primary-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'course' })}>Editar dados</button> : null}</div>
     {canEdit ? <CoursePublication course={course} onFocusPendency={focusPendency} onReload={query.refetch} /> : null}
-    <div className="course-filters"><span className="course-draft-tab">Rascunho</span></div>
+    {canEdit ? <CourseDiscard course={course} onReload={query.refetch} /> : null}
+    {course.currentVersion ? <Link to={paths.authoringVersion.getHref(course.courseId, course.currentVersion)}>Ver versão vigente</Link> : null}
+    <div className="course-filters" role="tablist" aria-label="Conteúdo do curso"><button type="button" role="tab" aria-selected={tab === 'draft'} aria-controls="course-draft-panel" onClick={() => setTab('draft')}>Rascunho</button><button type="button" role="tab" aria-selected={tab === 'history'} aria-controls="course-history-panel" onClick={() => setTab('history')}>Histórico</button></div>
+    {tab === 'history' ? <div id="course-history-panel" role="tabpanel" aria-label="Histórico"><CourseHistory courseId={course.courseId} /></div> : null}
+    <div id="course-draft-panel" role="tabpanel" aria-label="Rascunho" hidden={tab !== 'draft'}>
     <div id="course-modules" tabIndex={-1} className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div>
     <p role="status" aria-live="polite">{editor.notice}</p>
     {editor.error && !editor.editTarget && !editor.removeTarget && !editor.videoTarget ? <p className="inline-alert" role="alert">{editor.error}</p> : null}
@@ -85,6 +94,7 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children }: 
           </article>)}
         </div>
       </section>)}
+    </div>
     </div>
     {editor.videoTarget ? <CourseVideoPicker lesson={editor.videoTarget} busy={editor.busy} error={editor.error} onClose={editor.closeVideo} onSave={(videoId) => editor.editLesson(editor.videoTarget!.lessonId, { videoId })} /> : null}
     {editor.editTarget ? <CourseEditDialog target={editor.editTarget} course={course} busy={editor.busy} error={editor.error} onClose={editor.closeEdit} onSubmit={editor.saveDetails} /> : null}

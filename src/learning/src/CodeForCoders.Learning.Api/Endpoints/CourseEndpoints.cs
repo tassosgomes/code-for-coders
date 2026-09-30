@@ -6,6 +6,9 @@ using CodeForCoders.Learning.Application.Interfaces;
 using CodeForCoders.Learning.Application.UseCases.Courses.CreateCourse;
 using CodeForCoders.Learning.Application.UseCases.Courses.GetCourse;
 using CodeForCoders.Learning.Application.UseCases.Courses.ListCourses;
+using CodeForCoders.Learning.Application.UseCases.Courses.DiscardCourseDraft;
+using CodeForCoders.Learning.Application.UseCases.Courses.GetCourseVersion;
+using CodeForCoders.Learning.Application.UseCases.Courses.ListCourseVersions;
 
 namespace CodeForCoders.Learning.Api.Endpoints;
 
@@ -20,6 +23,23 @@ public static class CourseEndpoints
         group.MapPost("", CreateAsync).RequireAuthorization(LearningAuthorization.Edit);
         group.MapCourseStructureEndpoints();
         group.MapPost("/{courseId:guid}/versions", PublishAsync).RequireAuthorization(LearningAuthorization.Edit);
+        group.MapGet("/{courseId:guid}/versions", ListVersionsAsync).RequireAuthorization(LearningAuthorization.Read);
+        group.MapGet("/{courseId:guid}/versions/{versionNumber:int}", GetVersionAsync).RequireAuthorization(LearningAuthorization.Read);
+        group.MapPost("/{courseId:guid}/discard-draft", DiscardAsync).RequireAuthorization(LearningAuthorization.Edit);
+    }
+
+    private static async Task<IResult> ListVersionsAsync(Guid courseId, IListCourseVersions useCase, CancellationToken cancellationToken, int _page = 1, int _size = 20)
+        => Results.Ok(await useCase.ExecuteAsync(new(courseId, _page, _size), cancellationToken));
+
+    private static async Task<IResult> GetVersionAsync(Guid courseId, int versionNumber, IGetCourseVersion useCase, CancellationToken cancellationToken)
+        => Results.Ok(await useCase.ExecuteAsync(new(courseId, versionNumber), cancellationToken));
+
+    private static async Task<IResult> DiscardAsync(Guid courseId, DiscardCourseDraftRequest request, HttpContext context, IDiscardCourseDraft useCase, CancellationToken cancellationToken)
+    {
+        var write = new CourseWriteContext(courseId, Guid.Parse(context.User.FindFirst("tenantId")!.Value),
+            Guid.Parse(context.User.FindFirst("sub")!.Value), context.Request.Headers["X-Actor-Name"].ToString(),
+            context.Request.Headers["Idempotency-Key"].ToString(), System.Text.Json.JsonSerializer.Serialize(request));
+        return Results.Ok(await useCase.ExecuteAsync(new(write, request.DraftRevision), cancellationToken));
     }
 
     private static async Task<IResult> ResolveAsync(CourseReferenceRequest request, IResolveCourseReferences useCase, CancellationToken cancellationToken)

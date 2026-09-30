@@ -19,5 +19,19 @@ public sealed class CourseLesson
         if (changes.HasVideoId) VideoId = changes.VideoId;
     }
     internal void MoveTo(Guid moduleId) => ModuleId = moduleId;
+    internal static CourseLesson Restore(Guid moduleId, PublishedLesson snapshot)
+    {
+        var lesson = new CourseLesson { Id = snapshot.LessonId };
+        lesson.RestoreContent(moduleId, snapshot);
+        return lesson;
+    }
+    internal void RestoreContent(Guid moduleId, PublishedLesson snapshot)
+    {
+        ModuleId = moduleId;
+        Title = snapshot.Title;
+        Description = snapshot.Description;
+        Position = snapshot.Position;
+        VideoId = snapshot.VideoId;
+    }
     internal void SetPosition(int position) => Position = position;
 }

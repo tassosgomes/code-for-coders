@@ -15,6 +15,7 @@ public sealed class Course
     public int DraftRevision { get; private set; }
     public int? CurrentVersion { get; private set; }
     public bool HasUnpublishedChanges { get; private set; }
+    public string? PublishedFingerprint { get; private set; }
     public Guid CreatedById { get; private set; }
     public string CreatedByName { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; private set; }
@@ -125,7 +126,35 @@ public sealed class Course
         LastEditedByName = actor.ActorName;
         LastEditedAt = actor.Now;
         DraftRevision++;
-        HasUnpublishedChanges = CurrentVersion.HasValue;
+        HasUnpublishedChanges = CurrentVersion.HasValue && CourseContentFingerprint.FromCourse(this) != PublishedFingerprint;
+    }
+
+    public void EnsurePublishedFingerprint(CourseVersion version)
+        => PublishedFingerprint ??= CourseContentFingerprint.FromVersion(version);
+
+    public void DiscardDraft(int revision, CourseVersion version)
+    {
+        if (revision != DraftRevision) throw new DraftChangedException();
+        Title = version.Title;
+        Description = version.Description;
+        var modules = Modules.ToDictionary(module => module.Id);
+        var lessons = Modules.SelectMany(module => module.Lessons).ToDictionary(lesson => lesson.Id);
+        foreach (var module in Modules) module.Lessons.Clear();
+        Modules.Clear();
+        foreach (var snapshot in version.Modules.OrderBy(module => module.Position))
+        {
+            var module = modules.GetValueOrDefault(snapshot.ModuleId) ?? CourseModule.Restore(Id, snapshot);
+            module.Rename(snapshot.Title);
+            module.SetPosition(snapshot.Position);
+            foreach (var item in snapshot.Lessons.OrderBy(lesson => lesson.Position))
+            {
+                var lesson = lessons.GetValueOrDefault(item.LessonId) ?? CourseLesson.Restore(module.Id, item);
+                lesson.RestoreContent(module.Id, item);
+                module.Lessons.Add(lesson);
+            }
+            Modules.Add(module);
+        }
+        PublishedFingerprint = CourseContentFingerprint.FromVersion(version);
     }
 
     public CourseVersion Publish(CoursePublication input)
@@ -144,6 +173,7 @@ public sealed class Course
         if (pendencies.Count > 0) throw new CourseIncompleteException(pendencies);
         var version = CourseVersion.Create(this, input, (CurrentVersion ?? 0) + 1);
         CurrentVersion = version.VersionNumber;
+        PublishedFingerprint = CourseContentFingerprint.FromCourse(this);
         HasUnpublishedChanges = false;
         return version;
     }
