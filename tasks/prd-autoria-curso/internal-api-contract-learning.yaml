@@ -1,0 +1,1676 @@
+openapi: 3.1.0
+info:
+  title: Learning — autoria de cursos (interno)
+  version: 1.0.0
+  description: 'Recorte interno do primeiro PRD de CAP-005, `tasks/prd-autoria-curso/prd.md` v1.0. Consumidor único conhecido:
+    `bff-admin`. `learning` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity,
+    emissor `identity`, audiência `learning`, validade) e exige `autoria.ler` nas leituras e `autoria.editar` nas escritas
+    no claim `permissions`, sem consultar Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token.
+    As operações de autoria espelham 1:1 o contrato público (`api-contract.yaml` 1.0.0); diferenças: sem cookie nem CSRF,
+    401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, sem 502/504, header `X-Actor-Name` nas escritas (C-04), e o vídeo da
+    aula só com `videoId` (o BFF enriquece, C-05). Acrescenta `resolveCourseReferencesInternal`, para a consulta da trilha
+    de auditoria (C-08).'
+  contact:
+    name: Time de Conteúdo e Currículo
+servers:
+- url: /internal/v1
+  description: Rota privada de learning, inacessível ao navegador
+tags:
+- name: Cursos
+  description: Lista, criação, dados do curso e exclusão de rascunho (RF-02, RF-05, RF-09)
+- name: Estrutura
+  description: Módulos e aulas no rascunho, com vínculo de vídeo (RF-03, RF-04)
+- name: Publicação
+  description: Publicar, republicar, descartar alterações e histórico de versões (RF-06 a RF-08)
+- name: Auditoria
+  description: Identificação legível do curso na trilha (C-08)
+paths:
+  /courses:
+    get:
+      tags:
+      - Cursos
+      summary: Listar os cursos da escola
+      description: 'Todos os cursos da escola do ator, de todos os autores (RN-C03), ordenados pela última edição, mais recente
+        primeiro. Curso de outra escola nunca aparece. `status` distingue rascunho nunca publicado de publicado; `hasUnpublishedChanges`
+        indica rascunho diferente da versão vigente (RF-05).
+
+        '
+      operationId: listCoursesInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      - name: status
+        in: query
+        required: false
+        description: Filtra por estado do curso.
+        schema:
+          $ref: '#/components/schemas/CourseStatus'
+      responses:
+        '200':
+          description: Página de cursos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSummaryPage'
+              examples:
+                pagina:
+                  value:
+                    data:
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      title: .NET do zero à API
+                      status: published
+                      currentVersion: 2
+                      hasUnpublishedChanges: true
+                      lastEditedAt: '2026-10-05T13:20:00Z'
+                      lastEditedBy:
+                        name: Marina Alves
+                    - courseId: 2a3b4c5d-6e7f-4a81-9b2c-3d4e5f6a7b8c
+                      title: Testes automatizados na prática
+                      status: draft
+                      currentVersion: null
+                      hasUnpublishedChanges: false
+                      lastEditedAt: '2026-10-04T18:02:00Z'
+                      lastEditedBy:
+                        name: Rafael Souza
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+    post:
+      tags:
+      - Cursos
+      summary: Criar curso
+      description: 'Cria o curso em rascunho, da escola do ator, com o ator como autor original (RF-02, RN-C02). Nenhum campo
+        comercial existe aqui: preço, nível e pré-requisito são da oferta (RN-C14).
+
+        '
+      operationId: createCourseInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourseRequest'
+            examples:
+              novo:
+                value:
+                  title: .NET do zero à API
+                  description: Do primeiro projeto de console a uma API com testes e banco de dados.
+      responses:
+        '201':
+          description: Curso criado em rascunho.
+          headers:
+            Location:
+              description: Endereço do curso criado.
+              schema:
+                type: string
+                examples:
+                - /internal/v1/courses/6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                rascunho:
+                  $ref: '#/components/examples/CourseDraftEmpty'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '422':
+          $ref: '#/components/responses/InvalidContent'
+  /courses/{courseId}:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    get:
+      tags:
+      - Cursos
+      summary: Abrir o curso no editor
+      description: 'Dados do curso, estrutura do rascunho em ordem (RN-C01), versão vigente e revisão do rascunho (C-03).
+        O vídeo da aula traz só `videoId`: título e duração são de Media, e quem os acrescenta é o BFF (C-05).'
+      operationId: getCourseInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '200':
+          description: Curso encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+      parameters: []
+    patch:
+      tags:
+      - Cursos
+      summary: Alterar título ou descrição do curso
+      description: 'Altera o rascunho; num curso publicado, o aluno só vê a mudança depois de republicar (RN-C05). Campo ausente
+        não muda.
+
+        '
+      operationId: updateCourseInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCourseRequest'
+            examples:
+              titulo:
+                value:
+                  title: .NET do zero à API — 2ª edição
+      responses:
+        '200':
+          description: Rascunho atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidContent'
+    delete:
+      tags:
+      - Cursos
+      summary: Excluir curso nunca publicado
+      description: 'Só curso sem nenhuma versão publicada (RF-09, OD45). Não é ato administrativo e não gera fato. Repetir
+        a exclusão com a mesma `Idempotency-Key` devolve 204.
+
+        '
+      operationId: deleteCourseInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      responses:
+        '204':
+          description: Curso excluído.
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+        '409':
+          description: Curso já publicado não pode ser excluído.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                publicado:
+                  value:
+                    type: about:blank
+                    title: Curso publicado não pode ser excluído.
+                    status: 409
+                    code: COURSE_ALREADY_PUBLISHED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  /courses/{courseId}/modules:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    post:
+      tags:
+      - Estrutura
+      summary: Criar módulo
+      description: 'Cria o módulo no rascunho, na posição pedida ou no fim quando `position` é omitido. Os módulos seguintes
+        deslocam uma posição (RN-C01).
+
+        '
+      operationId: createModuleInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModuleRequest'
+            examples:
+              modulo:
+                value:
+                  title: Fundamentos da linguagem
+      responses:
+        '201':
+          description: Módulo criado; devolve o curso inteiro com a nova revisão do rascunho.
+          headers:
+            Location:
+              description: Endereço do módulo criado.
+              schema:
+                type: string
+                examples:
+                - /internal/v1/courses/6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e/modules/8c9d0e1f-2a3b-4c4d-9e5f-6a7b8c9d0e1f
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidContent'
+  /courses/{courseId}/modules/{moduleId}:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    - $ref: '#/components/parameters/ModuleId'
+    patch:
+      tags:
+      - Estrutura
+      summary: Renomear ou reposicionar módulo
+      description: 'Altera título e/ou posição do módulo no rascunho. O módulo mantém o `moduleId` (RN-C07); os demais se
+        deslocam para manter posições únicas e contíguas.
+
+        '
+      operationId: updateModuleInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModuleRequest'
+            examples:
+              mover:
+                value:
+                  position: 1
+      responses:
+        '200':
+          description: Módulo atualizado; devolve o curso inteiro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/StructureItemNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidContent'
+    delete:
+      tags:
+      - Estrutura
+      summary: Remover módulo
+      description: 'Remove o módulo e todas as aulas dele do rascunho. A confirmação com a contagem de aulas é feita na tela
+        (RF-03). Aulas removidas não voltam com o mesmo identificador (RN-C07).
+
+        '
+      operationId: deleteModuleInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      responses:
+        '200':
+          description: Módulo removido; devolve o curso inteiro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/StructureItemNotFound'
+  /courses/{courseId}/modules/{moduleId}/lessons:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    - $ref: '#/components/parameters/ModuleId'
+    post:
+      tags:
+      - Estrutura
+      summary: Criar aula
+      description: 'Cria a aula no módulo, na posição pedida ou no fim. `videoId` é opcional na criação; se informado, segue
+        as mesmas regras de `updateLesson` (RN-C04).
+
+        '
+      operationId: createLessonInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLessonRequest'
+            examples:
+              aula:
+                value:
+                  title: Tipos e variáveis
+                  videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+      responses:
+        '201':
+          description: Aula criada; devolve o curso inteiro.
+          headers:
+            Location:
+              description: Endereço da aula criada.
+              schema:
+                type: string
+                examples:
+                - /internal/v1/courses/6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e/lessons/4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/StructureItemNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidLessonContent'
+  /courses/{courseId}/lessons/{lessonId}:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    - $ref: '#/components/parameters/LessonId'
+    patch:
+      tags:
+      - Estrutura
+      summary: Alterar aula
+      description: 'Renomeia, altera a descrição, move para outro módulo do mesmo curso, reposiciona e vincula, troca ou desvincula
+        o vídeo (`videoId: null`). Em todos os casos a aula mantém o `lessonId` (RN-C07). Só é aceito vídeo que `learning`
+        conhece como pronto e da mesma escola; vídeo em preparação, que falhou, inexistente ou de outra escola responde `VIDEO_NOT_AVAILABLE`,
+        e a aula não muda (RN-C04, OD35).
+
+        '
+      operationId: updateLessonInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLessonRequest'
+            examples:
+              trocarVideo:
+                value:
+                  videoId: 7e8f9a0b-1c2d-4e3f-8a4b-5c6d7e8f9a0b
+              moverParaOutroModulo:
+                value:
+                  moduleId: 8c9d0e1f-2a3b-4c4d-9e5f-6a7b8c9d0e1f
+                  position: 1
+              desvincularVideo:
+                value:
+                  videoId: null
+      responses:
+        '200':
+          description: Aula atualizada; devolve o curso inteiro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/StructureItemNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidLessonContent'
+    delete:
+      tags:
+      - Estrutura
+      summary: Remover aula
+      description: 'Remove a aula do rascunho. Uma aula criada depois, mesmo com o mesmo título, terá outro `lessonId` (RN-C07).
+        Nada do que Aprendizagem registrou é apagado (RN-C09).
+
+        '
+      operationId: deleteLessonInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      responses:
+        '200':
+          description: Aula removida; devolve o curso inteiro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/StructureItemNotFound'
+  /courses/{courseId}/discard-draft:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    post:
+      tags:
+      - Publicação
+      summary: Descartar alterações não publicadas
+      description: 'Volta o rascunho a ser igual à versão vigente (RF-07). Só para curso publicado. Confere `draftRevision`:
+        se o rascunho mudou desde que a tela o mostrou, responde `DRAFT_CHANGED` e nada é descartado (C-03). Os identificadores
+        voltam a ser os da versão vigente.
+
+        '
+      operationId: discardCourseDraftInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftRevisionRequest'
+            examples:
+              descartar:
+                value:
+                  draftRevision: 14
+      responses:
+        '200':
+          description: Rascunho igual à versão vigente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                publicadoComAlteracoes:
+                  $ref: '#/components/examples/CoursePublishedWithChanges'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+        '409':
+          description: Rascunho mudou desde a revisão informada, ou curso nunca publicado.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                rascunhoMudou:
+                  $ref: '#/components/examples/DraftChanged'
+                nuncaPublicado:
+                  value:
+                    type: about:blank
+                    title: Curso sem versão publicada não tem alterações a descartar.
+                    status: 409
+                    code: COURSE_NEVER_PUBLISHED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          $ref: '#/components/responses/IdempotencyReused'
+  /courses/{courseId}/versions:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    get:
+      tags:
+      - Publicação
+      summary: Histórico de versões
+      description: 'Versões publicadas do curso, da mais recente para a mais antiga, com autor, momento e nota; `current:
+        true` na vigente (RF-08). Curso nunca publicado devolve lista vazia.
+
+        '
+      operationId: listCourseVersionsInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de versões.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseVersionSummaryPage'
+              examples:
+                historico:
+                  value:
+                    data:
+                    - versionNumber: 2
+                      publishedAt: '2026-10-05T10:00:00Z'
+                      publishedBy:
+                        name: Rafael Souza
+                      versionNote: Aula 4 regravada com o SDK novo
+                      current: true
+                    - versionNumber: 1
+                      publishedAt: '2026-10-01T09:30:00Z'
+                      publishedBy:
+                        name: Marina Alves
+                      current: false
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+    post:
+      tags:
+      - Publicação
+      summary: Publicar ou republicar o curso
+      description: 'Confere a revisão do rascunho (C-03) e a completude (RN-C11). Completo, cria a próxima versão, imutável,
+        e a torna a única vigente (RN-C06, RN-C08). A versão, `conteudo.versao-publicada` e o ato em `auditoria.ato-praticado`
+        nascem na mesma transação (RF-06, C-06). Incompleto, responde `COURSE_INCOMPLETE` com as pendências por módulo e aula
+        e nada é publicado. Duplo clique ou repetição com a mesma `Idempotency-Key` devolve a mesma versão; publicações concorrentes
+        recebem números distintos e sequenciais.
+
+        '
+      operationId: publishCourseInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/ActorName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishCourseRequest'
+            examples:
+              comNota:
+                value:
+                  draftRevision: 14
+                  versionNote: Aula 4 regravada com o SDK novo
+              semNota:
+                value:
+                  draftRevision: 3
+      responses:
+        '201':
+          description: Versão publicada e vigente.
+          headers:
+            Location:
+              description: Endereço da versão publicada.
+              schema:
+                type: string
+                examples:
+                - /internal/v1/courses/6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e/versions/3
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseVersion'
+              examples:
+                versao:
+                  $ref: '#/components/examples/CourseVersion3'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotFound'
+        '409':
+          description: Rascunho mudou desde a revisão informada; a tela recarrega antes de publicar.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                rascunhoMudou:
+                  $ref: '#/components/examples/DraftChanged'
+        '422':
+          description: 'Currículo incompleto (`COURSE_INCOMPLETE`, com `pendencies`), nota acima do limite, ou chave de idempotência
+            reutilizada com outro corpo.
+
+            '
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                incompleto:
+                  value:
+                    type: about:blank
+                    title: O curso tem pendências e não foi publicado.
+                    status: 422
+                    code: COURSE_INCOMPLETE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                    pendencies:
+                    - code: module-without-lessons
+                      moduleId: 8c9d0e1f-2a3b-4c4d-9e5f-6a7b8c9d0e1f
+                    - code: lesson-without-video
+                      moduleId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+                      lessonId: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+  /courses/{courseId}/versions/{versionNumber}:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    - $ref: '#/components/parameters/VersionNumber'
+    get:
+      tags:
+      - Publicação
+      summary: Consultar uma versão publicada
+      description: 'Estrutura exatamente como foi publicada naquela versão, que nunca muda (RN-C06, RF-07). Não traz título
+        de vídeo: só o `videoId` de cada aula.
+
+        '
+      operationId: getCourseVersionInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '200':
+          description: Versão encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseVersion'
+              examples:
+                versao:
+                  $ref: '#/components/examples/CourseVersion3'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          description: Curso inexistente, de outra escola, ou versão que não existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                versaoInexistente:
+                  value:
+                    type: about:blank
+                    title: Versão não encontrada.
+                    status: 404
+                    code: COURSE_VERSION_NOT_FOUND
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+      parameters: []
+  /course-references/resolve:
+    post:
+      tags:
+      - Auditoria
+      summary: Identificar cursos pelo id para a consulta da trilha
+      description: Usada pelo `bff-admin` só para apresentar o alvo `curso` dos registros de auditoria (C-08). Exige JWT de
+        audiência `learning` com papel `administrador`; não exige `autoria.ler`, e não devolve nada além do título atual do
+        curso — nem estrutura, nem versão, nem autor. Curso excluído, inexistente ou de outra escola volta sem `title`, sem
+        distinguir os casos. Não altera a Auditoria; o BFF não persiste o título.
+      operationId: resolveCourseReferencesInternal
+      security:
+      - StaffUserToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseReferenceLookupRequest'
+            examples:
+              dois:
+                value:
+                  courseIds:
+                  - 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                  - 2a3b4c5d-6e7f-4a81-9b2c-3d4e5f6a7b8c
+      responses:
+        '200':
+          description: Um resultado por id distinto, na ordem do pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseReferenceLookupResponse'
+              examples:
+                resolvidoENao:
+                  value:
+                    data:
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      title: .NET do zero à API
+                    - courseId: 2a3b4c5d-6e7f-4a81-9b2c-3d4e5f6a7b8c
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          description: JWT válido sem papel administrador.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                semPapel:
+                  $ref: '#/components/examples/PermissionDenied'
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT RS256 de ator interno emitido por Identity na validação de sessão (`validateStaffSessionInternal`
+        com `audience: learning`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions, exp,
+        jti. Chave pública por `kid` no JWKS de Identity.'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 'Chave opaca única por intenção de escrita. Repetição com o mesmo corpo devolve o mesmo resultado na janela
+        de 24 horas; corpo diferente com a mesma chave retorna 422 `IDEMPOTENCY_KEY_REUSED`.
+
+        '
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    CourseId:
+      name: courseId
+      in: path
+      required: true
+      description: Identificador do curso, o mesmo de `conteudo.versao-publicada` e do alvo do ato.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        curso:
+          value: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+    ModuleId:
+      name: moduleId
+      in: path
+      required: true
+      description: Identificador estável do módulo (RN-C07).
+      schema:
+        type: string
+        format: uuid
+      examples:
+        modulo:
+          value: 8c9d0e1f-2a3b-4c4d-9e5f-6a7b8c9d0e1f
+    LessonId:
+      name: lessonId
+      in: path
+      required: true
+      description: Identificador estável da aula (RN-C07), o mesmo de `conteudo.versao-publicada` e da Referência de Uso.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        aula:
+          value: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+    VersionNumber:
+      name: versionNumber
+      in: path
+      required: true
+      description: Número sequencial da versão no curso, começando em 1.
+      schema:
+        type: integer
+        minimum: 1
+      examples:
+        versao:
+          value: 3
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, iniciando em 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+    ActorName:
+      name: X-Actor-Name
+      in: header
+      required: true
+      description: Nome do ator no momento da ação, repassado pelo BFF a partir da validação de sessão (C-04). Guardado só
+        para exibição em `lastEditedBy`, `createdBy` e `publishedBy`; nunca em log, span, métrica ou fato. A identidade do
+        ator vem sempre de `sub`, nunca deste header.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+      examples:
+        nome:
+          value: Marina Alves
+  responses:
+    InvalidRequest:
+      description: JSON malformado, campo obrigatório ausente ou valor fora do schema.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: JSON ou campos obrigatórios inválidos.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: JWT válido sem a permissão exigida pela operação (`autoria.ler` ou `autoria.editar`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              $ref: '#/components/examples/PermissionDenied'
+    CourseNotFound:
+      description: Curso inexistente, excluído ou de outra escola — resposta idêntica.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              $ref: '#/components/examples/CourseNotFound'
+    StructureItemNotFound:
+      description: 'Curso, módulo ou aula inexistente no rascunho, ou de outra escola. Módulo ou aula de outro curso responde
+        igual a inexistente.
+
+        '
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            curso:
+              $ref: '#/components/examples/CourseNotFound'
+            modulo:
+              value:
+                type: about:blank
+                title: Módulo não encontrado.
+                status: 404
+                code: MODULE_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+            aula:
+              value:
+                type: about:blank
+                title: Aula não encontrada.
+                status: 404
+                code: LESSON_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    InvalidContent:
+      description: Título em branco, posição fora do intervalo, limite de estrutura atingido, ou chave de idempotência reutilizada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semTitulo:
+              $ref: '#/components/examples/TitleRequired'
+            posicao:
+              $ref: '#/components/examples/InvalidPosition'
+            limite:
+              $ref: '#/components/examples/StructureLimitReached'
+            chaveReutilizada:
+              $ref: '#/components/examples/IdempotencyKeyReused'
+    InvalidLessonContent:
+      description: Como `InvalidContent`, mais vídeo não disponível para vínculo.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semTitulo:
+              $ref: '#/components/examples/TitleRequired'
+            posicao:
+              $ref: '#/components/examples/InvalidPosition'
+            limite:
+              $ref: '#/components/examples/StructureLimitReached'
+            videoIndisponivel:
+              value:
+                type: about:blank
+                title: Vídeo não disponível para vínculo.
+                detail: O vídeo precisa estar pronto e ser da escola. Um vídeo que acabou de ficar pronto pode levar alguns
+                  instantes para aparecer.
+                status: 422
+                code: VIDEO_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+            chaveReutilizada:
+              $ref: '#/components/examples/IdempotencyKeyReused'
+    IdempotencyReused:
+      description: Chave de idempotência reutilizada com outro corpo.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            chaveReutilizada:
+              $ref: '#/components/examples/IdempotencyKeyReused'
+    TokenInvalid:
+      description: JWT ausente, inválido, expirado, de outra audiência ou de outro emissor.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tokenInvalido:
+              value:
+                type: about:blank
+                title: Token de ator ausente ou inválido.
+                status: 401
+                code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+        pendencies:
+          type: array
+          description: Só em `COURSE_INCOMPLETE`. Uma entrada por falta, na ordem do currículo.
+          items:
+            $ref: '#/components/schemas/PublicationPendency'
+    PublicationPendency:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          enum:
+          - course-without-modules
+          - module-without-lessons
+          - lesson-without-video
+          description: Regra de RN-C11 que falta cumprir.
+        moduleId:
+          type: string
+          format: uuid
+          description: Presente em `module-without-lessons` e `lesson-without-video`.
+        lessonId:
+          type: string
+          format: uuid
+          description: Presente em `lesson-without-video`.
+    CourseStatus:
+      type: string
+      enum:
+      - draft
+      - published
+      description: '`draft` — nunca publicado; pode ser excluído. `published` — tem versão vigente. Clientes devem tolerar
+        valor novo (ex.: retirada de circulação, depois do MVP — OD45).
+
+        '
+    Title:
+      type: string
+      minLength: 1
+      maxLength: 200
+      description: Obrigatório; só espaços responde 422 `TITLE_REQUIRED` (C-07).
+    Description:
+      type: string
+      maxLength: 5000
+      description: Descrição pedagógica, opcional (C-07). Não é texto de venda.
+    VersionNote:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Nota de versão opcional (RN-C13). Não é motivo de auditoria e não vai para a trilha.
+    Position:
+      type: integer
+      minimum: 1
+      description: 'Posição 1-based entre os irmãos. Na criação, até quantidade + 1; na alteração, até a quantidade. Fora
+        disso, 422 `INVALID_POSITION`.
+
+        '
+    ActorName:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Nome do ator no momento da ação (C-04). Só para exibição; nunca em log, métrica ou fato.
+    CreateCourseRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        description:
+          $ref: '#/components/schemas/Description'
+    UpdateCourseRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        description:
+          $ref: '#/components/schemas/Description'
+    CreateModuleRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        position:
+          $ref: '#/components/schemas/Position'
+    UpdateModuleRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        position:
+          $ref: '#/components/schemas/Position'
+    CreateLessonRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - title
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        description:
+          $ref: '#/components/schemas/Description'
+        position:
+          $ref: '#/components/schemas/Position'
+        videoId:
+          type: string
+          format: uuid
+    UpdateLessonRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: '`moduleId` move a aula para outro módulo do mesmo curso; sem `position`, ela vai para o fim do módulo
+        de destino. `videoId: null` desvincula o vídeo.
+
+        '
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        description:
+          $ref: '#/components/schemas/Description'
+        moduleId:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position'
+        videoId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+    DraftRevisionRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - draftRevision
+      properties:
+        draftRevision:
+          type: integer
+          minimum: 1
+          description: Revisão do rascunho que a tela mostrou (C-03).
+    PublishCourseRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - draftRevision
+      properties:
+        draftRevision:
+          type: integer
+          minimum: 1
+          description: Revisão do rascunho que a tela mostrou (C-03).
+        versionNote:
+          $ref: '#/components/schemas/VersionNote'
+    CourseSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - status
+      - currentVersion
+      - hasUnpublishedChanges
+      - lastEditedAt
+      - lastEditedBy
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          description: Título no rascunho.
+        status:
+          $ref: '#/components/schemas/CourseStatus'
+        currentVersion:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+          description: Número da versão vigente; `null` em `draft`.
+        hasUnpublishedChanges:
+          type: boolean
+          description: Rascunho diferente da versão vigente. Sempre `false` em `draft`.
+        lastEditedAt:
+          type: string
+          format: date-time
+        lastEditedBy:
+          $ref: '#/components/schemas/ActorName'
+    CourseSummaryPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    LessonVideo:
+      type: object
+      additionalProperties: false
+      required:
+      - videoId
+      description: Vídeo vinculado à aula. `learning` não guarda título nem duração do vídeo (RN-C04, C-05).
+      properties:
+        videoId:
+          type: string
+          format: uuid
+    DraftLesson:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - title
+      - position
+      - video
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        position:
+          type: integer
+          minimum: 1
+        video:
+          oneOf:
+          - $ref: '#/components/schemas/LessonVideo'
+          - type: 'null'
+    DraftModule:
+      type: object
+      additionalProperties: false
+      required:
+      - moduleId
+      - title
+      - position
+      - lessons
+      properties:
+        moduleId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        position:
+          type: integer
+          minimum: 1
+        lessons:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/DraftLesson'
+    CourseDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - status
+      - currentVersion
+      - hasUnpublishedChanges
+      - draftRevision
+      - createdAt
+      - createdBy
+      - lastEditedAt
+      - lastEditedBy
+      - modules
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/CourseStatus'
+        currentVersion:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+        hasUnpublishedChanges:
+          type: boolean
+        draftRevision:
+          type: integer
+          minimum: 1
+          description: Cresce a cada alteração do rascunho, de qualquer autor (C-03).
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: '#/components/schemas/ActorName'
+        lastEditedAt:
+          type: string
+          format: date-time
+        lastEditedBy:
+          $ref: '#/components/schemas/ActorName'
+        modules:
+          type: array
+          maxItems: 100
+          description: Estrutura do rascunho, em ordem de `position` (C-07).
+          items:
+            $ref: '#/components/schemas/DraftModule'
+    VersionLesson:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - title
+      - position
+      - videoId
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        position:
+          type: integer
+          minimum: 1
+        videoId:
+          type: string
+          format: uuid
+    VersionModule:
+      type: object
+      additionalProperties: false
+      required:
+      - moduleId
+      - title
+      - position
+      - lessons
+      properties:
+        moduleId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        position:
+          type: integer
+          minimum: 1
+        lessons:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/VersionLesson'
+    CourseVersion:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - versionNumber
+      - title
+      - publishedAt
+      - publishedBy
+      - current
+      - modules
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        description:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        publishedBy:
+          $ref: '#/components/schemas/ActorName'
+        versionNote:
+          $ref: '#/components/schemas/VersionNote'
+        current:
+          type: boolean
+        modules:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/VersionModule'
+    CourseVersionSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - versionNumber
+      - publishedAt
+      - publishedBy
+      - current
+      properties:
+        versionNumber:
+          type: integer
+          minimum: 1
+        publishedAt:
+          type: string
+          format: date-time
+        publishedBy:
+          $ref: '#/components/schemas/ActorName'
+        versionNote:
+          $ref: '#/components/schemas/VersionNote'
+        current:
+          type: boolean
+    CourseVersionSummaryPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseVersionSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Pagination:
+      type: object
+      additionalProperties: false
+      required:
+      - page
+      - size
+      - total
+      - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+    CourseReferenceLookupRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - courseIds
+      properties:
+        courseIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    CourseReferenceLookupResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - courseId
+            properties:
+              courseId:
+                type: string
+                format: uuid
+              title:
+                type: string
+                description: Título atual do curso; ausente quando não resolvido.
+  examples:
+    PermissionDenied:
+      value:
+        type: about:blank
+        title: Sem permissão para esta área.
+        status: 403
+        code: PERMISSION_DENIED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CourseNotFound:
+      value:
+        type: about:blank
+        title: Curso não encontrado.
+        status: 404
+        code: COURSE_NOT_FOUND
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TitleRequired:
+      value:
+        type: about:blank
+        title: O título é obrigatório.
+        status: 422
+        code: TITLE_REQUIRED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    InvalidPosition:
+      value:
+        type: about:blank
+        title: Posição fora do intervalo.
+        status: 422
+        code: INVALID_POSITION
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    StructureLimitReached:
+      value:
+        type: about:blank
+        title: Limite de módulos ou aulas do curso atingido.
+        status: 422
+        code: STRUCTURE_LIMIT_REACHED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    IdempotencyKeyReused:
+      value:
+        type: about:blank
+        title: Chave de idempotência já usada com outro pedido.
+        status: 422
+        code: IDEMPOTENCY_KEY_REUSED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    DraftChanged:
+      value:
+        type: about:blank
+        title: O curso foi alterado desde que você o abriu. Recarregue antes de continuar.
+        status: 409
+        code: DRAFT_CHANGED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CourseDraftEmpty:
+      value:
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        title: .NET do zero à API
+        description: Do primeiro projeto de console a uma API com testes e banco de dados.
+        status: draft
+        currentVersion: null
+        hasUnpublishedChanges: false
+        draftRevision: 1
+        createdAt: '2026-09-30T14:00:00Z'
+        createdBy:
+          name: Marina Alves
+        lastEditedAt: '2026-09-30T14:00:00Z'
+        lastEditedBy:
+          name: Marina Alves
+        modules: []
+    CoursePublishedWithChanges:
+      value:
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        title: .NET do zero à API
+        status: published
+        currentVersion: 2
+        hasUnpublishedChanges: true
+        draftRevision: 14
+        createdAt: '2026-09-30T14:00:00Z'
+        createdBy:
+          name: Marina Alves
+        lastEditedAt: '2026-10-05T13:20:00Z'
+        lastEditedBy:
+          name: Marina Alves
+        modules:
+        - moduleId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+          title: Fundamentos da linguagem
+          position: 1
+          lessons:
+          - lessonId: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+            title: Tipos e variáveis
+            position: 1
+            video:
+              videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+          - lessonId: 9e8d7c6b-5a4f-4e3d-9c2b-1a0f9e8d7c6b
+            title: Controle de fluxo
+            position: 2
+            video: null
+        - moduleId: 8c9d0e1f-2a3b-4c4d-9e5f-6a7b8c9d0e1f
+          title: Coleções
+          position: 2
+          lessons: []
+    CourseVersion3:
+      value:
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        versionNumber: 3
+        title: .NET do zero à API
+        publishedAt: '2026-10-05T14:02:11Z'
+        publishedBy:
+          name: Marina Alves
+        versionNote: Aula 4 regravada com o SDK novo
+        current: true
+        modules:
+        - moduleId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+          title: Fundamentos da linguagem
+          position: 1
+          lessons:
+          - lessonId: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+            title: Tipos e variáveis
+            position: 1
+            videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41

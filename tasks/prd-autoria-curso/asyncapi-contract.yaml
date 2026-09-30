@@ -1,0 +1,236 @@
+asyncapi: 3.0.0
+id: urn:code-4-coders:learning
+info:
+  title: Learning — fatos da publicação de curso
+  version: 1.0.0
+  description: >-
+    Recorte do primeiro PRD de CAP-005, `tasks/prd-autoria-curso/prd.md` v1.0 de 2026-09-28. Aplicação
+    `learning`, dona de Conteúdo e Currículo. Envia `conteudo.versao-publicada` (RF-10) e o ato de
+    publicação no envelope da Auditoria (RF-11); recebe os fatos de vídeo pronto e de falha da Media para
+    manter a própria visão de quais vídeos podem ser vinculados (RF-04, OD35). Nenhum fato carrega nome,
+    e-mail, descrição do curso, nota de versão nem título de vídeo.
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  versaoPublicada:
+    address: conteudo.versao-publicada.v1
+    description: >-
+      Uma versão do currículo passou a vigorar para um curso. Carrega o estado completo da versão vigente
+      (C-09), para que cada consumidor substitua o que sabia do curso sem consultar `learning`.
+    messages:
+      versaoPublicada:
+        $ref: '#/components/messages/VersaoPublicada'
+  atoPraticado:
+    address: auditoria.ato-praticado.v1
+    description: >-
+      Canal da Auditoria (RN-A14). O contrato é de `audit`, revisto por esta entrega em
+      `asyncapi-contract-audit.yaml` 1.2.0; aqui `learning` aparece só como produtor.
+    messages:
+      atoPraticado:
+        $ref: './asyncapi-contract-audit.yaml#/components/messages/AtoPraticado'
+  ativoPronto:
+    address: midia.ativo-pronto.v1
+    description: Fato da Media (`tasks/prd-ingestao-midia/asyncapi-contract.yaml` 1.0.0), sem mudança.
+    messages:
+      ativoPronto:
+        $ref: '../prd-ingestao-midia/asyncapi-contract.yaml#/components/messages/AtivoPronto'
+  preparacaoFalhou:
+    address: midia.preparacao-falhou.v1
+    description: Fato da Media (`tasks/prd-ingestao-midia/asyncapi-contract.yaml` 1.0.0), sem mudança.
+    messages:
+      preparacaoFalhou:
+        $ref: '../prd-ingestao-midia/asyncapi-contract.yaml#/components/messages/PreparacaoFalhou'
+operations:
+  publicarVersaoPublicada:
+    action: send
+    summary: Publicar que uma versão do curso passou a vigorar.
+    channel:
+      $ref: '#/channels/versaoPublicada'
+    messages:
+      - $ref: '#/channels/versaoPublicada/messages/versaoPublicada'
+    description: >-
+      Compromissos observáveis (o mecanismo fica na TechSpec).
+      (1) Pelo outbox, na mesma transação que cria a versão e o ato de publicação (G06, RN-C13): não existe
+      versão sem fato nem fato sem versão.
+      (2) Um fato por versão: `eventId` é fixo para aquela versão e toda republicação da mensagem repete o
+      mesmo `eventId`. Entrega ao menos uma vez; consumidores deduplicam por `eventId`.
+      (3) Ordenação não garantida. Para um mesmo `courseId`, vale a de maior `versionNumber`; um fato com
+      `versionNumber` menor ou igual ao já aplicado é ignorado (RF-12).
+      (4) Estado completo: a versão substitui tudo o que o consumidor sabia daquele curso. Aula ausente
+      deixou de fazer parte da versão vigente (RN-C08).
+  publicarAtoVersaoPublicada:
+    action: send
+    summary: Comunicar o ato de publicação à Auditoria.
+    channel:
+      $ref: '#/channels/atoPraticado'
+    messages:
+      - $ref: '#/channels/atoPraticado/messages/atoPraticado'
+    description: >-
+      Pelo outbox, na mesma transação de `publicarVersaoPublicada`. Conteúdo fixo por esta entrega (C-06):
+      `origem: conteudo`, `tipo: versao-publicada`, `autor` = conta interna que publicou, `alvo` =
+      `{tipo: curso, id: courseId}`, `complemento.versao` = número da versão em texto, `praticadoEm` =
+      `publishedAt`, sem `motivo` (OD42). `fatoId` é o mesmo `eventId` do fato de versão, para correlação;
+      a chave de idempotência da Auditoria continua sendo (`origem`, `fatoId`).
+  receberAtivoPronto:
+    action: receive
+    summary: Passar a oferecer o vídeo para vínculo.
+    channel:
+      $ref: '#/channels/ativoPronto'
+    messages:
+      - $ref: '#/channels/ativoPronto/messages/ativoPronto'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: '0.3.0'
+    description: >-
+      Registra o vídeo como pronto na visão local de `learning`, com a escola do fato. Idempotente por
+      `eventId`. Até o fato chegar, o vínculo daquele vídeo responde `VIDEO_NOT_AVAILABLE` (RN-C04). Falha
+      transitória não confirma a mensagem, que volta; esgotadas as entregas, segue para a fila de erro e
+      pode ser reprocessada sem efeito duplicado.
+  receberPreparacaoFalhou:
+    action: receive
+    summary: Nunca oferecer o vídeo para vínculo.
+    channel:
+      $ref: '#/channels/preparacaoFalhou'
+    messages:
+      - $ref: '#/channels/preparacaoFalhou/messages/preparacaoFalhou'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: '0.3.0'
+    description: >-
+      Registra o vídeo como falho na visão local; `learning` não guarda o motivo. Mesmas garantias de
+      `receberAtivoPronto`. Como `ready` e `failed` são finais (RN-M05), um vídeo nunca recebe os dois.
+components:
+  messages:
+    VersaoPublicada:
+      name: VersaoPublicada
+      title: Versão de curso publicada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        additionalProperties: false
+        required: [correlationId]
+        properties:
+          correlationId:
+            type: string
+            description: traceparent da requisição de publicação no backoffice. Sem dado pessoal.
+      payload:
+        $ref: '#/components/schemas/VersaoPublicadaPayload'
+      examples:
+        - name: versao3
+          headers:
+            correlationId: 00-3c4d5e6f708192a3b4c5d6e7f8091a2b-3c4d5e6f70819203-01
+          payload:
+            eventId: 9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+            versionNumber: 3
+            publishedAt: '2026-10-05T14:02:11Z'
+            publishedById: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            title: .NET do zero à API
+            modules:
+              - moduleId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+                title: Fundamentos da linguagem
+                position: 1
+                lessons:
+                  - lessonId: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+                    title: Tipos e variáveis
+                    position: 1
+                    videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                  - lessonId: 9e8d7c6b-5a4f-4e3d-9c2b-1a0f9e8d7c6b
+                    title: Controle de fluxo
+                    position: 2
+                    videoId: 7e8f9a0b-1c2d-4e3f-8a4b-5c6d7e8f9a0b
+  schemas:
+    VersaoPublicadaPayload:
+      type: object
+      additionalProperties: false
+      required: [eventId, tenantId, courseId, versionNumber, publishedAt, publishedById, title, modules]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Fixo por versão; chave de deduplicação dos consumidores.
+        tenantId:
+          type: string
+          format: uuid
+          description: Escola dona do curso (G07).
+        courseId:
+          type: string
+          format: uuid
+          description: O mesmo `courseId` da interface HTTP e do alvo do ato. Unidade sobre a qual Matrícula decide (RN-C12).
+        versionNumber:
+          type: integer
+          minimum: 1
+          description: Sequencial por curso. Define qual versão é a vigente quando fatos chegam fora de ordem.
+        publishedAt:
+          type: string
+          format: date-time
+        publishedById:
+          type: string
+          format: uuid
+          description: Conta interna que publicou, por referência (G23). Nunca nome ou e-mail.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Título do curso na versão. Media ignora (RN-M02); consumidores futuros usam para exibição.
+        modules:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Estrutura completa da versão, em ordem de `position` (RN-C01, RN-C11).
+          items:
+            $ref: '#/components/schemas/ModuloPublicado'
+    ModuloPublicado:
+      type: object
+      additionalProperties: false
+      required: [moduleId, title, position, lessons]
+      properties:
+        moduleId:
+          type: string
+          format: uuid
+          description: Identidade estável entre versões (RN-C07).
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        position:
+          type: integer
+          minimum: 1
+        lessons:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/AulaPublicada'
+    AulaPublicada:
+      type: object
+      additionalProperties: false
+      required: [lessonId, title, position, videoId]
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+          description: Identidade estável entre versões (RN-C07); unidade de progresso em Aprendizagem (RN-C12).
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        position:
+          type: integer
+          minimum: 1
+        videoId:
+          type: string
+          format: uuid
+          description: O mesmo `videoId` dos fatos `midia.*`. Toda aula publicada tem vídeo (RN-C11).

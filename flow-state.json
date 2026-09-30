@@ -56,8 +56,12 @@
     },
     {
       "id": "CAP-005",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "contract",
+      "artifacts": {
+        "domain": "domains/conteudo-e-curriculo/domain.md",
+        "prd": "tasks/prd-autoria-curso/prd.md",
+        "contract": "tasks/prd-autoria-curso/contracts.md"
+      },
       "mvp_order": 4
     },
     {
@@ -197,10 +201,12 @@
     },
     {
       "id": "CAP-030",
-      "stage": "prd",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/auditoria-e-conformidade/domain.md",
-        "prd": "tasks/prd-consulta-trilha-auditoria/prd.md"
+        "prd": "tasks/prd-consulta-trilha-auditoria/prd.md",
+        "contract": "tasks/prd-consulta-trilha-auditoria/contracts.md",
+        "techspec": "tasks/prd-consulta-trilha-auditoria/techspec.md"
       },
       "mvp_order": 2
     },
@@ -212,9 +218,9 @@
   ],
   "next_actions": [
     {
-      "id": "NA21",
-      "what": "Criar os contratos de consulta administrativa e complemento da CAP-030 a partir de tasks/prd-consulta-trilha-auditoria/prd.md, preservando o contrato da primeira fatia",
-      "skill": "tsg-flow-contract-creator",
+      "id": "NA25",
+      "what": "Criar a TechSpec do 1o PRD de CAP-005 a partir de tasks/prd-autoria-curso/prd.md e contracts.md (C-01 a C-11); errata do PRD (Auditoria muda, C-01) pendente em revisao 1.1",
+      "skill": "tsg-flow-techspec-creator",
       "blocked_by": []
     }
   ],
@@ -256,7 +262,7 @@
     }
   ],
   "foundation": {
-    "status": "done",
+    "status": "ready",
     "nota": "Fase 0 conduzida fora do fluxo TSG (PRD standalone ou plan mode). A Etapa 3 registrou a evidencia em docs/foundation.md e as decisoes de repositorio e runtime em docs/adr/. Os dez servicos da Fase 1 estao declarados com caminho preenchido; o fluxo TSG segue apenas com o progresso das capacidades.",
     "services": [
       {
@@ -593,6 +599,54 @@
       "owner": "produto",
       "decided_at": "2026-09-27",
       "decision": "Somente explicacao posterior vinculada ao original, exibida separadamente com autor e momento proprios. O original e a sua conformidade permanecem intactos. Descartado preencher ou substituir autor, alvo, tipo e motivo recebidos, pois isso confundiria contexto posterior com o fato preservado."
+    },
+    {
+      "id": "OD40",
+      "ref": "domains/conteudo-e-curriculo/domain.md QC-07 · RN-C02, RN-C03",
+      "what": "De quem e o curso e quem pode edita-lo",
+      "owner": "tasso",
+      "decided_at": "2026-09-28",
+      "decision": "O curso pertence a escola; todo ator com a permissao de autoria ve, edita e publica todos os cursos da escola; autor original e autor de cada publicacao ficam registrados. Mesma logica de RN-M04 e OD33. Descartado: curso do professor que criou - exigiria regra de transferencia e deixaria curso orfao na saida do professor."
+    },
+    {
+      "id": "OD41",
+      "ref": "domains/conteudo-e-curriculo/domain.md QC-06 · RN-C07, RN-C08",
+      "what": "Aluno no meio do curso quando sai nova versao",
+      "owner": "tasso",
+      "decided_at": "2026-09-28",
+      "decision": "Uma unica versao vigente por curso, valida para todos; aula e modulo tem identidade estavel entre versoes e o progresso ancora na aula. Aula removida sai do percurso sem apagar o progresso registrado. Descartados: aluno preso a versao em que comecou e o hibrido por data de inicio - ambos mantem versoes simultaneas vivas e obrigam Aprendizagem e Midia a conhecer versao."
+    },
+    {
+      "id": "OD42",
+      "ref": "domains/conteudo-e-curriculo/domain.md QC-08 · RN-C13",
+      "what": "Motivo obrigatorio no ato de publicacao de curso",
+      "owner": "tasso",
+      "decided_at": "2026-09-28",
+      "decision": "Nao exigido. Publicacao vai a auditoria.ato-praticado com autor e alvo (curso); nota de versao opcional, sem efeito na conformidade. Descartados: motivo obrigatorio so na republicacao ou em toda publicacao."
+    },
+    {
+      "id": "OD43",
+      "ref": "domains/entrega-de-midia-e-protecao/domain.md QM-05 · domains/conteudo-e-curriculo/domain.md QC-09",
+      "what": "Qual PRD entrega o ciclo de Material complementar",
+      "owner": "tasso",
+      "decided_at": "2026-09-28",
+      "decision": "Segundo PRD de CAP-005, atravessando Midia (envio e guarda do material) e Conteudo (vinculo). O primeiro PRD de CAP-005 fecha estrutura, vinculo de video pronto e publicacao - o que CAP-003 e CAP-007 consomem. Descartado: material no primeiro PRD - abriria ingestao de material em Midia, que hoje so trata video."
+    },
+    {
+      "id": "OD44",
+      "ref": "domains/conteudo-e-curriculo/domain.md QC-04",
+      "what": "Dois autores editando o mesmo rascunho ao mesmo tempo",
+      "owner": "tasso",
+      "decided_at": "2026-09-28",
+      "decision": "Resolvido por processo interno da escola no inicio; o produto nao bloqueia nem avisa edicao concorrente. Revisitar se o conflito aparecer na operacao. Descartados para o MVP: bloqueio de edicao e aviso de edicao concorrente."
+    },
+    {
+      "id": "OD45",
+      "ref": "domains/conteudo-e-curriculo/domain.md QC-01",
+      "what": "Retirar curso de circulacao (despublicar)",
+      "owner": "tasso",
+      "decided_at": "2026-09-28",
+      "decision": "Fora do MVP. Quando entrar, e ato auditado com motivo obrigatorio e exige decidir o efeito em Catalogo e Matricula (direito vitalicio)."
     }
   ]
 }
