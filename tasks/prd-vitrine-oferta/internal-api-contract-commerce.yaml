@@ -1,0 +1,1396 @@
+openapi: 3.1.0
+info:
+  title: Commerce — Catálogo (interno)
+  version: 1.1.0
+  description: 'Recorte interno do primeiro PRD de CAP-003 (`tasks/prd-vitrine-oferta/prd.md` v1.0, aprovado em
+    2026-09-30). Evolui `commerce` 1.0.0 (`tasks/prd-acesso-interno/internal-api-contract-commerce.yaml`, área financeira
+    reservada, sem mudança) com o módulo Catálogo. Três consumidores e dois esquemas de segurança: (1) `bff-admin`,
+    com o JWT do ator de audiência `commerce` (ADR-0005) — operações de ficha e oferta, derivadas mecanicamente
+    de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF), e `resolveOfferReferencesInternal`
+    para a consulta da trilha; (2) `bff-student`, com asserção de serviço própria (C-04) — vitrine, página e clique,
+    derivadas de `api-contract-student.yaml` 1.0.0. `commerce` decide pelas claims, sem confiar no BFF. A escola
+    vem do `tenantId` do token ou da asserção (G07).'
+  contact:
+    name: Time de Commerce
+servers:
+- url: /internal/v1
+  description: Rota privada de Commerce, inacessível ao navegador
+tags:
+- name: Catálogo
+  description: Fichas e ofertas, pelo backoffice
+- name: Vitrine
+  description: Leitura pública e intenção de compra, pelo BFF do aluno
+- name: Auditoria
+  description: Rótulos para a consulta da trilha
+paths:
+  /catalog/courses:
+    get:
+      tags:
+      - Catálogo
+      summary: Listar os cursos publicados no catálogo
+      description: Todos os cursos com versão vigente da escola do ator, com o nível da versão vigente e quantas
+        ofertas cada um tem por estado (RF-02). Curso nunca publicado não aparece. Ordenados pelo título. `inShowcase`
+        indica se o curso está na vitrine agora (ao menos uma oferta publicada e nível na versão vigente — DP-04).
+        Exige `oferta.editar` no claim `permissions`; o autor dos atos é `sub`.
+      operationId: listCatalogCoursesInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de cursos do catálogo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogCourseSummaryPage'
+              examples:
+                pagina:
+                  value:
+                    data:
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      title: .NET do zero à API
+                      level: advanced
+                      inShowcase: true
+                      offerCounts:
+                        draft: 0
+                        published: 2
+                        unpublished: 1
+                    - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                      title: Fundamentos de C#
+                      level: null
+                      inShowcase: false
+                      offerCounts:
+                        draft: 1
+                        published: 0
+                        unpublished: 0
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /catalog/courses/{courseId}:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    get:
+      tags:
+      - Catálogo
+      summary: Abrir a ficha do curso
+      description: Ficha de vitrine com os dados da versão vigente do curso, só para leitura — título, nível, pré-requisito
+        (RN-O03) — a chamada comercial e todas as ofertas do curso, com a contagem de cliques em *Comprar* de cada
+        uma (RF-09). Curso de outra escola ou nunca publicado → 404. Exige `oferta.editar` no claim `permissions`;
+        o autor dos atos é `sub`.
+      operationId: getCatalogCourseInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '200':
+          description: Ficha do curso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogCourseDetail'
+              examples:
+                ficha:
+                  $ref: '#/components/examples/CatalogCourseWithOffers'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CatalogCourseNotFound'
+    patch:
+      tags:
+      - Catálogo
+      summary: Alterar a chamada comercial da ficha
+      description: Único dado editável da ficha (RF-02). `null` remove a chamada; a vitrine passa a usar o início
+        da descrição pedagógica. Não é ato auditado. Vale na vitrine imediatamente. Exige `oferta.editar` no claim
+        `permissions`; o autor dos atos é `sub`.
+      operationId: updateCatalogCourseInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCatalogCourseRequest'
+            examples:
+              chamada:
+                value:
+                  tagline: Da primeira linha de C# a uma API no ar.
+      responses:
+        '200':
+          description: Ficha atualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogCourseDetail'
+              examples:
+                ficha:
+                  $ref: '#/components/examples/CatalogCourseWithOffers'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CatalogCourseNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidOfferContent'
+  /catalog/courses/{courseId}/offers:
+    parameters:
+    - $ref: '#/components/parameters/CourseId'
+    post:
+      tags:
+      - Catálogo
+      summary: Criar oferta em rascunho
+      description: Cria uma oferta em rascunho, invisível ao público (RF-03). Um curso pode ter várias (OD48). Pode
+        ser criada mesmo que a versão vigente do curso não tenha nível; só a publicação exige (RN-O03). Exige `oferta.editar`
+        no claim `permissions`; o autor dos atos é `sub`.
+      operationId: createOfferInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferInput'
+            examples:
+              dozeMeses:
+                value:
+                  name: Acesso por 12 meses
+                  priceCents: 49700
+                  accessPeriod:
+                    type: months
+                    months: 12
+              vitalicio:
+                value:
+                  name: Acesso vitalício
+                  priceCents: 89700
+                  accessPeriod:
+                    type: lifetime
+      responses:
+        '201':
+          description: Oferta criada em rascunho.
+          headers:
+            Location:
+              description: Endereço da oferta criada.
+              schema:
+                type: string
+                examples:
+                - /api/v1/catalog/offers/7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+              examples:
+                rascunho:
+                  $ref: '#/components/examples/OfferDraft'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/CatalogCourseNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidOfferContent'
+  /catalog/offers/{offerId}:
+    parameters:
+    - $ref: '#/components/parameters/OfferId'
+    patch:
+      tags:
+      - Catálogo
+      summary: Alterar oferta
+      description: Altera nome, preço ou vigência, em rascunho ou publicada (RF-03, RF-05). Campo ausente não muda.
+        Numa oferta **publicada**, mudança de preço ou de vigência vale só para compras futuras (RN-O10) e gera
+        o ato `oferta-alterada` com os valores anterior e novo, e o fato `catalogo.oferta-alterada`; mudança só
+        de nome não gera ato (DP-05). Oferta despublicada também pode ser alterada, sem ato, porque não está à venda.
+        Exige `oferta.editar` no claim `permissions`; o autor dos atos é `sub`.
+      operationId: updateOfferInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOfferRequest'
+            examples:
+              novoPreco:
+                value:
+                  priceCents: 39700
+      responses:
+        '200':
+          description: Oferta alterada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+              examples:
+                publicada:
+                  $ref: '#/components/examples/OfferPublished'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/OfferNotFound'
+        '422':
+          $ref: '#/components/responses/InvalidOfferContent'
+    delete:
+      tags:
+      - Catálogo
+      summary: Excluir oferta em rascunho
+      description: Só oferta que nunca foi publicada (RN-O11). Oferta publicada ou despublicada → 422 `OFFER_STATE_CONFLICT`.
+        Exige `oferta.editar` no claim `permissions`; o autor dos atos é `sub`.
+      operationId: deleteOfferInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '204':
+          description: Oferta excluída.
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/OfferNotFound'
+        '422':
+          $ref: '#/components/responses/OfferStateConflict'
+  /catalog/offers/{offerId}/publish:
+    parameters:
+    - $ref: '#/components/parameters/OfferId'
+    post:
+      tags:
+      - Catálogo
+      summary: Publicar oferta
+      description: Coloca uma oferta em rascunho ou despublicada à venda (RF-04). Exige que a versão vigente do
+        curso declare nível (RN-O03) → senão 422 `COURSE_LEVEL_REQUIRED`. Oferta já publicada → 422 `OFFER_STATE_CONFLICT`.
+        Gera, na mesma transação, o fato `catalogo.oferta-publicada` e o ato `oferta-publicada`. Exige `oferta.editar`
+        no claim `permissions`; o autor dos atos é `sub`.
+      operationId: publishOfferInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Oferta publicada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+              examples:
+                publicada:
+                  $ref: '#/components/examples/OfferPublished'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/OfferNotFound'
+        '422':
+          $ref: '#/components/responses/PublishRejected'
+  /catalog/offers/{offerId}/unpublish:
+    parameters:
+    - $ref: '#/components/parameters/OfferId'
+    post:
+      tags:
+      - Catálogo
+      summary: Despublicar oferta
+      description: Tira a oferta da vitrine e impede compra nova (RF-06, RN-O12); não afeta pedido nem concessão.
+        Oferta que não está publicada → 422 `OFFER_STATE_CONFLICT`. Gera o fato `catalogo.oferta-despublicada` e
+        o ato `oferta-despublicada`. Exige `oferta.editar` no claim `permissions`; o autor dos atos é `sub`.
+      operationId: unpublishOfferInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Oferta despublicada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+              examples:
+                despublicada:
+                  $ref: '#/components/examples/OfferUnpublished'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/OfferNotFound'
+        '422':
+          $ref: '#/components/responses/OfferStateConflict'
+  /showcase/courses:
+    get:
+      tags:
+      - Vitrine
+      summary: Listar os cursos da vitrine
+      description: Cursos com ao menos uma oferta publicada e nível na versão vigente (RF-07, DP-04), do mais recentemente
+        colocado na vitrine para o mais antigo. `summary` é a chamada comercial ou, sem ela, o início da descrição
+        pedagógica, cortado em até 200 caracteres. `lowestPriceCents` é o menor preço entre as ofertas publicadas;
+        `offerCount` permite exibir "a partir de" quando maior que 1. Exige a asserção do `bff-student` com escopo
+        `showcase:read`; a escola é o `tenantId` da asserção.
+      operationId: listShowcaseCoursesInternal
+      security:
+      - StudentBffServiceAssertion: []
+      parameters:
+      - name: level
+        in: query
+        required: false
+        description: Filtra por nível. Ausente = todos.
+        schema:
+          $ref: '#/components/schemas/CourseLevel'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/ShowcaseSize'
+      responses:
+        '200':
+          description: Página da vitrine. Filtro sem resultado devolve `data` vazio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowcaseCoursePage'
+              examples:
+                iniciante:
+                  value:
+                    data:
+                    - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                      title: Fundamentos de C#
+                      level: beginner
+                      summary: Sintaxe, tipos e orientação a objetos em C#.
+                      lowestPriceCents: 29700
+                      offerCount: 1
+                    pagination:
+                      page: 1
+                      size: 12
+                      total: 1
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AssertionInvalid'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
+  /showcase/courses/{courseId}:
+    parameters:
+    - name: courseId
+      in: path
+      required: true
+      description: Identificador do curso; compõe o endereço público estável da página (RF-08, C-07).
+      schema:
+        type: string
+        format: uuid
+    get:
+      tags:
+      - Vitrine
+      summary: Abrir a página pública do curso
+      description: Título, nível, descrição pedagógica, pré-requisito recomendado, estrutura da versão vigente (módulos
+        e títulos de aulas, sem vídeo) e as opções de compra publicadas (RF-08). Cada curso recomendado indica se
+        está na vitrine (`inShowcase`), para o link; o título é o atual quando o Catálogo conhece o curso e o da
+        publicação quando não (C-02). Curso fora da vitrine, inexistente ou de outra escola → 404 indistinto. Exige
+        a asserção do `bff-student` com escopo `showcase:read`; a escola é o `tenantId` da asserção.
+      operationId: getShowcaseCourseInternal
+      security:
+      - StudentBffServiceAssertion: []
+      responses:
+        '200':
+          description: Página do curso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowcaseCourseDetail'
+              examples:
+                avancado:
+                  value:
+                    courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                    title: .NET do zero à API
+                    level: advanced
+                    description: Do primeiro programa a uma API publicada, com testes e deploy.
+                    prerequisite:
+                      text: Git e C# básico.
+                      recommendedCourses:
+                      - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                        title: Fundamentos de C#
+                        inShowcase: true
+                    modules:
+                    - title: Fundamentos da linguagem
+                      lessons:
+                      - title: Tipos e variáveis
+                      - title: Controle de fluxo
+                    offers:
+                    - offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                      name: Acesso por 12 meses
+                      priceCents: 39700
+                      accessPeriod:
+                        type: months
+                        months: 12
+                    - offerId: 8d9e0f1a-2b3c-4d4e-9f5a-6b7c8d9e0f1a
+                      name: Acesso vitalício
+                      priceCents: 89700
+                      accessPeriod:
+                        type: lifetime
+        '404':
+          $ref: '#/components/responses/ShowcaseCourseNotFound'
+        '401':
+          $ref: '#/components/responses/AssertionInvalid'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
+  /showcase/offers/{offerId}/purchase-intents:
+    parameters:
+    - name: offerId
+      in: path
+      required: true
+      description: Oferta publicada cujo botão *Comprar* foi clicado.
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - Vitrine
+      summary: Registrar um clique em Comprar
+      description: 'Soma um à contagem anônima da oferta (RF-09, OD53) e responde que a compra estará disponível
+        em breve. Sem corpo. Nada que identifique a pessoa é recebido ou guardado: nem sessão, nem cookie, nem identificador
+        de navegador, nem IP (G10, G26). A `Idempotency-Key`, gerada por clique no navegador, evita contar duas
+        vezes a repetição automática de uma mesma requisição (G09). Não exige prova CSRF: não usa sessão, e o pior
+        efeito de uma requisição forjada é um clique a mais num sinal sem valor financeiro (C-08). Oferta não publicada
+        → 404, sem contar. Quando `CAP-011` existir, o botão passa a levar ao checkout e esta operação deixa de
+        ser chamada. Exige a asserção do `bff-student` com escopo `purchase-intent:write`; a escola é o `tenantId`
+        da asserção.'
+      operationId: registerPurchaseIntentInternal
+      security:
+      - StudentBffServiceAssertion: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Chave opaca por clique; repetição na janela de 24 horas não conta de novo.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '202':
+          description: Clique contado; a compra ainda não está disponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseIntentAccepted'
+              examples:
+                emBreve:
+                  value:
+                    purchaseAvailability: coming-soon
+        '404':
+          $ref: '#/components/responses/OfferNotAvailable'
+        '401':
+          $ref: '#/components/responses/AssertionInvalid'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
+  /offer-references/resolve:
+    post:
+      tags:
+      - Auditoria
+      summary: Resolver rótulos de ofertas para a consulta da trilha
+      description: Para a consulta da trilha de CAP-030 (RF-10; mesmo papel de `resolveCourseReferencesInternal`
+        em C-08 de CAP-005). Devolve, para cada oferta da escola do ator, o rótulo "título do curso — nome da opção"
+        atual. Oferta desconhecida ou de outra escola é omitida, e o BFF mostra o alvo sem rótulo. Exige o papel
+        administrador no claim `roles`; não exige `oferta.editar`. Leitura sem efeito colateral; POST para manter
+        os identificadores fora da URL, como nas buscas de CAP-030.
+      operationId: resolveOfferReferencesInternal
+      security:
+      - StaffUserToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveOfferReferencesRequest'
+            examples:
+              duas:
+                value:
+                  offerIds:
+                  - 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                  - 8d9e0f1a-2b3c-4d4e-9f5a-6b7c8d9e0f1a
+      responses:
+        '200':
+          description: Rótulos das ofertas encontradas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfferReferenceList'
+              examples:
+                rotulos:
+                  value:
+                    data:
+                    - offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                      label: .NET do zero à API — Acesso por 12 meses
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT RS256 de ator interno emitido por Identity (`validateStaffSessionInternal` com `audience:
+        commerce`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions, exp, jti.
+        Chave pública por `kid` no JWKS de Identity. As operações de Catálogo exigem `oferta.editar`; `resolveOfferReferencesInternal`
+        exige o papel administrador.'
+    StudentBffServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Asserção de serviço assimétrica e curta assinada pela chave exclusiva do `bff-student` (mecanismo
+        da ADR-0004, estendido a `commerce` por C-04; ADR própria na TechSpec). `commerce` valida assinatura, `kid`,
+        emissor `bff-student`, audiência `commerce`, escopo, `tenantId`, validade e `jti` contra replay. Escopos:
+        `showcase:read` nas leituras e `purchase-intent:write` no clique. Não representa aluno nem visitante.'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 'Chave opaca única por intenção de escrita (G09). Repetição com o mesmo corpo devolve o mesmo
+        resultado na janela de 24 horas; corpo diferente com a mesma chave → 422 `IDEMPOTENCY_KEY_REUSED`.
+
+        '
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    CourseId:
+      name: courseId
+      in: path
+      required: true
+      description: Identificador do curso em Conteúdo e Currículo.
+      schema:
+        type: string
+        format: uuid
+    OfferId:
+      name: offerId
+      in: path
+      required: true
+      description: Identificador da oferta.
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, a partir de 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+    ShowcaseSize:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 48
+        default: 12
+  schemas:
+    CourseLevel:
+      type: string
+      enum:
+      - beginner
+      - intermediate
+      - advanced
+      description: Nível do curso, vindo da versão vigente (RN-C18). Clientes devem tolerar valor novo.
+    PriceCents:
+      type: integer
+      minimum: 1
+      maximum: 9999999
+      description: Preço em centavos de real (BRL), de R$ 0,01 a R$ 99.999,99 (DP-03). Sem parcelamento.
+      examples:
+      - 49700
+    AccessPeriod:
+      description: 'Vigência prometida (RN-O08, OD51). `months`: acesso por N meses inteiros, contados da concessão
+        (RN-D04). `lifetime`: sem término.
+
+        '
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        - months
+        properties:
+          type:
+            const: months
+          months:
+            type: integer
+            minimum: 1
+            maximum: 60
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        properties:
+          type:
+            const: lifetime
+    OfferName:
+      type: string
+      minLength: 1
+      maxLength: 60
+      description: Nome da opção exibido na vitrine (DP-03).
+      examples:
+      - Acesso por 12 meses
+    OfferStatus:
+      type: string
+      enum:
+      - draft
+      - published
+      - unpublished
+      description: '`draft` — nunca publicada; pode ser excluída. `published` — à venda. `unpublished` — já foi
+        publicada, não está à venda e não pode ser excluída (RN-O11).
+
+        '
+    OfferInput:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - priceCents
+      - accessPeriod
+      properties:
+        name:
+          $ref: '#/components/schemas/OfferName'
+        priceCents:
+          $ref: '#/components/schemas/PriceCents'
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+    UpdateOfferRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          $ref: '#/components/schemas/OfferName'
+        priceCents:
+          $ref: '#/components/schemas/PriceCents'
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+    UpdateCatalogCourseRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - tagline
+      properties:
+        tagline:
+          $ref: '#/components/schemas/Tagline'
+    Tagline:
+      description: Chamada comercial, até 160 caracteres (RF-02, DP-03); `null` quando não há.
+      oneOf:
+      - type: string
+        minLength: 1
+        maxLength: 160
+      - type: 'null'
+    Offer:
+      type: object
+      additionalProperties: false
+      required:
+      - offerId
+      - courseId
+      - name
+      - priceCents
+      - accessPeriod
+      - status
+      - purchaseIntentCount
+      - createdAt
+      - updatedAt
+      - publishedAt
+      properties:
+        offerId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        name:
+          $ref: '#/components/schemas/OfferName'
+        priceCents:
+          $ref: '#/components/schemas/PriceCents'
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        purchaseIntentCount:
+          type: integer
+          minimum: 0
+          description: Cliques em *Comprar* desde a primeira publicação (RF-09). Anônimo.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        publishedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Última publicação; `null` se nunca foi publicada.
+    RecommendedCourse:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+    CatalogCourseSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - level
+      - inShowcase
+      - offerCounts
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          description: Título da versão vigente.
+        level:
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        inShowcase:
+          type: boolean
+        offerCounts:
+          type: object
+          additionalProperties: false
+          required:
+          - draft
+          - published
+          - unpublished
+          properties:
+            draft:
+              type: integer
+              minimum: 0
+            published:
+              type: integer
+              minimum: 0
+            unpublished:
+              type: integer
+              minimum: 0
+    CatalogCourseSummaryPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogCourseSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    CatalogCourseDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - level
+      - prerequisite
+      - tagline
+      - inShowcase
+      - offers
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        level:
+          description: Nível da versão vigente; `null` bloqueia a publicação de oferta (RN-O03).
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        prerequisite:
+          type: object
+          additionalProperties: false
+          required:
+          - text
+          - recommendedCourses
+          properties:
+            text:
+              type:
+              - string
+              - 'null'
+            recommendedCourses:
+              type: array
+              maxItems: 5
+              items:
+                $ref: '#/components/schemas/RecommendedCourse'
+        tagline:
+          $ref: '#/components/schemas/Tagline'
+        inShowcase:
+          type: boolean
+        offers:
+          type: array
+          maxItems: 50
+          description: Todas as ofertas do curso, rascunhos primeiro, depois publicadas e despublicadas (C-06).
+          items:
+            $ref: '#/components/schemas/Offer'
+    Pagination:
+      type: object
+      additionalProperties: false
+      required:
+      - page
+      - size
+      - total
+      - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+    ShowcaseCourseCard:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - level
+      - summary
+      - lowestPriceCents
+      - offerCount
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        level:
+          $ref: '#/components/schemas/CourseLevel'
+        summary:
+          type: string
+          maxLength: 200
+        lowestPriceCents:
+          type: integer
+          minimum: 1
+          description: Menor preço entre as ofertas publicadas, em centavos de real.
+        offerCount:
+          type: integer
+          minimum: 1
+    ShowcaseCoursePage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShowcaseCourseCard'
+        pagination:
+          type: object
+          additionalProperties: false
+          required:
+          - page
+          - size
+          - total
+          - totalPages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+            size:
+              type: integer
+              minimum: 1
+            total:
+              type: integer
+              minimum: 0
+            totalPages:
+              type: integer
+              minimum: 0
+    ShowcaseCourseDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - level
+      - description
+      - prerequisite
+      - modules
+      - offers
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        level:
+          $ref: '#/components/schemas/CourseLevel'
+        description:
+          type: string
+          maxLength: 5000
+          description: Descrição pedagógica da versão vigente; pode ser vazia.
+        prerequisite:
+          type: object
+          additionalProperties: false
+          required:
+          - text
+          - recommendedCourses
+          description: Recomendação, nunca condição (DE04). Ausência explícita.
+          properties:
+            text:
+              type:
+              - string
+              - 'null'
+            recommendedCourses:
+              type: array
+              maxItems: 5
+              items:
+                type: object
+                additionalProperties: false
+                required:
+                - courseId
+                - title
+                - inShowcase
+                properties:
+                  courseId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  inShowcase:
+                    type: boolean
+                    description: Quando `false`, exibir só o título, sem link.
+        modules:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Estrutura da versão vigente, em ordem.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - title
+            - lessons
+            properties:
+              title:
+                type: string
+              lessons:
+                type: array
+                minItems: 1
+                maxItems: 200
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                  - title
+                  properties:
+                    title:
+                      type: string
+        offers:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: Ofertas publicadas, do menor para o maior preço.
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - offerId
+            - name
+            - priceCents
+            - accessPeriod
+            properties:
+              offerId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              priceCents:
+                type: integer
+                minimum: 1
+              accessPeriod:
+                $ref: '#/components/schemas/AccessPeriod'
+    PurchaseIntentAccepted:
+      type: object
+      additionalProperties: false
+      required:
+      - purchaseAvailability
+      properties:
+        purchaseAvailability:
+          type: string
+          enum:
+          - coming-soon
+          description: Estado da compra da oferta. `CAP-011` substitui este fluxo; clientes devem tolerar valor
+            novo.
+    ResolveOfferReferencesRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - offerIds
+      properties:
+        offerIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    OfferReferenceList:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - offerId
+            - label
+            properties:
+              offerId:
+                type: string
+                format: uuid
+              label:
+                type: string
+                maxLength: 263
+  responses:
+    InvalidRequest:
+      description: Requisição malformada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            malformada:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CatalogCourseNotFound:
+      description: Curso inexistente, de outra escola ou sem versão vigente — indistintos (G07).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Curso não encontrado no catálogo.
+                status: 404
+                code: CATALOG_COURSE_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OfferNotFound:
+      description: Oferta inexistente ou de outra escola — indistintas (G07).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrada:
+              value:
+                type: about:blank
+                title: Oferta não encontrada.
+                status: 404
+                code: OFFER_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    InvalidOfferContent:
+      description: 'Conteúdo fora das regras: `FIELD_INVALID` (preço, vigência, nome ou chamada fora dos limites
+        de DP-03, com o campo em `detail`) ou `IDEMPOTENCY_KEY_REUSED`.
+
+        '
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            preco:
+              value:
+                type: about:blank
+                title: Campo inválido.
+                status: 422
+                detail: priceCents deve estar entre 1 e 9999999.
+                code: FIELD_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OfferStateConflict:
+      description: A ação não cabe no estado atual da oferta (RN-O11).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            estado:
+              value:
+                type: about:blank
+                title: A oferta não está no estado exigido.
+                status: 422
+                code: OFFER_STATE_CONFLICT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PublishRejected:
+      description: '`COURSE_LEVEL_REQUIRED` (versão vigente sem nível, RN-O03), `OFFER_STATE_CONFLICT` ou `IDEMPOTENCY_KEY_REUSED`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semNivel:
+              value:
+                type: about:blank
+                title: O curso não declara nível.
+                status: 422
+                detail: O professor precisa declarar o nível e publicar o curso.
+                code: COURSE_LEVEL_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ShowcaseCourseNotFound:
+      description: Curso fora da vitrine, inexistente ou de outra escola — indistintos.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Curso não disponível.
+                status: 404
+                code: SHOWCASE_COURSE_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OfferNotAvailable:
+      description: Oferta não publicada, inexistente ou de outra escola — indistintas. O clique não é contado.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Oferta não disponível.
+                status: 404
+                code: OFFER_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TokenInvalid:
+      description: JWT ausente, inválido, expirado, com emissor ou audiência errados.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            e:
+              value:
+                type: about:blank
+                title: Token de acesso inválido.
+                status: 401
+                code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: Token válido sem a permissão ou o papel exigido.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            e:
+              value:
+                type: about:blank
+                title: Sem permissão.
+                status: 403
+                code: PERMISSION_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AssertionInvalid:
+      description: Asserção de serviço ausente, inválida, repetida (`jti`) ou de outro emissor; JWT de usuário no
+        lugar da asserção.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            e:
+              value:
+                type: about:blank
+                title: Credencial de serviço inválida.
+                status: 401
+                code: SERVICE_ASSERTION_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ScopeDenied:
+      description: Asserção válida sem o escopo da operação.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            e:
+              value:
+                type: about:blank
+                title: Escopo insuficiente.
+                status: 403
+                code: SCOPE_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  examples:
+    OfferDraft:
+      value:
+        offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        name: Acesso por 12 meses
+        priceCents: 49700
+        accessPeriod:
+          type: months
+          months: 12
+        status: draft
+        purchaseIntentCount: 0
+        createdAt: '2026-10-07T10:00:00Z'
+        updatedAt: '2026-10-07T10:00:00Z'
+        publishedAt: null
+    OfferPublished:
+      value:
+        offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        name: Acesso por 12 meses
+        priceCents: 39700
+        accessPeriod:
+          type: months
+          months: 12
+        status: published
+        purchaseIntentCount: 14
+        createdAt: '2026-10-07T10:00:00Z'
+        updatedAt: '2026-10-08T11:30:00Z'
+        publishedAt: '2026-10-07T10:05:00Z'
+    OfferUnpublished:
+      value:
+        offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        name: Acesso por 12 meses
+        priceCents: 39700
+        accessPeriod:
+          type: months
+          months: 12
+        status: unpublished
+        purchaseIntentCount: 14
+        createdAt: '2026-10-07T10:00:00Z'
+        updatedAt: '2026-10-09T08:00:00Z'
+        publishedAt: '2026-10-07T10:05:00Z'
+    CatalogCourseWithOffers:
+      value:
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        title: .NET do zero à API
+        level: advanced
+        prerequisite:
+          text: Git e C# básico.
+          recommendedCourses:
+          - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+            title: Fundamentos de C#
+        tagline: Da primeira linha de C# a uma API no ar.
+        inShowcase: true
+        offers:
+        - offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          name: Acesso por 12 meses
+          priceCents: 39700
+          accessPeriod:
+            type: months
+            months: 12
+          status: published
+          purchaseIntentCount: 14
+          createdAt: '2026-10-07T10:00:00Z'
+          updatedAt: '2026-10-08T11:30:00Z'
+          publishedAt: '2026-10-07T10:05:00Z'
+        - offerId: 8d9e0f1a-2b3c-4d4e-9f5a-6b7c8d9e0f1a
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          name: Acesso vitalício
+          priceCents: 89700
+          accessPeriod:
+            type: lifetime
+          status: published
+          purchaseIntentCount: 5
+          createdAt: '2026-10-07T10:02:00Z'
+          updatedAt: '2026-10-07T10:02:00Z'
+          publishedAt: '2026-10-07T10:06:00Z'

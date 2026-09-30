@@ -1,0 +1,525 @@
+openapi: 3.1.0
+info:
+  title: Learning — nível e pré-requisito do curso (interno)
+  version: 1.1.0
+  description: 'Recorte interno do segundo PRD de CAP-005 (`tasks/prd-nivel-prerequisito-curso/prd.md` v1.0). Interface
+    `bff-admin` → `learning`, derivada do recorte público (`api-contract.yaml` 1.1.0) pela mesma transformação mecânica
+    usada em 1.0.0: sem cookie nem CSRF; JWT de ator com audiência `learning`; `X-Actor-Name` nas escritas (C-04);
+    sem as respostas 502/504, que são do BFF. `learning` decide `autoria.ler`/`autoria.editar` pelas claims e valida
+    cursos recomendados (escola, versão vigente, não o próprio curso). Evolui aditivamente `learning` 1.0.0 (`tasks/prd-autoria-curso/internal-api-contract-learning.yaml`);
+    as demais operações não mudam.'
+  contact:
+    name: Time de Conteúdo e Currículo
+servers:
+- url: /internal/v1
+  description: Rota privada de learning, inacessível ao navegador
+tags:
+- name: Cursos
+  description: Cursos da escola, rascunho e versões publicadas
+paths:
+  /courses:
+    get:
+      tags:
+      - Cursos
+      summary: Listar os cursos da escola
+      description: 'Igual a 1.0.0, com duas adições: o filtro opcional `title` (trecho do título, sem diferenciar
+        maiúsculas nem acentos), usado pelo seletor de cursos recomendados (RF-02), e o campo `currentLevel` em
+        cada item, que permite à lista indicar os cursos cuja versão vigente não tem nível (RF-04).
+
+        '
+      operationId: listCoursesInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/Page
+      - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/Size
+      - name: status
+        in: query
+        required: false
+        description: Filtra por estado do curso. O seletor de recomendados usa `published`.
+        schema:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/CourseStatus
+      - name: title
+        in: query
+        required: false
+        description: Trecho do título no rascunho, de 2 a 100 caracteres.
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 100
+          examples:
+          - fundamentos
+      responses:
+        '200':
+          description: Página de cursos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSummaryPage'
+              examples:
+                publicados:
+                  value:
+                    data:
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      title: .NET do zero à API
+                      status: published
+                      currentVersion: 3
+                      currentLevel: intermediate
+                      hasUnpublishedChanges: false
+                      lastEditedAt: '2026-10-05T13:20:00Z'
+                      lastEditedBy:
+                        name: Marina Alves
+                    - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                      title: Fundamentos de C#
+                      status: published
+                      currentVersion: 1
+                      currentLevel: null
+                      hasUnpublishedChanges: false
+                      lastEditedAt: '2026-09-29T10:00:00Z'
+                      lastEditedBy:
+                        name: Rafael Souza
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/InvalidRequest
+        '401':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/TokenInvalid
+        '403':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/PermissionDenied
+  /courses/{courseId}:
+    parameters:
+    - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/CourseId
+    get:
+      tags:
+      - Cursos
+      summary: Abrir o curso no editor
+      description: 'Igual a 1.0.0, com nível e pré-requisito do rascunho (`level`, `prerequisite`) e o nível da
+        versão vigente (`currentLevel`), para o aviso de RF-04. Cursos recomendados vêm com o título atual no rascunho
+        de cada um.
+
+        '
+      operationId: getCourseInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '200':
+          description: Curso com o rascunho completo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                comNivel:
+                  $ref: '#/components/examples/CourseWithLevel'
+        '401':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/TokenInvalid
+        '403':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/PermissionDenied
+        '404':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/CourseNotFound
+    patch:
+      tags:
+      - Cursos
+      summary: Alterar título, descrição, nível ou pré-requisito do curso
+      description: 'Altera o rascunho; num curso publicado, o público só vê a mudança depois de republicar (RN-C05).
+        Campo ausente não muda; `null` em `level` ou `prerequisiteText` limpa o valor; `recommendedCourseIds` substitui
+        a lista inteira, na ordem enviada, e `[]` a esvazia (RF-01, RF-02). Cada curso recomendado precisa ser da
+        escola, ter versão vigente e não ser o próprio curso; caso contrário, 422 `RECOMMENDED_COURSE_INVALID`,
+        sem alterar nada.
+
+        '
+      operationId: updateCourseInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/IdempotencyKey
+      - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/ActorName
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCourseRequest'
+            examples:
+              nivelEPreRequisito:
+                value:
+                  level: advanced
+                  prerequisiteText: Git e C# básico.
+                  recommendedCourseIds:
+                  - 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+              limparNivel:
+                value:
+                  level: null
+      responses:
+        '200':
+          description: Rascunho atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseDetail'
+              examples:
+                comNivel:
+                  $ref: '#/components/examples/CourseWithLevel'
+        '400':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/InvalidRequest
+        '401':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/TokenInvalid
+        '403':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/PermissionDenied
+        '404':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/CourseNotFound
+        '422':
+          $ref: '#/components/responses/InvalidCourseContent'
+  /courses/{courseId}/versions/{versionNumber}:
+    parameters:
+    - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/CourseId
+    - $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/parameters/VersionNumber
+    get:
+      tags:
+      - Cursos
+      summary: Abrir uma versão publicada
+      description: 'Igual a 1.0.0, com o nível e o pré-requisito com que a versão foi publicada (RF-05). Os cursos
+        recomendados trazem o título que tinham no momento da publicação. Versões anteriores a esta entrega vêm
+        com `level: null` e `prerequisite` vazio.
+
+        '
+      operationId: getCourseVersionInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '200':
+          description: A versão como foi publicada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseVersion'
+              examples:
+                versao4:
+                  value:
+                    courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                    versionNumber: 4
+                    title: .NET do zero à API
+                    description: Do primeiro programa a uma API publicada.
+                    level: advanced
+                    prerequisite:
+                      text: Git e C# básico.
+                      recommendedCourses:
+                      - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                        title: Fundamentos de C#
+                    publishedAt: '2026-10-06T09:15:00Z'
+                    publishedBy:
+                      name: Marina Alves
+                    current: true
+                    modules:
+                    - moduleId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+                      title: Fundamentos da linguagem
+                      position: 1
+                      lessons:
+                      - lessonId: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+                        title: Tipos e variáveis
+                        position: 1
+                        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        '401':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/TokenInvalid
+        '403':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/PermissionDenied
+        '404':
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/responses/CourseNotFound
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT RS256 de ator interno emitido por Identity na validação de sessão (`validateStaffSessionInternal`
+        com `audience: learning`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions,
+        exp, jti. Chave pública por `kid` no JWKS de Identity.'
+  schemas:
+    CourseLevel:
+      type: string
+      enum:
+      - beginner
+      - intermediate
+      - advanced
+      description: 'Nível do curso inteiro (H4): iniciante, intermediário, avançado. Só orienta; nunca condiciona
+        compra ou acesso (DE04). Clientes devem tolerar valor novo.
+
+        '
+    PrerequisiteText:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      description: Recomendação pedagógica em texto livre (RF-02). Texto do autor; nunca em log ou métrica.
+      examples:
+      - Lógica de programação e noções de Git.
+    RecommendedCourse:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          description: 'No rascunho, o título atual do curso recomendado; numa versão, o título que ele tinha quando
+            a versão foi publicada.
+
+            '
+    Prerequisite:
+      type: object
+      additionalProperties: false
+      required:
+      - text
+      - recommendedCourses
+      description: 'Ausência declarada explicitamente: `text` nulo e `recommendedCourses` vazio.'
+      properties:
+        text:
+          oneOf:
+          - $ref: '#/components/schemas/PrerequisiteText'
+          - type: 'null'
+        recommendedCourses:
+          type: array
+          maxItems: 5
+          description: Na ordem escolhida pelo professor.
+          items:
+            $ref: '#/components/schemas/RecommendedCourse'
+    UpdateCourseRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/Title
+        description:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/Description
+        level:
+          description: '`null` volta o rascunho a *sem nível*.'
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        prerequisiteText:
+          description: '`null` remove o texto.'
+          oneOf:
+          - $ref: '#/components/schemas/PrerequisiteText'
+          - type: 'null'
+        recommendedCourseIds:
+          type: array
+          maxItems: 5
+          uniqueItems: true
+          description: Substitui a lista inteira, na ordem enviada.
+          items:
+            type: string
+            format: uuid
+    CourseSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - status
+      - currentVersion
+      - currentLevel
+      - hasUnpublishedChanges
+      - lastEditedAt
+      - lastEditedBy
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/CourseStatus
+        currentVersion:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+        currentLevel:
+          description: Nível da versão vigente; `null` quando não há versão vigente ou ela não declara nível.
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        hasUnpublishedChanges:
+          type: boolean
+        lastEditedAt:
+          type: string
+          format: date-time
+        lastEditedBy:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/ActorName
+    CourseSummaryPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseSummary'
+        pagination:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/Pagination
+    CourseDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - status
+      - currentVersion
+      - currentLevel
+      - level
+      - prerequisite
+      - hasUnpublishedChanges
+      - draftRevision
+      - createdAt
+      - createdBy
+      - lastEditedAt
+      - lastEditedBy
+      - modules
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/CourseStatus
+        currentVersion:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+        currentLevel:
+          description: Nível da versão vigente (RF-04).
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        level:
+          description: Nível no rascunho.
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        prerequisite:
+          $ref: '#/components/schemas/Prerequisite'
+        hasUnpublishedChanges:
+          type: boolean
+          description: Passa a considerar também nível e pré-requisito.
+        draftRevision:
+          type: integer
+          minimum: 1
+          description: Cresce também quando nível ou pré-requisito mudam (C-03).
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/ActorName
+        lastEditedAt:
+          type: string
+          format: date-time
+        lastEditedBy:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/ActorName
+        modules:
+          type: array
+          maxItems: 100
+          items:
+            $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/DraftModule
+    CourseVersion:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - versionNumber
+      - title
+      - level
+      - prerequisite
+      - publishedAt
+      - publishedBy
+      - current
+      - modules
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+        description:
+          type: string
+        level:
+          oneOf:
+          - $ref: '#/components/schemas/CourseLevel'
+          - type: 'null'
+        prerequisite:
+          $ref: '#/components/schemas/Prerequisite'
+        publishedAt:
+          type: string
+          format: date-time
+        publishedBy:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/ActorName
+        versionNote:
+          $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/VersionNote
+        current:
+          type: boolean
+        modules:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/VersionModule
+  responses:
+    InvalidCourseContent:
+      description: 'Conteúdo inválido. Além dos códigos de 1.0.0 (`TITLE_REQUIRED`, `IDEMPOTENCY_KEY_REUSED`), esta
+        versão acrescenta `RECOMMENDED_COURSE_INVALID` — curso recomendado de outra escola, nunca publicado, inexistente
+        ou o próprio curso — e `FIELD_INVALID` para nível fora da lista ou texto acima de 1 000 caracteres, com
+        o campo em `detail`.
+
+        '
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../prd-autoria-curso/internal-api-contract-learning.yaml#/components/schemas/Problem
+          examples:
+            recomendadoInvalido:
+              value:
+                type: about:blank
+                title: Curso recomendado inválido.
+                status: 422
+                detail: recommendedCourseIds[0] não é um curso publicado desta escola.
+                code: RECOMMENDED_COURSE_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  examples:
+    CourseWithLevel:
+      value:
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        title: .NET do zero à API
+        description: Do primeiro programa a uma API publicada.
+        status: published
+        currentVersion: 3
+        currentLevel: null
+        level: advanced
+        prerequisite:
+          text: Git e C# básico.
+          recommendedCourses:
+          - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+            title: Fundamentos de C#
+        hasUnpublishedChanges: true
+        draftRevision: 18
+        createdAt: '2026-09-29T10:00:00Z'
+        createdBy:
+          name: Marina Alves
+        lastEditedAt: '2026-10-06T09:10:00Z'
+        lastEditedBy:
+          name: Marina Alves
+        modules: []

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: BFF do backoffice — acesso interno por papel e permissão
-  version: 1.2.0
+  version: 1.3.0
   description: >
     Recorte de CAP-002, PRD `tasks/prd-acesso-interno/prd.md` v1.0, aprovado em 2026-09-25.
     Interface SPA do backoffice (`admin-spa`) → BFF do backoffice (`bff-admin`). O serviço de
@@ -945,7 +945,7 @@ components:
       description: Papel interno, pelo nome canônico de Identidade e Acesso. O mesmo valor viaja em `complemento.papel` na Auditoria.
     Permission:
       type: string
-      enum: [acesso.gerir, financeiro.ler, autoria.ler, suporte.atender, midia.enviar, autoria.editar]
+      enum: [acesso.gerir, financeiro.ler, autoria.ler, suporte.atender, midia.enviar, autoria.editar, oferta.editar]
       description: >
         Catálogo inicial (DP-03): administrador → acesso.gerir; financeiro → financeiro.ler;
         professor → autoria.ler; suporte → suporte.atender. Capacidades futuras acrescentam

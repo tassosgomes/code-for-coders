@@ -2,10 +2,10 @@
 tsg_artifact: techspec
 product: code-4-coders
 capability: CAP-030
-version: 1.1
+version: 1.2
 status: approved
-updated: 2026-09-27
-sources: tasks/prd-consulta-trilha-auditoria/prd.md@1.0, tasks/prd-consulta-trilha-auditoria/contracts.md@1.1, context/architecture-baseline.md@1.2
+updated: 2026-09-30
+sources: tasks/prd-consulta-trilha-auditoria/prd.md@1.0, tasks/prd-consulta-trilha-auditoria/contracts.md@1.2, context/architecture-baseline.md@1.2
 ---
 
 # Especificação Técnica — Consulta e complemento da trilha de auditoria
@@ -13,11 +13,11 @@ sources: tasks/prd-consulta-trilha-auditoria/prd.md@1.0, tasks/prd-consulta-tril
 > **Escopo:** Full-stack  
 > **Modo:** Pipeline  
 > **PRD de origem:** [prd.md](prd.md) v1.0, aprovado  
-> **Contratos de integração:** [contracts.md](contracts.md) v1.1; [API pública](api-contract.yaml),
+> **Contratos de integração:** [contracts.md](contracts.md) v1.2; [API pública](api-contract.yaml),
 > [API interna de Auditoria](internal-api-contract-audit.yaml),
 > [API interna de Identidade](internal-api-contract-identity.yaml) e
 > [mensagem de complemento](asyncapi-contract.yaml), aprovados para implementação  
-> **Data:** 2026-09-27  
+> **Data:** 2026-09-27 (revisão 1.2 em 2026-09-30)  
 > **Status:** Aprovado  
 > **Handoff:** approved — pode alimentar o Task Creator
 
@@ -45,6 +45,14 @@ TechSpec foram aprovadas pelo responsável em 2026-09-27.
 nomes de autor e alvo. O BFF resolve os rótulos da página, e não só do detalhe; o lookup em
 Identity passa a nascer em V-01. O schema `AuditRecordSummary` já aceita `label` opcional, sem
 mudança de contrato.
+
+**Revisão 1.2 (2026-09-30):** errata para acompanhar [contracts.md](contracts.md) v1.2, aprovado
+em 2026-09-28 e já implementado. O resumo da lista (`AuditRecordSummary`, APIs pública e interna
+1.2.0) ganha `role` opcional e nullable, para a lista mostrar o papel junto ao tipo do ato, como no
+Figma aprovado. Sem decisão nova: `audit` preenche `role` somente em `papel-concedido` e
+`papel-revogado`, lendo o atributo `papel` já armazenado no complemento do original; nos demais
+tipos, ou com complemento ausente ou ilegível, devolve `null`. O BFF repassa o valor sem
+enriquecer. Nada muda em persistência, mensagem de auditoria ou no detalhe.
 
 ## Arquitetura da Solução
 
@@ -148,7 +156,8 @@ admin-spa /admin/auditoria ──▶ bff-admin ──JWT audit──▶ audit �
   Valkey mantém somente IDs/metadata temporários. A lista exclui complementos, indica se há
   algum e apresenta estado vazio sem perder filtros. O BFF resolve em Identity os rótulos das
   referências da página (revisão 1.1), sem gravá-los; falha transitória mostra a referência
-  curta e `401/403` de Identity fecha a resposta.
+  curta e `401/403` de Identity fecha a resposta. Concessões e revogações trazem o `role` do
+  original no resumo (revisão 1.2); nos demais tipos o campo é `null` e a lista não mostra papel.
 - **Saída observável:** navegação restrita, página ordenada com total/snapshot estáveis, ou
   `401/403/422` neutro. Ator de outro tenant jamais vê ou infere registro.
 - **Evidência / checkpoint:** com dois tenants, professor e administrador, abrir origem e rota
@@ -202,11 +211,12 @@ mensageria e migrations geradas por EF entram em V-03.
 | API pública `listAuditRecords` | SPA → POST BFF → `listAuditRecordsInternal` em `audit` → `resolveAuditIdentityReferencesInternal` em Identity | Sessão vigente, CSRF, administrador, tenant, filtro inclusivo e snapshot; rótulos da página como no detalhe; V-01 |
 | API pública `getAuditRecord` | SPA → BFF → `getAuditRecordInternal` em `audit` → `resolveAuditIdentityReferencesInternal` em Identity | Lookup apenas de referências do tenant; falha transitória sem rótulo, revogação fecha; V-02 |
 | API pública `confirmAuditRecordComplement` | SPA → BFF → banco próprio/outbox → RabbitMQ | `202` só após commit; idempotência 24 h e CSRF; V-03 |
-| API interna `listAuditRecordsInternal`, `getAuditRecordInternal` | BFF com JWT `audit` → serviço dono | Busca POST com filtros no corpo; validação local de papel/tenant; sem dados pessoais de Identity; V-01/V-02 |
+| API interna `listAuditRecordsInternal`, `getAuditRecordInternal` | BFF com JWT `audit` → serviço dono | Busca POST com filtros no corpo; validação local de papel/tenant; sem dados pessoais de Identity; `role` do resumo derivado só do atributo `papel` de concessão/revogação (1.2.0); V-01/V-02 |
 | API interna `resolveAuditIdentityReferencesInternal` | BFF com asserção `audit-references:read` e `X-Staff-Session` → Identity | Somente administrador e referências do tenant; ausência/outro tenant indistintos; V-01/V-02 |
 
 Os schemas, parâmetros e códigos HTTP pertencem aos YAMLs. As revisões 1.1.0 das buscas
-substituem os GETs 1.0.0 antes de qualquer implementação ou consumidor implantado.
+substituem os GETs 1.0.0 antes de qualquer implementação ou consumidor implantado. As revisões
+1.2.0 acrescentam apenas `role` opcional e nullable ao resumo; a mudança é aditiva.
 
 ### Mensagem e dados
 

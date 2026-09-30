@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-28",
+  "updated": "2026-09-30",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/prd-ingestao-midia, fora do indice por colisao de chave unica.",
   "artifacts": {
     "vision": "vision.md",
@@ -10,7 +10,8 @@
     "capability-backlog": "backlog/capabilities.md",
     "prd": "tasks/prd-trilha-auditoria/prd.md",
     "contract": "tasks/prd-trilha-auditoria/contracts.md",
-    "techspec": "tasks/prd-trilha-auditoria/techspec.md"
+    "techspec": "tasks/prd-trilha-auditoria/techspec.md",
+    "CAP-006-ingestao:prd": "tasks/prd-ingestao-midia/prd.md"
   },
   "capability_stages": [
     "backlog",
@@ -45,28 +46,37 @@
     },
     {
       "id": "CAP-003",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "contract",
+      "artifacts": {
+        "domain": "domains/catalogo-e-oferta/domain.md",
+        "prd": "tasks/prd-vitrine-oferta/prd.md",
+        "contract": "tasks/prd-vitrine-oferta/contracts.md"
+      },
       "mvp_order": 5
     },
     {
       "id": "CAP-004",
       "stage": "backlog",
-      "artifacts": {}
+      "artifacts": {
+        "domain": "domains/catalogo-e-oferta/domain.md"
+      }
     },
     {
       "id": "CAP-005",
       "stage": "contract",
       "artifacts": {
         "domain": "domains/conteudo-e-curriculo/domain.md",
-        "prd": "tasks/prd-autoria-curso/prd.md",
-        "contract": "tasks/prd-autoria-curso/contracts.md"
+        "prd": "tasks/prd-nivel-prerequisito-curso/prd.md",
+        "contract": "tasks/prd-nivel-prerequisito-curso/contracts.md"
       },
-      "mvp_order": 4
+      "mvp_order": 4,
+      "delivered": [
+        "tasks/prd-autoria-curso (1o PRD, done, PR #98)"
+      ]
     },
     {
       "id": "CAP-006",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
         "prd": "tasks/prd-observabilidade-midia/prd.md",
@@ -86,18 +96,24 @@
     {
       "id": "CAP-008",
       "stage": "backlog",
-      "artifacts": {},
+      "artifacts": {
+        "domain": "domains/matricula-e-direito-de-acesso/domain.md"
+      },
       "mvp_order": 6
     },
     {
       "id": "CAP-009",
       "stage": "backlog",
-      "artifacts": {}
+      "artifacts": {
+        "domain": "domains/matricula-e-direito-de-acesso/domain.md"
+      }
     },
     {
       "id": "CAP-010",
       "stage": "backlog",
-      "artifacts": {}
+      "artifacts": {
+        "domain": "domains/matricula-e-direito-de-acesso/domain.md"
+      }
     },
     {
       "id": "CAP-011",
@@ -218,10 +234,18 @@
   ],
   "next_actions": [
     {
-      "id": "NA25",
-      "what": "Criar a TechSpec do 1o PRD de CAP-005 a partir de tasks/prd-autoria-curso/prd.md e contracts.md (C-01 a C-11); errata do PRD (Auditoria muda, C-01) pendente em revisao 1.1",
+      "id": "NA28",
+      "what": "Aprovar tasks/prd-nivel-prerequisito-curso/techspec.draft.md (decisoes locais: message_id no outbox de content, reenvio por flag com marcador, titulo do recomendado da versao vigente, title_search, current_level); depois tasks",
       "skill": "tsg-flow-techspec-creator",
       "blocked_by": []
+    },
+    {
+      "id": "NA27",
+      "what": "TechSpec do 1o PRD de CAP-003 (tasks/prd-vitrine-oferta) sobre contracts.md 1.0 aprovado, com ADR da assercao bff-student->commerce (OD57); depois da NA28",
+      "skill": "tsg-flow-techspec-creator",
+      "blocked_by": [
+        "NA28"
+      ]
     }
   ],
   "open_decisions": [
@@ -233,15 +257,6 @@
       "blocks": [
         "fim da Fase 1",
         "CAP-028"
-      ]
-    },
-    {
-      "id": "OD3",
-      "ref": "vision.md A2 / capabilities.md R4",
-      "what": "Identidade visual e design system",
-      "owner": "time de design",
-      "blocks": [
-        "CAP-003 em publico"
       ]
     },
     {
@@ -647,6 +662,118 @@
       "owner": "tasso",
       "decided_at": "2026-09-28",
       "decision": "Fora do MVP. Quando entrar, e ato auditado com motivo obrigatorio e exige decidir o efeito em Catalogo e Matricula (direito vitalicio)."
+    },
+    {
+      "id": "OD3",
+      "ref": "vision.md A2 / capabilities.md R4",
+      "what": "Identidade visual e design system",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Fechada: DESIGN.md (fonte da verdade visual) e o Figma Code4Coders Design System valem como identidade visual e design system, inclusive para a area publica. Descartado: aguardar nova entrega do time de design, que so atrasaria CAP-003 sem lacuna identificada."
+    },
+    {
+      "id": "OD46",
+      "ref": "backlog/capabilities.md CAP-003",
+      "what": "Fatia do primeiro PRD de CAP-003",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Entra: negocio cria oferta sobre curso publicado com preco, vigencia do acesso, nivel e pre-requisito, publica e despublica; vitrine publica com filtro por nivel; pagina do curso com curriculo publicado e vigencia prometida; CTA de compra que registra so a intencao. Dimensionada pelo que CAP-008 (cortesia, precisa da vigencia) e CAP-011 (compra, precisa do preco) consomem. Fora: cupom e campanha (CAP-004, Fase 2); checkout e pagamento (CAP-011, passo 11, depende de OD5); busca e SEO avancados (pos-MVP). Domain docs: Catalogo e Oferta (D6) e Matricula e Direito de Acesso (D7) sao detalhados como par antes do PRD, conforme backlog/capabilities.md secao A obs. 1 (risco DE01: vigencia prometida x concedida); CAP-008 e a rodada seguinte."
+    },
+    {
+      "id": "OD47",
+      "ref": "domains/catalogo-e-oferta/domain.draft.md RN-O14",
+      "what": "Quem cria, precifica e publica ofertas",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Nova permissao de gestao de oferta concedida ao papel financeiro; nome nasce no PRD de CAP-003. Descartado: papel novo comercial (acrescenta convite/papel/tela de Identidade ao caminho de CAP-003) e administrador (contraria DP-03 de CAP-002 e concentra poder na conta mais sensivel)."
+    },
+    {
+      "id": "OD48",
+      "ref": "domains/catalogo-e-oferta/domain.draft.md RN-O03, RN-O04",
+      "what": "Varias ofertas publicadas por curso",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Um curso pode ter varias ofertas publicadas ao mesmo tempo; a vitrine lista o curso uma vez com as opcoes. Nivel e pre-requisito ficam na Ficha de Vitrine, comum as ofertas do curso (concilia visao H4 e 5). Descartado: uma oferta publicada por vez (trocar de modelo exigiria despublicar e publicar)."
+    },
+    {
+      "id": "OD49",
+      "ref": "domains/catalogo-e-oferta RN-O09 · domains/matricula-e-direito-de-acesso RN-D03",
+      "what": "Como a vigencia chega a Matricula",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Catalogo e dono da promessa; o pedido congela a vigencia com o preco e a ordem de concessao a entrega pronta. Matricula nunca consulta Catalogo para conceder. Descartado: Matricula consultar Catalogo na concessao (oferta alterada entre compra e pagamento mudaria o prometido). Redacao da junta no Domain Map deve acompanhar na proxima revisao dele."
+    },
+    {
+      "id": "OD50",
+      "ref": "domains/catalogo-e-oferta/domain.draft.md RN-O15",
+      "what": "Atos do Catalogo auditados",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Publicar, despublicar e alterar preco ou vigencia de oferta publicada sao atos auditados, motivo opcional; rascunho nao. Descartado: so publicar/despublicar (mudanca de preco sem autor) e nenhum no MVP."
+    },
+    {
+      "id": "OD51",
+      "ref": "domains/catalogo-e-oferta/domain.draft.md QO-01, RN-O08",
+      "what": "Unidade da duracao da vigencia por periodo",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Meses inteiros. Termino no mesmo dia do mes, N meses apos a concessao (caso de fim de mes em QD-04). Descartado: dias."
+    },
+    {
+      "id": "OD52",
+      "ref": "domains/matricula-e-direito-de-acesso/domain.draft.md QD-01, RN-D11",
+      "what": "Quem concede cortesia",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Financeiro. Ainda nao ha operacao comercial separada; papel comercial fica para um segundo momento e, se surgir, a permissao migra por decisao de Identidade sem mudar a regra."
+    },
+    {
+      "id": "OD53",
+      "ref": "domains/catalogo-e-oferta/domain.md QO-02",
+      "what": "CTA de compra antes de CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "O botao de compra leva a aviso de compra disponivel em breve e conta o clique por oferta, sem identificar a pessoa. CAP-011 troca o destino. Descartado: exigir login e registrar interesse (intencao pessoal e Pedido, dominio de Vendas) e botao desabilitado (perde o unico sinal de demanda)."
+    },
+    {
+      "id": "OD54",
+      "ref": "domains/conteudo-e-curriculo/domain.md RN-C18 · domains/catalogo-e-oferta/domain.md RN-O03",
+      "what": "Dono de nivel e pre-requisito",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Nivel e pre-requisito sao atributos pedagogicos do curso (Conteudo), declarados pelo professor no rascunho e publicados com a versao; Catalogo exibe e filtra. Continuam informativos, sem gate. Motivo: informacao pedagogica que o financeiro nao tem; persona Professor da visao. Descartado: so pre-requisito no curso; manter na Ficha editada pelo professor (dois donos). Diverge da redacao de DE04 (\"atributo informativo do Catalogo\") no Domain Map; revisar na proxima revisao do mapa, junto com a junta de vigencia (OD49)."
+    },
+    {
+      "id": "OD55",
+      "ref": "tasks/prd-nivel-prerequisito-curso/prd.draft.md DP-01, DP-02",
+      "what": "Fatia do 2o PRD de CAP-005 (nivel e pre-requisito)",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Entra: professor declara nivel (opcional, com aviso de que sem nivel o curso nao entra na vitrine) e pre-requisito (texto ate 1000 caracteres e/ou ate 5 cursos publicados da escola) no rascunho; publicados com a versao; historico por versao; fato conteudo.versao-publicada aditivo e leitura sob demanda pelo Catalogo. Fora: exibicao e filtro na vitrine (CAP-003). Descartado: nivel obrigatorio para publicar (mudaria RN-C11) e pre-requisito so texto."
+    },
+    {
+      "id": "OD56",
+      "ref": "tasks/prd-nivel-prerequisito-curso/contracts.md C-01 · tasks/prd-vitrine-oferta/contracts.md C-01",
+      "what": "Carga inicial do Catalogo",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "learning reenvia, na implantacao, o fato da versao vigente de cada curso publicado com o mesmo eventId; Media ignora (versao ja aplicada), Catalogo aplica. Substitui a leitura sob demanda do RF-06 do PRD de nivel (errata). Descartado: leitura sincrona commerce->learning (mecanismo novo de autenticacao entre servicos de dominio e dependencia sincrona)."
+    },
+    {
+      "id": "OD57",
+      "ref": "tasks/prd-vitrine-oferta/contracts.md C-04",
+      "what": "Autenticacao bff-student -> commerce nas chamadas publicas",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "Assercao de servico do bff-student (mecanismo da ADR-0004) estendida a commerce, audiencia commerce, escopos showcase:read e purchase-intent:write; ADR propria na TechSpec. Descartado: sem autenticacao, so rede interna."
+    },
+    {
+      "id": "OD58",
+      "ref": "tasks/prd-nivel-prerequisito-curso/contracts.md C-03",
+      "what": "Descricao pedagogica no fato de versao",
+      "owner": "tasso",
+      "decided_at": "2026-09-30",
+      "decision": "conteudo.versao-publicada.v1 1.1.0 passa a levar a descricao (<= 5000), revisando a parte sem descricao de C-09 de CAP-005; a pagina publica sai inteira da visao do Catalogo. Descartado: bff-student ler a descricao em learning."
     }
   ]
 }

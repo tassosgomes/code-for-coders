@@ -1,0 +1,424 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — vitrine pública
+  version: 1.0.0
+  description: >
+    Recorte do primeiro PRD de CAP-003, `tasks/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30.
+    Interface `student-spa` → `bff-student`, **pública**: nenhuma operação exige sessão, e a presença do
+    cookie de sessão do aluno não muda nada (RN-O13). As operações de conta de CAP-001 não mudam. A
+    escola é a do BFF (MVP mono-tenant, BA10). Nenhuma resposta carrega autor, e-mail ou identificador de
+    pessoa. Preço sempre em centavos de real, inteiro (C-05).
+  contact:
+    name: Time de Commerce
+servers:
+  - url: /api/v1
+    description: URL pública versionada do BFF do aluno
+tags:
+  - name: Vitrine
+    description: Cursos à venda, página do curso e intenção de compra
+paths:
+  /showcase/courses:
+    get:
+      tags: [Vitrine]
+      summary: Listar os cursos da vitrine
+      description: >
+        Cursos com ao menos uma oferta publicada e nível na versão vigente (RF-07, DP-04), do mais
+        recentemente colocado na vitrine para o mais antigo. `summary` é a chamada comercial ou, sem ela,
+        o início da descrição pedagógica, cortado em até 200 caracteres. `lowestPriceCents` é o menor
+        preço entre as ofertas publicadas; `offerCount` permite exibir "a partir de" quando maior que 1.
+      operationId: listShowcaseCourses
+      security: []
+      parameters:
+        - name: level
+          in: query
+          required: false
+          description: Filtra por nível. Ausente = todos.
+          schema:
+            $ref: '#/components/schemas/CourseLevel'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página da vitrine. Filtro sem resultado devolve `data` vazio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowcaseCoursePage'
+              examples:
+                iniciante:
+                  value:
+                    data:
+                      - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                        title: Fundamentos de C#
+                        level: beginner
+                        summary: Sintaxe, tipos e orientação a objetos em C#.
+                        lowestPriceCents: 29700
+                        offerCount: 1
+                    pagination: {page: 1, size: 12, total: 1, totalPages: 1}
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '502':
+          $ref: '#/components/responses/ShowcaseUnavailable'
+        '504':
+          $ref: '#/components/responses/ShowcaseTimeout'
+  /showcase/courses/{courseId}:
+    parameters:
+      - name: courseId
+        in: path
+        required: true
+        description: Identificador do curso; compõe o endereço público estável da página (RF-08, C-07).
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Vitrine]
+      summary: Abrir a página pública do curso
+      description: >
+        Título, nível, descrição pedagógica, pré-requisito recomendado, estrutura da versão vigente
+        (módulos e títulos de aulas, sem vídeo) e as opções de compra publicadas (RF-08). Cada curso
+        recomendado indica se está na vitrine (`inShowcase`), para o link; o título é o atual quando o
+        Catálogo conhece o curso e o da publicação quando não (C-02). Curso fora da vitrine, inexistente
+        ou de outra escola → 404 indistinto.
+      operationId: getShowcaseCourse
+      security: []
+      responses:
+        '200':
+          description: Página do curso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowcaseCourseDetail'
+              examples:
+                avancado:
+                  value:
+                    courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                    title: .NET do zero à API
+                    level: advanced
+                    description: Do primeiro programa a uma API publicada, com testes e deploy.
+                    prerequisite:
+                      text: Git e C# básico.
+                      recommendedCourses:
+                        - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                          title: Fundamentos de C#
+                          inShowcase: true
+                    modules:
+                      - title: Fundamentos da linguagem
+                        lessons:
+                          - title: Tipos e variáveis
+                          - title: Controle de fluxo
+                    offers:
+                      - offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                        name: Acesso por 12 meses
+                        priceCents: 39700
+                        accessPeriod: {type: months, months: 12}
+                      - offerId: 8d9e0f1a-2b3c-4d4e-9f5a-6b7c8d9e0f1a
+                        name: Acesso vitalício
+                        priceCents: 89700
+                        accessPeriod: {type: lifetime}
+        '404':
+          $ref: '#/components/responses/ShowcaseCourseNotFound'
+        '502':
+          $ref: '#/components/responses/ShowcaseUnavailable'
+        '504':
+          $ref: '#/components/responses/ShowcaseTimeout'
+  /showcase/offers/{offerId}/purchase-intents:
+    parameters:
+      - name: offerId
+        in: path
+        required: true
+        description: Oferta publicada cujo botão *Comprar* foi clicado.
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Vitrine]
+      summary: Registrar um clique em Comprar
+      description: >
+        Soma um à contagem anônima da oferta (RF-09, OD53) e responde que a compra estará disponível em
+        breve. Sem corpo. Nada que identifique a pessoa é recebido ou guardado: nem sessão, nem cookie,
+        nem identificador de navegador, nem IP (G10, G26). A `Idempotency-Key`, gerada por clique no
+        navegador, evita contar duas vezes a repetição automática de uma mesma requisição (G09). Não exige
+        prova CSRF: não usa sessão, e o pior efeito de uma requisição forjada é um clique a mais num
+        sinal sem valor financeiro (C-08). Oferta não publicada → 404, sem contar. Quando `CAP-011`
+        existir, o botão passa a levar ao checkout e esta operação deixa de ser chamada.
+      operationId: registerPurchaseIntent
+      security: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Chave opaca por clique; repetição na janela de 24 horas não conta de novo.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+      responses:
+        '202':
+          description: Clique contado; a compra ainda não está disponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseIntentAccepted'
+              examples:
+                emBreve:
+                  value:
+                    purchaseAvailability: coming-soon
+        '404':
+          $ref: '#/components/responses/OfferNotAvailable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '502':
+          $ref: '#/components/responses/ShowcaseUnavailable'
+        '504':
+          $ref: '#/components/responses/ShowcaseTimeout'
+components:
+  parameters:
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, a partir de 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 48
+        default: 12
+  schemas:
+    CourseLevel:
+      type: string
+      enum: [beginner, intermediate, advanced]
+      description: Nível do curso (RN-C18). Orienta, não restringe (DE04). Clientes devem tolerar valor novo.
+    AccessPeriod:
+      description: >
+        Vigência prometida. `months`: "Acesso por N meses, contados a partir da liberação" (RN-D04).
+        `lifetime`: "Acesso vitalício".
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [type, months]
+          properties:
+            type:
+              const: months
+            months:
+              type: integer
+              minimum: 1
+              maximum: 60
+        - type: object
+          additionalProperties: false
+          required: [type]
+          properties:
+            type:
+              const: lifetime
+    ShowcaseCourseCard:
+      type: object
+      additionalProperties: false
+      required: [courseId, title, level, summary, lowestPriceCents, offerCount]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        level:
+          $ref: '#/components/schemas/CourseLevel'
+        summary:
+          type: string
+          maxLength: 200
+        lowestPriceCents:
+          type: integer
+          minimum: 1
+          description: Menor preço entre as ofertas publicadas, em centavos de real.
+        offerCount:
+          type: integer
+          minimum: 1
+    ShowcaseCoursePage:
+      type: object
+      additionalProperties: false
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShowcaseCourseCard'
+        pagination:
+          type: object
+          additionalProperties: false
+          required: [page, size, total, totalPages]
+          properties:
+            page: {type: integer, minimum: 1}
+            size: {type: integer, minimum: 1}
+            total: {type: integer, minimum: 0}
+            totalPages: {type: integer, minimum: 0}
+    ShowcaseCourseDetail:
+      type: object
+      additionalProperties: false
+      required: [courseId, title, level, description, prerequisite, modules, offers]
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        level:
+          $ref: '#/components/schemas/CourseLevel'
+        description:
+          type: string
+          maxLength: 5000
+          description: Descrição pedagógica da versão vigente; pode ser vazia.
+        prerequisite:
+          type: object
+          additionalProperties: false
+          required: [text, recommendedCourses]
+          description: Recomendação, nunca condição (DE04). Ausência explícita.
+          properties:
+            text:
+              type: [string, 'null']
+            recommendedCourses:
+              type: array
+              maxItems: 5
+              items:
+                type: object
+                additionalProperties: false
+                required: [courseId, title, inShowcase]
+                properties:
+                  courseId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  inShowcase:
+                    type: boolean
+                    description: Quando `false`, exibir só o título, sem link.
+        modules:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Estrutura da versão vigente, em ordem.
+          items:
+            type: object
+            additionalProperties: false
+            required: [title, lessons]
+            properties:
+              title:
+                type: string
+              lessons:
+                type: array
+                minItems: 1
+                maxItems: 200
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [title]
+                  properties:
+                    title:
+                      type: string
+        offers:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: Ofertas publicadas, do menor para o maior preço.
+          items:
+            type: object
+            additionalProperties: false
+            required: [offerId, name, priceCents, accessPeriod]
+            properties:
+              offerId:
+                type: string
+                format: uuid
+              name:
+                type: string
+              priceCents:
+                type: integer
+                minimum: 1
+              accessPeriod:
+                $ref: '#/components/schemas/AccessPeriod'
+    PurchaseIntentAccepted:
+      type: object
+      additionalProperties: false
+      required: [purchaseAvailability]
+      properties:
+        purchaseAvailability:
+          type: string
+          enum: [coming-soon]
+          description: Estado da compra da oferta. `CAP-011` substitui este fluxo; clientes devem tolerar valor novo.
+    Problem:
+      type: object
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+  responses:
+    InvalidRequest:
+      description: 'Parâmetro inválido, como nível fora da lista.'
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          examples:
+            nivel:
+              value: {type: about:blank, title: Requisição inválida., status: 400, detail: 'level deve ser beginner, intermediate ou advanced.', code: INVALID_REQUEST, traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01}
+    ShowcaseCourseNotFound:
+      description: Curso fora da vitrine, inexistente ou de outra escola — indistintos.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          examples:
+            indisponivel:
+              value: {type: about:blank, title: Curso não disponível., status: 404, code: SHOWCASE_COURSE_NOT_FOUND, traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01}
+    OfferNotAvailable:
+      description: Oferta não publicada, inexistente ou de outra escola — indistintas. O clique não é contado.
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          examples:
+            indisponivel:
+              value: {type: about:blank, title: Oferta não disponível., status: 404, code: OFFER_NOT_AVAILABLE, traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01}
+    TooManyRequests:
+      description: Limite de requisições da borda excedido; o clique não foi contado.
+      headers:
+        Retry-After:
+          description: Segundos até poder repetir.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          examples:
+            limite:
+              value: {type: about:blank, title: Muitas requisições., status: 429, code: RATE_LIMITED, traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01}
+    ShowcaseUnavailable:
+      description: '`commerce` indisponível.'
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          examples:
+            indisponivel:
+              value: {type: about:blank, title: Vitrine temporariamente indisponível., status: 502, code: SHOWCASE_UNAVAILABLE, traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01}
+    ShowcaseTimeout:
+      description: '`commerce` excedeu o tempo-limite.'
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}
+          examples:
+            tempo:
+              value: {type: about:blank, title: Vitrine não respondeu a tempo., status: 504, code: SHOWCASE_TIMEOUT, traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01}

@@ -4,8 +4,8 @@
 
   "kinds": {
     "claude": {
-      "model_flag": "--model", "model": "claude-opus-5-5",
-      "effort_args": ["--effort", "{effort}"], "effort": "medium", "extra_args": ["--dangerously-skip-permissions"]
+      "model_flag": "--model", "model": "claude-sonnet-5-5",
+      "effort_args": ["--effort", "{effort}"], "effort": "high", "extra_args": ["--dangerously-skip-permissions"]
     },
     "codex": {
       "model_flag": "--model", "model": "gpt-6.1-sol",
@@ -34,10 +34,10 @@
     { "role": "implementer", "task_kind": "vertical", "kind": "codex",
       "escalation": ["claude"] },
     { "role": "implementer", "kind": "codex", "escalation": ["claude"] },
-    { "role": "validator", "mode": "full", "kind": "opencode",
-      "model": "opencode-go/muse-spark-1.3-contributor"},
+    { "role": "validator", "mode": "full", "kind": "claude",
+      "model": "claude-sonnet-5-5"},
     { "role": "validator", "kind": "opencode",
-      "model": "opencode-go/muse-spark-1.3-contributor" }
+      "model": "claude-sonnet-5-5" }
   ],
 
   "escalation": {

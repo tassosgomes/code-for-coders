@@ -1,9 +1,9 @@
 ---
 tsg_artifact: domain
 product: code-4-coders
-version: 1.0
+version: 1.1
 status: approved
-updated: 2026-09-28
+updated: 2026-09-30
 sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4, context/architecture-baseline.md@1.2, domains/entrega-de-midia-e-protecao/domain.md@1.0, domains/auditoria-e-conformidade/domain.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
 
@@ -37,9 +37,10 @@ duplicá-lo. Este domínio separa **o aprendível** do **vendável** (DE02) e do
 
 ### Fora do Escopo deste Domínio (Out of Scope)
 
-- **Preço, condição comercial, vigência do acesso prometida, nível e pré-requisito** → Catálogo e
-  Oferta. A visão (§ restrições) e DE04 põem nível e pré-requisito como atributos da **oferta**,
-  ainda que o professor seja quem os sugere.
+- **Preço, condição comercial e vigência do acesso prometida** → Catálogo e Oferta. **Nível e
+  pré-requisito são deste domínio** desde a revisão 1.1 (RN-C18): são informação pedagógica, e quem
+  a tem é o professor (persona da visão). Catálogo os exibe e filtra; nenhum dos dois condiciona
+  compra ou acesso (DE04).
 - **Receber, guardar, preparar, cifrar e entregar o vídeo e o material** → Entrega de Mídia e
   Proteção. Este domínio só **referencia** um ativo que Mídia já declarou pronto (OD30).
 - **Decidir se um aluno pode acessar o curso** → Matrícula e Direito de Acesso.
@@ -71,7 +72,7 @@ duplicá-lo. Este domínio separa **o aprendível** do **vendável** (DE02) e do
 
 | Entidade | Descrição | Atributos Principais | Relacionamentos |
 |---|---|---|---|
-| Curso | O aprendível: um conjunto ordenado de módulos sob um título. Pertence à escola, não a quem o criou | título, descrição pedagógica, autor original, escola (tenant), estado (nunca publicado, publicado) | contém: Módulo · tem: Rascunho, Versão de Publicação |
+| Curso | O aprendível: um conjunto ordenado de módulos sob um título. Pertence à escola, não a quem o criou | título, descrição pedagógica, nível, pré-requisito declarado, autor original, escola (tenant), estado (nunca publicado, publicado) | contém: Módulo · tem: Rascunho, Versão de Publicação |
 | Módulo | Agrupamento de aulas dentro do curso, na ordem pedagógica | título, posição | pertence a: Curso · contém: Aula |
 | Aula | Menor unidade de conteúdo consumível. Referencia uma mídia de vídeo e pode anexar materiais. **Tem identidade estável entre versões** (RN-C07) | título, descrição, posição, vídeo vinculado | pertence a: Módulo · referencia: Mídia (externa) · anexa: Material Complementar |
 | Material Complementar | Arquivo de apoio à aula (PDF, código-fonte, planilha). O arquivo é um Ativo Protegido de Mídia; aqui fica só o vínculo e o rótulo | rótulo, ativo referenciado | pertence a: Aula · referencia: Ativo Protegido do tipo material (externo) |
@@ -86,7 +87,7 @@ duplicá-lo. Este domínio separa **o aprendível** do **vendável** (DE02) e do
 | Capacidade | O que este domínio entrega a ela |
 |---|---|
 | `CAP-005` | Todo o ciclo: estruturar curso, módulos e aulas; vincular vídeo pronto e material; publicar e republicar versões; informar uso de ativos e o ato de publicação |
-| `CAP-003` | O curso publicado que uma oferta referencia. Oferta só se monta sobre curso com versão vigente |
+| `CAP-003` | O curso publicado que uma oferta referencia, com o nível e o pré-requisito da versão vigente que a vitrine exibe e filtra. Oferta só se monta sobre curso com versão vigente |
 | `CAP-007` | Indiretamente: a Referência de Uso que Mídia confere antes de abrir sessão (RN-M10) nasce aqui |
 | `CAP-017` | A estrutura publicada — ordem de módulos e aulas, com identidade estável de aula — que o aluno percorre |
 | `CAP-018` | A ordem pedagógica sobre a qual Aprendizagem decide liberação progressiva |
@@ -120,7 +121,7 @@ identificador opaco (RN-M09) e o confere antes de abrir sessão (RN-M10).
 |---|---|---|---|---|
 | Entrega de Mídia e Proteção | Referências de Uso: quais ativos cada aula da versão vigente usa | Evento (fato consumado) | Este domínio (o vínculo) / Mídia (o registro opaco) | **Alta** — sem ela nenhuma sessão de reprodução abre (RN-M10) |
 | Aprendizagem e Progresso | A estrutura da versão vigente a percorrer | Evento + leitura | Este domínio | **Alta** — `CAP-017` depende disto |
-| Catálogo e Oferta | O curso publicado a referenciar numa oferta | Leitura | Este domínio | Alta |
+| Catálogo e Oferta | O curso publicado a referenciar numa oferta, com nível e pré-requisito da versão vigente | Leitura / evento | Este domínio | Alta |
 | Auditoria e Conformidade | O ato de publicação de versão | Evento no envelope `auditoria.ato-praticado` | Este domínio (o fato) / Auditoria (o registro) | Média |
 | Avaliação | O encaixe da avaliação no currículo | Leitura | Este domínio (a posição) / Avaliação (a avaliação) | Baixa até `CAP-020` |
 | Inteligência de Negócio | Fatos de publicação | Evento | Este domínio | Baixa |
@@ -148,10 +149,11 @@ Nenhuma. Armazenamento e distribuição de arquivo são de Mídia.
 | RN-C11 | **Publicação exige currículo completo:** ao menos um módulo, todo módulo com ao menos uma aula, e toda aula com vídeo pronto vinculado. Rascunho incompleto é salvo, mas não publica | Domain Map (Aula referencia mídia) · RN-C04 |
 | RN-C12 | **Toda publicação informa as Referências de Uso da versão vigente**, identificando para cada ativo o curso — unidade sobre a qual Matrícula decide — e a aula — unidade sobre a qual Aprendizagem registra progresso. Para Mídia, os dois identificadores são opacos | OD30 · RN-M09 · RN-M10 · RN-M14 |
 | RN-C13 | **Publicação é ato administrativo auditado.** Publicar uma versão comunica o ato no envelope `auditoria.ato-praticado`, com autor e alvo (o curso) identificados; **motivo não é obrigatório**. A nota de versão é opcional e sua ausência não torna o ato não conforme. A versão e o ato nascem juntos: não existe versão publicada sem ato comunicado | OD42 · OD19 · RN-A05 · RN-A14 · G13 |
-| RN-C14 | **Este domínio não guarda preço, condição comercial, vigência, nível nem pré-requisito.** Tudo que muda por decisão comercial vive em Catálogo e Oferta; o curso pode ser vendido de várias formas sem que o currículo mude | DE02 · DE04 · visão (restrições) |
+| RN-C14 | **Este domínio não guarda preço, condição comercial nem vigência.** Tudo que muda por decisão comercial vive em Catálogo e Oferta; o curso pode ser vendido de várias formas sem que o currículo mude. (Revisão 1.1: nível e pré-requisito saíram desta regra e passaram a RN-C18) | DE02 · visão (restrições) · decisão de 2026-09-30 |
 | RN-C15 | **Material Complementar é Ativo Protegido de Mídia.** Este domínio guarda só o vínculo e o rótulo; o arquivo nunca fica aqui e nunca é público. O vínculo segue RN-C04 (mesma escola, disponível em Mídia) e entra na Referência de Uso como qualquer ativo | OD31 · RN-M16 |
 | RN-C16 | **Este domínio só declara onde uma avaliação se encaixa**, por referência à avaliação de Avaliação. Não cria, não corrige e não decide aprovação; condicionar o avanço à aprovação é de Aprendizagem | Domain Map · DE05 |
 | RN-C17 | **Oferta só se monta sobre curso com versão vigente.** Curso nunca publicado não é referenciável por Catálogo | Domain Map (Catálogo referencia currículo publicado) · `CAP-003` |
+| RN-C18 | **Nível e pré-requisito declarado são atributos pedagógicos do curso**, declarados por quem tem a permissão de autoria no rascunho e publicados com a versão (RN-C05): o aluno e a vitrine só veem os da versão vigente. Nível é um de iniciante, intermediário ou avançado, do curso inteiro; pré-requisito é recomendação opcional. **Nenhum dos dois condiciona compra, matrícula nem acesso** | Visão (persona Professor, H4) · DE04 (sem gate) · decisão de 2026-09-30 |
 
 ---
 
@@ -179,7 +181,7 @@ Nenhuma. Armazenamento e distribuição de arquivo são de Mídia.
 
 | Risco | Probabilidade | Impacto | Mitigação |
 |---|---|---|---|
-| **Curso virar oferta** — nível, preço ou vigência entrarem no formulário de autoria porque "o professor sabe" | Alta | Alto | RN-C14 e Fora do Escopo: o professor pode sugerir; o atributo é da oferta (DE02, DE04) |
+| **Curso virar oferta** — preço ou vigência entrarem no formulário de autoria porque "o professor sabe" | Alta | Alto | RN-C14 e Fora do Escopo: o que é comercial é da oferta (DE02). Nível e pré-requisito são pedagógicos e ficam aqui (RN-C18) |
 | **Nova versão arrastar progresso** — aula trocada virar aula nova e o aluno perder o que assistiu | Média | Alto | RN-C07 (identidade estável) e RN-C09; Aprendizagem ancora na aula, não na versão |
 | **Rascunho vazar para o aluno** por alguém ler a estrutura em edição em vez da versão vigente | Média | Alto | RN-C05: leitura de fora do domínio só enxerga Versão de Publicação |
 | **Virar dono paralelo de mídia** — guardar duração, qualidade ou arquivo do vídeo "para exibir" | Média | Médio | RN-C04 e RN-C15: só vínculo; o estado do ativo vem de fato de Mídia |
@@ -231,3 +233,4 @@ domain docs que a capacidade atravessa e o ID da capacidade.*
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-28 | Tasso Gomes | Criação: bounded context, juntas com Mídia (OD30/OD35), Auditoria, Aprendizagem, Catálogo e Identidade; regras RN-C01 a RN-C17; decisões OD40 a OD45. Aprovado em 2026-09-28 |
+| 1.1 | 2026-09-30 | Tasso Gomes | Nível e pré-requisito passam a ser atributos pedagógicos do curso (RN-C18), declarados pelo professor e publicados com a versão; RN-C14 deixa de citá-los. Decisão OD54, aprovada em 2026-09-30. Diverge da redação de DE04 no Domain Map ("atributo informativo do Catálogo"); a parte "sem gate" permanece |

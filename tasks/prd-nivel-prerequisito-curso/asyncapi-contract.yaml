@@ -1,0 +1,210 @@
+asyncapi: 3.0.0
+id: urn:code-4-coders:learning
+info:
+  title: Learning — fato de versão publicada com nível e pré-requisito
+  version: 1.1.0
+  description: >-
+    Recorte do segundo PRD de CAP-005, `tasks/prd-nivel-prerequisito-curso/prd.md` v1.0, aprovado em
+    2026-09-30. Aplicação `learning`, dona de Conteúdo e Currículo. Evolui `conteudo.versao-publicada.v1`
+    (1.0.0 em `tasks/prd-autoria-curso/asyncapi-contract.yaml`) de forma aditiva: o fato passa a levar a
+    descrição pedagógica, o nível e o pré-requisito da versão (RF-06; C-02 e C-03 deste conjunto). Acrescenta
+    o reenvio único da versão vigente de cada curso já publicado, na implantação (C-01). O ato de publicação
+    e os fatos `midia.*` não mudam. Nenhum fato carrega nome ou e-mail.
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  versaoPublicada:
+    address: conteudo.versao-publicada.v1
+    description: >-
+      Uma versão do currículo passou a vigorar para um curso. Estado completo da versão vigente (C-09 de
+      CAP-005), agora com descrição, nível e pré-requisito. Consumidores: Media (1.1.0, sem mudança) e
+      Catálogo em `commerce` (novo, `tasks/prd-vitrine-oferta/asyncapi-contract.yaml`).
+    messages:
+      versaoPublicada:
+        $ref: '#/components/messages/VersaoPublicada'
+operations:
+  publicarVersaoPublicada:
+    action: send
+    summary: Publicar que uma versão do curso passou a vigorar.
+    channel:
+      $ref: '#/channels/versaoPublicada'
+    messages:
+      - $ref: '#/channels/versaoPublicada/messages/versaoPublicada'
+    description: >-
+      Compromissos de 1.0.0 mantidos: outbox na transação da versão e do ato; `eventId` fixo por versão;
+      entrega ao menos uma vez com deduplicação por `eventId`; ordem não garantida, vale a maior
+      `versionNumber` por curso; estado completo substitui o que o consumidor sabia. Novo em 1.1.0:
+      `description`, `level` e `prerequisite` são sempre enviados, com ausência explícita (`level: null`,
+      `prerequisite.text: null`, `recommendedCourses: []`), nunca omitidos (RF-06).
+  reenviarVersaoVigente:
+    action: send
+    summary: Reenviar, uma vez, o fato da versão vigente de cada curso já publicado.
+    channel:
+      $ref: '#/channels/versaoPublicada'
+    messages:
+      - $ref: '#/channels/versaoPublicada/messages/versaoPublicada'
+    description: >-
+      Carga inicial do Catálogo (C-01). Executado uma vez, na implantação desta entrega, depois que o
+      consumidor do Catálogo existe. Para cada curso com versão vigente, `learning` envia o fato daquela
+      versão no formato 1.1.0 com o **mesmo `eventId`** original: Media reconhece a versão já aplicada e não
+      muda nada (C-11 de CAP-005); o Catálogo, que nunca a viu, aplica. Versões anteriores a esta entrega
+      saem com `level: null` e pré-requisito vazio, porque não os tinham. Não gera ato de auditoria: não há
+      ato novo. Pode ser repetido sem efeito, pelas mesmas garantias.
+components:
+  messages:
+    VersaoPublicada:
+      name: VersaoPublicada
+      title: Versão de curso publicada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        additionalProperties: false
+        required: [correlationId]
+        properties:
+          correlationId:
+            type: string
+            description: traceparent da requisição de publicação ou da execução do reenvio. Sem dado pessoal.
+      payload:
+        $ref: '#/components/schemas/VersaoPublicadaPayload'
+      examples:
+        - name: versao4
+          headers:
+            correlationId: 00-4d5e6f708192a3b4c5d6e7f8091a2b3c-4d5e6f7081920314-01
+          payload:
+            eventId: 1b2c3d4e-5f60-4a71-8b92-a3b4c5d6e7f8
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+            versionNumber: 4
+            publishedAt: '2026-10-06T09:15:00Z'
+            publishedById: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            title: .NET do zero à API
+            description: Do primeiro programa a uma API publicada, com testes e deploy.
+            level: advanced
+            prerequisite:
+              text: Git e C# básico.
+              recommendedCourses:
+                - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                  title: Fundamentos de C#
+            modules:
+              - moduleId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+                title: Fundamentos da linguagem
+                position: 1
+                lessons:
+                  - lessonId: 4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f7a
+                    title: Tipos e variáveis
+                    position: 1
+                    videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        - name: reenvioSemNivel
+          headers:
+            correlationId: 00-5e6f708192a3b4c5d6e7f8091a2b3c4d-5e6f708192a3b4c5-01
+          payload:
+            eventId: 9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+            versionNumber: 1
+            publishedAt: '2026-09-29T10:00:00Z'
+            publishedById: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            title: Fundamentos de C#
+            description: Sintaxe, tipos e orientação a objetos em C#.
+            level: null
+            prerequisite:
+              text: null
+              recommendedCourses: []
+            modules:
+              - moduleId: 2b3c4d5e-6f70-4a81-9b2c-3d4e5f6a7b8c
+                title: Primeiros passos
+                position: 1
+                lessons:
+                  - lessonId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
+                    title: Olá, mundo
+                    position: 1
+                    videoId: 1c2d3e4f-5061-4a72-8b83-9d8e7f6a5b42
+  schemas:
+    VersaoPublicadaPayload:
+      type: object
+      additionalProperties: false
+      required: [eventId, tenantId, courseId, versionNumber, publishedAt, publishedById, title, description, level, prerequisite, modules]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Fixo por versão; chave de deduplicação dos consumidores. O reenvio repete o original.
+        tenantId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: integer
+          minimum: 1
+        publishedAt:
+          type: string
+          format: date-time
+        publishedById:
+          type: string
+          format: uuid
+          description: Conta interna que publicou, por referência (G23).
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+          description: >-
+            Descrição pedagógica da versão (C-07 de CAP-005). Novo em 1.1.0 (C-03), para a página pública do
+            curso. Vazia quando o curso não tem descrição. Texto do autor; nunca em log ou métrica.
+        level:
+          description: Nível da versão (RN-C18); `null` quando a versão não declara. Novo em 1.1.0.
+          oneOf:
+            - type: string
+              enum: [beginner, intermediate, advanced]
+            - type: 'null'
+        prerequisite:
+          $ref: '#/components/schemas/PreRequisitoPublicado'
+        modules:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '../prd-autoria-curso/asyncapi-contract.yaml#/components/schemas/ModuloPublicado'
+    PreRequisitoPublicado:
+      type: object
+      additionalProperties: false
+      required: [text, recommendedCourses]
+      description: Novo em 1.1.0. Recomendação, nunca condição (DE04).
+      properties:
+        text:
+          oneOf:
+            - type: string
+              minLength: 1
+              maxLength: 1000
+            - type: 'null'
+        recommendedCourses:
+          type: array
+          maxItems: 5
+          description: >-
+            Na ordem do professor. `title` é o título do recomendado no momento da publicação (C-02): o
+            consumidor usa o título atual quando conhece o curso, e este quando não conhece.
+          items:
+            type: object
+            additionalProperties: false
+            required: [courseId, title]
+            properties:
+              courseId:
+                type: string
+                format: uuid
+              title:
+                type: string
+                minLength: 1
+                maxLength: 200
