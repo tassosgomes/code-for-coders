@@ -12,7 +12,8 @@ namespace CodeForCoders.Learning.Application.UseCases.Courses.Common;
 
 public sealed class CourseEditSession(
     ICourseRepository courses, ICourseEditStore edits,
-    IUnitOfWork unitOfWork, IValidator<CourseWriteContext> validator, TimeProvider timeProvider, IReadyVideoQueries videos, ICourseVersionStore versions)
+    IUnitOfWork unitOfWork, IValidator<CourseWriteContext> validator, TimeProvider timeProvider, IReadyVideoQueries videos, ICourseVersionStore versions,
+    ICourseQueries queries)
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -54,7 +55,8 @@ public sealed class CourseEditSession(
         }
         var createdId = await edit(course, cancellationToken);
         course!.RecordEdit(new CourseCreation(input.TenantId, input.ActorId, input.ActorName, course.Title, course.Description, now));
-        var output = new CourseEditOutput(CourseDetailOutput.FromCourse(course), createdId);
+        var references = await queries.ResolveAsync(course.RecommendedCourseIds.ToArray(), cancellationToken);
+        var output = new CourseEditOutput(CourseDetailOutput.FromCourse(course, references), createdId);
         if (receipt is null) { receipt = CourseEditReceipt.Create(input.TenantId, input.ActorId, key); edits.Add(receipt); }
         receipt.Store(hash, JsonSerializer.Serialize(output, JsonOptions), now);
         await unitOfWork.CommitAsync(cancellationToken);

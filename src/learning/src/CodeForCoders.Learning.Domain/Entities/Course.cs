@@ -11,7 +11,12 @@ public sealed class Course
     public Guid Id { get; private set; }
     public Guid TenantId { get; private set; }
     public string Title { get; private set; } = string.Empty;
+    public string TitleSearch { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public string? Level { get; private set; }
+    public string? CurrentLevel { get; private set; }
+    public string? PrerequisiteText { get; private set; }
+    public IReadOnlyList<Guid> RecommendedCourseIds { get; private set; } = [];
     public int DraftRevision { get; private set; }
     public int? CurrentVersion { get; private set; }
     public bool HasUnpublishedChanges { get; private set; }
@@ -35,6 +40,7 @@ public sealed class Course
             Id = Guid.CreateVersion7(input.Now),
             TenantId = input.TenantId,
             Title = input.Title.Trim(),
+            TitleSearch = CourseTitleSearch.Normalize(input.Title.Trim()),
             Description = input.Description,
             DraftRevision = 1,
             CreatedById = input.ActorId,
@@ -54,8 +60,15 @@ public sealed class Course
     public void Update(CourseChanges changes)
     {
         ValidateChanges(changes);
-        if (changes.Title is not null) Title = changes.Title.Trim();
+        if (changes.Title is not null)
+        {
+            Title = changes.Title.Trim();
+            TitleSearch = CourseTitleSearch.Normalize(Title);
+        }
         if (changes.HasDescription) Description = changes.Description;
+        if (changes.HasLevel) Level = changes.Level;
+        if (changes.HasPrerequisiteText) PrerequisiteText = changes.PrerequisiteText;
+        if (changes.RecommendedCourseIds is not null) RecommendedCourseIds = changes.RecommendedCourseIds.ToArray();
     }
 
     public Guid AddModule(CourseChanges changes)
@@ -141,7 +154,12 @@ public sealed class Course
     {
         if (revision != DraftRevision) throw new DraftChangedException();
         Title = version.Title;
+        TitleSearch = CourseTitleSearch.Normalize(Title);
         Description = version.Description;
+        Level = version.Level;
+        CurrentLevel = version.Level;
+        PrerequisiteText = version.Prerequisite?.Text;
+        RecommendedCourseIds = version.Prerequisite?.RecommendedCourses.Select(item => item.CourseId).ToArray() ?? [];
         var modules = Modules.ToDictionary(module => module.Id);
         var lessons = Modules.SelectMany(module => module.Lessons).ToDictionary(lesson => lesson.Id);
         foreach (var module in Modules) module.Lessons.Clear();
@@ -178,6 +196,7 @@ public sealed class Course
         if (pendencies.Count > 0) throw new CourseIncompleteException(pendencies);
         var version = CourseVersion.Create(this, input, (CurrentVersion ?? 0) + 1);
         CurrentVersion = version.VersionNumber;
+        CurrentLevel = version.Level;
         PublishedFingerprint = CourseContentFingerprint.FromCourse(this);
         HasUnpublishedChanges = false;
         return version;
@@ -198,8 +217,19 @@ public sealed class Course
         if (title.Length > 200) throw new CourseRuleException("INVALID_REQUEST");
     }
 
-    private static void ValidateChanges(CourseChanges changes)
+    private void ValidateChanges(CourseChanges changes)
     {
+        if (changes.HasPrerequisiteText && changes.PrerequisiteText is { Length: < 1 or > 1000 })
+            throw new CourseRuleException("FIELD_INVALID", "prerequisiteText");
+        if (changes.RecommendedCourseIds is { } recommended)
+        {
+            if (recommended.Count > 5 || recommended.Distinct().Count() != recommended.Count)
+                throw new CourseRuleException("INVALID_REQUEST");
+            if (recommended.Contains(Id))
+                throw new CourseRuleException("RECOMMENDED_COURSE_INVALID", $"recommendedCourseIds[{recommended.ToList().IndexOf(Id)}]");
+        }
+        if (changes.HasLevel && changes.Level is not (null or "beginner" or "intermediate" or "advanced"))
+            throw new CourseRuleException("FIELD_INVALID", "level");
         if (changes.Title is not null) ValidateTitle(changes.Title);
         if (changes.Description?.Length > 5000) throw new CourseRuleException("INVALID_REQUEST");
     }

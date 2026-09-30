@@ -1,3 +1,3 @@
 namespace CodeForCoders.Learning.Application.Interfaces;
 
-public sealed record CourseListQuery(int Page, int Size, string? Status);
+public sealed record CourseListQuery(int Page, int Size, string? Status, string? Title = null);

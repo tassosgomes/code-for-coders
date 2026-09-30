@@ -71,7 +71,8 @@ public sealed class CoursePublicationTests(CourseApiFactory factory)
         {
             Assert.DoesNotContain("Teacher display name", row.Payload, StringComparison.Ordinal);
             Assert.DoesNotContain("Private version note", row.Payload, StringComparison.Ordinal);
-            Assert.DoesNotContain("Private description", row.Payload, StringComparison.Ordinal);
+            if (row.RoutingKey == "auditoria.ato-praticado.v1") Assert.DoesNotContain("Private description", row.Payload, StringComparison.Ordinal);
+            else Assert.Equal("Private description", JsonDocument.Parse(row.Payload).RootElement.GetProperty("description").GetString());
         }
     }
 

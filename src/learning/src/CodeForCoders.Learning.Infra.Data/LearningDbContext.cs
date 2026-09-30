@@ -20,6 +20,8 @@ public sealed class LearningDbContext(
 
     public DbSet<ContentOutboxMessage> ContentOutboxMessages => Set<ContentOutboxMessage>();
 
+    public DbSet<Catalog.CatalogInitialLoadExecution> CatalogInitialLoadExecutions => Set<Catalog.CatalogInitialLoadExecution>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

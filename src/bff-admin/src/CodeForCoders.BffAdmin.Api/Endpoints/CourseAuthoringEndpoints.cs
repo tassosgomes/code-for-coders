@@ -48,11 +48,13 @@ public static class CourseAuthoringEndpoints
         => SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}/discard-draft", body, "POST"), context, identity, learning, cancellationToken);
 
     private static async Task<IResult> ListAsync(HttpContext context, IStaffSessionIdentityClient identity,
-        ICourseAuthoringClient learning, CancellationToken cancellationToken, int _page = 1, int _size = 20, string? status = null)
+        ICourseAuthoringClient learning, CancellationToken cancellationToken, int _page = 1, int _size = 20, string? status = null, string? title = null)
     {
-        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue || status is not (null or "draft" or "published"))
+        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue || status is not (null or "draft" or "published")
+            || title is { Length: < 2 or > 100 })
             return Problem(400, "INVALID_REQUEST");
         var filters = status is null ? "" : $"&status={status}";
+        if (title is not null) filters += $"&title={Uri.EscapeDataString(title)}";
         return await SendAsync(new CourseOperation($"internal/v1/courses?_page={_page}&_size={_size}{filters}", null),
             context, identity, learning, cancellationToken);
     }

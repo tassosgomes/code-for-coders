@@ -10,6 +10,10 @@ public sealed class CourseLearningHandler : HttpMessageHandler
     public HttpMethod? Method { get; private set; }
     public JsonElement? Payload { get; private set; }
     public JsonElement? Pendencies { get; set; }
+    public JsonElement? ProblemErrors { get; set; }
+    public string? Level { get; set; }
+    public string? CurrentLevel { get; set; }
+    public CoursePrerequisite Prerequisite { get; set; } = new(null, []);
     public bool ReferencesUnavailable { get; set; }
     public string ProblemCode { get; set; } = "COURSE_NOT_FOUND";
     public string? Location { get; set; }
@@ -37,20 +41,20 @@ public sealed class CourseLearningHandler : HttpMessageHandler
         }
         if (Malformed) return new(HttpStatusCode.OK) { Content = new StringContent("invalid json") };
         if (Status == HttpStatusCode.NoContent) return new(HttpStatusCode.NoContent);
-        if (Status != HttpStatusCode.OK) return new(Status) { Content = JsonContent.Create(new { code = ProblemCode, pendencies = Pendencies, errors = new { title = new[] { "Title is required." } } }) };
+        if (Status != HttpStatusCode.OK) return new(Status) { Content = JsonContent.Create(new { code = ProblemCode, pendencies = Pendencies, errors = ProblemErrors ?? JsonSerializer.SerializeToElement(new { title = new[] { "Title is required." } }) }) };
         if (request.RequestUri!.AbsolutePath == "/internal/v1/course-references/resolve")
             return new(ReferencesUnavailable ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK) { Content = JsonContent.Create(new { data = new[] { new { courseId = CourseId, title = "School course" } } }) };
         var actor = new CourseActor("Validated teacher");
         var now = DateTimeOffset.UtcNow;
-        var detail = new CourseDetail(CourseId, Body?.Title ?? "School course", Body?.Description, "draft", null, false, 1, now, actor, now, actor, Modules);
+        var detail = new CourseDetail(CourseId, Body?.Title ?? "School course", Body?.Description, "draft", null, false, 1, now, actor, now, actor, Modules, Level, CurrentLevel, Prerequisite);
         if (request.RequestUri!.AbsolutePath.Contains("/versions/", StringComparison.Ordinal))
-            return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "Historical title", "Historical description", now, actor, "First note", false, [])) };
+            return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "Historical title", "Historical description", now, actor, "First note", false, [], Level, Prerequisite)) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/discard-draft", StringComparison.Ordinal))
             return new(HttpStatusCode.OK) { Content = JsonContent.Create(detail with { Status = "published", CurrentVersion = 2, DraftRevision = 5 }) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal) && request.Method == HttpMethod.Get)
             return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersionSummaryPage([new(2, now, actor, "Second note", true), new(1, now.AddDays(-1), actor, "First note", false)], new(1, 20, 2, 1))) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal))
-            return new(HttpStatusCode.Created) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "School course", null, now, actor, "Note", true, [])), Headers = { Location = new Uri($"/internal/v1/courses/{CourseId}/versions/1", UriKind.Relative) } };
+            return new(HttpStatusCode.Created) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "School course", null, now, actor, "Note", true, [], Level, Prerequisite)), Headers = { Location = new Uri($"/internal/v1/courses/{CourseId}/versions/1", UriKind.Relative) } };
         if (request.Method == HttpMethod.Post)
         {
             var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = JsonContent.Create(detail) };
@@ -58,7 +62,7 @@ public sealed class CourseLearningHandler : HttpMessageHandler
             return response;
         }
         if (request.RequestUri!.Query.Length > 0)
-            return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CoursePage([new(CourseId, "School course", "draft", null, false, now, actor)], new(1, 20, 1, 1))) };
+            return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CoursePage([new(CourseId, "School course", "draft", null, false, now, actor, CurrentLevel)], new(1, 20, 1, 1))) };
         return new(HttpStatusCode.OK) { Content = JsonContent.Create(detail) };
     }
 }

@@ -6,10 +6,10 @@ import { courseSchema } from '@/features/course-authoring/types/course';
 import type { CourseVersion } from '@/features/course-authoring/types/course-version';
 import { createPublicationBoundary, publicationLessonId, publicationModuleId, publicationVideoId } from '@/testing/authoring-publication-handlers';
 
-export const createVersionBoundary = (canEdit = true, published = true) => {
+export const createVersionBoundary = (canEdit = true, published = true, audience?: Pick<CourseVersion, 'level' | 'prerequisite'>) => {
   const initial = createPublicationBoundary(true, canEdit);
   let course = courseSchema.parse({ ...initial.snapshot(), status: published ? 'published' : 'draft', currentVersion: published ? 1 : null, hasUnpublishedChanges: published, draftRevision: 4, title: 'Rascunho alterado' });
-  const first: CourseVersion = { courseId: course.courseId, versionNumber: 1, title: 'Título publicado', description: 'Descrição publicada', publishedAt: '2026-09-29T12:00:00Z', publishedBy: { name: 'Marina' }, versionNote: 'Primeira versão', current: true,
+  const first: CourseVersion = { courseId: course.courseId, versionNumber: 1, title: 'Título publicado', description: 'Descrição publicada', publishedAt: '2026-09-29T12:00:00Z', publishedBy: { name: 'Marina' }, versionNote: 'Primeira versão', current: true, level: audience?.level ?? null, prerequisite: audience?.prerequisite ?? { text: null, recommendedCourses: [] },
     modules: [{ moduleId: publicationModuleId, title: 'Fundamentos', position: 1, lessons: [{ lessonId: publicationLessonId, title: 'Tipos originais', description: 'Descrição da aula', position: 1, videoId: publicationVideoId }] }] };
   let versions = published ? [first] : [];
   let mode: 'success' | 'changed' | 'unavailable' | 'missing' = 'success';
@@ -29,12 +29,12 @@ export const createVersionBoundary = (canEdit = true, published = true) => {
       if (mode === 'changed') { course = { ...course, title: 'Edição do colega', draftRevision: 5 }; return HttpResponse.json({ code: 'DRAFT_CHANGED' }, { status: 409 }); }
       if (mode === 'unavailable') return HttpResponse.json({ code: 'LEARNING_UNAVAILABLE' }, { status: 502 });
       if (params.operation === 'discard-draft') {
-        course = { ...course, title: first.title, description: first.description, hasUnpublishedChanges: false, draftRevision: course.draftRevision + 1 };
+        course = { ...course, title: first.title, description: first.description, level: first.level, currentLevel: first.level, prerequisite: first.prerequisite, hasUnpublishedChanges: false, draftRevision: course.draftRevision + 1 };
         return HttpResponse.json(course);
       }
-      const version: CourseVersion = { ...first, title: course.title, versionNumber: (course.currentVersion ?? 0) + 1, publishedBy: { name: 'Rafael' }, versionNote: input.versionNote, publishedAt: '2026-09-30T12:00:00Z' };
+      const version: CourseVersion = { ...first, title: course.title, level: course.level, prerequisite: course.prerequisite, versionNumber: (course.currentVersion ?? 0) + 1, publishedBy: { name: 'Rafael' }, versionNote: input.versionNote, publishedAt: '2026-09-30T12:00:00Z' };
       versions = [version, ...versions.map((item) => ({ ...item, current: false }))];
-      course = { ...course, currentVersion: version.versionNumber, hasUnpublishedChanges: false };
+      course = { ...course, currentVersion: version.versionNumber, currentLevel: version.level, hasUnpublishedChanges: false };
       return HttpResponse.json(version, { status: 201 });
     }),
   ] };

@@ -22,7 +22,7 @@ export const createPublicationBoundary = (complete = true, canEdit = true) => {
         if (mode === 'changed') { course = { ...course, draftRevision: course.draftRevision + 1 }; return HttpResponse.json({ code: 'DRAFT_CHANGED' }, { status: 409 }); }
         if (mode === 'incomplete') return HttpResponse.json({ code: 'COURSE_INCOMPLETE', pendencies: [{ code: 'lesson-without-video', moduleId: publicationModuleId, lessonId: publicationLessonId }] }, { status: 422 });
         course = { ...course, status: 'published', currentVersion: 1, hasUnpublishedChanges: false };
-        return HttpResponse.json({ courseId: course.courseId, versionNumber: 1, title: course.title, publishedAt: '2026-09-29T15:00:00Z', publishedBy: { name: 'Professor' }, current: true, modules: [] }, { status: 201 });
+        return HttpResponse.json({ courseId: course.courseId, versionNumber: 1, title: course.title, level: course.level, prerequisite: course.prerequisite, publishedAt: '2026-09-29T15:00:00Z', publishedBy: { name: 'Professor' }, current: true, modules: [] }, { status: 201 });
       }),
     ],
   };

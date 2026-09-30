@@ -14,6 +14,17 @@ public sealed class CourseVersionStore(LearningDbContext context) : ICourseVersi
     public Task<CourseVersion?> GetAsync(Guid courseId, int versionNumber, CancellationToken cancellationToken)
         => context.CourseVersions.AsNoTracking().SingleOrDefaultAsync(version => version.CourseId == courseId && version.VersionNumber == versionNumber, cancellationToken);
 
+    public async Task<IReadOnlyList<PublishedRecommendedCourse>> GetCurrentReferencesAsync(IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
+    {
+        var titles = await (from course in context.Courses.AsNoTracking()
+                            join version in context.CourseVersions.AsNoTracking()
+                                on new { CourseId = course.Id, VersionNumber = course.CurrentVersion }
+                                equals new { version.CourseId, VersionNumber = (int?)version.VersionNumber }
+                            where ids.Contains(course.Id)
+                            select new { course.Id, version.Title }).ToDictionaryAsync(item => item.Id, item => item.Title, cancellationToken);
+        return ids.Select(id => new PublishedRecommendedCourse(id, titles[id])).ToArray();
+    }
+
     public async Task<CourseVersionSummaryPage> ListAsync(Guid courseId, int currentVersion, int page, int size, CancellationToken cancellationToken)
     {
         var query = context.CourseVersions.AsNoTracking().Where(version => version.CourseId == courseId);

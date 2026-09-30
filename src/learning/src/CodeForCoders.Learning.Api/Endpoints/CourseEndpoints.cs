@@ -67,8 +67,8 @@ public static class CourseEndpoints
     }
 
     private static async Task<IResult> ListAsync(HttpContext context, IListCourses useCase, CancellationToken cancellationToken,
-        int _page = 1, int _size = 20, string? status = null)
-        => Results.Ok(await useCase.ExecuteAsync(new CourseListQuery(_page, _size, status), cancellationToken));
+        int _page = 1, int _size = 20, string? status = null, string? title = null)
+        => Results.Ok(await useCase.ExecuteAsync(new CourseListQuery(_page, _size, status, title), cancellationToken));
 
     private static async Task<IResult> GetAsync(Guid courseId, IGetCourse useCase, CancellationToken cancellationToken)
         => Results.Ok(await useCase.ExecuteAsync(courseId, cancellationToken));

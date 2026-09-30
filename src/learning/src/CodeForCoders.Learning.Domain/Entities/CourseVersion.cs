@@ -10,6 +10,8 @@ public sealed class CourseVersion
     public int VersionNumber { get; private set; }
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public string? Level { get; private set; }
+    public PublishedPrerequisite? Prerequisite { get; private set; }
     public string? VersionNote { get; private set; }
     public Guid PublishedById { get; private set; }
     public string PublishedByName { get; private set; } = string.Empty;
@@ -25,6 +27,8 @@ public sealed class CourseVersion
             VersionNumber = number,
             Title = course.Title,
             Description = course.Description,
+            Level = course.Level,
+            Prerequisite = new(course.PrerequisiteText, Array.AsReadOnly((input.RecommendedCourses ?? []).ToArray())),
             VersionNote = input.VersionNote,
             PublishedById = input.Actor.ActorId,
             PublishedByName = input.Actor.ActorName,

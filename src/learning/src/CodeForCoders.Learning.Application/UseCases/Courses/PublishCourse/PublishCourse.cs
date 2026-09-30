@@ -34,8 +34,9 @@ public sealed class PublishCourse(ICourseRepository courses, ICourseEditStore re
             if (receipt.RequestHash != hash) throw new CourseRuleException("IDEMPOTENCY_KEY_REUSED");
             return JsonSerializer.Deserialize<CourseVersionOutput>(receipt.ResponseJson, JsonOptions)!;
         }
-        var version = course!.Publish(new(input.DraftRevision, input.VersionNote,
-            new(context.TenantId, context.ActorId, context.ActorName, course.Title, course.Description, now)));
+        var recommended = await versions.GetCurrentReferencesAsync(course!.RecommendedCourseIds, cancellationToken);
+        var version = course.Publish(new(input.DraftRevision, input.VersionNote,
+            new(context.TenantId, context.ActorId, context.ActorName, course.Title, course.Description, now), recommended));
         versions.Add(version);
         await AppendMessagesAsync(version, cancellationToken);
         var output = CourseVersionOutput.FromVersion(version);
@@ -48,25 +49,7 @@ public sealed class PublishCourse(ICourseRepository courses, ICourseEditStore re
 
     private async Task AppendMessagesAsync(CourseVersion version, CancellationToken cancellationToken)
     {
-        var fact = new
-        {
-            EventId = version.Id,
-            version.TenantId,
-            version.CourseId,
-            version.VersionNumber,
-            version.PublishedAt,
-            version.PublishedById,
-            version.Title,
-            Modules = version.Modules.Select(module => new
-            {
-                module.ModuleId,
-                module.Title,
-                module.Position,
-                Lessons = module.Lessons.Select(lesson => new { lesson.LessonId, lesson.Title, lesson.Position, lesson.VideoId })
-            }),
-        };
-        const string factRoute = "conteudo.versao-publicada.v1";
-        await outbox.AppendAsync(new(version.Id, version.TenantId, factRoute, factRoute, fact, version.PublishedAt, Activity.Current?.Id), cancellationToken);
+        await outbox.AppendAsync(PublishedCourseFact.FromVersion(version, Activity.Current?.Id), cancellationToken);
         var act = new
         {
             FatoId = version.Id,

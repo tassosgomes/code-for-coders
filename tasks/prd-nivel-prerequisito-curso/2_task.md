@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["1.0"]
 gate: 'rg -q "^> \*\*Adendo nível e pré-requisito:\*\* ASCII e Figma aprovados pelo responsável em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-autoria-curso.md'

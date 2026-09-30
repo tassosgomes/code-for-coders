@@ -43,6 +43,11 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("created_by_name");
 
+                    b.Property<string>("CurrentLevel")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("current_level");
+
                     b.Property<int?>("CurrentVersion")
                         .HasColumnType("integer")
                         .HasColumnName("current_version");
@@ -74,10 +79,27 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("last_edited_by_name");
 
+                    b.Property<string>("Level")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("level");
+
+                    b.Property<string>("PrerequisiteText")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("prerequisite_text");
+
                     b.Property<string>("PublishedFingerprint")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("published_fingerprint");
+
+                    b.Property<string>("RecommendedCourseIds")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("recommended_course_ids")
+                        .HasDefaultValueSql("'[]'::jsonb");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
@@ -88,6 +110,12 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("title");
+
+                    b.Property<string>("TitleSearch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title_search");
 
                     b.HasKey("Id");
 
@@ -260,10 +288,19 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .HasColumnType("character varying(5000)")
                         .HasColumnName("description");
 
+                    b.Property<string>("Level")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("level");
+
                     b.Property<string>("Modules")
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("modules");
+
+                    b.Property<string>("Prerequisite")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("prerequisite");
 
                     b.Property<DateTimeOffset>("PublishedAt")
                         .HasColumnType("timestamp with time zone")
@@ -308,6 +345,26 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                     b.ToTable("course_versions", "content");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.Catalog.CatalogInitialLoadExecution", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<int>("CourseCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("course_count");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("catalog_initial_load_executions", "content");
+                });
+
             modelBuilder.Entity("CodeForCoders.Learning.Infra.Data.Outbox.ContentOutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -322,6 +379,10 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("last_error");
+
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("message_id");
 
                     b.Property<DateTimeOffset>("OccurredOn")
                         .HasColumnType("timestamp with time zone")

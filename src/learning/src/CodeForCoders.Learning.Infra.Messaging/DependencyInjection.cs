@@ -19,6 +19,10 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(OutboxOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.AddOptions<CatalogInitialLoadOptions>()
+            .Bind(configuration.GetSection(CatalogInitialLoadOptions.SectionName))
+            .ValidateOnStart();
+        services.AddScoped<CatalogInitialLoad>();
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<HeartbeatReceiptStore>();

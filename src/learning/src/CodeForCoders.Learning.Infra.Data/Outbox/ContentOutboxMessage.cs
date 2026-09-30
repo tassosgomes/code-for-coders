@@ -10,6 +10,8 @@ public sealed class ContentOutboxMessage : IOutboxDelivery
 
     public Guid Id { get; private set; }
 
+    public Guid MessageId { get; private set; }
+
     public Guid TenantId { get; private set; }
 
     public string Type { get; private set; } = string.Empty;
@@ -33,6 +35,7 @@ public sealed class ContentOutboxMessage : IOutboxDelivery
         return new ContentOutboxMessage
         {
             Id = draft.Id,
+            MessageId = draft.Id,
             TenantId = draft.TenantId,
             Type = draft.Type,
             RoutingKey = draft.RoutingKey,
@@ -40,6 +43,13 @@ public sealed class ContentOutboxMessage : IOutboxDelivery
             OccurredOn = draft.OccurredOn,
             TraceParent = draft.TraceParent,
         };
+    }
+
+    public static ContentOutboxMessage CreateReplay(OutboxMessageDraft draft, string payload)
+    {
+        var message = Create(draft, payload);
+        message.Id = Guid.CreateVersion7();
+        return message;
     }
 
     public void MarkProcessed()
