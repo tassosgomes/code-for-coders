@@ -18,6 +18,7 @@ public sealed class GlobalExceptionHandler(
         var (status, type, title, detail) = exception switch
         {
             DraftChangedException => (409, "/problems/draft-changed", "Draft changed", exception.Message),
+            CourseRuleException { Code: "COURSE_ALREADY_PUBLISHED" } => (409, "/problems/course-already-published", "Course already published", exception.Message),
             CourseRuleException { Code: "COURSE_NEVER_PUBLISHED" } => (409, "/problems/course-never-published", "Course never published", exception.Message),
             CourseIncompleteException => (422, "/problems/course-incomplete", "Course incomplete", exception.Message),
             ValidationException => (

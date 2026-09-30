@@ -20,6 +20,9 @@ public static class DependencyInjection
             .FromAssemblyOf<IRecordPlatformHeartbeat>()
             .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<,>)))
             .AsMatchingInterface()
+            .WithScopedLifetime()
+            .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<>)))
+            .AsMatchingInterface()
             .WithScopedLifetime());
 
         return services;

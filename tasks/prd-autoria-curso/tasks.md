@@ -83,7 +83,7 @@ vínculo de vídeo pronto já existente. Isso evita uma task horizontal sem feed
 - [x] 4.0 Professor vincula apenas vídeo pronto da escola
 - [x] 5.0 Professor publica versão com ato conforme e Referências de Uso
 - [x] 6.0 Professor republica, descarta alterações e consulta versões imutáveis
-- [ ] 7.0 Professor exclui somente curso nunca publicado
+- [x] 7.0 Professor exclui somente curso nunca publicado
 
 ## Caminho crítico e lanes
 

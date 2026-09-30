@@ -23,6 +23,8 @@ public sealed class CourseAuthoringClient(HttpClient httpClient) : ICourseAuthor
             using var response = await httpClient.SendAsync(request, cancellationToken);
             if (response.IsSuccessStatusCode)
             {
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    return new(204, null, null, null, null);
                 if (input.Path == "internal/v1/course-references/resolve")
                 {
                     var references = await response.Content.ReadFromJsonAsync<CourseReferencePage>(cancellationToken);

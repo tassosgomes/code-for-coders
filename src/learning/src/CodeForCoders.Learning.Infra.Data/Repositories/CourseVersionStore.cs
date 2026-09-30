@@ -8,6 +8,9 @@ public sealed class CourseVersionStore(LearningDbContext context) : ICourseVersi
 {
     public void Add(CourseVersion version) => context.CourseVersions.Add(version);
 
+    public Task<bool> HasPublishedAsync(Guid courseId, CancellationToken cancellationToken)
+        => context.CourseVersions.AnyAsync(version => version.CourseId == courseId, cancellationToken);
+
     public Task<CourseVersion?> GetAsync(Guid courseId, int versionNumber, CancellationToken cancellationToken)
         => context.CourseVersions.AsNoTracking().SingleOrDefaultAsync(version => version.CourseId == courseId && version.VersionNumber == versionNumber, cancellationToken);
 

@@ -9,6 +9,7 @@ using CodeForCoders.Learning.Application.UseCases.Courses.ListCourses;
 using CodeForCoders.Learning.Application.UseCases.Courses.DiscardCourseDraft;
 using CodeForCoders.Learning.Application.UseCases.Courses.GetCourseVersion;
 using CodeForCoders.Learning.Application.UseCases.Courses.ListCourseVersions;
+using CodeForCoders.Learning.Application.UseCases.Courses.DeleteCourse;
 
 namespace CodeForCoders.Learning.Api.Endpoints;
 
@@ -21,11 +22,21 @@ public static class CourseEndpoints
         group.MapGet("", ListAsync).RequireAuthorization(LearningAuthorization.Read);
         group.MapGet("/{courseId:guid}", GetAsync).RequireAuthorization(LearningAuthorization.Read);
         group.MapPost("", CreateAsync).RequireAuthorization(LearningAuthorization.Edit);
+        group.MapDelete("/{courseId:guid}", DeleteAsync).RequireAuthorization(LearningAuthorization.Edit);
         group.MapCourseStructureEndpoints();
         group.MapPost("/{courseId:guid}/versions", PublishAsync).RequireAuthorization(LearningAuthorization.Edit);
         group.MapGet("/{courseId:guid}/versions", ListVersionsAsync).RequireAuthorization(LearningAuthorization.Read);
         group.MapGet("/{courseId:guid}/versions/{versionNumber:int}", GetVersionAsync).RequireAuthorization(LearningAuthorization.Read);
         group.MapPost("/{courseId:guid}/discard-draft", DiscardAsync).RequireAuthorization(LearningAuthorization.Edit);
+    }
+
+    private static async Task<IResult> DeleteAsync(Guid courseId, HttpContext context, IDeleteCourse useCase, CancellationToken cancellationToken)
+    {
+        var write = new CourseWriteContext(courseId, Guid.Parse(context.User.FindFirst("tenantId")!.Value),
+            Guid.Parse(context.User.FindFirst("sub")!.Value), context.Request.Headers["X-Actor-Name"].ToString(),
+            context.Request.Headers["Idempotency-Key"].ToString(), string.Empty);
+        await useCase.ExecuteAsync(new(write), cancellationToken);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> ListVersionsAsync(Guid courseId, IListCourseVersions useCase, CancellationToken cancellationToken, int _page = 1, int _size = 20)

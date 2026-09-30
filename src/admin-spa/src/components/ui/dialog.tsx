@@ -1,8 +1,8 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
-type DialogProps = { title: string; description: string; busy: boolean; onClose: () => void; children: ReactNode; className?: string };
-export const Dialog = ({ title, description, busy, onClose, children, className = '' }: DialogProps) => {
+type DialogProps = { title: string; description: string; busy: boolean; onClose: () => void; children: ReactNode; className?: string; role?: 'dialog' | 'alertdialog' };
+export const Dialog = ({ title, description, busy, onClose, children, className = '', role = 'dialog' }: DialogProps) => {
   const ref = useRef<HTMLElement>(null);
   const previousFocus = useRef(document.activeElement);
   useEffect(() => {
@@ -10,7 +10,7 @@ export const Dialog = ({ title, description, busy, onClose, children, className 
     return () => { if (previous instanceof HTMLElement) previous.focus(); };
   }, []);
   return <div className={`dialog-backdrop ${className}`}>
-    <section className="dialog-card course-create-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description" ref={ref} onKeyDown={(event) => {
+    <section className="dialog-card course-create-dialog" role={role} aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description" ref={ref} onKeyDown={(event) => {
       if (event.key === 'Escape' && !busy) { event.preventDefault(); onClose(); }
       if (event.key !== 'Tab') return;
       const controls = ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href]');

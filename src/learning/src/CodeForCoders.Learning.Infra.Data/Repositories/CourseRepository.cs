@@ -6,6 +6,8 @@ namespace CodeForCoders.Learning.Infra.Data.Repositories;
 
 public sealed class CourseRepository(LearningDbContext dbContext) : ICourseRepository
 {
+    public void Remove(Course course) => dbContext.Courses.Remove(course);
+
     public async Task<Course?> GetAsync(Guid courseId, CancellationToken cancellationToken)
     {
         var course = await dbContext.Courses.Include(course => course.Modules).ThenInclude(module => module.Lessons)

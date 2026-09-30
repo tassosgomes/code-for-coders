@@ -36,6 +36,7 @@ public sealed class CourseLearningHandler : HttpMessageHandler
             Body = request.RequestUri!.AbsolutePath == "/internal/v1/courses" && Payload.Value.TryGetProperty("title", out _) ? Payload.Value.Deserialize<CourseCreateBody>(new JsonSerializerOptions(JsonSerializerDefaults.Web)) : null;
         }
         if (Malformed) return new(HttpStatusCode.OK) { Content = new StringContent("invalid json") };
+        if (Status == HttpStatusCode.NoContent) return new(HttpStatusCode.NoContent);
         if (Status != HttpStatusCode.OK) return new(Status) { Content = JsonContent.Create(new { code = ProblemCode, pendencies = Pendencies, errors = new { title = new[] { "Title is required." } } }) };
         if (request.RequestUri!.AbsolutePath == "/internal/v1/course-references/resolve")
             return new(ReferencesUnavailable ? HttpStatusCode.ServiceUnavailable : HttpStatusCode.OK) { Content = JsonContent.Create(new { data = new[] { new { courseId = CourseId, title = "School course" } } }) };

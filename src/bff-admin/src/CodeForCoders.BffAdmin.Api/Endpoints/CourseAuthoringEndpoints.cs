@@ -13,6 +13,7 @@ public static class CourseAuthoringEndpoints
         group.MapGet("", ListAsync);
         group.MapGet("/{courseId:guid}", GetAsync);
         group.MapPost("", CreateAsync);
+        group.MapDelete("/{courseId:guid}", DeleteCourseAsync);
         group.MapPost("/{courseId:guid}/versions", PublishAsync);
         group.MapGet("/{courseId:guid}/versions", ListVersionsAsync);
         group.MapGet("/{courseId:guid}/versions/{versionNumber:int}", GetVersionAsync);
@@ -26,6 +27,10 @@ public static class CourseAuthoringEndpoints
         group.MapDelete("/{courseId:guid}/lessons/{lessonId:guid}", DeleteLessonAsync);
 
     }
+
+    private static Task<IResult> DeleteCourseAsync(Guid courseId, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourseAuthoringClient learning, CancellationToken cancellationToken)
+        => SendAsync(new CourseOperation($"internal/v1/courses/{courseId:D}", null, "DELETE"), context, identity, learning, cancellationToken);
 
     private static Task<IResult> GetVersionAsync(Guid courseId, int versionNumber, HttpContext context, IStaffSessionIdentityClient identity,
         ICourseAuthoringClient learning, CancellationToken cancellationToken)
@@ -106,6 +111,7 @@ public static class CourseAuthoringEndpoints
         if (!validation.Session.Permissions.Contains(permission, StringComparer.Ordinal)) return Problem(403, "PERMISSION_DENIED");
         var result = await learning.SendAsync(new CourseClientRequest(operation.Path, validation.Session.AccessToken,
             validation.Session.Name, key, operation.Body, operation.Method), cancellationToken);
+        if (result.Status == 204) return Results.NoContent();
         if (result.Status == 201 && result.Version is not null)
             return Results.Created($"/api/v1/courses/{result.Version.CourseId:D}/versions/{result.Version.VersionNumber}", result.Version);
         if (result.Status == 201 && result.Course is not null)

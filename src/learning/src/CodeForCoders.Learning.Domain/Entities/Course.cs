@@ -46,6 +46,11 @@ public sealed class Course
         };
     }
 
+    public void EnsureNeverPublished()
+    {
+        if (CurrentVersion.HasValue) throw new CourseRuleException("COURSE_ALREADY_PUBLISHED");
+    }
+
     public void Update(CourseChanges changes)
     {
         ValidateChanges(changes);

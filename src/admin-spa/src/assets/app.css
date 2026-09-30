@@ -4254,6 +4254,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-module:focus, .course-lesson:focus { outline: 2px solid var(--primary); outline-offset: 3px; }
 @media (max-width: 640px) { .course-module-heading, .course-lesson { gap: 8px; padding: 12px; } .course-module-heading > span { font-size: 12px; } }
 
+.course-delete-dialog .dialog-card { max-width: 560px; white-space: normal; }
+.course-delete-dialog .dialog-actions { justify-content: flex-start; }
+.primary-button.course-delete-confirm { background: #dc2626; border-color: #dc2626; color: #fff; }
+.primary-button.course-delete-confirm:hover { background: #b91c1c; border-color: #b91c1c; }
 .course-editor-overview { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .course-editor-overview > div { display: grid; gap: 16px; flex: 1; min-width: 180px; }
 .course-collapse-button { border: 0; color: inherit; background: transparent; font-size: 20px; padding: 6px; }
