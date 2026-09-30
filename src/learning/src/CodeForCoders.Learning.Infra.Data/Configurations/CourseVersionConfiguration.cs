@@ -19,6 +19,10 @@ public sealed class CourseVersionConfiguration : IEntityTypeConfiguration<Course
         builder.Property(version => version.VersionNumber).HasColumnName("version_number");
         builder.Property(version => version.Title).HasColumnName("title").HasMaxLength(200);
         builder.Property(version => version.Description).HasColumnName("description").HasMaxLength(5000);
+        builder.Property(version => version.Level).HasColumnName("level").HasMaxLength(12);
+        builder.Property(version => version.Prerequisite).HasColumnName("prerequisite").HasColumnType("jsonb")
+            .HasConversion(value => JsonSerializer.Serialize(value, JsonOptions),
+                value => JsonSerializer.Deserialize<PublishedPrerequisite>(value, JsonOptions));
         builder.Property(version => version.VersionNote).HasColumnName("version_note").HasMaxLength(1000);
         builder.Property(version => version.PublishedById).HasColumnName("published_by_id");
         builder.Property(version => version.PublishedByName).HasColumnName("published_by_name").HasMaxLength(200);

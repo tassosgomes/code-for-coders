@@ -121,15 +121,15 @@ public sealed class CoursePrerequisiteTests(CourseApiFactory factory)
         using var backward = await WriteAsync(client, second.Id, new { recommendedCourseIds = new[] { first.Id } }); backward.EnsureSuccessStatusCode();
     }
 
-    [Fact(DisplayName = nameof(ReorderingOnlyChangesRevisionAndFingerprintAndDiscardRestoresEmptyPrerequisite))]
-    public async Task ReorderingOnlyChangesRevisionAndFingerprintAndDiscardRestoresEmptyPrerequisite()
+    [Fact(DisplayName = nameof(ReorderingOnlyChangesRevisionAndFingerprintAndDiscardRestoresPublishedPrerequisite))]
+    public async Task ReorderingOnlyChangesRevisionAndFingerprintAndDiscardRestoresPublishedPrerequisite()
     {
         var target = await SeedAsync(published: true); var first = await SeedAsync(target.TenantId, published: true); var second = await SeedAsync(target.TenantId, published: true);
         await using (var db = Context())
         {
             var course = await db.Courses.IgnoreQueryFilters().Include(item => item.Modules).ThenInclude(item => item.Lessons).SingleAsync(item => item.Id == target.Id, Cancellation);
             course.Update(new(null, null, false, null, null, PrerequisiteText: "Basics", HasPrerequisiteText: true, RecommendedCourseIds: [first.Id, second.Id]));
-            db.CourseVersions.Add(course.Publish(new(1, null, new(course.TenantId, course.CreatedById, "Teacher", course.Title, null, DateTimeOffset.UtcNow))));
+            db.CourseVersions.Add(course.Publish(new(1, null, new(course.TenantId, course.CreatedById, "Teacher", course.Title, null, DateTimeOffset.UtcNow), [new(first.Id, first.Title), new(second.Id, second.Title)])));
             await db.SaveChangesAsync(Cancellation);
         }
         using var client = Teacher(target.TenantId); var snapshot = await client.GetStringAsync($"/internal/v1/courses/{target.Id}/versions/2", Cancellation);
@@ -140,8 +140,8 @@ public sealed class CoursePrerequisiteTests(CourseApiFactory factory)
         Assert.False((await revert.Content.ReadFromJsonAsync<JsonElement>(Cancellation)).GetProperty("hasUnpublishedChanges").GetBoolean());
         using var discard = await WriteAsync(client, target.Id, new { draftRevision = 3 }, suffix: "/discard-draft"); discard.EnsureSuccessStatusCode();
         var restored = await discard.Content.ReadFromJsonAsync<JsonElement>(Cancellation);
-        Assert.Equal(JsonValueKind.Null, restored.GetProperty("prerequisite").GetProperty("text").ValueKind);
-        Assert.Equal(0, restored.GetProperty("prerequisite").GetProperty("recommendedCourses").GetArrayLength()); Assert.False(restored.GetProperty("hasUnpublishedChanges").GetBoolean());
+        Assert.Equal("Basics", restored.GetProperty("prerequisite").GetProperty("text").GetString());
+        Assert.Equal(2, restored.GetProperty("prerequisite").GetProperty("recommendedCourses").GetArrayLength()); Assert.False(restored.GetProperty("hasUnpublishedChanges").GetBoolean());
         Assert.Equal(snapshot, await client.GetStringAsync($"/internal/v1/courses/{target.Id}/versions/2", Cancellation));
     }
 

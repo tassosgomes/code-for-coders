@@ -12,7 +12,8 @@ internal static class CourseContentFingerprint
                 module.Lessons.OrderBy(lesson => lesson.Position).Select(lesson =>
                     new PublishedLesson(lesson.Id, lesson.Title, lesson.Description, lesson.Position, lesson.VideoId ?? Guid.Empty)).ToArray())).ToArray());
 
-    public static string FromVersion(CourseVersion version) => Hash(version.Title, version.Description, null, null, [], version.Modules);
+    public static string FromVersion(CourseVersion version) => Hash(version.Title, version.Description, version.Level,
+        version.Prerequisite?.Text, version.Prerequisite?.RecommendedCourses.Select(item => item.CourseId).ToArray() ?? [], version.Modules);
 
     private static string Hash(string title, string? description, string? level, string? prerequisiteText,
         IReadOnlyList<Guid> recommendedCourseIds, IReadOnlyList<PublishedModule> modules)

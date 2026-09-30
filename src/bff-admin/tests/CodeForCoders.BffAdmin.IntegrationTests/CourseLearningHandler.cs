@@ -48,13 +48,13 @@ public sealed class CourseLearningHandler : HttpMessageHandler
         var now = DateTimeOffset.UtcNow;
         var detail = new CourseDetail(CourseId, Body?.Title ?? "School course", Body?.Description, "draft", null, false, 1, now, actor, now, actor, Modules, Level, CurrentLevel, Prerequisite);
         if (request.RequestUri!.AbsolutePath.Contains("/versions/", StringComparison.Ordinal))
-            return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "Historical title", "Historical description", now, actor, "First note", false, [])) };
+            return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "Historical title", "Historical description", now, actor, "First note", false, [], Level, Prerequisite)) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/discard-draft", StringComparison.Ordinal))
             return new(HttpStatusCode.OK) { Content = JsonContent.Create(detail with { Status = "published", CurrentVersion = 2, DraftRevision = 5 }) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal) && request.Method == HttpMethod.Get)
             return new(HttpStatusCode.OK) { Content = JsonContent.Create(new CourseVersionSummaryPage([new(2, now, actor, "Second note", true), new(1, now.AddDays(-1), actor, "First note", false)], new(1, 20, 2, 1))) };
         if (request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal))
-            return new(HttpStatusCode.Created) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "School course", null, now, actor, "Note", true, [])), Headers = { Location = new Uri($"/internal/v1/courses/{CourseId}/versions/1", UriKind.Relative) } };
+            return new(HttpStatusCode.Created) { Content = JsonContent.Create(new CourseVersion(CourseId, 1, "School course", null, now, actor, "Note", true, [], Level, Prerequisite)), Headers = { Location = new Uri($"/internal/v1/courses/{CourseId}/versions/1", UriKind.Relative) } };
         if (request.Method == HttpMethod.Post)
         {
             var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = JsonContent.Create(detail) };

@@ -34,8 +34,9 @@ public sealed class PublishCourse(ICourseRepository courses, ICourseEditStore re
             if (receipt.RequestHash != hash) throw new CourseRuleException("IDEMPOTENCY_KEY_REUSED");
             return JsonSerializer.Deserialize<CourseVersionOutput>(receipt.ResponseJson, JsonOptions)!;
         }
-        var version = course!.Publish(new(input.DraftRevision, input.VersionNote,
-            new(context.TenantId, context.ActorId, context.ActorName, course.Title, course.Description, now)));
+        var recommended = await versions.GetCurrentReferencesAsync(course!.RecommendedCourseIds, cancellationToken);
+        var version = course.Publish(new(input.DraftRevision, input.VersionNote,
+            new(context.TenantId, context.ActorId, context.ActorName, course.Title, course.Description, now), recommended));
         versions.Add(version);
         await AppendMessagesAsync(version, cancellationToken);
         var output = CourseVersionOutput.FromVersion(version);
@@ -57,6 +58,9 @@ public sealed class PublishCourse(ICourseRepository courses, ICourseEditStore re
             version.PublishedAt,
             version.PublishedById,
             version.Title,
+            Description = version.Description ?? string.Empty,
+            version.Level,
+            Prerequisite = version.Prerequisite ?? new PublishedPrerequisite(null, []),
             Modules = version.Modules.Select(module => new
             {
                 module.ModuleId,

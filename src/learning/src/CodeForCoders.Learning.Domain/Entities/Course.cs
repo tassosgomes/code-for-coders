@@ -156,9 +156,10 @@ public sealed class Course
         Title = version.Title;
         TitleSearch = CourseTitleSearch.Normalize(Title);
         Description = version.Description;
-        Level = CurrentLevel;
-        PrerequisiteText = null;
-        RecommendedCourseIds = [];
+        Level = version.Level;
+        CurrentLevel = version.Level;
+        PrerequisiteText = version.Prerequisite?.Text;
+        RecommendedCourseIds = version.Prerequisite?.RecommendedCourses.Select(item => item.CourseId).ToArray() ?? [];
         var modules = Modules.ToDictionary(module => module.Id);
         var lessons = Modules.SelectMany(module => module.Lessons).ToDictionary(lesson => lesson.Id);
         foreach (var module in Modules) module.Lessons.Clear();
@@ -195,6 +196,7 @@ public sealed class Course
         if (pendencies.Count > 0) throw new CourseIncompleteException(pendencies);
         var version = CourseVersion.Create(this, input, (CurrentVersion ?? 0) + 1);
         CurrentVersion = version.VersionNumber;
+        CurrentLevel = version.Level;
         PublishedFingerprint = CourseContentFingerprint.FromCourse(this);
         HasUnpublishedChanges = false;
         return version;
