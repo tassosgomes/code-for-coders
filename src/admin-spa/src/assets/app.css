@@ -4290,3 +4290,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .course-history-list { list-style: none; padding: 0; }
 .course-history-item, .course-version-module { padding: 16px; overflow-wrap: anywhere; }
+
+.catalog-no-level { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-warning, #8b5e00); }
+.catalog-table { margin-top: 1.5rem; }
+.catalog-skeleton { margin-top: 1.5rem; display: grid; gap: 0.75rem; }
+.catalog-skeleton > div { height: 3.5rem; border-radius: 0.5rem; background: var(--color-border, #e5e7eb); }
+@media (max-width: 640px) { .catalog-table { min-width: 520px; } }

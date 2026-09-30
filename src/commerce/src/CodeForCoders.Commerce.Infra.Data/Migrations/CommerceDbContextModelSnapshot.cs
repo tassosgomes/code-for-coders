@@ -8,7 +8,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CodeForCoders.Commerce.Infra.Data.Migrations;
+namespace CodeForCoders.Commerce.Infra.Data.Migrations
+{
     [DbContext(typeof(CommerceDbContext))]
     partial class CommerceDbContextModelSnapshot : ModelSnapshot
     {
@@ -19,6 +20,70 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations;
                 .HasDefaultSchema("catalog")
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.CatalogCourseView", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset?>("InShowcaseSince")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("in_showcase_since");
+
+                    b.Property<string>("Level")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("level");
+
+                    b.Property<string>("PrerequisiteJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("prerequisite");
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("SourceFormat")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("source_format");
+
+                    b.Property<string>("StructureJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("structure");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("TenantId", "CourseId");
+
+                    b.HasIndex("TenantId", "Title", "CourseId");
+
+                    b.ToTable("course_views", "catalog");
+                });
 
             modelBuilder.Entity("CodeForCoders.Commerce.Infra.Data.Outbox.OutboxMessage", b =>
                 {
@@ -83,3 +148,4 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations;
 #pragma warning restore 612, 618
         }
     }
+}

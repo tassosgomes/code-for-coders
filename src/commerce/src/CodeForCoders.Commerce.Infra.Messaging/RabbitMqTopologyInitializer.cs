@@ -59,12 +59,32 @@ public sealed class RabbitMqTopologyInitializer(
                 ["x-delivery-limit"] = settings.DeliveryLimit,
             },
             cancellationToken: cancellationToken);
+        await DeclareCatalogAsync(channel, settings, cancellationToken);
         await channel.QueueBindAsync(
             settings.HeartbeatQueue,
             settings.Exchange,
             "commerce.platform.heartbeat.v1",
             arguments: null,
             cancellationToken: cancellationToken);
+    }
+
+    private static async Task DeclareCatalogAsync(IChannel channel, RabbitMqOptions settings, CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(settings.LearningExchange, ExchangeType.Topic, true, false, null, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync($"{settings.CatalogCourseQueue}.dlq", true, false, false,
+            new Dictionary<string, object?> { ["x-queue-type"] = "quorum" }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync($"{settings.CatalogCourseQueue}.dlq", settings.DeadLetterExchange,
+            settings.CatalogCourseQueue, null, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(settings.CatalogCourseQueue, true, false, false,
+            new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+                ["x-dead-letter-routing-key"] = settings.CatalogCourseQueue,
+                ["x-delivery-limit"] = settings.DeliveryLimit,
+            }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(settings.CatalogCourseQueue, settings.LearningExchange,
+            PublishedCourseFact.RoutingKey, null, cancellationToken: cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

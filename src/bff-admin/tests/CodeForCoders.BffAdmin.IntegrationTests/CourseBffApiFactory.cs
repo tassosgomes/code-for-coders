@@ -16,6 +16,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
     public CourseIdentityHandler Identity { get; } = new();
     public CourseLearningHandler Learning { get; } = new();
     public CourseAuditHandler Audit { get; } = new();
+    public CatalogCommerceHandler Commerce { get; } = new();
     public CourseMediaHandler Media { get; } = new();
     public CourseBffSessionStore Sessions { get; } = new();
 
@@ -28,6 +29,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Learning:BaseAddress", "http://learning.test/");
         builder.UseSetting("Audit:BaseAddress", "http://audit.test/");
         Audit.CourseId = Learning.CourseId;
+        builder.UseSetting("Commerce:BaseAddress", "http://commerce.test/");
         builder.UseSetting("Media:BaseAddress", "http://media.test/");
         builder.UseSetting("StaffIdentity:TenantId", "00000000-0000-7000-8000-000000000001");
         using var rsa = RSA.Create(2048);
@@ -41,6 +43,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
             // Keep the production typed client registration and resilience pipeline; replace only the HTTP boundary.
             services.AddHttpClient<ICourseAuthoringClient, CourseAuthoringClient>().ConfigurePrimaryHttpMessageHandler(() => Learning);
             services.AddHttpClient<IAuditRecordClient, AuditRecordClient>().ConfigurePrimaryHttpMessageHandler(() => Audit);
+            services.AddHttpClient<ICommerceCatalogClient, CommerceCatalogClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
             services.AddHttpClient<IVideoLibraryClient, VideoLibraryClient>().ConfigurePrimaryHttpMessageHandler(() => Media);
         });
     }

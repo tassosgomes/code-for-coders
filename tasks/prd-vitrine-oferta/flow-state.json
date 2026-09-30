@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "branch": "feature/vitrine-oferta",
+  "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
+  "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
+  "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
+  "last_checkpoint": null,
+  "phase": "checkpoint",
+  "active_task": "3.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "validated_commit": null,
+  "validated_tree": null,
+  "last_result": {
+    "run_id": "run.QtS7enkn",
+    "role": "validator",
+    "mode": "focused",
+    "task": "3.0",
+    "attempt": "1/3",
+    "outcome": "approved"
+  },
+  "history": [
+    "2026-09-30 init: worktree isolada ../code-for-coders-vitrine-oferta criada a pedido do usuário; prepare-prd-branch (run.eBJ6sjTh) confirmou feature/vitrine-oferta sobre main@5566d02; delivery=pr autorizado pelo usuário.",
+    "Plano tratado como aprovado: tasks 1.0/2.0 done com commits em main (b2c2bc5, 328425d, PR #102) e instrução explícita do usuário para prosseguir sob o mesmo plano. Header de tasks.md ainda diz 'Em revisão' (resíduo).",
+    "Lacuna registrada: checkboxes de 1.0 e 2.0 em tasks.md desmarcados apesar de done; integrator não criou commit de reconciliação na preparação — reconciliar no primeiro checkpoint-task (3.0).",
+    "3.0 impl tentativa 1/3 (run.79LtN5QY): transporte reportou timeout_or_blocked aos 821s mas worker codex seguiu; monitorado até concluir (43m25s) sem re-delegar. implementation_complete: gate 40/27 testes, 14 checks exit 0, smoke Compose OK.",
+    "3.0 validação focused (run.QtS7enkn, claude/anti-afinidade): APROVADA, 0 bloqueantes, 3 recomendações não bloqueantes; gate reexecutado pelo validator."
+  ]
+}

@@ -10,6 +10,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
+        services.AddScoped<IValidator<UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInput>, UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInputValidator>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.Scan(scan => scan

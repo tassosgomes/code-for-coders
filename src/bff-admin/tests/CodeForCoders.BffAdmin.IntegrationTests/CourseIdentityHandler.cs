@@ -20,7 +20,7 @@ public sealed class CourseIdentityHandler : HttpMessageHandler
         {
             Content = JsonContent.Create(new StaffSessionValidatedV1(
             Guid.Parse("00000000-0000-7000-8000-000000000002"), "Validated teacher", Roles, Permissions,
-            DateTimeOffset.UtcNow.AddHours(1), input?.Audience == "learning" ? "server-learning-token" : input?.Audience == "media" ? "server-media-token" : input?.Audience == "audit" ? "server-audit-token" : null))
+            DateTimeOffset.UtcNow.AddHours(1), input?.Audience == "learning" ? "server-learning-token" : input?.Audience == "media" ? "server-media-token" : input?.Audience == "audit" ? "server-audit-token" : input?.Audience == "commerce" ? "server-commerce-token" : null))
         };
     }
 }

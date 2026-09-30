@@ -60,6 +60,7 @@ public sealed class GlobalExceptionHandler(
             ?? httpContext.TraceIdentifier;
         if (exception is ValidationException validationException)
         {
+            problemDetails.Extensions["code"] = "INVALID_REQUEST";
             problemDetails.Extensions["errors"] = validationException.Errors
                 .GroupBy(error => error.PropertyName)
                 .ToDictionary(

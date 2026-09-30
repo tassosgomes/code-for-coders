@@ -74,6 +74,15 @@ public static class ServiceConfigurationExtensions
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.DisableForUnsafeHttpMethods();
             });
+        builder.Services.AddHttpClient<ICommerceCatalogClient, CommerceCatalogClient>((services, client) =>
+                client.BaseAddress = new Uri(services.GetRequiredService<IOptions<CommerceApiOptions>>().Value.BaseAddress))
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddOptions<MediaApiOptions>()
             .Bind(builder.Configuration.GetSection(MediaApiOptions.SectionName))
             .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)

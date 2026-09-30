@@ -1,3 +1,4 @@
+using CodeForCoders.Commerce.Api.Authorization;
 using CodeForCoders.Commerce.Application;
 using CodeForCoders.Commerce.Infra.Data;
 using CodeForCoders.Commerce.Infra.Messaging;
@@ -38,6 +39,8 @@ public static class ServiceConfigurationExtensions
             FinanceAreaAuthorization.PolicyName,
             policy => policy.RequireAuthenticatedUser()
                 .RequireClaim(FinanceAreaAuthorization.PermissionClaim, FinanceAreaAuthorization.RequiredPermission)));
+        builder.Services.AddAuthorization(options => options.AddPolicy(CatalogPolicies.EditOffers,
+            policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", CatalogPolicies.Permission)));
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);

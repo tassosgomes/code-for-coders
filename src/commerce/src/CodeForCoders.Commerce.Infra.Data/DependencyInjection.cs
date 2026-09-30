@@ -30,6 +30,8 @@ public static class DependencyInjection
                 options.EnableSensitiveDataLogging();
             }
         });
+        services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
+        services.AddScoped<ICatalogCourseProjectionStore, Catalog.CatalogCourseProjectionStore>();
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, CommerceUnitOfWork>();
         services.AddOptions<ValkeyOptions>()

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Menu, ScrollText, Users, Wallet, X } from 'lucide-react';
+import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Menu, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 
 import { paths } from '@/config/paths';
@@ -34,12 +34,16 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
         </Link>
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
           <NavLink end to={paths.home.getHref()}><House size={18} />Início</NavLink>
-          {[true, false].map((content) => {
-            const group = areas.filter((area) => Boolean(area.permission === 'autoria.ler' || area.permission === 'midia.enviar') === content && area.href);
+          {(['content', 'commerce', 'operations'] as const).map((section) => {
+            const group = areas.filter((area) => {
+              const areaSection = area.permission === 'autoria.ler' || area.permission === 'midia.enviar' ? 'content'
+                : area.permission === 'oferta.editar' || area.permission === 'financeiro.ler' ? 'commerce' : 'operations';
+              return areaSection === section && area.href;
+            });
             if (group.length === 0) return null;
-            return <div className="sidebar-group" key={String(content)}><p className="sidebar-heading">{content ? 'Conteúdo' : 'Operação'}</p>
+            return <div className="sidebar-group" key={section}><p className="sidebar-heading">{section === 'content' ? 'Conteúdo' : section === 'commerce' ? 'Comercial' : 'Operação'}</p>
               {group.map((area) => <NavLink key={area.label} to={area.href!}>
-                {area.permission === 'autoria.ler' ? <BookOpen size={18} /> : area.permission === 'midia.enviar' ? <Clapperboard size={18} /> : area.permission === 'financeiro.ler' ? <Wallet size={18} /> : area.role === 'administrador' ? <ScrollText size={18} /> : <Users size={18} />}
+                {area.permission === 'autoria.ler' ? <BookOpen size={18} /> : area.permission === 'midia.enviar' ? <Clapperboard size={18} /> : area.permission === 'oferta.editar' ? <Tags size={18} /> : area.permission === 'financeiro.ler' ? <Wallet size={18} /> : area.role === 'administrador' ? <ScrollText size={18} /> : <Users size={18} />}
                 {area.label}
               </NavLink>)}
             </div>;

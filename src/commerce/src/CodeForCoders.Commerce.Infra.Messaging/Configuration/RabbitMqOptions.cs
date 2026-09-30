@@ -30,6 +30,12 @@ public sealed class RabbitMqOptions
     [Required]
     public string HeartbeatQueue { get; set; } = "commerce.platform-heartbeat";
 
+    [Required]
+    public string LearningExchange { get; set; } = "learning.events";
+
+    [Required]
+    public string CatalogCourseQueue { get; set; } = "commerce.catalog-course";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 
