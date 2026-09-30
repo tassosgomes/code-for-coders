@@ -19,6 +19,10 @@ public sealed class OutboxPublisherWorker(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await using (var scope = scopeFactory.CreateAsyncScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<CatalogInitialLoad>().RunAsync(stoppingToken);
+        }
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(options.Value.PollingIntervalSeconds));
         try
         {

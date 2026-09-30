@@ -49,28 +49,7 @@ public sealed class PublishCourse(ICourseRepository courses, ICourseEditStore re
 
     private async Task AppendMessagesAsync(CourseVersion version, CancellationToken cancellationToken)
     {
-        var fact = new
-        {
-            EventId = version.Id,
-            version.TenantId,
-            version.CourseId,
-            version.VersionNumber,
-            version.PublishedAt,
-            version.PublishedById,
-            version.Title,
-            Description = version.Description ?? string.Empty,
-            version.Level,
-            Prerequisite = version.Prerequisite ?? new PublishedPrerequisite(null, []),
-            Modules = version.Modules.Select(module => new
-            {
-                module.ModuleId,
-                module.Title,
-                module.Position,
-                Lessons = module.Lessons.Select(lesson => new { lesson.LessonId, lesson.Title, lesson.Position, lesson.VideoId })
-            }),
-        };
-        const string factRoute = "conteudo.versao-publicada.v1";
-        await outbox.AppendAsync(new(version.Id, version.TenantId, factRoute, factRoute, fact, version.PublishedAt, Activity.Current?.Id), cancellationToken);
+        await outbox.AppendAsync(PublishedCourseFact.FromVersion(version, Activity.Current?.Id), cancellationToken);
         var act = new
         {
             FatoId = version.Id,

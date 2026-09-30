@@ -14,6 +14,10 @@ public sealed class ContentOutboxMessageConfiguration : IEntityTypeConfiguration
         builder.Property(message => message.Id)
             .HasColumnName("id")
             .ValueGeneratedNever();
+        builder.Property(message => message.MessageId)
+            .HasColumnName("message_id")
+            .ValueGeneratedNever()
+            .IsRequired();
         builder.Property(message => message.TenantId)
             .HasColumnName("tenant_id")
             .ValueGeneratedNever()

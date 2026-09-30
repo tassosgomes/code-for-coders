@@ -20,7 +20,7 @@ public sealed class RabbitMqPublisher(
             {
                 ContentType = "application/json",
                 DeliveryMode = DeliveryModes.Persistent,
-                MessageId = message.Id.ToString(),
+                MessageId = (message is ContentOutboxMessage content ? content.MessageId : message.Id).ToString(),
                 Type = message.Type,
                 Headers = string.IsNullOrWhiteSpace(message.TraceParent)
                     ? null

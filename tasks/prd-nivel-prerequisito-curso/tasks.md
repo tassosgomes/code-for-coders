@@ -71,7 +71,7 @@ a coluna `message_id` nasce em V-04, que é a única fatia que precisa dela.
 - [x] 3.0 Professor declara o nível do curso e vê o aviso de curso sem nível
 - [x] 4.0 Professor recomenda o pré-requisito em texto e cursos publicados da escola
 - [x] 5.0 Publicação leva nível e pré-requisito à versão, ao histórico e ao fato 1.1.0
-- [ ] 6.0 Reenvio único da versão vigente de cada curso publicado para a carga inicial do Catálogo
+- [x] 6.0 Reenvio único da versão vigente de cada curso publicado para a carga inicial do Catálogo
 
 ## Caminho crítico e lanes
 
