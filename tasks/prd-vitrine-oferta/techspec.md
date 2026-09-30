@@ -408,7 +408,7 @@ Duas camadas por operação, como nas demais áreas: BFF público ↔ interno de
 
 ## Architecture Decision Records
 
-- [ADR-0009: Autenticação de serviço do BFF do aluno em serviços de domínio](../../docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md) (**Proposed**, nova) — o `bff-student` chama `commerce` por asserção de serviço nas rotas públicas; estende a ADR-0004 sem substituí-la.
+- [ADR-0009: Autenticação de serviço do BFF do aluno em serviços de domínio](../../docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md) (**Accepted** em 2026-09-30, nova) — o `bff-student` chama `commerce` por asserção de serviço nas rotas públicas; estende a ADR-0004 sem substituí-la.
 - [ADR-0001](../../docs/adr/0001-monorepo-de-codigo.md) — serviços com deploy independente; a coordenação é a ordem de implantação acima; o verificador de asserção é uma cópia por serviço.
 - [ADR-0002](../../docs/adr/0002-plataforma-de-runtime-coolify.md) — segredos (chaves do BFF e do emissor) pelo secret manager do ambiente.
 - [ADR-0004](../../docs/adr/0004-autenticacao-de-servico-bff-identity.md) — mecanismo de asserção, estendido pela ADR-0009.
