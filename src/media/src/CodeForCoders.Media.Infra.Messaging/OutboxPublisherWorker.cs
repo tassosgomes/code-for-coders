@@ -114,7 +114,7 @@ public sealed class OutboxPublisherWorker(
             var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
             var query = dbContext.OutboxMessages.IgnoreQueryFilters().AsNoTracking()
                 .Where(message => message.TenantId == tenantId
-                    && (message.RoutingKey == "midia.ativo-pronto.v1" || message.RoutingKey == "midia.preparacao-falhou.v1"));
+                    && (message.RoutingKey == "midia.ativo-pronto.v1" || message.RoutingKey == "midia.preparacao-falhou.v1")); // gitleaks:allow - routing keys RabbitMQ, nao segredos
             if (after.HasValue) query = query.Where(message => message.Id.CompareTo(after.Value) > 0);
             var batch = await query.OrderBy(message => message.Id).Take(options.Value.BatchSize).ToListAsync(cancellationToken);
             if (batch.Count == 0) return count;

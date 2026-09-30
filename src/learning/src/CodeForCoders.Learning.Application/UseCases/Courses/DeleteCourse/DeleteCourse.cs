@@ -19,7 +19,7 @@ public sealed class DeleteCourse(
         var input = request.Context;
         await validator.ValidateAndThrowAsync(input, cancellationToken);
         await using var transaction = await edits.LockAsync(input.CourseId, cancellationToken);
-        var key = "delete:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{input.CourseId:D}:{input.IdempotencyKey}")));
+        var key = "delete:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{input.CourseId:D}:{input.IdempotencyKey}"))); // nosemgrep - chave de idempotencia (prefixo + SHA-256), nao SQL concatenado
         var receipt = await edits.FindAsync(new(input.TenantId, input.ActorId, key), cancellationToken);
         var now = timeProvider.GetUtcNow();
         // The receipt has no course foreign key and must be read before the deleted aggregate.
