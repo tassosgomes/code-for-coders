@@ -11,6 +11,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
         services.AddScoped<IValidator<UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInput>, UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInputValidator>();
+        services.AddScoped<IValidator<UseCases.Showcase.ListShowcaseCourses.ListShowcaseCoursesInput>, UseCases.Showcase.ListShowcaseCourses.ListShowcaseCoursesInputValidator>();
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IValidator<UseCases.CatalogCourses.UpdateCatalogCourse.UpdateCatalogCourseInput>, UseCases.CatalogCourses.UpdateCatalogCourse.UpdateCatalogCourseInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogOffers.CreateOffer.CreateOfferInput>, UseCases.CatalogOffers.CreateOffer.CreateOfferInputValidator>();

@@ -56,6 +56,9 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("StudentIdentity:SigningKeyId", "test-key");
         builder.UseSetting("StudentIdentity:SigningKeyBase64", Convert.ToBase64String(SigningKey.ExportPkcs8PrivateKey()));
         builder.UseSetting("StudentIdentity:TenantId", "00000000-0000-7000-8000-000000000001");
+        builder.UseSetting("Commerce:BaseAddress", "http://commerce.integration.test/");
+        builder.UseSetting("Commerce:SigningKeyId", "test-commerce-key");
+        builder.UseSetting("Commerce:SigningKeyBase64", Convert.ToBase64String(SigningKey.ExportPkcs8PrivateKey()));
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IStudentRegistrationIdentityClient>();

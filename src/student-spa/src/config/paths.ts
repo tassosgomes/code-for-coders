@@ -23,6 +23,14 @@ export const paths = {
     path: '/redefinir-senha',
     getHref: () => '/redefinir-senha',
   },
+  studentShowcase: {
+    path: '/cursos',
+    getHref: (levelParam?: string) => (levelParam ? `/cursos?nivel=${encodeURIComponent(levelParam)}` : '/cursos'),
+  },
+  studentShowcaseCourse: {
+    path: '/cursos/:courseId',
+    getHref: (courseId: string) => `/cursos/${encodeURIComponent(courseId)}`,
+  },
   studentPasswordChange: {
     path: '/trocar-senha',
     getHref: () => '/trocar-senha',

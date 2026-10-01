@@ -32,6 +32,7 @@ public static class ServiceConfigurationExtensions
             .ValidateOnStart();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
         builder.Services.AddSingleton<ServiceAssertionTokenFactory>();
+        builder.Services.AddCommerceClientConfiguration(builder.Configuration);
         builder.Services.AddHttpClient<IStudentRegistrationIdentityClient, StudentRegistrationIdentityClient>((provider, client) =>
             {
                 var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StudentIdentityOptions>>().Value;
@@ -100,7 +101,7 @@ public static class ServiceConfigurationExtensions
         return builder;
     }
 
-    private static bool IsValidPrivateKey(string encodedKey)
+    internal static bool IsValidPrivateKey(string encodedKey)
     {
         try
         {

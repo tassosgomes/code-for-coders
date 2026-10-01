@@ -5,6 +5,7 @@ using CodeForCoders.Commerce.Infra.Data.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace CodeForCoders.Commerce.Infra.Data;
@@ -31,6 +32,7 @@ public static class DependencyInjection
             }
         });
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
+        services.AddScoped<IShowcaseQueries, Queries.ShowcaseQueries>();
         services.AddScoped<ICatalogCourseProjectionStore, Catalog.CatalogCourseProjectionStore>();
         services.AddScoped<ICatalogCourseEditStore, Catalog.CatalogCourseEditStore>();
         services.AddScoped<ICatalogOutboxMessageWriter, CatalogOutboxMessageWriter>();
@@ -41,6 +43,8 @@ public static class DependencyInjection
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Valkey connection string is required.")
             .ValidateOnStart();
         services.AddSingleton<ValkeyConnectionProvider>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
 
         return services;
     }

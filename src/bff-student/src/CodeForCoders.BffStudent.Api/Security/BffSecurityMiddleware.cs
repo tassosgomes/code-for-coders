@@ -1,4 +1,5 @@
 using CodeForCoders.BffStudent.Api.Clients;
+using CodeForCoders.BffStudent.Api.Endpoints;
 using CodeForCoders.BffStudent.Application.Common;
 using CodeForCoders.BffStudent.Application.Interfaces;
 using Microsoft.Extensions.Options;
@@ -151,8 +152,10 @@ public sealed class BffSecurityMiddleware(
         return !IsAnonymousRoute(path);
     }
 
+    // The public showcase has no session to protect: the cookie is ignored, never validated or renewed (ADR-0009).
     private static bool IsAnonymousRoute(PathString path)
-        => path.Equals("/api/v1/student-accounts", StringComparison.OrdinalIgnoreCase)
+        => path.StartsWithSegments(ShowcaseEndpoints.Prefix, StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/api/v1/student-accounts", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/api/v1/account-confirmations", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/api/v1/account-confirmation-requests", StringComparison.OrdinalIgnoreCase)
             || path.Equals("/api/v1/student-sessions", StringComparison.OrdinalIgnoreCase)

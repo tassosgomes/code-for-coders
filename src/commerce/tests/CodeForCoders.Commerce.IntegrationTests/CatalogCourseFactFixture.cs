@@ -4,7 +4,7 @@ namespace CodeForCoders.Commerce.IntegrationTests;
 
 public static class CatalogCourseFactFixture
 {
-    public static byte[] Create(Guid tenantId, Guid courseId, int version = 1, bool rich = false, string title = "Published course", string? level = "beginner")
+    public static byte[] Create(Guid tenantId, Guid courseId, int version = 1, bool rich = false, string title = "Published course", string? level = "beginner", string description = "Pedagogical description")
     {
         var fields = new Dictionary<string, object?>
         {
@@ -20,7 +20,7 @@ public static class CatalogCourseFactFixture
         };
         if (rich)
         {
-            fields["description"] = "Pedagogical description"; fields["level"] = level;
+            fields["description"] = description; fields["level"] = level;
             fields["prerequisite"] = new { text = (string?)null, recommendedCourses = Array.Empty<object>() };
         }
         return JsonSerializer.SerializeToUtf8Bytes(fields);

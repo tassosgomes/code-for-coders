@@ -25,5 +25,10 @@ public sealed class CatalogCourseViewConfiguration : IEntityTypeConfiguration<Ca
         builder.Property(course => course.InShowcaseSince).HasColumnName("in_showcase_since");
         builder.Ignore(course => course.InShowcase);
         builder.HasIndex(course => new { course.TenantId, course.Title, course.CourseId });
+        // Showcase order (newest entry first, ties by course id) read by the public listing.
+        builder.HasIndex(course => new { course.TenantId, course.InShowcaseSince, course.CourseId })
+            .IsDescending(false, true, false)
+            .HasFilter("in_showcase_since IS NOT NULL")
+            .HasDatabaseName("ix_course_views_showcase_order");
     }
 }

@@ -71,6 +71,7 @@ internal static class IdentityClientTestSupport
                 SigningKeyBase64 = Convert.ToBase64String(SigningKey.ExportPkcs8PrivateKey()),
                 TenantId = TenantId,
             }),
+            Options.Create(new CommerceServiceOptions()),
             TimeProvider.System);
 
     public static readonly string[] AllScopes =

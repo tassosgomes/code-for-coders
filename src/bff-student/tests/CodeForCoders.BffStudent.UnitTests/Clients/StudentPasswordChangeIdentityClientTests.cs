@@ -94,6 +94,7 @@ public sealed class StudentPasswordChangeIdentityClientTests
     {
         var factory = new ServiceAssertionTokenFactory(
             Options.Create(new StudentIdentityOptions { Scope = "student-sessions:validate" }),
+            Options.Create(new CommerceServiceOptions()),
             TimeProvider.System);
 
         Assert.Throws<InvalidOperationException>(() => factory.Create("student-password-changes:execute"));

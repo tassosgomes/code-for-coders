@@ -3,6 +3,7 @@ import { isRouteErrorResponse, Link, useRouteError } from 'react-router';
 
 import { AppShell } from '@/components/app-shell';
 import { AuthLayout } from '@/components/auth-layout';
+import { PublicLayout } from '@/components/public-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,10 +12,10 @@ import { StudentSessionPanel } from '@/features/student-session/components/stude
 import { useStudentSession } from '@/features/student-session/api/student-session';
 
 type RouteErrorProps = {
-  layout?: 'app' | 'auth' | 'auto';
+  layout?: 'app' | 'auth' | 'auto' | 'public';
 };
 
-const RouteErrorContent = ({ authenticated }: { authenticated: boolean }) => {
+const RouteErrorContent = ({ authenticated, publicArea = false }: { authenticated: boolean; publicArea?: boolean }) => {
   const error = useRouteError();
   const isNotFound = isRouteErrorResponse(error) && error.status === 404;
 
@@ -36,7 +37,14 @@ const RouteErrorContent = ({ authenticated }: { authenticated: boolean }) => {
         </p>
       </CardContent>
       <CardFooter className="flex flex-wrap gap-3">
-        {authenticated ? (
+        {publicArea ? (
+          <Button asChild>
+            <Link to={paths.studentShowcase.getHref()}>
+              <ArrowLeft aria-hidden="true" />
+              Ver todos os cursos
+            </Link>
+          </Button>
+        ) : authenticated ? (
           <Button asChild>
             <Link to={paths.home.getHref()}>
               <House aria-hidden="true" />
@@ -87,6 +95,14 @@ const AutoRouteError = () => {
 export const RouteError = ({ layout = 'auto' }: RouteErrorProps) => {
   if (layout === 'auto') {
     return <AutoRouteError />;
+  }
+
+  if (layout === 'public') {
+    return (
+      <PublicLayout>
+        <RouteErrorContent authenticated={false} publicArea />
+      </PublicLayout>
+    );
   }
 
   if (layout === 'app') {

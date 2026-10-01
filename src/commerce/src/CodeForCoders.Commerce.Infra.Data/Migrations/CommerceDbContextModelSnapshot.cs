@@ -85,6 +85,11 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
 
                     b.HasKey("TenantId", "CourseId");
 
+                    b.HasIndex("TenantId", "InShowcaseSince", "CourseId")
+                        .IsDescending(false, true, false)
+                        .HasDatabaseName("ix_course_views_showcase_order")
+                        .HasFilter("in_showcase_since IS NOT NULL");
+
                     b.HasIndex("TenantId", "Title", "CourseId");
 
                     b.ToTable("course_views", "catalog");
