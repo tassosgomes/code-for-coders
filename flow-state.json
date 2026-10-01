@@ -101,9 +101,10 @@
     },
     {
       "id": "CAP-008",
-      "stage": "backlog",
+      "stage": "prd",
       "artifacts": {
-        "domain": "domains/matricula-e-direito-de-acesso/domain.md"
+        "domain": "domains/matricula-e-direito-de-acesso/domain.md",
+        "prd": "tasks/prd-concessao-acesso/prd.md"
       },
       "mvp_order": 6
     },
@@ -241,8 +242,8 @@
   "next_actions": [
     {
       "id": "NA29",
-      "what": "Declarar a fatia minima de CAP-008 (Concessao e vigencia de direito de acesso, ordem 6 da fila MVP) e escrever o PRD sobre domains/matricula-e-direito-de-acesso/domain.md v1.0; CAP-008 precede a venda para nao virar flag de checkout",
-      "skill": "tsg-flow-prd-creator",
+      "what": "Contratos do 1o PRD de CAP-008 (tasks/prd-concessao-acesso/prd.md 1.0 aprovado em 2026-10-01): decisao de acesso (commerce/Matricula), cortesia no bff-admin, permissao cortesia.conceder em identity e tipo de ato cortesia-concedida em audit",
+      "skill": "tsg-flow-contract-creator",
       "blocked_by": []
     }
   ],
@@ -788,6 +789,30 @@
       "owner": "tasso",
       "decided_at": "2026-10-01",
       "decision": "CAP-005 (2 PRDs, #98 e #101) e CAP-003 (1o PRD, #128) saem da fila como done. Pontas viram PRDs futuros: material complementar de CAP-005 (OD43, passa por Midia); destino real do botao de compra de CAP-003 (depende de CAP-011/OD5); aviso de 'ja tem acesso' (depende de CAP-008); cupom em CAP-004 (Fase 2). Descartado: manter as duas abertas ate o material complementar e o checkout sairem - travaria a fila do MVP por escopo que o recorte ja excluiu."
+    },
+    {
+      "id": "OD61",
+      "ref": "tasks/prd-concessao-acesso/prd.md Rastreabilidade",
+      "what": "Fatia do 1o PRD de CAP-008 (concessao e vigencia de direito de acesso)",
+      "owner": "tasso",
+      "decided_at": "2026-10-01",
+      "decision": "Entra: matricula e concessao com origem e vigencia; cortesia como ato auditado do financeiro; decisao 'pode acessar agora?' com expiracao automatica; fatos acesso-concedido e acesso-expirado; tela minima no backoffice; QD-04 fechada. Fora: ordem de concessao por compra (nome do fato e de Vendas, sem domain doc; vai com CAP-011), revogacao/suspensao (CAP-009), turma (CAP-010), assinatura (CAP-013/014), diagnostico de suporte (CAP-025). Descartado: incluir o consumidor da compra agora - o contrato nasceria sem o produtor e seria refeito em CAP-011; cortesia como pedido de valor zero - reintroduz DE01."
+    },
+    {
+      "id": "OD62",
+      "ref": "tasks/prd-concessao-acesso/prd.md DP-01 a DP-10",
+      "what": "Decisoes locais do PRD de concessao de acesso",
+      "owner": "tasso",
+      "decided_at": "2026-10-01",
+      "decision": "Permissao cortesia.conceder do financeiro; beneficiario pelo e-mail exato da conta de aluno; termino ao fim do dia no fuso da escola (Brasilia), mes sem o dia vira o ultimo dia do mes (fecha QD-04); vigencia de 1 a 60 meses ou vitalicia, motivo de 1 a 500 caracteres; cortesia sobre curso com versao vigente, sem exigir oferta; varias concessoes convivem com aviso; sem desfazer pela tela ate CAP-009 (risco aceito, QA-01), vitalicia com confirmacao reforcada; aluno sem e-mail nesta entrega; decisao devolve pode/nao pode, termino e motivo (sem direito | vigencia encerrada); acesso-expirado em ate 1 hora do termino. Descartado: lista de alunos, bloqueio de nova cortesia, extensao de concessao existente, revogacao minima agora."
+    },
+    {
+      "id": "OD63",
+      "ref": "conversa 2026-10-01 · CAP-008",
+      "what": "Cortesia em lote, cortesia para quem nao tem conta e cursos publicos",
+      "owner": "tasso",
+      "decided_at": "2026-10-01",
+      "decision": "Adiados, sem data: podem vir a ser necessarios (grupo de teste, parceria, curso publico). Cada um tera PRD proprio. Curso publico exige decisao sobre a fronteira de Matricula e Catalogo (acesso sem compra nem concessao por aluno). A cortesia aluno a aluno atende a validacao de CAP-007/CAP-017 e a excecao operacional."
     }
   ]
 }
