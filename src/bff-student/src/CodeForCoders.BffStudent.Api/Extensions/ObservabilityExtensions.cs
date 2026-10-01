@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CodeForCoders.BffStudent.Application.Common;
 using CodeForCoders.BffStudent.Infra.Messaging;
 using OpenTelemetry.Exporter;
@@ -27,7 +28,13 @@ public static class ObservabilityExtensions
                     new KeyValuePair<string, object>("deployment.environment.name", environment.EnvironmentName),
                 }))
             .WithTracing(tracing => tracing
-                .AddAspNetCoreInstrumentation(options => options.Filter = context => !context.Request.Path.StartsWithSegments("/health"))
+                .AddAspNetCoreInstrumentation(options =>
+                {
+                    options.Filter = context => !context.Request.Path.StartsWithSegments("/health");
+                    // Visitor data never reaches spans: ASP.NET Core records the User-Agent natively.
+                    options.EnrichWithHttpRequest = (activity, _) => RemoveVisitorTags(activity);
+                    options.EnrichWithHttpResponse = (activity, _) => RemoveVisitorTags(activity);
+                })
                 .AddHttpClientInstrumentation()
                 .AddEntityFrameworkCoreInstrumentation()
                 .AddSource(BffStudentTelemetry.ActivitySourceName)
@@ -48,5 +55,12 @@ public static class ObservabilityExtensions
             options.AddOtlpExporter();
         }));
         return services;
+    }
+
+    private static readonly string[] VisitorTags = ["user_agent.original", "http.user_agent", "client.address", "client.port", "http.client_ip"];
+
+    private static void RemoveVisitorTags(Activity activity)
+    {
+        foreach (var tag in VisitorTags) activity.SetTag(tag, null);
     }
 }

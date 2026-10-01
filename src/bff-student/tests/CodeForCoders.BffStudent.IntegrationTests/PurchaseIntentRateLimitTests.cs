@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Security.Cryptography;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace CodeForCoders.BffStudent.IntegrationTests;
@@ -98,23 +100,36 @@ public sealed class PurchaseIntentRateLimitTests(BffStudentIntegrationFixture fi
     [Fact(DisplayName = nameof(HttpSpansNeverRecordVisitorHeadersOrTheIdempotencyKey))]
     public async Task HttpSpansNeverRecordVisitorHeadersOrTheIdempotencyKey()
     {
+        var traceId = ActivityTraceId.CreateRandom();
+        var httpSpanStopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var tags = new ConcurrentQueue<KeyValuePair<string, object?>>();
         using var listener = new ActivityListener
         {
             ShouldListenTo = _ => true,
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
-            ActivityStopped = activity => { foreach (var tag in activity.TagObjects) tags.Enqueue(tag); },
+            ActivityStopped = activity =>
+            {
+                if (activity.TraceId != traceId) return;
+                foreach (var tag in activity.TagObjects) tags.Enqueue(tag);
+                if (activity.Kind == ActivityKind.Server && activity.Source.Name == "Microsoft.AspNetCore")
+                    httpSpanStopped.TrySetResult();
+            },
         };
         ActivitySource.AddActivityListener(listener);
         await using var factory = new ShowcaseBffFactory(fixture);
         factory.Commerce.Respond = _ => Accepted();
         using var client = factory.CreateClient();
+        // The factory removes hosted services, including the one that initializes OpenTelemetry.
+        _ = factory.Services.GetRequiredService<TracerProvider>();
         using var request = Request(Guid.CreateVersion7(), "private-idempotency-key");
+        request.Headers.Add("traceparent", $"00-{traceId}-{ActivitySpanId.CreateRandom()}-01");
         request.Headers.Add("User-Agent", "private-browser-sentinel");
         request.Headers.Add("Cookie", "visitor=private-cookie-sentinel");
         request.Headers.Add("X-Forwarded-For", "192.0.2.100");
         using var response = await client.SendAsync(request, Cancellation);
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
+        // TestServer can deliver the response before the server activity stops and its tags are collected.
+        await httpSpanStopped.Task.WaitAsync(TimeSpan.FromSeconds(10), Cancellation);
         Assert.NotEmpty(tags);
         var serialized = string.Join(';', tags);
         foreach (var value in new[] { "private-idempotency-key", "private-browser-sentinel", "private-cookie-sentinel", "192.0.2.100" })

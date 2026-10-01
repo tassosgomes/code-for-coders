@@ -5,9 +5,9 @@
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "last_checkpoint": "5a34aa9fe579c877308cd1e1fa1629ef60a7bb10",
-  "phase": "delivery",
-  "active_task": "12.0",
-  "attempt": 1,
+  "phase": "checkpoint",
+  "active_task": "11.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 3,
   "transport_retries": 1,
@@ -18,10 +18,11 @@
   "validated_commit": "5a34aa9fe579c877308cd1e1fa1629ef60a7bb10",
   "validated_tree": "87696c31331738f8a1827331615c2ea4d414e0ac",
   "last_result": {
-    "run_id": "run.u0ZkoRq9",
+    "run_id": "run.nU4420Vw",
     "role": "validator",
-    "mode": "full",
-    "attempt": "3/3",
+    "mode": "revalidation",
+    "task": "11.0",
+    "attempt": "2/3",
     "outcome": "approved"
   },
   "history": [
@@ -62,6 +63,10 @@
     "Pós-entrega: usuário reportou finding SAST low na PR #128. Diagnóstico SonarCloud: MINOR S7737 em testing/audit-trail-offer-handlers.ts:9; 3 MAJOR autoFocus fora do escopo autorizado (UX revisada). Reopen 12.0 p/ correção; full será refeita (mudança de código invalida aprovação).",
     "12.0 fix SAST (run.qiDqtWDi, codex high explícito): S7737 corrigido em audit-trail-offer-handlers.ts; diff 1 arquivo; gate 12.0 + checks exit 0; autoFocus intocado.",
     "12.0 fix SAST checkpoint 5a34aa9 e push (PR #128 atualizada). Mudança de código pós-full → revalidação full obrigatória (rodada 3).",
-    "FULL 3/3 (run.u0ZkoRq9): APROVADA sobre 5a34aa9 (fix S7737 confirmado; admin-spa reexecutado 205 testes, 90,33%; reaproveitamento justificado). PR #128 atualizada. Fechamento de docs+push a seguir."
+    "FULL 3/3 (run.u0ZkoRq9): APROVADA sobre 5a34aa9 (fix S7737 confirmado; admin-spa reexecutado 205 testes, 90,33%; reaproveitamento justificado). PR #128 atualizada. Fechamento de docs+push a seguir.",
+    "Fechamento pós-fix SAST: docs finais commitados e push. PR #128 em 5a34aa9+docs, full rodada 3 aprovada. Fluxo done.",
+    "Pós-fix SAST: CI da PR #128 triado. commerce=infra template (upload-findings). bff-student=flake real de teste da 11.0 (spans vazios no runner). Reopen 11.0 para correção de determinismo.",
+    "11.0 fix tentativa 1/3 (run.qwjBsjCR): gate_failed. Flake era sintoma: spans vazios mascaravam user_agent.original gravado em span. Tentativa 2/3 autoriza correção de produção (bff-student) + preserva determinismo do teste.",
+    "11.0 fix tentativa 2/3 (run.9pItG8a9, claude/sonnet-5-5 a pedido do usuário): EnrichWithHttpRequest/Response remove user_agent.original dos spans; teste determinístico preservado; gate passed, IntegrationTests 2x exit 0."
   ]
 }
