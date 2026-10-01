@@ -1,3 +1,4 @@
+using CodeForCoders.Commerce.Domain.Entities;
 using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Infra.Data.Configuration;
 using CodeForCoders.Commerce.Infra.Data.Outbox;
@@ -11,10 +12,29 @@ public sealed class CommerceDbContext(
 {
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<CatalogOutboxMessage> CatalogOutboxMessages => Set<CatalogOutboxMessage>();
+
+    public DbSet<CatalogCourseView> CatalogCourseViews => Set<CatalogCourseView>();
+    public DbSet<CatalogOffer> CatalogOffers => Set<CatalogOffer>();
+    public DbSet<CatalogEditReceipt> CatalogEditReceipts => Set<CatalogEditReceipt>();
+
+    public DbSet<PurchaseIntentDailyCount> PurchaseIntentDailyCounts => Set<PurchaseIntentDailyCount>();
+    public DbSet<PurchaseIntentReceipt> PurchaseIntentReceipts => Set<PurchaseIntentReceipt>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(CommerceSchemas.Catalog);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CommerceDbContext).Assembly);
+        modelBuilder.Entity<PurchaseIntentDailyCount>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<PurchaseIntentReceipt>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CatalogCourseView>().HasQueryFilter(
+            course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CatalogOffer>().HasQueryFilter(
+            offer => tenantContext.TenantId.HasValue && offer.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CatalogEditReceipt>().HasQueryFilter(
+            receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CatalogOutboxMessage>().HasQueryFilter(
+            message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
             message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
     }

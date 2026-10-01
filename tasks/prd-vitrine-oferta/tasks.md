@@ -5,7 +5,7 @@
 > **ADRs pertinentes:** [0001](../../docs/adr/0001-monorepo-de-codigo.md), [0002](../../docs/adr/0002-plataforma-de-runtime-coolify.md), [0004](../../docs/adr/0004-autenticacao-de-servico-bff-identity.md), [0005](../../docs/adr/0005-sessao-e-servico-do-backoffice.md), [0009](../../docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md) (**Accepted**)
 > **Contratos:** [contracts.md](contracts.md) 1.0 — OpenAPI do backoffice 1.0.0, da vitrine 1.0.0 e interno de `commerce` 1.1.0; AsyncAPI de `commerce` 1.0.0 e da Auditoria 1.3.0
 > **Design:** novo documento `docs/design/wireframes-catalogo-vitrine.md` (a produzir em 1.0 e 2.0), sobre `DESIGN.md` e o design system do backoffice
-> **Status do plano:** Em revisão
+> **Status do plano:** Concluído
 
 ## Visão Geral
 
@@ -79,18 +79,18 @@ outbox do Catálogo nasce em V-04, a asserção de serviço em V-07 e o contador
 
 ## Tasks
 
-- [ ] 1.0 Wireframes ASCII do Catálogo e da vitrine aprovados
-- [ ] 2.0 Figma do Catálogo e da vitrine aprovado
-- [ ] 3.0 O financeiro abre o Catálogo e vê os cursos publicados da escola
-- [ ] 4.0 O financeiro abre a ficha do curso e escreve a chamada comercial
-- [ ] 5.0 O financeiro cria, edita e exclui ofertas em rascunho
-- [ ] 6.0 O financeiro publica a oferta e ela nasce com autor na trilha
-- [ ] 7.0 O financeiro altera preço ou vigência de oferta publicada, só para compras futuras
-- [ ] 8.0 O financeiro despublica a oferta: ela sai da vitrine sem afetar quem comprou
-- [ ] 9.0 O visitante abre a vitrine, filtra por nível e só vê o que está à venda
-- [ ] 10.0 O visitante lê a página do curso e entende o que compra
-- [ ] 11.0 O visitante clica em Comprar, vê o aviso e a escola tem um primeiro sinal de demanda
-- [ ] 12.0 O administrador vê os atos de oferta na trilha com rótulo legível
+- [x] 1.0 Wireframes ASCII do Catálogo e da vitrine aprovados
+- [x] 2.0 Figma do Catálogo e da vitrine aprovado
+- [x] 3.0 O financeiro abre o Catálogo e vê os cursos publicados da escola
+- [x] 4.0 O financeiro abre a ficha do curso e escreve a chamada comercial
+- [x] 5.0 O financeiro cria, edita e exclui ofertas em rascunho
+- [x] 6.0 O financeiro publica a oferta e ela nasce com autor na trilha
+- [x] 7.0 O financeiro altera preço ou vigência de oferta publicada, só para compras futuras
+- [x] 8.0 O financeiro despublica a oferta: ela sai da vitrine sem afetar quem comprou
+- [x] 9.0 O visitante abre a vitrine, filtra por nível e só vê o que está à venda
+- [x] 10.0 O visitante lê a página do curso e entende o que compra
+- [x] 11.0 O visitante clica em Comprar, vê o aviso e a escola tem um primeiro sinal de demanda
+- [x] 12.0 O administrador vê os atos de oferta na trilha com rótulo legível
 
 ## Caminho crítico e lanes
 

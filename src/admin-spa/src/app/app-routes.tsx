@@ -1,5 +1,7 @@
 import type { RouteObject } from 'react-router';
 
+import { CatalogCoursesRoute } from '@/app/routes/catalog-courses-route';
+import { CatalogCourseRecordRoute } from '@/app/routes/catalog-course-record-route';
 import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
 import { paths } from '@/config/paths';
 
@@ -31,6 +33,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <DashboardRoute /> },
       { path: paths.staffAccess.path.slice(1), element: <StaffAccessRoute /> },
+      { path: paths.catalog.path.slice(1), element: <CatalogCoursesRoute /> },
+      { path: paths.catalogCourse.path.slice(1), element: <CatalogCourseRecordRoute /> },
       { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
       { path: paths.authoring.path.slice(1), element: <AuthoringCoursesRoute /> },
       { path: paths.authoringCourse.path.slice(1), element: <AuthoringCourseRoute /> },
@@ -68,4 +72,3 @@ export const routes: RouteObject[] = [
     errorElement: <RouteError />,
   },
 ];
-

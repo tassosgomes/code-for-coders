@@ -5,6 +5,7 @@ using CodeForCoders.Commerce.Infra.Data.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
 namespace CodeForCoders.Commerce.Infra.Data;
@@ -30,6 +31,14 @@ public static class DependencyInjection
                 options.EnableSensitiveDataLogging();
             }
         });
+        services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
+        services.AddScoped<IOfferReferenceQueries, Queries.OfferReferenceQueries>();
+        services.AddHostedService<Catalog.PurchaseIntentReceiptCleanupWorker>();
+        services.AddScoped<IPurchaseIntentStore, Catalog.PurchaseIntentStore>();
+        services.AddScoped<IShowcaseQueries, Queries.ShowcaseQueries>();
+        services.AddScoped<ICatalogCourseProjectionStore, Catalog.CatalogCourseProjectionStore>();
+        services.AddScoped<ICatalogCourseEditStore, Catalog.CatalogCourseEditStore>();
+        services.AddScoped<ICatalogOutboxMessageWriter, CatalogOutboxMessageWriter>();
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, CommerceUnitOfWork>();
         services.AddOptions<ValkeyOptions>()
@@ -37,6 +46,8 @@ public static class DependencyInjection
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Valkey connection string is required.")
             .ValidateOnStart();
         services.AddSingleton<ValkeyConnectionProvider>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
 
         return services;
     }

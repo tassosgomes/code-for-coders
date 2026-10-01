@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Commerce.Api/CodeForCoders.Commerce.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Commerce.Application/CodeForCoders.Commerce.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.Commerce.Domain/CodeForCoders.Commerce.Domain.csproj" />
     <ProjectReference Include="../CodeForCoders.Commerce.Tests.Common/CodeForCoders.Commerce.Tests.Common.csproj" />
@@ -16,5 +17,15 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <!--
+    Cross-service conformance (ADR-0009): the real assertion factory of bff-student is linked, not copied,
+    so the commerce verifier is tested against the tokens the BFF really signs without a service-to-service reference.
+  -->
+  <ItemGroup>
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/ServiceAssertionTokenFactory.cs" Link="BffStudent/ServiceAssertionTokenFactory.cs" />
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/ServiceAssertionDestination.cs" Link="BffStudent/ServiceAssertionDestination.cs" />
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/StudentIdentityOptions.cs" Link="BffStudent/StudentIdentityOptions.cs" />
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/CommerceServiceOptions.cs" Link="BffStudent/CommerceServiceOptions.cs" />
   </ItemGroup>
 </Project>

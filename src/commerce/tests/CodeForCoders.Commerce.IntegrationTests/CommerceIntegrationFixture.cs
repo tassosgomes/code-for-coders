@@ -1,6 +1,8 @@
 using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Infra.Data;
 using Microsoft.EntityFrameworkCore;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Testcontainers.PostgreSql;
 using Testcontainers.RabbitMq;
 using Xunit;
@@ -20,9 +22,19 @@ public sealed class CommerceIntegrationFixture : IAsyncLifetime
         .WithPassword("code_for_coders")
         .Build();
 
+    private const int ValkeyPort = 6379;
+
+    public IContainer Valkey { get; } = new ContainerBuilder("valkey/valkey:8.1-alpine")
+        .WithPortBinding(ValkeyPort, true)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Ready to accept connections"))
+        .Build();
+
+    public string ValkeyConnectionString
+        => $"{Valkey.Hostname}:{Valkey.GetMappedPublicPort(ValkeyPort)},abortConnect=false";
+
     public async ValueTask InitializeAsync()
     {
-        await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync());
+        await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync(), Valkey.StartAsync());
 
         var dbOptions = new DbContextOptionsBuilder<CommerceDbContext>()
             .UseNpgsql(PostgreSql.GetConnectionString())
@@ -35,6 +47,7 @@ public sealed class CommerceIntegrationFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        await Valkey.DisposeAsync();
         await RabbitMq.DisposeAsync();
         await PostgreSql.DisposeAsync();
     }

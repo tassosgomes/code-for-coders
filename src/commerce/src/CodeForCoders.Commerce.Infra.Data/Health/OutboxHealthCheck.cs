@@ -14,7 +14,11 @@ public sealed class OutboxHealthCheck(CommerceDbContext dbContext) : IHealthChec
     {
         var pending = dbContext.OutboxMessages
             .IgnoreQueryFilters()
-            .Where(message => message.ProcessedOn == null);
+            .Where(message => message.ProcessedOn == null)
+            .Select(message => new { message.Attempts, message.OccurredOn })
+            .Concat(dbContext.CatalogOutboxMessages.IgnoreQueryFilters()
+                .Where(message => message.ProcessedOn == null)
+                .Select(message => new { message.Attempts, message.OccurredOn }));
         var exhausted = await pending.CountAsync(message => message.Attempts >= MaximumAttempts, cancellationToken);
         var oldest = await pending
             .Select(message => (DateTimeOffset?)message.OccurredOn)

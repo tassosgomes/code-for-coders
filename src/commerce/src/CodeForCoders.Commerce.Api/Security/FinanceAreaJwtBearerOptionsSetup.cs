@@ -1,4 +1,6 @@
 using System.Text.Json;
+using CodeForCoders.Commerce.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -39,6 +41,17 @@ public sealed class FinanceAreaJwtBearerOptionsSetup(
         };
         options.Events = new JwtBearerEvents
         {
+            // Public routes accept only the service assertion: this scheme must not read (or refresh JWKS for) it.
+            OnMessageReceived = context =>
+            {
+                if (context.HttpContext.GetEndpoint()?.Metadata.GetOrderedMetadata<IAuthorizeData>()
+                    .Any(data => data.Policy == ShowcasePolicies.Read) == true)
+                {
+                    context.NoResult();
+                }
+
+                return Task.CompletedTask;
+            },
             OnChallenge = async context =>
             {
                 context.HandleResponse();

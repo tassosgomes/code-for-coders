@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
         services.AddHostedService<HeartbeatConsumerWorker>();
+        services.AddHostedService<CatalogCourseConsumerWorker>();
 
         return services;
     }

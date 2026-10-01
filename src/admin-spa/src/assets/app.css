@@ -4290,3 +4290,43 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .course-history-list { list-style: none; padding: 0; }
 .course-history-item, .course-version-module { padding: 16px; overflow-wrap: anywhere; }
+
+.catalog-no-level { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-warning, #8b5e00); }
+.catalog-table { margin-top: 1.5rem; }
+.catalog-table tr { position: relative; }
+.catalog-table td:first-child a::after { content: ''; position: absolute; inset: 0; }
+.catalog-table tr:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.catalog-skeleton { margin-top: 1.5rem; display: grid; gap: 0.75rem; }
+.catalog-skeleton > div { height: 3.5rem; border-radius: 0.5rem; background: var(--color-border, #e5e7eb); }
+.catalog-record-page { max-width: 960px; }
+.catalog-record-card { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.catalog-record-card h2 { margin-top: 0; font-size: 20px; }
+.catalog-record-card dl { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; }
+.catalog-record-card dt { color: var(--muted); }
+.catalog-record-card dd { margin: 0; }
+.catalog-record-card ul { margin: 0; padding-left: 18px; }
+.catalog-record-card textarea { width: 100%; box-sizing: border-box; }
+.catalog-record-card .primary-button { justify-self: end; }
+@media (max-width: 640px) {
+  .catalog-record-card { padding: 16px; }
+  .catalog-record-card dl { grid-template-columns: 1fr; gap: 6px; }
+}
+@media (max-width: 640px) { .catalog-table { min-width: 520px; } }
+
+.catalog-offers-heading, .catalog-offers-list > li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.catalog-offers-list { list-style: none; padding: 0; }
+.catalog-offers-list > li { border-top: 1px solid var(--border); padding: 1rem 0; }
+.catalog-offers-list h3 { margin: 0; }
+@media (max-width: 640px) { .catalog-offers-list > li { align-items: flex-start; flex-direction: column; } }
+
+.catalog-offer-form fieldset { display: flex; flex-wrap: wrap; gap: 1rem; border: 0; padding: .75rem 0; }
+.catalog-offer-form legend { font-weight: 600; margin-bottom: .5rem; }
+.catalog-offer-form fieldset label { display: inline-flex; align-items: center; gap: .5rem; }
+.catalog-offer-form input[type="radio"] { width: auto; padding: 0; accent-color: var(--primary); }
+
+.offer-option { padding: 1.25rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+.offer-option h3 { margin: 0; font-size: 1rem; }
+.offer-option p { margin: .5rem 0 1rem; color: var(--muted); }
+.offer-option strong { font-size: 1.5rem; }
+.offer-change-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+@media (max-width: 640px) { .offer-change-comparison { grid-template-columns: 1fr; } }

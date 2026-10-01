@@ -7,11 +7,14 @@ import { StudentAppLayoutRoute } from '@/app/routes/student-app-layout-route';
 import { RootRoute } from '@/app/routes/root-route';
 import { RouteError } from '@/app/routes/route-error';
 import { AuthLayout } from '@/components/auth-layout';
+import { PublicLayout } from '@/components/public-layout';
 import { StudentRegistrationRoute } from '@/app/routes/student-registration-route';
 import { StudentConfirmationRoute } from '@/app/routes/student-confirmation-route';
 import { StudentLoginRoute } from '@/app/routes/student-login-route';
 import { StudentPasswordRecoveryRoute, StudentPasswordResetRoute } from '@/app/routes/student-password-recovery-route';
 import { StudentPasswordChangeRoute } from '@/app/routes/student-password-change-route';
+import { StudentShowcaseCourseRoute } from '@/app/routes/student-showcase-course-route';
+import { StudentShowcaseRoute } from '@/app/routes/student-showcase-route';
 
 const routes: RouteObject[] = [
   {
@@ -28,6 +31,15 @@ const routes: RouteObject[] = [
           { path: paths.studentLogin.path.slice(1), element: <StudentLoginRoute /> },
           { path: paths.studentPasswordRecovery.path.slice(1), element: <StudentPasswordRecoveryRoute /> },
           { path: paths.studentPasswordReset.path.slice(1), element: <StudentPasswordResetRoute /> },
+        ],
+      },
+      {
+        // Public area: outside requireStudentSession, never reads the session, same page for a signed-in student (RN-O13).
+        element: <PublicLayout />,
+        errorElement: <RouteError layout="public" />,
+        children: [
+          { path: paths.studentShowcase.path.slice(1), element: <StudentShowcaseRoute /> },
+          { path: paths.studentShowcaseCourse.path.slice(1), element: <StudentShowcaseCourseRoute /> },
         ],
       },
       {

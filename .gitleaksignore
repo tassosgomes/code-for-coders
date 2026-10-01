@@ -32,3 +32,6 @@ src/media/tests/CodeForCoders.Media.IntegrationTests/MediaOutboxMetricsTests.cs:
 # Fixtures de teste, não segredos: token fictício de convite e Idempotency-Key literal.
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:26
 src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/StaffInvitationAcceptanceTests.cs:generic-api-key:61
+# Falso positivo confirmado: routing key de domínio pública ("catalogo.oferta-alterada.v1"),
+# declarada no contrato AsyncAPI; não é segredo.
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OfferChangeTests.cs:generic-api-key:191

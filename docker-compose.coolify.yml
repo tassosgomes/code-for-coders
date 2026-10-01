@@ -205,6 +205,12 @@ services:
       FinanceAreaTokens__Issuer: identity
       FinanceAreaTokens__Audience: commerce
       FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      ServiceAssertions__Audience: commerce
+      ServiceAssertions__Issuers__bff-student__PublicKeys__local-commerce-1: ${BFF_COMMERCE_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__0: showcase:read
+      ServiceAssertions__Issuers__bff-student__AllowedScopes__1: purchase-intent:write
+      ServiceAssertions__Issuers__bff-student__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      RabbitMq__AuditExchange: audit.events
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
@@ -351,9 +357,17 @@ services:
       StudentIdentity__SigningKeyId: local-dev-1
       StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set in Coolify}
       StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Commerce__BaseAddress: http://commerce:8080/
+      Commerce__Issuer: bff-student
+      Commerce__Audience: commerce
+      Commerce__Scope: showcase:read purchase-intent:write
+      Commerce__SigningKeyId: local-commerce-1
+      Commerce__SigningKeyBase64: ${BFF_COMMERCE_PRIVATE_KEY_B64:?set in Coolify}
       Cors__AllowedOrigins__0: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
     depends_on:
       identity:
+        condition: service_healthy
+      commerce:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]

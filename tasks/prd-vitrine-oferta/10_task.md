@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["9.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.ShowcaseCourseDetailTests --minimum-expected-tests 9 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.ShowcaseCourseProxyTests --minimum-expected-tests 3 && npm --prefix src/student-spa run test -- student-course-page'
@@ -15,8 +15,9 @@ gate_expect: "Pelo menos 20 testes passam: 9 de integração de commerce, 3 do B
 - **`commerce` — `getShowcaseCourseInternal`:** por lista explícita de campos, devolve título, nível,
   descrição (saída inteira da visão do Catálogo, C-03), pré-requisito (texto e recomendados com `inShowcase`;
   título **atual** quando o Catálogo conhece o curso, senão o da publicação, C-02), estrutura de módulos e
-  títulos de aula **sem vídeo** e as ofertas **publicadas** do menor para o maior preço, cada uma com nome,
-  `priceCents`, `currency: BRL` e `accessPeriod`. Curso fora da vitrine, inexistente ou de outra escola → o
+títulos de aula **sem vídeo** e as ofertas **publicadas** do menor para o maior preço, cada uma com nome,
+`priceCents` e `accessPeriod` (sem `currency`: decisão do responsável em 2026-10-01 — os contratos OpenAPI
+aprovados prevalecem; `currency: BRL` permanece forma dos fatos AsyncAPI, acordo CAP-008/CAP-011). Curso fora da vitrine, inexistente ou de outra escola → o
   mesmo 404 `SHOWCASE_COURSE_NOT_FOUND`, com respostas idênticas entre os três casos. Asserção de serviço
   com escopo `showcase:read`, como em 9.0; resposta `Cache-Control: no-store`. Republicar o curso em
   `learning` com aula nova aparece na página sem ação do financeiro (fato → visão → página).

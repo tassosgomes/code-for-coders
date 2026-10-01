@@ -11,6 +11,8 @@ export const paths = {
     path: '/acessos',
     getHref: () => '/acessos',
   },
+  catalog: { path: '/catalogo', getHref: () => '/catalogo' },
+  catalogCourse: { path: '/catalogo/:courseId', getHref: (courseId: string) => `/catalogo/${courseId}` },
   staffFinance: {
     path: '/financeiro',
     getHref: () => '/financeiro',

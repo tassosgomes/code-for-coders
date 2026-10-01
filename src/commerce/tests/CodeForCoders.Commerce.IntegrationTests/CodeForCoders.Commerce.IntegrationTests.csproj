@@ -15,6 +15,8 @@
     <ProjectReference Include="../../src/CodeForCoders.Commerce.Infra.Messaging/CodeForCoders.Commerce.Infra.Messaging.csproj" />
     <ProjectReference Include="../CodeForCoders.Commerce.Tests.Common/CodeForCoders.Commerce.Tests.Common.csproj" />
     <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="YamlDotNet" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
@@ -23,5 +25,16 @@
     <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+  <!-- Cross-service conformance (ADR-0009): the real bff-student assertion factory is linked, not copied. -->
+  <ItemGroup>
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/ServiceAssertionTokenFactory.cs" Link="BffStudent/ServiceAssertionTokenFactory.cs" />
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/ServiceAssertionDestination.cs" Link="BffStudent/ServiceAssertionDestination.cs" />
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/StudentIdentityOptions.cs" Link="BffStudent/StudentIdentityOptions.cs" />
+    <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/CommerceServiceOptions.cs" Link="BffStudent/CommerceServiceOptions.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../../../tasks/prd-vitrine-oferta/asyncapi-contract.yaml" Link="Contracts/offers.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../tasks/prd-vitrine-oferta/asyncapi-contract-audit.yaml" Link="Contracts/audit.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

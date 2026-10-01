@@ -11,6 +11,14 @@ public static class CommerceTelemetry
 
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
+    public static readonly Counter<long> CourseFactsApplied = Meter.CreateCounter<long>("commerce.catalog.course.applied", "{fact}");
+    public static readonly Counter<long> CourseFactsIgnored = Meter.CreateCounter<long>("commerce.catalog.course.ignored", "{fact}");
+    public static readonly Counter<long> CourseFactsDeadLettered = Meter.CreateCounter<long>("commerce.catalog.course.dead_lettered", "{fact}");
+    public static readonly Counter<long> PurchaseIntentsCounted = Meter.CreateCounter<long>("commerce.purchase_intent.counted", "{click}");
+    public static readonly Counter<long> PurchaseIntentsRepeated = Meter.CreateCounter<long>("commerce.purchase_intent.repeated", "{click}");
+    public static readonly Counter<long> PurchaseIntentsRefused = Meter.CreateCounter<long>("commerce.purchase_intent.refused", "{click}");
+    public static readonly Counter<long> ShowcaseReads = Meter.CreateCounter<long>("commerce.showcase.read", "{read}");
+    public static readonly Histogram<double> CourseFactLag = Meter.CreateHistogram<double>("commerce.catalog.course.lag", "s");
     public static readonly Counter<long> HeartbeatsRecorded = Meter.CreateCounter<long>(
         "commerce.platform.heartbeat.recorded",
         unit: "{heartbeat}");

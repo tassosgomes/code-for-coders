@@ -2,7 +2,7 @@ using CodeForCoders.Commerce.Application.Interfaces;
 
 namespace CodeForCoders.Commerce.Infra.Data.Outbox;
 
-public sealed class OutboxMessage
+public sealed class OutboxMessage : IOutboxDelivery
 {
     private OutboxMessage()
     {

@@ -15,6 +15,7 @@ public static class ServiceConfigurationExtensions
         builder.Services.AddApplicationConfiguration();
         builder.Services.AddScoped<CourseVideoEnricher>();
         builder.Services.AddScoped<CourseAuditReferenceEnricher>();
+        builder.Services.AddScoped<OfferAuditReferenceEnricher>();
         builder.Services.AddOptions<LearningApiOptions>()
             .Bind(builder.Configuration.GetSection(LearningApiOptions.SectionName))
             .Validate(options => Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri)
@@ -67,6 +68,24 @@ public static class ServiceConfigurationExtensions
                 var settings = serviceProvider.GetRequiredService<IOptions<CommerceApiOptions>>().Value;
                 client.BaseAddress = new Uri(settings.BaseAddress, UriKind.Absolute);
             })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
+        builder.Services.AddHttpClient<ICommerceCatalogClient, CommerceCatalogClient>((services, client) =>
+                client.BaseAddress = new Uri(services.GetRequiredService<IOptions<CommerceApiOptions>>().Value.BaseAddress))
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
+        builder.Services.AddHttpClient<IOfferReferenceClient, OfferReferenceClient>((services, client) =>
+                client.BaseAddress = new Uri(services.GetRequiredService<IOptions<CommerceApiOptions>>().Value.BaseAddress))
             .AddStandardResilienceHandler(options =>
             {
                 options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
