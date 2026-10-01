@@ -5,9 +5,9 @@
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "last_checkpoint": "0dedaecaa7084e62ba2a709b1d2f05875aec0a8f",
-  "phase": "delivery",
-  "active_task": "9.0",
-  "attempt": null,
+  "phase": "fix",
+  "active_task": "12.0",
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 2,
   "transport_retries": 1,
@@ -18,11 +18,9 @@
   "validated_commit": "0dedaecaa7084e62ba2a709b1d2f05875aec0a8f",
   "validated_tree": "1147cbb032b0d2c37c38a97e4b9bcdbe18021f60",
   "last_result": {
-    "run_id": "run.mWneQ7Ip",
-    "role": "validator",
-    "mode": "full",
-    "attempt": "2/3",
-    "outcome": "approved"
+    "role": "orchestrator",
+    "action": "sast_finding",
+    "outcome": "SonarCloud PR#128: 1 MINOR S7737 (audit-trail-offer-handlers.ts:9) + 3 MAJOR autoFocus (não autorizados). Correção do low delegada a pedido do usuário (codex high)."
   },
   "history": [
     "2026-09-30 init: worktree isolada ../code-for-coders-vitrine-oferta criada a pedido do usuário; prepare-prd-branch (run.eBJ6sjTh) confirmou feature/vitrine-oferta sobre main@5566d02; delivery=pr autorizado pelo usuário.",
@@ -57,6 +55,8 @@
     "9.0 fix tentativa 2/3 (run.N3hLgdy6): Theory novo cobre intermediate/advanced com repasse; diff mínimo (1 arquivo de teste). Gate passed.",
     "9.0 revalidation (run.7hA4GJE3): APROVADA; M12 morto pelo teste novo (sensor focalizado). Checkpoint do fix a seguir; full será refeita sobre o novo commit.",
     "9.0 fix checkpointado. Preparando integração e full novamente (full_attempt 2/3).",
-    "FULL 2/3 (run.mWneQ7Ip): APROVADA. validated_commit 0dedaec / tree 1147cbb0. CI 7 componentes (bff-student reexecutado 167/167, 84,55%), M12 e M12b mortos. Entrega em PR autorizada pelo usuário; complete-prd a seguir."
+    "FULL 2/3 (run.mWneQ7Ip): APROVADA. validated_commit 0dedaec / tree 1147cbb0. CI 7 componentes (bff-student reexecutado 167/167, 84,55%), M12 e M12b mortos. Entrega em PR autorizada pelo usuário; complete-prd a seguir.",
+    "COMPLETE-PRD (run.Qu1omPY0): PR #128 aberta (feature/vitrine-oferta -> main). Commit final b5aa2a1 apenas docs/estado sobre 0dedaec validado. PRD COMPLETE.",
+    "Pós-entrega: usuário reportou finding SAST low na PR #128. Diagnóstico SonarCloud: MINOR S7737 em testing/audit-trail-offer-handlers.ts:9; 3 MAJOR autoFocus fora do escopo autorizado (UX revisada). Reopen 12.0 p/ correção; full será refeita (mudança de código invalida aprovação)."
   ]
 }

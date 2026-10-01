@@ -90,7 +90,7 @@ outbox do Catálogo nasce em V-04, a asserção de serviço em V-07 e o contador
 - [x] 9.0 O visitante abre a vitrine, filtra por nível e só vê o que está à venda
 - [x] 10.0 O visitante lê a página do curso e entende o que compra
 - [x] 11.0 O visitante clica em Comprar, vê o aviso e a escola tem um primeiro sinal de demanda
-- [x] 12.0 O administrador vê os atos de oferta na trilha com rótulo legível
+- [ ] 12.0 O administrador vê os atos de oferta na trilha com rótulo legível
 
 ## Caminho crítico e lanes
 
