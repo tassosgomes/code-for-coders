@@ -34,6 +34,11 @@ apiClient.interceptors.response.use(
       ? error.response.data.code
       : undefined;
 
+    // This anonymous signal never affects the visitor's notice or session (C-08).
+    if (axios.isAxiosError(error) && error.config?.url?.endsWith('/purchase-intents')) {
+      return Promise.reject(error);
+    }
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('app:api-error', { detail: { status } }));
 

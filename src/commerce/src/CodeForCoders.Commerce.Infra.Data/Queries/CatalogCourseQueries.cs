@@ -34,7 +34,11 @@ public sealed class CatalogCourseQueries(CommerceDbContext dbContext) : ICatalog
         var offers = await dbContext.CatalogOffers.AsNoTracking().Where(offer => offer.CourseId == courseId)
             .OrderBy(offer => offer.Status == "draft" ? 0 : offer.Status == "published" ? 1 : 2)
             .ThenBy(offer => offer.CreatedAt).ThenBy(offer => offer.OfferId).ToListAsync(cancellationToken);
-        return new(course.CourseId, course.Title, course.Level, resolved, course.Tagline, course.InShowcaseSince.HasValue, offers.Select(CatalogOfferDetail.FromCatalogOffer).ToArray());
+        var counts = await dbContext.PurchaseIntentDailyCounts.AsNoTracking()
+            .Where(item => offers.Select(offer => offer.OfferId).Contains(item.OfferId))
+            .GroupBy(item => item.OfferId).Select(group => new { OfferId = group.Key, Count = group.Sum(item => item.Count) })
+            .ToDictionaryAsync(item => item.OfferId, item => item.Count, cancellationToken);
+        return new(course.CourseId, course.Title, course.Level, resolved, course.Tagline, course.InShowcaseSince.HasValue, offers.Select(offer => CatalogOfferDetail.FromCatalogOffer(offer) with { PurchaseIntentCount = counts.GetValueOrDefault(offer.OfferId) }).ToArray());
     }
 
     public async Task<CatalogCoursePage> ListAsync(int page, int size, CancellationToken cancellationToken)

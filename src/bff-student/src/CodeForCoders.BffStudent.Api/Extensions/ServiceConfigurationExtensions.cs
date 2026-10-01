@@ -32,6 +32,7 @@ public static class ServiceConfigurationExtensions
             .ValidateOnStart();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
         builder.Services.AddSingleton<ServiceAssertionTokenFactory>();
+        builder.Services.AddPurchaseIntentRateLimit(builder.Configuration);
         builder.Services.AddCommerceClientConfiguration(builder.Configuration);
         builder.Services.AddHttpClient<IStudentRegistrationIdentityClient, StudentRegistrationIdentityClient>((provider, client) =>
             {

@@ -1,7 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
+
+import { renderWithProviders } from '@/testing/test-utils';
 
 import type { ShowcaseCourseDetail } from '@/features/student-showcase/api/get-showcase-course';
 import { StudentCoursePage } from '@/features/student-showcase/components/student-course-page';
@@ -30,7 +32,7 @@ const course: ShowcaseCourseDetail = {
 };
 
 const renderPage = (result: Parameters<typeof StudentCoursePage>[0]['result'], onRetry = vi.fn()) => {
-  const view = render(
+  const view = renderWithProviders(
     <MemoryRouter>
       <StudentCoursePage onRetry={onRetry} result={result} />
     </MemoryRouter>,

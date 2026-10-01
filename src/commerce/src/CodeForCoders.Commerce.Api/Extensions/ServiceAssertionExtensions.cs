@@ -26,6 +26,10 @@ public static class ServiceAssertionExtensions
             policy => policy.AddAuthenticationSchemes(ServiceAssertionAuthenticationHandler.SchemeName)
                 .RequireAuthenticatedUser()
                 .RequireClaim(ServiceAssertionAuthenticationHandler.ScopeClaim, ServiceAssertionScopes.ShowcaseRead)));
+        services.AddAuthorization(options => options.AddPolicy(ShowcasePolicies.PurchaseIntent,
+            policy => policy.AddAuthenticationSchemes(ServiceAssertionAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ServiceAssertionAuthenticationHandler.ScopeClaim, ServiceAssertionScopes.PurchaseIntentWrite)));
         return services;
     }
 

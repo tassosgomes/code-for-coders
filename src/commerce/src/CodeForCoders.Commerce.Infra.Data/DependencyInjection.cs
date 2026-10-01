@@ -32,6 +32,8 @@ public static class DependencyInjection
             }
         });
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
+        services.AddHostedService<Catalog.PurchaseIntentReceiptCleanupWorker>();
+        services.AddScoped<IPurchaseIntentStore, Catalog.PurchaseIntentStore>();
         services.AddScoped<IShowcaseQueries, Queries.ShowcaseQueries>();
         services.AddScoped<ICatalogCourseProjectionStore, Catalog.CatalogCourseProjectionStore>();
         services.AddScoped<ICatalogCourseEditStore, Catalog.CatalogCourseEditStore>();

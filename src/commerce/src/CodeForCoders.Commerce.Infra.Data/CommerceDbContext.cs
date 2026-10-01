@@ -18,10 +18,15 @@ public sealed class CommerceDbContext(
     public DbSet<CatalogOffer> CatalogOffers => Set<CatalogOffer>();
     public DbSet<CatalogEditReceipt> CatalogEditReceipts => Set<CatalogEditReceipt>();
 
+    public DbSet<PurchaseIntentDailyCount> PurchaseIntentDailyCounts => Set<PurchaseIntentDailyCount>();
+    public DbSet<PurchaseIntentReceipt> PurchaseIntentReceipts => Set<PurchaseIntentReceipt>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(CommerceSchemas.Catalog);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CommerceDbContext).Assembly);
+        modelBuilder.Entity<PurchaseIntentDailyCount>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<PurchaseIntentReceipt>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CatalogCourseView>().HasQueryFilter(
             course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CatalogOffer>().HasQueryFilter(

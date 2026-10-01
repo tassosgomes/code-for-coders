@@ -4,9 +4,9 @@
   "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
-  "last_checkpoint": "7b4cc4e6bc9df738c358e498fd7b8cc0c049b7b5",
+  "last_checkpoint": "0bf9a2608e2253b64c96af4020445a7d4032e56a",
   "phase": "checkpoint",
-  "active_task": "10.0",
+  "active_task": "11.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,10 +18,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.7nCl92qU",
+    "run_id": "run.H0bp03DI",
     "role": "validator",
-    "mode": "revalidation",
-    "task": "10.0",
+    "mode": "focused",
+    "task": "11.0",
     "attempt": "1/3",
     "outcome": "approved"
   },
@@ -47,6 +47,8 @@
     "9.0 checkpoint: done. Avançando para 10.0 (tentativa 1/3).",
     "10.0 impl (run.mK02ptos, claude): implementation_complete com gate, checks e smoke no Compose.",
     "10.0 validação focused (run.R9L21LlZ, codex): validation_error B-01 — conflito task x contratos (currency na resposta HTTP). Gate técnico passed (36 testes), checks exit 0, smoke OK; aprovação pendente só de B-01. Task bloqueada sem consumir tentativa; aguardando decisão do responsável.",
-    "INTERVENÇÃO (decisão do responsável, sessão atual): B-01 resolvido — contratos valem; currency: BRL permanece forma dos fatos AsyncAPI (CAP-008/011). Redação da 10_task.md corrigida com autorização registrada. Nova rodada de validação (revalidation) sem consumir nova tentativa de implementação."
+    "INTERVENÇÃO (decisão do responsável, sessão atual): B-01 resolvido — contratos valem; currency: BRL permanece forma dos fatos AsyncAPI (CAP-008/011). Redação da 10_task.md corrigida com autorização registrada. Nova rodada de validação (revalidation) sem consumir nova tentativa de implementação.",
+    "10.0 checkpoint: done (após decisão B-01 e revalidation aprovada). Avançando para 11.0 (tentativa 1/3).",
+    "11.0 impl (run.qrzP9sKR, codex): implementation_complete com gate 23 testes, checks exit 0 e smoke Playwright no Compose."
   ]
 }

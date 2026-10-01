@@ -20,6 +20,8 @@ public sealed class ShowcaseBffFactory(BffStudentIntegrationFixture fixture) : W
     private readonly RSA commerceKey = RSA.Create(2048);
     private readonly RSA identityKey = RSA.Create(2048);
 
+    public int PurchaseIntentPermitLimit { get; set; } = 60;
+
     public CommerceBoundaryHandler Commerce { get; } = new();
 
     public CountingSessionIdentityClient Identity { get; } = new();
@@ -31,6 +33,7 @@ public sealed class ShowcaseBffFactory(BffStudentIntegrationFixture fixture) : W
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("ShowcaseTest");
+        builder.UseSetting("PurchaseIntentRateLimit:PermitLimit", PurchaseIntentPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.UseSetting("ConnectionStrings:DefaultConnection", fixture.PostgreSql.GetConnectionString());
         builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);
         builder.UseSetting("RabbitMq:Username", "code_for_coders");

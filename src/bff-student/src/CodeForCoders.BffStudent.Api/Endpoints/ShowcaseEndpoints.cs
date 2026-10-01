@@ -1,5 +1,6 @@
 using CodeForCoders.BffStudent.Api.Clients;
 using CodeForCoders.BffStudent.Contracts;
+using CodeForCoders.BffStudent.Api.Extensions;
 
 namespace CodeForCoders.BffStudent.Api.Endpoints;
 
@@ -14,6 +15,9 @@ public static class ShowcaseEndpoints
 
     public static void MapShowcaseEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapPost($"{Prefix}/offers/{{offerId}}/purchase-intents", RegisterPurchaseIntentAsync)
+            .RequireRateLimiting(PurchaseIntentRateLimitExtensions.Policy)
+            .WithName("registerPurchaseIntent").WithTags("Showcase");
         endpoints.MapGet($"{Prefix}/courses", ListCoursesAsync)
             .WithName("listShowcaseCourses")
             .WithTags("Showcase")
@@ -28,6 +32,26 @@ public static class ShowcaseEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+    }
+
+    private static async Task<IResult> RegisterPurchaseIntentAsync(HttpContext httpContext, IShowcaseCommerceClient client,
+        CancellationToken cancellationToken, string offerId)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        if (!Guid.TryParseExact(offerId, "D", out var id))
+            return Problem(httpContext, StatusCodes.Status404NotFound, "OFFER_NOT_AVAILABLE", "Oferta não disponível.");
+        var keys = httpContext.Request.Headers["Idempotency-Key"];
+        if (keys.Count != 1 || string.IsNullOrWhiteSpace(keys[0]) || keys[0]!.Length > 128)
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "A purchase intent key is required.");
+        var result = await client.RegisterPurchaseIntentAsync(id, keys[0]!, cancellationToken);
+        if (result.StatusCode == StatusCodes.Status202Accepted && result.Body is not null)
+            return Results.Json(result.Body, statusCode: StatusCodes.Status202Accepted);
+        return result.StatusCode switch
+        {
+            StatusCodes.Status404NotFound => Problem(httpContext, result.StatusCode, "OFFER_NOT_AVAILABLE", "Oferta não disponível."),
+            StatusCodes.Status504GatewayTimeout => Problem(httpContext, result.StatusCode, "SHOWCASE_TIMEOUT", "The showcase took too long to respond."),
+            _ => Problem(httpContext, StatusCodes.Status502BadGateway, "SHOWCASE_UNAVAILABLE", "The showcase is temporarily unavailable."),
+        };
     }
 
     private static async Task<IResult> GetCourseAsync(

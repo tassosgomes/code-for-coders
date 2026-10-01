@@ -33,6 +33,30 @@ public sealed class ShowcaseCommerceClient(HttpClient httpClient) : IShowcaseCom
     public Task<ShowcaseResult<ShowcaseCourseDetailV1>> GetCourseAsync(Guid courseId, CancellationToken cancellationToken)
         => ReadAsync<ShowcaseCourseDetailV1>($"internal/v1/showcase/courses/{courseId:D}", cancellationToken);
 
+    public async Task<ShowcaseResult<PurchaseIntentAccepted>> RegisterPurchaseIntentAsync(Guid offerId, string key, CancellationToken cancellationToken)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Post, $"internal/v1/showcase/offers/{offerId:D}/purchase-intents");
+        message.Options.Set(ServiceAssertionHandler.ScopeKey, "purchase-intent:write");
+        message.Headers.Add("Idempotency-Key", key);
+        try
+        {
+            using var response = await httpClient.SendAsync(message, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.Accepted)
+            {
+                var body = await response.Content.ReadFromJsonAsync<PurchaseIntentAccepted>(cancellationToken);
+                return body?.PurchaseAvailability == "coming-soon"
+                    ? new(StatusCodes.Status202Accepted, null, body) : Unavailable<PurchaseIntentAccepted>();
+            }
+            return response.StatusCode == HttpStatusCode.NotFound && await ReadCodeAsync(response, cancellationToken) == "OFFER_NOT_AVAILABLE"
+                ? new(StatusCodes.Status404NotFound, "OFFER_NOT_AVAILABLE") : Unavailable<PurchaseIntentAccepted>();
+        }
+        catch (HttpRequestException) { return Unavailable<PurchaseIntentAccepted>(); }
+        catch (JsonException) { return Unavailable<PurchaseIntentAccepted>(); }
+        catch (TimeoutRejectedException) { return Timeout<PurchaseIntentAccepted>(); }
+        catch (ExecutionRejectedException) { return Unavailable<PurchaseIntentAccepted>(); }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return Timeout<PurchaseIntentAccepted>(); }
+    }
+
     private async Task<ShowcaseResult<T>> ReadAsync<T>(string path, CancellationToken cancellationToken)
         where T : class
     {
