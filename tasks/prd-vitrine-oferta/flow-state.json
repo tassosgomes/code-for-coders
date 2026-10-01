@@ -4,24 +4,23 @@
   "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
-  "last_checkpoint": "96c716c4f904bdd26191bf90c628a7773b6dcb57",
-  "phase": "checkpoint",
+  "last_checkpoint": "0dedaecaa7084e62ba2a709b1d2f05875aec0a8f",
+  "phase": "delivery",
   "active_task": "9.0",
-  "attempt": 2,
+  "attempt": null,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 1,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "0dedaecaa7084e62ba2a709b1d2f05875aec0a8f",
+  "validated_tree": "1147cbb032b0d2c37c38a97e4b9bcdbe18021f60",
   "last_result": {
-    "run_id": "run.7hA4GJE3",
+    "run_id": "run.mWneQ7Ip",
     "role": "validator",
-    "mode": "revalidation",
-    "task": "9.0",
+    "mode": "full",
     "attempt": "2/3",
     "outcome": "approved"
   },
@@ -56,6 +55,8 @@
     "prepare-integration (run.v3JsmaxJ): integration_ready; base/target persistidos. Validador full a seguir.",
     "FULL 1/3 (run.bkD2FY6p): REPROVADA. CI 7/7 verde (cobertura 79-95%), sensor 16/17 mortos; M12 sobreviveu na task 9.0. Reopen 9.0 para fix (tentativa 2/3).",
     "9.0 fix tentativa 2/3 (run.N3hLgdy6): Theory novo cobre intermediate/advanced com repasse; diff mínimo (1 arquivo de teste). Gate passed.",
-    "9.0 revalidation (run.7hA4GJE3): APROVADA; M12 morto pelo teste novo (sensor focalizado). Checkpoint do fix a seguir; full será refeita sobre o novo commit."
+    "9.0 revalidation (run.7hA4GJE3): APROVADA; M12 morto pelo teste novo (sensor focalizado). Checkpoint do fix a seguir; full será refeita sobre o novo commit.",
+    "9.0 fix checkpointado. Preparando integração e full novamente (full_attempt 2/3).",
+    "FULL 2/3 (run.mWneQ7Ip): APROVADA. validated_commit 0dedaec / tree 1147cbb0. CI 7 componentes (bff-student reexecutado 167/167, 84,55%), M12 e M12b mortos. Entrega em PR autorizada pelo usuário; complete-prd a seguir."
   ]
 }

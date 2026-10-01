@@ -5,7 +5,7 @@
 > **ADRs pertinentes:** [0001](../../docs/adr/0001-monorepo-de-codigo.md), [0002](../../docs/adr/0002-plataforma-de-runtime-coolify.md), [0004](../../docs/adr/0004-autenticacao-de-servico-bff-identity.md), [0005](../../docs/adr/0005-sessao-e-servico-do-backoffice.md), [0009](../../docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md) (**Accepted**)
 > **Contratos:** [contracts.md](contracts.md) 1.0 — OpenAPI do backoffice 1.0.0, da vitrine 1.0.0 e interno de `commerce` 1.1.0; AsyncAPI de `commerce` 1.0.0 e da Auditoria 1.3.0
 > **Design:** novo documento `docs/design/wireframes-catalogo-vitrine.md` (a produzir em 1.0 e 2.0), sobre `DESIGN.md` e o design system do backoffice
-> **Status do plano:** Em revisão
+> **Status do plano:** Concluído
 
 ## Visão Geral
 
