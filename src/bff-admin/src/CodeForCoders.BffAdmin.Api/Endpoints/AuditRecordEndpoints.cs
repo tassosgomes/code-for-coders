@@ -132,6 +132,7 @@ public static class AuditRecordEndpoints
         IAuditRecordClient auditClient,
         IAuditIdentityReferenceClient identityReferenceClient,
         CourseAuditReferenceEnricher courseReferences,
+        OfferAuditReferenceEnricher offerReferences,
         CancellationToken cancellationToken)
     {
         var access = await ValidateAdministratorSessionAsync(httpContext, identityClient, cancellationToken);
@@ -154,6 +155,8 @@ public static class AuditRecordEndpoints
         }
 
         var detail = audit.Detail;
+        var offerLabels = await offerReferences.ResolveAsync(access.SessionId, [detail.Target], cancellationToken);
+        detail = detail with { Target = OfferAuditReferenceEnricher.AddLabel(detail.Target, offerLabels) };
         var courseLabels = await courseReferences.ResolveAsync(access.SessionId, [detail.Target], cancellationToken);
         detail = detail with { Target = CourseAuditReferenceEnricher.AddLabel(detail.Target, courseLabels) };
         var references = detail.Complements
@@ -285,6 +288,7 @@ public static class AuditRecordEndpoints
         IAuditRecordClient auditClient,
         IAuditIdentityReferenceClient identityReferenceClient,
         CourseAuditReferenceEnricher courseReferences,
+        OfferAuditReferenceEnricher offerReferences,
         CancellationToken cancellationToken)
     {
         var session = BffSessionContext.Get(httpContext);
@@ -347,6 +351,8 @@ public static class AuditRecordEndpoints
 
         var courseLabels = await courseReferences.ResolveAsync(session.IdentitySessionId, audit.Page.Data.Select(record => record.Target), cancellationToken);
         var page = audit.Page with { Data = audit.Page.Data.Select(record => record with { Target = CourseAuditReferenceEnricher.AddLabel(record.Target, courseLabels) }).ToArray() };
+        var offerLabels = await offerReferences.ResolveAsync(session.IdentitySessionId, page.Data.Select(record => record.Target), cancellationToken);
+        page = page with { Data = page.Data.Select(record => record with { Target = OfferAuditReferenceEnricher.AddLabel(record.Target, offerLabels) }).ToArray() };
         var references = page.Data
             .SelectMany(record => new[] { record.Author, record.Target })
             .Where(reference => reference is not null

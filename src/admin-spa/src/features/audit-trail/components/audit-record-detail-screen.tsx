@@ -4,12 +4,16 @@ import { Link, Navigate, useLocation, useNavigate, useNavigationType } from 'rea
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 
 import { paths } from '@/config/paths';
+import { formatOfferAuditAttribute, getOfferAuditAttributeEntries } from '@/features/audit-trail/utils/format-offer-audit-attribute';
 import { useConfirmAuditRecordComplement } from '@/features/audit-trail/api/confirm-audit-record-complement';
 import { useAuditRecord, type AuditRecordDetail } from '@/features/audit-trail/api/get-audit-record';
 import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-trail-forbidden';
 import { parseAuditTrailNavigationState, type AuditTrailPersonFilter } from '@/features/audit-trail/types/audit-trail-navigation';
 
 const typeLabels: Record<string, string> = {
+  'oferta-publicada': 'Oferta publicada',
+  'oferta-alterada': 'Oferta alterada',
+  'oferta-despublicada': 'Oferta despublicada',
   'versao-publicada': 'Versão publicada',
   'papel-concedido': 'Papel concedido',
   'papel-revogado': 'Papel revogado',
@@ -229,7 +233,7 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
         <DetailField label="Origem">
           {query.data.origin === 'identidade'
             ? 'Identidade e Acesso'
-            : query.data.origin === 'conteudo' ? 'Conteúdo e Currículo' : <code className="audit-mono">{query.data.origin}</code>}
+            : query.data.origin === 'conteudo' ? 'Conteúdo e Currículo' : query.data.origin === 'catalogo' ? 'Catálogo e Ofertas' : <code className="audit-mono">{query.data.origin}</code>}
         </DetailField>
         <DetailField label="Tipo">
           {query.data.type
@@ -244,13 +248,13 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
         <DetailField label="Alvo">
           <IdentityReference recordId={recordId} reference={query.data.target} filterKind="target" />
         </DetailField>
-        {Object.entries(query.data.attributes).map(([key, value]) => <DetailField key={key} label={attributeLabel(key)}>
-          {key === 'papel' ? <RoleBadge role={value} /> : <code className="audit-mono">{value}</code>}
+        {getOfferAuditAttributeEntries(query.data.attributes).map(([key, value]) => <DetailField key={key} label={attributeLabel(key)}>
+          {key === 'papel' ? <RoleBadge role={value} /> : <code className="audit-mono">{formatOfferAuditAttribute(key, value)}</code>}
         </DetailField>)}
         <DetailField label="Motivo">
           {query.data.reason !== null
             ? <span className="audit-detail-reason">{query.data.reason}</span>
-            : (query.data.type === 'convite-interno-aceito' || query.data.type === 'versao-publicada')
+            : (query.data.type === 'convite-interno-aceito' || query.data.type === 'versao-publicada' || ['oferta-publicada', 'oferta-alterada', 'oferta-despublicada'].includes(query.data.type ?? ''))
               ? <span className="audit-not-applicable">Não se aplica a este tipo</span>
               : <MissingValue />}
         </DetailField>
@@ -375,12 +379,12 @@ const IdentityReference = ({ recordId, reference, filterKind }: IdentityReferenc
   const navigate = useNavigate();
   if (!reference) return <MissingValue />;
 
-  const label = reference.label ?? (reference.type === 'curso' ? 'Título não disponível' : 'Nome não disponível');
+  const label = reference.label ?? (reference.type === 'curso' ? 'Título não disponível' : reference.type === 'oferta' ? 'Rótulo não disponível' : 'Nome não disponível');
   const referenceId = reference.id;
 
   return <div className="audit-detail-reference">
     <span>{label}</span>
-    {reference.type === 'curso' ? <span className="audit-reference-kind">Curso</span> : null}
+    {reference.type === 'curso' || reference.type === 'oferta' ? <span className="audit-reference-kind">{referenceTypeLabel(reference.type)}</span> : null}
     {!reference.label && referenceId ? <span className="audit-reference-missing">
       {referenceTypeLabel(reference.type)} · {shortReference(referenceId)}
     </span> : null}
@@ -392,7 +396,7 @@ const IdentityReference = ({ recordId, reference, filterKind }: IdentityReferenc
         type="button"
       ><Copy aria-hidden="true" size={14} /></button> : null}
       <button
-        aria-label={reference.type === 'curso' ? 'Ver atos deste curso (alvo)' : `Ver atos desta pessoa (${filterKind === 'author' ? 'autor' : 'alvo'})`}
+        aria-label={reference.type === 'curso' ? 'Ver atos deste curso (alvo)' : reference.type === 'oferta' ? 'Ver atos desta oferta (alvo)' : `Ver atos desta pessoa (${filterKind === 'author' ? 'autor' : 'alvo'})`}
         className="audit-person-filter-link"
         onClick={() => navigate(paths.auditTrail.getHref(), {
           state: {
@@ -401,7 +405,7 @@ const IdentityReference = ({ recordId, reference, filterKind }: IdentityReferenc
           },
         })}
         type="button"
-      >{reference.type === 'curso' ? 'Ver atos deste curso' : 'Ver atos desta pessoa'}</button>
+      >{reference.type === 'curso' ? 'Ver atos deste curso' : reference.type === 'oferta' ? 'Ver atos desta oferta' : 'Ver atos desta pessoa'}</button>
     </div> : null}
   </div>;
 };
@@ -415,10 +419,20 @@ const roleLabels: Record<string, string> = {
   suporte: 'Suporte',
 };
 
-const attributeLabel = (key: string) => key === 'papel' ? 'Papel' : key === 'versao' ? 'Versão' : key;
+const attributeLabels: Record<string, string> = {
+  papel: 'Papel',
+  versao: 'Versão',
+  curso: 'Curso',
+  precoAnterior: 'Preço anterior',
+  precoNovo: 'Preço novo',
+  vigenciaAnterior: 'Vigência anterior',
+  vigenciaNova: 'Vigência nova',
+};
+const attributeLabel = (key: string) => attributeLabels[key] ?? key;
 
 const referenceTypeLabel = (type: string | null) => {
   if (type === 'curso') return 'Curso';
+  if (type === 'oferta') return 'Oferta';
   if (type === 'conta-interna') return 'Conta interna';
   if (type === 'convite-interno') return 'Convite interno';
   return type ?? 'Referência';

@@ -17,6 +17,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
     public CourseLearningHandler Learning { get; } = new();
     public CourseAuditHandler Audit { get; } = new();
     public CatalogCommerceHandler Commerce { get; } = new();
+    public OfferReferenceHandler OfferReferences { get; } = new();
     public CourseMediaHandler Media { get; } = new();
     public CourseBffSessionStore Sessions { get; } = new();
 
@@ -44,6 +45,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
             services.AddHttpClient<ICourseAuthoringClient, CourseAuthoringClient>().ConfigurePrimaryHttpMessageHandler(() => Learning);
             services.AddHttpClient<IAuditRecordClient, AuditRecordClient>().ConfigurePrimaryHttpMessageHandler(() => Audit);
             services.AddHttpClient<ICommerceCatalogClient, CommerceCatalogClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
+            services.AddHttpClient<IOfferReferenceClient, OfferReferenceClient>().ConfigurePrimaryHttpMessageHandler(() => OfferReferences);
             services.AddHttpClient<IVideoLibraryClient, VideoLibraryClient>().ConfigurePrimaryHttpMessageHandler(() => Media);
         });
     }

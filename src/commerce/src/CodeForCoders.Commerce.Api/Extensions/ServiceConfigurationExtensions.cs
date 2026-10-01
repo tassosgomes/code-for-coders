@@ -41,6 +41,8 @@ public static class ServiceConfigurationExtensions
                 .RequireClaim(FinanceAreaAuthorization.PermissionClaim, FinanceAreaAuthorization.RequiredPermission)));
         builder.Services.AddAuthorization(options => options.AddPolicy(CatalogPolicies.EditOffers,
             policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", CatalogPolicies.Permission)));
+        builder.Services.AddAuthorization(options => options.AddPolicy(CatalogPolicies.ResolveReferences,
+            policy => policy.RequireAuthenticatedUser().RequireClaim("roles", CatalogPolicies.AdministratorRole)));
         builder.Services.AddServiceAssertionConfiguration(builder.Configuration);
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();
