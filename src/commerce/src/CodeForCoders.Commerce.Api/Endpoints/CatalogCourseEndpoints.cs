@@ -6,6 +6,7 @@ using CodeForCoders.Commerce.Application.UseCases.CatalogCourses.UpdateCatalogCo
 using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.CreateOffer;
 using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.UpdateOffer;
 using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.DeleteOffer;
+using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.PublishOffer;
 using System.Text.Json;
 using System.Security.Claims;
 
@@ -21,6 +22,7 @@ public static class CatalogCourseEndpoints
         group.MapPatch("/courses/{courseId:guid}", UpdateAsync).WithName("updateCatalogCourseInternal");
         group.MapPost("/courses/{courseId:guid}/offers", CreateOfferAsync).WithName("createOfferInternal");
         group.MapPatch("/offers/{offerId:guid}", UpdateOfferAsync).WithName("updateOfferInternal");
+        group.MapPost("/offers/{offerId:guid}/publish", PublishOfferAsync).WithName("publishOfferInternal");
         group.MapDelete("/offers/{offerId:guid}", DeleteOfferAsync).WithName("deleteOfferInternal");
     }
 
@@ -39,6 +41,14 @@ public static class CatalogCourseEndpoints
         if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
         return Results.Ok(await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,
             context.Request.Headers["Idempotency-Key"].ToString(), body), cancellationToken));
+    }
+
+    private static async Task<IResult> PublishOfferAsync(Guid offerId, HttpContext context,
+        ITenantContext tenantContext, IPublishOffer useCase, CancellationToken cancellationToken)
+    {
+        if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
+        return Results.Ok(await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,
+            context.Request.Headers["Idempotency-Key"].ToString(), System.Diagnostics.Activity.Current?.Id), cancellationToken));
     }
 
     private static async Task<IResult> DeleteOfferAsync(Guid offerId, HttpContext context,

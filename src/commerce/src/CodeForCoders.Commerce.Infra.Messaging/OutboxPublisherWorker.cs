@@ -28,7 +28,9 @@ public sealed class OutboxPublisherWorker(
                 {
                     for (var index = 0; index < options.Value.BatchSize; index++)
                     {
-                        if (!await PublishOneAsync(stoppingToken))
+                        var catalogPublished = await PublishOneAsync(CommerceSchemas.Catalog, stoppingToken);
+                        var salesPublished = await PublishOneAsync(CommerceSchemas.Sales, stoppingToken);
+                        if (!catalogPublished && !salesPublished)
                         {
                             break;
                         }
@@ -57,7 +59,7 @@ public sealed class OutboxPublisherWorker(
         }
     }
 
-    private async Task<bool> PublishOneAsync(CancellationToken cancellationToken)
+    private async Task<bool> PublishOneAsync(string schema, CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
@@ -67,16 +69,15 @@ public sealed class OutboxPublisherWorker(
         // interpolated below are constants or validated numeric options, so the raw SQL stays
         // bounded to this module's outbox table.
         var query = $"""
-            SELECT * FROM {CommerceSchemas.Sales}.outbox_messages
+            SELECT * FROM {schema}.outbox_messages
             WHERE processed_on IS NULL AND attempts < {maxAttempts}
             ORDER BY id
             LIMIT 1
             FOR UPDATE SKIP LOCKED
             """;
-        var message = await dbContext.OutboxMessages
-            .FromSqlRaw(query)
-            .IgnoreQueryFilters()
-            .SingleOrDefaultAsync(cancellationToken);
+        IOutboxDelivery? message = schema == CommerceSchemas.Catalog
+            ? await dbContext.CatalogOutboxMessages.FromSqlRaw(query).IgnoreQueryFilters().SingleOrDefaultAsync(cancellationToken)
+            : await dbContext.OutboxMessages.FromSqlRaw(query).IgnoreQueryFilters().SingleOrDefaultAsync(cancellationToken);
 
         if (message is null)
         {

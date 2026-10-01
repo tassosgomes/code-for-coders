@@ -11,7 +11,7 @@ public sealed class RabbitMqPublisher(
     RabbitMqConnectionProvider connectionProvider,
     IOptions<RabbitMqOptions> options)
 {
-    public async Task PublishAsync(OutboxMessage message, CancellationToken cancellationToken)
+    public async Task PublishAsync(IOutboxDelivery message, CancellationToken cancellationToken)
     {
         try
         {
@@ -27,10 +27,11 @@ public sealed class RabbitMqPublisher(
                     : new Dictionary<string, object?>
                     {
                         ["traceparent"] = message.TraceParent,
+                        ["correlationId"] = message.TraceParent,
                     },
             };
             await channel.BasicPublishAsync(
-                exchange: options.Value.Exchange,
+                exchange: message.RoutingKey == "auditoria.ato-praticado.v1" ? options.Value.AuditExchange : options.Value.Exchange,
                 routingKey: message.RoutingKey,
                 mandatory: true,
                 basicProperties: properties,

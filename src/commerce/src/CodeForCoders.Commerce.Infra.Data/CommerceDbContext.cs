@@ -12,6 +12,8 @@ public sealed class CommerceDbContext(
 {
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<CatalogOutboxMessage> CatalogOutboxMessages => Set<CatalogOutboxMessage>();
+
     public DbSet<CatalogCourseView> CatalogCourseViews => Set<CatalogCourseView>();
     public DbSet<CatalogOffer> CatalogOffers => Set<CatalogOffer>();
     public DbSet<CatalogEditReceipt> CatalogEditReceipts => Set<CatalogEditReceipt>();
@@ -26,6 +28,8 @@ public sealed class CommerceDbContext(
             offer => tenantContext.TenantId.HasValue && offer.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CatalogEditReceipt>().HasQueryFilter(
             receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CatalogOutboxMessage>().HasQueryFilter(
+            message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
             message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
     }

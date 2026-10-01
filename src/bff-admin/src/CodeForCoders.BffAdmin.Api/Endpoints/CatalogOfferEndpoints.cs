@@ -13,6 +13,7 @@ public static class CatalogOfferEndpoints
         var group = endpoints.MapGroup("/api/v1/catalog").WithTags("Catalog");
         group.MapPost("/courses/{courseId:guid}/offers", CreateAsync).WithName("createOffer");
         group.MapPatch("/offers/{offerId:guid}", UpdateAsync).WithName("updateOffer");
+        group.MapPost("/offers/{offerId:guid}/publish", PublishAsync).WithName("publishOffer");
         group.MapDelete("/offers/{offerId:guid}", DeleteAsync).WithName("deleteOffer");
     }
 
@@ -28,7 +29,11 @@ public static class CatalogOfferEndpoints
         IStaffSessionIdentityClient identity, ICommerceCatalogClient commerce, CancellationToken cancellationToken)
         => WriteAsync(new(offerId, null, HttpMethod.Delete), context, identity, commerce, cancellationToken);
 
-    private sealed record WriteInput(Guid TargetId, JsonElement? Body, HttpMethod Method);
+    private static Task<IResult> PublishAsync(Guid offerId, HttpContext context,
+        IStaffSessionIdentityClient identity, ICommerceCatalogClient commerce, CancellationToken cancellationToken)
+        => WriteAsync(new(offerId, null, HttpMethod.Post, true), context, identity, commerce, cancellationToken);
+
+    private sealed record WriteInput(Guid TargetId, JsonElement? Body, HttpMethod Method, bool Publish = false);
 
     private static async Task<IResult> WriteAsync(WriteInput input, HttpContext context,
         IStaffSessionIdentityClient identity, ICommerceCatalogClient commerce, CancellationToken cancellationToken)
@@ -45,7 +50,8 @@ public static class CatalogOfferEndpoints
             return Problem(context, validation.StatusCode == 504 ? 504 : 502, "IDENTITY_UNAVAILABLE");
         if (!validation.Session.Permissions.Contains(EditOffers, StringComparer.Ordinal)) return Problem(context, 403, "PERMISSION_DENIED");
         var request = new CatalogOfferRequest(validation.Session.AccessToken, input.TargetId, input.Body, key);
-        var result = input.Method == HttpMethod.Post ? await commerce.CreateOfferAsync(request, cancellationToken)
+        var result = input.Publish ? await commerce.PublishOfferAsync(request, cancellationToken)
+            : input.Method == HttpMethod.Post ? await commerce.CreateOfferAsync(request, cancellationToken)
             : input.Method == HttpMethod.Patch ? await commerce.UpdateOfferAsync(request, cancellationToken)
             : await commerce.DeleteOfferAsync(request, cancellationToken);
         if (result.StatusCode == 204) return Results.NoContent();

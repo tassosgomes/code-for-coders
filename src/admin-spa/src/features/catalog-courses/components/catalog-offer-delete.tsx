@@ -14,7 +14,7 @@ export const CatalogOfferDelete = ({ offer, onDeleted, renderTrigger }: CatalogO
     catch (failure) { setError(axios.isAxiosError<{ code?: string }>(failure) && failure.response?.data.code === 'OFFER_STATE_CONFLICT'
       ? 'Esta oferta já foi publicada e não pode ser excluída.' : 'Não foi possível excluir o rascunho. Tente de novo.'); }
   };
-  if (offer.status !== 'draft') return null;
+  if (offer.status !== 'draft') return <>{renderTrigger(() => undefined)}</>;
   return <>{renderTrigger(() => { setKey(crypto.randomUUID()); setError(undefined); })}
     {key ? <Dialog role="alertdialog" title={`Excluir o rascunho “${offer.name}”?`} description="Esta ação não pode ser desfeita." busy={deletion.isPending} onClose={() => setKey(undefined)}>
       {error ? <p role="alert" className="inline-alert">{error}</p> : null}

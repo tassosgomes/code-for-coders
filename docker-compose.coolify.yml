@@ -205,6 +205,7 @@ services:
       FinanceAreaTokens__Issuer: identity
       FinanceAreaTokens__Audience: commerce
       FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      RabbitMq__AuditExchange: audit.events
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}

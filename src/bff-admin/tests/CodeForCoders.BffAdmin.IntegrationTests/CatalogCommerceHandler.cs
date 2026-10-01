@@ -30,8 +30,9 @@ public sealed class CatalogCommerceHandler : HttpMessageHandler
         if (request.RequestUri!.AbsolutePath.Contains("/offers", StringComparison.Ordinal) && Status == HttpStatusCode.OK && !Malformed)
         {
             if (request.Method == HttpMethod.Delete) return new HttpResponseMessage(HttpStatusCode.NoContent);
-            var courseId = request.Method == HttpMethod.Post ? Guid.Parse(request.RequestUri.Segments[^2].TrimEnd('/')) : Guid.CreateVersion7();
-            return new HttpResponseMessage(request.Method == HttpMethod.Post ? HttpStatusCode.Created : HttpStatusCode.OK)
+            var publishing = request.RequestUri.AbsolutePath.EndsWith("/publish", StringComparison.Ordinal);
+            var courseId = request.Method == HttpMethod.Post && !publishing ? Guid.Parse(request.RequestUri.Segments[^2].TrimEnd('/')) : Guid.CreateVersion7();
+            return new HttpResponseMessage(request.Method == HttpMethod.Post && !publishing ? HttpStatusCode.Created : HttpStatusCode.OK)
             {
                 Content = JsonContent.Create(new
                 {
@@ -40,7 +41,7 @@ public sealed class CatalogCommerceHandler : HttpMessageHandler
                     name = "Draft",
                     priceCents = 49700,
                     accessPeriod = new { type = "months", months = 12 },
-                    status = "draft",
+                    status = publishing ? "published" : "draft",
                     purchaseIntentCount = 0,
                     createdAt = DateTimeOffset.UtcNow,
                     updatedAt = DateTimeOffset.UtcNow,

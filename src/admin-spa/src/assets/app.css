@@ -4323,3 +4323,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .catalog-offer-form legend { font-weight: 600; margin-bottom: .5rem; }
 .catalog-offer-form fieldset label { display: inline-flex; align-items: center; gap: .5rem; }
 .catalog-offer-form input[type="radio"] { width: auto; padding: 0; accent-color: var(--primary); }
+
+.offer-option { padding: 1.25rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+.offer-option h3 { margin: 0; font-size: 1rem; }
+.offer-option p { margin: .5rem 0 1rem; color: var(--muted); }
+.offer-option strong { font-size: 1.5rem; }

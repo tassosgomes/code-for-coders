@@ -8,6 +8,9 @@ namespace CodeForCoders.BffAdmin.Api.Clients;
 
 public sealed class CommerceCatalogClient(HttpClient httpClient) : ICommerceCatalogClient
 {
+    public Task<CatalogCourseRecordResult> PublishOfferAsync(CatalogOfferRequest input, CancellationToken cancellationToken)
+        => SendOfferAsync(input, HttpMethod.Post, $"internal/v1/catalog/offers/{input.TargetId:D}/publish", cancellationToken);
+
     public Task<CatalogCourseRecordResult> CreateOfferAsync(CatalogOfferRequest input, CancellationToken cancellationToken)
         => SendOfferAsync(input, HttpMethod.Post, $"internal/v1/catalog/courses/{input.TargetId:D}/offers", cancellationToken);
 

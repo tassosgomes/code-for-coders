@@ -24,6 +24,17 @@ public sealed class CatalogCourseView
         return offer;
     }
 
+    public Events.OfferPublished PublishOffer(Guid offerId, DateTimeOffset now)
+    {
+        if (Level is null)
+            throw new CatalogRuleException("COURSE_LEVEL_REQUIRED", "The current course version needs a level before publication.");
+        var offer = _offers.Single(item => item.OfferId == offerId);
+        offer.Publish(now);
+        RefreshShowcase(_offers.Count(item => item.Status == "published"), now);
+        return new(Guid.CreateVersion7(), TenantId, offerId, CourseId, offer.OfferRevision, now,
+            offer.Name, offer.PriceCents, "BRL", offer.AccessPeriod);
+    }
+
     public void DeleteOffer(Guid offerId)
     {
         var offer = _offers.Single(item => item.OfferId == offerId);

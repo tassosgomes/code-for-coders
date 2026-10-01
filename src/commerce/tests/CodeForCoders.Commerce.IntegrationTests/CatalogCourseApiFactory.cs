@@ -8,6 +8,8 @@ namespace CodeForCoders.Commerce.IntegrationTests;
 
 public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) : WebApplicationFactory<Program>
 {
+    public string? DatabaseConnectionString { get; init; }
+
     public Action<IServiceCollection>? CustomizeServices { get; set; }
 
     public IdentityJwksMessageHandler JwksHandler { get; } = new();
@@ -15,7 +17,7 @@ public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("CatalogTest");
-        builder.UseSetting("ConnectionStrings:DefaultConnection", fixture.PostgreSql.GetConnectionString());
+        builder.UseSetting("ConnectionStrings:DefaultConnection", DatabaseConnectionString ?? fixture.PostgreSql.GetConnectionString());
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
         builder.UseSetting("FinanceAreaTokens:Audience", "commerce");
         builder.UseSetting("FinanceAreaTokens:JwksUrl", "http://identity.test/internal/v1/jwks");

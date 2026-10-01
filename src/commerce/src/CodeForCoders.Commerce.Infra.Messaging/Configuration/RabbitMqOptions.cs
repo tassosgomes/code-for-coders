@@ -25,6 +25,18 @@ public sealed class RabbitMqOptions
     public string Exchange { get; set; } = "commerce.events";
 
     [Required]
+    public string AuditExchange { get; set; } = "audit.events";
+
+    [Required]
+    public string OfferRetentionQueue { get; set; } = "commerce.catalog-offer-retention";
+
+    [Range(1, int.MaxValue)]
+    public int OfferRetentionMaxLength { get; set; } = 10000;
+
+    [Range(1, int.MaxValue)]
+    public int OfferRetentionTtlMilliseconds { get; set; } = 604800000;
+
+    [Required]
     public string DeadLetterExchange { get; set; } = "commerce.events.dlx";
 
     [Required]

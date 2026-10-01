@@ -2,9 +2,9 @@ using CodeForCoders.Commerce.Application.Interfaces;
 
 namespace CodeForCoders.Commerce.Infra.Data.Outbox;
 
-public sealed class OutboxMessage : IOutboxDelivery
+public sealed class CatalogOutboxMessage : IOutboxDelivery
 {
-    private OutboxMessage()
+    private CatalogOutboxMessage()
     {
     }
 
@@ -28,9 +28,9 @@ public sealed class OutboxMessage : IOutboxDelivery
 
     public string? TraceParent { get; private set; }
 
-    public static OutboxMessage Create(OutboxMessageDraft draft, string payload)
+    public static CatalogOutboxMessage Create(OutboxMessageDraft draft, string payload)
     {
-        return new OutboxMessage
+        return new CatalogOutboxMessage
         {
             Id = draft.Id,
             TenantId = draft.TenantId,
@@ -50,8 +50,6 @@ public sealed class OutboxMessage : IOutboxDelivery
     public void RegisterFailure(Exception exception)
     {
         Attempts++;
-        LastError = exception.Message.Length <= 2000
-            ? exception.Message
-            : exception.Message[..2000];
+        LastError = exception.GetType().Name;
     }
 }

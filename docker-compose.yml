@@ -289,6 +289,7 @@ services:
       FinanceAreaTokens__Issuer: identity
       FinanceAreaTokens__Audience: commerce
       FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
+      RabbitMq__AuditExchange: audit.events
     ports:
       - "5104:8080"
     depends_on: *api-dependencies

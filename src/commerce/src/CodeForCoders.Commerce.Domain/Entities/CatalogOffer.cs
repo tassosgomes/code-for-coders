@@ -44,6 +44,16 @@ public sealed class CatalogOffer
         return true;
     }
 
+    internal void Publish(DateTimeOffset now)
+    {
+        if (Status is not ("draft" or "unpublished"))
+            throw new CatalogRuleException("OFFER_STATE_CONFLICT", "The offer is already published.");
+        Status = "published";
+        PublishedAt = now;
+        UpdatedAt = now;
+        OfferRevision++;
+    }
+
     internal void EnsureDeletable()
     {
         if (Status != "draft") throw new CatalogRuleException("OFFER_STATE_CONFLICT", "Only a draft offer can be deleted.");

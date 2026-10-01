@@ -17,6 +17,9 @@ public static class AdministrativeActPolicy
         new Dictionary<string, bool>(StringComparer.Ordinal)
         {
             ["versao-publicada"] = false,
+            ["oferta-publicada"] = false,
+            ["oferta-alterada"] = false,
+            ["oferta-despublicada"] = false,
             ["convite-interno-emitido"] = true,
             ["convite-interno-aceito"] = false,
             ["papel-concedido"] = true,
@@ -32,7 +35,8 @@ public static class AdministrativeActPolicy
     public static string[] GetNonConformityReasons(AdministrativeAct act)
     {
         var reasons = new List<string>(capacity: 7);
-        if (!IsAcceptedType(act.Type) || (act.Type == "versao-publicada" && act.Origin != "conteudo"))
+        var isOfferType = act.Type is "oferta-publicada" or "oferta-alterada" or "oferta-despublicada";
+        if (!IsAcceptedType(act.Type) || (isOfferType && act.Origin != "catalogo") || (act.Type == "versao-publicada" && act.Origin != "conteudo"))
         {
             reasons.Add(UnknownType);
         }
@@ -42,7 +46,8 @@ public static class AdministrativeActPolicy
             reasons.Add(MissingAuthor);
         }
 
-        if (!IsValidReference(act.Target) || (act.Type == "versao-publicada" && act.Target?.Type != "curso"))
+        if (!IsValidReference(act.Target) || (act.Type == "versao-publicada" && act.Target?.Type != "curso")
+            || (act.Origin == "catalogo" && act.Target?.Type != "oferta"))
         {
             reasons.Add(MissingTarget);
         }
