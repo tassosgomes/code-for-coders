@@ -4,9 +4,9 @@
   "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
-  "last_checkpoint": "8fd7776a0aa3900b8404245b36e5cedbca5bce35",
+  "last_checkpoint": "f2dd8a2264cfd4532d48524db7f63f2586a4ba8f",
   "phase": "checkpoint",
-  "active_task": "7.0",
+  "active_task": "8.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,10 +18,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.PPDxRWAz",
+    "run_id": "run.S03hNMVL",
     "role": "validator",
     "mode": "focused",
-    "task": "7.0",
+    "task": "8.0",
     "attempt": "1/3",
     "outcome": "approved"
   },
@@ -39,6 +39,8 @@
     "6.0 impl tentativa 1/3 (run.TmgeV0dr): timeout_or_blocked padrão (4ª vez); monitorado até concluir. implementation_complete: gate 32 testes.",
     "6.0 checkpoint 8fd7776: transporte reportou result_invalid mas commit, checkbox e done confirmados por inspeção direta (pane p28 fechado após leitura). Avançando para 7.0 (tentativa 1/3).",
     "7.0 impl: run.OEjaRzVO (codex) interrompido por rate limit 5h sem veredito (diff parcial preservado, sem commit); re-delegado com --kind=claude explícito por indisponibilidade do codex até 00:47. run.FMNHxMFM: implementation_complete, gate 46 testes, checks exit 0; smoke Compose declarado pendente.",
-    "7.0 validação focused (run.PPVKa0WI codex abortado por rate 0%; run.PPDxRWAz opencode imposta): APROVADA 0 bloqueantes; validator executou o smoke pendente com imagens reconstruídas."
+    "7.0 validação focused (run.PPVKa0WI codex abortado por rate 0%; run.PPDxRWAz opencode imposta): APROVADA 0 bloqueantes; validator executou o smoke pendente com imagens reconstruídas.",
+    "7.0 checkpoint: done. Avançando para 8.0 (tentativa 1/3).",
+    "8.0 impl (run.FAFo3x6V, claude imposto por rate limit do codex): implementation_complete com gate, checks e smoke no Compose."
   ]
 }

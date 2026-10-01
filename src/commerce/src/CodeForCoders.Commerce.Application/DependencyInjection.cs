@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IValidator<UseCases.CatalogOffers.UpdateOffer.UpdateOfferInput>, UseCases.CatalogOffers.UpdateOffer.UpdateOfferInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogOffers.DeleteOffer.DeleteOfferInput>, UseCases.CatalogOffers.DeleteOffer.DeleteOfferInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogOffers.PublishOffer.PublishOfferInput>, UseCases.CatalogOffers.PublishOffer.PublishOfferInputValidator>();
+        services.AddScoped<IValidator<UseCases.CatalogOffers.UnpublishOffer.UnpublishOfferInput>, UseCases.CatalogOffers.UnpublishOffer.UnpublishOfferInputValidator>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()

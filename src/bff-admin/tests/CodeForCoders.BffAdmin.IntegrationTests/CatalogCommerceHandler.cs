@@ -31,8 +31,10 @@ public sealed class CatalogCommerceHandler : HttpMessageHandler
         {
             if (request.Method == HttpMethod.Delete) return new HttpResponseMessage(HttpStatusCode.NoContent);
             var publishing = request.RequestUri.AbsolutePath.EndsWith("/publish", StringComparison.Ordinal);
-            var courseId = request.Method == HttpMethod.Post && !publishing ? Guid.Parse(request.RequestUri.Segments[^2].TrimEnd('/')) : Guid.CreateVersion7();
-            return new HttpResponseMessage(request.Method == HttpMethod.Post && !publishing ? HttpStatusCode.Created : HttpStatusCode.OK)
+            var unpublishing = request.RequestUri.AbsolutePath.EndsWith("/unpublish", StringComparison.Ordinal);
+            var transition = publishing || unpublishing;
+            var courseId = request.Method == HttpMethod.Post && !transition ? Guid.Parse(request.RequestUri.Segments[^2].TrimEnd('/')) : Guid.CreateVersion7();
+            return new HttpResponseMessage(request.Method == HttpMethod.Post && !transition ? HttpStatusCode.Created : HttpStatusCode.OK)
             {
                 Content = JsonContent.Create(new
                 {
@@ -41,7 +43,7 @@ public sealed class CatalogCommerceHandler : HttpMessageHandler
                     name = "Draft",
                     priceCents = 49700,
                     accessPeriod = new { type = "months", months = 12 },
-                    status = publishing ? "published" : "draft",
+                    status = publishing ? "published" : unpublishing ? "unpublished" : "draft",
                     purchaseIntentCount = 0,
                     createdAt = DateTimeOffset.UtcNow,
                     updatedAt = DateTimeOffset.UtcNow,

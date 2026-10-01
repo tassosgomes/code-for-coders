@@ -38,6 +38,15 @@ public sealed class CatalogCourseView
             offer.Name, offer.PriceCents, "BRL", offer.AccessPeriod);
     }
 
+    public Events.OfferUnpublished UnpublishOffer(Guid offerId, DateTimeOffset now)
+    {
+        var offer = _offers.Single(item => item.OfferId == offerId);
+        offer.Unpublish(now);
+        RefreshShowcase(_offers.Count(item => item.Status == "published"), now);
+        return new(Guid.CreateVersion7(), TenantId, offerId, CourseId, offer.OfferRevision, now,
+            offer.Name, offer.PriceCents, "BRL", offer.AccessPeriod);
+    }
+
     public void DeleteOffer(Guid offerId)
     {
         var offer = _offers.Single(item => item.OfferId == offerId);

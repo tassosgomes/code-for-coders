@@ -7,6 +7,7 @@ using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.CreateOffer;
 using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.UpdateOffer;
 using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.DeleteOffer;
 using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.PublishOffer;
+using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.UnpublishOffer;
 using System.Text.Json;
 using System.Security.Claims;
 
@@ -23,6 +24,7 @@ public static class CatalogCourseEndpoints
         group.MapPost("/courses/{courseId:guid}/offers", CreateOfferAsync).WithName("createOfferInternal");
         group.MapPatch("/offers/{offerId:guid}", UpdateOfferAsync).WithName("updateOfferInternal");
         group.MapPost("/offers/{offerId:guid}/publish", PublishOfferAsync).WithName("publishOfferInternal");
+        group.MapPost("/offers/{offerId:guid}/unpublish", UnpublishOfferAsync).WithName("unpublishOfferInternal");
         group.MapDelete("/offers/{offerId:guid}", DeleteOfferAsync).WithName("deleteOfferInternal");
     }
 
@@ -45,6 +47,14 @@ public static class CatalogCourseEndpoints
 
     private static async Task<IResult> PublishOfferAsync(Guid offerId, HttpContext context,
         ITenantContext tenantContext, IPublishOffer useCase, CancellationToken cancellationToken)
+    {
+        if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
+        return Results.Ok(await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,
+            context.Request.Headers["Idempotency-Key"].ToString(), System.Diagnostics.Activity.Current?.Id), cancellationToken));
+    }
+
+    private static async Task<IResult> UnpublishOfferAsync(Guid offerId, HttpContext context,
+        ITenantContext tenantContext, IUnpublishOffer useCase, CancellationToken cancellationToken)
     {
         if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
         return Results.Ok(await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,

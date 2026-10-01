@@ -3,6 +3,7 @@ namespace CodeForCoders.BffAdmin.Application.Interfaces;
 public interface ICommerceCatalogClient
 {
     Task<CatalogCourseRecordResult> PublishOfferAsync(CatalogOfferRequest request, CancellationToken cancellationToken);
+    Task<CatalogCourseRecordResult> UnpublishOfferAsync(CatalogOfferRequest request, CancellationToken cancellationToken);
     Task<CatalogCourseRecordResult> CreateOfferAsync(CatalogOfferRequest request, CancellationToken cancellationToken);
     Task<CatalogCourseRecordResult> UpdateOfferAsync(CatalogOfferRequest request, CancellationToken cancellationToken);
     Task<CatalogCourseRecordResult> DeleteOfferAsync(CatalogOfferRequest request, CancellationToken cancellationToken);

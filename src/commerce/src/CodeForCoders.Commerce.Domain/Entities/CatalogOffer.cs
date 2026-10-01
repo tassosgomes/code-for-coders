@@ -54,6 +54,15 @@ public sealed class CatalogOffer
         OfferRevision++;
     }
 
+    internal void Unpublish(DateTimeOffset now)
+    {
+        if (Status != "published")
+            throw new CatalogRuleException("OFFER_STATE_CONFLICT", "Only a published offer can be unpublished.");
+        Status = "unpublished";
+        UpdatedAt = now;
+        OfferRevision++;
+    }
+
     internal void EnsureDeletable()
     {
         if (Status != "draft") throw new CatalogRuleException("OFFER_STATE_CONFLICT", "Only a draft offer can be deleted.");
