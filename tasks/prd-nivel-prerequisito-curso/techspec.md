@@ -5,14 +5,14 @@ capability: CAP-005
 version: 1.0
 status: approved
 updated: 2026-09-30
-sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.0, tasks/prd-nivel-prerequisito-curso/contracts.md@1.0, context/architecture-baseline.md@1.2
+sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.1, tasks/prd-nivel-prerequisito-curso/contracts.md@1.0, context/architecture-baseline.md@1.2
 ---
 
 # TechSpec — nível e pré-requisito do curso
 
 > **Escopo:** Full-stack (`learning`, `bff-admin`, `admin-spa`)
 > **Modo:** Pipeline, API-First
-> **PRD de origem:** [prd.md](prd.md), v1.0, aprovado em 2026-09-30
+> **PRD de origem:** [prd.md](prd.md), v1.1, aprovado em 2026-09-30
 > **Contratos:** [contracts.md](contracts.md) 1.0; [OpenAPI público](api-contract.yaml) 1.1.0, [OpenAPI interno de learning](internal-api-contract-learning.yaml) 1.1.0 e [AsyncAPI de learning](asyncapi-contract.yaml) 1.1.0, aprovados em 2026-09-30
 > **Data:** 2026-09-30
 > **Status:** Aprovado pelo responsável em 2026-09-30

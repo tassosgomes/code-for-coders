@@ -1,3 +1,13 @@
+---
+tsg_artifact: tasks
+product: code-4-coders
+capability: CAP-005
+version: 1.0
+status: approved
+updated: 2026-09-30
+sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.1, tasks/prd-nivel-prerequisito-curso/techspec.md@1.0
+---
+
 # Plano de Implementação — Nível e pré-requisito do curso (CAP-005, 2º PRD)
 
 > **TechSpec de origem:** [techspec.md](techspec.md) 1.0, aprovada em 2026-09-30

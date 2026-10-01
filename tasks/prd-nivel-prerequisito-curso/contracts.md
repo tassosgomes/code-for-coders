@@ -5,7 +5,7 @@ capability: CAP-005
 version: 1.0
 status: approved
 updated: 2026-09-30
-sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.0, domains/conteudo-e-curriculo/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1, context/architecture-baseline.md@1.2
+sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.1, domains/conteudo-e-curriculo/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1, context/architecture-baseline.md@1.2
 ---
 
 # Contratos de integração — nível e pré-requisito do curso
@@ -52,7 +52,7 @@ Este conjunto registra o acordo para o segundo PRD de `CAP-005`. É o **provedor
 
 | Entrada consultada | Versão e data | Decisão herdada |
 |---|---|---|
-| [PRD](prd.md) | v1.0, 2026-09-30 | RF-01 a RF-06, DP-01, DP-02; OD54, OD55 |
+| [PRD](prd.md) | v1.1, 2026-09-30 | RF-01 a RF-06, DP-01, DP-02; OD54, OD55 |
 | [Conteúdo e Currículo](../../domains/conteudo-e-curriculo/domain.md) | v1.1, 2026-09-30 | RN-C05, RN-C06, RN-C11, RN-C13, RN-C18 |
 | [Catálogo e Oferta](../../domains/catalogo-e-oferta/domain.md) | v1.1, 2026-09-30 | RN-O02, RN-O03 (consumidor) |
 | [Contratos de autoria](../prd-autoria-curso/contracts.md) | 1.0, 2026-09-28 | C-02, C-03, C-04, C-07, C-09, C-11; convenções HTTP do backoffice |

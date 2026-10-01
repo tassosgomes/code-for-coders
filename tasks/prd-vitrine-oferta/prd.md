@@ -5,7 +5,7 @@ capability: CAP-003
 version: 1.0
 status: approved
 updated: 2026-09-30
-sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/catalogo-e-oferta/domain.md@1.1, domains/matricula-e-direito-de-acesso/domain.md@1.0, domains/conteudo-e-curriculo/domain.md@1.1, domains/identidade-e-acesso/domain.md@1.1, domains/auditoria-e-conformidade/domain.md@1.2, tasks/prd-nivel-prerequisito-curso/prd.md@1.0
+sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/catalogo-e-oferta/domain.md@1.1, domains/matricula-e-direito-de-acesso/domain.md@1.0, domains/conteudo-e-curriculo/domain.md@1.1, domains/identidade-e-acesso/domain.md@1.1, domains/auditoria-e-conformidade/domain.md@1.2, tasks/prd-nivel-prerequisito-curso/prd.md@1.1
 ---
 
 # Vitrine e oferta de curso — o que está à venda, por quanto e por quanto tempo

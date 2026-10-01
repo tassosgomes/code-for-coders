@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/prd-ingestao-midia, fora do indice por colisao de chave unica.",
   "artifacts": {
     "vision": "vision.md",
@@ -237,7 +237,7 @@
   "next_actions": [
     {
       "id": "NA28",
-      "what": "Executar o plano do 2o PRD de CAP-005 (tasks/prd-nivel-prerequisito-curso/tasks.md, aprovado em 2026-09-30; PRD 1.1 com errata do RF-06): 1.0 ASCII aprovado, proxima 2.0 Figma",
+      "what": "Executar o plano do 2o PRD de CAP-005 (tasks/prd-nivel-prerequisito-curso/tasks.md, aprovado em 2026-09-30; PRD 1.1 com errata do RF-06): adendo de wireframes ja aprovado (ASCII e Figma, 2026-09-30) e gates das tasks 1.0 e 2.0 passando; proxima 3.0 (V-01, nivel do curso)",
       "skill": "tsg-flow-orchestrator",
       "blocked_by": []
     },
