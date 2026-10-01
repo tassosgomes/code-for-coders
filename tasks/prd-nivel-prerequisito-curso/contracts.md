@@ -5,7 +5,7 @@ capability: CAP-005
 version: 1.0
 status: approved
 updated: 2026-09-30
-sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.0, domains/conteudo-e-curriculo/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1, context/architecture-baseline.md@1.2
+sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.1, domains/conteudo-e-curriculo/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1, context/architecture-baseline.md@1.2
 ---
 
 # Contratos de integração — nível e pré-requisito do curso

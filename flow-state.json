@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-09-30",
+  "updated": "2026-10-01",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/prd-ingestao-midia, fora do indice por colisao de chave unica.",
   "artifacts": {
     "vision": "vision.md",
@@ -46,13 +46,17 @@
     },
     {
       "id": "CAP-003",
-      "stage": "contract",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/catalogo-e-oferta/domain.md",
         "prd": "tasks/prd-vitrine-oferta/prd.md",
-        "contract": "tasks/prd-vitrine-oferta/contracts.md"
+        "contract": "tasks/prd-vitrine-oferta/contracts.md",
+        "techspec": "tasks/prd-vitrine-oferta/techspec.md"
       },
-      "mvp_order": 5
+      "mvp_order": 5,
+      "delivered": [
+        "tasks/prd-vitrine-oferta (1o PRD, done, PR #128)"
+      ]
     },
     {
       "id": "CAP-004",
@@ -63,17 +67,17 @@
     },
     {
       "id": "CAP-005",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/conteudo-e-curriculo/domain.md",
         "prd": "tasks/prd-nivel-prerequisito-curso/prd.md",
         "contract": "tasks/prd-nivel-prerequisito-curso/contracts.md",
-        "techspec": "tasks/prd-nivel-prerequisito-curso/techspec.md",
-        "tasks": "tasks/prd-nivel-prerequisito-curso/tasks.md"
+        "techspec": "tasks/prd-nivel-prerequisito-curso/techspec.md"
       },
       "mvp_order": 4,
       "delivered": [
-        "tasks/prd-autoria-curso (1o PRD, done, PR #98)"
+        "tasks/prd-autoria-curso (1o PRD, done, PR #98)",
+        "tasks/prd-nivel-prerequisito-curso (2o PRD, done, PR #101)"
       ]
     },
     {
@@ -236,15 +240,9 @@
   ],
   "next_actions": [
     {
-      "id": "NA28",
-      "what": "Executar o plano do 2o PRD de CAP-005 (tasks/prd-nivel-prerequisito-curso/tasks.md, aprovado em 2026-09-30; PRD 1.1 com errata do RF-06): 1.0 ASCII aprovado, proxima 2.0 Figma",
-      "skill": "tsg-flow-orchestrator",
-      "blocked_by": []
-    },
-    {
-      "id": "NA27",
-      "what": "TechSpec do 1o PRD de CAP-003 (tasks/prd-vitrine-oferta) sobre contracts.md 1.0 aprovado, com ADR da assercao bff-student->commerce (OD57); depois da NA28",
-      "skill": "tsg-flow-techspec-creator",
+      "id": "NA29",
+      "what": "Declarar a fatia minima de CAP-008 (Concessao e vigencia de direito de acesso, ordem 6 da fila MVP) e escrever o PRD sobre domains/matricula-e-direito-de-acesso/domain.md v1.0; CAP-008 precede a venda para nao virar flag de checkout",
+      "skill": "tsg-flow-prd-creator",
       "blocked_by": []
     }
   ],
@@ -782,6 +780,14 @@
       "owner": "tasso",
       "decided_at": "2026-09-30",
       "decision": "message_id separado do id no outbox de content; reenvio por flag CatalogInitialLoad:Enabled com marcador de execucao unica, habilitado so apos o consumidor do Catalogo; titulo do recomendado na versao = titulo da versao vigente dele; busca sem acento por coluna title_search (sem unaccent); current_level em courses."
+    },
+    {
+      "id": "OD60",
+      "ref": "CAP-005 e CAP-003 no recorte do MVP",
+      "what": "Marcar CAP-005 e CAP-003 como done no recorte do MVP",
+      "owner": "tasso",
+      "decided_at": "2026-10-01",
+      "decision": "CAP-005 (2 PRDs, #98 e #101) e CAP-003 (1o PRD, #128) saem da fila como done. Pontas viram PRDs futuros: material complementar de CAP-005 (OD43, passa por Midia); destino real do botao de compra de CAP-003 (depende de CAP-011/OD5); aviso de 'ja tem acesso' (depende de CAP-008); cupom em CAP-004 (Fase 2). Descartado: manter as duas abertas ate o material complementar e o checkout sairem - travaria a fila do MVP por escopo que o recorte ja excluiu."
     }
   ]
 }
