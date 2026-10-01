@@ -4,25 +4,24 @@
   "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
-  "last_checkpoint": "5a34aa9fe579c877308cd1e1fa1629ef60a7bb10",
-  "phase": "checkpoint",
+  "last_checkpoint": "80839c5888bd6f1c7240d0b5dbcc22fafc84cfd0",
+  "phase": "delivery",
   "active_task": "11.0",
-  "attempt": 2,
+  "attempt": null,
   "max_attempts": 3,
-  "full_attempt": 3,
+  "full_attempt": 4,
   "transport_retries": 1,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
-  "validated_commit": "5a34aa9fe579c877308cd1e1fa1629ef60a7bb10",
-  "validated_tree": "87696c31331738f8a1827331615c2ea4d414e0ac",
+  "validated_commit": "80839c5888bd6f1c7240d0b5dbcc22fafc84cfd0",
+  "validated_tree": "cdb1da05a162ff47a67f386cecb95e20aa65d4bc",
   "last_result": {
-    "run_id": "run.nU4420Vw",
+    "run_id": "run.HWb74vFt",
     "role": "validator",
-    "mode": "revalidation",
-    "task": "11.0",
-    "attempt": "2/3",
+    "mode": "full",
+    "attempt": "4/5",
     "outcome": "approved"
   },
   "history": [
@@ -67,6 +66,8 @@
     "Fechamento pós-fix SAST: docs finais commitados e push. PR #128 em 5a34aa9+docs, full rodada 3 aprovada. Fluxo done.",
     "Pós-fix SAST: CI da PR #128 triado. commerce=infra template (upload-findings). bff-student=flake real de teste da 11.0 (spans vazios no runner). Reopen 11.0 para correção de determinismo.",
     "11.0 fix tentativa 1/3 (run.qwjBsjCR): gate_failed. Flake era sintoma: spans vazios mascaravam user_agent.original gravado em span. Tentativa 2/3 autoriza correção de produção (bff-student) + preserva determinismo do teste.",
-    "11.0 fix tentativa 2/3 (run.9pItG8a9, claude/sonnet-5-5 a pedido do usuário): EnrichWithHttpRequest/Response remove user_agent.original dos spans; teste determinístico preservado; gate passed, IntegrationTests 2x exit 0."
+    "11.0 fix tentativa 2/3 (run.9pItG8a9, claude/sonnet-5-5 a pedido do usuário): EnrichWithHttpRequest/Response remove user_agent.original dos spans; teste determinístico preservado; gate passed, IntegrationTests 2x exit 0.",
+    "11.0 fix spans checkpointado e push (PR #128 atualizada). Mudança de produção → full rodada 4.",
+    "FULL 4/5 (run.HWb74vFt): APROVADA sobre 80839c5. bff-student inteiro + 2x anti-flake 38/38; spans sem dado de visitante; sensor OK. Fechamento docs+push."
   ]
 }
