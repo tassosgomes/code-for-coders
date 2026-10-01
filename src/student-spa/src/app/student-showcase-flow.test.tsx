@@ -170,6 +170,8 @@ describe('student showcase flow', () => {
 
   it('opens the course by id from the card, never by title', async () => {
     const user = userEvent.setup();
+    server.use(http.get(`${env.API_URL}/api/v1/showcase/courses/:courseId`, () =>
+      HttpResponse.json({ code: 'SHOWCASE_COURSE_NOT_FOUND' }, { status: 404 })));
     const router = renderShowcase('/cursos');
 
     await user.click(await screen.findByRole('link', { name: 'Testes na prática' }));

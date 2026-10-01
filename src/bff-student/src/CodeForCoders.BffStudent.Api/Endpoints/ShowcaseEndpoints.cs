@@ -21,7 +21,44 @@ public static class ShowcaseEndpoints
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+        endpoints.MapGet($"{Prefix}/courses/{{courseId}}", GetCourseAsync)
+            .WithName("getShowcaseCourse")
+            .WithTags("Showcase")
+            .Produces<ShowcaseCourseDetailV1>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status504GatewayTimeout);
     }
+
+    private static async Task<IResult> GetCourseAsync(
+        HttpContext httpContext,
+        IShowcaseCommerceClient client,
+        CancellationToken cancellationToken,
+        string courseId)
+    {
+        httpContext.Response.Headers.CacheControl = "no-store";
+        // An address that is not even an identifier gets the same answer as a course that is not on sale (RN-O02).
+        if (!Guid.TryParseExact(courseId, "D", out var id))
+        {
+            return CourseNotFound(httpContext);
+        }
+
+        var result = await client.GetCourseAsync(id, cancellationToken);
+        if (result.StatusCode == StatusCodes.Status200OK && result.Body is not null)
+        {
+            return Results.Ok(result.Body);
+        }
+
+        return result.StatusCode switch
+        {
+            StatusCodes.Status404NotFound => CourseNotFound(httpContext),
+            StatusCodes.Status504GatewayTimeout => Problem(httpContext, result.StatusCode, "SHOWCASE_TIMEOUT", "The showcase took too long to respond."),
+            _ => Problem(httpContext, StatusCodes.Status502BadGateway, "SHOWCASE_UNAVAILABLE", "The showcase is temporarily unavailable."),
+        };
+    }
+
+    private static IResult CourseNotFound(HttpContext httpContext)
+        => Problem(httpContext, StatusCodes.Status404NotFound, ShowcaseCommerceClient.CourseNotFoundCode, "Curso não disponível.");
 
     private static async Task<IResult> ListCoursesAsync(
         HttpContext httpContext,
@@ -38,9 +75,9 @@ public static class ShowcaseEndpoints
         }
 
         var result = await client.ListCoursesAsync(level, _page, _size, cancellationToken);
-        if (result.StatusCode == StatusCodes.Status200OK && result.Page is not null)
+        if (result.StatusCode == StatusCodes.Status200OK && result.Body is not null)
         {
-            return Results.Ok(result.Page);
+            return Results.Ok(result.Body);
         }
 
         return result.StatusCode switch

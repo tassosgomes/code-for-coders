@@ -1,4 +1,5 @@
 using CodeForCoders.Commerce.Application.Exceptions;
+using CodeForCoders.Commerce.Application.UseCases.Showcase.GetShowcaseCourse;
 using CodeForCoders.Commerce.Domain.SeedWork;
 using CodeForCoders.Commerce.Domain.Entities;
 using FluentValidation;
@@ -23,6 +24,11 @@ public sealed class GlobalExceptionHandler(
                 "/problems/validation-error",
                 "Validation failed",
                 "One or more validation errors occurred."),
+            NotFoundException { Message: GetShowcaseCourse.NotFoundCode } => (
+                StatusCodes.Status404NotFound,
+                "about:blank",
+                "Curso não disponível.",
+                "Curso não disponível."),
             NotFoundException => (
                 StatusCodes.Status404NotFound,
                 "/problems/not-found",
@@ -60,7 +66,7 @@ public sealed class GlobalExceptionHandler(
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
         if (exception is CatalogRuleException catalogRule) problemDetails.Extensions["code"] = catalogRule.Code;
-        if (exception is NotFoundException && exception.Message is "CATALOG_COURSE_NOT_FOUND" or "OFFER_NOT_FOUND")
+        if (exception is NotFoundException && exception.Message is "CATALOG_COURSE_NOT_FOUND" or "OFFER_NOT_FOUND" or GetShowcaseCourse.NotFoundCode)
             problemDetails.Extensions["code"] = exception.Message;
         if (exception is ValidationException validationException)
         {
