@@ -4,13 +4,13 @@
   "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
-  "last_checkpoint": "111b85c59e1c8e3aa98677e04735b6ac1ad60437",
+  "last_checkpoint": "96c716c4f904bdd26191bf90c628a7773b6dcb57",
   "phase": "checkpoint",
-  "active_task": "12.0",
-  "attempt": 1,
+  "active_task": "9.0",
+  "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 0,
-  "transport_retries": 0,
+  "full_attempt": 1,
+  "transport_retries": 1,
   "specs": [
     "techspec.md"
   ],
@@ -18,11 +18,11 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.oAk0CO3Z",
+    "run_id": "run.7hA4GJE3",
     "role": "validator",
-    "mode": "focused",
-    "task": "12.0",
-    "attempt": "1/3",
+    "mode": "revalidation",
+    "task": "9.0",
+    "attempt": "2/3",
     "outcome": "approved"
   },
   "history": [
@@ -51,6 +51,11 @@
     "10.0 checkpoint: done (após decisão B-01 e revalidation aprovada). Avançando para 11.0 (tentativa 1/3).",
     "11.0 impl (run.qrzP9sKR, codex): implementation_complete com gate 23 testes, checks exit 0 e smoke Playwright no Compose.",
     "11.0 checkpoint: done. Avançando para 12.0 (tentativa 1/3).",
-    "12.0 impl (run.BbVoRqRl, codex): implementation_complete com gate 28 testes, checks exit 0 e smoke no Compose."
+    "12.0 impl (run.BbVoRqRl, codex): implementation_complete com gate 28 testes, checks exit 0 e smoke no Compose.",
+    "12/12 tasks done. Iniciando prepare-integration para entrega em PR.",
+    "prepare-integration (run.v3JsmaxJ): integration_ready; base/target persistidos. Validador full a seguir.",
+    "FULL 1/3 (run.bkD2FY6p): REPROVADA. CI 7/7 verde (cobertura 79-95%), sensor 16/17 mortos; M12 sobreviveu na task 9.0. Reopen 9.0 para fix (tentativa 2/3).",
+    "9.0 fix tentativa 2/3 (run.N3hLgdy6): Theory novo cobre intermediate/advanced com repasse; diff mínimo (1 arquivo de teste). Gate passed.",
+    "9.0 revalidation (run.7hA4GJE3): APROVADA; M12 morto pelo teste novo (sensor focalizado). Checkpoint do fix a seguir; full será refeita sobre o novo commit."
   ]
 }

@@ -135,6 +135,20 @@ public sealed class ShowcaseAnonymousRouteTests(BffStudentIntegrationFixture fix
         Assert.Equal("?level=beginner&_page=2&_size=6", Assert.Single(factory.Commerce.Requests).RequestUri!.Query);
     }
 
+    [Theory(DisplayName = nameof(EveryContractLevelIsAcceptedAndForwardedToCommerce))]
+    [InlineData("intermediate")]
+    [InlineData("advanced")]
+    public async Task EveryContractLevelIsAcceptedAndForwardedToCommerce(string level)
+    {
+        await using var factory = new ShowcaseBffFactory(fixture);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync($"{Route}?level={level}", Cancellation);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal($"?level={level}&_page=1&_size=12", Assert.Single(factory.Commerce.Requests).RequestUri!.Query);
+    }
+
     [Theory(DisplayName = nameof(InvalidQueryIsRefusedWithoutCallingCommerce))]
     [InlineData("?level=xyz")]
     [InlineData("?level=")]

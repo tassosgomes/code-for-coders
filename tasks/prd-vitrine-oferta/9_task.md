@@ -99,3 +99,13 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 - [ ] Só cursos com nível e ao menos uma oferta publicada aparecem; filtro `iniciante` reflete no endereço e mostra só iniciantes; filtro sem resultado mostra o estado vazio com "Todos"; nova versão sem nível tira o curso e as ofertas seguem `published` no backoffice.
 - [ ] Resposta JSON da vitrine inspecionada: nenhum autor, identificador de pessoa nem `videoId`.
 - [ ] Smoke no Compose com um curso de cada nível publicado em `learning` **com nível real** (fatos 1.1.0 de `learning` ou, enquanto ele não existe, mensagens conformes a `VersaoPublicadaPayload` 1.1.0 no exchange de `learning`) e ofertas publicadas: abrir `http://localhost:8082/student/cursos` e `…?nivel=iniciante`, recarregar cada URL direto (o nginx devolve o SPA), com cookie de aluno válido e inválido → mesma vitrine.
+
+## Resumo do checkpoint pós-full — tentativa 2/3
+
+Run: run.dL9ggDyY
+
+O teste `EveryContractLevelIsAcceptedAndForwardedToCommerce` cobre `intermediate` e `advanced`,
+exigindo HTTP 200 e o repasse do nível ao commerce. A revalidação `run.7hA4GJE3` aprovou a correção
+de B1/M12: gate com 94 testes, format/build e regressões do BFF aprovados; o mutante M12 foi morto.
+O código confere com a árvore revisada. Status restabelecido para `done`, com o checkbox 9.0 já marcado
+em `tasks.md`. A revisão full reprovada foi preservada como histórico; uma nova full permanece pendente.
