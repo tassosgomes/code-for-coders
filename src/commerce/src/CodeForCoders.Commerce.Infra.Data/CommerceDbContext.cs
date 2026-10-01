@@ -13,6 +13,7 @@ public sealed class CommerceDbContext(
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<CatalogCourseView> CatalogCourseViews => Set<CatalogCourseView>();
+    public DbSet<CatalogOffer> CatalogOffers => Set<CatalogOffer>();
     public DbSet<CatalogEditReceipt> CatalogEditReceipts => Set<CatalogEditReceipt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -21,6 +22,8 @@ public sealed class CommerceDbContext(
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CommerceDbContext).Assembly);
         modelBuilder.Entity<CatalogCourseView>().HasQueryFilter(
             course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<CatalogOffer>().HasQueryFilter(
+            offer => tenantContext.TenantId.HasValue && offer.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CatalogEditReceipt>().HasQueryFilter(
             receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(

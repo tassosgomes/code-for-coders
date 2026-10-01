@@ -1,6 +1,8 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { catalogOfferSchema } from '@/features/catalog-courses/types/catalog-offer';
+
 import { apiClient } from '@/lib/api-client';
 
 export const catalogCourseInputSchema = z.object({ courseId: z.uuid() });
@@ -8,7 +10,7 @@ export type CatalogCourseInput = z.infer<typeof catalogCourseInputSchema>;
 export const catalogCourseRecordSchema = z.object({
   courseId: z.uuid(), title: z.string(), level: z.enum(['beginner', 'intermediate', 'advanced']).nullable(),
   prerequisite: z.object({ text: z.string().nullable(), recommendedCourses: z.array(z.object({ courseId: z.uuid(), title: z.string() })) }),
-  tagline: z.string().nullable(), inShowcase: z.boolean(), offers: z.array(z.object({ purchaseIntentCount: z.number().int().min(0) })),
+  tagline: z.string().nullable(), inShowcase: z.boolean(), offers: z.array(catalogOfferSchema),
 });
 export type CatalogCourseRecord = z.infer<typeof catalogCourseRecordSchema>;
 

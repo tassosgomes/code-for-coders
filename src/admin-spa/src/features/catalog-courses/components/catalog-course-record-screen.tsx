@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 
 import { paths } from '@/config/paths';
 import { useCatalogCourse } from '@/features/catalog-courses/api/get-catalog-course';
+import { CatalogOffers } from '@/features/catalog-courses/components/catalog-offers';
 import { CatalogTaglineForm } from '@/features/catalog-courses/components/catalog-tagline-form';
 
 type CatalogCourseRecordScreenProps = { courseId: string; canReadAuthoring: boolean };
@@ -27,8 +28,7 @@ export const CatalogCourseRecordScreen = ({ courseId, canReadAuthoring }: Catalo
           </dl><p>O professor altera nível e pré-requisito no curso.</p>
           {canReadAuthoring ? <Link to={paths.authoringCourse.getHref(courseId)}>Abrir na Autoria</Link> : null}</section>
           <CatalogTaglineForm key={courseId} course={course} />
-          <section className="catalog-record-card"><h2>Ofertas</h2><p>Nenhuma oferta ainda. Crie a primeira para colocar o curso à venda.</p>
-            <p>{course.offers.reduce((total, offer) => total + offer.purchaseIntentCount, 0)} cliques em Comprar</p></section>
+          <CatalogOffers course={course} />
         </> : null}
   </main>;
 };

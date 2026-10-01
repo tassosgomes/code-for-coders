@@ -1,10 +1,35 @@
 using CodeForCoders.Commerce.Domain.SeedWork;
+using CodeForCoders.Commerce.Domain.ValueObjects;
 
 namespace CodeForCoders.Commerce.Domain.Entities;
 
 public sealed class CatalogCourseView
 {
     private CatalogCourseView() { }
+    private readonly List<CatalogOffer> _offers = [];
+    public IReadOnlyCollection<CatalogOffer> Offers => _offers.AsReadOnly();
+
+    public CatalogOffer CreateOffer(OfferChange change, DateTimeOffset now)
+    {
+        if (_offers.Count >= 50) throw new CatalogRuleException("FIELD_INVALID", "offers cannot exceed 50 per course.");
+        var offer = CatalogOffer.Create(this, change, now);
+        _offers.Add(offer);
+        return offer;
+    }
+
+    public CatalogOffer UpdateOffer(Guid offerId, OfferChange change, DateTimeOffset now)
+    {
+        var offer = _offers.Single(item => item.OfferId == offerId);
+        offer.Update(change, now);
+        return offer;
+    }
+
+    public void DeleteOffer(Guid offerId)
+    {
+        var offer = _offers.Single(item => item.OfferId == offerId);
+        offer.EnsureDeletable();
+        _offers.Remove(offer);
+    }
 
     public Guid TenantId { get; private set; }
     public Guid CourseId { get; private set; }

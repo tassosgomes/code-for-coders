@@ -3,6 +3,9 @@ using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Application.UseCases.CatalogCourses.ListCatalogCourses;
 using CodeForCoders.Commerce.Application.UseCases.CatalogCourses.GetCatalogCourse;
 using CodeForCoders.Commerce.Application.UseCases.CatalogCourses.UpdateCatalogCourse;
+using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.CreateOffer;
+using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.UpdateOffer;
+using CodeForCoders.Commerce.Application.UseCases.CatalogOffers.DeleteOffer;
 using System.Text.Json;
 using System.Security.Claims;
 
@@ -16,6 +19,43 @@ public static class CatalogCourseEndpoints
         group.MapGet("/courses", ListAsync).WithName("listCatalogCoursesInternal");
         group.MapGet("/courses/{courseId:guid}", GetAsync).WithName("getCatalogCourseInternal");
         group.MapPatch("/courses/{courseId:guid}", UpdateAsync).WithName("updateCatalogCourseInternal");
+        group.MapPost("/courses/{courseId:guid}/offers", CreateOfferAsync).WithName("createOfferInternal");
+        group.MapPatch("/offers/{offerId:guid}", UpdateOfferAsync).WithName("updateOfferInternal");
+        group.MapDelete("/offers/{offerId:guid}", DeleteOfferAsync).WithName("deleteOfferInternal");
+    }
+
+    private static async Task<IResult> CreateOfferAsync(Guid courseId, JsonElement body, HttpContext context,
+        ITenantContext tenantContext, ICreateOffer useCase, CancellationToken cancellationToken)
+    {
+        if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
+        var output = await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, courseId,
+            context.Request.Headers["Idempotency-Key"].ToString(), body), cancellationToken);
+        return Results.Created($"/api/v1/catalog/offers/{output.OfferId:D}", output);
+    }
+
+    private static async Task<IResult> UpdateOfferAsync(Guid offerId, JsonElement body, HttpContext context,
+        ITenantContext tenantContext, IUpdateOffer useCase, CancellationToken cancellationToken)
+    {
+        if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
+        return Results.Ok(await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,
+            context.Request.Headers["Idempotency-Key"].ToString(), body), cancellationToken));
+    }
+
+    private static async Task<IResult> DeleteOfferAsync(Guid offerId, HttpContext context,
+        ITenantContext tenantContext, IDeleteOffer useCase, CancellationToken cancellationToken)
+    {
+        if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
+        await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,
+            context.Request.Headers["Idempotency-Key"].ToString()), cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static bool SetActor(HttpContext context, ITenantContext tenantContext, out Guid actorId)
+    {
+        actorId = Guid.Empty;
+        return SetTenant(context, tenantContext)
+            && Guid.TryParse(context.User.FindFirst("sub")?.Value ?? context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out actorId)
+            && actorId != Guid.Empty;
     }
 
     private static async Task<IResult> GetAsync(Guid courseId, HttpContext context, ITenantContext tenantContext,

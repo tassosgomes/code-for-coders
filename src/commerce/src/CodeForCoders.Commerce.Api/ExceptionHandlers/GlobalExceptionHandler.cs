@@ -60,8 +60,8 @@ public sealed class GlobalExceptionHandler(
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
         if (exception is CatalogRuleException catalogRule) problemDetails.Extensions["code"] = catalogRule.Code;
-        if (exception is NotFoundException && exception.Message == "CATALOG_COURSE_NOT_FOUND")
-            problemDetails.Extensions["code"] = "CATALOG_COURSE_NOT_FOUND";
+        if (exception is NotFoundException && exception.Message is "CATALOG_COURSE_NOT_FOUND" or "OFFER_NOT_FOUND")
+            problemDetails.Extensions["code"] = exception.Message;
         if (exception is ValidationException validationException)
         {
             problemDetails.Extensions["code"] = "INVALID_REQUEST";

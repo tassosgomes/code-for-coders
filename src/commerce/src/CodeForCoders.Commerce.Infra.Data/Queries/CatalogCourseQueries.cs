@@ -31,7 +31,10 @@ public sealed class CatalogCourseQueries(CommerceDbContext dbContext) : ICatalog
             RecommendedCourses = prerequisite.RecommendedCourses
             .Select(reference => reference with { Title = titles.GetValueOrDefault(reference.CourseId, reference.Title) }).ToArray()
         };
-        return new(course.CourseId, course.Title, course.Level, resolved, course.Tagline, course.InShowcaseSince.HasValue, []);
+        var offers = await dbContext.CatalogOffers.AsNoTracking().Where(offer => offer.CourseId == courseId)
+            .OrderBy(offer => offer.Status == "draft" ? 0 : offer.Status == "published" ? 1 : 2)
+            .ThenBy(offer => offer.CreatedAt).ThenBy(offer => offer.OfferId).ToListAsync(cancellationToken);
+        return new(course.CourseId, course.Title, course.Level, resolved, course.Tagline, course.InShowcaseSince.HasValue, offers.Select(CatalogOfferDetail.FromCatalogOffer).ToArray());
     }
 
     public async Task<CatalogCoursePage> ListAsync(int page, int size, CancellationToken cancellationToken)
@@ -41,7 +44,8 @@ public sealed class CatalogCourseQueries(CommerceDbContext dbContext) : ICatalog
         var courses = await query.OrderBy(course => course.Title).ThenBy(course => course.CourseId)
             .Skip((page - 1) * size).Take(size)
             .Select(course => new CatalogCourseSummary(course.CourseId, course.Title, course.Level,
-                course.InShowcaseSince != null, new CatalogOfferCounts(0, 0, 0)))
+                course.InShowcaseSince != null, new CatalogOfferCounts(course.Offers.Count(offer => offer.Status == "draft"),
+                    course.Offers.Count(offer => offer.Status == "published"), course.Offers.Count(offer => offer.Status == "unpublished"))))
             .ToListAsync(cancellationToken);
         return new CatalogCoursePage(courses, new CatalogPagination(page, size, total, (int)Math.Ceiling((double)total / size)));
     }

@@ -16,6 +16,8 @@ public sealed class CatalogCourseEditStore(CommerceDbContext dbContext) : ICatal
             var courseKey = $"{scope.TenantId:D}/{scope.CourseId:D}";
             await dbContext.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({receiptKey}, 0))", cancellationToken);
             await dbContext.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({courseKey}, 0))", cancellationToken);
+            await dbContext.Database.ExecuteSqlAsync(
+                $"SELECT 1 FROM catalog.course_views WHERE tenant_id = {scope.TenantId} AND course_id = {scope.CourseId} FOR UPDATE", cancellationToken);
             return new CatalogEditTransaction(transaction);
         }
         catch (OperationCanceledException) { await transaction.DisposeAsync(); throw; }
@@ -23,7 +25,11 @@ public sealed class CatalogCourseEditStore(CommerceDbContext dbContext) : ICatal
     }
 
     public Task<CatalogCourseView?> GetAsync(Guid courseId, CancellationToken cancellationToken)
-        => dbContext.CatalogCourseViews.SingleOrDefaultAsync(course => course.CourseId == courseId, cancellationToken);
+        => dbContext.CatalogCourseViews.Include(course => course.Offers).SingleOrDefaultAsync(course => course.CourseId == courseId, cancellationToken);
+
+    public Task<Guid?> FindOfferCourseAsync(Guid offerId, CancellationToken cancellationToken)
+        => dbContext.CatalogOffers.Where(offer => offer.OfferId == offerId).Select(offer => (Guid?)offer.CourseId)
+            .SingleOrDefaultAsync(cancellationToken);
 
     public Task<CatalogEditReceipt?> FindAsync(CatalogEditScope scope, CancellationToken cancellationToken)
         => dbContext.CatalogEditReceipts.SingleOrDefaultAsync(receipt => receipt.TenantId == scope.TenantId

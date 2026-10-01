@@ -8,6 +8,48 @@ namespace CodeForCoders.BffAdmin.Api.Clients;
 
 public sealed class CommerceCatalogClient(HttpClient httpClient) : ICommerceCatalogClient
 {
+    public Task<CatalogCourseRecordResult> CreateOfferAsync(CatalogOfferRequest input, CancellationToken cancellationToken)
+        => SendOfferAsync(input, HttpMethod.Post, $"internal/v1/catalog/courses/{input.TargetId:D}/offers", cancellationToken);
+
+    public Task<CatalogCourseRecordResult> UpdateOfferAsync(CatalogOfferRequest input, CancellationToken cancellationToken)
+        => SendOfferAsync(input, HttpMethod.Patch, $"internal/v1/catalog/offers/{input.TargetId:D}", cancellationToken);
+
+    public Task<CatalogCourseRecordResult> DeleteOfferAsync(CatalogOfferRequest input, CancellationToken cancellationToken)
+        => SendOfferAsync(input, HttpMethod.Delete, $"internal/v1/catalog/offers/{input.TargetId:D}", cancellationToken);
+
+    private async Task<CatalogCourseRecordResult> SendOfferAsync(CatalogOfferRequest input, HttpMethod method, string path, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(method, path);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", input.AccessToken);
+        request.Headers.TryAddWithoutValidation("Idempotency-Key", input.IdempotencyKey);
+        if (input.Body is { } body) request.Content = JsonContent.Create(body);
+        try
+        {
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+            var status = (int)response.StatusCode;
+            if (status >= 500) return RecordUnavailable(status == 504 ? 504 : 502);
+            if (method == HttpMethod.Delete && status == 204) return new(204, null, null);
+            using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return RecordUnavailable(502);
+            if (response.IsSuccessStatusCode)
+            {
+                if (!root.TryGetProperty("offerId", out var offerId) || !offerId.TryGetGuid(out _)
+                    || !root.TryGetProperty("courseId", out var courseId) || !courseId.TryGetGuid(out _)
+                    || !root.TryGetProperty("priceCents", out var price) || !price.TryGetInt32(out _)
+                    || !root.TryGetProperty("accessPeriod", out var period) || period.ValueKind != JsonValueKind.Object)
+                    return RecordUnavailable(502);
+                return new(status, null, root.Clone());
+            }
+            return new(status, root.TryGetProperty("code", out var code) ? code.GetString() : "INVALID_REQUEST", null,
+                root.TryGetProperty("detail", out var detail) ? detail.GetString() : null);
+        }
+        catch (JsonException) { return RecordUnavailable(502); }
+        catch (HttpRequestException) { return RecordUnavailable(502); }
+        catch (TimeoutRejectedException) { return RecordUnavailable(504); }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return RecordUnavailable(504); }
+    }
+
     public Task<CatalogCourseRecordResult> GetAsync(CatalogCourseRecordRequest input, CancellationToken cancellationToken)
         => SendRecordAsync(input, HttpMethod.Get, cancellationToken);
 
