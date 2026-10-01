@@ -12,6 +12,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IValidator<UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInput>, UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInputValidator>();
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<IValidator<UseCases.CatalogCourses.UpdateCatalogCourse.UpdateCatalogCourseInput>, UseCases.CatalogCourses.UpdateCatalogCourse.UpdateCatalogCourseInputValidator>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()

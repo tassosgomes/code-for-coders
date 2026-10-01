@@ -1,5 +1,6 @@
 using CodeForCoders.Commerce.Application.Exceptions;
 using CodeForCoders.Commerce.Domain.SeedWork;
+using CodeForCoders.Commerce.Domain.Entities;
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +28,7 @@ public sealed class GlobalExceptionHandler(
                 "/problems/not-found",
                 "Resource not found",
                 exception.Message),
-            EntityValidationException or RelatedAggregateException => (
+            CatalogRuleException or EntityValidationException or RelatedAggregateException => (
                 StatusCodes.Status422UnprocessableEntity,
                 "/problems/business-rule-violation",
                 "Business rule violation",
@@ -58,6 +59,9 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
+        if (exception is CatalogRuleException catalogRule) problemDetails.Extensions["code"] = catalogRule.Code;
+        if (exception is NotFoundException && exception.Message == "CATALOG_COURSE_NOT_FOUND")
+            problemDetails.Extensions["code"] = "CATALOG_COURSE_NOT_FOUND";
         if (exception is ValidationException validationException)
         {
             problemDetails.Extensions["code"] = "INVALID_REQUEST";

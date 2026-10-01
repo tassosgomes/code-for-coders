@@ -82,7 +82,7 @@ outbox do Catálogo nasce em V-04, a asserção de serviço em V-07 e o contador
 - [x] 1.0 Wireframes ASCII do Catálogo e da vitrine aprovados
 - [x] 2.0 Figma do Catálogo e da vitrine aprovado
 - [x] 3.0 O financeiro abre o Catálogo e vê os cursos publicados da escola
-- [ ] 4.0 O financeiro abre a ficha do curso e escreve a chamada comercial
+- [x] 4.0 O financeiro abre a ficha do curso e escreve a chamada comercial
 - [ ] 5.0 O financeiro cria, edita e exclui ofertas em rascunho
 - [ ] 6.0 O financeiro publica a oferta e ela nasce com autor na trilha
 - [ ] 7.0 O financeiro altera preço ou vigência de oferta publicada, só para compras futuras

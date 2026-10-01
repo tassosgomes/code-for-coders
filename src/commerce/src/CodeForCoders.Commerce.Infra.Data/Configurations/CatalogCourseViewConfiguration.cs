@@ -18,6 +18,7 @@ public sealed class CatalogCourseViewConfiguration : IEntityTypeConfiguration<Ca
         builder.Property(course => course.Title).HasColumnName("title").HasMaxLength(200);
         builder.Property(course => course.Description).HasColumnName("description").HasMaxLength(5000);
         builder.Property(course => course.Level).HasColumnName("level").HasMaxLength(20);
+        builder.Property(course => course.Tagline).HasColumnName("tagline").HasMaxLength(160);
         builder.Property(course => course.PrerequisiteJson).HasColumnName("prerequisite").HasColumnType("jsonb");
         builder.Property(course => course.StructureJson).HasColumnName("structure").HasColumnType("jsonb");
         builder.Property(course => course.PublishedAt).HasColumnName("published_at");

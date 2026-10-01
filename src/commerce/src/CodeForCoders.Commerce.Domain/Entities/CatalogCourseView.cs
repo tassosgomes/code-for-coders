@@ -13,6 +13,7 @@ public sealed class CatalogCourseView
     public string Title { get; private set; } = "";
     public string Description { get; private set; } = "";
     public string? Level { get; private set; }
+    public string? Tagline { get; private set; }
     public string PrerequisiteJson { get; private set; } = "{}";
     public string StructureJson { get; private set; } = "[]";
     public DateTimeOffset PublishedAt { get; private set; }
@@ -49,6 +50,13 @@ public sealed class CatalogCourseView
 
     public static bool IsShowcaseEligible(string? level, int publishedOfferCount)
         => level is not null && publishedOfferCount > 0;
+
+    public void UpdateTagline(string? tagline)
+    {
+        if (tagline is not null && tagline.Length is < 1 or > 160)
+            throw new CatalogRuleException("FIELD_INVALID", "tagline must contain between 1 and 160 characters.");
+        Tagline = tagline;
+    }
 
     public void RefreshShowcase(int publishedOfferCount, DateTimeOffset now)
     {

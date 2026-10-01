@@ -4293,6 +4293,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .catalog-no-level { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--color-warning, #8b5e00); }
 .catalog-table { margin-top: 1.5rem; }
+.catalog-table tr { position: relative; }
+.catalog-table td:first-child a::after { content: ''; position: absolute; inset: 0; }
+.catalog-table tr:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
 .catalog-skeleton { margin-top: 1.5rem; display: grid; gap: 0.75rem; }
 .catalog-skeleton > div { height: 3.5rem; border-radius: 0.5rem; background: var(--color-border, #e5e7eb); }
+.catalog-record-page { max-width: 960px; }
+.catalog-record-card { margin-top: 24px; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.catalog-record-card h2 { margin-top: 0; font-size: 20px; }
+.catalog-record-card dl { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; }
+.catalog-record-card dt { color: var(--muted); }
+.catalog-record-card dd { margin: 0; }
+.catalog-record-card ul { margin: 0; padding-left: 18px; }
+.catalog-record-card textarea { width: 100%; box-sizing: border-box; }
+.catalog-record-card .primary-button { justify-self: end; }
+@media (max-width: 640px) {
+  .catalog-record-card { padding: 16px; }
+  .catalog-record-card dl { grid-template-columns: 1fr; gap: 6px; }
+}
 @media (max-width: 640px) { .catalog-table { min-width: 520px; } }

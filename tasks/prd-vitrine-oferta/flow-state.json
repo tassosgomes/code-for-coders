@@ -4,9 +4,9 @@
   "original_base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
-  "last_checkpoint": null,
+  "last_checkpoint": "df48e937f0b860ac8ef4575b24985a98dee57e9d",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,10 +18,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.QtS7enkn",
+    "run_id": "run.Np5LJvnD",
     "role": "validator",
     "mode": "focused",
-    "task": "3.0",
+    "task": "4.0",
     "attempt": "1/3",
     "outcome": "approved"
   },
@@ -30,6 +30,8 @@
     "Plano tratado como aprovado: tasks 1.0/2.0 done com commits em main (b2c2bc5, 328425d, PR #102) e instrução explícita do usuário para prosseguir sob o mesmo plano. Header de tasks.md ainda diz 'Em revisão' (resíduo).",
     "Lacuna registrada: checkboxes de 1.0 e 2.0 em tasks.md desmarcados apesar de done; integrator não criou commit de reconciliação na preparação — reconciliar no primeiro checkpoint-task (3.0).",
     "3.0 impl tentativa 1/3 (run.79LtN5QY): transporte reportou timeout_or_blocked aos 821s mas worker codex seguiu; monitorado até concluir (43m25s) sem re-delegar. implementation_complete: gate 40/27 testes, 14 checks exit 0, smoke Compose OK.",
-    "3.0 validação focused (run.QtS7enkn, claude/anti-afinidade): APROVADA, 0 bloqueantes, 3 recomendações não bloqueantes; gate reexecutado pelo validator."
+    "3.0 validação focused (run.QtS7enkn, claude/anti-afinidade): APROVADA, 0 bloqueantes, 3 recomendações não bloqueantes; gate reexecutado pelo validator.",
+    "3.0 checkpoint df48e93: checkboxes 1.0/2.0 reconciliados no mesmo commit, status done, tree limpa. Avançando para 4.0 (tentativa 1/3).",
+    "4.0 impl tentativa 1/3 (run.GPRRN905): mesmo padrão de timeout_or_blocked aos 818s com worker ativo; monitorado até concluir (29m49s). implementation_complete: gate 39 testes, checks exit 0, smoke OK."
   ]
 }

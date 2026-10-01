@@ -1,5 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
+
+import { paths } from '@/config/paths';
 
 import { useCatalogCourses } from '@/features/catalog-courses/api/get-catalog-courses';
 import type { CatalogCourse } from '@/features/catalog-courses/api/get-catalog-courses';
@@ -28,7 +30,7 @@ export const CatalogCoursesScreen = () => {
         : courses.data.data.length === 0 ? <section className="empty-state"><h2>Nenhum curso publicado ainda.</h2><p>Só cursos publicados pelo professor aparecem aqui para receber ofertas.</p></section>
           : <div className="course-table-wrap"><table className="course-table catalog-table"><thead><tr><th>Curso</th><th>Nível</th><th>Na vitrine</th><th>Ofertas</th></tr></thead><tbody>
             {courses.data.data.map((course) => <tr key={course.courseId}>
-              <td><strong>{course.title}</strong></td><td>{course.level ? levelLabels[course.level] : <span className="catalog-no-level"><AlertTriangle aria-hidden="true" size={16} />Sem nível</span>}</td>
+              <td><Link to={paths.catalogCourse.getHref(course.courseId)}><strong>{course.title}</strong></Link></td><td>{course.level ? levelLabels[course.level] : <span className="catalog-no-level"><AlertTriangle aria-hidden="true" size={16} />Sem nível</span>}</td>
               <td>{course.inShowcase ? '✓ Sim' : '– Não'}</td><td>{offerSummary(course.offerCounts)}</td>
             </tr>)}
           </tbody></table></div>}

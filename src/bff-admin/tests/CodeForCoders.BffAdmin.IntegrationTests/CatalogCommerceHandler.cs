@@ -13,20 +13,36 @@ public sealed class CatalogCommerceHandler : HttpMessageHandler
     public bool Timeout { get; set; }
     public bool Malformed { get; set; }
     public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
+    public string? IdempotencyKey { get; private set; }
+    public string? Body { get; private set; }
+    public HttpMethod? Method { get; private set; }
+    public string ErrorCode { get; set; } = "FIELD_INVALID";
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Calls++; Token = request.Headers.Authorization?.Parameter; Uri = request.RequestUri;
+        Method = request.Method;
+        IdempotencyKey = request.Headers.TryGetValues("Idempotency-Key", out var keys) ? keys.Single() : null;
+        Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         if (Unavailable) throw new HttpRequestException("Commerce unavailable.");
         if (Timeout) throw new TimeoutRejectedException("Commerce timeout.");
         HttpContent content = Malformed ? new StringContent("invalid json") : Status != HttpStatusCode.OK
-            ? JsonContent.Create(new { code = Status == HttpStatusCode.Forbidden ? "PERMISSION_DENIED" : "TOKEN_INVALID" })
-            : JsonContent.Create(new
+            ? JsonContent.Create(new { code = Status == HttpStatusCode.Forbidden ? "PERMISSION_DENIED" : Status == HttpStatusCode.Unauthorized ? "TOKEN_INVALID" : ErrorCode, detail = "tagline must contain between 1 and 160 characters." })
+            : request.RequestUri!.AbsolutePath.EndsWith("/courses", StringComparison.Ordinal) ? JsonContent.Create(new
             {
                 data = new[] { new { courseId = Guid.CreateVersion7(), title = "Catalog course", level = (string?)null, inShowcase = false,
                 offerCounts = new { draft = 0, published = 0, unpublished = 0 } } },
                 pagination = new { page = 2, size = 10, total = 11, totalPages = 2 }
+            }) : JsonContent.Create(new
+            {
+                courseId = Guid.Parse(request.RequestUri.Segments[^1]),
+                title = "Catalog course",
+                level = (string?)null,
+                prerequisite = new { text = (string?)null, recommendedCourses = Array.Empty<object>() },
+                tagline = "Saved",
+                inShowcase = false,
+                offers = Array.Empty<object>()
             });
-        return Task.FromResult(new HttpResponseMessage(Status) { Content = content });
+        return new HttpResponseMessage(Status) { Content = content };
     }
 }

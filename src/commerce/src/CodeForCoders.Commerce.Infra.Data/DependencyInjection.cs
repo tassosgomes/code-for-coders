@@ -32,6 +32,7 @@ public static class DependencyInjection
         });
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICatalogCourseProjectionStore, Catalog.CatalogCourseProjectionStore>();
+        services.AddScoped<ICatalogCourseEditStore, Catalog.CatalogCourseEditStore>();
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, CommerceUnitOfWork>();
         services.AddOptions<ValkeyOptions>()
