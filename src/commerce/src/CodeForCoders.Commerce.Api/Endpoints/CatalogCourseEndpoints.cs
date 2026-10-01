@@ -40,7 +40,7 @@ public static class CatalogCourseEndpoints
     {
         if (!SetActor(context, tenantContext, out var actorId)) return InvalidToken();
         return Results.Ok(await useCase.ExecuteAsync(new(tenantContext.TenantId!.Value, actorId, offerId,
-            context.Request.Headers["Idempotency-Key"].ToString(), body), cancellationToken));
+            context.Request.Headers["Idempotency-Key"].ToString(), body, System.Diagnostics.Activity.Current?.Id), cancellationToken));
     }
 
     private static async Task<IResult> PublishOfferAsync(Guid offerId, HttpContext context,

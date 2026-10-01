@@ -1,17 +1,24 @@
 import { Dialog } from '@/components/ui/dialog';
 import { ValidatedForm } from '@/components/ui/form/validated-form';
 import { offerInputSchema } from '@/features/catalog-courses/api/offer-input';
-import { useOfferWrite } from '@/features/catalog-courses/hooks/use-offer-write';
+import { CatalogOfferChangeConfirmation } from '@/features/catalog-courses/components/catalog-offer-change-confirmation';
+import { offerTermsChanged, useOfferChange } from '@/features/catalog-courses/hooks/use-offer-change';
 import type { CatalogOffer } from '@/features/catalog-courses/types/catalog-offer';
 import { offerPriceInput } from '@/features/catalog-courses/utils/offer-price';
 
 type CatalogOfferFormProps = { courseId: string; offer?: CatalogOffer; onClose: () => void; onSaved: () => void };
 export const CatalogOfferForm = ({ courseId, offer, onClose, onSaved }: CatalogOfferFormProps) => {
-  const editing = useOfferWrite(courseId, offer?.offerId);
-  return <Dialog className="catalog-offer-form" title={offer ? 'Editar rascunho' : 'Nova oferta'} description="A oferta nasce como rascunho e só aparece ao público depois de publicada." busy={editing.busy} onClose={onClose}>
+  const editing = useOfferChange(courseId, offer, onSaved);
+  const published = offer?.status === 'published';
+  return <Dialog className="catalog-offer-form" title={editing.pending ? 'Confirmar alteração' : published ? 'Editar oferta publicada' : offer?.status === 'unpublished' ? 'Editar oferta despublicada' : offer ? 'Editar rascunho' : 'Nova oferta'}
+    description={editing.pending ? offer?.name ?? '' : published ? 'Esta oferta está à venda. Mudar preço ou vigência vale só para compras futuras.' : 'A oferta só aparece ao público depois de publicada.'}
+    busy={editing.busy} onClose={editing.pending ? editing.back : onClose}>
+    {editing.pending && offer && editing.nextOffer ? <CatalogOfferChangeConfirmation offer={offer} nextOffer={editing.nextOffer} busy={editing.busy} error={editing.error}
+      onBack={editing.back} onConfirm={editing.confirm} /> : null}
+    <div hidden={Boolean(editing.pending)}>
     <ValidatedForm schema={offerInputSchema} defaultValues={{ name: offer?.name ?? '', price: offer ? offerPriceInput(offer.priceCents) : '',
       periodType: offer?.accessPeriod.type ?? 'months', months: offer?.accessPeriod.type === 'months' ? String(offer.accessPeriod.months) : '12' }}
-    onSubmit={async (input) => { const saved = await editing.save(input); if (saved) onSaved(); return saved; }}>
+    onSubmit={editing.submit}>
       {(form) => {
         const errors = { name: form.formState.errors.name?.message ?? editing.fieldErrors.name,
           price: form.formState.errors.price?.message ?? editing.fieldErrors.price, months: form.formState.errors.months?.message ?? editing.fieldErrors.months };
@@ -29,9 +36,10 @@ export const CatalogOfferForm = ({ courseId, offer, onClose, onSaved }: CatalogO
           {errors.months ? <p id="offer-months-error" role="alert" className="field-error">{errors.months}</p> : null}
           {editing.error ? <p role="alert" className="inline-alert">{editing.error}</p> : null}
           <div className="dialog-actions"><button type="button" className="outline-button" disabled={editing.busy} onClick={onClose}>Cancelar</button>
-            <button type="submit" className="primary-button" disabled={editing.busy}>{editing.busy ? 'Salvando…' : 'Salvar rascunho'}</button></div>
+            <button type="submit" className="primary-button" disabled={editing.busy}>{editing.busy ? 'Salvando…' : published && offerTermsChanged(offer, form.watch()) ? 'Revisar alteração' : offer && offer.status !== 'draft' ? 'Salvar' : 'Salvar rascunho'}</button></div>
         </>;
       }}
     </ValidatedForm>
+    </div>
   </Dialog>;
 };

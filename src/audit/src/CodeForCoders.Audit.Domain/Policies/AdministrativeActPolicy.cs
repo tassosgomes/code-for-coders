@@ -1,5 +1,6 @@
 using CodeForCoders.Audit.Domain.Entities;
 using CodeForCoders.Audit.Domain.ValueObjects;
+using System.Globalization;
 
 namespace CodeForCoders.Audit.Domain.Policies;
 
@@ -62,7 +63,8 @@ public static class AdministrativeActPolicy
             reasons.Add(MissingPracticedOn);
         }
 
-        if (act.ComplementIsInvalid || !IsValidComplement(act.Complement))
+        if (act.ComplementIsInvalid || !IsValidComplement(act.Complement)
+            || act.Type == "oferta-alterada" && !HasValidChangePairs(act.Complement))
         {
             reasons.Add(InvalidComplement);
         }
@@ -95,6 +97,28 @@ public static class AdministrativeActPolicy
     }
 
     private static bool IsAsciiLowercase(char value) => value is >= 'a' and <= 'z';
+
+    private static bool HasValidChangePairs(IReadOnlyDictionary<string, string>? complement)
+        => HasValidPair(complement, "precoAnterior", "precoNovo", IsValidPrice)
+            && HasValidPair(complement, "vigenciaAnterior", "vigenciaNova", IsValidPeriod);
+
+    private static bool HasValidPair(IReadOnlyDictionary<string, string>? complement, string before, string after,
+        Func<string, bool> validate)
+    {
+        if (complement is null) return true;
+        var hasBefore = complement.TryGetValue(before, out var previous);
+        var hasAfter = complement.TryGetValue(after, out var current);
+        return hasBefore == hasAfter && (!hasBefore || previous is not null && current is not null
+            && validate(previous) && validate(current));
+    }
+
+    private static bool IsValidPrice(string value)
+        => value.Length > 0 && value[0] is >= '1' and <= '9' && value.All(character => character is >= '0' and <= '9');
+
+    private static bool IsValidPeriod(string value)
+        => value == "vitalicia" || value.Length is >= 2 and <= 3 && value[^1] == 'm' && value[0] is >= '1' and <= '9'
+            && int.TryParse(value.AsSpan(0, value.Length - 1), NumberStyles.None, CultureInfo.InvariantCulture, out var months)
+            && months is >= 1 and <= 60;
 
     private static bool IsValidComplement(IReadOnlyDictionary<string, string>? complement)
         => complement is null || complement.All(pair =>

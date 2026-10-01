@@ -17,11 +17,14 @@ public sealed class CatalogCourseView
         return offer;
     }
 
-    public CatalogOffer UpdateOffer(Guid offerId, OfferChange change, DateTimeOffset now)
+    public Events.OfferChanged? UpdateOffer(Guid offerId, OfferChange change, DateTimeOffset now)
     {
         var offer = _offers.Single(item => item.OfferId == offerId);
-        offer.Update(change, now);
-        return offer;
+        var previous = new Events.OfferPreviousTerms(offer.PriceCents, offer.AccessPeriod);
+        if (!offer.Update(change, now) || offer.Status != "published"
+            || previous.PriceCents == offer.PriceCents && previous.AccessPeriod == offer.AccessPeriod) return null;
+        return new(Guid.CreateVersion7(), TenantId, offerId, CourseId, offer.OfferRevision, now,
+            offer.Name, offer.PriceCents, "BRL", offer.AccessPeriod, previous);
     }
 
     public Events.OfferPublished PublishOffer(Guid offerId, DateTimeOffset now)

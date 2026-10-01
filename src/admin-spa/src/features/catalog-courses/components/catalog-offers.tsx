@@ -21,6 +21,6 @@ export const CatalogOffers = ({ course }: CatalogOffersProps) => {
     </li>)}</ul>}
     <p>{offers.reduce((total, offer) => total + offer.purchaseIntentCount, 0)} cliques em Comprar</p>
     {notice ? <p role="status">{notice}</p> : null}
-    {editing ? <CatalogOfferForm courseId={course.courseId} offer={editing.offer} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); setNotice('Rascunho salvo.'); }} /> : null}
+    {editing ? <CatalogOfferForm courseId={course.courseId} offer={editing.offer} onClose={() => setEditing(undefined)} onSaved={() => { setEditing(undefined); setNotice(editing.offer && editing.offer.status !== 'draft' ? 'Oferta salva.' : 'Rascunho salvo.'); }} /> : null}
   </section>;
 };

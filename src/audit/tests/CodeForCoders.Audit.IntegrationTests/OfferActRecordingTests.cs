@@ -45,6 +45,32 @@ public sealed class OfferActRecordingTests(AuditIntegrationFixture fixture)
         Assert.Equal(act.TenantId, record.TenantId); Assert.Equal("non_conforming", record.Conformity); Assert.Contains("alvo-ausente", record.Reasons);
     }
 
+    [Fact(DisplayName = nameof(ChangedActRetainsBothPairsAndIsConforming))]
+    public async Task ChangedActRetainsBothPairsAndIsConforming()
+    {
+        var act = Act() with { Tipo = "oferta-alterada" };
+        act.Complemento!["precoAnterior"] = "49700"; act.Complemento["precoNovo"] = "39700";
+        act.Complemento["vigenciaAnterior"] = "12m"; act.Complemento["vigenciaNova"] = "vitalicia";
+        await RecordAsync(act); await RecordAsync(act);
+        await using var context = Context(); var record = await context.AuditRecords.SingleAsync(row => row.FactId == act.FatoId, TestContext.Current.CancellationToken);
+        Assert.Equal("conforming", record.Conformity); Assert.Null(record.Reason);
+        using var complement = System.Text.Json.JsonDocument.Parse(record.Complement!);
+        foreach (var (key, value) in act.Complemento) Assert.Equal(value, complement.RootElement.GetProperty(key).GetString());
+    }
+
+    [Theory(DisplayName = nameof(InvalidChangedPairsPersistAsNonConforming))]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task InvalidChangedPairsPersistAsNonConforming(bool incomplete)
+    {
+        var act = Act() with { Tipo = "oferta-alterada" };
+        act.Complemento!["vigenciaAnterior"] = incomplete ? "12m" : "12 meses";
+        if (!incomplete) act.Complemento["vigenciaNova"] = "vitalicia";
+        await RecordAsync(act);
+        await using var context = Context(); var record = await context.AuditRecords.SingleAsync(row => row.FactId == act.FatoId, TestContext.Current.CancellationToken);
+        Assert.Equal("non_conforming", record.Conformity); Assert.Contains("complemento-invalido", record.Reasons);
+    }
+
     private AuditDbContext Context() => new(new DbContextOptionsBuilder<AuditDbContext>().UseNpgsql(fixture.MigrationConnectionString).Options);
     private static AtoPraticado Act() => new()
     {

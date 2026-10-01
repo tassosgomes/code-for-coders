@@ -13,7 +13,8 @@ export const Dialog = ({ title, description, busy, onClose, children, className 
     <section className="dialog-card course-create-dialog" role={role} aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-description" ref={ref} onKeyDown={(event) => {
       if (event.key === 'Escape' && !busy) { event.preventDefault(); onClose(); }
       if (event.key !== 'Tab') return;
-      const controls = ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href]');
+      const controls = Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href]') ?? [])
+        .filter((control) => !control.closest('[hidden]'));
       const first = controls?.[0]; const last = controls?.[controls.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
