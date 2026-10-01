@@ -5,7 +5,7 @@
   "base_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "target_ref": "5566d027a6c74924f85a84bfa318711e56b15104",
   "last_checkpoint": "80839c5888bd6f1c7240d0b5dbcc22fafc84cfd0",
-  "phase": "fix",
+  "phase": "checkpoint",
   "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -18,11 +18,12 @@
   "validated_commit": "80839c5888bd6f1c7240d0b5dbcc22fafc84cfd0",
   "validated_tree": "cdb1da05a162ff47a67f386cecb95e20aa65d4bc",
   "last_result": {
-    "run_id": "run.fp2ZzFIj",
-    "role": "integrator",
-    "mode": "complete-prd",
-    "outcome": "prd_complete",
-    "note": "pós-fix 11.0; PR #128 em 183e534; único fail restante: commerce/Segurança upload-findings (infra template)"
+    "run_id": "run.ZwJSxTKP",
+    "role": "validator",
+    "mode": "revalidation",
+    "task": "7.0",
+    "attempt": "1/3",
+    "outcome": "approved"
   },
   "history": [
     "2026-09-30 init: worktree isolada ../code-for-coders-vitrine-oferta criada a pedido do usuário; prepare-prd-branch (run.eBJ6sjTh) confirmou feature/vitrine-oferta sobre main@5566d02; delivery=pr autorizado pelo usuário.",
