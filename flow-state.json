@@ -101,7 +101,7 @@
     },
     {
       "id": "CAP-008",
-      "stage": "techspec",
+      "stage": "tasks",
       "artifacts": {
         "domain": "domains/matricula-e-direito-de-acesso/domain.md",
         "prd": "tasks/prd-concessao-acesso/prd.md",
@@ -244,8 +244,8 @@
   "next_actions": [
     {
       "id": "NA29",
-      "what": "Plano de tasks do 1o PRD de CAP-008 (tasks/prd-concessao-acesso: PRD 1.1, contratos 1.1, TechSpec 1.0 aprovados em 2026-10-01); abrir com EN-01 (wireframe ASCII e Figma da area Cortesias) antes de qualquer tela",
-      "skill": "tsg-flow-task-creator",
+      "what": "Aprovar o plano tasks/prd-concessao-acesso/tasks.md (9 tasks: 1.0 e 2.0 de design, 3.0 a 9.0 verticais V-01 a V-07) e executar com o orquestrador, a partir da 1.0 (wireframe ASCII das Cortesias, aprovação do responsável)",
+      "skill": "tsg-flow-orchestrator",
       "blocked_by": []
     }
   ],
