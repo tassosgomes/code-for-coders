@@ -5,9 +5,9 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
-  "last_checkpoint": "3.0",
+  "last_checkpoint": "5.0",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "5.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -27,11 +27,11 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "3.0",
-    "run_id": "run.mF9korO4",
+    "task": "5.0",
+    "run_id": "run.sDtKK4DO",
     "outcome": "checkpoint_ok",
     "gate": "passed",
-    "report": ".tsg-flow/delegate-logs/run.mF9korO4/report.md"
+    "report": ".tsg-flow/delegate-logs/run.sDtKK4DO/report.md"
   },
   "history": [
     {
@@ -443,6 +443,35 @@
       "task": "3.0",
       "run_id": "run.mF9korO4",
       "note": "Revalidação run.dHQXrNWQ aprovada; correção pós-full B2 de concorrência do listener de spans. Gate 21 testes, format/build/regressões e checks SPA aprovados; HEAD e 2319 hashes correspondem ao validator. Task done e índice [x]; smoke Compose pendente para full. CommerceApiFactory.cs (5.0), contracts/ e prd_review.md excluídos."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "3.0",
+      "run_id": "run.mF9korO4",
+      "commit": "53e1b45",
+      "note": "B2 fechado pós-full"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "5.0",
+      "run_id": "run.nlCs87po",
+      "note": "provas completas: E2E + gate 67 + BFF completo + format"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "revalidation_approved",
+      "task": "5.0",
+      "run_id": "run.RP5uLLDe",
+      "note": "B1 fechado"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "5.0",
+      "run_id": "run.sDtKK4DO",
+      "note": "Revalidação run.RP5uLLDe aprovada; B1 corrigido na factory E2E com chave RSA efêmera. HEAD e diff correspondem ao baseline do validator; gate 67/67 e oito checks aprovados. Task done, sete critérios com evidência e índice [x]; smoke Compose pendente para full. contracts/ e prd_review.md preservados fora do checkpoint. SHA definitivo no relatório e resultado desta chamada."
     }
   ],
   "full_fix_plan": [
