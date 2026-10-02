@@ -1,6 +1,7 @@
 # Wireframes ASCII — Cortesias do backoffice (CAP-008, 1º PRD)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-10-01 (aprovação explícita "Aprovar o ASCII") · implementação não iniciada
+> **Status:** ASCII e Figma aprovados pelo responsável em 2026-10-02 (ASCII aprovado em 2026-10-01 com "Aprovar o ASCII"; Figma aprovado em 2026-10-02 com "As telas em si estão aprovadas"; frames na [seção 8](#8-handoff-do-figma--aprovado)). Código de tela liberado a partir da task 3.0.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=244-3616) · frames por tela na [seção 8](#8-handoff-do-figma--aprovado) · arquivo Code4Coders — Design System.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 3.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados das telas da área **Cortesias** (`admin-spa`) e do reflexo da cortesia na trilha de auditoria antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-concessao-acesso/prd.md) v1.1 (RF-01…RF-05, RF-08, Experiência do Usuário, DP-01…DP-07), [TechSpec](../../tasks/prd-concessao-acesso/techspec.md) v1.0 (V-01…V-07, Habilitadores inevitáveis, D-01, D-03), [contrato do backoffice](../../tasks/prd-concessao-acesso/api-contract.md) 1.0.0 ([YAML](../../tasks/prd-concessao-acesso/api-contract.yaml)), [wireframes do Catálogo](wireframes-catalogo-vitrine.md) (AppShell, formato do documento e do registro de aprovação), [wireframes de Auditoria](wireframes-auditoria.md) (trilha, `ComplianceBadge`, `EmptyState`, `CodeWindow`), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -541,3 +542,148 @@ Tudo reusando o AppShell, `EmptyState`, `CodeWindow`, `Stepper`, `RadioGroup`, `
 8. **Resultado** com a concessão criada e erros por `code`, com reenvio idempotente (G12–G13, G16, T6).
 9. **Trilha**: rótulo *Cortesia concedida*, filtro, detalhe com aluno pelo nome, curso pelo título, vigência formatada e motivo, **sem e-mail** (G14, T7).
 10. **Componentes novos:** `StudentAccountCard`, `AccessGrantRow`, `CoursePickRow`, `TermPreview`, `ReviewSentence`, `LifetimeConfirm`, `CourtesyResultCard`.
+
+
+---
+
+## 8. Handoff do Figma — aprovado
+
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-10-02, nas páginas `Fluxo — Cortesias` e `Screens — Cortesias`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=244-3616).
+
+> **Aprovação:** o responsável aprovou o Figma explicitamente em 2026-10-02 ("As telas em si estão aprovadas"), sem pedido de ajuste. O desenho é a referência visual para as tasks de tela (3.0 em diante).
+
+### 8.1 Fluxos e navegação
+
+| Artefato | Link e `node-id` |
+|---|---|
+| Índice de revisão | [244:3616](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=244-3616) |
+| Fluxo 1 · Financeiro — conceder cortesia | [243:3333](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=243-3333) |
+| Fluxo 2 · Administrador — cortesia na trilha | [243:3649](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=243-3649) |
+| Página Fluxo — Cortesias | [227:2](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-2) |
+| Página Screens — Cortesias | [227:3](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-3) |
+
+Cada nó dos fluxos tem o botão **Revisar tela →**, que abre o frame correspondente pelo link do arquivo. B12 (sem permissão, [90:2842](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=90-2842)) e B1 (sessão encerrada, [70:199](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=70-199)) reusam os frames de Acesso interno. Os dados são ilustrativos e o desenho não executa escritas, busca nem autorização; foco, teclado, idempotência e regras do servidor seguem as seções 1 a 6.
+
+### 8.2 Inventário de telas e estados
+
+Desktop em 1440 de largura (altura 900, ou a do conteúdo quando ele passa disso); mobile em 390. Light em todas as telas; Dark em T1.b e T5.a. T7 clona as telas existentes de CAP-030 (lista e detalhe da trilha) com o tipo novo.
+
+**Ajustes de desenho sem mudar decisão:** os passos concluídos aparecem como linhas resumidas com *Editar* acima do card do passo (G2); a Revisão lista os quatro campos com *Editar* em vez de repetir as linhas resumidas; o contador do motivo de exemplo mostra 52/500 (o texto do exemplo tem 52 caracteres); na tela T1.h o selo de situação do `StudentAccountCard` fica oculto no mobile (o aviso de e-mail não confirmado já informa). Estados a mais que o ASCII listava: T0.c2, T1.g2, T2.d2, T5.a2 (confirmando), T5.b2 (vitalícia sem marcar), T6.a2 (sucesso vitalícia), T5.e2 e T7.d2 (mobile). `FIELD_INVALID` volta ao passo do campo e reaproveita T3.c, T4.b e T4.c.
+
+#### 🧩 Composições propostas — Cortesias — [grupo 227:4](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-4)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| Icon/gift | 24 × 24 | [227:10](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-10) |
+| Icon/search | 24 × 24 | [227:14](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-14) |
+| Icon/chevron-left | 24 × 24 | [227:17](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-17) |
+| Checkbox | 112 × 48 | [227:22](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-22) |
+| Textarea | 1800 × 264 | [227:31](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-31) |
+| Stepper | 1960 × 276 | [227:30355](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=227-30355) |
+| StudentAccountCard | 1800 × 384 | [229:114](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-114) |
+| AccessGrantRow | 1800 × 217 | [229:147](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-147) |
+| CoursePickRow | 1800 × 251 | [229:182](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-182) |
+| TermPreview | 1800 × 112 | [229:30153](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-30153) |
+| ReviewSentence | 832 × 86 | [229:30154](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-30154) |
+| LifetimeConfirm | 1800 × 98 | [229:30164](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-30164) |
+| CourtesyResultCard | 832 × 118 | [229:30165](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=229-30165) |
+| StepSummary | 880 × 50 | [235:833](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-833) |
+
+#### T0 · Entrada — `/admin/cortesias` (`cortesia.conceder`) — [grupo 231:85](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=231-85)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T0.a · T1.a — Formulário sequencial, passo Aluno (vazio) | 1440 × 900 | [231:86](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=231-86) |
+| T0.c · Carregando a área | 1440 × 900 | [231:204](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=231-204) |
+| T0.c2 · Erro ao carregar a área | 1440 × 900 | [231:302](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=231-302) |
+
+#### T1 · Passo 1 — Aluno — [grupo 233:269](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-269)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T1.b · Localizado (conta ativa, e-mail confirmado) | 1440 × 1120 | [233:270](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-270) |
+| T1.c · E-mail ainda não confirmado (avisa, não impede) | 1440 × 1200 | [233:429](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-429) |
+| T1.d · Conta desativada (impede) | 1440 × 900 | [233:597](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-597) |
+| T1.e · Não encontrada (inexistente, ator interno ou outra escola) | 1440 × 900 | [233:719](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-719) |
+| T1.f · Sem concessões | 1440 × 900 | [233:826](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-826) |
+| T1.g · Carregando | 1440 × 900 | [233:950](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-950) |
+| T1.g2 · Erro / serviço indisponível | 1440 × 900 | [233:1058](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=233-1058) |
+
+#### T2 · Passo 2 — Curso — [grupo 235:839](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-839)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T2.a · Escolha — curso escolhido | 1440 × 1100 | [235:840](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-840) |
+| T2.b · Filtrado (mantém o termo) | 1440 × 1100 | [235:993](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-993) |
+| T2.c · Vazio | 1440 × 900 | [235:1147](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-1147) |
+| T2.d · Carregando | 1440 × 900 | [235:1270](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-1270) |
+| T2.d2 · Erro ao carregar cursos | 1440 × 900 | [235:1386](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=235-1386) |
+
+#### T3 · Passo 3 — Vigência — [grupo 236:1255](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1255)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T3.a · Por período | 1440 × 1000 | [236:1256](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1256) |
+| T3.b · Vitalícia | 1440 × 900 | [236:1400](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1400) |
+| T3.c · Meses inválidos | 1440 × 1000 | [236:1536](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1536) |
+| T3.d · Prévia indisponível (leitura 502/504) | 1440 × 1000 | [236:1673](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1673) |
+
+#### T4 · Passo 4 — Motivo — [grupo 236:1830](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1830)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T4.a · Escrevendo | 1440 × 900 | [236:1831](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1831) |
+| T4.b · Vazio ou só espaços | 1440 × 900 | [236:1962](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-1962) |
+| T4.c · Acima de 500 caracteres (texto preservado) | 1440 × 1000 | [236:2091](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=236-2091) |
+
+#### T5 · Passo 5 — Revisão — [grupo 237:1869](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-1869)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T5.a · Resumo em uma frase | 1440 × 900 | [237:1870](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-1870) |
+| T5.a2 · Confirmando (Concedendo…, mesma `Idempotency-Key`) | 1440 × 900 | [237:2002](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2002) |
+| T5.b · Vitalícia — confirmação reforçada marcada | 1440 × 1000 | [237:2135](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2135) |
+| T5.b2 · Vitalícia — sem marcar (confirmação desabilitada) | 1440 × 1000 | [237:2272](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2272) |
+| T5.c · Aviso de acesso existente (não impede) | 1440 × 1000 | [237:2407](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2407) |
+| T5.d · Erro ao confirmar (campos e resumo mantidos) | 1440 × 1000 | [237:2561](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2561) |
+
+#### T6 · Passo 6 — Resultado — [grupo 237:2715](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2715)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T6.a · Sucesso | 1440 × 900 | [237:2716](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2716) |
+| T6.a2 · Sucesso vitalícia | 1440 × 900 | [237:2803](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2803) |
+| T6.b1 · `STUDENT_ACCOUNT_NOT_ELIGIBLE` / `COURSE_NOT_ELIGIBLE` | 1440 × 900 | [237:2888](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2888) |
+| T6.b2 · `IDEMPOTENCY_KEY_REUSED` | 1440 × 900 | [237:2970](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-2970) |
+| T6.b3 · 502/504 — `STUDENT_ACCOUNT_CHECK_UNAVAILABLE` ou serviço indisponível | 1440 × 900 | [237:3052](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=237-3052) |
+
+#### T7 · Trilha de auditoria — cortesia (telas existentes de CAP-030) — [grupo 239:5645](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-5645)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T7.a · Filtro de tipo — opção Cortesia concedida | 1440 × 960 | [239:2736](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-2736) |
+| T7.b · Lista — filtro Cortesia concedida e linha da cortesia | 1440 × 960 | [239:2786](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-2786) |
+| T7.c · Detalhe — Cortesia concedida (6 meses) | 1440 × 1100 | [239:2836](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-2836) |
+| T7.c2 · Detalhe — Cortesia concedida (vitalícia) | 1440 × 1100 | [239:2886](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-2886) |
+
+#### Mobile 390 — Cortesias (T0.d, T1.h, T2.e, T3.e, T4.d, T5.e, T6.c e T7.d) — [grupo 241:3674](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3674)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T0.d · Passo Aluno (vazio) | 390 × 844 | [241:3121](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3121) |
+| T1.h · Aluno localizado (e-mail não confirmado) | 390 × 1100 | [241:3168](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3168) |
+| T2.e · Curso — escolha | 390 × 844 | [241:3251](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3251) |
+| T3.e · Vigência — por período | 390 × 844 | [241:3323](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3323) |
+| T4.d · Motivo — escrevendo | 390 × 844 | [241:3398](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3398) |
+| T5.e · Revisão — com aviso de acesso existente | 390 × 900 | [241:3453](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3453) |
+| T5.e2 · Revisão — vitalícia com confirmação reforçada | 390 × 900 | [241:3524](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3524) |
+| T6.c · Resultado — sucesso | 390 × 844 | [241:3580](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=241-3580) |
+| T7.d · Detalhe — Cortesia concedida | 390 × 900 | [239:2936](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-2936) |
+| T7.d2 · Lista — linha vira card | 390 × 844 | [239:2985](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=239-2985) |
+
+#### Dark mode — validação de tokens (Cortesias) — [grupo 242:33369](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=242-33369)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| T1.b · Localizado (conta ativa) — Dark | 1440 × 1120 | [242:33370](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=242-33370) |
+| T5.a · Resumo em uma frase — Dark | 1440 × 900 | [242:33422](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=242-33422) |

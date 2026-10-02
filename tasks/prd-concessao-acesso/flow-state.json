@@ -5,9 +5,9 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": null,
-  "last_checkpoint": "1.0",
+  "last_checkpoint": "2.0",
   "phase": "checkpoint",
-  "active_task": "1.0",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -25,12 +25,12 @@
   "validated_tree": null,
   "pending_delegation": null,
   "last_result": {
-    "role": "validator",
-    "mode": "focused",
-    "task": "1.0",
-    "run_id": "run.AuHSDsQI",
-    "outcome": "approved",
-    "report": "tasks/prd-concessao-acesso/1.0_task_review.md"
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "2.0",
+    "run_id": "run.FY9fBORg",
+    "outcome": "checkpoint_ok",
+    "report": "tasks/prd-concessao-acesso/2.0_task_review.md"
   },
   "history": [
     {
@@ -79,6 +79,47 @@
       "task": "1.0",
       "run_id": "run.AZH4GFaV",
       "note": "checkpoint_ok: 1_task.md done, tasks.md [x] 1.0, wireframes 543 linhas, review focused aprovada run.AuHSDsQI, gate rg exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "checkpoint_ok",
+      "task": "1.0",
+      "run_id": "run.AZH4GFaV",
+      "commit": "4d7a00c",
+      "note": "Fase 0 (ASCII) concluída; 2.0 aguarda desenho no Figma pelo responsável (trabalho externo)"
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "user_decision",
+      "task": "2.0",
+      "note": "Responsável informou Figma pronto e aprovado; vai colar o link do índice de revisão e os node-ids por tela (T0–T7). Fluxo aguardando os links para delegar o registro no documento."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "external_work_applied",
+      "task": "2.0",
+      "note": "Responsável desenhou no Figma e registrou no documento (fora dos workers): +147 linhas — header com índice 244-3616, seção 8 com node-ids por tela/estado desktop+mobile e linha de status ASCII e Figma aprovados em 2026-10-02. Aprovação explícita ao orquestrador: \"Figma pronto e aprovado\"."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "2.0",
+      "run_id": "run.cq22RJl4",
+      "note": "verificação sem edição; seção 8 cobre T0–T7 desktop+mobile+dark; R1 stepper segue como recomendação para a focused"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "focused_approved",
+      "task": "2.0",
+      "run_id": "run.srGILbsN",
+      "note": "0 bloqueantes, 2 recomendações não bloqueantes"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "2.0",
+      "run_id": "run.FY9fBORg",
+      "note": "checkpoint_ok: 2_task.md done, tasks.md [x] 2.0, wireframes +148 linhas (header + seção 8 Figma), review focused aprovada run.srGILbsN, gate rg exit 0; contracts/ preservado fora do commit"
     }
   ]
 }
