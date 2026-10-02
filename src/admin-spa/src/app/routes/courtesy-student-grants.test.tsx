@@ -75,7 +75,8 @@ describe('courtesy student grants', () => {
       const data = page === 1 ? [grant({ courseId: crypto.randomUUID() })] : [grant()];
       return HttpResponse.json({ data, pagination: { page, size: 50, total: 51, totalPages: 2 } });
     }));
-    await review(); expect(await screen.findByText('Este aluno já tem acesso até 02/04/2027.')).toBeInTheDocument(); expect(firstPageCalls).toBeGreaterThanOrEqual(2);
+    await review(); expect(await screen.findByText('Este aluno já tem acesso até 02/04/2027.')).toBeInTheDocument();
+    await waitFor(() => expect(firstPageCalls).toBeGreaterThanOrEqual(2));
   });
   it('shows a retry for unavailable grants and does not retain the previous student when email changes', async () => {
     renderCourtesy(); server.use(http.get(`${env.API_URL}/api/v1/students/:studentId/access-grants`, () => HttpResponse.json({ code: 'COMMERCE_UNAVAILABLE' }, { status: 502 })));

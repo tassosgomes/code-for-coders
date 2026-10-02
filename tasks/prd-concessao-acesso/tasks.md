@@ -83,7 +83,7 @@ decisão em V-05 e a rotina de expiração em V-06.
 - [x] 3.0 O financeiro abre a área Cortesias e localiza o aluno pelo e-mail
 - [x] 4.0 O financeiro escolhe o curso entre os publicados da escola
 - [x] 5.0 O financeiro concede a cortesia e o acesso nasce com término correto, fato e ato
-- [ ] 6.0 O financeiro vê as concessões do aluno, é avisado antes de duplicar e confirma a vitalícia com reforço
+- [x] 6.0 O financeiro vê as concessões do aluno, é avisado antes de duplicar e confirma a vitalícia com reforço
 - [x] 7.0 Qualquer serviço pergunta se o aluno pode acessar o curso agora e recebe a única resposta
 - [x] 8.0 A concessão que vence gera o fato informativo, uma vez, sem que a decisão dependa dele
 - [x] 9.0 O administrador vê a cortesia na trilha, com aluno, curso, vigência e motivo legíveis

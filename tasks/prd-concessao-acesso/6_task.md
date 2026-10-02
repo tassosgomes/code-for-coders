@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["5.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.StudentAccessGrantsTests --minimum-expected-tests 8 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj -- --filter-class CodeForCoders.BffAdmin.IntegrationTests.CourtesyStudentGrantsProxyTests --minimum-expected-tests 3 && npm --prefix src/admin-spa run test -- courtesy-student-grants'
@@ -65,11 +65,11 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 16 testes.
-- [ ] A lista traz uma concessão com término no passado como `expired` **sem** a rotina de 8.0 ter rodado, e uma ativa como `active`.
-- [ ] Duas cortesias ao mesmo curso convivem na mesma matrícula; o aviso aparece com o término da ativa e não bloqueia a confirmação.
-- [ ] Aluno de outra escola, inexistente ou sem concessão → página vazia; `getCourtesyGrant` de outra origem, inexistente ou de outra escola → 404 `GRANT_NOT_FOUND`.
-- [ ] A confirmação reforçada da vitalícia aparece e é necessária para enviar; a de período não a exige.
+- [x] Gate passa (exit 0) com pelo menos 16 testes.
+- [x] A lista traz uma concessão com término no passado como `expired` **sem** a rotina de 8.0 ter rodado, e uma ativa como `active`.
+- [x] Duas cortesias ao mesmo curso convivem na mesma matrícula; o aviso aparece com o término da ativa e não bloqueia a confirmação.
+- [x] Aluno de outra escola, inexistente ou sem concessão → página vazia; `getCourtesyGrant` de outra origem, inexistente ou de outra escola → 404 `GRANT_NOT_FOUND`.
+- [x] A confirmação reforçada da vitalícia aparece e é necessária para enviar; a de período não a exige.
 - [ ] Smoke no Compose (o de 5.0): em `http://localhost:8081/admin/cortesias`, localizar o aluno que recebeu a cortesia → a concessão aparece na lista; preparar outra ao mesmo curso → o aviso aparece com a data; vitalícia → o passo reforçado.
 
 ## Checkpoint pós-full — task 6.0
@@ -83,3 +83,22 @@ nos erros com retry e 1 na resposta malformada. Gate: 28 testes aprovados.
 Lint, build e regressões aprovados pelo validator, incluindo BFF 145/145 em três execuções.
 O smoke de Compose continua pendente para a validação full, conforme recomendação não bloqueante
 da revalidação; seu checkbox não é marcado sem evidência.
+
+## Resumo do checkpoint pós-full 2 (B1.1 / B2.1)
+
+Run: run.V6mnZ2VF
+
+Revalidação `run.Wb3Hww4K` aprovada (tentativa 1/3, gate `passed`, 0 bloqueantes): correção do B1.1
+(`courtesy-student-grants.test.tsx:78` agora aguarda a segunda requisição com `waitFor`, sem
+enfraquecer a asserção nem subir timeout) e conferência do B2.1 (`StudentAccessPeriod.Months` com
+`JsonIgnore(WhenWritingNull)`, vitalícia serializa como `{"type":"lifetime"}`, alinhada ao schema
+`AccessPeriod` do contrato interno commerce, com teste de conformidade e controle negativo).
+Contratos publicados preservados.
+
+Gate integral final: exit 0, 30/30 (mínimo de 16 atendido). Checks dos componentes tocados
+(commerce format/build, commerce integração 246/246 na reexecução, arquitetura, BFF 145/145,
+SPA lint/typecheck/build, `courtesy-confirm` 4/4) e 3 execuções sequenciais da suíte SPA completa
+(43 arquivos, 231/231 cada) verdes, no limite de carga da rodada (sequencial, sem loops).
+Ressalvas do validator: intermitência de ambiente no `HeartbeatFlowsThroughOutboxRabbitMqAndConsumer`
+(exit 2 isolado, verde na reexecução) e homologação em runtime 10.0.11. Smoke Compose, cobertura
+agregada, publish/imagens e sensor de discriminação ficam para a full.

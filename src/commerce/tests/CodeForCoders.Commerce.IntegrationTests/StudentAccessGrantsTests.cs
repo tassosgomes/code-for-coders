@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Application.Interfaces;
 using CodeForCoders.Commerce.Infra.Data;
@@ -49,6 +50,32 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
         await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().EntitlementCourseViews.ExecuteUpdateAsync(update => update.SetProperty(course => course.Title, "Current course title"), Cancellation);
         var grant = Assert.Single((await ListAsync(test)).Data);
         Assert.Equal("Current course title", grant.CourseTitle); Assert.Equal("active", grant.Status); Assert.Null(grant.EndsOn); Assert.Null(grant.ExpiresAt);
+    }
+    [Theory(DisplayName = nameof(ListResponseMatchesPublishedSchemaAndRejectsInvalidAccessPeriod))]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ListResponseMatchesPublishedSchemaAndRejectsInvalidAccessPeriod(bool lifetime)
+    {
+        await using var test = new CourtesyGrantFixture(infra);
+        await test.SeedAsync();
+        await GrantAsync(test, "schema", lifetime);
+        using var response = await test.Client.GetAsync(ListPath(test), Cancellation);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = (await response.Content.ReadFromJsonAsync<JsonObject>(Cancellation))!;
+        Assert.True(StudentAccessGrantContract.IsValid(payload), "HTTP grant list must match the published OpenAPI AccessGrantPage schema.");
+        var period = Assert.Single(payload["data"]!.AsArray())!["accessPeriod"]!.AsObject();
+        Assert.Equal(lifetime ? "lifetime" : "months", period["type"]!.GetValue<string>());
+        if (lifetime)
+        {
+            Assert.False(period.ContainsKey("months"));
+            period["months"] = null;
+        }
+        else
+        {
+            Assert.Equal(6, period["months"]!.GetValue<int>());
+            period.Remove("months");
+        }
+        Assert.False(StudentAccessGrantContract.IsValid(payload), "The published schema must reject months:null for lifetime and missing months for a fixed period.");
     }
     [Fact(DisplayName = nameof(PaginationOrdersNewestFirstWithStableIdTieBreaker))]
     public async Task PaginationOrdersNewestFirstWithStableIdTieBreaker()
