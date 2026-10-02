@@ -17,6 +17,7 @@ public static class AdministrativeActPolicy
     private static readonly IReadOnlyDictionary<string, bool> AcceptedTypes =
         new Dictionary<string, bool>(StringComparer.Ordinal)
         {
+            ["cortesia-concedida"] = true,
             ["versao-publicada"] = false,
             ["oferta-publicada"] = false,
             ["oferta-alterada"] = false,
@@ -36,8 +37,10 @@ public static class AdministrativeActPolicy
     public static string[] GetNonConformityReasons(AdministrativeAct act)
     {
         var reasons = new List<string>(capacity: 7);
+        var isCourtesyType = act.Type == "cortesia-concedida";
         var isOfferType = act.Type is "oferta-publicada" or "oferta-alterada" or "oferta-despublicada";
-        if (!IsAcceptedType(act.Type) || (isOfferType && act.Origin != "catalogo") || (act.Type == "versao-publicada" && act.Origin != "conteudo"))
+        if (!IsAcceptedType(act.Type) || (isOfferType && act.Origin != "catalogo") || (act.Type == "versao-publicada" && act.Origin != "conteudo")
+            || (isCourtesyType && act.Origin != "matricula") || (act.Origin == "matricula" && !isCourtesyType))
         {
             reasons.Add(UnknownType);
         }
@@ -48,7 +51,8 @@ public static class AdministrativeActPolicy
         }
 
         if (!IsValidReference(act.Target) || (act.Type == "versao-publicada" && act.Target?.Type != "curso")
-            || (act.Origin == "catalogo" && act.Target?.Type != "oferta"))
+            || (act.Origin == "catalogo" && act.Target?.Type != "oferta")
+            || (isCourtesyType && act.Target?.Type != "conta-aluno"))
         {
             reasons.Add(MissingTarget);
         }
@@ -64,7 +68,8 @@ public static class AdministrativeActPolicy
         }
 
         if (act.ComplementIsInvalid || !IsValidComplement(act.Complement)
-            || act.Type == "oferta-alterada" && !HasValidChangePairs(act.Complement))
+            || act.Type == "oferta-alterada" && !HasValidChangePairs(act.Complement)
+            || isCourtesyType && !HasCourtesyComplement(act.Complement))
         {
             reasons.Add(InvalidComplement);
         }
@@ -76,6 +81,11 @@ public static class AdministrativeActPolicy
 
         return reasons.ToArray();
     }
+
+    private static bool HasCourtesyComplement(IReadOnlyDictionary<string, string>? complement)
+        => complement is { Count: 3 } && complement.TryGetValue("curso", out var course) && Guid.TryParse(course, out var courseId)
+            && courseId != Guid.Empty && complement.TryGetValue("concessao", out var grant) && Guid.TryParse(grant, out var grantId)
+            && grantId != Guid.Empty && complement.TryGetValue("vigencia", out var period) && IsValidPeriod(period);
 
     private static bool IsValidReference(AdministrativeActReference? reference)
         => reference is not null

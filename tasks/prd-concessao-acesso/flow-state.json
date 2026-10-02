@@ -5,9 +5,9 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": null,
-  "last_checkpoint": "4.0",
+  "last_checkpoint": "5.0",
   "phase": "checkpoint",
-  "active_task": "4.0",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -27,10 +27,10 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "4.0",
-    "run_id": "run.SnoshS6H",
+    "task": "5.0",
+    "run_id": "run.Ceerm92M",
     "outcome": "checkpoint_ok",
-    "report": "tasks/prd-concessao-acesso/4.0_task_review.md"
+    "report": "tasks/prd-concessao-acesso/5.0_task_review.md"
   },
   "history": [
     {
@@ -178,6 +178,35 @@
       "task": "4.0",
       "run_id": "run.SnoshS6H",
       "note": "checkpoint_ok: 4_task.md done, tasks.md [x] 4.0, V-02 escolher curso (visão entitlement + listagem + proxy BFF + passo Curso no SPA), review focused aprovada run.CfdOC1Dz, gate 34 testes exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "4.0",
+      "run_id": "run.SnoshS6H",
+      "commit": "4705980",
+      "note": "Fase 1 concluída (aluno + curso); próxima 5.0 (V-03 concessão)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "5.0",
+      "run_id": "run.ZbHbUDZp",
+      "note": "67 testes vs mínimo 54; fatia V-03 completa (modelo, término, outbox, ato, BFF, SPA); codex 66min"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "focused_approved",
+      "task": "5.0",
+      "run_id": "run.F8hu474M",
+      "note": "0 bloqueantes, 3 recomendações"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "5.0",
+      "run_id": "run.Ceerm92M",
+      "note": "checkpoint_ok: 5_task.md done, tasks.md [x] 5.0, V-03 conceder cortesia (modelo, término, outbox, ato, BFF, SPA), review focused aprovada run.F8hu474M, gate 67 testes exit 0; contracts/ preservado fora do commit"
     }
   ]
 }

@@ -30,7 +30,7 @@ RUN dotnet publish "src/CodeForCoders.Commerce.Api/CodeForCoders.Commerce.Api.cs
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends --yes libgssapi-krb5-2 \
+    && apt-get install --no-install-recommends --yes libgssapi-krb5-2 tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

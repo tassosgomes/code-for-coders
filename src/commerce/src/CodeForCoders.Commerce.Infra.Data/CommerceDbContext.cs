@@ -10,6 +10,11 @@ public sealed class CommerceDbContext(
     DbContextOptions<CommerceDbContext> options,
     ITenantContext tenantContext) : DbContext(options)
 {
+    public DbSet<Enrollment> Enrollments => Set<Enrollment>();
+    public DbSet<AccessGrant> AccessGrants => Set<AccessGrant>();
+    public DbSet<GrantReceipt> GrantReceipts => Set<GrantReceipt>();
+    public DbSet<EntitlementOutboxMessage> EntitlementOutboxMessages => Set<EntitlementOutboxMessage>();
+
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     public DbSet<CatalogOutboxMessage> CatalogOutboxMessages => Set<CatalogOutboxMessage>();
@@ -25,6 +30,10 @@ public sealed class CommerceDbContext(
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Enrollment>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<AccessGrant>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<GrantReceipt>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<EntitlementOutboxMessage>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.HasDefaultSchema(CommerceSchemas.Catalog);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CommerceDbContext).Assembly);
         modelBuilder.Entity<PurchaseIntentDailyCount>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);

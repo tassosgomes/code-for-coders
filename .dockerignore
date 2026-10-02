@@ -16,3 +16,7 @@ domains
 skills-lock.json
 flow-state.json
 vision.md
+
+**/node_modules
+**/coverage
+.tsg-flow

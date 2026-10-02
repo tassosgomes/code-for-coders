@@ -21,5 +21,6 @@ public static class EndpointExtensions
         app.MapStaffMemberEndpoints();
         app.MapAuditIdentityReferenceEndpoints();
         app.MapStudentAccountLookupEndpoints();
+        app.MapStudentAccountConfirmationEndpoints();
     }
 }

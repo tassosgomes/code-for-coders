@@ -30,7 +30,8 @@ public sealed class OutboxPublisherWorker(
                     {
                         var catalogPublished = await PublishOneAsync(CommerceSchemas.Catalog, stoppingToken);
                         var salesPublished = await PublishOneAsync(CommerceSchemas.Sales, stoppingToken);
-                        if (!catalogPublished && !salesPublished)
+                        var entitlementPublished = await PublishOneAsync(CommerceSchemas.Entitlement, stoppingToken);
+                        if (!catalogPublished && !salesPublished && !entitlementPublished)
                         {
                             break;
                         }
@@ -77,7 +78,9 @@ public sealed class OutboxPublisherWorker(
             """;
         IOutboxDelivery? message = schema == CommerceSchemas.Catalog
             ? await dbContext.CatalogOutboxMessages.FromSqlRaw(query).IgnoreQueryFilters().SingleOrDefaultAsync(cancellationToken)
-            : await dbContext.OutboxMessages.FromSqlRaw(query).IgnoreQueryFilters().SingleOrDefaultAsync(cancellationToken);
+            : schema == CommerceSchemas.Entitlement
+                ? await dbContext.EntitlementOutboxMessages.FromSqlRaw(query).IgnoreQueryFilters().SingleOrDefaultAsync(cancellationToken)
+                : await dbContext.OutboxMessages.FromSqlRaw(query).IgnoreQueryFilters().SingleOrDefaultAsync(cancellationToken);
 
         if (message is null)
         {

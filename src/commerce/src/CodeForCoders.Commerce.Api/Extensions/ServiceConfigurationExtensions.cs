@@ -13,6 +13,7 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddCommerceConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddCourtesyGrantConfiguration(builder.Configuration);
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddMessagingConfiguration(builder.Configuration);
         builder.Services.AddOptions<FinanceAreaTokenOptions>()

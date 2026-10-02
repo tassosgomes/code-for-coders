@@ -6,6 +6,10 @@ namespace CodeForCoders.Identity.Infra.Data.Accounts;
 
 public sealed class StudentAccountQueries(IdentityDbContext dbContext) : IStudentAccountQueries
 {
+    public Task<bool> IsEligibleAsync(Guid tenantId, Guid studentId, CancellationToken cancellationToken)
+        => dbContext.Accounts.AsNoTracking().IgnoreQueryFilters().AnyAsync(account => account.TenantId == tenantId
+            && account.Id == studentId && account.Type == AccountType.Student && account.DeactivatedOn == null, cancellationToken);
+
     public Task<StudentAccountDetails?> FindAsync(Guid tenantId, string normalizedEmail, CancellationToken cancellationToken)
         => dbContext.Accounts.AsNoTracking().IgnoreQueryFilters()
             .Where(account => account.TenantId == tenantId && account.Type == AccountType.Student

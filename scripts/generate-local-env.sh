@@ -41,6 +41,19 @@ if [[ -e "$env_file" ]]; then
     changed=true
   fi
 
+  if ! rg -q '^COMMERCE_IDENTITY_PRIVATE_KEY_B64=' "$env_file"; then
+    umask 077
+    commerce_identity_key_dir="$(mktemp -d)"
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$commerce_identity_key_dir/private.pem"
+    {
+      printf '\nCOMMERCE_IDENTITY_PUBLIC_KEY_B64=%s\n' "$(openssl pkey -in "$commerce_identity_key_dir/private.pem" -pubout -outform DER | base64 | tr -d '\n')"
+      printf 'COMMERCE_IDENTITY_PRIVATE_KEY_B64=%s\n' "$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$commerce_identity_key_dir/private.pem" | base64 | tr -d '\n')"
+      printf 'SCHOOL_TIME_ZONE=America/Sao_Paulo\n'
+    } >> "$env_file"
+    rm -rf -- "$commerce_identity_key_dir"
+    changed=true
+  fi
+
   chmod 600 "$env_file"
   if [[ "$changed" == false ]]; then
     printf '[local-env] %s already contains the generated configuration; keeping the current configuration.\n' "$env_file"
@@ -71,6 +84,9 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/bff-admin-private.pem"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/identity-staff-token-private.pem"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/bff-commerce-private.pem"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/commerce-identity-private.pem"
+commerce_identity_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$key_material_dir/commerce-identity-private.pem" | base64 | tr -d '\n')"
+commerce_identity_public_key_b64="$(openssl pkey -in "$key_material_dir/commerce-identity-private.pem" -pubout -outform DER | base64 | tr -d '\n')"
 
 private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
   -in "$key_material_dir/bff-private.pem" | base64 | tr -d '\n')"
@@ -91,6 +107,9 @@ outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 
 {
+  printf 'COMMERCE_IDENTITY_PUBLIC_KEY_B64=%s\n' "$commerce_identity_public_key_b64"
+  printf 'COMMERCE_IDENTITY_PRIVATE_KEY_B64=%s\n' "$commerce_identity_private_key_b64"
+  printf 'SCHOOL_TIME_ZONE=America/Sao_Paulo\n'
   printf 'NOTIFICATION_NAMESPACE=default\n'
   printf 'STUDENT_ACCOUNT_CONFIRMATION_URL=http://localhost:8082/student/confirm-account\n'
   printf 'ACCOUNT_CONFIRMATION_VALIDITY_HOURS=24\n'

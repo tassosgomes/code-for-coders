@@ -14,6 +14,7 @@ namespace CodeForCoders.BffAdmin.IntegrationTests;
 
 public sealed class CourtesyBffApiFactory : WebApplicationFactory<Program>
 {
+    public CourtesyGrantHttpHandler Grants { get; } = new();
     public CourtesyCoursesHttpHandler Courses { get; } = new();
     public CourseIdentityHandler Identity { get; } = new();
     public CourtesyIdentityHandler Lookup { get; } = new();
@@ -43,6 +44,7 @@ public sealed class CourtesyBffApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IBffSessionStore>(); services.AddSingleton<IBffSessionStore>(Sessions);
             services.AddHttpClient<IStudentAccountIdentityClient, StudentAccountIdentityClient>().ConfigurePrimaryHttpMessageHandler(() => Lookup);
             services.AddHttpClient<IStaffSessionIdentityClient, StaffSessionIdentityClient>().ConfigurePrimaryHttpMessageHandler(() => Identity);
+            services.AddHttpClient<ICourtesyGrantsClient, CourtesyGrantsClient>().ConfigurePrimaryHttpMessageHandler(() => Grants);
             services.AddHttpClient<ICourtesyCoursesClient, CourtesyCoursesClient>().ConfigurePrimaryHttpMessageHandler(() => Courses);
             // Keep the production typed client registration and resilience pipeline; replace only the HTTP boundary.
         });

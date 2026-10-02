@@ -28,9 +28,12 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
+                // Reasons are confidential even in development: never log SQL parameter values.
             }
         });
+        services.AddScoped<ICourtesyGrantStore, Entitlement.CourtesyGrantStore>();
+        services.AddScoped<IEntitlementOutboxMessageWriter, EntitlementOutboxMessageWriter>();
+        services.AddHostedService<Entitlement.GrantReceiptCleanupWorker>();
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
         services.AddScoped<IEntitlementCourseProjectionStore, Entitlement.EntitlementCourseProjectionStore>();

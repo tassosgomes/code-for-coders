@@ -1,3 +1,4 @@
+import { CourtesyConfirmationSteps } from '@/features/courtesies/components/courtesy-confirmation-steps';
 import { CourtesyCourseStep } from '@/features/courtesies/components/courtesy-course-step';
 import { useCourtesyForm } from '@/features/courtesies/hooks/use-courtesy-form';
 
@@ -16,7 +17,7 @@ export const CourtesyStudentScreen = () => {
     <header><p className="eyebrow">Cortesias</p><h1>Conceder cortesia</h1><p>Conceda acesso a um curso sem compra, com motivo.</p></header>
     <div className="courtesy-flow">
       <ol className="courtesy-stepper" aria-label="Passos da cortesia">{steps.map((step, index) => <li key={step} aria-current={index === flow.step ? 'step' : undefined}><span>{index + 1}</span><span>{step}</span></li>)}</ol>
-      {flow.step > 0 && lookup.account ? <div className="courtesy-step-summary"><span>Aluno: {lookup.account.name}</span><button type="button" className="secondary-button" onClick={() => flow.setStep(0)}>Editar aluno</button></div> : null}
+      {flow.step > 0 && lookup.account ? <div className="courtesy-step-summary"><span>Aluno: {lookup.account.name}</span><button type="button" className="secondary-button" disabled={flow.step >= 4} onClick={() => flow.setStep(0)}>Editar aluno</button></div> : null}
       <section hidden={flow.step !== 0} className="catalog-record-card courtesy-lookup-card" aria-label="Passo Aluno">
         <div className="courtesy-step-heading"><h2>Aluno</h2><span>1 de 6</span></div>
         <p>Informe o e-mail da conta de aluno.</p>
@@ -34,7 +35,7 @@ export const CourtesyStudentScreen = () => {
         {lookup.account ? <div className="courtesy-actions"><button type="button" className="primary-button" disabled={lookup.account.status !== 'active' || lookup.busy} onClick={() => flow.setStep(1)}>Continuar</button></div> : null}
       </section>
       {flow.step === 1 ? <CourtesyCourseStep selected={flow.course} onSelect={flow.selectCourse} onBack={() => flow.setStep(0)} onContinue={() => flow.setStep(2)} /> : null}
-      {flow.step === 2 ? <section className="catalog-record-card courtesy-lookup-card" aria-label="Passo Prazo"><div className="courtesy-step-heading"><h2>Prazo</h2><span>3 de 6</span></div><p>Curso escolhido: {flow.course?.title}</p><button className="secondary-button" type="button" onClick={() => flow.setStep(1)}>Voltar</button></section> : null}
+      {lookup.account && flow.course ? <CourtesyConfirmationSteps studentId={lookup.account.studentId} studentName={lookup.account.name} studentEmail={lookup.account.email} courseId={flow.course.courseId} courseTitle={flow.course.title} step={flow.step} setStep={flow.setStep} onRestart={() => { resetStudent(); flow.setStep(0); }} /> : null}
     </div>
   </main>;
 };

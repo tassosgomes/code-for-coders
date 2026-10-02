@@ -59,6 +59,16 @@ public sealed class RabbitMqTopologyInitializer(
                 ["x-delivery-limit"] = settings.DeliveryLimit,
             },
             cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(settings.EntitlementFactRetentionQueue, true, false, false,
+            new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-max-length"] = settings.EntitlementFactRetentionMaxLength,
+                ["x-message-ttl"] = settings.EntitlementFactRetentionTtlMilliseconds,
+                ["x-overflow"] = "drop-head"
+            }, cancellationToken: cancellationToken);
+        foreach (var key in new[] { "matricula.acesso-concedido.v1", "matricula.acesso-expirado.v1" })
+            await channel.QueueBindAsync(settings.EntitlementFactRetentionQueue, settings.Exchange, key, null, cancellationToken: cancellationToken);
         await DeclareCatalogAsync(channel, settings, cancellationToken);
         await DeclareEntitlementAsync(channel, settings, cancellationToken);
         await channel.ExchangeDeclareAsync(settings.AuditExchange, ExchangeType.Topic, durable: true,
