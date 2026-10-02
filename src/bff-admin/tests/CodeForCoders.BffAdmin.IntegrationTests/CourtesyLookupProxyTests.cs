@@ -1,9 +1,11 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using CodeForCoders.BffAdmin.Application.Common;
 using CodeForCoders.BffAdmin.Contracts;
 using Xunit;
 
@@ -26,10 +28,10 @@ public sealed class CourtesyLookupProxyTests
     {
         await using var factory = CreateFactory();
         using var client = await factory.AuthenticatedAsync();
-        var spans = new List<string>();
+        var spans = new ConcurrentBag<string>();
         using var listener = new ActivityListener
         {
-            ShouldListenTo = _ => true,
+            ShouldListenTo = source => source.Name is BffAdminTelemetry.ActivitySourceName or "Microsoft.AspNetCore" or "System.Net.Http",
             Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
             ActivityStopped = activity => spans.Add(activity.DisplayName + string.Join(" ", activity.TagObjects.Select(tag => $"{tag.Key}={tag.Value}"))),
         };
@@ -51,8 +53,10 @@ public sealed class CourtesyLookupProxyTests
         Assert.Equal("bff-admin", claims.RootElement.GetProperty("iss").GetString());
         Assert.Equal("identity-internal", claims.RootElement.GetProperty("aud").GetString());
         Assert.Equal("00000000-0000-7000-8000-000000000001", claims.RootElement.GetProperty("tenantId").GetString());
-        Assert.NotEmpty(factory.Logs); Assert.NotEmpty(spans);
-        Assert.All(factory.Logs.Concat(spans), entry => { Assert.DoesNotContain(Email, entry); Assert.DoesNotContain("Lookup Student", entry); });
+        var capturedLogs = factory.Logs.ToArray();
+        var capturedSpans = spans.ToArray();
+        Assert.NotEmpty(capturedLogs); Assert.NotEmpty(capturedSpans);
+        Assert.All(capturedLogs.Concat(capturedSpans), entry => { Assert.DoesNotContain(Email, entry); Assert.DoesNotContain("Lookup Student", entry); });
     }
 
     [Fact(DisplayName = nameof(RequiresCookieAndCsrfBeforeCallingIdentityLookup))]

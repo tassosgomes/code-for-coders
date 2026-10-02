@@ -5,10 +5,10 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
-  "last_checkpoint": "6.0",
+  "last_checkpoint": "3.0",
   "phase": "checkpoint",
-  "active_task": "6.0",
-  "attempt": 1,
+  "active_task": "3.0",
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
   "transport_retries": 3,
@@ -27,10 +27,11 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "6.0",
-    "run_id": "run.WPgaSPoR",
+    "task": "3.0",
+    "run_id": "run.mF9korO4",
     "outcome": "checkpoint_ok",
-    "report": ".tsg-flow/delegate-logs/run.WPgaSPoR/report.md"
+    "gate": "passed",
+    "report": ".tsg-flow/delegate-logs/run.mF9korO4/report.md"
   },
   "history": [
     {
@@ -413,6 +414,35 @@
       "task": "6.0",
       "run_id": "run.WPgaSPoR",
       "note": "Revalidação run.x5vccikJ aprovada; checkpoint da correção de flaky 502/504, gate 28 testes e lint/build/regressões aprovados. Task done e índice [x]; smoke Compose permanece pendente para full. Correções das tasks 3.0/5.0, prd_review.md e contracts/ excluídos."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "6.0",
+      "run_id": "run.WPgaSPoR",
+      "commit": "d1f5260",
+      "note": "flaky fechado pós-full"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "3.0",
+      "run_id": "run.gJt4jAIv",
+      "note": "prova completada: gate 21 testes + BFF 3x consecutivas verdes"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "revalidation_approved",
+      "task": "3.0",
+      "run_id": "run.dHQXrNWQ",
+      "note": "B2 fechado"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "3.0",
+      "run_id": "run.mF9korO4",
+      "note": "Revalidação run.dHQXrNWQ aprovada; correção pós-full B2 de concorrência do listener de spans. Gate 21 testes, format/build/regressões e checks SPA aprovados; HEAD e 2319 hashes correspondem ao validator. Task done e índice [x]; smoke Compose pendente para full. CommerceApiFactory.cs (5.0), contracts/ e prd_review.md excluídos."
     }
   ],
   "full_fix_plan": [

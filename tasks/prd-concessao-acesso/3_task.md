@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["2.0"]
 gate: 'dotnet test --project src/identity/tests/CodeForCoders.Identity.UnitTests/CodeForCoders.Identity.UnitTests.csproj -- --filter-class CodeForCoders.Identity.UnitTests.StaffRoleCatalogCourtesyPermissionTests --minimum-expected-tests 4 && dotnet test --project src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentAccountLookupTests --minimum-expected-tests 8 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj -- --filter-class CodeForCoders.BffAdmin.IntegrationTests.CourtesyLookupProxyTests --minimum-expected-tests 5 && npm --prefix src/admin-spa run test -- courtesy-student-lookup'
@@ -82,8 +82,16 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 21 testes.
-- [ ] Composição: `identity` e `bff-admin` iniciam no ambiente de teste com os registros reais (escopo, emissor, cliente) e o cliente HTTP real do BFF é exercitado contra a fronteira controlada do teste, sem dublê do adaptador.
-- [ ] `lookupStudentAccountInternal` direto: e-mail com maiúsculas e espaços nas bordas encontra a conta cadastrada pelo fluxo real; inexistente e conta de ator interno → o mesmo 404; desativada → `status: disabled`; e-mail não confirmado → `emailConfirmed: false`; outro tenant → 404; sem escopo ou sem a permissão → 403.
-- [ ] A inspeção da saída de log e dos spans de uma localização não contém o e-mail nem o nome.
+- [x] Gate passa (exit 0) com pelo menos 21 testes.
+- [x] Composição: `identity` e `bff-admin` iniciam no ambiente de teste com os registros reais (escopo, emissor, cliente) e o cliente HTTP real do BFF é exercitado contra a fronteira controlada do teste, sem dublê do adaptador.
+- [x] `lookupStudentAccountInternal` direto: e-mail com maiúsculas e espaços nas bordas encontra a conta cadastrada pelo fluxo real; inexistente e conta de ator interno → o mesmo 404; desativada → `status: disabled`; e-mail não confirmado → `emailConfirmed: false`; outro tenant → 404; sem escopo ou sem a permissão → 403.
+- [x] A inspeção da saída de log e dos spans de uma localização não contém o e-mail nem o nome.
 - [ ] Smoke no Compose (Identity, `bff-admin`, `admin-spa`, PostgreSQL, Valkey; `./scripts/generate-local-env.sh`, `./scripts/apps.sh start`, quatro papéis de equipe, uma conta de aluno ativa, uma não confirmada, uma desativada e uma de ator interno): `http://localhost:8081/admin/cortesias` como financeiro → passo *Aluno* e a localização; como professor, suporte e administrador, o menu não tem o item e a rota direta nega; revogar o papel e repetir a ação → recusada.
+
+## Resumo do checkpoint pós-full
+
+Run: run.mF9korO4
+
+Correção B2 aprovada na [revalidação](3.0_task_review.md) `run.dHQXrNWQ`: coleção concorrente de spans, captura estável de logs/spans e filtro das fontes instrumentadas, preservando as asserções de ausência de dados pessoais. Gate: 21/21 testes; format, build e regressões de Identity/BFF e lint, typecheck, teste de sessão e build do SPA passaram. BFF completo: três execuções consecutivas, 145/145 cada. O integrator confirmou HEAD e 2319 hashes de código/configuração idênticos ao baseline do validator.
+
+Os quatro critérios marcados têm evidência na revisão. O smoke Compose permanece pendente para a validação full, conforme a ressalva do validator; cobertura, publish e imagens também permanecem para a full. A correção B1 pertence à task 5.0.
