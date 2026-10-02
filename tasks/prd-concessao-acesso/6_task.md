@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["5.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.StudentAccessGrantsTests --minimum-expected-tests 8 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj -- --filter-class CodeForCoders.BffAdmin.IntegrationTests.CourtesyStudentGrantsProxyTests --minimum-expected-tests 3 && npm --prefix src/admin-spa run test -- courtesy-student-grants'
@@ -65,11 +65,11 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [x] Gate passa (exit 0) com pelo menos 16 testes.
-- [x] A lista traz uma concessão com término no passado como `expired` **sem** a rotina de 8.0 ter rodado, e uma ativa como `active`.
-- [x] Duas cortesias ao mesmo curso convivem na mesma matrícula; o aviso aparece com o término da ativa e não bloqueia a confirmação.
-- [x] Aluno de outra escola, inexistente ou sem concessão → página vazia; `getCourtesyGrant` de outra origem, inexistente ou de outra escola → 404 `GRANT_NOT_FOUND`.
-- [x] A confirmação reforçada da vitalícia aparece e é necessária para enviar; a de período não a exige.
+- [ ] Gate passa (exit 0) com pelo menos 16 testes.
+- [ ] A lista traz uma concessão com término no passado como `expired` **sem** a rotina de 8.0 ter rodado, e uma ativa como `active`.
+- [ ] Duas cortesias ao mesmo curso convivem na mesma matrícula; o aviso aparece com o término da ativa e não bloqueia a confirmação.
+- [ ] Aluno de outra escola, inexistente ou sem concessão → página vazia; `getCourtesyGrant` de outra origem, inexistente ou de outra escola → 404 `GRANT_NOT_FOUND`.
+- [ ] A confirmação reforçada da vitalícia aparece e é necessária para enviar; a de período não a exige.
 - [ ] Smoke no Compose (o de 5.0): em `http://localhost:8081/admin/cortesias`, localizar o aluno que recebeu a cortesia → a concessão aparece na lista; preparar outra ao mesmo curso → o aviso aparece com a data; vitalícia → o passo reforçado.
 
 ## Checkpoint pós-full — task 6.0
