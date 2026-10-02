@@ -136,7 +136,7 @@ public static class AuditIdentityReferenceEndpoints
         foreach (var reference in request.References)
         {
             if (reference.Id == Guid.Empty
-                || reference.Type is not ("conta-interna" or "convite-interno"))
+                || reference.Type is not ("conta-interna" or "convite-interno" or "conta-aluno"))
             {
                 return false;
             }

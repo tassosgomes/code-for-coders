@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["5.0", "2.0"]
 gate: 'dotnet test --project src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.AuditStudentReferenceTests --minimum-expected-tests 4 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj -- --filter-class CodeForCoders.BffAdmin.IntegrationTests.CourtesyAuditReferenceTests --minimum-expected-tests 5 && npm --prefix src/admin-spa run test -- audit-trail-courtesy'
@@ -63,8 +63,8 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 13 testes.
-- [ ] Composição: `identity` e `bff-admin` iniciam no ambiente de teste com os registros reais, e o cliente HTTP real do BFF para Identity e para `learning` é exercitado contra a fronteira controlada do teste.
-- [ ] O detalhe de um ato `cortesia-concedida` mostra "Cortesia concedida", o autor, o aluno **pelo nome**, o curso **pelo título**, a vigência e o motivo; o e-mail do aluno não aparece; o filtro por tipo oferece *Cortesia concedida*.
-- [ ] Conta de outro tenant ou inexistente → sem rótulo, sem dizer qual; sem sessão de administrador → 403.
-- [ ] Smoke no Compose (o de 5.0): conceder uma cortesia e abrir `http://localhost:8081/admin/auditoria` como administrador → o registro conforme aparece com os rótulos legíveis.
+- [x] Gate passa (exit 0) com pelo menos 13 testes.
+- [x] Composição: `identity` e `bff-admin` iniciam no ambiente de teste com os registros reais, e o cliente HTTP real do BFF para Identity e para `learning` é exercitado contra a fronteira controlada do teste.
+- [x] O detalhe de um ato `cortesia-concedida` mostra "Cortesia concedida", o autor, o aluno **pelo nome**, o curso **pelo título**, a vigência e o motivo; o e-mail do aluno não aparece; o filtro por tipo oferece *Cortesia concedida*.
+- [x] Conta de outro tenant ou inexistente → sem rótulo, sem dizer qual; sem sessão de administrador → 403.
+- [x] Smoke no Compose (o de 5.0): conceder uma cortesia e abrir `http://localhost:8081/admin/auditoria` como administrador → o registro conforme aparece com os rótulos legíveis.

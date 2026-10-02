@@ -4,7 +4,7 @@ namespace CodeForCoders.Identity.Application.UseCases.Accounts.ResolveAuditIdent
 
 public sealed class ResolveAuditIdentityReferencesInputValidator : AbstractValidator<ResolveAuditIdentityReferencesInput>
 {
-    private static readonly string[] ReferenceTypes = ["conta-interna", "convite-interno"];
+    private static readonly string[] ReferenceTypes = ["conta-interna", "convite-interno", "conta-aluno"];
 
     public ResolveAuditIdentityReferencesInputValidator()
     {

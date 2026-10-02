@@ -5,9 +5,9 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": null,
-  "last_checkpoint": "8.0",
+  "last_checkpoint": "9.0",
   "phase": "checkpoint",
-  "active_task": "8.0",
+  "active_task": "9.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -27,10 +27,10 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "8.0",
-    "run_id": "run.BqIS1Evz",
+    "task": "9.0",
+    "run_id": "run.qtTSqN0e",
     "outcome": "checkpoint_ok",
-    "report": "tasks/prd-concessao-acesso/8.0_task_review.md"
+    "report": "tasks/prd-concessao-acesso/9.0_task_review.md"
   },
   "history": [
     {
@@ -301,6 +301,35 @@
       "task": "8.0",
       "run_id": "run.BqIS1Evz",
       "note": "checkpoint_ok: 8_task.md done, tasks.md [x] 8.0, V-06 fato de expiracao (AccessExpirationCycle/Worker, MarkExpiryFact, gauge lag), review focused aprovada run.W5x338qO, gate 11 testes exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "8.0",
+      "run_id": "run.BqIS1Evz",
+      "commit": "7deb5a4",
+      "note": "V-06 no ar; resta 9.0 (V-07 trilha)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "9.0",
+      "run_id": "run.PFnJMLiQ",
+      "note": "21 testes vs mínimo 13; regressões identity/bff/audit-trail verdes"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "focused_approved",
+      "task": "9.0",
+      "run_id": "run.mPmLedTs",
+      "note": "0 bloqueantes, 2 recomendações; todas as 9 tasks com focused aprovada"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "9.0",
+      "run_id": "run.qtTSqN0e",
+      "note": "checkpoint_ok: 9_task.md done, tasks.md [x] 9.0, V-07 trilha com conta-aluno por nome e cursoTitulo derivado via learning, review focused aprovada run.mPmLedTs, gate 21 testes exit 0; contracts/ preservado fora do commit"
     }
   ]
 }
