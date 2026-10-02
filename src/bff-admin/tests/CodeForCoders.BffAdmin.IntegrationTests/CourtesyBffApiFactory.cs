@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 
 namespace CodeForCoders.BffAdmin.IntegrationTests;
@@ -45,8 +46,14 @@ public sealed class CourtesyBffApiFactory : WebApplicationFactory<Program>
             services.AddHttpClient<IStudentAccountIdentityClient, StudentAccountIdentityClient>().ConfigurePrimaryHttpMessageHandler(() => Lookup);
             services.AddHttpClient<IStaffSessionIdentityClient, StaffSessionIdentityClient>().ConfigurePrimaryHttpMessageHandler(() => Identity);
             services.AddHttpClient<ICourtesyGrantsClient, CourtesyGrantsClient>().ConfigurePrimaryHttpMessageHandler(() => Grants);
+            services.PostConfigure<HttpStandardResilienceOptions>(nameof(ICourtesyGrantsClient) + "-standard", options =>
+            {
+                // Immediate controlled failures must exhaust retries before the total timeout, regardless of jitter.
+                options.Retry.Delay = TimeSpan.Zero;
+                options.Retry.UseJitter = false;
+            });
             services.AddHttpClient<ICourtesyCoursesClient, CourtesyCoursesClient>().ConfigurePrimaryHttpMessageHandler(() => Courses);
-            // Keep the production typed client registration and resilience pipeline; replace only the HTTP boundary.
+            // Keep production typed clients, resilience strategies and timeout windows; control the HTTP boundary and retry waits.
         });
     }
 

@@ -46,5 +46,6 @@ public sealed class CourtesyStudentGrantsProxyTests
         await using var factory = Factory(); factory.Grants.Unavailable = mode == "unavailable"; factory.Grants.Timeout = mode == "timeout"; factory.Grants.Malformed = mode == "malformed";
         using var client = await factory.AuthenticatedAsync(); using var response = await client.GetAsync($"/api/v1/students/{Guid.CreateVersion7()}/access-grants", Cancellation);
         Assert.Equal(status, (int)response.StatusCode); Assert.Contains(code, await response.Content.ReadAsStringAsync(Cancellation));
+        Assert.Equal(mode == "malformed" ? 1 : 4, factory.Grants.Calls);
     }
 }

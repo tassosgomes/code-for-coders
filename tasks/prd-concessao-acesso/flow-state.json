@@ -4,14 +4,14 @@
   "branch": "feature/concessao-acesso",
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
-  "target_ref": null,
-  "last_checkpoint": "9.0",
+  "target_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
+  "last_checkpoint": "6.0",
   "phase": "checkpoint",
-  "active_task": "9.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
-  "transport_retries": 2,
+  "full_attempt": 1,
+  "transport_retries": 3,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
   "specs": [
@@ -27,10 +27,10 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "9.0",
-    "run_id": "run.qtTSqN0e",
+    "task": "6.0",
+    "run_id": "run.WPgaSPoR",
     "outcome": "checkpoint_ok",
-    "report": "tasks/prd-concessao-acesso/9.0_task_review.md"
+    "report": ".tsg-flow/delegate-logs/run.WPgaSPoR/report.md"
   },
   "history": [
     {
@@ -330,6 +330,103 @@
       "task": "9.0",
       "run_id": "run.qtTSqN0e",
       "note": "checkpoint_ok: 9_task.md done, tasks.md [x] 9.0, V-07 trilha com conta-aluno por nome e cursoTitulo derivado via learning, review focused aprovada run.mPmLedTs, gate 21 testes exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "9.0",
+      "run_id": "run.qtTSqN0e",
+      "commit": "21d1d87",
+      "note": "Todas as 9 tasks done; próxima etapa: prepare-integration"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "infra_failure",
+      "run_id": "run.B6cZktkX",
+      "note": "integrator opencode: provider \"request contains invalid parameters\"; sem operação git; repetição com --kind=codex (escalonamento do integrator, precedente prd-acesso-interno)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "integration_ready",
+      "run_id": "run.POBnmHG1",
+      "note": "main inalterada f0db614; sem rebase; HEAD 21d1d87; 9 checkpoints + branch"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "full_rejected",
+      "full_attempt": 1,
+      "run_id": "run.YAxjkfs6",
+      "note": "B1: CommerceApiFactory E2E sem StudentAccountIdentity (exit 2 determinístico). B2: corrida no listener de spans do CourtesyLookupProxyTests (2/4 falhas). Cobertura 80-96%. Smoke de jornada e revisão semântica ficam para a full 2. Transporte: agent_blocked por prompt de permissão (rm no scratchpad), aprovado pelo orquestrador no pane; resultado gravado no mesmo run."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "task_reopened",
+      "task": "5.0",
+      "run_id": "run.MLs6RfB8",
+      "note": "pós-full B1"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "fix_partial",
+      "task": "5.0",
+      "run_id": "run.8W51EeHg",
+      "note": "B1 fechado; check-13 falho por B2 (dono 3.0); ordem invertida: corrigir B2 primeiro"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "task_reopened",
+      "task": "3.0",
+      "run_id": "run.IwbL5R2M",
+      "note": "pós-full B2"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "flaky_found",
+      "task": "6.0",
+      "run_id": "run.1NsHCODl",
+      "note": "CourtesyStudentGrantsProxyTests.UpstreamFailureUses502Or504Contract: 504 após ~11s onde se esperava 502 COMMERCE_UNAVAILABLE; 2 falhas em 6 execuções completas; dono 6.0"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "task_reopened",
+      "task": "6.0",
+      "run_id": "run.bRUqCjat",
+      "note": "flaky 502/504 pós-full"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "6.0",
+      "run_id": "run.AQddyhBl",
+      "note": "flaky 502/504: race jitter×prazo no teste; factory com delay 0 sem jitter + asserção de 4 chamadas; BFF 3x145/145"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "revalidation_approved",
+      "task": "6.0",
+      "run_id": "run.x5vccikJ",
+      "note": "flaky fechado; causa de teste confirmada"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "6.0",
+      "run_id": "run.WPgaSPoR",
+      "note": "Revalidação run.x5vccikJ aprovada; checkpoint da correção de flaky 502/504, gate 28 testes e lint/build/regressões aprovados. Task done e índice [x]; smoke Compose permanece pendente para full. Correções das tasks 3.0/5.0, prd_review.md e contracts/ excluídos."
+    }
+  ],
+  "full_fix_plan": [
+    {
+      "task": "5.0",
+      "blockers": [
+        "B1"
+      ]
+    },
+    {
+      "task": "3.0",
+      "blockers": [
+        "B2"
+      ]
     }
   ]
 }
