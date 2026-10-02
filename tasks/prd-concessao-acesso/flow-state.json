@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "worktree": null,
+  "branch": "feature/concessao-acesso",
+  "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
+  "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
+  "target_ref": null,
+  "last_checkpoint": "1.0",
+  "phase": "checkpoint",
+  "active_task": "1.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 1,
+  "transport": "herdr",
+  "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
+  "specs": [
+    "prd.md",
+    "techspec.md",
+    "contracts.md 1.1 (OpenAPI backoffice 1.0.0; interno commerce 1.2.0; interno identity 1.4.0; AsyncAPI commerce 1.1.0; AsyncAPI auditoria 1.4.0)"
+  ],
+  "delivery": "pr",
+  "plan_approval": "Plano confirmado para implementação (aprovado pelo responsável em 2026-10-01, cabeçalho de tasks.md); execução autorizada pelo usuário ao invocar o orquestrador (transporte herdr, delivery=pr)",
+  "validated_commit": null,
+  "validated_tree": null,
+  "pending_delegation": null,
+  "last_result": {
+    "role": "validator",
+    "mode": "focused",
+    "task": "1.0",
+    "run_id": "run.AuHSDsQI",
+    "outcome": "approved",
+    "report": "tasks/prd-concessao-acesso/1.0_task_review.md"
+  },
+  "history": [
+    {
+      "ts": "2026-10-01",
+      "event": "branch_ready",
+      "run_id": "run.gUHcAEeF",
+      "note": "feature/concessao-acesso criada neste checkout (sem worktree separada; workers compartilham a árvore). Precedente prd-acesso-interno usou worktree por causa do Compose do smoke full; decisão de Compose/worktree fica para a validação full. contracts/ não rastreado preservado."
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "external_choice_pending",
+      "task": "1.0",
+      "run_id": "run.BQxrhiyl",
+      "note": "Documento ASCII completo (543 linhas, T0–T7 com estados desktop/mobile, seção 7 com 10 decisões). Gate exit 1 apenas pela linha de aprovação ausente; tentativa 1 permanece aberta aguardando decisão externa — não conta como reprovação de convergência."
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "user_decision",
+      "task": "1.0",
+      "note": "Responsável aprovou o ASCII (resposta explícita \"Aprovar o ASCII\") após revisar docs/design/wireframes-cortesias.md"
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "infra_failure",
+      "task": "1.0",
+      "run_id": "run.goub0KEf",
+      "note": "opencode backend overloaded; worker não editou nada (status line e git conferidos); pane wC:p3Y fechado; repetição 1/2 sem consumir tentativa"
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "gate_passed",
+      "task": "1.0",
+      "run_id": "run.4EKgHcaL",
+      "note": "Aprovação do ASCII registrada no cabeçalho; gate exit 0; tentativa 1 fechada sem reprovação de convergência"
+    },
+    {
+      "ts": "2026-10-01",
+      "event": "focused_approved",
+      "task": "1.0",
+      "run_id": "run.AuHSDsQI",
+      "note": "0 bloqueantes; R1 (stepper 6x5) encaminhada à 2.0 via contexto; R2 opcional"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "1.0",
+      "run_id": "run.AZH4GFaV",
+      "note": "checkpoint_ok: 1_task.md done, tasks.md [x] 1.0, wireframes 543 linhas, review focused aprovada run.AuHSDsQI, gate rg exit 0; contracts/ preservado fora do commit"
+    }
+  ]
+}
