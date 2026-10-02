@@ -21,7 +21,7 @@ public sealed class CourtesyGrantFixture : IAsyncDisposable
     public ConcurrentQueue<string> Logs { get; } = new();
     public ConcurrentQueue<string> Spans { get; } = new();
     private readonly ActivityListener listener;
-    public Guid Tenant { get; } = Guid.CreateVersion7();
+    public Guid Tenant { get; }
     public Guid Actor { get; } = Guid.CreateVersion7();
     public Guid Student { get; } = Guid.CreateVersion7();
     public Guid Course { get; } = Guid.CreateVersion7();
@@ -29,8 +29,9 @@ public sealed class CourtesyGrantFixture : IAsyncDisposable
     public CourtesyGrantTestClock Clock { get; } = new();
     public CatalogCourseApiFactory Factory { get; }
     public HttpClient Client { get; }
-    public CourtesyGrantFixture(CommerceIntegrationFixture infra, Action<IServiceCollection>? customize = null)
+    public CourtesyGrantFixture(CommerceIntegrationFixture infra, Action<IServiceCollection>? customize = null, Guid? tenant = null)
     {
+        Tenant = tenant ?? Guid.CreateVersion7();
         Factory = new(infra)
         {
             CustomizeServices = services =>

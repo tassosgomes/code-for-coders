@@ -12,6 +12,7 @@ public static class EndpointExtensions
         app.MapCourtesyCourseEndpoints();
         app.MapCourtesyGrantEndpoints();
         app.MapStudentAccessGrantEndpoints();
+        app.MapAccessDecisionEndpoints();
         app.MapOfferReferenceEndpoints();
         app.MapShowcaseEndpoints();
         app.MapPurchaseIntentEndpoints();
