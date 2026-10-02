@@ -13,6 +13,10 @@ if [[ -e "$env_file" ]]; then
   }
 
   changed=false
+  if ! rg -q '^BFF_ADMIN_STUDENT_LOOKUP_SCOPE=' "$env_file"; then
+    printf '\nBFF_ADMIN_STUDENT_LOOKUP_SCOPE=student-account:lookup\n' >> "$env_file"
+    changed=true
+  fi
   if ! rg -q '^BFF_ADMIN_OUTBOX_KEY_B64=' "$env_file"; then
     bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
     printf '\nBFF_ADMIN_OUTBOX_KEY_B64=%s\n' "$bff_admin_outbox_key_b64" >> "$env_file"
@@ -97,6 +101,7 @@ bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
   printf 'IDENTITY_OUTBOX_KEY_B64=%s\n' "$outbox_key_b64"
   printf 'BFF_ADMIN_OUTBOX_KEY_B64=%s\n' "$bff_admin_outbox_key_b64"
   printf 'BFF_ADMIN_OUTBOX_KEY_VERSION=v1\n'
+  printf 'BFF_ADMIN_STUDENT_LOOKUP_SCOPE=student-account:lookup\n'
   printf 'BFF_IDENTITY_PUBLIC_KEY_B64=%s\n' "$public_key_b64"
   printf 'BFF_IDENTITY_PRIVATE_KEY_B64=%s\n' "$private_key_b64"
   printf 'BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64=%s\n' "$admin_public_key_b64"

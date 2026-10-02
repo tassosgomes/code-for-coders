@@ -17,6 +17,12 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail, code) = exception switch
         {
+            StudentAccountLookupException lookupException => (
+                lookupException.StatusCode,
+                "/problems/student-account-lookup",
+                lookupException.Title,
+                lookupException.Message,
+                lookupException.Code),
             StudentRegistrationException registrationException => (
                 registrationException.StatusCode,
                 "/problems/student-registration",

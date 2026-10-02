@@ -28,6 +28,7 @@ using CodeForCoders.Identity.Application.UseCases.Accounts.GrantStaffRole;
 using CodeForCoders.Identity.Application.UseCases.Accounts.RevokeStaffRole;
 using CodeForCoders.Identity.Application.UseCases.Accounts.StaffRoleActions;
 using CodeForCoders.Identity.Application.UseCases.Platform.RecordPlatformHeartbeat;
+using CodeForCoders.Identity.Application.UseCases.Accounts.LookupStudentAccount;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -38,6 +39,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<IValidator<LookupStudentAccountInput>, LookupStudentAccountInputValidator>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.AddScoped<IValidator<RegisterStudentAccountInput>, RegisterStudentAccountInputValidator>();
         services.AddScoped<IValidator<ConfirmStudentAccountInput>, ConfirmStudentAccountInputValidator>();

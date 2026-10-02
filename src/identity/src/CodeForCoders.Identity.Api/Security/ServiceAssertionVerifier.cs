@@ -94,7 +94,7 @@ public sealed class ServiceAssertionVerifier(
         var scopeGranted = claims.Scopes.Contains(requiredScope, StringComparer.Ordinal)
             && issuer.AllowedScopes.Contains(requiredScope, StringComparer.Ordinal);
         return new ServiceAssertionVerification(
-            new VerifiedServiceAssertion(claims.TenantId, claims.AssertionId, claims.ExpiresOn),
+            new VerifiedServiceAssertion(claims.TenantId, claims.AssertionId, claims.ExpiresOn, claims.Issuer),
             scopeGranted);
     }
 

@@ -5,9 +5,9 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": null,
-  "last_checkpoint": "2.0",
+  "last_checkpoint": "3.0",
   "phase": "checkpoint",
-  "active_task": "2.0",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -27,10 +27,10 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0",
-    "run_id": "run.FY9fBORg",
+    "task": "3.0",
+    "run_id": "run.0u4klWZZ",
     "outcome": "checkpoint_ok",
-    "report": "tasks/prd-concessao-acesso/2.0_task_review.md"
+    "report": "tasks/prd-concessao-acesso/3.0_task_review.md"
   },
   "history": [
     {
@@ -120,6 +120,35 @@
       "task": "2.0",
       "run_id": "run.FY9fBORg",
       "note": "checkpoint_ok: 2_task.md done, tasks.md [x] 2.0, wireframes +148 linhas (header + seção 8 Figma), review focused aprovada run.srGILbsN, gate rg exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "2.0",
+      "run_id": "run.FY9fBORg",
+      "commit": "0f87df3",
+      "note": "Fase 0 concluída (ASCII + Figma aprovados); próxima task 3.0 (V-01, vertical)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "3.0",
+      "run_id": "run.XflGlnMG",
+      "note": "21 testes do gate no ciclo 2; format/build/integração completas de identity e bff-admin, SPA lint/typecheck/build verdes; codex 53min"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "focused_approved",
+      "task": "3.0",
+      "run_id": "run.4sUG13gB",
+      "note": "0 bloqueantes, 4 recomendações"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "3.0",
+      "run_id": "run.0u4klWZZ",
+      "note": "checkpoint_ok: 3_task.md done, tasks.md [x] 3.0, V-01 localizar aluno (identity lookup + BFF proxy + SPA cortesias), review focused aprovada run.4sUG13gB, gate 21 testes exit 0; contracts/ preservado fora do commit"
     }
   ]
 }

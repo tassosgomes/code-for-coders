@@ -29,7 +29,8 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
+                // Lookup parameters contain personal data even in local development.
+                options.EnableSensitiveDataLogging(false);
             }
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
@@ -40,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityPasswordRecoveryStore, IdentityPasswordRecoveryStore>();
         services.AddScoped<IIdentityStaffAccountStore, IdentityStaffAccountStore>();
         services.AddScoped<IIdentityStaffInvitationStore, IdentityStaffInvitationStore>();
+        services.AddScoped<IStudentAccountQueries, StudentAccountQueries>();
         services.AddScoped<IAuditIdentityReferenceQueries, AuditIdentityReferenceQueries>();
         services.AddScoped<IIdentitySessionStore, IdentitySessionStore>();
         services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();

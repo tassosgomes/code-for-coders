@@ -19,6 +19,7 @@ public static class EndpointExtensions
         app.MapVideoLibraryEndpoints();
         app.MapVideoUploadEndpoints();
         app.MapAuditRecordEndpoints();
+        app.MapStudentAccountEndpoints();
         app.MapProxyEndpoints();
     }
 }

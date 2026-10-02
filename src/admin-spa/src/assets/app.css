@@ -4182,3 +4182,30 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .offer-option strong { font-size: 1.5rem; }
 .offer-change-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 @media (max-width: 640px) { .offer-change-comparison { grid-template-columns: 1fr; } }
+
+.courtesy-page { display: grid; gap: 24px; }
+.courtesy-page header p { color: var(--muted); }
+.courtesy-flow { width: min(100%, 880px); display: grid; gap: 24px; }
+.courtesy-stepper { display: flex; align-items: center; gap: 12px; padding: 0; list-style: none; }
+.courtesy-stepper li { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+.courtesy-stepper li:not(:last-child) { flex: 1; }
+.courtesy-stepper li:not(:last-child)::after { content: ''; height: 2px; flex: 1; background: var(--border); }
+.courtesy-stepper li > span:first-child { display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; }
+.courtesy-stepper li[aria-current] { color: var(--primary); font-weight: 600; }
+.courtesy-stepper li[aria-current] > span:first-child { background: var(--primary); color: #fff; border-color: var(--primary); }
+.courtesy-lookup-card { margin-top: 0; display: grid; gap: 16px; padding: 24px; }
+.courtesy-step-heading, .courtesy-student-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.courtesy-lookup-card .courtesy-step-heading h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 1.2px; font: 600 12px/16px Inter, sans-serif; }
+.courtesy-step-heading > span { font-size: 12px; color: var(--muted); }
+.courtesy-actions { display: flex; justify-content: end; }
+.courtesy-student-card { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; }
+.courtesy-student-card p { overflow-wrap: anywhere; }
+.courtesy-warning { padding: 12px; background: #f8f7fc; border: 1px solid var(--border); border-radius: 10px; }
+.courtesy-loading { padding: 24px; border-radius: 12px; background: #f8f7fc; }
+@media (max-width: 640px) {
+  .courtesy-stepper { gap: 6px; }
+  .courtesy-stepper li { gap: 6px; }
+  .courtesy-stepper li:not([aria-current]) > span:nth-child(2) { display: none; }
+  .courtesy-lookup-card { padding: 16px; }
+  .courtesy-account-status { display: none; }
+}

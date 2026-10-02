@@ -13,6 +13,7 @@ export const paths = {
   },
   catalog: { path: '/catalogo', getHref: () => '/catalogo' },
   catalogCourse: { path: '/catalogo/:courseId', getHref: (courseId: string) => `/catalogo/${courseId}` },
+  courtesies: { path: '/cortesias', getHref: () => '/cortesias' },
   staffFinance: {
     path: '/financeiro',
     getHref: () => '/financeiro',

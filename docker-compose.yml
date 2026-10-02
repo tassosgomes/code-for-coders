@@ -151,6 +151,7 @@ services:
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__6: staff-members:read
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__7: staff-members:write
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__8: audit-references:read
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__9: ${BFF_ADMIN_STUDENT_LOOKUP_SCOPE:-student-account:lookup}
       ServiceAssertions__Issuers__bff-admin__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     ports:
       - "5101:8080"
