@@ -5,7 +5,7 @@ capability: CAP-005
 version: 1.0
 status: approved
 updated: 2026-09-30
-sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.0, tasks/prd-nivel-prerequisito-curso/contracts.md@1.0, context/architecture-baseline.md@1.2
+sources: tasks/prd-nivel-prerequisito-curso/prd.md@1.1, tasks/prd-nivel-prerequisito-curso/contracts.md@1.0, context/architecture-baseline.md@1.2
 ---
 
 # TechSpec — nível e pré-requisito do curso

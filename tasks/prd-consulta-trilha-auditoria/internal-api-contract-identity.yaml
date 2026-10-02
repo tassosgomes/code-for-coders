@@ -1,10 +1,11 @@
 openapi: 3.1.0
 info:
   title: Identity — identificação legível de referências de auditoria
-  version: 1.0.0
+  version: 1.1.0
   description: >-
     Recorte de CAP-030 para bff-admin → identity. Resolve por tenant referências de
-    conta interna e convite interno no momento da consulta. Não altera nem copia
+    conta interna, convite interno e (desde 1.1.0, aditivo, C-07 de tasks/prd-concessao-acesso)
+    conta de aluno, no momento da consulta; o rótulo da conta de aluno é o nome, nunca o e-mail. Não altera nem copia
     dados na Auditoria. Identity valida a asserção do BFF, a sessão interna vigente
     e o papel administrador; referências de outro tenant e ausentes são indistintas.
   contact:
@@ -108,7 +109,7 @@ components:
       properties:
         type:
           type: string
-          enum: [conta-interna, convite-interno]
+          enum: [conta-interna, convite-interno, conta-aluno]
         id: { type: string, format: uuid }
     ReferenceLookupRequest:
       type: object
@@ -128,7 +129,7 @@ components:
       properties:
         type:
           type: string
-          enum: [conta-interna, convite-interno]
+          enum: [conta-interna, convite-interno, conta-aluno]
         id: { type: string, format: uuid }
         label:
           type: string

@@ -70,6 +70,7 @@ Decisões novas aprovadas pelo responsável pelo PRD em 2026-09-27:
 - O contrato interno de Identity em `CAP-002` não é editado. A nova operação requer escopo próprio e leitura de contas/convites no tenant; Identity deve aceitar o novo escopo apenas para `bff-admin`.
 - A revisão 1.2.0 acrescenta somente o campo opcional e nullable `role` ao resumo HTTP público e interno. O serviço `audit` lê o valor `papel` já armazenado no original e devolve apenas esse valor para concessões/revogações. A mudança é aditiva para consumidores existentes; não há migração de persistência nem mudança na mensagem de auditoria.
 - A mensagem usa `confirmationId`, `tenantId`, `originalRecordId`, `confirmedAt`, `author` por referência e `explanation`. Não reutiliza `AtoPraticado`: a semântica e a deduplicação diferem. Falta de identidade estrutural ou original válido leva à fila de erro, sem criar complemento.
+- **Identity 1.0.0 → 1.1.0 (C-07 de `tasks/prd-concessao-acesso/contracts.md`, 2026-10-01):** aditiva. `resolveAuditIdentityReferencesInternal` passa a aceitar a referência `conta-aluno`, alvo do ato `cortesia-concedida`, e devolve o **nome** da conta como rótulo, nunca o e-mail. Referência não resolvida segue devolvendo só `{type, id}`. Consumidores que só enviam `conta-interna` e `convite-interno` continuam corretos.
 
 ## Validação e verificação
 

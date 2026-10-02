@@ -1,0 +1,902 @@
+openapi: 3.1.0
+info:
+  title: Commerce — Matrícula e Direito de Acesso (interno)
+  version: 1.2.0
+  description: 'Recorte interno do primeiro PRD de CAP-008 (`tasks/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01).
+    Evolui `commerce` 1.1.0 (`tasks/prd-vitrine-oferta/internal-api-contract-commerce.yaml`, Catálogo e vitrine, sem mudança)
+    com o módulo Matrícula. Dois consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência
+    `commerce` (ADR-0005) — operações de cortesia, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF;
+    sem 502/504, que são do BFF); (2) `media` e `learning`, com asserção de serviço própria (C-04) — a decisão "pode acessar
+    agora?", fonte única do direito (RN-D01), sem consumidor nesta entrega. `commerce` decide pelas claims, sem confiar no
+    BFF. A escola vem do `tenantId` do token ou da asserção (G07). A localização do aluno por e-mail não passa por aqui: é
+    de Identity (`internal-api-contract-identity.yaml`).'
+  contact:
+    name: Time de Commerce
+servers:
+- url: /internal/v1
+  description: Rota privada de Commerce, inacessível ao navegador
+tags:
+- name: Cortesias
+  description: Cortesia e concessões, pelo backoffice
+- name: Decisão de acesso
+  description: '"Este aluno pode acessar este curso agora?", consultada por outros serviços'
+paths:
+  /courtesy-courses:
+    get:
+      tags:
+      - Cortesias
+      summary: Listar os cursos em que se pode conceder cortesia
+      description: 'Cursos da escola do ator com versão vigente, ordenados pelo título (DP-05, RF-03). **Não depende de o
+        curso ter oferta**: cortesia não tem pedido (RN-D11). Curso nunca publicado não aparece. `title` filtra por trecho
+        do título, sem distinguir maiúsculas nem acentos. Exige `cortesia.conceder` no claim `permissions`; o autor dos atos
+        é `sub`.'
+      operationId: listCourtesyCoursesInternal
+      security: &id001
+      - StaffUserToken: []
+      parameters:
+      - name: title
+        in: query
+        required: false
+        description: Trecho do título do curso.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+        examples:
+          trecho:
+            value: dotnet
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de cursos concedíveis.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourtesyCoursePage'
+              examples:
+                pagina:
+                  value:
+                    data:
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      title: .NET do zero à API
+                    - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                      title: Fundamentos de C#
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /courtesy-term-preview:
+    get:
+      tags:
+      - Cortesias
+      summary: Calcular o término de uma vigência por período
+      description: 'Leitura **sem efeito**, para o passo "Vigência" e a revisão (RF-03): devolve o último dia de acesso e
+        o instante em que o acesso deixa de valer **se a cortesia fosse concedida agora**, pela mesma regra da concessão (DP-03,
+        RF-05). Nada é gravado e a tela não recalcula a regra. O resultado vale se a confirmação ocorrer no mesmo dia no fuso
+        da escola; o término definitivo é o devolvido por `grantCourtesy`. Vigência vitalícia não tem término e não usa esta
+        operação. Exige `cortesia.conceder` no claim `permissions`.'
+      operationId: previewCourtesyTermInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - name: months
+        in: query
+        required: true
+        description: Duração em meses inteiros, de 1 a 60 (DP-04).
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 60
+        examples:
+          seis:
+            value: 6
+      responses:
+        '200':
+          description: O término que a concessão teria agora.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourtesyTermPreview'
+              examples:
+                seisMeses:
+                  value:
+                    months: 6
+                    computedAt: '2026-10-12T14:10:00Z'
+                    endsOn: '2027-04-12'
+                    expiresAt: '2027-04-13T03:00:00Z'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /students/{studentId}/access-grants:
+    parameters:
+    - $ref: '#/components/parameters/StudentId'
+    get:
+      tags:
+      - Cortesias
+      summary: Listar as concessões de um aluno
+      description: 'Todas as concessões do aluno na escola do ator, de qualquer origem, da mais recente para a mais antiga
+        (RF-02): curso, origem, vigência e situação. `status` é **calculado na leitura**, comparando o término com o momento
+        atual (RN-D06): nenhuma rotina precisa ter rodado. Aluno sem concessão devolve página vazia, não 404. Aluno inexistente
+        ou de outra escola também devolve página vazia (G07). Exige `cortesia.conceder` no claim `permissions`; o autor dos
+        atos é `sub`.'
+      operationId: listStudentAccessGrantsInternal
+      security: *id001
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de concessões do aluno.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGrantPage'
+              examples:
+                umaAtivaUmaVencida:
+                  value:
+                    data:
+                    - grantId: 4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+                      studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                      courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      courseTitle: .NET do zero à API
+                      origin: courtesy
+                      status: active
+                      accessPeriod:
+                        type: months
+                        months: 12
+                      grantedAt: '2026-10-12T14:10:00Z'
+                      endsOn: '2027-10-12'
+                      expiresAt: '2027-10-13T03:00:00Z'
+                      reason: Bolsa do programa de mentoria, turma de outubro
+                    - grantId: 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+                      studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                      courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                      courseTitle: Fundamentos de C#
+                      origin: courtesy
+                      status: expired
+                      accessPeriod:
+                        type: months
+                        months: 1
+                      grantedAt: '2026-08-31T09:00:00Z'
+                      endsOn: '2026-09-30'
+                      expiresAt: '2026-10-01T03:00:00Z'
+                      reason: Compensação por indisponibilidade da plataforma
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /courtesy-grants:
+    post:
+      tags:
+      - Cortesias
+      summary: Conceder cortesia
+      description: 'Concede a cortesia: acesso ao curso **sem pedido**, a partir do momento da confirmação, por 1 a 60 meses
+        ou vitalício, com motivo obrigatório (RF-03, RN-D11). Várias concessões convivem (RN-D07): já haver uma ativa **não**
+        impede. Concessão, fato `matricula.acesso-concedido` e ato `cortesia-concedida` nascem na mesma transação ou não nascem.
+        Reenvio com a mesma `Idempotency-Key` e o mesmo corpo não duplica: devolve a concessão original (200). O beneficiário
+        é reconfirmado como conta de aluno ativa no momento da concessão (RN-D09, C-03): conta desativada ou deixada de ser
+        de aluno entre a localização e a confirmação → 422 `STUDENT_ACCOUNT_NOT_ELIGIBLE`. **Não há operação para desfazer**
+        nesta entrega (DP-07, `CAP-009`). Exige `cortesia.conceder` no claim `permissions`; o autor dos atos é `sub`. A conta
+        é reconfirmada em Identity (`confirmStudentAccountInternal`, C-03) antes de gravar; sem resposta, nada é concedido.'
+      operationId: grantCourtesyInternal
+      security: *id001
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourtesyGrantInput'
+            examples:
+              seisMeses:
+                value:
+                  studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                  courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                  accessPeriod:
+                    type: months
+                    months: 6
+                  reason: Bolsa do programa de mentoria, turma de outubro
+              vitalicia:
+                value:
+                  studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+                  courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                  accessPeriod:
+                    type: lifetime
+                  reason: Parceria com a comunidade de desenvolvedores
+      responses:
+        '200':
+          description: Reenvio da mesma solicitação (mesma `Idempotency-Key` e mesmo corpo); devolve a concessão já criada.
+            Nada novo foi gravado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGrant'
+              examples:
+                reenvio:
+                  $ref: '#/components/examples/AccessGrantSixMonths'
+        '201':
+          description: Cortesia concedida.
+          headers:
+            Location:
+              description: Endereço da concessão criada.
+              schema:
+                type: string
+                examples:
+                - /api/v1/courtesy-grants/4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGrant'
+              examples:
+                seisMeses:
+                  $ref: '#/components/examples/AccessGrantSixMonths'
+                vitalicia:
+                  $ref: '#/components/examples/AccessGrantLifetime'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '422':
+          $ref: '#/components/responses/GrantRejected'
+        '503':
+          $ref: '#/components/responses/StudentAccountCheckUnavailable'
+  /courtesy-grants/{grantId}:
+    parameters:
+    - $ref: '#/components/parameters/GrantId'
+    get:
+      tags:
+      - Cortesias
+      summary: Ver uma cortesia concedida
+      description: Devolve a concessão de origem cortesia, na escola do ator. Concessão de outra origem, inexistente ou de
+        outra escola respondem o mesmo 404 (G07). Exige `cortesia.conceder` no claim `permissions`; o autor dos atos é `sub`.
+      operationId: getCourtesyGrantInternal
+      security: *id001
+      responses:
+        '200':
+          description: A concessão.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessGrant'
+              examples:
+                seisMeses:
+                  $ref: '#/components/examples/AccessGrantSixMonths'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/GrantNotFound'
+  /access-decision:
+    get:
+      tags:
+      - Decisão de acesso
+      summary: Decidir se o aluno pode acessar o curso agora
+      description: 'Fonte única da resposta "este aluno pode acessar este curso agora?" (RN-D01, G11, RF-06). Consultada por
+        Mídia antes de cada sessão de reprodução e por Aprendizagem; **nenhum consumidor guarda réplica do direito**. O aluno
+        tem acesso se ao menos uma concessão dele sobre o curso está ativa e dentro da vigência (RN-D07): a decisão compara
+        `expiresAt` com o momento da pergunta, sem depender de rotina nem do fato `acesso-expirado` (RN-D06). Responde **200
+        também quando nega**: negar é resposta, não erro. Aluno desconhecido, conta que não é de aluno, curso desconhecido
+        e dado de outra escola resultam em `denied` com `no-grant`, indistintos (G07, RN-D17). A decisão é só sobre o curso:
+        nunca diz se uma aula está liberada (RN-D15) e não muda por nova versão (RN-D08) nem por mudança de oferta (RN-D03).
+        Quem não obtiver resposta **não libera** o acesso (falha fechada, BA07). Pode ser guardada pelo consumidor por **até
+        30 segundos**, nunca além de `expiresAt`. Nenhum dado pessoal na consulta nem na resposta (G10, G23).'
+      operationId: decideAccessInternal
+      security:
+      - DomainServiceAssertion: []
+      parameters:
+      - name: studentId
+        in: query
+        required: true
+        description: Conta de aluno em Identidade e Acesso.
+        schema:
+          type: string
+          format: uuid
+      - name: courseId
+        in: query
+        required: true
+        description: Curso em Conteúdo e Currículo.
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: A decisão. Pode ser guardada por até 30 segundos.
+          headers:
+            Cache-Control:
+              description: '`private, max-age=30` (BA07): teto absoluto de cache do consumidor.'
+              schema:
+                type: string
+                examples:
+                - private, max-age=30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessDecision'
+              examples:
+                permitidoPorPeriodo:
+                  value:
+                    decision: allowed
+                    validity:
+                      type: until
+                      expiresAt: '2027-04-13T03:00:00Z'
+                    deniedReason: null
+                    lastExpiredAt: null
+                    decidedAt: '2026-10-12T14:15:00Z'
+                permitidoVitalicio:
+                  value:
+                    decision: allowed
+                    validity:
+                      type: lifetime
+                    deniedReason: null
+                    lastExpiredAt: null
+                    decidedAt: '2026-10-12T14:15:00Z'
+                semDireito:
+                  value:
+                    decision: denied
+                    validity: null
+                    deniedReason: no-grant
+                    lastExpiredAt: null
+                    decidedAt: '2026-10-12T14:15:00Z'
+                vigenciaEncerrada:
+                  value:
+                    decision: denied
+                    validity: null
+                    deniedReason: grant-ended
+                    lastExpiredAt: '2026-10-01T03:00:00Z'
+                    decidedAt: '2026-10-12T14:15:00Z'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/ServiceUnauthorized'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT RS256 de ator interno emitido por Identity (`validateStaffSessionInternal` com `audience: commerce`),
+        vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions, exp, jti. Chave pública por `kid`
+        no JWKS de Identity. As operações de Cortesias exigem `cortesia.conceder`.'
+    DomainServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Asserção de serviço assimétrica e curta assinada pela chave exclusiva do serviço chamador (`media` ou `learning`),
+        no mecanismo da ADR-0004 estendido por ADR-0009; a extensão a serviços de domínio como emissores é registrada em ADR
+        própria pela TechSpec (C-04). `commerce` valida assinatura, `kid`, emissor, audiência `commerce`, escopo `access-decision:read`,
+        `tenantId` permitido ao emissor, validade e `jti` contra replay. Não representa aluno.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 'Chave opaca única por intenção de escrita (G09). Repetição com o mesmo corpo devolve o mesmo resultado
+        na janela de 24 horas; corpo diferente com a mesma chave → 422 `IDEMPOTENCY_KEY_REUSED`.
+
+        '
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    StudentId:
+      name: studentId
+      in: path
+      required: true
+      description: Identificador da conta de aluno em Identidade e Acesso.
+      schema:
+        type: string
+        format: uuid
+    GrantId:
+      name: grantId
+      in: path
+      required: true
+      description: Identificador da concessão.
+      schema:
+        type: string
+        format: uuid
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, a partir de 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+  schemas:
+    AccessPeriod:
+      description: 'Vigência da concessão, na forma única de `AccessPeriod` de CAP-003 (C-05): por período, em meses inteiros
+        de 1 a 60 (DP-04), contados a partir do momento da concessão (RN-D04), ou vitalícia.
+
+        '
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        - months
+        properties:
+          type:
+            const: months
+          months:
+            type: integer
+            minimum: 1
+            maximum: 60
+            examples:
+            - 12
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        properties:
+          type:
+            const: lifetime
+    CourtesyCourse:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      properties:
+        courseId:
+          type: string
+          format: uuid
+          description: Identificador do curso em Conteúdo e Currículo.
+        title:
+          type: string
+          description: Título da versão vigente.
+    CourtesyGrantInput:
+      type: object
+      additionalProperties: false
+      required:
+      - studentId
+      - courseId
+      - accessPeriod
+      - reason
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+          pattern: \S
+          description: 'Motivo obrigatório (RN-D11, DP-04): de 1 a 500 caracteres, com ao menos um caractere que não seja
+            espaço. Não deve conter dado pessoal de terceiros (RN-A08). Vai ao ato de auditoria e à concessão; nunca a log,
+            métrica ou rastreamento.
+
+            '
+          examples:
+          - Bolsa do programa de mentoria, turma de outubro
+    AccessGrant:
+      type: object
+      additionalProperties: false
+      required:
+      - grantId
+      - studentId
+      - courseId
+      - courseTitle
+      - origin
+      - status
+      - accessPeriod
+      - grantedAt
+      - endsOn
+      - expiresAt
+      - reason
+      description: Uma concessão de acesso de um aluno a um curso (Matrícula e Direito de Acesso).
+      properties:
+        grantId:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        courseTitle:
+          type: string
+          description: Título atual do curso na visão de Matrícula. Só para exibição.
+        origin:
+          type: string
+          enum:
+          - courtesy
+          - purchase
+          - subscription
+          - cohort
+          description: 'Origem da concessão (RN-D02). Nesta entrega só `courtesy` é concedível; os demais valores nascem em
+            `CAP-011`, `CAP-013`/`CAP-014` e `CAP-010`. Clientes devem tolerar valor novo.
+
+            '
+        status:
+          type: string
+          enum:
+          - active
+          - expired
+          description: 'Calculado na leitura (RN-D06): `expired` quando o momento atual é igual ou posterior a `expiresAt`.
+            `suspended` e `revoked` virão com `CAP-009`; clientes devem tolerar valor novo.
+
+            '
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+        grantedAt:
+          type: string
+          format: date-time
+          description: Momento da concessão, em UTC. É de onde a vigência conta (RN-D04).
+        endsOn:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: 'Último dia de acesso, no fuso da escola (horário de Brasília na Fase 1, DP-03), para exibir "até DD/MM/AAAA".
+            Nulo na vitalícia. Mês sem o dia → último dia do mês.
+
+            '
+          examples:
+          - '2027-10-12'
+        expiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: 'Instante, em UTC, em que o acesso **deixa** de valer (exclusivo): o início do dia seguinte a `endsOn`
+            no fuso da escola. Há acesso se o momento da pergunta é anterior a ele. Nulo na vitalícia.
+
+            '
+          examples:
+          - '2027-10-13T03:00:00Z'
+        reason:
+          type:
+          - string
+          - 'null'
+          description: Motivo informado ao conceder. Presente na cortesia; nulo em origens sem motivo.
+    PaginationInfo:
+      type: object
+      additionalProperties: false
+      required:
+      - page
+      - size
+      - total
+      - totalPages
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+    CourtesyCoursePage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtesyCourse'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+    AccessGrantPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessGrant'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+    AccessDecision:
+      type: object
+      additionalProperties: false
+      required:
+      - decision
+      - validity
+      - deniedReason
+      - lastExpiredAt
+      - decidedAt
+      description: Resposta única de Matrícula à pergunta "pode acessar agora?" (DP-09).
+      properties:
+        decision:
+          type: string
+          enum:
+          - allowed
+          - denied
+        validity:
+          description: 'Quando `allowed`: o término efetivo — o da concessão ativa que dura mais; `lifetime` se alguma ativa
+            é vitalícia. Nulo quando `denied`.'
+          oneOf:
+          - type: 'null'
+          - type: object
+            additionalProperties: false
+            required:
+            - type
+            - expiresAt
+            properties:
+              type:
+                const: until
+              expiresAt:
+                type: string
+                format: date-time
+                description: Instante em que o acesso deixa de valer (exclusivo), em UTC.
+          - type: object
+            additionalProperties: false
+            required:
+            - type
+            properties:
+              type:
+                const: lifetime
+        deniedReason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - no-grant
+          - grant-ended
+          - null
+          description: 'Quando `denied`: `no-grant` (nunca teve concessão a esse curso) ou `grant-ended` (já teve, nenhuma
+            está ativa). Nulo quando `allowed`. Clientes devem tolerar valor novo (`suspended` e `revoked` virão com `CAP-009`).'
+        lastExpiredAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Em `grant-ended`, o término da última concessão. Nulo nos demais casos.
+        decidedAt:
+          type: string
+          format: date-time
+          description: Momento em que Matrícula decidiu, em UTC.
+    CourtesyTermPreview:
+      type: object
+      additionalProperties: false
+      required:
+      - months
+      - computedAt
+      - endsOn
+      - expiresAt
+      description: Prévia do término de uma vigência por período, calculada pela regra da concessão e sem efeito (RF-03, DP-03).
+      properties:
+        months:
+          type: integer
+          minimum: 1
+          maximum: 60
+        computedAt:
+          type: string
+          format: date-time
+          description: Momento, em UTC, a partir do qual o servidor calculou. A concessão calcula de novo no seu momento.
+        endsOn:
+          type: string
+          format: date
+          description: Último dia de acesso, no fuso da escola.
+        expiresAt:
+          type: string
+          format: date-time
+          description: Instante, em UTC, em que o acesso deixa de valer (exclusivo).
+  responses:
+    InvalidRequest:
+      description: Requisição malformada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            malformada:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: Token sem `cortesia.conceder`; code `PERMISSION_DENIED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              value:
+                type: about:blank
+                title: Sem permissão para conceder acesso.
+                status: 403
+                code: PERMISSION_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    GrantNotFound:
+      description: Cortesia inexistente, de outra origem ou de outra escola — indistintas (G07).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrada:
+              value:
+                type: about:blank
+                title: Cortesia não encontrada.
+                status: 404
+                code: GRANT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    GrantRejected:
+      description: 'Regra violada, nada concedido: `FIELD_INVALID` (motivo vazio ou acima de 500 caracteres, meses fora de
+        1 a 60, com o campo em `detail`), `STUDENT_ACCOUNT_NOT_ELIGIBLE` (conta inexistente, de outra escola, deixou de ser
+        de aluno ou está desativada — RN-D09), `COURSE_NOT_ELIGIBLE` (curso nunca publicado ou de outra escola — DP-05, RN-D17)
+        ou `IDEMPOTENCY_KEY_REUSED`.
+
+        '
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            motivoVazio:
+              value:
+                type: about:blank
+                title: Campo inválido.
+                status: 422
+                detail: reason deve ter de 1 a 500 caracteres e não ser só espaços.
+                code: FIELD_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+            contaDesativada:
+              value:
+                type: about:blank
+                title: A conta não pode receber acesso.
+                status: 422
+                code: STUDENT_ACCOUNT_NOT_ELIGIBLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TokenInvalid:
+      description: JWT ausente, expirado, de audiência errada ou com assinatura inválida; code `TOKEN_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            token:
+              value:
+                type: about:blank
+                title: Token inválido.
+                status: 401
+                code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ServiceUnauthorized:
+      description: Asserção ausente, inválida, expirada, de audiência errada ou com `jti` repetido; code `SERVICE_UNAUTHORIZED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            asserção:
+              value:
+                type: about:blank
+                title: Serviço não autenticado.
+                status: 401
+                code: SERVICE_UNAUTHORIZED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ScopeDenied:
+      description: Asserção sem o escopo `access-decision:read` ou de emissor sem permissão para o `tenantId`; code `SCOPE_DENIED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            escopo:
+              value:
+                type: about:blank
+                title: Escopo insuficiente.
+                status: 403
+                code: SCOPE_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    StudentAccountCheckUnavailable:
+      description: '`commerce` não conseguiu reconfirmar a conta em Identity. **Falha fechada**: nada foi concedido; `STUDENT_ACCOUNT_CHECK_UNAVAILABLE`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível confirmar a conta do aluno.
+                status: 503
+                code: STUDENT_ACCOUNT_CHECK_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  examples:
+    AccessGrantSixMonths:
+      value:
+        grantId: 4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+        studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        courseTitle: .NET do zero à API
+        origin: courtesy
+        status: active
+        accessPeriod:
+          type: months
+          months: 6
+        grantedAt: '2026-10-12T14:10:00Z'
+        endsOn: '2027-04-12'
+        expiresAt: '2027-04-13T03:00:00Z'
+        reason: Bolsa do programa de mentoria, turma de outubro
+    AccessGrantLifetime:
+      value:
+        grantId: 7f8091a2-b3c4-4d5e-8f60-71829304a5b6
+        studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+        courseTitle: .NET do zero à API
+        origin: courtesy
+        status: active
+        accessPeriod:
+          type: lifetime
+        grantedAt: '2026-10-12T14:12:30Z'
+        endsOn: null
+        expiresAt: null
+        reason: Parceria com a comunidade de desenvolvedores
