@@ -4209,3 +4209,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .courtesy-lookup-card { padding: 16px; }
   .courtesy-account-status { display: none; }
 }
+
+.courtesy-lookup-card[hidden] { display: none; }
+.courtesy-course-list { list-style: none; padding: 0 !important; display: grid; gap: 12px; }
+.courtesy-course-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.courtesy-course-row.is-selected { border-color: var(--primary); background: var(--surface-raised, var(--surface)); }
+.courtesy-pagination, .courtesy-step-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.courtesy-actions { gap: 12px; }
+.courtesy-course-loading { display: grid; gap: 12px; }
+@media (max-width: 600px) { .courtesy-course-row { align-items: start; flex-direction: column; } }

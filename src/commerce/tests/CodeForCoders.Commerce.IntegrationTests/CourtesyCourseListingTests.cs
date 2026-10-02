@@ -19,7 +19,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture)
+public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixture)
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -29,9 +29,8 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
         await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
         using var response = await SendAsync(factory, client, Guid.CreateVersion7());
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var page = await response.Content.ReadFromJsonAsync<CatalogCoursePage>(Cancellation);
-        Assert.Empty(page!.Data); Assert.Equal(0, page.Pagination.Total);
-        Assert.Contains(factory.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>(), service => service is CatalogCourseConsumerWorker);
+        Assert.Empty((await response.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data);
+        Assert.Contains(factory.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>(), service => service is EntitlementCourseConsumerWorker);
     }
 
     [Theory(DisplayName = nameof(OtherRolesCannotListTheCatalog))]
@@ -50,10 +49,10 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
     public async Task MissingAndInvalidTokensReturn401()
     {
         await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
-        using var missing = await client.GetAsync("/internal/v1/catalog/courses", Cancellation);
+        using var missing = await client.GetAsync("/internal/v1/courtesy-courses", Cancellation);
         Assert.Equal(HttpStatusCode.Unauthorized, missing.StatusCode);
         client.DefaultRequestHeaders.Authorization = new("Bearer", "invalid");
-        using var invalid = await client.GetAsync("/internal/v1/catalog/courses", Cancellation);
+        using var invalid = await client.GetAsync("/internal/v1/courtesy-courses", Cancellation);
         Assert.Equal(HttpStatusCode.Unauthorized, invalid.StatusCode);
     }
 
@@ -66,32 +65,33 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), rich: true, title: "Alpha"));
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(other, Guid.CreateVersion7(), title: "Other school"));
         using var first = await SendAsync(factory, client, tenant, path: "?_page=1&_size=1");
-        var page = await first.Content.ReadFromJsonAsync<CatalogCoursePage>(Cancellation);
+        var page = await first.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation);
         Assert.Equal("Alpha", Assert.Single(page!.Data).Title); Assert.Equal(2, page.Pagination.Total); Assert.Equal(2, page.Pagination.TotalPages);
-        Assert.Equal(new CatalogOfferCounts(0, 0, 0), page.Data[0].OfferCounts); Assert.False(page.Data[0].InShowcase);
+        // No Catalog row or offer was inserted; Entitlement alone supplies the list.
+        await using var scope = factory.Services.CreateAsyncScope();
+        scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(tenant);
+        Assert.Empty(await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().CatalogCourseViews.ToListAsync(Cancellation));
         using var second = await SendAsync(factory, client, tenant, path: "?_page=2&_size=1");
-        Assert.Equal("Zebra", Assert.Single((await second.Content.ReadFromJsonAsync<CatalogCoursePage>(Cancellation))!.Data).Title);
+        Assert.Equal("Zebra", Assert.Single((await second.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data).Title);
         using var isolated = await SendAsync(factory, client, other);
-        Assert.Equal("Other school", Assert.Single((await isolated.Content.ReadFromJsonAsync<CatalogCoursePage>(Cancellation))!.Data).Title);
+        Assert.Equal("Other school", Assert.Single((await isolated.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data).Title);
     }
 
-    [Fact(DisplayName = nameof(BrokerDeliveryIsMonotonicAndUpgradesLegacyFormatWithoutVideoIds))]
-    public async Task BrokerDeliveryIsMonotonicAndUpgradesLegacyFormatWithoutVideoIds()
+    [Fact(DisplayName = nameof(BrokerDeliveryIgnoresEqualAndOlderVersionsIncludingRichReplay))]
+    public async Task BrokerDeliveryIgnoresEqualAndOlderVersionsIncludingRichReplay()
     {
         await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
         var tenant = Guid.CreateVersion7(); var courseId = Guid.CreateVersion7();
-        await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 2));
-        var legacy = await WaitForAsync(factory, tenant, courseId, course => course.VersionNumber == 2);
-        Assert.Null(legacy.Level); Assert.Equal("", legacy.Description); Assert.Equal("1.0.0", legacy.SourceFormat);
-        await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 2, true));
-        var rich = await WaitForAsync(factory, tenant, courseId, course => course.SourceFormat == "1.1.0");
-        Assert.Equal("beginner", rich.Level); Assert.Equal("Pedagogical description", rich.Description);
-        Assert.DoesNotContain("videoId", rich.StructureJson); Assert.Contains("Lesson", rich.StructureJson);
+        await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 2, title: "Fundamentos de C#"));
+        await WaitForAsync(factory, tenant, courseId, course => course.VersionNumber == 2);
         await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 2, true, "Duplicate"));
         await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 1, true, "Older"));
         await WaitUntilQueueEmptyAsync(factory);
         var unchanged = await WaitForAsync(factory, tenant, courseId, course => course.VersionNumber == 2);
-        Assert.Equal("Published course", unchanged.Title);
+        Assert.Equal("Fundamentos de C#", unchanged.Title);
+        await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 3, true, "Ação"));
+        var updated = await WaitForAsync(factory, tenant, courseId, course => course.VersionNumber == 3);
+        Assert.Equal("acao", updated.NormalizedTitle);
     }
 
     [Theory(DisplayName = nameof(PermanentErrorsGoToDeadLetterWithoutRetry))]
@@ -101,17 +101,17 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
     {
         await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
         await using var channel = await factory.Services.GetRequiredService<RabbitMqConnectionProvider>().CreateChannelAsync(Cancellation);
-        await channel.QueuePurgeAsync("commerce.catalog-course.dlq", Cancellation);
+        await channel.QueuePurgeAsync("commerce.entitlement-course.dlq", Cancellation);
         var body = Encoding.UTF8.GetBytes(payload); await PublishAsync(factory, body);
         BasicGetResult? delivery = null;
         for (var attempt = 0; attempt < 100 && delivery is null; attempt++)
         {
-            delivery = await channel.BasicGetAsync("commerce.catalog-course.dlq", true, Cancellation);
+            delivery = await channel.BasicGetAsync("commerce.entitlement-course.dlq", true, Cancellation);
             if (delivery is null) await Task.Delay(50, Cancellation);
         }
         Assert.NotNull(delivery); Assert.Equal(body, delivery.Body.ToArray());
         Assert.False(delivery.BasicProperties.Headers?.ContainsKey("x-delivery-count") == true);
-        Assert.Null(await channel.BasicGetAsync("commerce.catalog-course.dlq", true, Cancellation));
+        Assert.Null(await channel.BasicGetAsync("commerce.entitlement-course.dlq", true, Cancellation));
     }
 
     [Fact(DisplayName = nameof(ConcurrentFirstInsertAndUpdatesKeepTheGreatestVersion))]
@@ -124,32 +124,48 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
         Assert.Equal(8, result.VersionNumber);
     }
 
-    [Fact(DisplayName = nameof(NewerLegacyPublicationClearsLevelAndDescription))]
-    public async Task NewerLegacyPublicationClearsLevelAndDescription()
+    [Fact(DisplayName = nameof(TitleSearchIsCaseAndAccentInsensitiveAndTreatsWildcardsLiterally))]
+    public async Task TitleSearchIsCaseAndAccentInsensitiveAndTreatsWildcardsLiterally()
     {
         await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
-        var tenant = Guid.CreateVersion7(); var course = Guid.CreateVersion7();
-        await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, course, rich: true));
-        await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, course, 2));
-        var result = await WaitForAsync(factory, tenant, course, row => row.VersionNumber == 2);
-        Assert.Null(result.Level); Assert.Equal("", result.Description); Assert.Null(result.InShowcaseSince);
+        var tenant = Guid.CreateVersion7();
+        await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), title: "Fundaméntos de C#"));
+        await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), title: "Ação 100%_"));
+        foreach (var term in new[] { "FUNDAMENTOS", "fundaméntos", "acao", "%_" })
+        {
+            using var response = await SendAsync(factory, client, tenant, path: "?title=" + Uri.EscapeDataString(term));
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Single((await response.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data);
+        }
     }
 
-    [Fact(DisplayName = nameof(TransientFailuresAreNotAcknowledgedAndExhaustTheirDeliveryLimit))]
-    public async Task TransientFailuresAreNotAcknowledgedAndExhaustTheirDeliveryLimit()
+    [Fact(DisplayName = nameof(MissingTenantCannotReadAnySchool))]
+    public async Task MissingTenantCannotReadAnySchool()
     {
-        var unavailable = new UnavailableCatalogProjectionStore();
+        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var token = new JwtSecurityToken("identity", "commerce", [new Claim("permissions", "cortesia.conceder")],
+            DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(2), new SigningCredentials(factory.JwksHandler.SigningKey, SecurityAlgorithms.RsaSha256));
+        client.DefaultRequestHeaders.Authorization = new("Bearer", new JwtSecurityTokenHandler().WriteToken(token));
+        using var response = await client.GetAsync("/internal/v1/courtesy-courses", Cancellation);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Contains("TOKEN_INVALID", await response.Content.ReadAsStringAsync(Cancellation));
+    }
+
+    [Fact(DisplayName = nameof(TransientFailuresRetryAndEventuallyDeadLetterWithoutAcknowledging))]
+    public async Task TransientFailuresRetryAndEventuallyDeadLetterWithoutAcknowledging()
+    {
+        var unavailable = new UnavailableEntitlementProjectionStore();
         await using var factory = new CatalogCourseApiFactory(fixture)
         {
             CustomizeServices = services =>
             {
-                services.RemoveAll<ICatalogCourseProjectionStore>();
-                services.AddSingleton<ICatalogCourseProjectionStore>(unavailable);
+                services.RemoveAll<IEntitlementCourseProjectionStore>();
+                services.AddSingleton<IEntitlementCourseProjectionStore>(unavailable);
                 services.Configure<RabbitMqOptions>(options =>
                 {
-                    options.HeartbeatQueue = "commerce.platform-heartbeat-transient-test";
-                    options.CatalogCourseQueue = "commerce.catalog-transient-test";
-                    options.EntitlementCourseQueue = "commerce.catalog-test-entitlement-transient";
+                    options.HeartbeatQueue = "commerce.courtesy-heartbeat-transient-test";
+                    options.CatalogCourseQueue = "commerce.courtesy-catalog-transient-test";
+                    options.EntitlementCourseQueue = "commerce.entitlement-transient-test";
                     options.DeliveryLimit = 3;
                 });
             },
@@ -158,16 +174,14 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
         var body = CatalogCourseFactFixture.Create(Guid.CreateVersion7(), Guid.CreateVersion7());
         await PublishAsync(factory, body);
         await using var channel = await factory.Services.GetRequiredService<RabbitMqConnectionProvider>().CreateChannelAsync(Cancellation);
-        BasicGetResult? deadLetter = null;
+        BasicGetResult? delivery = null;
         var deadline = DateTimeOffset.UtcNow.AddSeconds(20);
-        while (deadLetter is null && DateTimeOffset.UtcNow < deadline)
+        while (delivery is null && DateTimeOffset.UtcNow < deadline)
         {
-            deadLetter = await channel.BasicGetAsync("commerce.catalog-transient-test.dlq", true, Cancellation);
-            if (deadLetter is null) await Task.Delay(50, Cancellation);
+            delivery = await channel.BasicGetAsync("commerce.entitlement-transient-test.dlq", true, Cancellation);
+            if (delivery is null) await Task.Delay(50, Cancellation);
         }
-        Assert.NotNull(deadLetter);
-        Assert.Equal(body, deadLetter.Body.ToArray());
-        Assert.Equal(3, unavailable.Calls);
+        Assert.NotNull(delivery); Assert.Equal(body, delivery.Body.ToArray()); Assert.Equal(3, unavailable.Calls);
     }
 
     [Fact(DisplayName = nameof(InvalidPaginationReturnsContractProblem))]
@@ -182,7 +196,7 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
     private static async Task ApplyAsync(CatalogCourseApiFactory factory, byte[] body)
     {
         await using var scope = factory.Services.CreateAsyncScope();
-        await scope.ServiceProvider.GetRequiredService<ICatalogCourseProjectionStore>().ApplyAsync(PublishedCourseFact.Parse(body), Cancellation);
+        await scope.ServiceProvider.GetRequiredService<IEntitlementCourseProjectionStore>().ApplyAsync(PublishedCourseFact.Parse(body), Cancellation);
     }
 
     private static async Task PublishAsync(CatalogCourseApiFactory factory, byte[] body)
@@ -192,14 +206,14 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
             new BasicProperties { ContentType = "application/json", Persistent = true }, body, Cancellation);
     }
 
-    private static async Task<CodeForCoders.Commerce.Domain.Entities.CatalogCourseView> WaitForAsync(
-        CatalogCourseApiFactory factory, Guid tenantId, Guid courseId, Func<CodeForCoders.Commerce.Domain.Entities.CatalogCourseView, bool> predicate)
+    private static async Task<CodeForCoders.Commerce.Domain.Entities.EntitlementCourseView> WaitForAsync(
+        CatalogCourseApiFactory factory, Guid tenantId, Guid courseId, Func<CodeForCoders.Commerce.Domain.Entities.EntitlementCourseView, bool> predicate)
     {
         for (var attempt = 0; attempt < 100; attempt++)
         {
             await using var scope = factory.Services.CreateAsyncScope();
             scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(tenantId);
-            var row = await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().CatalogCourseViews.AsNoTracking()
+            var row = await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().EntitlementCourseViews.AsNoTracking()
                 .SingleOrDefaultAsync(course => course.CourseId == courseId, Cancellation);
             if (row is not null && predicate(row)) return row;
             await Task.Delay(50, Cancellation);
@@ -212,7 +226,7 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
         await using var channel = await factory.Services.GetRequiredService<RabbitMqConnectionProvider>().CreateChannelAsync(Cancellation);
         for (var attempt = 0; attempt < 100; attempt++)
         {
-            if (await channel.MessageCountAsync("commerce.catalog-course", Cancellation) == 0)
+            if (await channel.MessageCountAsync("commerce.entitlement-course", Cancellation) == 0)
             {
                 // Broker count excludes the active delivery; allow its transaction to finish.
                 await Task.Delay(200, Cancellation); return;
@@ -223,12 +237,12 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
     }
 
     private static Task<HttpResponseMessage> SendAsync(CatalogCourseApiFactory factory, HttpClient client, Guid tenant,
-        string permission = "oferta.editar", string role = "financeiro", string path = "")
+        string permission = "cortesia.conceder", string role = "financeiro", string path = "")
     {
         var token = new JwtSecurityToken("identity", "commerce",
             [new Claim("sub", Guid.CreateVersion7().ToString()), new Claim("tenantId", tenant.ToString()), new Claim("roles", role), new Claim("permissions", permission)],
             DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(2), new SigningCredentials(factory.JwksHandler.SigningKey, SecurityAlgorithms.RsaSha256));
-        var request = new HttpRequestMessage(HttpMethod.Get, "/internal/v1/catalog/courses" + path);
+        var request = new HttpRequestMessage(HttpMethod.Get, "/internal/v1/courtesy-courses" + path);
         request.Headers.Authorization = new("Bearer", new JwtSecurityTokenHandler().WriteToken(token));
         return client.SendAsync(request, Cancellation);
     }

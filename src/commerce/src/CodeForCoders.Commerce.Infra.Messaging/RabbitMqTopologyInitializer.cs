@@ -60,6 +60,7 @@ public sealed class RabbitMqTopologyInitializer(
             },
             cancellationToken: cancellationToken);
         await DeclareCatalogAsync(channel, settings, cancellationToken);
+        await DeclareEntitlementAsync(channel, settings, cancellationToken);
         await channel.ExchangeDeclareAsync(settings.AuditExchange, ExchangeType.Topic, durable: true,
             autoDelete: false, arguments: null, cancellationToken: cancellationToken);
         await channel.QueueDeclareAsync(settings.OfferRetentionQueue, durable: true, exclusive: false,
@@ -97,6 +98,25 @@ public sealed class RabbitMqTopologyInitializer(
                 ["x-delivery-limit"] = settings.DeliveryLimit,
             }, cancellationToken: cancellationToken);
         await channel.QueueBindAsync(settings.CatalogCourseQueue, settings.LearningExchange,
+            PublishedCourseFact.RoutingKey, null, cancellationToken: cancellationToken);
+    }
+
+    private static async Task DeclareEntitlementAsync(IChannel channel, RabbitMqOptions settings, CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(settings.LearningExchange, ExchangeType.Topic, true, false, null, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync($"{settings.EntitlementCourseQueue}.dlq", true, false, false,
+            new Dictionary<string, object?> { ["x-queue-type"] = "quorum" }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync($"{settings.EntitlementCourseQueue}.dlq", settings.DeadLetterExchange,
+            settings.EntitlementCourseQueue, null, cancellationToken: cancellationToken);
+        await channel.QueueDeclareAsync(settings.EntitlementCourseQueue, true, false, false,
+            new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+                ["x-dead-letter-routing-key"] = settings.EntitlementCourseQueue,
+                ["x-delivery-limit"] = settings.DeliveryLimit,
+            }, cancellationToken: cancellationToken);
+        await channel.QueueBindAsync(settings.EntitlementCourseQueue, settings.LearningExchange,
             PublishedCourseFact.RoutingKey, null, cancellationToken: cancellationToken);
     }
 

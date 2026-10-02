@@ -43,6 +43,8 @@ public static class ServiceConfigurationExtensions
             policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", CatalogPolicies.Permission)));
         builder.Services.AddAuthorization(options => options.AddPolicy(CatalogPolicies.ResolveReferences,
             policy => policy.RequireAuthenticatedUser().RequireClaim("roles", CatalogPolicies.AdministratorRole)));
+        builder.Services.AddAuthorization(options => options.AddPolicy(CourtesyPolicies.Grant,
+            policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", CourtesyPolicies.Permission)));
         builder.Services.AddServiceAssertionConfiguration(builder.Configuration);
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();

@@ -14,6 +14,8 @@ public sealed class CommerceDbContext(
 
     public DbSet<CatalogOutboxMessage> CatalogOutboxMessages => Set<CatalogOutboxMessage>();
 
+    public DbSet<EntitlementCourseView> EntitlementCourseViews => Set<EntitlementCourseView>();
+
     public DbSet<CatalogCourseView> CatalogCourseViews => Set<CatalogCourseView>();
     public DbSet<CatalogOffer> CatalogOffers => Set<CatalogOffer>();
     public DbSet<CatalogEditReceipt> CatalogEditReceipts => Set<CatalogEditReceipt>();
@@ -27,6 +29,8 @@ public sealed class CommerceDbContext(
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CommerceDbContext).Assembly);
         modelBuilder.Entity<PurchaseIntentDailyCount>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<PurchaseIntentReceipt>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<EntitlementCourseView>().HasQueryFilter(
+            course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CatalogCourseView>().HasQueryFilter(
             course => tenantContext.TenantId.HasValue && course.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CatalogOffer>().HasQueryFilter(

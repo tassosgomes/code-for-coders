@@ -14,6 +14,10 @@ public static class CommerceTelemetry
     public static readonly Counter<long> CourseFactsApplied = Meter.CreateCounter<long>("commerce.catalog.course.applied", "{fact}");
     public static readonly Counter<long> CourseFactsIgnored = Meter.CreateCounter<long>("commerce.catalog.course.ignored", "{fact}");
     public static readonly Counter<long> CourseFactsDeadLettered = Meter.CreateCounter<long>("commerce.catalog.course.dead_lettered", "{fact}");
+    public static readonly Counter<long> EntitlementCourseFactsApplied = Meter.CreateCounter<long>("commerce.entitlement.course.applied", "{fact}");
+    public static readonly Counter<long> EntitlementCourseFactsIgnored = Meter.CreateCounter<long>("commerce.entitlement.course.ignored", "{fact}");
+    public static readonly Counter<long> EntitlementCourseFactsDeadLettered = Meter.CreateCounter<long>("commerce.entitlement.course.dead_lettered", "{fact}");
+    public static readonly Histogram<double> EntitlementCourseFactLag = Meter.CreateHistogram<double>("commerce.entitlement.course.lag", "s");
     public static readonly Counter<long> PurchaseIntentsCounted = Meter.CreateCounter<long>("commerce.purchase_intent.counted", "{click}");
     public static readonly Counter<long> PurchaseIntentsRepeated = Meter.CreateCounter<long>("commerce.purchase_intent.repeated", "{click}");
     public static readonly Counter<long> PurchaseIntentsRefused = Meter.CreateCounter<long>("commerce.purchase_intent.refused", "{click}");

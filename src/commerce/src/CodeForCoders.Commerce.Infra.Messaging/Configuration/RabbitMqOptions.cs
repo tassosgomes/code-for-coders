@@ -48,6 +48,9 @@ public sealed class RabbitMqOptions
     [Required]
     public string CatalogCourseQueue { get; set; } = "commerce.catalog-course";
 
+    [Required]
+    public string EntitlementCourseQueue { get; set; } = "commerce.entitlement-course";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 

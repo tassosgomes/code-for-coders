@@ -18,6 +18,7 @@ public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) 
     {
         builder.UseEnvironment("CatalogTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", DatabaseConnectionString ?? fixture.PostgreSql.GetConnectionString());
+        builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
         builder.UseSetting("FinanceAreaTokens:Audience", "commerce");
         builder.UseSetting("FinanceAreaTokens:JwksUrl", "http://identity.test/internal/v1/jwks");

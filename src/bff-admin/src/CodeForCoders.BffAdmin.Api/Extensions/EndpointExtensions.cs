@@ -15,6 +15,7 @@ public static class EndpointExtensions
         app.MapStaffMemberEndpoints();
         app.MapFinanceAreaEndpoints();
         app.MapCatalogCourseEndpoints();
+        app.MapCourtesyCourseEndpoints();
         app.MapCatalogOfferEndpoints();
         app.MapVideoLibraryEndpoints();
         app.MapVideoUploadEndpoints();

@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddHostedService<OutboxPublisherWorker>();
         services.AddHostedService<HeartbeatConsumerWorker>();
         services.AddHostedService<CatalogCourseConsumerWorker>();
+        services.AddHostedService<EntitlementCourseConsumerWorker>();
 
         return services;
     }

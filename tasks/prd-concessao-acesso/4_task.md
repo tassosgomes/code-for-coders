@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["3.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.UnitTests/CodeForCoders.Commerce.UnitTests.csproj -- --filter-class CodeForCoders.Commerce.UnitTests.EntitlementCourseViewTests --minimum-expected-tests 6 && dotnet test --project src/commerce/tests/CodeForCoders.Commerce.UnitTests/CodeForCoders.Commerce.UnitTests.csproj -- --filter-class CodeForCoders.Commerce.UnitTests.CourtesyTitleSearchTests --minimum-expected-tests 4 && dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.CourtesyCourseListingTests --minimum-expected-tests 9 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.IntegrationTests/CodeForCoders.BffAdmin.IntegrationTests.csproj -- --filter-class CodeForCoders.BffAdmin.IntegrationTests.CourtesyCoursesProxyTests --minimum-expected-tests 4 && npm --prefix src/admin-spa run test -- courtesy-course-step'
@@ -78,8 +78,8 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 26 testes.
-- [ ] Composição: `commerce` inicia no ambiente de teste com os registros reais (política, consumidor, topologia, contexto de tenant) e o cliente HTTP real de `bff-admin` é exercitado contra a fronteira controlada do teste.
-- [ ] Reentrega do mesmo fato e fato de versão menor não alteram a linha; fato com `tenantId` ausente ou JSON inválido vai à DLQ sem retry; a busca "fundamentos" acha "Fundamentos de C#" e a busca sem acento acha título acentuado.
-- [ ] `listCourtesyCoursesInternal` direto: sem a permissão → 403; JWT de outra escola → lista só daquela escola; curso sem oferta aparece.
-- [ ] Smoke no Compose (Identity, `learning`, `commerce`, RabbitMQ, PostgreSQL, Valkey, migrations por `dotnet ef database update`): publicar um curso em `learning` (fato real) e abrir `http://localhost:8081/admin/cortesias` como financeiro → o curso é listado no passo *Curso*; com o consumidor declarado antes do reenvio de `learning`, os cursos já publicados aparecem.
+- [x] Gate passa (exit 0) com pelo menos 26 testes.
+- [x] Composição: `commerce` inicia no ambiente de teste com os registros reais (política, consumidor, topologia, contexto de tenant) e o cliente HTTP real de `bff-admin` é exercitado contra a fronteira controlada do teste.
+- [x] Reentrega do mesmo fato e fato de versão menor não alteram a linha; fato com `tenantId` ausente ou JSON inválido vai à DLQ sem retry; a busca "fundamentos" acha "Fundamentos de C#" e a busca sem acento acha título acentuado.
+- [x] `listCourtesyCoursesInternal` direto: sem a permissão → 403; JWT de outra escola → lista só daquela escola; curso sem oferta aparece.
+- [x] Smoke no Compose (Identity, `learning`, `commerce`, RabbitMQ, PostgreSQL, Valkey, migrations por `dotnet ef database update`): publicar um curso em `learning` (fato real) e abrir `http://localhost:8081/admin/cortesias` como financeiro → o curso é listado no passo *Curso*; com o consumidor declarado antes do reenvio de `learning`, os cursos já publicados aparecem.
