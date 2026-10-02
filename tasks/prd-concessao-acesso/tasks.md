@@ -80,7 +80,7 @@ decisão em V-05 e a rotina de expiração em V-06.
 
 - [x] 1.0 Wireframes ASCII da área Cortesias aprovados
 - [x] 2.0 Figma da área Cortesias aprovado
-- [x] 3.0 O financeiro abre a área Cortesias e localiza o aluno pelo e-mail
+- [ ] 3.0 O financeiro abre a área Cortesias e localiza o aluno pelo e-mail
 - [x] 4.0 O financeiro escolhe o curso entre os publicados da escola
 - [x] 5.0 O financeiro concede a cortesia e o acesso nasce com término correto, fato e ato
 - [x] 6.0 O financeiro vê as concessões do aluno, é avisado antes de duplicar e confirma a vitalícia com reforço
