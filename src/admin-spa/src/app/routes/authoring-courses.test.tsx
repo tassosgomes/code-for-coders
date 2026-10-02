@@ -128,12 +128,15 @@ describe('authoring courses', () => {
     server.use(http.get(`${env.API_URL}/api/v1/courses`, () => failed ? HttpResponse.json({ code: 'LEARNING_UNAVAILABLE' }, { status: 502 }) : HttpResponse.json({ data: [], pagination: { page: 1, size: 20, total: 0, totalPages: 0 } })));
     expect(await screen.findByRole('heading', { name: 'Não foi possível carregar os cursos' })).toBeInTheDocument();
     failed = false; await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
-    expect(await screen.findByRole('heading', { name: 'Sua escola ainda não tem cursos' })).toBeInTheDocument();
+    const empty = await screen.findByRole('heading', { name: 'Nenhum curso ainda.' });
+    expect(empty).toBeInTheDocument();
+    await user.click(within(empty.closest('section')!).getByRole('button', { name: '+ Novo curso' }));
+    expect(screen.getByRole('dialog', { name: 'Novo curso' })).toBeVisible();
   });
 
   it('opens the authoring card from the professor home', async () => {
     const user = userEvent.setup(); renderCourses(['autoria.ler', 'autoria.editar'], '/');
-    await user.click(await screen.findByRole('link', { name: 'Abrir autoria' }));
+    await user.click(await screen.findByRole('link', { name: 'Abrir Autoria' }));
     expect(await screen.findByRole('heading', { name: 'Cursos da escola' })).toBeInTheDocument();
   });
 });

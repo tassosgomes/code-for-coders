@@ -46,8 +46,8 @@ describe('videos area', () => {
     renderWithProviders(<MemoryRouter><DashboardScreen areas={areas} name="Marina Alves" roles={['professor']} /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: 'Vídeos' })).toBeInTheDocument();
-    expect(screen.getByText('Envie as gravações das aulas e acompanhe a preparação.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Abrir vídeos/ })).toHaveAttribute('href', '/videos');
+    expect(screen.getByText('Envie gravações e acompanhe a preparação.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Abrir Vídeos/ })).toHaveAttribute('href', '/videos');
   });
 
   it('blocks direct access when the permission is missing', async () => {

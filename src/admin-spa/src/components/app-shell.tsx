@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Menu, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
-import { Link, NavLink, Outlet } from 'react-router';
+import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Menu, Moon, Sun, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router';
 
 import { paths } from '@/config/paths';
 import { useDocumentTitle } from '@/hooks/use-document-title';
@@ -23,11 +23,16 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
   useDocumentTitle(title);
   const menuOpen = useShellStore((state) => state.menuOpen);
   const toggleMenu = useShellStore((state) => state.toggleMenu);
+  const theme = useShellStore((state) => state.theme);
+  const toggleTheme = useShellStore((state) => state.toggleTheme);
+  const { pathname } = useLocation();
+  const isDashboard = pathname === paths.home.path;
+  const isAuthoring = pathname === paths.authoring.path || pathname.startsWith(`${paths.authoring.path}/`);
   const [accountOpen, setAccountOpen] = useState(false);
   const initials = name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={theme ?? undefined}>
       <aside className={`app-sidebar ${menuOpen ? 'is-open' : ''}`}>
         <Link aria-label={`${serviceName} — início`} className="backoffice-brand" to={paths.home.getHref()}>
           <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
@@ -40,6 +45,7 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
                 : area.permission === 'oferta.editar' || area.permission === 'financeiro.ler' ? 'commerce' : 'operations';
               return areaSection === section && area.href;
             });
+            if ((isAuthoring || isDashboard) && section === 'content') group.sort((first, second) => Number(second.permission === 'autoria.ler') - Number(first.permission === 'autoria.ler'));
             if (group.length === 0) return null;
             return <div className="sidebar-group" key={section}><p className="sidebar-heading">{section === 'content' ? 'Conteúdo' : section === 'commerce' ? 'Comercial' : 'Operação'}</p>
               {group.map((area) => <NavLink key={area.label} to={area.href!}>
@@ -55,9 +61,10 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
           <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Fechar navegação' : 'Abrir navegação'} className="menu-button" onClick={toggleMenu} type="button">
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <Link aria-label={`${serviceName} — início`} className="mobile-backoffice-brand" to={paths.home.getHref()}>
+          {isAuthoring ? <span className="authoring-mobile-label">Autoria</span> : <Link aria-label={`${serviceName} — início`} className="mobile-backoffice-brand" to={paths.home.getHref()}>
             <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
-          </Link>
+          </Link>}
+          {isAuthoring || isDashboard ? <button className="course-theme-toggle" type="button" aria-label="Alternar tema claro e escuro" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button> : null}
           <div className="account-menu-wrap">
             <button aria-expanded={accountOpen} aria-haspopup="menu" className="account-trigger" onClick={() => setAccountOpen(!accountOpen)} type="button">
               <span className="account-avatar">{initials}</span><span>{name}</span><ChevronDown size={16} />

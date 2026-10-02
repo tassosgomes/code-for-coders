@@ -31,7 +31,8 @@ describe('authoring video picker', () => {
   it('selects a school colleague ready video, replaces it and unlinks without losing lesson identity', async () => {
     const user = userEvent.setup(); const boundary = renderPicker(); const id = boundary.snapshot().modules[0]?.lessons[0]?.lessonId;
     await open(user); await user.click(await screen.findByRole('radio', { name: /Vídeo da colega/ }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('2:05 · Marina · Pronto');
+    expect(screen.getByRole('dialog')).toHaveTextContent('2:05 · Marina');
+    expect(screen.getAllByText('Pronto')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Vincular vídeo' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByRole('article', { name: 'Tipos' })).toHaveTextContent('Vídeo da colega');

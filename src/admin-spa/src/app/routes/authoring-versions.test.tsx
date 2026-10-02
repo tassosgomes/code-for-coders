@@ -1,12 +1,12 @@
 import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { routes } from '@/app/app-routes';
 import { paths } from '@/config/paths';
 import { createVersionBoundary } from '@/testing/authoring-version-handlers';
-import { publicationLessonId } from '@/testing/authoring-publication-handlers';
+import { publicationLessonId, publicationVideoId } from '@/testing/authoring-publication-handlers';
 import { server } from '@/testing/server';
 import { renderWithProviders } from '@/testing/test-utils';
 
@@ -17,16 +17,44 @@ const renderCourse = (boundary = createVersionBoundary(), version?: number) => {
   const rendered = renderWithProviders(<RouterProvider router={router} />);
   return { boundary, router, ...rendered };
 };
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('authoring versions', () => {
+  it('keyboard arrows move focus and selection between draft and history without changing the course', async () => {
+    const user = userEvent.setup(); const { boundary } = renderCourse();
+    const draft = await screen.findByRole('tab', { name: 'Rascunho' });
+    draft.focus(); await user.keyboard('{ArrowRight}');
+    const history = screen.getByRole('tab', { name: 'Histórico' });
+    expect(history).toHaveFocus(); expect(history).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tabpanel', { name: 'Histórico' })).toBeVisible();
+    expect(screen.queryByRole('tabpanel', { name: 'Rascunho' })).not.toBeInTheDocument();
+    await user.keyboard('{Home}'); expect(draft).toHaveFocus();
+    expect(draft).toHaveAttribute('aria-selected', 'true'); expect(boundary.writes).toHaveLength(0);
+  });
+
+  it('copies the complete published video reference and announces success', async () => {
+    const user = userEvent.setup(); const clipboard = vi.spyOn(navigator.clipboard, 'writeText');
+    renderCourse(createVersionBoundary(), 1);
+    await user.click(await screen.findByRole('button', { name: 'Copiar referência de Tipos originais' }));
+    expect(clipboard).toHaveBeenCalledWith(publicationVideoId);
+    expect(await screen.findByText('Referência copiada.')).toHaveAttribute('role', 'status');
+  });
+
+  it('makes the full reference available for manual copy if clipboard access fails', async () => {
+    const user = userEvent.setup(); vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValueOnce(new Error('Permission denied'));
+    renderCourse(createVersionBoundary(), 1);
+    await user.click(await screen.findByRole('button', { name: 'Copiar referência de Tipos originais' }));
+    expect(await screen.findByText(`Não foi possível copiar. Referência do vídeo: ${publicationVideoId}`)).toHaveAttribute('role', 'status');
+  });
+
   it('direct historical URL and a fresh router preserve the requested immutable version with no edit controls', async () => {
     const boundary = createVersionBoundary(); const first = renderCourse(boundary, 1);
-    await screen.findByRole('heading', { name: 'Título publicado' });
+    await screen.findByRole('heading', { name: 'Versão 1', level: 1 });
+    expect(screen.getByText('Título publicado')).toBeVisible();
     expect(screen.getByText(`ID da aula: ${publicationLessonId}`)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '1. Tipos originais' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Editar|Publicar|Descartar|Trocar vídeo/ })).not.toBeInTheDocument();
     first.unmount(); first.router.dispose(); renderCourse(boundary, 1);
-    await screen.findByRole('heading', { name: 'Título publicado' }); expect(boundary.reads).toEqual([1, 1]);
+    await screen.findByRole('heading', { name: 'Versão 1', level: 1 }); expect(boundary.reads).toEqual([1, 1]);
   });
 
   it('republishes the displayed revision and history shows newest first, author, note and current marker', async () => {
@@ -41,7 +69,7 @@ describe('authoring versions', () => {
     expect(within(history).getAllByRole('heading', { level: 3 }).map((item) => item.textContent)).toEqual(['Versão 2 · Vigente', 'Versão 1 · Anterior']);
     expect(within(history).getByText('Segunda versão')).toBeInTheDocument(); expect(within(history).getByText(/Marina/)).toBeInTheDocument();
     await user.click(within(history).getByRole('link', { name: 'Ver versão 1' }));
-    await screen.findByRole('heading', { name: 'Título publicado' }); expect(screen.getByText('Versão 1 · Anterior')).toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Versão 1', level: 1 }); expect(screen.getByText('Anterior')).toBeVisible();
     expect(boundary.writes[0]?.revision).toBe(4);
   });
 
@@ -89,7 +117,7 @@ describe('authoring versions', () => {
     const user = userEvent.setup(); renderCourse(createVersionBoundary(false)); await screen.findByRole('heading', { name: 'Rascunho alterado' });
     expect(screen.queryByRole('button', { name: /Publicar|Descartar|Editar/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: 'Histórico' })); await user.click(await screen.findByRole('link', { name: 'Ver versão 1' }));
-    await screen.findByRole('heading', { name: 'Título publicado' });
+    await screen.findByRole('heading', { name: 'Versão 1', level: 1 });
   });
 
   it('never-published course has empty history and no discard control', async () => {

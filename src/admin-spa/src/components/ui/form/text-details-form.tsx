@@ -9,9 +9,9 @@ type TextDetailsFormProps = {
   busy: boolean; titleError?: string; error?: string;
   onSubmit: (input: TextDetails) => Promise<void>;
   onCancel: () => void;
-  defaultValues?: TextDetails; submitLabel?: string; showDescription?: boolean; contextHint?: string;
+  defaultValues?: TextDetails; submitLabel?: string; showDescription?: boolean; contextHint?: string; descriptionHelp?: string;
 };
-export const TextDetailsForm = ({ schema, busy, titleError, error, onSubmit, onCancel, defaultValues, submitLabel = 'Criar curso', showDescription = true, contextHint }: TextDetailsFormProps) => {
+export const TextDetailsForm = ({ schema, busy, titleError, error, onSubmit, onCancel, defaultValues, submitLabel = 'Criar curso', showDescription = true, contextHint, descriptionHelp }: TextDetailsFormProps) => {
   const form = useForm<TextDetails>({ resolver: zodResolver(schema), defaultValues: defaultValues ?? { title: '', description: '' } });
   const [title, description] = useWatch({ control: form.control, name: ['title', 'description'] });
   const validationError = form.formState.errors.title?.message ?? titleError;
@@ -27,6 +27,7 @@ export const TextDetailsForm = ({ schema, busy, titleError, error, onSubmit, onC
     <small>{description.length}/5000</small>
     {form.formState.errors.description ? <p className="field-error" role="alert">{form.formState.errors.description.message}</p> : null}
     </> : null}
+    {showDescription && descriptionHelp ? <small>{descriptionHelp}</small> : null}
     {contextHint ? <small>{contextHint}</small> : null}
     {error ? <p className="inline-alert" role="alert">{error}</p> : null}
     <div className="dialog-actions">

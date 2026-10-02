@@ -39,7 +39,7 @@ describe('authoring deletion', () => {
     const user = userEvent.setup(); const boundary = createDeletionBoundary(); const router = renderDeletion(boundary);
     await user.click(await screen.findByRole('button', { name: 'Excluir curso' }));
     await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Excluir curso' }));
-    await screen.findByRole('heading', { name: 'Sua escola ainda não tem cursos' }); expect(screen.getByText('Curso excluído')).toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Nenhum curso ainda.' }); expect(screen.getByText('Curso excluído')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/autoria'); expect(boundary.writes[0]?.key).toBeTruthy(); expect(boundary.writes[0]?.csrf).toBe('delete-csrf');
     await router.navigate(editorPath); await screen.findByRole('heading', { name: 'Curso não encontrado' });
   });
@@ -49,7 +49,7 @@ describe('authoring deletion', () => {
     await user.click(await screen.findByRole('button', { name: `Ações de ${authoringCourseFixture.title}` }));
     await user.click(await screen.findByRole('button', { name: 'Excluir curso' })); expect(screen.getByRole('link', { name: `Abrir ${authoringCourseFixture.title}` })).toBeInTheDocument();
     await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Excluir curso' }));
-    await screen.findByRole('heading', { name: 'Sua escola ainda não tem cursos' }); expect(boundary.writes).toHaveLength(1);
+    await screen.findByRole('heading', { name: 'Nenhum curso ainda.' }); expect(boundary.writes).toHaveLength(1);
   });
 
   it('failure keeps confirmation and explicit retry uses the same intention', async () => {
