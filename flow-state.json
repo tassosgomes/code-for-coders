@@ -101,10 +101,12 @@
     },
     {
       "id": "CAP-008",
-      "stage": "prd",
+      "stage": "techspec",
       "artifacts": {
         "domain": "domains/matricula-e-direito-de-acesso/domain.md",
-        "prd": "tasks/prd-concessao-acesso/prd.md"
+        "prd": "tasks/prd-concessao-acesso/prd.md",
+        "contract": "tasks/prd-concessao-acesso/contracts.md",
+        "techspec": "tasks/prd-concessao-acesso/techspec.md"
       },
       "mvp_order": 6
     },
@@ -242,8 +244,8 @@
   "next_actions": [
     {
       "id": "NA29",
-      "what": "Contratos do 1o PRD de CAP-008 (tasks/prd-concessao-acesso/prd.md 1.0 aprovado em 2026-10-01): decisao de acesso (commerce/Matricula), cortesia no bff-admin, permissao cortesia.conceder em identity e tipo de ato cortesia-concedida em audit",
-      "skill": "tsg-flow-contract-creator",
+      "what": "Plano de tasks do 1o PRD de CAP-008 (tasks/prd-concessao-acesso: PRD 1.1, contratos 1.1, TechSpec 1.0 aprovados em 2026-10-01); abrir com EN-01 (wireframe ASCII e Figma da area Cortesias) antes de qualquer tela",
+      "skill": "tsg-flow-task-creator",
       "blocked_by": []
     }
   ],
@@ -813,6 +815,22 @@
       "owner": "tasso",
       "decided_at": "2026-10-01",
       "decision": "Adiados, sem data: podem vir a ser necessarios (grupo de teste, parceria, curso publico). Cada um tera PRD proprio. Curso publico exige decisao sobre a fronteira de Matricula e Catalogo (acesso sem compra nem concessao por aluno). A cortesia aluno a aluno atende a validacao de CAP-007/CAP-017 e a excecao operacional."
+    },
+    {
+      "id": "OD64",
+      "ref": "tasks/prd-concessao-acesso/contracts.md C-01 a C-10",
+      "what": "Contratos do 1o PRD de CAP-008",
+      "owner": "tasso",
+      "decided_at": "2026-10-01",
+      "decision": "Aprovados: Matricula com visao minima do curso em fila propria, carga inicial pelo reenvio de learning (repetido se ja ocorreu); localizacao do aluno por e-mail em Identity (POST, minimo); reconfirmacao da conta por commerce em Identity com falha fechada; decisao de acesso GET /access-decision por asserção de servico de media e learning; vigencia accessPeriod + endsOn + expiresAt (exclusivo UTC); Auditoria 1.4.0 (cortesia-concedida, motivo obrigatorio, alvo conta-aluno); conta-aluno resolvida por Identity na trilha (nome); cortesia.conceder no enum; Idempotency-Key com 200 no reenvio; fatos acesso-* ja nesta entrega. Descartado: confiar no BFF, projecao de contas por fatos, direito no JWT do aluno, ler o Catalogo a partir de Matricula."
+    },
+    {
+      "id": "OD65",
+      "ref": "tasks/prd-concessao-acesso/techspec.md D-01 a D-10; ADR-0010; ADR-0011",
+      "what": "TechSpec do 1o PRD de CAP-008",
+      "owner": "tasso",
+      "decided_at": "2026-10-01",
+      "decision": "Aprovada: area do backoffice chama-se Cortesias (errata do PRD 1.1; Acessos ja e da gestao de acesso interno); previa do termino por operacao de leitura previewCourtesyTerm, a mesma funcao de dominio da concessao (contrato 1.1, C-11); visao minima do curso propria de Entitlement; termino gravado e situacao derivada; reconfirmacao em Identity fora da transacao; idempotencia por recibo; nenhuma credencial de media/learning provisionada ate haver consumidor; fuso da escola como configuracao; cursoTitulo derivado na trilha; limpeza propria de grant_receipts. ADR-0010 e ADR-0011 aceitas. Descartado: calcular o termino no SPA, ler a visao do Catalogo a partir de Matricula, copiar a ausencia de limpeza dos recibos do Catalogo. Divida existente registrada: recibos de edicao do Catalogo (catalog.edit_receipts) nunca sao apagados."
     }
   ]
 }

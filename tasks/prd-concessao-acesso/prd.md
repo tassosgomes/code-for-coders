@@ -2,7 +2,7 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-008
-version: 1.0
+version: 1.1
 status: approved
 updated: 2026-10-01
 sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/matricula-e-direito-de-acesso/domain.md@1.0, domains/identidade-e-acesso/domain.md@1.1, domains/auditoria-e-conformidade/domain.md@1.2, domains/conteudo-e-curriculo/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1
@@ -159,7 +159,7 @@ sem caso especial.
 ### RF-01: Permissão de concessão de cortesia
 
 **Descrição**: Passa a existir a permissão `cortesia.conceder`, concedida ao papel **financeiro**
-(RN-D11), que abre a área **Acessos** do backoffice e autoriza localizar um aluno, ver as concessões
+(RN-D11), que abre a área **Cortesias** do backoffice e autoriza localizar um aluno, ver as concessões
 dele e conceder cortesia. Ninguém sem ela vê ou usa essa área. A decisão é tomada pelo serviço dono a
 partir das claims, não pelo BFF nem pela tela. O administrador governa acesso interno e **não herda**
 a área do financeiro (DP-03 de `CAP-002`).
@@ -171,7 +171,7 @@ a área do financeiro (DP-03 de `CAP-002`).
   **Then** ele tem `financeiro.ler`, `oferta.editar` e `cortesia.conceder`
 
 - **Given** um ator com o papel professor, suporte ou administrador, sem o papel financeiro
-  **When** tenta abrir a área Acessos ou chamar qualquer operação de cortesia diretamente
+  **When** tenta abrir a área Cortesias ou chamar qualquer operação de cortesia diretamente
   **Then** é recusado, e a área não aparece no menu
 
 - **Given** um financeiro que teve o papel revogado
@@ -567,7 +567,7 @@ a vigência no detalhe, e a oferecê-lo no filtro por tipo.
 (parceiro, bolsa, compensação); precisa ter certeza de **quem** recebe, **o quê** e **até quando**, e
 de que errar é difícil.
 
-**Fluxo.** Backoffice → **Acessos** → *Conceder cortesia*:
+**Fluxo.** Backoffice → **Cortesias** → *Conceder cortesia*:
 
 1. **Aluno** — informa o e-mail → vê e-mail e nome da conta e as concessões que ela já tem.
 2. **Curso** — escolhe entre os cursos publicados da escola (com busca por título).
@@ -620,7 +620,7 @@ conta de aluno recebe concessão (RN-D09); a ordem de compra fica para `CAP-011`
   uso próprios desde o primeiro commit, como o baseline ressalva — é o primeiro candidato a extração),
   `identity` (permissão nova; confirmação de que o e-mail é de conta de aluno, devolvendo só o mínimo
   de RF-02), `audit` (um tipo de ato novo, aditivo, como em `CAP-005` e `CAP-003`),
-  `bff-admin`/`admin-spa` (área Acessos e rótulo na trilha).
+  `bff-admin`/`admin-spa` (área Cortesias e rótulo na trilha).
 - Os consumidores da decisão — `media` e `learning` — **não mudam nesta entrega**; passam a consultá-la
   em `CAP-007` e `CAP-017`.
 - A lista de cursos publicados que o financeiro vê deve vir do que Conteúdo já comunica, sem nova
@@ -735,3 +735,5 @@ conta de aluno recebe concessão (RN-D09); a ordem de compra fica para `CAP-011`
 públicos (acesso sem compra nem concessão por aluno), podem vir a ser necessários. Nenhum entra nesta
 entrega; cada um terá o próprio PRD e, no caso de curso público, decisão sobre a fronteira de Matrícula
 e Catálogo.
+
+**Revisão 1.1 (2026-10-01), errata de nome:** a área do backoffice passa de **Acessos** para **Cortesias** (RF-01 e Experiência do Usuário). "Acessos" e a rota `/acessos` já são da gestão de acesso interno do administrador (CAP-002); duas áreas com o mesmo nome confundiriam quem acumula papéis (D-01 da TechSpec). Nenhum comportamento, requisito ou critério muda.

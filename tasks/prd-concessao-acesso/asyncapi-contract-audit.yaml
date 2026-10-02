@@ -1,0 +1,340 @@
+# Revisão do canal `auditoria.ato-praticado.v1` pelo primeiro PRD de CAP-008 (concessão de acesso).
+# Base: tasks/prd-vitrine-oferta/asyncapi-contract-audit.yaml 1.3.0, preservado lá sem alteração. O canal de
+# complemento (1.1.0) não muda e não é repetido aqui. Mudança aditiva: origem `matricula`, tipo `cortesia-concedida`
+# (com motivo obrigatório), alvo `conta-aluno` e chaves de complemento (C-06). Decisões em contracts.md.
+asyncapi: 3.0.0
+id: urn:code-4-coders:audit
+info:
+  title: Auditoria — ato administrativo praticado
+  version: 1.4.0
+  description: 'Recorte 1.4.0 do contrato da Auditoria, para o primeiro PRD de `CAP-008` (PRD `tasks/prd-concessao-acesso/prd.md`,
+    v1.0, aprovado em 2026-10-01). Base: 1.3.0 (`tasks/prd-vitrine-oferta/asyncapi-contract-audit.yaml`, que inclui as
+    mudanças de 1.2.0 e 1.3.0), preservado lá sem alteração. Mudança aditiva de receptor: origem `matricula`, tipo
+    `cortesia-concedida`, **com motivo obrigatório**, alvo `conta-aluno` e as chaves de complemento `concessao` e `vigencia`
+    (C-06 deste conjunto); `curso` passa a servir também a esse ato. A Auditoria é dona da forma; o domínio de origem é
+    dono do conteúdo (RN-A14). A aplicação `audit` só recebe.'
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: 'Broker RabbitMQ do grupo inicial (baseline). Host, vhost, credenciais e topologia física são parâmetro
+      de implantação da plataforma e não são fixados por este contrato. Exchange `topic`, filas quorum, DLX/DLQ
+      por fila e `x-delivery-limit` são convenção do baseline (G06).
+
+      '
+    variables:
+      host:
+        default: localhost
+        description: Resolvido pela configuração de implantação, não por este contrato.
+channels:
+  atoPraticado:
+    address: auditoria.ato-praticado.v1
+    description: 'Canal endereçado à Auditoria. Todo domínio com ato administrativo publica aqui, sempre pelo outbox
+      (G06); produtores: Identidade e Acesso (CAP-002), Conteúdo e Currículo (CAP-005) e Catálogo e Oferta (CAP-003,
+      desde 1.3.0) e Matrícula e Direito de Acesso (CAP-008, desde 1.4.0). Routing key versionada pela convenção do baseline (`{servico}.{evento}.v{n}`). O prefixo `auditoria.`
+      indica o dono do contrato, não o produtor — mesmo padrão de `notificacao.envio-solicitado`.
+
+      '
+    messages:
+      atoPraticado:
+        $ref: '#/components/messages/AtoPraticado'
+operations:
+  receberAtoPraticado:
+    action: receive
+    summary: Registrar o ato de forma permanente — conforme, não conforme ou retido como ilegível.
+    channel:
+      $ref: '#/channels/atoPraticado'
+    messages:
+    - $ref: '#/channels/atoPraticado/messages/atoPraticado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Compromissos observáveis (o mecanismo fica na TechSpec). (1) Idempotência: a chave é o par (`origem`,
+      `fatoId`). Reentrega gera um único registro; reentrega com conteúdo divergente do registro original não cria
+      registro nem altera o original e é alertada à operação (RF-02). (2) Tolerância a ato incompleto: o schema
+      abaixo é a obrigação do produtor. Uma mensagem legível que viole essa obrigação — sem `autor`, sem `alvo`,
+      sem `motivo` quando o tipo o exige, ou com `tipo` fora dos aceitos — NÃO é recusada: vira registro não conforme
+      com a razão de cada falta, e a operação é alertada uma vez por ato (RF-03, RN-A06, DP-04). (3) Mensagem ilegível:
+      é legível a mensagem JSON que traz `fatoId`, `origem` e `tenantId` válidos (sem tenant não há a quem o registro
+      pertença, RN-A13 — esclarecimento da versão 1.0.1). A que não os traz não vira registro, é retida intacta
+      na fila de erro da Auditoria para investigação e a operação é alertada (RF-04, DP-05). (4) Falha transitória
+      da Auditoria ao gravar: a mensagem não é confirmada e volta a ser entregue; esgotado o limite de entregas,
+      segue para a fila de erro e pode ser reprocessada sem duplicar registro, por (1). (5) Ordenação: não garantida.
+      A trilha é ordenada por `praticadoEm`, não pela chegada (RN-A04). (6) A Auditoria registra o momento do recebimento,
+      que não viaja na mensagem (RN-A04).
+
+      '
+components:
+  messages:
+    AtoPraticado:
+      name: AtoPraticado
+      title: Ato administrativo praticado
+      summary: Comunicação, pelo domínio de origem, de que um ato administrativo aconteceu. É fato consumado, não
+        pedido de autorização.
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        required:
+        - correlationId
+        properties:
+          correlationId:
+            type: string
+            description: 'Identificador de correlação do fluxo de origem (ex.: a requisição do backoffice que praticou
+              o ato). Não contém dado pessoal.'
+      payload:
+        $ref: '#/components/schemas/AtoPraticadoPayload'
+      examples:
+      - name: ofertaAlterada
+        headers:
+          correlationId: 00-6f708192a3b4c5d6e7f8091a2b3c4d5e-6f708192a3b4c5d6-01
+        payload:
+          fatoId: 2c3d4e5f-6071-4a82-9b93-a4b5c6d7e8f9
+          origem: catalogo
+          tipo: oferta-alterada
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          praticadoEm: '2026-10-08T11:30:00Z'
+          autor:
+            tipo: conta-interna
+            id: 8b9c0d1e-2f3a-4b4c-8d5e-6f7a8b9c0d1e
+          alvo:
+            tipo: oferta
+            id: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          complemento:
+            curso: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+            precoAnterior: '49700'
+            precoNovo: '39700'
+      - name: cortesiaConcedida
+        headers:
+          correlationId: 00-81a2b3c4d5e6f708192a3b4c5d6e7f80-81a2b3c4d5e6f708-01
+        payload:
+          fatoId: 5d6e7f80-9182-4a3b-8c4d-5e6f70819203
+          origem: matricula
+          tipo: cortesia-concedida
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          praticadoEm: '2026-10-12T14:10:00Z'
+          autor:
+            tipo: conta-interna
+            id: 3e4f5061-7283-4a94-8ba5-b6c7d8e9f0a1
+          alvo:
+            tipo: conta-aluno
+            id: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          complemento:
+            curso: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+            concessao: 4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+            vigencia: 6m
+          motivo: Bolsa do programa de mentoria, turma de outubro
+      - name: versaoPublicada
+        headers:
+          correlationId: 00-3c4d5e6f708192a3b4c5d6e7f8091a2b-3c4d5e6f70819203-01
+        payload:
+          fatoId: 9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d
+          origem: conteudo
+          tipo: versao-publicada
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          praticadoEm: '2026-10-05T14:02:11Z'
+          autor:
+            tipo: conta-interna
+            id: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+          alvo:
+            tipo: curso
+            id: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          complemento:
+            versao: '3'
+      - name: papelConcedido
+        headers:
+          correlationId: backoffice-2026-10-02-0042
+        payload:
+          fatoId: 4b0f6a52-5d1e-4a8c-9d7a-2f0c6e1b3a90
+          origem: identidade
+          tipo: papel-concedido
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          praticadoEm: '2026-10-02T14:05:11Z'
+          autor:
+            tipo: conta-interna
+            id: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+          alvo:
+            tipo: conta-interna
+            id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          complemento:
+            papel: professor
+          motivo: Professor contratado para o curso de .NET avançado
+      - name: conviteInternoAceito
+        headers:
+          correlationId: convite-aceite-2026-10-03-0003
+        payload:
+          fatoId: c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f
+          origem: identidade
+          tipo: convite-interno-aceito
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          praticadoEm: '2026-10-03T09:12:40Z'
+          autor:
+            tipo: conta-interna
+            id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          alvo:
+            tipo: convite-interno
+            id: 5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+  schemas:
+    AtoPraticadoPayload:
+      type: object
+      description: 'Obrigação do produtor. A reação da Auditoria a cada violação está em `receberAtoPraticado`:
+        faltas de conteúdo viram registro não conforme; só a falta de `fatoId`, `origem` ou `tenantId` torna a mensagem
+        ilegível.
+
+        '
+      required:
+      - fatoId
+      - origem
+      - tipo
+      - tenantId
+      - praticadoEm
+      - autor
+      - alvo
+      properties:
+        fatoId:
+          type: string
+          format: uuid
+          description: 'Identidade estável do ato, atribuída pela origem. Junto com `origem`, é a chave de idempotência.
+            Um novo ato é sempre um novo `fatoId`; nunca se reenvia um `fatoId` para "corrigir" o anterior (RN-A07).
+
+            '
+        origem:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*$
+          description: 'Domínio de origem do ato, no identificador curto do seu serviço. Aceitos: `identidade` (CAP-002),
+            `conteudo` (CAP-005) e `catalogo` (CAP-003, desde 1.3.0) e `matricula` (CAP-008, desde 1.4.0). Não é enum para que um domínio novo passe
+            a ser auditado sem mudança no contrato (RN-A14).
+
+            '
+        tipo:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*$
+          description: 'Tipo do ato, no vocabulário do domínio de origem. Aceitos nesta versão — origem `identidade`
+            (RN-19): `convite-interno-emitido`, `convite-interno-aceito`, `papel-concedido`, `papel-revogado`; origem
+            `conteudo` (RN-C13, desde 1.2.0): `versao-publicada`, sem motivo; origem `catalogo` (RN-O15, desde 1.3.0):
+            `oferta-publicada`, `oferta-alterada` e `oferta-despublicada`, sem motivo; origem `matricula` (RN-D11, desde 1.4.0):
+            `cortesia-concedida`, **com motivo obrigatório**. Outro valor é registrado
+            como não conforme com a razão "tipo desconhecido" (DP-04). Não é enum pelo mesmo motivo de `origem`;
+            aceitar um tipo novo é evolução compatível deste contrato (versão minor).
+
+            '
+        tenantId:
+          type: string
+          format: uuid
+          description: Convenção do baseline (BA10 · G07), identificador do tenant no mesmo formato usado pelos
+            serviços. O registro pertence ao tenant do ato (RN-A13); sem `tenantId` válido a mensagem é ilegível.
+        praticadoEm:
+          type: string
+          format: date-time
+          description: Momento em que o ato foi praticado na origem — não o da publicação. É por ele que a trilha
+            é lida (RN-A04).
+        autor:
+          $ref: '#/components/schemas/ReferenciaDeIdentidade'
+        alvo:
+          $ref: '#/components/schemas/ReferenciaDeIdentidade'
+        complemento:
+          type: object
+          description: 'Referências adicionais que qualificam o ato, sem dado pessoal (RN-A08). `papel` nos atos
+            `papel-concedido`, `papel-revogado` e `convite-interno-emitido` (papel ofertado); `versao` no ato `versao-publicada`
+            (desde 1.2.0); `curso` nos três atos de oferta e, em `oferta-alterada`, o par anterior/novo do que mudou
+            (desde 1.3.0); `curso`, `concessao` e `vigencia` em `cortesia-concedida` (desde 1.4.0). Valores são identificadores, nunca e-mail, nome ou texto livre.
+
+            '
+          additionalProperties:
+            type: string
+            maxLength: 100
+          properties:
+            papel:
+              type: string
+              description: 'Papel envolvido no ato, pelo nome canônico de Identidade e Acesso (ex.: professor, suporte,
+                financeiro, administrador).'
+            versao:
+              type: string
+              pattern: ^[1-9][0-9]*$
+              description: Número da versão publicada do curso, em texto (o complemento só aceita texto). Só em
+                `versao-publicada`.
+            curso:
+              type: string
+              format: uuid
+              description: Curso da oferta (identificador de Conteúdo). Nos três atos de oferta.
+            precoAnterior:
+              type: string
+              pattern: ^[1-9][0-9]*$
+              description: Preço em centavos de real antes da mudança. Só em `oferta-alterada` quando o preço mudou,
+                junto com `precoNovo`.
+            precoNovo:
+              type: string
+              pattern: ^[1-9][0-9]*$
+              description: Preço em centavos de real depois da mudança.
+            vigenciaAnterior:
+              type: string
+              pattern: ^(vitalicia|[1-9][0-9]?m)$
+              description: 'Vigência prometida antes da mudança: `vitalicia` ou o número de meses seguido de `m`
+                (ex.: `12m`). Só em `oferta-alterada` quando a vigência mudou, junto com `vigenciaNova`.'
+            vigenciaNova:
+              type: string
+              pattern: ^(vitalicia|[1-9][0-9]?m)$
+              description: Vigência prometida depois da mudança.
+            concessao:
+              type: string
+              format: uuid
+              description: Concessão de acesso criada pelo ato (identificador em Matrícula e Direito de Acesso). Só em `cortesia-concedida`
+                (desde 1.4.0).
+            vigencia:
+              type: string
+              pattern: ^(vitalicia|[1-9][0-9]?m)$
+              description: 'Vigência declarada na cortesia, `vitalicia` ou o número de meses seguido de `m` (ex.: `6m`).
+                Só em `cortesia-concedida` (desde 1.4.0).'
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: 'Justificativa escrita pelo autor. Obrigatória em `convite-interno-emitido`, `papel-concedido`,
+            `papel-revogado` e `cortesia-concedida` (RN-D11, desde 1.4.0); não se aplica a `convite-interno-aceito` nem a `versao-publicada` (OD42) nem aos
+            atos de oferta (OD50) (RN-A05, Identidade RN-19). Guardada no registro, nunca em log, métrica ou rastreamento.
+            Não deve conter dado pessoal de terceiros além do alvo já referenciado (RN-A08).
+
+            '
+      allOf:
+      - if:
+          properties:
+            tipo:
+              enum:
+              - convite-interno-emitido
+              - papel-concedido
+              - papel-revogado
+              - cortesia-concedida
+          required:
+          - tipo
+        then:
+          required:
+          - motivo
+    ReferenciaDeIdentidade:
+      type: object
+      description: 'Referência a quem praticou ou sofreu o ato, por identificador — nunca cópia de e-mail, nome
+        ou outro dado pessoal (RN-A08). É isso que permite a anonimização futura sem alterar o registro (CAP-031).
+
+        '
+      required:
+      - tipo
+      - id
+      properties:
+        tipo:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*$
+          description: 'Natureza do referenciado. Aceitos: `conta-interna` (conta de ator interno) e `convite-interno`
+            (Convite de Acesso Interno — o e-mail convidado é alcançado pelo convite, nunca copiado aqui); `curso`
+            (desde 1.2.0, só como alvo de `versao-publicada`, identificador do curso em Conteúdo e Currículo); `oferta`
+            (desde 1.3.0, alvo dos atos de oferta, identificador da oferta em Catálogo e Oferta); `conta-aluno` (desde 1.4.0,
+            alvo de `cortesia-concedida`, identificador da conta de aluno em Identidade e Acesso — o e-mail e o nome são
+            alcançados pela conta, nunca copiados aqui). O nome do schema
+            é histórico: o referenciado nem sempre é pessoa. Outros domínios acrescentam valores (ex.: `conta-aluno`).
+
+            '
+        id:
+          type: string
+          format: uuid
+          description: Identificador no domínio dono do referenciado.
