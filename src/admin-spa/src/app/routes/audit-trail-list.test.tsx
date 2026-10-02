@@ -246,6 +246,6 @@ describe('AuditTrailList', () => {
     }], { initialEntries: ['/'] });
     renderWithProviders(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('link', { name: 'Abrir auditoria' })).toHaveAttribute('href', '/auditoria');
+    expect(await screen.findByRole('link', { name: 'Abrir Auditoria' })).toHaveAttribute('href', '/auditoria');
   });
 });

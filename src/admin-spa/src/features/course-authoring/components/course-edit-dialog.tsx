@@ -17,6 +17,6 @@ export const CourseEditDialog = ({ target, course, busy, error, onClose, onSubmi
   const schema = target.kind === 'course' ? updateCourseInputSchema : showDescription ? createLessonInputSchema : createModuleInputSchema;
   const formSchema = schema.safeExtend({ title: createModuleInputSchema.shape.title, description: createLessonInputSchema.shape.description.unwrap() });
   return <Dialog title={title} description={target.kind === 'create-lesson' ? `Módulo: ${target.module.title}` : 'As alterações são salvas no rascunho.'} busy={busy} onClose={onClose}>
-    <TextDetailsForm schema={formSchema} defaultValues={{ title: defaults.title, description: 'description' in defaults ? defaults.description ?? '' : '' }} showDescription={showDescription} submitLabel={target.kind.startsWith('create-') ? (showDescription ? 'Criar aula' : 'Criar módulo') : 'Salvar alterações'} busy={busy} error={error} onSubmit={onSubmit} onCancel={onClose} />
+    <TextDetailsForm schema={formSchema} defaultValues={{ title: defaults.title, description: 'description' in defaults ? defaults.description ?? '' : '' }} showDescription={showDescription} descriptionHelp={target.kind === 'course' ? 'O que a pessoa aprenderá neste curso.' : undefined} submitLabel={target.kind.startsWith('create-') ? (showDescription ? 'Criar aula' : 'Criar módulo') : 'Salvar alterações'} busy={busy} error={error} onSubmit={onSubmit} onCancel={onClose} />
   </Dialog>;
 };

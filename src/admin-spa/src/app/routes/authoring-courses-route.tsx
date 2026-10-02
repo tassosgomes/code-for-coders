@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { CircleAlert, Mail } from 'lucide-react';
 import { Link, useLocation, useNavigate, useOutletContext, useSearchParams } from 'react-router';
 
 import { paths } from '@/config/paths';
 import { useCourses } from '@/features/course-authoring/api/get-courses';
 import { CreateCourseDialog } from '@/features/course-authoring/components/create-course-dialog';
 import { CourseStatusBadge } from '@/features/course-authoring/components/course-status-badge';
+import { CoursePagination } from '@/features/course-authoring/components/course-pagination';
 import { CourseDelete } from '@/features/course-authoring/components/course-delete';
 import type { StaffSession } from '@/features/staff-session/api/staff-session';
 
@@ -25,29 +27,24 @@ const AuthoringCoursesContent = ({ canEdit }: { canEdit: boolean }) => {
   const [notice, setNotice] = useState(location.state?.courseNotice === 'Curso excluído' ? 'Curso excluído' : '');
   const changePage = (nextPage: number, nextStatus = status) => setParams({ ...(nextPage > 1 ? { page: String(nextPage) } : {}), ...(nextStatus ? { status: nextStatus } : {}) });
   return <main className="page-shell authoring-page">
-    <p className="eyebrow">Autoria</p>
     {notice ? <p role="status">{notice}</p> : null}
-    <div className="course-page-heading"><div><h1>Cursos da escola</h1><p className="page-subtitle">Monte o currículo e publique quando estiver pronto.</p></div>
+    <header className="course-page-heading"><div><p className="eyebrow">Autoria</p><h1>Cursos da escola</h1><p className="page-subtitle">Monte o currículo e publique quando estiver pronto.</p></div>
       {canEdit ? <button className="primary-button" onClick={() => setCreating(true)} type="button">+ Novo curso</button> : null}
-    </div>
+    </header>
     {!canEdit ? <p className="inline-alert">Somente leitura. Você pode consultar os cursos da escola.</p> : null}
     <div className="course-filters" aria-label="Filtrar cursos">
       {([{ label: 'Todos', value: undefined }, { label: 'Rascunhos', value: 'draft' }, { label: 'Publicados', value: 'published' }] as const).map((filter) =>
         <button aria-pressed={status === filter.value} key={filter.label} onClick={() => setParams(filter.value ? { status: filter.value } : {})} type="button">{filter.label}</button>)}
     </div>
-    {courses.isPending ? <p role="status">Carregando cursos…</p> : courses.isError ? <section className="empty-state"><h2>Não foi possível carregar os cursos</h2><button className="outline-button" onClick={() => void courses.refetch()} type="button">Tentar novamente</button></section>
-      : courses.data.data.length === 0 ? <section className="empty-state"><h2>{status ? 'Nenhum curso neste filtro' : 'Sua escola ainda não tem cursos'}</h2><p>{status ? 'Escolha outro estado para encontrar cursos.' : 'Crie o primeiro rascunho para começar.'}</p></section>
+    {courses.isPending ? <p role="status">Carregando cursos…</p> : courses.isError ? <><section className="course-load-error" role="alert"><CircleAlert size={16} /><h2>Não foi possível carregar os cursos</h2></section><button className="outline-button" onClick={() => void courses.refetch()} type="button">Tentar novamente</button></>
+      : courses.data.data.length === 0 ? <><section className="empty-state"><span className="course-status-tile"><Mail size={24} /></span><h2>{status === 'published' ? 'Nenhum curso publicado ainda.' : status === 'draft' ? 'Nenhum rascunho ainda.' : 'Nenhum curso ainda.'}</h2><p>{status === 'published' ? 'Os cursos publicados aparecerão aqui.' : status === 'draft' ? 'Os rascunhos aparecerão aqui.' : 'Crie o primeiro e organize suas aulas.'}</p>{!status && canEdit ? <button type="button" className="primary-button" onClick={() => setCreating(true)}>+ Novo curso</button> : null}</section>{status ? <button type="button" className="text-button" onClick={() => setParams({})}>Ver todos os cursos</button> : null}</>
         : <div className="course-table-wrap"><table className="course-table"><thead><tr><th>Curso</th><th>Estado</th><th>Última edição</th><th><span className="sr-only">Ações</span></th></tr></thead><tbody>
-          {courses.data.data.map((course) => <tr key={course.courseId}><td><strong>{course.title}</strong>{course.status === 'published' && course.currentLevel === null ? <span className="course-level-indicator">Sem nível</span> : null}</td><td><CourseStatusBadge course={course} /></td>
+          {courses.data.data.map((course) => <tr key={course.courseId}><td><strong>{course.title}</strong>{course.status === 'published' && course.currentLevel === null ? <span className="course-level-indicator"><CircleAlert size={14} /><span className="role-badge">Sem nível</span></span> : null}</td><td><CourseStatusBadge course={course} /></td>
             <td>{course.lastEditedBy.name} · <time dateTime={course.lastEditedAt}>{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(course.lastEditedAt))}</time></td>
-            <td><Link aria-label={`Abrir ${course.title}`} to={paths.authoringCourse.getHref(course.courseId)}>Abrir →</Link>
-              {canEdit ? <CourseDelete course={course} presentation="menu" onReload={courses.refetch} onNotice={setNotice} onDeleted={() => setNotice('Curso excluído')} /> : null}</td></tr>)}
+            <td><div className="course-table-actions"><Link aria-label={`Abrir ${course.title}`} to={paths.authoringCourse.getHref(course.courseId)}>Abrir →</Link>
+              {canEdit ? <CourseDelete course={course} presentation="menu" onReload={courses.refetch} onNotice={setNotice} onDeleted={() => setNotice('Curso excluído')} /> : null}</div></td></tr>)}
         </tbody></table></div>}
-    {courses.data && courses.data.pagination.total > 0 ? <nav aria-label="Páginas de cursos" className="course-pagination">
-      <button aria-label="Página anterior" className="outline-button" disabled={page === 1} onClick={() => changePage(page - 1)} type="button">‹</button>
-      <span>Página {page} de {courses.data.pagination.totalPages} · 20 por página</span>
-      <button aria-label="Próxima página" className="outline-button" disabled={page >= courses.data.pagination.totalPages} onClick={() => changePage(page + 1)} type="button">›</button>
-    </nav> : null}
+    {courses.data && courses.data.pagination.total > 0 ? <CoursePagination label="Páginas de cursos" page={page} totalPages={courses.data.pagination.totalPages} onChange={changePage} /> : null}
     {creating ? <CreateCourseDialog onClose={() => setCreating(false)} onCreated={(course) => void navigate(paths.authoringCourse.getHref(course.courseId))} /> : null}
   </main>;
 };
