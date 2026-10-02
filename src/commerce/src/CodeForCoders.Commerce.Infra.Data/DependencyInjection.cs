@@ -34,6 +34,13 @@ public static class DependencyInjection
         services.AddScoped<ICourtesyGrantStore, Entitlement.CourtesyGrantStore>();
         services.AddScoped<IEntitlementOutboxMessageWriter, EntitlementOutboxMessageWriter>();
         services.AddHostedService<Entitlement.GrantReceiptCleanupWorker>();
+        services.AddOptions<AccessExpirationOptions>()
+            .Bind(configuration.GetSection(AccessExpirationOptions.SectionName))
+            .Validate(options => options.PollingIntervalSeconds is > 0 and <= 1800, "Access expiration polling must be between 1 and 1800 seconds.")
+            .Validate(options => options.BatchSize is > 0 and <= 1000, "Access expiration batch size must be between 1 and 1000.")
+            .ValidateOnStart();
+        services.AddScoped<Entitlement.AccessExpirationCycle>();
+        services.AddHostedService<Entitlement.AccessExpirationWorker>();
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
         services.AddScoped<IStudentAccessGrantQueries, Queries.StudentAccessGrantQueries>();

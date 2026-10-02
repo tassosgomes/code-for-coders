@@ -5,13 +5,13 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": null,
-  "last_checkpoint": "7.0",
+  "last_checkpoint": "8.0",
   "phase": "checkpoint",
-  "active_task": "7.0",
+  "active_task": "8.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 1,
+  "transport_retries": 2,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
   "specs": [
@@ -27,10 +27,10 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "7.0",
-    "run_id": "run.GpSJZVz7",
+    "task": "8.0",
+    "run_id": "run.BqIS1Evz",
     "outcome": "checkpoint_ok",
-    "report": "tasks/prd-concessao-acesso/7.0_task_review.md"
+    "report": "tasks/prd-concessao-acesso/8.0_task_review.md"
   },
   "history": [
     {
@@ -265,6 +265,42 @@
       "task": "7.0",
       "run_id": "run.GpSJZVz7",
       "note": "checkpoint_ok: 7_task.md done, tasks.md [x] 7.0, V-05 decisao de acesso (decideAccessInternal, escopo access-decision:read, replay jti, Cache-Control 30s), review focused aprovada run.h54tnvVs, gate 41 testes exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "7.0",
+      "run_id": "run.GpSJZVz7",
+      "commit": "5d64f00",
+      "note": "V-05 no ar; restam 8.0 e 9.0"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "infra_failure",
+      "task": "8.0",
+      "run_id": "run.9gfdk2DD",
+      "note": "codex iniciou mas o pane sumiu (agent_not_found após prompt stall); árvore sem efeitos; repetição 2/2 sem consumir tentativa"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "8.0",
+      "run_id": "run.DTLIzlSZ",
+      "note": "gate 10 testes AccessExpirationTests; regressão commerce 244; smoke Compose com fato real na fila de retenção"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "focused_approved",
+      "task": "8.0",
+      "run_id": "run.W5x338qO",
+      "note": "0 bloqueantes, 3 recomendações"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "8.0",
+      "run_id": "run.BqIS1Evz",
+      "note": "checkpoint_ok: 8_task.md done, tasks.md [x] 8.0, V-06 fato de expiracao (AccessExpirationCycle/Worker, MarkExpiryFact, gauge lag), review focused aprovada run.W5x338qO, gate 11 testes exit 0; contracts/ preservado fora do commit"
     }
   ]
 }

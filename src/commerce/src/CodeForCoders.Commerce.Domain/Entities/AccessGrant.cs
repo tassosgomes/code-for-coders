@@ -21,6 +21,14 @@ public sealed class AccessGrant
     public Guid? ExpiryEventId { get; private set; }
     public DateTimeOffset? ExpiryPublishedAt { get; private set; }
 
+    public void MarkExpiryFact(Guid eventId, DateTimeOffset now)
+    {
+        if (eventId == Guid.Empty || ExpiresAt is null || ExpiresAt > now || ExpiryPublishedAt is not null)
+            throw new EntitlementRuleException("EXPIRY_FACT_INVALID", "Only an expired grant without an expiry fact can be marked.");
+        ExpiryEventId = eventId;
+        ExpiryPublishedAt = now;
+    }
+
     public static AccessGrant CreateCourtesy(Enrollment enrollment, CourtesyGrantDetails details, TimeZoneInfo zone)
     {
         if (string.IsNullOrWhiteSpace(details.Reason) || details.Reason.Length > 500 || details.ActorId == Guid.Empty)
