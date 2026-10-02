@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 using CodeForCoders.Identity.Application.Common;
 using CodeForCoders.Identity.Domain.Entities;
 using CodeForCoders.Identity.Infra.Data;
@@ -17,7 +18,10 @@ public sealed class StudentAccountConfirmationTests(StudentAccountLookupFixture 
     {
         var student = await fixture.RegisterAsync($"{Guid.CreateVersion7()}@confirm.test");
         using var response = await SendAsync(student); Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("{\"eligible\":true}", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var payload = JsonNode.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!;
+        StudentAccountConfirmationContract.AssertValid(payload);
+        Assert.Equal(student, payload["studentId"]!.GetValue<Guid>());
+        Assert.True(payload["eligible"]!.GetValue<bool>());
         Assert.Equal("no-store", response.Headers.CacheControl?.ToString());
     }
     [Theory(DisplayName = nameof(IneligibleAccountsAreIndistinguishable))]
@@ -39,7 +43,35 @@ public sealed class StudentAccountConfirmationTests(StudentAccountLookupFixture 
             if (kind == "disabled") await db.Accounts.IgnoreQueryFilters().Where(item => item.Id == id).ExecuteUpdateAsync(update => update.SetProperty(item => item.DeactivatedOn, DateTimeOffset.UtcNow), TestContext.Current.CancellationToken);
         }
         using var response = await SendAsync(id); Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("{\"eligible\":false}", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var payload = JsonNode.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!;
+        StudentAccountConfirmationContract.AssertValid(payload);
+        Assert.Equal(id, payload["studentId"]!.GetValue<Guid>());
+        Assert.False(payload["eligible"]!.GetValue<bool>());
+    }
+    [Fact(DisplayName = nameof(ConfirmationContractRejectsMissingFieldsExtraPropertiesAndInvalidValues))]
+    public async Task ConfirmationContractRejectsMissingFieldsExtraPropertiesAndInvalidValues()
+    {
+        var student = await fixture.RegisterAsync($"{Guid.CreateVersion7()}@confirm.test");
+        using var response = await SendAsync(student);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var payload = JsonNode.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken))!.AsObject();
+        StudentAccountConfirmationContract.AssertValid(payload);
+
+        var missingStudentId = payload.DeepClone().AsObject();
+        missingStudentId.Remove("studentId");
+        Assert.False(StudentAccountConfirmationContract.IsValid(missingStudentId));
+        var missingEligibility = payload.DeepClone().AsObject();
+        missingEligibility.Remove("eligible");
+        Assert.False(StudentAccountConfirmationContract.IsValid(missingEligibility));
+        var extraProperty = payload.DeepClone().AsObject();
+        extraProperty["accountStatus"] = "active";
+        Assert.False(StudentAccountConfirmationContract.IsValid(extraProperty));
+        var invalidStudentId = payload.DeepClone().AsObject();
+        invalidStudentId["studentId"] = "invalid-uuid";
+        Assert.False(StudentAccountConfirmationContract.IsValid(invalidStudentId));
+        var invalidEligibility = payload.DeepClone().AsObject();
+        invalidEligibility["eligible"] = "true";
+        Assert.False(StudentAccountConfirmationContract.IsValid(invalidEligibility));
     }
     [Fact(DisplayName = nameof(AssertionAuthenticationAndScopeAreEnforced))]
     public async Task AssertionAuthenticationAndScopeAreEnforced()

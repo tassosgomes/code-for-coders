@@ -62,7 +62,7 @@ describe('courtesy confirm', () => {
     await waitFor(() => expect(previews).toBeGreaterThanOrEqual(2));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByRole('textbox', { name: 'Motivo da cortesia' }), 'Bolsa de mentoria'); const beforeReview = previews;
-    await user.click(screen.getByRole('button', { name: 'Revisar' })); await screen.findByRole('heading', { name: 'Revisão' }); expect(previews).toBeGreaterThan(beforeReview);
+    await user.click(screen.getByRole('button', { name: 'Revisar' })); await screen.findByRole('heading', { name: 'Revisão' }); await waitFor(() => expect(previews).toBeGreaterThan(beforeReview));
     expect(screen.getByRole('region', { name: 'Passo Revisão' })).toHaveTextContent('até 02/04/2027');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar cortesia' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' }));
     expect(await screen.findByRole('heading', { name: 'Cortesia concedida' })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Resultado da cortesia' })).toHaveTextContent('Acesso até 03/04/2027');
@@ -80,7 +80,7 @@ describe('courtesy confirm', () => {
   it('rejects blank and oversized reasons and presents field errors', async () => {
     renderCourtesy(); const user = await openTerm(); await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Continuar' }));
     await user.click(screen.getByRole('button', { name: 'Revisar' })); expect(await screen.findByRole('alert')).toHaveTextContent('Informe o motivo');
-    await user.type(screen.getByRole('textbox', { name: 'Motivo da cortesia' }), 'a'.repeat(501)); await user.click(screen.getByRole('button', { name: 'Revisar' })); expect(await screen.findByRole('alert')).toHaveTextContent('500');
+    await user.click(screen.getByRole('textbox', { name: 'Motivo da cortesia' })); await user.paste('a'.repeat(501)); await user.click(screen.getByRole('button', { name: 'Revisar' })); expect(await screen.findByRole('alert')).toHaveTextContent('500');
   });
   it('concedes lifetime without sending months or requesting another term preview', async () => {
     renderCourtesy(); let body: unknown;

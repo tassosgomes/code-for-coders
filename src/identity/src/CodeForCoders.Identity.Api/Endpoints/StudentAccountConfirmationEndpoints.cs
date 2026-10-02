@@ -29,7 +29,7 @@ public static class StudentAccountConfirmationEndpoints
         }
         catch (JsonException) { return Problem(400); }
         if (input is null || input.StudentId == Guid.Empty) return Problem(400);
-        return Results.Ok(new { eligible = await useCase.ExecuteAsync(new(verified.Assertion.TenantId, input.StudentId), cancellationToken) });
+        return Results.Ok(new { studentId = input.StudentId, eligible = await useCase.ExecuteAsync(new(verified.Assertion.TenantId, input.StudentId), cancellationToken) });
     }
     private static IResult Problem(int status) => Results.Problem(statusCode: status, title: "Student account confirmation rejected.",
         extensions: new Dictionary<string, object?> { ["code"] = status == 401 ? "SERVICE_UNAUTHORIZED" : status == 403 ? "PERMISSION_DENIED" : "INVALID_REQUEST" });
