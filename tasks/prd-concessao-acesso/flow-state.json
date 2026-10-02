@@ -5,9 +5,9 @@
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
   "target_ref": null,
-  "last_checkpoint": "5.0",
+  "last_checkpoint": "6.0",
   "phase": "checkpoint",
-  "active_task": "5.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -27,10 +27,10 @@
   "last_result": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "5.0",
-    "run_id": "run.Ceerm92M",
+    "task": "6.0",
+    "run_id": "run.YHWhS01P",
     "outcome": "checkpoint_ok",
-    "report": "tasks/prd-concessao-acesso/5.0_task_review.md"
+    "report": "tasks/prd-concessao-acesso/6.0_task_review.md"
   },
   "history": [
     {
@@ -207,6 +207,35 @@
       "task": "5.0",
       "run_id": "run.Ceerm92M",
       "note": "checkpoint_ok: 5_task.md done, tasks.md [x] 5.0, V-03 conceder cortesia (modelo, término, outbox, ato, BFF, SPA), review focused aprovada run.F8hu474M, gate 67 testes exit 0; contracts/ preservado fora do commit"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "5.0",
+      "run_id": "run.Ceerm92M",
+      "commit": "a0f1e59",
+      "note": "Fase 2 parcial: concessão no ar (V-03); desbloqueia 6.0, 7.0, 8.0 e 9.0"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "6.0",
+      "run_id": "run.uV3J5ZTD",
+      "note": "28 testes vs mínimo 16; suites completas commerce/bff verdes; codex 25min"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "focused_approved",
+      "task": "6.0",
+      "run_id": "run.7WVuQyyE",
+      "note": "0 bloqueantes, 3 recomendações"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_task",
+      "task": "6.0",
+      "run_id": "run.YHWhS01P",
+      "note": "checkpoint_ok: 6_task.md done, tasks.md [x] 6.0, V-04 concessoes do aluno/aviso/reforco vitalicia, review focused aprovada run.7WVuQyyE, gate 28 testes exit 0; contracts/ preservado fora do commit"
     }
   ]
 }

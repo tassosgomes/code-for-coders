@@ -87,6 +87,7 @@ describe('courtesy confirm', () => {
     server.use(http.post(`${env.API_URL}/api/v1/courtesy-grants`, async ({ request }) => { body = await request.json(); return HttpResponse.json({ grantId: crypto.randomUUID(), courseTitle: 'Fundamentos de C#', endsOn: null, reason: 'Lifetime scholarship' }, { status: 201 }); }));
     const user = await openTerm(); await user.click(screen.getByRole('radio', { name: 'Vitalícia' })); await user.click(screen.getByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByRole('textbox', { name: 'Motivo da cortesia' }), 'Lifetime scholarship'); await user.click(screen.getByRole('button', { name: 'Revisar' })); await screen.findByRole('heading', { name: 'Revisão' });
+    await user.click(screen.getByRole('checkbox', { name: /não há como desfazer pela tela/ }));
     await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' })); await screen.findByRole('heading', { name: 'Cortesia concedida' }); expect(body).toHaveProperty('accessPeriod', { type: 'lifetime' }); expect(screen.getByRole('region', { name: 'Resultado da cortesia' })).toHaveTextContent('Acesso vitalício');
   });
 });

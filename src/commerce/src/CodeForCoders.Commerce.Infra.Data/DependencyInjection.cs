@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddHostedService<Entitlement.GrantReceiptCleanupWorker>();
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
+        services.AddScoped<IStudentAccessGrantQueries, Queries.StudentAccessGrantQueries>();
         services.AddScoped<IEntitlementCourseProjectionStore, Entitlement.EntitlementCourseProjectionStore>();
         services.AddScoped<IOfferReferenceQueries, Queries.OfferReferenceQueries>();
         services.AddHostedService<Catalog.PurchaseIntentReceiptCleanupWorker>();

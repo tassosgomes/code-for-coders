@@ -1,6 +1,7 @@
 import { CourtesyResultCard } from '@/features/courtesies/components/courtesy-result-card';
 import { ReviewSentence } from '@/features/courtesies/components/review-sentence';
 import { TermPreview } from '@/features/courtesies/components/term-preview';
+import { LifetimeConfirm } from '@/features/courtesies/components/lifetime-confirm';
 import { useCourtesyConfirmation } from '@/features/courtesies/hooks/use-courtesy-confirmation';
 
 type CourtesyConfirmationStepsProps = { studentId: string; studentName: string; studentEmail: string; courseId: string; courseTitle: string; step: number; setStep: (step: number) => void; onRestart: () => void };
@@ -26,7 +27,11 @@ export const CourtesyConfirmationSteps = ({ studentId, studentName, studentEmail
     </section>
     <section hidden={step !== 4} className="catalog-record-card courtesy-lookup-card" aria-label="Passo Revisão">
       <div className="courtesy-step-heading"><h2>Revisão</h2><span>5 de 6</span></div><ReviewSentence student={studentEmail} course={courseTitle} reason={form.watch('reason')} lifetime={period.type === 'lifetime'} endsOn={preview.data?.endsOn} /><p>Aluno: {studentName} ({studentEmail})</p>
-      <p>A cortesia será registrada na trilha de auditoria.</p><div className="courtesy-actions"><button type="button" className="secondary-button" disabled={mutation.isPending} onClick={() => setStep(3)}>Voltar</button><button type="button" className="primary-button" disabled={mutation.isPending || period.type === 'months' && (!preview.data || preview.isFetching || preview.isError)} onClick={() => { void flow.confirm(); }}>{mutation.isPending ? 'Concedendo…' : 'Confirmar cortesia'}</button></div>
+      {flow.grants.isFetching ? <p role="status">Consultando concessões do aluno…</p> : null}
+      {flow.grants.isError ? <p role="alert">Não foi possível consultar os acessos existentes. A cortesia pode ser concedida mesmo assim.</p> : null}
+      {flow.existingAccess ? <div className="courtesy-warning" role="status"><p>{flow.existingAccess}</p><p>A nova cortesia não altera as concessões existentes.</p></div> : null}
+      {step === 4 && period.type === 'lifetime' ? <LifetimeConfirm confirmed={flow.lifetimeConfirmed} disabled={mutation.isPending} onChange={flow.setLifetimeConfirmed} /> : null}
+      <p>A cortesia será registrada na trilha de auditoria.</p><div className="courtesy-actions"><button type="button" className="secondary-button" disabled={mutation.isPending} onClick={() => setStep(3)}>Voltar</button><button type="button" className="primary-button" disabled={mutation.isPending || period.type === 'lifetime' && !flow.lifetimeConfirmed || period.type === 'months' && (!preview.data || preview.isFetching || preview.isError)} onClick={() => { void flow.confirm(); }}>{mutation.isPending ? 'Concedendo…' : 'Confirmar cortesia'}</button></div>
     </section>
     {flow.error ? <p role="alert" className="inline-alert">{flow.error}</p> : null}
   </div>;

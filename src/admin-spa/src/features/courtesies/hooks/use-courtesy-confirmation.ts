@@ -5,6 +5,8 @@ import { useRef, useState } from 'react';
 import { useValidatedForm } from '@/components/ui/form/validated-form';
 import { courtesyGrantSchema, useGrantCourtesy } from '@/features/courtesies/api/grant-courtesy';
 import { courtesyTermQueryOptions, useCourtesyTerm } from '@/features/courtesies/api/preview-courtesy-term';
+import { useStudentAccessGrants } from '@/features/courtesies/api/list-student-access-grants';
+import { existingAccessMessage } from '@/features/courtesies/utils/existing-access-message';
 
 const messages: Record<string, string> = {
   FIELD_INVALID: 'Revise a vigência e o motivo da cortesia.',
@@ -27,17 +29,20 @@ export const useCourtesyConfirmation = (studentId: string, courseId: string, ste
   const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [lifetimeConfirmed, setLifetimeConfirmed] = useState(false);
+  const grants = useStudentAccessGrants(studentId, step === 4);
+  const existingAccess = existingAccessMessage(grants.data, courseId);
   const review = async () => {
     if (!await form.trigger()) return;
     setError(null); setReviewing(true);
     try {
       if (period.type === 'months') await queries.fetchQuery(courtesyTermQueryOptions(period.months));
-      key.current = crypto.randomUUID(); mutation.reset(); setStep(4);
+      key.current = crypto.randomUUID(); mutation.reset(); setLifetimeConfirmed(false); setStep(4);
     } catch { setError('Não foi possível calcular o término. Tente novamente.'); }
     finally { setReviewing(false); }
   };
   const confirm = async () => {
-    if (submitting.current || !key.current) return;
+    if (step !== 4 || submitting.current || !key.current || period.type === 'lifetime' && !lifetimeConfirmed) return;
     const parsed = courtesyGrantSchema.safeParse({ ...form.getValues(), studentId, courseId });
     if (!parsed.success) { setError(messages.FIELD_INVALID ?? null); return; }
     submitting.current = true; setError(null);
@@ -52,5 +57,5 @@ export const useCourtesyConfirmation = (studentId: string, courseId: string, ste
       }
     } finally { submitting.current = false; }
   };
-  return { form, period, preview, mutation, error, review, reviewing, confirm };
+  return { form, period, preview, mutation, error, review, reviewing, confirm, lifetimeConfirmed, setLifetimeConfirmed, existingAccess, grants };
 };

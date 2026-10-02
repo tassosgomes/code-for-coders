@@ -5,6 +5,7 @@ import { useCourtesyForm } from '@/features/courtesies/hooks/use-courtesy-form';
 import { ValidatedForm } from '@/components/ui/form/validated-form';
 import { studentAccountLookupSchema } from '@/features/courtesies/api/lookup-student-account';
 import { StudentAccountCard } from '@/features/courtesies/components/student-account-card';
+import { StudentAccessGrants } from '@/features/courtesies/components/student-access-grants';
 import { useCourtesyStudentLookup } from '@/features/courtesies/hooks/use-courtesy-student-lookup';
 
 const steps = ['Aluno', 'Curso', 'Prazo', 'Motivo', 'Revisão', 'Resultado'];
@@ -32,6 +33,7 @@ export const CourtesyStudentScreen = () => {
         {lookup.busy ? <div className="courtesy-loading" role="status">Localizando aluno…</div> : null}
         {lookup.error ? <p className="inline-alert" role="alert">{lookup.error}</p> : null}
         {lookup.account ? <StudentAccountCard account={lookup.account} onChange={resetStudent} /> : null}
+        {lookup.account ? <StudentAccessGrants key={lookup.account.studentId} studentId={lookup.account.studentId} enabled={flow.step === 0} /> : null}
         {lookup.account ? <div className="courtesy-actions"><button type="button" className="primary-button" disabled={lookup.account.status !== 'active' || lookup.busy} onClick={() => flow.setStep(1)}>Continuar</button></div> : null}
       </section>
       {flow.step === 1 ? <CourtesyCourseStep selected={flow.course} onSelect={flow.selectCourse} onBack={() => flow.setStep(0)} onContinue={() => flow.setStep(2)} /> : null}

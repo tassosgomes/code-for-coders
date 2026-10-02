@@ -29,6 +29,12 @@ public sealed class CourtesyGrantsClient(HttpClient client) : ICourtesyGrantsCli
                 if (!root.TryGetProperty("endsOn", out var end) || !DateOnly.TryParse(end.GetString(), out _)
                     || !root.TryGetProperty("expiresAt", out var expiry) || !expiry.TryGetDateTimeOffset(out _)) return Unavailable(502);
             }
+            else if (input.Path.StartsWith("students/", StringComparison.Ordinal))
+            {
+                if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Array
+                    || !root.TryGetProperty("pagination", out var pagination) || pagination.ValueKind != JsonValueKind.Object)
+                    return Unavailable(502);
+            }
             else if (!root.TryGetProperty("grantId", out var id) || !id.TryGetGuid(out _)) return Unavailable(502);
             return new((int)response.StatusCode, null, root.Clone());
         }

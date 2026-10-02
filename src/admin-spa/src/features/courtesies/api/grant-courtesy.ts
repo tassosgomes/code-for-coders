@@ -1,7 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import type { CourtesyGrant } from '@/features/courtesies/types/courtesy-grant';
+import { studentAccessGrantsQueryOptions } from '@/features/courtesies/api/list-student-access-grants';
 import { apiClient } from '@/lib/api-client';
 
 export const courtesyGrantSchema = z.object({
@@ -15,4 +16,9 @@ export const courtesyGrantSchema = z.object({
 export type CourtesyGrantInput = z.infer<typeof courtesyGrantSchema>;
 export const grantCourtesy = (input: { body: CourtesyGrantInput; key: string }): Promise<CourtesyGrant> =>
   apiClient.post('/api/v1/courtesy-grants', input.body, { headers: { 'Idempotency-Key': input.key } });
-export const useGrantCourtesy = () => useMutation({ mutationFn: grantCourtesy, retry: false });
+export const useGrantCourtesy = () => {
+  const queries = useQueryClient();
+  return useMutation({ mutationFn: grantCourtesy, retry: false,
+    onSuccess: (_grant, input) => { void queries.invalidateQueries({ queryKey: studentAccessGrantsQueryOptions(input.body.studentId).queryKey }); },
+  });
+};

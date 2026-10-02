@@ -13,6 +13,7 @@ public static class CourtesyGrantEndpoints
         endpoints.MapPost("/api/v1/courtesy-grants", GrantAsync).WithName("grantCourtesy");
         endpoints.MapGet("/api/v1/courtesy-term-preview", PreviewAsync).WithName("previewCourtesyTerm");
         endpoints.MapGet("/api/v1/courtesy-grants/{grantId:guid}", GetAsync).WithName("getCourtesyGrant");
+        endpoints.MapGet("/api/v1/students/{studentId:guid}/access-grants", ListStudentGrantsAsync).WithName("listStudentAccessGrants");
     }
     private static Task<IResult> GrantAsync(JsonElement body, HttpContext context, IStaffSessionIdentityClient identity,
         ICourtesyGrantsClient commerce, CancellationToken cancellationToken)
@@ -24,6 +25,12 @@ public static class CourtesyGrantEndpoints
         ICourtesyGrantsClient commerce, CancellationToken cancellationToken)
         => months is < 1 or > 60 ? Task.FromResult(Problem(context, 400, "INVALID_REQUEST"))
             : SendAsync(new($"courtesy-term-preview?months={months}", null), context, identity, commerce, cancellationToken);
+
+    private static Task<IResult> ListStudentGrantsAsync(Guid studentId, HttpContext context, IStaffSessionIdentityClient identity,
+        ICourtesyGrantsClient commerce, CancellationToken cancellationToken, int _page = 1, int _size = 10)
+        => _page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue
+            ? Task.FromResult(Problem(context, 400, "INVALID_REQUEST"))
+            : SendAsync(new($"students/{studentId:D}/access-grants?_page={_page}&_size={_size}", null), context, identity, commerce, cancellationToken);
 
     private sealed record Request(string Path, JsonElement? Body);
     private static async Task<IResult> SendAsync(Request input, HttpContext context, IStaffSessionIdentityClient identity,
