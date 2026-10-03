@@ -1,9 +1,17 @@
 import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { supportMessage, useProtectedPlayback } from '@/features/student-lessons/hooks/use-protected-playback';
 
 const zones = ['left-4 top-4', 'right-4 top-4', 'left-4 top-1/2', 'right-4 top-1/2'];
+const speeds = [0.5, 1, 1.25, 1.5, 2];
 
 type ProtectedVideoPlayerProps = { lessonId: string; csrfToken: string };
 
@@ -15,10 +23,15 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlay
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [volume, setVolume] = useState(1);
+  const [speed, setSpeed] = useState(1);
 
   const seek = (seconds: number) => {
     const video = videoRef.current;
     if (video) { video.currentTime = Math.max(0, Math.min(duration, seconds)); setPosition(video.currentTime); }
+  };
+  const handleSpeedChange = (rate: number) => {
+    setSpeed(rate);
+    if (videoRef.current) videoRef.current.playbackRate = rate;
   };
   const fullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen();
@@ -36,7 +49,12 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlay
       }}>
       <video ref={videoRef} className="aspect-video w-full" playsInline disablePictureInPicture
         onPlay={onPlay} onPause={onPause} onEnded={onPause}
-        onLoadedMetadata={() => { setDuration(videoRef.current?.duration ?? 0); loadedMetadata(); setPosition(videoRef.current?.currentTime ?? 0); }}
+        onLoadedMetadata={() => {
+          setDuration(videoRef.current?.duration ?? 0);
+          loadedMetadata();
+          setPosition(videoRef.current?.currentTime ?? 0);
+          if (videoRef.current) videoRef.current.playbackRate = speed;
+        }}
         onTimeUpdate={() => setPosition(videoRef.current?.currentTime ?? 0)} />
       {watermark ? <span aria-hidden="true" data-testid="video-watermark"
         className={'pointer-events-none absolute z-10 break-all rounded bg-black/60 px-2 py-1 text-xs text-white ' + zones[zone]}>{watermark}</span> : null}
@@ -49,6 +67,30 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlay
         <input aria-label="Volume" type="range" min={0} max={1} step={0.05} value={volume}
           onChange={(event) => { const value = Number(event.target.value); setVolume(value); if (videoRef.current) videoRef.current.volume = value; }}
           className="w-24 focus-visible:outline focus-visible:outline-ring" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              aria-label="Velocidade de reprodução"
+              disabled={Boolean(status)}
+              className="border-white/20 bg-transparent text-white hover:bg-white/20 hover:text-white focus-visible:outline focus-visible:outline-ring"
+            >
+              {speed.toString().replace('.', ',')}x
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-24">
+            <DropdownMenuRadioGroup
+              value={speed.toString()}
+              onValueChange={(val) => handleSpeedChange(Number(val))}
+            >
+              {speeds.map((rate) => (
+                <DropdownMenuRadioItem key={rate} value={rate.toString()}>
+                  {rate.toString().replace('.', ',')}x
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button aria-label="Tela cheia" onClick={fullscreen}>Tela cheia</Button>
       </div>
     </div>

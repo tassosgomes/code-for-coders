@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.PublishedLessonRepublicationTests --minimum-expected-tests 4 && npm --prefix src/student-spa run test -- playback-navigation'
@@ -58,6 +58,6 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0), com os mínimos do `gate`.
+- [x] Gate focalizado passa (exit 0), com os mínimos do `gate`.
 - [ ] No navegador, com duas aulas: trocar de aula toca a outra do início; mudar a velocidade para 1,5x tem efeito imediato; o endereço de uma aula republicada com outro nome continua abrindo a mesma aula.
 - [ ] A aula removida da versão vigente mostra "Esta aula não está disponível" e a lista atual.

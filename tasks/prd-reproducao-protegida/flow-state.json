@@ -4,9 +4,9 @@
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "target_ref": null,
-  "last_checkpoint": "5.0",
+  "last_checkpoint": "6.0",
   "phase": "checkpoint",
-  "active_task": "6.0",
+  "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,12 +19,12 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.weBwC7Bu",
+    "run_id": "run.Lm6O8Vsr",
     "role": "validator",
-    "mode": "focused",
-    "task": "5.0",
+    "mode": "revalidation",
+    "task": "6.0",
     "outcome": "approved",
-    "note": "detalhes em 5_task_review.md"
+    "note": "B1 resolvido; detalhes em 6_task_review.md"
   },
   "pending": null,
   "history": [
@@ -49,6 +49,7 @@
     "instrucao do responsavel: implementacao passa a usar kind agy; validacao mantem claude/sonnet-5-5",
     "agy sem modo nao interativo travou em prompt de permissao (run.C6n2cmbF); resolvido com TSG_AGENT_EXTRA_ARGS=--dangerously-skip-permissions",
     "5.0 fix run.5Jzfp7vM (agy): implementation_complete, gate exit 0 (21 testes)",
-    "5.0 checkpoint-task ok (run.vRO5z8YT): 5_task.md done, tasks.md [x] 5.0, V-03 RenewPlaybackSession media/bff-student/student-spa+scripts, review focused aprovada run.weBwC7Bu, gate 21 testes exit 0"
+    "5.0 checkpoint-task ok (run.vRO5z8YT): 5_task.md done, tasks.md [x] 5.0, V-03 RenewPlaybackSession media/bff-student/student-spa+scripts, review focused aprovada run.weBwC7Bu, gate 21 testes exit 0",
+    "6.0 checkpoint-task ok (run.Vhcspt7O): 6_task.md done, tasks.md [x] 6.0, V-04 PublishedLessonRepublication learning/student-spa+nav, review revalidation aprovada run.Lm6O8Vsr, gate 12 testes exit 0"
   ]
 }
