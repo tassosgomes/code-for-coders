@@ -14,5 +14,7 @@ public sealed class StudentSessionTokenOptions
 
     public int LifetimeMinutes { get; set; } = 5;
 
+    public string[] EmailAudiences { get; set; } = ["media"];
+
     public Dictionary<string, string> AudienceScopes { get; set; } = [];
 }

@@ -8,9 +8,12 @@ readonly env_file="$repository_root/.env"
 
 ensure_lesson_keys() {
   umask 077
+  if ! rg -q "^MEDIA_EDGE_SHARED_SECRET=" "$env_file"; then
+    printf '\nMEDIA_EDGE_SHARED_SECRET=%s\n' "$(openssl rand -hex 32)" >> "$env_file"
+  fi
   local lesson_key_dir
   lesson_key_dir="$(mktemp -d)"
-  for lesson_key_prefix in IDENTITY_STUDENT_TOKEN LEARNING_COMMERCE; do
+  for lesson_key_prefix in IDENTITY_STUDENT_TOKEN LEARNING_COMMERCE MEDIA_COMMERCE; do
     if ! rg -q "^${lesson_key_prefix}_PRIVATE_KEY_B64=" "$env_file"; then
       openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$lesson_key_dir/private.pem" 2>/dev/null
       {

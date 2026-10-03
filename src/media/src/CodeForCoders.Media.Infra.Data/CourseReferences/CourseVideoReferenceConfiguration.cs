@@ -12,6 +12,7 @@ public sealed class CourseVideoReferenceConfiguration : IEntityTypeConfiguration
         builder.Property(reference => reference.TenantId).HasColumnName("tenant_id");
         builder.Property(reference => reference.CourseId).HasColumnName("course_id");
         builder.Property(reference => reference.LessonId).HasColumnName("lesson_id");
+        builder.HasIndex(reference => new { reference.TenantId, reference.LessonId });
         builder.Property(reference => reference.VideoId).HasColumnName("video_id");
     }
 }

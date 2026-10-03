@@ -35,6 +35,31 @@ public sealed class AccessDecisionIssuersTests(CommerceIntegrationFixture infra)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact(DisplayName = nameof(MediaAssertionCanReadDecision))]
+    public async Task MediaAssertionCanReadDecision()
+    {
+        await using var test = new AccessDecisionFixture(infra);
+        ConfigureMedia(test);
+        using var response = await test.RequestAsync(test.Assertion(issuer: "media"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact(DisplayName = nameof(MediaCannotUseShowcaseScope))]
+    public async Task MediaCannotUseShowcaseScope()
+    {
+        await using var test = new AccessDecisionFixture(infra);
+        ConfigureMedia(test);
+        using var response = await test.RequestAsync(test.Assertion(issuer: "media", scope: "showcase:read"));
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    private static void ConfigureMedia(AccessDecisionFixture test)
+    {
+        var settings = test.Courtesy.Factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ServiceAssertionOptions>>().Value;
+        var trusted = settings.Issuers["access-decision-test"];
+        settings.Issuers["media"] = new() { PublicKeys = trusted.PublicKeys, AllowedTenantIds = trusted.AllowedTenantIds, AllowedScopes = ["access-decision:read"] };
+    }
+
     private static void ConfigureLearning(AccessDecisionFixture test)
     {
         var settings = test.Courtesy.Factory.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<ServiceAssertionOptions>>().Value;

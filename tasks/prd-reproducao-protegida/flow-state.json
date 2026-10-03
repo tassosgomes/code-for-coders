@@ -4,9 +4,9 @@
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "target_ref": null,
-  "last_checkpoint": "3.0",
+  "last_checkpoint": "4.0",
   "phase": "checkpoint",
-  "active_task": "4.0",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,12 +19,12 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.UOtcOCJY",
+    "run_id": "run.LGTP0xJR",
     "role": "validator",
     "mode": "focused",
-    "task": "3.0",
+    "task": "4.0",
     "outcome": "approved",
-    "note": "revisao focused aprovada; detalhes em 3_task_review.md"
+    "note": "2 falhas de transporte anteriores (result_missing, gate em background); resolvido com context-file exigindo gate foreground; detalhes em 4_task_review.md"
   },
   "pending": null,
   "history": [
@@ -39,6 +39,8 @@
     "2.0 retomada: figma externo commitado (62073b2, 51ec37b); responsavel aprovou o Figma; gate exit 0; rodada atual preserva tentativa 1; seguindo para focused",
     "2.0 checkpoint-task ok (run.4EzPrGmr): 2_task.md done, tasks.md [x] 2.0, wireframes-aula.md handoff+aprovacao Figma, review focused aprovada run.H2U2spoF, gate rg exit 0",
     "checkpoint 2.0 = commit d2b9ea53b86166c848349730984be661043507af; iniciando 3.0 (primeira vertical, full-stack)",
-    "3.0 checkpoint-task ok (run.umqU86ac): 3_task.md done, tasks.md [x] 3.0, V-01 full-stack identity/commerce/learning/bff-student/student-spa+compose, review focused aprovada run.UOtcOCJY, gate 60 testes exit 0"
+    "3.0 checkpoint-task ok (run.umqU86ac): 3_task.md done, tasks.md [x] 3.0, V-01 full-stack identity/commerce/learning/bff-student/student-spa+compose, review focused aprovada run.UOtcOCJY, gate 60 testes exit 0",
+    "checkpoint 3.0 = commit b74f17bf2563139cfb39250965415775dd2d4106; nota: c4179ef (Atualizacao nas Skills) commitado pelo responsavel em paralelo, fora do escopo do PRD, sinalizar na full; iniciando 4.0",
+    "4.0 checkpoint-task ok (run.KPL3VMWE): 4_task.md done, tasks.md [x] 4.0, V-02 full-stack identity/commerce/media/media-edge/bff-student/student-spa+compose, review focused aprovada run.LGTP0xJR, gate 78 testes exit 0"
   ]
 }

@@ -14,6 +14,7 @@ internal sealed class MediaRoleFactory(
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("EndToEndTest");
+        builder.UseSetting("Playback:Delivery:SharedSecret", "development-test-secret");
         builder.UseSetting("ConnectionStrings:DefaultConnection", connectionString);
         if (!omitRole)
         {

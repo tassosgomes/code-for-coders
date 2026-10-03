@@ -32,6 +32,11 @@ public static class ServiceConfigurationExtensions
             .Validate(options => !options.AudienceScopes.ContainsKey("learning")
                 || options.AudienceScopes["learning"].Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("lessons:read"),
                 "The learning student audience requires lessons:read.")
+            .Validate(options => !options.AudienceScopes.ContainsKey("media")
+                || options.AudienceScopes["media"].Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("playback:use"),
+                "The media student audience requires playback:use.")
+            .Validate(options => options.EmailAudiences.All(audience => audience == "media"),
+                "Only media may receive the student email claim.")
             .ValidateOnStart();
         builder.Services.AddSingleton<StudentSessionTokenIssuer>();
         builder.Services.AddOptions<StaffSessionTokenOptions>()

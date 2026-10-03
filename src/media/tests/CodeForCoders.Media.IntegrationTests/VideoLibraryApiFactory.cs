@@ -22,6 +22,10 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
     private readonly RSA signingKey = RSA.Create(2048);
     private readonly MediaIntegrationFixture infrastructure = new();
 
+    public string PlaybackMasterKey { get; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+    public System.Collections.Concurrent.ConcurrentDictionary<Guid, int> PlaybackDecisions { get; } = new();
+    public System.Collections.Concurrent.ConcurrentDictionary<Guid, int> PlaybackDecisionCalls { get; } = new();
+
     public string JwksDocument { get; private set; } = string.Empty;
 
     public string MinioEndpoint => infrastructure.MinioEndpoint;
@@ -41,6 +45,12 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
         builder.UseEnvironment("IntegrationTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", infrastructure.PostgreSql.GetConnectionString());
         builder.UseSetting("Media:Role", "api");
+        builder.UseSetting("Preparation:MasterKey", PlaybackMasterKey);
+        builder.UseSetting("Preparation:MasterKeyId", "playback-test");
+        builder.UseSetting("Playback:Delivery:SharedSecret", "development-test-secret");
+        builder.UseSetting("AccessDecision:SigningKeyId", "media-decision-test");
+        builder.UseSetting("AccessDecision:SigningKeyBase64", Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey()));
+        builder.UseSetting("AccessDecision:BaseAddress", "http://commerce.test/");
         builder.UseSetting("AwsMedia:EndpointInternal", infrastructure.MinioEndpoint);
         builder.UseSetting("AwsMedia:EndpointPublic", infrastructure.MinioEndpoint);
         builder.UseSetting("AwsMedia:BucketName", MediaIntegrationFixture.MinioBucketName);
@@ -62,6 +72,8 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
                 services.Remove(hostedService);
             }
 
+            services.AddHttpClient<CodeForCoders.Media.Application.Interfaces.IAccessDecisionClient, CodeForCoders.Media.Api.Clients.AccessDecisionClient>()
+                .ConfigurePrimaryHttpMessageHandler(() => new PlaybackDecisionHandler(this));
             services.AddHttpClient(MediaJwksConfigurationManager.HttpClientName)
                 .ConfigurePrimaryHttpMessageHandler(_ => new JwksHandler(() => JwksDocument));
         });
@@ -85,6 +97,42 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
             DateTime.UtcNow.AddMinutes(5),
             permissions);
 
+    public string CreateStudentToken(Guid tenantId, Guid studentId, string? email = "student@example.com", string audience = "media")
+    {
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new("sub", studentId.ToString("D")), new("tenantId", tenantId.ToString("D")),
+            new("sessionId", Guid.CreateVersion7().ToString("D")), new("scope", "playback:use"),
+        };
+        if (email is not null) claims.Add(new("email", email));
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken("identity", audience, claims,
+            DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(5),
+            new SigningCredentials(new RsaSecurityKey(signingKey) { KeyId = SigningKeyId }, SecurityAlgorithms.RsaSha256));
+        return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private sealed class PlaybackDecisionHandler(VideoLibraryApiFactory factory) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(request.Headers.Authorization!.Parameter);
+            var tenant = Guid.Parse(token.Claims.Single(claim => claim.Type == "tenantId").Value);
+            factory.PlaybackDecisionCalls.AddOrUpdate(tenant, 1, (_, calls) => calls + 1);
+            factory.PlaybackDecisions.TryGetValue(tenant, out var status);
+            if (status == 503) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = System.Net.Http.Json.JsonContent.Create(new
+                {
+                    decision = status == 403 ? "denied" : "allowed",
+                    validity = status == 403 ? null : new { type = "lifetime" },
+                    deniedReason = status == 403 ? "no-grant" : null,
+                    decidedAt = DateTimeOffset.UtcNow,
+                }),
+            });
+        }
+    }
+
     public string CreateExpiredToken(Guid tenantId)
         => CreateToken(
             tenantId,
@@ -107,6 +155,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
             new("sub", actorAccountId.ToString("D")),
             new("tenantId", tenantId.ToString("D")),
             new("roles", "professor"),
+            new("sessionId", Guid.CreateVersion7().ToString("D")),
             new("scope", "videos:write"),
         };
         claims.AddRange(permissions.Select(permission => new System.Security.Claims.Claim("permissions", permission)));

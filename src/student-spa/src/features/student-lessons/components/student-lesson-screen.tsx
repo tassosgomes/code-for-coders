@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { env } from '@/config/env';
 import { paths } from '@/config/paths';
+import { ProtectedVideoPlayer } from '@/features/student-lessons/components/protected-video-player';
 import { useStudentLesson } from '@/features/student-lessons/api/get-student-lesson';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const problemSchema = z.object({ code: z.string(), reason: z.string().optional(), accessEndedAt: z.iso.datetime({ offset: true }).optional() });
-type StudentLessonScreenProps = { lessonId: string };
+type StudentLessonScreenProps = { lessonId: string; csrfToken: string };
 
-export const StudentLessonScreen = ({ lessonId }: StudentLessonScreenProps) => {
+export const StudentLessonScreen = ({ lessonId, csrfToken }: StudentLessonScreenProps) => {
   const query = useStudentLesson(lessonId);
   useDocumentTitle(query.isSuccess ? query.data.lesson.title : 'Aula');
   if (query.isPending) return (
@@ -44,7 +45,7 @@ export const StudentLessonScreen = ({ lessonId }: StudentLessonScreenProps) => {
     <section>
       <Button asChild variant="link" className="px-0"><Link to={paths.studentShowcaseCourse.getHref(course.courseId)}>Voltar para o curso</Link></Button>
       <h1 className="typo-h3 mb-4">{lesson.title}</h1>
-      <div className="flex aspect-video items-center justify-center rounded-lg bg-muted" role="status">Carregando vídeo…</div>
+      {csrfToken ? <ProtectedVideoPlayer lessonId={lessonId} csrfToken={csrfToken} /> : <div role="status">Carregando vídeo…</div>}
     </section>
     <nav aria-label="Aulas do curso" className="rounded-lg border p-4">
       <h2 className="typo-h4">Aulas do curso</h2><p className="text-muted-foreground">{course.title}</p>

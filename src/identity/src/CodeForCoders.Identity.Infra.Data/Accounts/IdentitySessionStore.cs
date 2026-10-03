@@ -109,7 +109,7 @@ public sealed class IdentitySessionStore(IdentityDbContext dbContext) : IIdentit
                     && account.Type == AccountType.Student
                     && account.IsConfirmed
                     && account.DeactivatedOn == null
-                select new StudentSessionDetails(session.Id, account.Id, account.Name, session.ExpiresOn))
+                select new StudentSessionDetails(session.Id, account.Id, account.Name, session.ExpiresOn, account.Email))
             .SingleOrDefaultAsync(cancellationToken);
     }
 

@@ -30,7 +30,7 @@ describe('Student lesson screen', () => {
     expect(await screen.findByRole('heading', { name: 'Injeção de dependência' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Aulas do curso' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Injeção de dependência.*Aula atual/u })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByText('Carregando vídeo…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Player da aula')).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(document.title).toBe('Injeção de dependência');
   });

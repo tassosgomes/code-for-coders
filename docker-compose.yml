@@ -100,6 +100,30 @@ services:
       timeout: 3s
       retries: 10
 
+  media-edge:
+    build:
+      context: .
+      dockerfile: src/media-edge/Dockerfile
+    environment:
+      MEDIA_EDGE_SHARED_SECRET: ${MEDIA_EDGE_SHARED_SECRET:?run scripts/generate-local-env.sh}
+      MEDIA_EDGE_SPA_ORIGIN: ${MEDIA_EDGE_SPA_ORIGIN:-http://localhost:8082}
+      MEDIA_EDGE_S3_HOST: minio:9000
+      MEDIA_EDGE_S3_ACCESS_KEY: ${MINIO_ROOT_USER:-code-for-coders}
+      MEDIA_EDGE_S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-code-for-coders-local}
+      MEDIA_EDGE_S3_BUCKET: code-for-coders-media
+      MEDIA_EDGE_S3_PREFIX: media
+      MEDIA_EDGE_S3_REGION: us-east-1
+    ports:
+      - "5109:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    depends_on:
+      minio-bucket-init:
+        condition: service_completed_successfully
+
   identity:
     image: code-for-coders-identity:local
     build:
@@ -112,6 +136,8 @@ services:
       StudentSessionTokens__SigningKeyBase64: ${IDENTITY_STUDENT_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StudentSessionTokens__LifetimeMinutes: "5"
       StudentSessionTokens__AudienceScopes__learning: lessons:read
+      StudentSessionTokens__AudienceScopes__media: playback:use
+      StudentSessionTokens__EmailAudiences__0: media
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=code-for-coders-local
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
@@ -233,6 +259,14 @@ services:
       dockerfile: src/media/Dockerfile
     container_name: code-for-coders-media
     environment:
+      AccessDecision__BaseAddress: http://commerce:8080/
+      AccessDecision__SigningKeyId: local-media-commerce-1
+      AccessDecision__SigningKeyBase64: ${MEDIA_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      Playback__Delivery__Adapter: DevelopmentEdge
+      Playback__Delivery__BaseAddress: ${MEDIA_EDGE_PUBLIC_URL:-http://localhost:5109/}
+      Playback__Delivery__SharedSecret: ${MEDIA_EDGE_SHARED_SECRET:?run scripts/generate-local-env.sh}
+      Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in environment}
+      Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:-local-v1}
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: api
@@ -299,6 +333,9 @@ services:
     container_name: code-for-coders-commerce
     environment:
       ServiceAssertions__Issuers__learning__PublicKeys__local-learning-commerce-1: ${LEARNING_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__media__PublicKeys__local-media-commerce-1: ${MEDIA_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__media__AllowedScopes__0: access-decision:read
+      ServiceAssertions__Issuers__media__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ServiceAssertions__Issuers__learning__AllowedScopes__0: access-decision:read
       ServiceAssertions__Issuers__learning__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       <<: *api-environment
@@ -431,6 +468,8 @@ services:
       dockerfile: src/bff-student/Dockerfile
     container_name: code-for-coders-bff-student
     environment:
+      Media__BaseAddress: http://media:8080/
+      Media__TimeoutSeconds: "5"
       Learning__BaseAddress: http://learning:8080/
       Learning__TimeoutSeconds: "5"
       <<: *api-environment

@@ -17,3 +17,14 @@
     margin: 0;
   }
 }
+
+.protected-video-player:fullscreen {
+  display: flex;
+  flex-direction: column;
+}
+.protected-video-player:fullscreen video {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  object-fit: contain;
+}

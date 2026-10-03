@@ -80,6 +80,47 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                     b.ToTable("operation_idempotency", "media_access");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.PlaybackSession", b =>
+                {
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("LessonId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lesson_id");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.HasKey("SessionId");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.ToTable("playback_sessions", "media_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Video", b =>
                 {
                     b.Property<Guid>("VideoId")
@@ -339,6 +380,8 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                         .HasColumnName("video_id");
 
                     b.HasKey("TenantId", "CourseId", "LessonId");
+
+                    b.HasIndex("TenantId", "LessonId");
 
                     b.ToTable("course_video_references", "media_access");
                 });
