@@ -68,6 +68,7 @@ public sealed class StaffRoleChangeTests(IdentityIntegrationFixture fixture)
             .Where(message => message.RoutingKey == "auditoria.ato-praticado.v1")
             .ToListAsync(cancellationToken);
         Assert.Equal(2, messages.Count);
+        foreach (var message in messages) IdentityMessages.AssertSends(message.RoutingKey, OutboxTestProtection.ReadPayload(message));
         Assert.All(messages, message => Assert.False(string.IsNullOrWhiteSpace(message.CorrelationId)));
         Assert.Equal(messages[0].CorrelationId, messages[1].CorrelationId);
 

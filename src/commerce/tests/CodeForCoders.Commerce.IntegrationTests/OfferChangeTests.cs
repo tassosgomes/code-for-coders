@@ -197,7 +197,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
 
     private void AssertPayloadPair(JsonElement fact, JsonElement act, bool price, bool period, string newPeriod = "vitalicia")
     {
-        OfferPublicationContract.AssertValid(fact, changed: true); OfferPublicationContract.AssertValid(act, audit: true);
+        CommerceMessages.AssertSends("catalogo.oferta-alterada.v1", fact); CommerceMessages.AssertSends("auditoria.ato-praticado.v1", act);
         Assert.Equal(fact.GetProperty("eventId").GetGuid(), act.GetProperty("fatoId").GetGuid());
         Assert.Equal("oferta-alterada", act.GetProperty("tipo").GetString()); Assert.Equal("catalogo", act.GetProperty("origem").GetString());
         Assert.Equal(_actor, act.GetProperty("autor").GetProperty("id").GetGuid()); Assert.Equal(_tenant, act.GetProperty("tenantId").GetGuid());

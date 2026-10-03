@@ -66,6 +66,7 @@ public sealed class VideoPreparationTests(VideoLibraryApiFactory factory)
             Assert.Equal("midia.ativo-pronto.v1", delivery.RoutingKey);
             Assert.Equal(readyMessage.Id.ToString(), delivery.MessageId);
             using var deliveredPayload = JsonDocument.Parse(delivery.Body);
+            MediaMessages.AssertSends(delivery.RoutingKey, deliveredPayload.RootElement);
             Assert.Equal(readyMessage.Id, deliveredPayload.RootElement.GetProperty("eventId").GetGuid());
             Assert.Equal(20, deliveredPayload.RootElement.GetProperty("durationSeconds").GetInt32());
             Assert.False(deliveredPayload.RootElement.TryGetProperty("title", out _));

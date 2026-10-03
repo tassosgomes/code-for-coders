@@ -107,6 +107,7 @@ public sealed class StaffInvitationAcceptanceTests(IdentityIntegrationFixture fi
             cancellationToken);
         using var auditDocument = JsonDocument.Parse(CreateOutboxPayloadProtector().Unprotect(audit));
         var auditPayload = auditDocument.RootElement;
+        IdentityMessages.AssertSends(audit.RoutingKey, auditPayload);
 
         Assert.Equal(Now, invitation.AcceptedOn);
         Assert.Equal(AccountType.InternalActor, account.Type);

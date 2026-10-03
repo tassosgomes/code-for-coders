@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Contract conformance for integration tests: links the shared AsyncAPI helper and copies the
+    whole contracts/ tree to the output, so cross-file $refs (../learning/asyncapi.yaml#...) resolve.
+    Import it from an IntegrationTests project that references JsonSchema.Net, YamlDotNet and xunit.v3; contracts/ is the single source of truth (AGENTS.md).
+  -->
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AsyncApiContract.cs" Link="ContractTesting/AsyncApiContract.cs" />
+    <None Include="$(MSBuildThisFileDirectory)../../contracts/**/*.yaml" Link="Contracts/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

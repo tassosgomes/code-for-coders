@@ -230,6 +230,7 @@ public sealed class VideoPreparationFailureTests(VideoLibraryApiFactory factory)
         Assert.False(string.IsNullOrWhiteSpace(published.CorrelationId));
         Assert.Equal(published.CorrelationId, published.CorrelationHeader);
         using var payload = JsonDocument.Parse(published.Body);
+        MediaMessages.AssertSends(published.RoutingKey, payload.RootElement);
         Assert.Equal(
             new[] { "eventId", "tenantId", "videoId", "occurredAt", "reason" }.Order(),
             payload.RootElement.EnumerateObject().Select(property => property.Name).Order());

@@ -22,5 +22,8 @@
     <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.v3" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
+  <Import Project="../../../contract-testing/ContractTesting.props" />
 </Project>

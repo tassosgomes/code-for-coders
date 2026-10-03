@@ -35,9 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="../../../../contracts/commerce/openapi-internal.yaml" Link="Contracts/access-decision.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../contracts/commerce/asyncapi.yaml" Link="Contracts/courtesy.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../contracts/audit/asyncapi.yaml" Link="Contracts/courtesy-audit.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../contracts/commerce/asyncapi.yaml" Link="Contracts/offers.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../contracts/audit/asyncapi.yaml" Link="Contracts/audit.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Import Project="../../../contract-testing/ContractTesting.props" />
 </Project>

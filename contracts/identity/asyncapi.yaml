@@ -46,6 +46,8 @@ channels:
     address: notificacao.envio-solicitado.v1
     description: Canal endereçado a Notificação (dona do contrato). Mesmo canal de CAP-001.
     messages:
+      pedidoDeEnvioSolicitado:
+        $ref: '#/components/messages/PedidoDeEnvioSolicitado'
       pedidoDeEnvio:
         $ref: '#/components/messages/PedidoDeEnvio'
   atoPraticado:
@@ -89,7 +91,7 @@ operations:
     channel:
       $ref: '#/channels/pedidoDeEnvio'
     messages:
-    - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvio'
+    - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvioSolicitado'
     description: Pedido endereçado a Notificação pelo outbox; um pedidoId por intenção, inclusive reenvio deliberado.
       Notificação deduplica por pedidoId. Conteúdo sensível só neste canal.
   publicarAtoPraticado:

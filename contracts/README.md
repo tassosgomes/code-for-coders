@@ -18,7 +18,7 @@ atual.
 3. Só então a pasta do PRD vai para `tasks/archive/`. Nada em `tasks/archive/` é editado depois.
 4. Mudança de contrato fora de um PRD entra por PR direto neste diretório.
 
-Testes de contrato (`*Contract.cs`, testes da SPA) leem os arquivos daqui, nunca de `tasks/`.
+Testes de contrato leem os arquivos daqui, nunca de `tasks/` (ver "Conformidade do código").
 
 ## Fronteiras
 
@@ -65,8 +65,34 @@ Um AsyncAPI referencia a mensagem de outra aplicação pelo arquivo dela aqui (p
   `learning/openapi-internal.yaml` ganharam `currentLevel`/`level: null` e
   `prerequisite: {text: null, recommendedCourses: []}`, o valor de ausência que 1.1.0 documenta,
   porque 1.1.0 tornou esses campos obrigatórios.
+- `identity/asyncapi.yaml`: conta-aluno e acesso-interno usavam a mesma chave de mensagem no
+  canal `notificacao.envio-solicitado.v1`. O canal declara as duas mensagens
+  (`pedidoDeEnvioSolicitado`, do aluno, e `pedidoDeEnvio`, da equipe), e cada operação aponta a sua.
 - Os `.md` derivados dos PRDs não foram trazidos: são documentação gerada a partir do recorte e
   não representam o arquivo consolidado. O YAML é a fonte.
+
+## Conformidade do código
+
+Toda mensagem que um serviço publica é validada, nos testes de integração, contra o AsyncAPI daqui:
+o teste captura o payload real (linha do outbox ou mensagem no broker) e chama
+`{Servico}Messages.AssertSends(routingKey, payload)`. O helper compartilhado
+(`src/contract-testing/AsyncApiContract.cs`, importado por `ContractTesting.props`) acha a operação
+`send` do canal com esse endereço, resolve os `$ref` (inclusive entre arquivos) e valida o payload
+com JSON Schema.
+
+| Aplicação | Mensagens cobertas |
+|---|---|
+| `identity` | `identidade.conta-criada`, `identidade.conta-confirmada`, `identidade.senha-redefinida`, `notificacao.envio-solicitado` (aluno e equipe), `auditoria.ato-praticado` |
+| `notification` | `notificacao.mensagem-entregue`, `notificacao.entrega-falhou` |
+| `media` | `midia.ativo-pronto`, `midia.preparacao-falhou` |
+| `learning` | `conteudo.versao-publicada`, `auditoria.ato-praticado` |
+| `commerce` | `catalogo.oferta-*`, `matricula.acesso-*`, `auditoria.ato-praticado` |
+
+`audit` só consome. Mudança em `contracts/` dispara o CI desses serviços.
+
+O HTTP não tem comparação automática com o OpenAPI gerado pelo código; alguns testes
+validam respostas pontuais contra o schema daqui (`AccessDecisionContract`,
+`StudentAccountLookupContract`, testes da `admin-spa`).
 
 ## Validação
 
