@@ -1,7 +1,7 @@
 # Wireframes ASCII — Tela da aula do aluno (CAP-007, 1º PRD)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-10-03
-> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2332) · frames por tela na [seção 8](#8-handoff-do-figma--aguardando-aprovação) · arquivo Code4Coders — Design System.
+> **Status:** ASCII e Figma aprovados pelo responsável em 2026-10-03 (ASCII aprovado em 2026-10-03; Figma aprovado em 2026-10-03 com "Perfeito! Está aprovado"; frames na [seção 8](#8-handoff-do-figma--aprovado)). Código de tela liberado a partir da task 3.0.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2332) · frames por tela na [seção 8](#8-handoff-do-figma--aprovado) · arquivo Code4Coders — Design System.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 3.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados da **tela da aula** (`student-spa`) antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-reproducao-protegida/prd.md) v1.0 (Experiência do Usuário, RF-01 a RF-07, RN-R01 a RN-R08, DP-01 a DP-10), [TechSpec](../../tasks/prd-reproducao-protegida/techspec.md) v1.0 (Bloco Frontend, V-01 a V-06, Habilitadores inevitáveis, D-05, D-06, D-11, D-13), [contrato do BFF do aluno](../../tasks/prd-reproducao-protegida/api-contract.md) 1.0.0 ([YAML](../../tasks/prd-reproducao-protegida/api-contract.yaml)), [wireframes de Cortesias](wireframes-cortesias.md) (formato do documento e do registro de aprovação), [wireframes do Catálogo e vitrine](wireframes-catalogo-vitrine.md) e [wireframes da conta do aluno](wireframes-conta-aluno.md) (design system do aluno, layout público, AppShell logado), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -406,11 +406,11 @@ Tudo reusando o AppShell do aluno, `Alert`, `Skeleton`, `Accordion`, `Badge` e d
 
 ---
 
-## 8. Handoff do Figma — aguardando aprovação
+## 8. Handoff do Figma — aprovado
 
 O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-10-03, nas páginas `Fluxo — Aula` e `Screens — Aula`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2332).
 
-> **Aprovação:** aguardando a aprovação explícita do responsável sobre o Figma. Pedido de ajuste volta ao Figma (ou ao ASCII, se mudar conteúdo) antes do registro. Nenhum código de tela começa antes dele.
+> **Aprovação:** o responsável aprovou o Figma explicitamente em 2026-10-03 ("Perfeito! Está aprovado"), sem pedido de ajuste. O desenho é a referência visual para as tasks de tela (3.0 em diante).
 
 ### 8.1 Fluxos e navegação
 
