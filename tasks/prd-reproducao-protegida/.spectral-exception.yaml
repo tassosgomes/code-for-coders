@@ -1,0 +1,33 @@
+# Ruleset do conjunto de contratos de CAP-007: o ruleset único da skill, com UMA exceção documentada (C-08).
+# As três operações de entrega HLS (playlist, variante e chave) devolvem texto de playlist e bytes de chave, que
+# não são JSON. A regra `tsg-content-type-json-only` é redeclarada só para aceitar, em RESPOSTAS, mais dois tipos
+# de mídia; o corpo de requisição continua restrito a JSON. Nenhuma outra regra do ruleset muda.
+extends:
+  - ../../.claude/skills/tsg-flow-contract-creator/rulesets/openapi.yaml
+rules:
+  tsg-content-type-json-only:
+    description: Corpos de requisição só JSON; respostas JSON, problem+json e, na entrega HLS (C-08), playlist e chave.
+    severity: error
+    given:
+      - $.paths[*][*].requestBody.content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+  tsg-content-type-json-only-response:
+    description: Respostas em JSON, problem+json ou, na entrega HLS (C-08), playlist HLS e chave binária.
+    severity: error
+    given:
+      - $.paths[*][*].responses[*].content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+          - application/vnd.apple.mpegurl
+          - application/octet-stream

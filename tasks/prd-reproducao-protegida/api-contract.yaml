@@ -1,0 +1,946 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — reprodução protegida
+  version: 1.0.0
+  description: 'Recorte de `CAP-007`, `tasks/prd-reproducao-protegida/prd.md` v1.0 de 2026-10-03. Interface SPA
+    → BFF do aluno para a tela da aula e a reprodução. O BFF não decide nada: valida a sessão em Identity (ADR-0003),
+    obtém o JWT de aluno com a audiência do serviço dono (`learning` ou `media`) e repassa. Escritas exigem `X-CSRF-Token`
+    (G18). As playlists e a chave passam pelo BFF (G15) e são repassadas sem alteração; os segmentos vêm direto
+    da distribuição, por endereço sem credencial mais `segmentAccess.query` (C-01, C-06). Nenhuma operação de `CAP-001`
+    a `CAP-008` muda.'
+  contact:
+    name: Time de Entrega de Mídia e Proteção
+servers:
+- url: /api/v1
+  description: URL pública versionada do BFF do aluno
+tags:
+- name: Aula
+  description: 'Tela da aula: a aula e a lista de aulas do curso (RF-01, RF-06)'
+- name: Reprodução
+  description: Sessão de Reprodução, renovação e avanço (RF-02, RF-07)
+- name: Entrega
+  description: Playlist, variantes e chave de cifra (RF-03, RF-05)
+paths:
+  /lessons/{lessonId}:
+    get:
+      tags:
+      - Aula
+      summary: Obter a aula e a lista de aulas do curso
+      description: 'Devolve a aula pedida e o curso **na versão vigente**, para a tela da aula (RF-01, RF-06). Ordem
+        das verificações: (1) a aula existe na versão vigente de um curso publicado da escola do aluno; (2) Matrícula
+        responde que o aluno pode acessar o curso agora (`decideAccessInternal`, cache de até 30 s, falha fechada:
+        BA07, G11). Nada do conteúdo é devolvido antes da decisão positiva (RN-R07). Todas as aulas estão abertas
+        a quem tem direito; não há liberação progressiva (RN-R06, G20).'
+      operationId: getStudentLesson
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/LessonId'
+      responses:
+        '200':
+          description: A aula e o curso na versão vigente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonScreen'
+              examples:
+                aula:
+                  value:
+                    lesson:
+                      lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                      moduleId: c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f
+                      title: Injeção de dependência na prática
+                      position: 2
+                    course:
+                      courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      title: APIs com .NET do zero ao deploy
+                      versionNumber: 3
+                      modules:
+                      - moduleId: c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f
+                        title: Fundamentos
+                        position: 1
+                        lessons:
+                        - lessonId: 5c2e8f4d-7b60-4a13-9a13-3f6a1c527d84
+                          title: Visão geral do curso
+                          position: 1
+                        - lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                          title: Injeção de dependência na prática
+                          position: 2
+                      - moduleId: d2e3f4a5-b6c7-4d8e-9fa0-1b2c3d4e5f60
+                        title: Persistência
+                        position: 2
+                        lessons:
+                        - lessonId: 7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d
+                          title: Migrations com Entity Framework
+                          position: 1
+          headers:
+            Cache-Control:
+              description: '`private, no-store`.'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/LessonNotAvailable'
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /lessons/{lessonId}/playback-sessions:
+    post:
+      tags:
+      - Reprodução
+      summary: Abrir uma Sessão de Reprodução
+      description: 'Abre a Sessão de Reprodução do aluno corrente para a aula (RF-01, RF-02). Ordem obrigatória
+        (RN-M10): (1) a aula alegada está entre as Referências de Uso de um vídeo (404 `LESSON_NOT_AVAILABLE`, **antes**
+        de consultar Matrícula); (2) o vídeo está pronto (409 `MEDIA_NOT_READY`); (3) Matrícula responde que o aluno
+        pode acessar o curso agora (403 `ACCESS_DENIED`; sem resposta, 503 `ACCESS_DECISION_UNAVAILABLE`, falha
+        fechada); (4) o e-mail do aluno está disponível para a marca d''água (422 `WATERMARK_UNAVAILABLE`). Cada
+        chamada abre uma sessão nova; não é idempotente e não há limite de sessões simultâneas do mesmo aluno (RN-M13,
+        BA16, G24). A sessão vale 5 minutos (DP-01).'
+      operationId: openPlaybackSession
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/LessonId'
+      - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '201':
+          description: Sessão aberta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaybackSession'
+              examples:
+                sessao:
+                  value:
+                    sessionId: e4b8c6a2-1d3f-4957-b0a8-6c2d4e8f1a73
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    expiresAt: '2026-10-05T14:05:00Z'
+                    renewAfter: '2026-10-05T14:03:30Z'
+                    watermark: &id001
+                      text: marina.alves@example.com
+                      repositionSeconds: 30
+                    progress: &id002
+                      intervalSeconds: 30
+                      minGapSeconds: 10
+                    segmentAccess:
+                      query: sa=MjAyNi0xMC0wNVQxNDowNTowMFo.k3Jq9xT2vL0pQw
+                      expiresAt: '2026-10-05T14:05:00Z'
+          headers:
+            Cache-Control: &id003
+              description: '`no-store`: nada desta resposta fica em cache do navegador, do BFF ou da distribuição.'
+              schema:
+                type: string
+                examples:
+                - no-store
+            Location:
+              description: Caminho da sessão, `/playback-sessions/{sessionId}`; base dos recursos `playlist`, `variants`,
+                `key`, `renewals` e `progress`.
+              schema:
+                type: string
+                examples:
+                - /playback-sessions/e4b8c6a2-1d3f-4957-b0a8-6c2d4e8f1a73
+        '404':
+          $ref: '#/components/responses/LessonNotAvailable'
+        '409':
+          description: 'O vídeo da aula ainda não está pronto ou falhou (RN-M05, RN-M09). Mensagem ao aluno: "Esta
+            aula está indisponível no momento"; nenhum detalhe técnico.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                naoPronto:
+                  value:
+                    type: about:blank
+                    title: Esta aula está indisponível no momento.
+                    status: 409
+                    code: MEDIA_NOT_READY
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: 'A sessão não pode trazer o e-mail do aluno para a marca d''água: **sem marca, sem reprodução**
+            (RN-R03).'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                semMarca: &id004
+                  value:
+                    type: about:blank
+                    title: Não foi possível iniciar a aula.
+                    status: 422
+                    code: WATERMARK_UNAVAILABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/AccessDeniedOrCsrf'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/renewals:
+    post:
+      tags:
+      - Reprodução
+      summary: Renovar a Sessão de Reprodução
+      description: 'Estende a reprodução em andamento **repetindo a decisão de acesso** (RN-M11, RF-02): a validade
+        volta a 5 minutos e a `segmentAccess` é substituída. O player chama a partir de `renewAfter` e repete a
+        tentativa enquanto a resposta for 503, até `expiresAt`. Decisão negada (403) encerra a reprodução; decisão
+        indisponível até o fim da validade também (RN-R02): nenhuma sessão se estende por padrão. Sessão já vencida
+        não renova (410): o player abre outra. Idempotente por natureza: repetir a chamada só repete a decisão e
+        devolve a validade vigente.'
+      operationId: renewPlaybackSession
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: 'Sessão renovada: mesmo `sessionId`, nova validade e nova `segmentAccess`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaybackSession'
+              examples:
+                renovada:
+                  value:
+                    sessionId: e4b8c6a2-1d3f-4957-b0a8-6c2d4e8f1a73
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    expiresAt: '2026-10-05T14:10:00Z'
+                    renewAfter: '2026-10-05T14:08:30Z'
+                    watermark: *id001
+                    progress: *id002
+                    segmentAccess:
+                      query: sa=MjAyNi0xMC0wNVQxNDoxMDowMFo.p8Wd2mQ7sN4xZa
+                      expiresAt: '2026-10-05T14:10:00Z'
+          headers: &id005
+            Cache-Control: *id003
+        '404':
+          $ref: '#/components/responses/SessionNotFound'
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '422':
+          description: 'A sessão não pode trazer o e-mail do aluno (RN-R03): a reprodução não se estende.'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                semMarca: *id004
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/AccessDeniedOrCsrf'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/playlist:
+    get:
+      tags:
+      - Entrega
+      summary: Obter a playlist principal (HLS)
+      description: 'Playlist HLS principal da sessão, listando as qualidades que o vídeo tem (RF-03, RF-05). Os
+        endereços das variantes são **relativos** (`variants/{quality}`), de modo que o BFF repassa o corpo sem
+        reescrevê-lo. Exceção ao gate HTTP: o corpo é `application/vnd.apple.mpegurl`, não JSON (C-08). Recusada
+        sem sessão válida, depois do fim da validade, ou para sessão de outro aluno (RN-M01).'
+      operationId: getPlaybackPlaylist
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Playlist principal.
+          headers: *id005
+          content:
+            application/vnd.apple.mpegurl:
+              schema:
+                type: string
+              examples:
+                playlist:
+                  value: '#EXTM3U
+
+                    #EXT-X-STREAM-INF:BANDWIDTH=5000000,RESOLUTION=1920x1080
+
+                    variants/1080p
+
+                    #EXT-X-STREAM-INF:BANDWIDTH=2800000,RESOLUTION=1280x720
+
+                    variants/720p
+
+                    #EXT-X-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=854x480
+
+                    variants/480p
+
+                    '
+        '404':
+          $ref: '#/components/responses/SessionNotFound'
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/variants/{quality}:
+    get:
+      tags:
+      - Entrega
+      summary: Obter a playlist de uma qualidade (HLS)
+      description: 'Playlist HLS de uma qualidade. Os segmentos aparecem como endereços **absolutos da distribuição,
+        sem credencial**; o player acrescenta `segmentAccess.query` a cada pedido de segmento (C-06). A URI da chave
+        é **relativa** (`../key`) e aponta para o recurso `key` desta sessão, nunca para um endereço estável do
+        armazenamento (ADR-0006, item 4). Nenhum endereço carrega o e-mail do aluno (G23). Exceção ao gate HTTP
+        (C-08): `application/vnd.apple.mpegurl`.'
+      operationId: getPlaybackVariantPlaylist
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/Quality'
+      responses:
+        '200':
+          description: Playlist da qualidade.
+          headers: *id005
+          content:
+            application/vnd.apple.mpegurl:
+              schema:
+                type: string
+              examples:
+                playlist:
+                  value: '#EXTM3U
+
+                    #EXT-X-VERSION:3
+
+                    #EXT-X-TARGETDURATION:6
+
+                    #EXT-X-PLAYLIST-TYPE:VOD
+
+                    #EXT-X-KEY:METHOD=AES-128,URI="../key"
+
+                    #EXTINF:6.000,
+
+                    https://media.example.com/v/0b1c2d3e/720p/seg-00001.ts
+
+                    #EXTINF:6.000,
+
+                    https://media.example.com/v/0b1c2d3e/720p/seg-00002.ts
+
+                    #EXT-X-ENDLIST
+
+                    '
+        '404':
+          $ref: '#/components/responses/SessionNotFound'
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/key:
+    get:
+      tags:
+      - Entrega
+      summary: Obter a chave de cifra do vídeo
+      description: 'Entrega a chave AES-128 **somente** para uma Sessão de Reprodução válida **daquele** vídeo,
+        pelo próprio serviço de Mídia e nunca pela distribuição nem por endereço estável (RN-M08, RF-03). Resposta
+        com `Cache-Control: no-store`. A chave nunca aparece em log, span, mensagem ou outra resposta (ADR-0006).
+        Exceção ao gate HTTP (C-08): `application/octet-stream`.'
+      operationId: getPlaybackKey
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: 'Chave de cifra AES-128 do vídeo: 16 bytes.'
+          headers: *id005
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/SessionNotFound'
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/progress:
+    post:
+      tags:
+      - Reprodução
+      summary: Informar o avanço da reprodução
+      description: 'O player informa onde a reprodução está (RF-07): a cada `progress.intervalSeconds` de reprodução
+        contínua e ao pausar, sair e chegar ao fim. Media aceita enquanto a sessão for do aluno, **mesmo depois
+        do fim da validade** (a decisão negada não apaga o que foi assistido: RF-07), e publica o fato `midia.reproducao-avancou.v1`
+        (`asyncapi-contract.yaml`). Idempotente por (`sessionId`, `sequence`); menos de `progress.minGapSeconds`
+        desde o avanço anterior aceito da mesma sessão não gera fato (RN-R05). A saída da aula é enviada com `fetch`
+        em modo `keepalive`, porque a escrita exige o cabeçalho `X-CSRF-Token`, que `sendBeacon` não permite.'
+      operationId: recordPlaybackProgress
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgressInput'
+            examples:
+              heartbeat:
+                value:
+                  sequence: 4
+                  positionSeconds: 132
+                  reason: heartbeat
+              pausa:
+                value:
+                  sequence: 5
+                  positionSeconds: 252
+                  reason: paused
+      responses:
+        '200':
+          description: Avanço tratado; `recorded` diz se virou fato.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressAck'
+              examples:
+                aceito:
+                  value:
+                    recorded: true
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '404':
+          $ref: '#/components/responses/SessionNotFound'
+        '410':
+          description: O avanço chegou depois da janela de aceitação da sessão (valor da TechSpec). O que foi informado
+            antes continua valendo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                expirada: &id006
+                  value:
+                    type: about:blank
+                    title: A sessão de reprodução terminou.
+                    status: 410
+                    code: PLAYBACK_SESSION_EXPIRED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/CsrfInvalid'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+components:
+  securitySchemes:
+    StudentSessionCookie:
+      type: apiKey
+      in: cookie
+      name: student_session
+      description: Cookie opaco de sessão do aluno, HttpOnly, Secure e SameSite (CAP-001). O BFF valida a sessão
+        em Identity a cada ação protegida (ADR-0003). Nenhum bearer token chega ao navegador.
+  parameters:
+    LessonId:
+      name: lessonId
+      in: path
+      required: true
+      description: Identidade estável da aula (RN-C07). Opaca para quem a recebe.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        aula:
+          value: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Identificador da Sessão de Reprodução.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        sessao:
+          value: e4b8c6a2-1d3f-4957-b0a8-6c2d4e8f1a73
+    Quality:
+      name: quality
+      in: path
+      required: true
+      description: Qualidade da variante.
+      schema:
+        $ref: '#/components/schemas/Quality'
+      examples:
+        hd:
+          value: 720p
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Prova CSRF vinculada à sessão do aluno (`csrfToken` de `getCurrentStudentSession`).
+      schema:
+        type: string
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+        reason:
+          type: string
+          enum:
+          - no-grant
+          - grant-ended
+          description: 'Só em `ACCESS_DENIED`: `no-grant` (nunca teve acesso ao curso) ou `grant-ended` (já teve,
+            nenhuma concessão está ativa). Clientes devem tolerar valor novo (`suspended` e `revoked` virão com
+            `CAP-009`).'
+        accessEndedAt:
+          type: string
+          format: date-time
+          description: 'Só em `ACCESS_DENIED` com `reason: grant-ended`: término (exclusivo, UTC) da última concessão.
+            O último dia de acesso é o dia anterior a este instante, no fuso da escola (DP-03 de `CAP-008`); é a
+            data da mensagem "Seu acesso a este curso terminou em ...".'
+    Quality:
+      type: string
+      enum:
+      - 1080p
+      - 720p
+      - 480p
+      description: Uma das três qualidades da Versão de Reprodução (DP-01 de `CAP-006`). Um vídeo cujo original
+        é menor não tem as maiores; a master só lista as que existem.
+    LessonOutline:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - title
+      - position
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+          description: Identidade estável entre versões (RN-C07).
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        position:
+          type: integer
+          minimum: 1
+    ModuleOutline:
+      type: object
+      additionalProperties: false
+      required:
+      - moduleId
+      - title
+      - position
+      - lessons
+      properties:
+        moduleId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        position:
+          type: integer
+          minimum: 1
+        lessons:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/LessonOutline'
+    LessonScreen:
+      type: object
+      additionalProperties: false
+      required:
+      - lesson
+      - course
+      description: 'O necessário para desenhar a tela da aula: a aula pedida e o curso na **versão vigente**, com
+        módulos e aulas na ordem do currículo (RF-06). Não leva `videoId`, estado de progresso nem liberação: todas
+        as aulas estão abertas a quem tem direito (RN-R06).'
+      properties:
+        lesson:
+          type: object
+          additionalProperties: false
+          required:
+          - lessonId
+          - moduleId
+          - title
+          - position
+          properties:
+            lessonId:
+              type: string
+              format: uuid
+            moduleId:
+              type: string
+              format: uuid
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+            position:
+              type: integer
+              minimum: 1
+        course:
+          type: object
+          additionalProperties: false
+          required:
+          - courseId
+          - title
+          - versionNumber
+          - modules
+          properties:
+            courseId:
+              type: string
+              format: uuid
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+            versionNumber:
+              type: integer
+              minimum: 1
+            modules:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/ModuleOutline'
+    Watermark:
+      type: object
+      additionalProperties: false
+      required:
+      - text
+      - repositionSeconds
+      properties:
+        text:
+          type: string
+          format: email
+          description: 'O e-mail do aluno, a compor sobre o vídeo. Única exposição declarada do e-mail nesta entrega
+            (Identidade RN-21, RN-M12): nunca vai para URL, log, métrica, nome de objeto, chave de cache nem mensagem.'
+        repositionSeconds:
+          type: integer
+          minimum: 1
+          description: Intervalo máximo entre trocas de posição (DP-03; hoje 30).
+    ProgressPolicy:
+      type: object
+      additionalProperties: false
+      required:
+      - intervalSeconds
+      - minGapSeconds
+      properties:
+        intervalSeconds:
+          type: integer
+          minimum: 1
+          description: A cada quantos segundos de reprodução contínua enviar um avanço (DP-02; hoje 30).
+        minGapSeconds:
+          type: integer
+          minimum: 1
+          description: Intervalo mínimo entre dois avanços da mesma sessão (DP-02; hoje 10).
+    SegmentAccess:
+      type: object
+      additionalProperties: false
+      required:
+      - query
+      - expiresAt
+      description: 'Credencial de vida curta dos segmentos. A playlist traz os endereços dos segmentos **sem credencial**;
+        o player acrescenta `query` a cada pedido de segmento. Renovar a sessão devolve uma `query` nova, e o player
+        passa a usá-la. O formato é opaco e pertence à camada anticorrupção de Media (BA14): nada do provedor aparece
+        no contrato.'
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: Cadeia de consulta, já codificada, para anexar ao endereço do segmento.
+        expiresAt:
+          type: string
+          format: date-time
+          description: Até quando a `query` vale; nunca depois de `expiresAt` da sessão.
+    PlaybackSession:
+      type: object
+      additionalProperties: false
+      required:
+      - sessionId
+      - lessonId
+      - expiresAt
+      - renewAfter
+      - watermark
+      - progress
+      - segmentAccess
+      description: 'Sessão de Reprodução: um aluno, um vídeo, uma aula, vida curta (RN-M11, DP-01). Os recursos
+        da sessão ficam sob `/playback-sessions/{sessionId}`: `playlist`, `variants/{quality}`, `key`, `renewals`
+        e `progress`. Os endereços na playlist são **relativos** a esse caminho.'
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        lessonId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+          description: Fim da validade (5 minutos depois da abertura ou da renovação; DP-01). Depois dele, playlist,
+            chave e segmentos são recusados e a sessão não renova.
+        renewAfter:
+          type: string
+          format: date-time
+          description: A partir de quando o player deve tentar renovar, e repetir a tentativa até `expiresAt` se
+            a decisão estiver indisponível (RF-02). Hoje, 90 s antes do fim.
+        watermark:
+          $ref: '#/components/schemas/Watermark'
+        progress:
+          $ref: '#/components/schemas/ProgressPolicy'
+        segmentAccess:
+          $ref: '#/components/schemas/SegmentAccess'
+    ProgressInput:
+      type: object
+      additionalProperties: false
+      required:
+      - sequence
+      - positionSeconds
+      - reason
+      description: 'Avanço informado pelo player. Aluno, curso e aula **não** vêm no corpo: Media os deriva da sessão.'
+      properties:
+        sequence:
+          type: integer
+          minimum: 1
+          description: 'Contador do player, crescente por sessão a partir de 1. Chave de idempotência (sessão, sequência):
+            reenvio não duplica o fato (G09).'
+        positionSeconds:
+          type: integer
+          minimum: 0
+          maximum: 43200
+          description: Posição na aula, em segundos inteiros.
+        reason:
+          type: string
+          enum:
+          - heartbeat
+          - paused
+          - left
+          - ended
+          description: '`heartbeat` a cada `progress.intervalSeconds` de reprodução contínua; `paused`, `left` (saída
+            da aula ou da aba; enviado com `keepalive`) e `ended` (fim da aula).'
+    ProgressAck:
+      type: object
+      additionalProperties: false
+      required:
+      - recorded
+      properties:
+        recorded:
+          type: boolean
+          description: '`false` quando o avanço foi recebido mas **não** vira fato: repetição de `sequence`, ou
+            menos de `progress.minGapSeconds` desde o avanço anterior aceito da mesma sessão (RN-R05). Não é erro.'
+  responses:
+    InvalidRequest:
+      description: JSON malformado, parâmetro ou campo inválido.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: VALIDATION_ERROR
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    LessonNotAvailable:
+      description: Aula inexistente, de outra escola, de curso não publicado ou removida da versão vigente. A resposta
+        **não distingue** o motivo (RN-R07).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Esta aula não está disponível.
+                status: 404
+                code: LESSON_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AccessDecisionUnavailable:
+      description: 'Matrícula não respondeu a tempo ou respondeu com erro. **Não é negação** (RN-R02, DP-08): nenhuma
+        sessão abre nem se estende. O cliente oferece *Tentar de novo*.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível confirmar seu acesso agora.
+                status: 503
+                code: ACCESS_DECISION_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    SessionNotFound:
+      description: Sessão desconhecida, de outro aluno ou de outra escola; não distingue o motivo.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrada:
+              value:
+                type: about:blank
+                title: Sessão de reprodução não encontrada.
+                status: 404
+                code: PLAYBACK_SESSION_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    SessionExpired:
+      description: A validade da sessão terminou sem renovação. O player abre uma sessão nova (`openPlaybackSession`);
+        a posição de reprodução fica com o próprio player.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            expirada: *id006
+    SessionRequired:
+      description: Sessão do aluno ausente, expirada ou revogada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessaoAusente:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CsrfInvalid:
+      description: Prova CSRF ausente ou inválida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            csrf: &id007
+              value:
+                type: about:blank
+                title: Prova CSRF ausente ou inválida.
+                status: 403
+                code: CSRF_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AccessDeniedOrCsrf:
+      description: '`CSRF_INVALID` (prova ausente ou inválida) ou `ACCESS_DENIED` (Matrícula respondeu que o aluno
+        não pode acessar o curso agora; `reason` e, quando vencido, `accessEndedAt`). Os dois não se confundem:
+        o cliente trata o `code`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            csrf: *id007
+            semAcesso: &id008
+              value:
+                type: about:blank
+                title: Você não tem acesso a este curso.
+                status: 403
+                code: ACCESS_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                reason: no-grant
+            vencido: &id009
+              value:
+                type: about:blank
+                title: Seu acesso a este curso terminou.
+                status: 403
+                code: ACCESS_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                reason: grant-ended
+                accessEndedAt: '2026-10-04T03:00:00Z'
+    AccessDenied:
+      description: Matrícula respondeu que o aluno não pode acessar o curso agora. `reason` distingue nunca ter
+        tido de ter vencido; nada do conteúdo do curso é revelado.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semAcesso: *id008
+            vencido: *id009
+    UpstreamUnavailable:
+      description: '`learning`, `media` ou `identity` não respondeu ou falhou: `LEARNING_UNAVAILABLE`, `MEDIA_UNAVAILABLE`
+        ou `IDENTITY_UNAVAILABLE`. Nada foi alterado de forma visível ao cliente.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Serviço temporariamente indisponível.
+                status: 502
+                code: UPSTREAM_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamTimeout:
+      description: O serviço não respondeu no tempo limite.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tempo:
+              value:
+                type: about:blank
+                title: O serviço demorou a responder.
+                status: 504
+                code: UPSTREAM_TIMEOUT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
