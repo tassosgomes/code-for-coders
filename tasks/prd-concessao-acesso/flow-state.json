@@ -3,14 +3,14 @@
   "worktree": null,
   "branch": "feature/concessao-acesso",
   "original_base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
-  "base_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
-  "target_ref": "f0db614da1864c8f47b37ee34014acc7f8bf11cc",
-  "last_checkpoint": "5.0",
-  "phase": "checkpoint",
-  "active_task": "5.0",
-  "attempt": 2,
+  "base_ref": "1b8a7462a7a85e7832940d731b3555452f9d4e94",
+  "target_ref": "1b8a7462a7a85e7832940d731b3555452f9d4e94",
+  "last_checkpoint": "5c4f486097ed2a873f896f8dae3abeb526c348f9",
+  "phase": "complete_prd",
+  "active_task": null,
+  "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 3,
   "transport_retries": 3,
   "transport": "herdr",
   "log_dir": "/home/tsgomes/github-tassosgomes/code-for-coders/.tsg-flow/delegate-logs",
@@ -21,17 +21,19 @@
   ],
   "delivery": "pr",
   "plan_approval": "Plano confirmado para implementação (aprovado pelo responsável em 2026-10-01, cabeçalho de tasks.md); execução autorizada pelo usuário ao invocar o orquestrador (transporte herdr, delivery=pr)",
-  "validated_commit": null,
-  "validated_tree": null,
-  "pending_delegation": null,
-  "last_result": {
+  "validated_commit": "5c4f486097ed2a873f896f8dae3abeb526c348f9",
+  "validated_tree": "dbb74ea9a1c3c122fa68f9d8a7c22c2662ce47aa",
+  "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "5.0",
-    "run_id": "run.sDtKK4DO",
-    "outcome": "checkpoint_ok",
-    "gate": "passed",
-    "report": ".tsg-flow/delegate-logs/run.sDtKK4DO/report.md"
+    "mode": "complete-prd"
+  },
+  "last_result": {
+    "role": "validator",
+    "mode": "full",
+    "attempt": 3,
+    "run_id": "run.NRdHKvty",
+    "outcome": "approved",
+    "report": "tasks/prd-concessao-acesso/prd_review.md"
   },
   "history": [
     {
@@ -472,20 +474,182 @@
       "task": "5.0",
       "run_id": "run.sDtKK4DO",
       "note": "Revalidação run.RP5uLLDe aprovada; B1 corrigido na factory E2E com chave RSA efêmera. HEAD e diff correspondem ao baseline do validator; gate 67/67 e oito checks aprovados. Task done, sete critérios com evidência e índice [x]; smoke Compose pendente para full. contracts/ e prd_review.md preservados fora do checkpoint. SHA definitivo no relatório e resultado desta chamada."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "5.0",
+      "run_id": "run.sDtKK4DO",
+      "commit": "6544542",
+      "note": "B1 fechado; todas as 9 tasks done de novo (3 reabertas pós-full fechadas)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "integration_ready",
+      "run_id": "run.ay3FtvZE",
+      "note": "main inalterada f0db614; HEAD 6544542; 12 commits"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "full_rejected",
+      "full_attempt": 2,
+      "run_id": "run.q56HOZDx",
+      "note": "B1: npm test intermitente (waitFor no grants test; paste no teste de 501 chars). B2: vitalícia com months:null; confirmation sem studentId; 404 com instance fora do Problem. Smoke 100%, sensor 20/20, CI verde exceto admin-spa. Transporte: result_missing com validator working; resultado reconciliado no mesmo run."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "round_resumed",
+      "task": "5.0",
+      "note": "Retomada pós-full 2 (run.q56HOZDx rejeitada; full 2/3). Pleno full_fix: reabrir 5.0, 6.0 e 3.0 conforme full_fix_plan. Decisão operacional B2: alinhar código aos contratos 1.1 (identity 1.4.0 exige studentId; Problem estrito), contratos não mudam. Working tree tem 4 arquivos modificados alheios ao PRD pelo responsável (AGENTS.md, README.md, docker-compose.remote.yml, scripts/remote-infra.sh) + contracts/ e prd_review.md não rastreados: preservar e excluir dos checkpoints."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "task_reopened",
+      "task": "5.0",
+      "run_id": "run.bPeRbzyj",
+      "note": "pós-full 2: B1.2 timeout courtesy-confirm + B2.2 confirmation sem studentId"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "5.0",
+      "run_id": "run.HucOURBH",
+      "note": "fix pós-full 2: gate 68/68 vs mínimo 54; 17 checks verdes; SPA completa 3x consecutivas 43arq/231testes; B2.2 com teste de conformidade e controles negativos; codex 30min"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "revalidation_rejected",
+      "task": "5.0",
+      "run_id": "run.tDeoyWaD",
+      "note": "B2.2 fechado (studentId+eligible, conformidade com controles negativos). B1 novo: courtesy-confirm.test.tsx:65 assercao sincrona previews>beforeReview apos findByRole Revisao; corrida com handler MSW; correcao esperada waitFor. Transporte result_missing reconciliado no mesmo run (monitor do claude retomou e escreveu result.json); sem repeticao."
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "5.0",
+      "run_id": "run.WFPD3jbD",
+      "note": "fix 2/3: waitFor na linha 65 conforme prescrito; gate 68/68; 2 suítes SPA sequenciais verdes; intervencao do orquestrador parou loops paralelos (responsável relatou sobrecarga); limite de carga adicionado ao contexto da rodada"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "revalidation_approved",
+      "task": "5.0",
+      "run_id": "run.CKZR5KKv",
+      "note": "tentativa 2/3: gate passed, 0 bloqueantes; 3 suítes SPA sequenciais verdes no limite de carga; ressalva runtime 10.0.11 vs 10.0.12 anotada"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "5.0",
+      "run_id": "run.xXSVJ3L3",
+      "commit": "1debf7b",
+      "note": "B1.2/B2.2+B1(waitFor) fechados pós-full 2; proxima 6.0 (B1.1 corrida grants + B2.1 months:null)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "task_reopened",
+      "task": "6.0",
+      "run_id": "run.7qTFYtYL",
+      "note": "pós-full 2: B1.1 corrida courtesy-student-grants + B2.1 months:null na lista"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "gate_passed",
+      "task": "6.0",
+      "run_id": "run.ua8zd4sf",
+      "note": "fix pós-full 2: gate 30/30 vs mínimo 16; B2.1 com conformidade AccessGrantPage e controles negativos; sequencial no desenv; codex 22min"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "revalidation_approved",
+      "task": "6.0",
+      "run_id": "run.Wb3Hww4K",
+      "note": "B1.1/B2.1 fechados; gate passed 0 bloqueantes; transporte result_missing reconciliado no mesmo run (padrao Monitor)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "checkpoint_ok",
+      "task": "6.0",
+      "run_id": "run.V6mnZ2VF",
+      "commit": "b83bb1f",
+      "note": "B1.1/B2.1 fechados; proxima 3.0 (B2.3 instance no 404)"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "task_reopened",
+      "task": "3.0",
+      "run_id": "run.KRtpqcHl",
+      "note": "pós-full 2: B2.3 instance fora do Problem no 404 de student-account-lookups"
+    },
+    {
+      "ts": "2026-10-02",
+      "event": "infra_failure",
+      "task": "3.0",
+      "run_id": "run.BVR54fcb",
+      "note": "gate_error por infra: npm do sistema quebrado (abbrev), Docker reiniciou durante os testes (resets na fixture BFF), cota em /tmp. Correção aplicada e provada nos trechos estáveis (identity 8/8 + 115/115, BFF focal 5/5 com SDK portátil). Tentativa 1 NAO consumida; repetição com receita de ambiente no contexto"
+    },
+    {
+      "ts": "2026-10-03",
+      "event": "fix_complete",
+      "task": "3.0",
+      "run_id": "run.0iRjX8G4",
+      "note": "B2.3 gate 21/21 passed; sQOTrSwD sem prompt (transporte)"
+    },
+    {
+      "ts": "2026-10-03",
+      "event": "revalidation_approved",
+      "task": "3.0",
+      "run_id": "run.MjaH0oAu",
+      "note": "B2.3 fechado"
+    },
+    {
+      "ts": "2026-10-03",
+      "event": "checkpoint_ok",
+      "task": "3.0",
+      "run_id": "run.GYCt1yF4",
+      "commit": "92e10ac",
+      "note": "fix B1/B2 concluidos nas tasks 5.0, 6.0 e 3.0; proximo prepare-integration e full 3"
+    },
+    {
+      "ts": "2026-10-03",
+      "event": "integration_blocked",
+      "run_id": "run.tKuQ4859",
+      "note": "aguarda decisao do responsavel: stash dos arquivos alheios + rebase com resolucao do conflito"
+    },
+    {
+      "ts": "2026-10-03",
+      "event": "integration_ready",
+      "run_id": "run.fgZw39cu",
+      "note": "rebase em 1b8a746 concluido; conflito app-shell.tsx resolvido (run.VSHHlfhz); HEAD 5c4f486; proxima full 3"
+    },
+    {
+      "ts": "2026-10-03",
+      "event": "full_approved",
+      "run_id": "run.NRdHKvty",
+      "note": "0 bloqueantes; 4 recomendacoes nao bloqueantes (R1-R4); transporte result_missing reconciliado no mesmo run"
     }
   ],
   "full_fix_plan": [
     {
       "task": "5.0",
       "blockers": [
-        "B1"
+        "B1.2 timeout courtesy-confirm",
+        "B2.2 confirmation sem studentId"
+      ]
+    },
+    {
+      "task": "6.0",
+      "blockers": [
+        "B1.1 corrida courtesy-student-grants",
+        "B2.1 months:null na lista"
       ]
     },
     {
       "task": "3.0",
       "blockers": [
-        "B2"
+        "B2.3 instance no 404 Problem"
       ]
     }
-  ]
+  ],
+  "stash": "36fdc339 (alheios do responsavel; restaurar apos full/entrega) + stash@{0} flow-state pre-rebase (descartavel)"
 }
