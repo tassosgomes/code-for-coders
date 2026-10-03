@@ -1,0 +1,67 @@
+name: contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'tasks/archive/**'
+      - '.agents/skills/tsg-flow-contract-creator/rulesets/**'
+      - '.github/workflows/contracts.yml'
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - 'tasks/archive/**'
+      - '.agents/skills/tsg-flow-contract-creator/rulesets/**'
+      - '.github/workflows/contracts.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate current contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: OpenAPI (Spectral, project ruleset)
+        run: >
+          npx --yes @stoplight/spectral-cli@6.17.0 lint "contracts/**/openapi*.yaml"
+          --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml
+          --fail-severity=error
+
+      - name: AsyncAPI (parser, cross-file $refs resolved)
+        run: |
+          status=0
+          for file in contracts/*/asyncapi.yaml; do
+            echo "::group::$file"
+            npx --yes @asyncapi/cli@6.2.0 validate "$file" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+  archive-immutable:
+    name: Archived PRDs are read-only
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Archiving a PRD (a new path under tasks/archive/) is allowed; changing or removing one is not.
+      # --no-renames turns a move out of the archive into a deletion, so it is caught too.
+      - name: Reject changes to tasks/archive/
+        run: |
+          changed=$(git diff --no-renames --name-status --diff-filter=MD \
+            "origin/${{ github.base_ref }}...HEAD" -- tasks/archive)
+          if [ -n "$changed" ]; then
+            echo "::error::tasks/archive/ is history and must not be edited (AGENTS.md). Changed:"
+            echo "$changed"
+            exit 1
+          fi

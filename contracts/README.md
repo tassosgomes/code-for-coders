@@ -96,6 +96,15 @@ validam respostas pontuais contra o schema daqui (`AccessDecisionContract`,
 
 ## Validação
 
+O workflow `.github/workflows/contracts.yml` roda em todo PR que toca `contracts/` ou
+`tasks/archive/`:
+
+- **validate:** os comandos abaixo, com as versões fixadas no workflow.
+- **archive-immutable:** falha se o PR modificar ou remover arquivo em `tasks/archive/`.
+  Arquivar um PRD (caminho novo no arquivo) é permitido.
+
+Para rodar localmente:
+
 ```bash
 npx --yes @stoplight/spectral-cli lint "contracts/**/openapi*.yaml" \
   --ruleset .agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error
