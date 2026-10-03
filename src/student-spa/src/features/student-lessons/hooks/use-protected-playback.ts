@@ -7,6 +7,7 @@ import { useOpenPlaybackSession, type PlaybackSession } from '@/features/student
 import { recordPlaybackProgress, type ProgressReason } from '@/features/student-lessons/api/record-playback-progress';
 import { useRenewPlaybackSession } from '@/features/student-lessons/api/renew-playback-session';
 import { setupPlaybackRequest } from '@/features/student-lessons/utils/playback-request';
+import { startPlaybackTiming } from '@/lib/telemetry';
 import { registerTelemetrySecret } from '@/lib/telemetry-url-redaction';
 
 export const supportMessage = 'Seu navegador não consegue mostrar este vídeo. Atualize o navegador ou tente em outro aparelho.';
@@ -66,6 +67,17 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
     hasLeftRef.current = false;
 
     const video = videoRef.current;
+    const timing = startPlaybackTiming();
+    let firstFrameRecorded = false;
+    const recordFirstFrame = () => {
+      if (!firstFrameRecorded) {
+        firstFrameRecorded = true;
+        timing.end();
+      }
+    };
+    video?.addEventListener('loadeddata', recordFirstFrame);
+    video?.addEventListener('playing', recordFirstFrame);
+
     const updatePosition = () => {
       if (video) positionRef.current = video.currentTime;
     };
@@ -203,7 +215,11 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
     window.addEventListener('pagehide', onPageHide);
 
     const start = async () => {
-      if (!Hls.isSupported()) { setStatus(supportMessage); return; }
+      if (!Hls.isSupported()) {
+        timing.fail(new Error('HLS not supported'));
+        setStatus(supportMessage);
+        return;
+      }
       try {
         const session = await open({ lessonId, csrfToken, signal: controller.signal });
         if (controller.signal.aborted || !videoRef.current) return;
@@ -211,18 +227,33 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
         setStatus('');
         hls = new Hls({ startLevel: -1, startPosition: positionRef.current,
           xhrSetup: (xhr, url) => setupPlaybackRequest(xhr, url, sessionRef.current?.segmentAccess.query ?? '') });
-        hls.on(Hls.Events.ERROR, (_event, data) => { if (data.fatal) stop('Não foi possível iniciar a aula.'); });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) {
+            timing.fail(data);
+            stop('Não foi possível iniciar a aula.');
+          }
+        });
         hls.attachMedia(videoRef.current);
         hls.loadSource(new URL('/api/v1/playback-sessions/' + session.sessionId + '/playlist', window.location.origin).href);
         reposition = setInterval(() => setZone((previous) => (previous + 1 + Math.floor(Math.random() * 3)) % 4),
           session.watermark.repositionSeconds * 1000);
-      } catch (error) { if (!controller.signal.aborted) setStatus(errorMessage(error)); }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          timing.fail(error);
+          setStatus(errorMessage(error));
+        }
+      }
     };
     void start();
     return () => {
       window.removeEventListener('pagehide', onPageHide);
+      video?.removeEventListener('loadeddata', recordFirstFrame);
+      video?.removeEventListener('playing', recordFirstFrame);
       video?.removeEventListener('timeupdate', updatePosition);
       video?.removeEventListener('pause', updatePosition);
+      if (!firstFrameRecorded) {
+        timing.cancel();
+      }
       if (!hasLeftRef.current && sessionRef.current) {
         hasLeftRef.current = true;
         clearInterval(progressInterval);

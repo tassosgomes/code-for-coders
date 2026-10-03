@@ -88,6 +88,22 @@ public static class MediaTelemetry
     public static readonly Counter<long> OutboxPublishFailed = Meter.CreateCounter<long>(
         "media.outbox.publish_failed",
         unit: "{message}");
+    public static readonly Counter<long> PlaybackOpened = Meter.CreateCounter<long>(
+        "media.playback.opened",
+        unit: "{session}");
+    public static readonly Counter<long> PlaybackRejected = Meter.CreateCounter<long>(
+        "media.playback.rejected",
+        unit: "{session}");
+    public static readonly Histogram<double> DecisionDuration = Meter.CreateHistogram<double>(
+        "media.decision.duration",
+        unit: "s",
+        advice: new InstrumentAdvice<double>
+        {
+            HistogramBucketBoundaries = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5],
+        });
+    public static readonly Counter<long> DecisionFailed = Meter.CreateCounter<long>(
+        "media.decision.failed",
+        unit: "{call}");
 
     public static void RecordOutboxPublished(string routingKey)
         => RecordOutboxEvent(OutboxPublished, routingKey);
@@ -99,6 +115,29 @@ public static class MediaTelemetry
         => VideoPrepareDuration.Record(
             Stopwatch.GetElapsedTime(startedAt).TotalSeconds,
             new KeyValuePair<string, object?>("stage", stage));
+
+    public static void RecordPlaybackOpened()
+        => PlaybackOpened.Add(1);
+
+    public static void RecordPlaybackRejected(string reason)
+        => PlaybackRejected.Add(1, new KeyValuePair<string, object?>("reason", NormalizePlaybackReason(reason)));
+
+    public static void RecordDecisionDuration(long startedAt)
+        => DecisionDuration.Record(Stopwatch.GetElapsedTime(startedAt).TotalSeconds);
+
+    public static void RecordDecisionFailed()
+        => DecisionFailed.Add(1);
+
+    public static string NormalizePlaybackReason(string reason)
+        => reason switch
+        {
+            "LESSON_NOT_AVAILABLE" or "referencia_ausente" or "referencia-ausente" or "referência ausente" => "referencia_ausente",
+            "MEDIA_NOT_READY" or "video_nao_pronto" or "video-nao-pronto" or "vídeo não pronto" => "video_nao_pronto",
+            "ACCESS_DECISION_UNAVAILABLE" or "indisponivel" or "indisponível" => "indisponivel",
+            "ACCESS_DENIED" or "negada" => "negada",
+            "WATERMARK_UNAVAILABLE" or "sem_email" or "sem-email" or "sem e-mail" => "sem_email",
+            _ => reason,
+        };
 
     private static void RecordOutboxEvent(Counter<long> instrument, string routingKey)
     {

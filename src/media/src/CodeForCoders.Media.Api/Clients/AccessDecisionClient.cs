@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using CodeForCoders.Media.Api.Security;
+using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -18,24 +20,53 @@ public sealed class AccessDecisionClient(HttpClient client, AccessDecisionAssert
 
     public async Task<StudentAccessDecision?> DecideFreshAsync(AccessDecisionQuery query, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(options.Value.SigningKeyBase64)) return null;
+        if (string.IsNullOrWhiteSpace(options.Value.SigningKeyBase64))
+        {
+            MediaTelemetry.RecordDecisionFailed();
+            return null;
+        }
         using var request = new HttpRequestMessage(HttpMethod.Get, $"internal/v1/access-decision?studentId={query.StudentId:D}&courseId={query.CourseId:D}");
         request.Headers.Authorization = new("Bearer", assertions.Create(query.TenantId));
+        var startedAt = Stopwatch.GetTimestamp();
         try
         {
             using var response = await client.SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode) return null;
+            MediaTelemetry.RecordDecisionDuration(startedAt);
+            if (!response.IsSuccessStatusCode)
+            {
+                MediaTelemetry.RecordDecisionFailed();
+                return null;
+            }
             var result = await response.Content.ReadFromJsonAsync<StudentAccessDecision>(cancellationToken);
-            if (!IsValid(result)) return null;
+            if (!IsValid(result))
+            {
+                MediaTelemetry.RecordDecisionFailed();
+                return null;
+            }
             var now = clock.GetUtcNow();
             var end = now.AddSeconds(options.Value.CacheSeconds);
             if (result!.Validity?.ExpiresAt is { } expires && expires < end) end = expires;
             if (end > now) cache.Set(query, new CachedDecision(result, end), end);
             return result;
         }
-        catch (HttpRequestException) { return null; }
-        catch (JsonException) { return null; }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return null; }
+        catch (HttpRequestException)
+        {
+            MediaTelemetry.RecordDecisionDuration(startedAt);
+            MediaTelemetry.RecordDecisionFailed();
+            return null;
+        }
+        catch (JsonException)
+        {
+            MediaTelemetry.RecordDecisionDuration(startedAt);
+            MediaTelemetry.RecordDecisionFailed();
+            return null;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            MediaTelemetry.RecordDecisionDuration(startedAt);
+            MediaTelemetry.RecordDecisionFailed();
+            return null;
+        }
     }
 
     private sealed record CachedDecision(StudentAccessDecision Decision, DateTimeOffset ExpiresAt);

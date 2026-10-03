@@ -79,7 +79,7 @@ de Identity e o emissor `learning` nascem em 3.0, o e-mail e o emissor `media` e
 - [x] 5.0 A reprodução continua sem interrupção e para quando o direito acaba
 - [x] 6.0 O aluno troca de aula e ajusta a velocidade
 - [x] 7.0 O avanço da reprodução chega como fato, sem e-mail e sem perder nada
-- [ ] 8.0 A equipe vê custo, erros e cache da entrega
+- [x] 8.0 A equipe vê custo, erros e cache da entrega
 
 ## Caminho crítico e lanes
 

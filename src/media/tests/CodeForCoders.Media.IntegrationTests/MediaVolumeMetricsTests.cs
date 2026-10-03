@@ -81,6 +81,7 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
                 "media.outbox.exhausted",
                 "media.outbox.pending",
                 "media.storage.used",
+                "media.students.active",
                 "media.uploads.pending",
                 "media.videos.count",
                 "media.videos.stuck",
