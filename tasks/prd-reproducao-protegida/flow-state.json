@@ -4,24 +4,27 @@
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "target_ref": null,
-  "last_checkpoint": "1.0",
+  "last_checkpoint": "2.0",
   "phase": "checkpoint",
-  "active_task": "2.0",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 0,
-  "specs": ["techspec.md", "contracts.md"],
+  "specs": [
+    "techspec.md",
+    "contracts.md"
+  ],
   "delivery": "pr",
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.j4NSdp8n",
+    "run_id": "run.H2U2spoF",
     "role": "validator",
     "mode": "focused",
-    "task": "1.0",
+    "task": "2.0",
     "outcome": "approved",
-    "note": "0 bloqueantes, 3 recomendacoes nao bloqueantes (destino de 'Ver outras aulas', frase de progresso em A1.m, registro do Figma em 2.0)"
+    "note": "0 bloqueantes, 2 recomendacoes (conferir node-id 260:2332 por amostragem antes da 3.0 se desejado; tasks de tela usam tokens do DS, nao pixels do desenho)"
   },
   "pending": null,
   "history": [
@@ -29,6 +32,11 @@
     "1.0 implement run.26C852Kl: documento wireframes-aula.md completo, status neutro; TASK BLOCKED aguardando aprovacao do responsavel (tentativa nao consumida)",
     "1.0 aprovacao ASCII pelo responsavel em 2026-10-03; status registrado; gate exit 0; seguindo para focused",
     "1.0 focused run.j4NSdp8n: approved (0 bloqueantes)",
-    "1.0 checkpoint-task ok (run.l41Nvcvc): 1_task.md done, tasks.md [x] 1.0, wireframes-aula.md 411 linhas, review focused aprovada run.j4NSdp8n, gate rg exit 0"
+    "1.0 checkpoint-task ok (run.l41Nvcvc): 1_task.md done, tasks.md [x] 1.0, wireframes-aula.md 411 linhas, review focused aprovada run.j4NSdp8n, gate rg exit 0",
+    "checkpoint 1.0 = commit 1dd3cb6ecbddea07b7f6b21f129a558789c5e45d; iniciando 2.0",
+    "2.0 implement run.HuGHnbkF: TASK BLOCKED preflight (sem Figma no runtime); tentativa 1 preservada",
+    "2026-10-03: responsavel assumiu o Figma externamente com outro agente; orquestrador aguardando retorno para retomar 2.0 (handoff + aprovacao + gate + focused + checkpoint)",
+    "2.0 retomada: figma externo commitado (62073b2, 51ec37b); responsavel aprovou o Figma; gate exit 0; rodada atual preserva tentativa 1; seguindo para focused",
+    "2.0 checkpoint-task ok (run.4EzPrGmr): 2_task.md done, tasks.md [x] 2.0, wireframes-aula.md handoff+aprovacao Figma, review focused aprovada run.H2U2spoF, gate rg exit 0"
   ]
 }

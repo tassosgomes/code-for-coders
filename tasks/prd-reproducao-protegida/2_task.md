@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["1.0"]
 gate: 'rg -q "^> \*\*Status:\*\* ASCII e Figma aprovados pelo responsável em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-aula.md'
@@ -45,6 +45,6 @@ Arquivos a criar não são listados: a estrutura vem das skills `dotnet` e `reac
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0).
-- [ ] Há um frame para cada estado do ASCII, em desktop e celular, registrados no documento.
-- [ ] O responsável aprovou o Figma explicitamente.
+- [x] Gate passa (exit 0).
+- [x] Há um frame para cada estado do ASCII, em desktop e celular, registrados no documento.
+- [x] O responsável aprovou o Figma explicitamente.

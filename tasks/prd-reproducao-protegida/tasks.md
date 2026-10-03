@@ -73,7 +73,7 @@ de Identity e o emissor `learning` nascem em 3.0, o e-mail e o emissor `media` e
 ## Tasks
 
 - [x] 1.0 Wireframes ASCII da tela da aula aprovados
-- [ ] 2.0 Figma da tela da aula aprovado
+- [x] 2.0 Figma da tela da aula aprovado
 - [ ] 3.0 O aluno com direito abre a aula e vê a lista de aulas; sem direito, vê o motivo
 - [ ] 4.0 O aluno assiste à aula, com marca d'água e sem link solto
 - [ ] 5.0 A reprodução continua sem interrupção e para quando o direito acaba
