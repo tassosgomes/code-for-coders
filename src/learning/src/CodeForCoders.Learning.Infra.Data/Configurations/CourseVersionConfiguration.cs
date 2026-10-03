@@ -30,6 +30,7 @@ public sealed class CourseVersionConfiguration : IEntityTypeConfiguration<Course
         builder.Property(version => version.Modules).HasColumnName("modules").HasColumnType("jsonb")
             .HasConversion(value => JsonSerializer.Serialize(value, JsonOptions),
                 value => JsonSerializer.Deserialize<IReadOnlyList<PublishedModule>>(value, JsonOptions)!);
+        builder.HasIndex(version => version.Modules).HasMethod("gin").HasOperators("jsonb_path_ops");
         builder.HasIndex(version => new { version.TenantId, version.CourseId, version.VersionNumber }).IsUnique();
         builder.HasOne<Course>().WithMany().HasForeignKey(version => version.CourseId).OnDelete(DeleteBehavior.Restrict);
     }

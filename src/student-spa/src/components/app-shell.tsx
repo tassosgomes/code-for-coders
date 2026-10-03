@@ -37,7 +37,7 @@ type AppShellProps = {
 };
 
 const getPageTitle = (pathname: string) =>
-  pathname === paths.studentPasswordChange.path ? 'Trocar senha' : 'Início';
+  pathname.startsWith(paths.studentLesson.path.replace(':lessonId', '')) ? 'Aula' : pathname === paths.studentPasswordChange.path ? 'Trocar senha' : 'Início';
 
 const sidebarStyle: CSSProperties & { '--sidebar-width': string } = {
   '--sidebar-width': '16.5rem',
@@ -46,10 +46,12 @@ const sidebarStyle: CSSProperties & { '--sidebar-width': string } = {
 export const AppShell = ({ accountMenu, children }: AppShellProps) => {
   const { pathname } = useLocation();
   const pageTitle = getPageTitle(pathname);
+  const onLesson = pathname.startsWith(paths.studentLesson.path.replace(':lessonId', ''));
+  const TitleTag = onLesson ? 'p' : 'h1';
   const onHome = pathname === paths.home.path;
   const onPasswordChange = pathname === paths.studentPasswordChange.path;
 
-  useDocumentTitle(`${pageTitle} | Code4Coders`);
+  useDocumentTitle(onLesson ? undefined : `${pageTitle} | Code4Coders`);
 
   return (
     <SidebarProvider style={sidebarStyle}>
@@ -145,7 +147,7 @@ export const AppShell = ({ accountMenu, children }: AppShellProps) => {
           </Sheet>
           <div className="min-w-0">
             <p className="typo-overline text-primary">Conta do aluno</p>
-            <h1 className="truncate font-heading text-lg font-semibold text-foreground">{pageTitle}</h1>
+            <TitleTag className="truncate font-heading text-lg font-semibold text-foreground">{pageTitle}</TitleTag>
           </div>
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <ThemeMenu />

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { redirect } from 'react-router';
+import { redirect, type LoaderFunctionArgs } from 'react-router';
 
 import { paths } from '@/config/paths';
 import { activeStudentSessionMarker } from '@/config/session-markers';
@@ -12,7 +12,7 @@ import {
 import { StudentAccountCard } from '@/features/student-session/components/student-session-panel';
 import { queryClient } from '@/lib/query-client';
 
-export const requireStudentSession = async () => {
+export const requireStudentSession = async (args?: LoaderFunctionArgs) => {
   try {
     const session = await getCurrentStudentSession();
     queryClient.setQueryData(studentSessionQueryKey, session);
@@ -20,7 +20,11 @@ export const requireStudentSession = async () => {
     return null;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      return redirect(paths.studentLogin.getHref());
+      const url = args ? new URL(args.request.url) : undefined;
+      const base = import.meta.env.BASE_URL.replace(/\/$/u, '');
+      const pathname = url?.pathname;
+      const internal = pathname && base && pathname.startsWith(`${base}/`) ? pathname.slice(base.length) : pathname;
+      return redirect(paths.studentLogin.getHref(internal ? `${internal}${url?.search ?? ''}${url?.hash ?? ''}` : undefined));
     }
 
     throw error;

@@ -1,8 +1,10 @@
 import { http, HttpResponse } from 'msw';
 
 import { env } from '@/config/env';
+import { studentLessonData } from '@/testing/student-lesson-data';
 
 export const handlers = [
+  http.get(`${env.API_URL}/api/v1/lessons/:lessonId`, () => HttpResponse.json(studentLessonData)),
   http.get(`${env.API_URL}/api/v1/student-sessions/current`, () =>
     HttpResponse.json({
       accountId: '00000000-0000-4000-8000-000000000001',

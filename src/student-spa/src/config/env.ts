@@ -2,6 +2,9 @@ import * as z from 'zod';
 
 const EnvSchema = z.object({
   API_URL: z.url(),
+  SCHOOL_TIME_ZONE: z.string().default('America/Sao_Paulo').refine((value) => {
+    try { new Intl.DateTimeFormat('pt-BR', { timeZone: value }); return true; } catch { return false; }
+  }, 'Invalid school time zone'),
   OTEL_ENDPOINT: z.url().optional(),
 });
 

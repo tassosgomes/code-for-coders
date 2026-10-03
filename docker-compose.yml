@@ -107,6 +107,11 @@ services:
       dockerfile: src/identity/Dockerfile
     container_name: code-for-coders-identity
     environment:
+      StudentSessionTokens__Issuer: identity
+      StudentSessionTokens__SigningKeyId: local-student-1
+      StudentSessionTokens__SigningKeyBase64: ${IDENTITY_STUDENT_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StudentSessionTokens__LifetimeMinutes: "5"
+      StudentSessionTokens__AudienceScopes__learning: lessons:read
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=code-for-coders-local
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
@@ -168,6 +173,11 @@ services:
       dockerfile: src/learning/Dockerfile
     container_name: code-for-coders-learning
     environment:
+      AccessDecision__BaseAddress: http://commerce:8080/
+      AccessDecision__SigningKeyId: local-learning-commerce-1
+      AccessDecision__SigningKeyBase64: ${LEARNING_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      AccessDecision__TimeoutSeconds: "2"
+      AccessDecision__CacheSeconds: "30"
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=code-for-coders-local
       LearningTokens__Issuer: identity
@@ -288,6 +298,9 @@ services:
       dockerfile: src/commerce/Dockerfile
     container_name: code-for-coders-commerce
     environment:
+      ServiceAssertions__Issuers__learning__PublicKeys__local-learning-commerce-1: ${LEARNING_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__learning__AllowedScopes__0: access-decision:read
+      ServiceAssertions__Issuers__learning__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=code-for-coders-local
       FinanceAreaTokens__Issuer: identity
@@ -418,6 +431,8 @@ services:
       dockerfile: src/bff-student/Dockerfile
     container_name: code-for-coders-bff-student
     environment:
+      Learning__BaseAddress: http://learning:8080/
+      Learning__TimeoutSeconds: "5"
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=code-for-coders-local
       ReverseProxy__Clusters__student-backend__Destinations__destination__Address: http://identity:8080/
@@ -468,6 +483,7 @@ services:
       dockerfile: Dockerfile
     container_name: code-for-coders-student-spa
     environment:
+      SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       API_URL: http://localhost:8082
     ports:
       - "8082:80"

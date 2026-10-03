@@ -87,9 +87,9 @@ public sealed class BffSecurityMiddleware(
             return;
         }
 
-        var audience = context.Request.Path.StartsWithSegments("/proxy")
-            ? settings.ProxyAudience
-            : null;
+        var audience = settings.RouteAudiences.OrderByDescending(route => route.Key.Length)
+            .FirstOrDefault(route => context.Request.Path.StartsWithSegments(route.Key, StringComparison.OrdinalIgnoreCase)).Value;
+        if (audience is null && context.Request.Path.StartsWithSegments("/proxy")) audience = settings.ProxyAudience;
         var validation = await identityClient.ValidateSessionAsync(
             session.StudentSessionId,
             string.IsNullOrWhiteSpace(audience) ? null : audience,
@@ -109,17 +109,16 @@ public sealed class BffSecurityMiddleware(
         if (validation.StatusCode != StatusCodes.Status200OK
             || validation.AccountId == Guid.Empty
             || string.IsNullOrWhiteSpace(validation.Name)
-            || (context.Request.Path.StartsWithSegments("/proxy")
-                && string.IsNullOrWhiteSpace(validation.AccessToken))
+            || (!string.IsNullOrWhiteSpace(audience) && string.IsNullOrWhiteSpace(validation.AccessToken))
             || validation.ExpiresAt <= timeProvider.GetUtcNow())
         {
-            var statusCode = validation.StatusCode == StatusCodes.Status504GatewayTimeout
-                ? StatusCodes.Status504GatewayTimeout
-                : StatusCodes.Status502BadGateway;
+            var isLesson = context.Request.Path.StartsWithSegments("/api/v1/lessons");
+            var statusCode = validation.StatusCode == StatusCodes.Status504GatewayTimeout ? 504
+                : isLesson && validation.StatusCode == 503 ? 503 : 502;
             await WriteProblemAsync(
                 context,
                 statusCode,
-                "IDENTITY_UNAVAILABLE",
+                isLesson ? statusCode == 504 ? "UPSTREAM_TIMEOUT" : "UPSTREAM_UNAVAILABLE" : "IDENTITY_UNAVAILABLE",
                 "The student identity service is temporarily unavailable.");
             return;
         }

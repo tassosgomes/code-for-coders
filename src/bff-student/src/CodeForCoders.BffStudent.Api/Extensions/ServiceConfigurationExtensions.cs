@@ -34,6 +34,7 @@ public static class ServiceConfigurationExtensions
         builder.Services.AddSingleton<ServiceAssertionTokenFactory>();
         builder.Services.AddPurchaseIntentRateLimit(builder.Configuration);
         builder.Services.AddCommerceClientConfiguration(builder.Configuration);
+        builder.Services.AddLearningClientConfiguration(builder.Configuration);
         builder.Services.AddHttpClient<IStudentRegistrationIdentityClient, StudentRegistrationIdentityClient>((provider, client) =>
             {
                 var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StudentIdentityOptions>>().Value;

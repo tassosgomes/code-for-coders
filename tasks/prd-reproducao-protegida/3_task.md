@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0"]
 gate: 'dotnet test --project src/identity/tests/CodeForCoders.Identity.UnitTests/CodeForCoders.Identity.UnitTests.csproj -- --filter-class CodeForCoders.Identity.UnitTests.StudentTokenAudienceTests --minimum-expected-tests 5 && dotnet test --project src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentTokenJwksTests --minimum-expected-tests 3 && dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.AccessDecisionIssuersTests --minimum-expected-tests 3 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.StudentLessonTests --minimum-expected-tests 10 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.AccessDecisionClientTests --minimum-expected-tests 4 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.StudentLessonProxyTests --minimum-expected-tests 7 && npm --prefix src/student-spa run test -- student-lesson-screen && npm --prefix src/student-spa run test -- student-login-return'
@@ -102,7 +102,7 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0), com os mínimos do `gate`.
-- [ ] A aplicação de `learning` inicia com os registros reais (JWKS, política de aluno, cliente da decisão) no ambiente de teste, e o cliente da decisão é exercitado pelo **adaptador real** contra um `commerce` de teste controlado, não por dublê da interface.
+- [x] Gate focalizado passa (exit 0), com os mínimos do `gate`.
+- [x] A aplicação de `learning` inicia com os registros reais (JWKS, política de aluno, cliente da decisão) no ambiente de teste, e o cliente da decisão é exercitado pelo **adaptador real** contra um `commerce` de teste controlado, não por dublê da interface.
 - [ ] Aluno com cortesia vigente (CAP-008) abre o link no navegador contra o ambiente de desenvolvimento e vê a lista de aulas; aluno sem concessão vê a mensagem; sem sessão de login, o link leva ao login e volta à aula. Pré-requisitos: `scripts/remote-infra.sh provision` e `migrate`, `scripts/apps.sh start --remote`, curso publicado com duas aulas e uma cortesia concedida pelo backoffice.
-- [ ] Nenhum título de curso, módulo ou aula aparece na resposta de um aluno sem direito.
+- [x] Nenhum título de curso, módulo ou aula aparece na resposta de um aluno sem direito.

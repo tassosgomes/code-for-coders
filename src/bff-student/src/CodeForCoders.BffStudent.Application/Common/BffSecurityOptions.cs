@@ -21,6 +21,8 @@ public sealed class BffSecurityOptions
     [Range(1, 1440)]
     public int SessionTtlMinutes { get; set; } = 60;
 
+    public Dictionary<string, string> RouteAudiences { get; set; } = new() { ["/api/v1/lessons"] = "learning" };
+
     public string ProxyAudience { get; set; } = string.Empty;
 
     public bool SessionCookieHttpOnly { get; set; } = true;

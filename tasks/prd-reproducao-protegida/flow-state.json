@@ -4,9 +4,9 @@
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "target_ref": null,
-  "last_checkpoint": "2.0",
+  "last_checkpoint": "3.0",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,12 +19,12 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.H2U2spoF",
+    "run_id": "run.UOtcOCJY",
     "role": "validator",
     "mode": "focused",
-    "task": "2.0",
+    "task": "3.0",
     "outcome": "approved",
-    "note": "0 bloqueantes, 2 recomendacoes (conferir node-id 260:2332 por amostragem antes da 3.0 se desejado; tasks de tela usam tokens do DS, nao pixels do desenho)"
+    "note": "revisao focused aprovada; detalhes em 3_task_review.md"
   },
   "pending": null,
   "history": [
@@ -37,6 +37,8 @@
     "2.0 implement run.HuGHnbkF: TASK BLOCKED preflight (sem Figma no runtime); tentativa 1 preservada",
     "2026-10-03: responsavel assumiu o Figma externamente com outro agente; orquestrador aguardando retorno para retomar 2.0 (handoff + aprovacao + gate + focused + checkpoint)",
     "2.0 retomada: figma externo commitado (62073b2, 51ec37b); responsavel aprovou o Figma; gate exit 0; rodada atual preserva tentativa 1; seguindo para focused",
-    "2.0 checkpoint-task ok (run.4EzPrGmr): 2_task.md done, tasks.md [x] 2.0, wireframes-aula.md handoff+aprovacao Figma, review focused aprovada run.H2U2spoF, gate rg exit 0"
+    "2.0 checkpoint-task ok (run.4EzPrGmr): 2_task.md done, tasks.md [x] 2.0, wireframes-aula.md handoff+aprovacao Figma, review focused aprovada run.H2U2spoF, gate rg exit 0",
+    "checkpoint 2.0 = commit d2b9ea53b86166c848349730984be661043507af; iniciando 3.0 (primeira vertical, full-stack)",
+    "3.0 checkpoint-task ok (run.umqU86ac): 3_task.md done, tasks.md [x] 3.0, V-01 full-stack identity/commerce/learning/bff-student/student-spa+compose, review focused aprovada run.UOtcOCJY, gate 60 testes exit 0"
   ]
 }

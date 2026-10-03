@@ -17,6 +17,9 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail) = exception switch
         {
+            StudentLessonException { Code: "LESSON_NOT_AVAILABLE" } => (404, "about:blank", "Esta aula não está disponível.", "Esta aula não está disponível."),
+            StudentLessonException { Code: "ACCESS_DENIED" } => (403, "about:blank", "Você não tem acesso a este curso.", "Você não tem acesso a este curso."),
+            StudentLessonException => (503, "about:blank", "Não foi possível confirmar seu acesso agora.", "Não foi possível confirmar seu acesso agora."),
             DraftChangedException => (409, "/problems/draft-changed", "Draft changed", exception.Message),
             CourseRuleException { Code: "COURSE_ALREADY_PUBLISHED" } => (409, "/problems/course-already-published", "Course already published", exception.Message),
             CourseRuleException { Code: "COURSE_NEVER_PUBLISHED" } => (409, "/problems/course-never-published", "Course never published", exception.Message),
@@ -64,6 +67,7 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["code"] = exception switch
         {
+            StudentLessonException lesson => lesson.Code,
             DraftChangedException => "DRAFT_CHANGED",
             CourseIncompleteException => "COURSE_INCOMPLETE",
             CourseItemNotFoundException item => item.Code,
@@ -72,6 +76,12 @@ public sealed class GlobalExceptionHandler(
             ValidationException => "INVALID_REQUEST",
             _ => "UNEXPECTED_ERROR",
         };
+        if (exception is StudentLessonException lessonError)
+        {
+            httpContext.Response.Headers.CacheControl = "private, no-store";
+            if (lessonError.Reason is not null) problemDetails.Extensions["reason"] = lessonError.Reason;
+            if (lessonError.AccessEndedAt.HasValue) problemDetails.Extensions["accessEndedAt"] = lessonError.AccessEndedAt.Value;
+        }
         if (exception is CourseIncompleteException incomplete) problemDetails.Extensions["pendencies"] = incomplete.Pendencies;
         if (exception is CourseRuleException { Field: not null } fieldError)
             problemDetails.Extensions["errors"] = new Dictionary<string, string[]> { [fieldError.Field] = [fieldError.Message] };

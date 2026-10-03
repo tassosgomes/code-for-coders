@@ -6,6 +6,22 @@ readonly script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
 readonly env_file="$repository_root/.env"
 
+ensure_lesson_keys() {
+  umask 077
+  local lesson_key_dir
+  lesson_key_dir="$(mktemp -d)"
+  for lesson_key_prefix in IDENTITY_STUDENT_TOKEN LEARNING_COMMERCE; do
+    if ! rg -q "^${lesson_key_prefix}_PRIVATE_KEY_B64=" "$env_file"; then
+      openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$lesson_key_dir/private.pem" 2>/dev/null
+      {
+        printf '\n%s_PRIVATE_KEY_B64=%s\n' "$lesson_key_prefix" "$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$lesson_key_dir/private.pem" | base64 | tr -d '\n')"
+        printf '%s_PUBLIC_KEY_B64=%s\n' "$lesson_key_prefix" "$(openssl pkey -in "$lesson_key_dir/private.pem" -pubout -outform DER | base64 | tr -d '\n')"
+      } >> "$env_file"
+    fi
+  done
+  rm -rf -- "$lesson_key_dir"
+}
+
 if [[ -e "$env_file" ]]; then
   command -v openssl >/dev/null 2>&1 || {
     printf '[local-env] OpenSSL is required to generate local development keys.\n' >&2
@@ -54,6 +70,7 @@ if [[ -e "$env_file" ]]; then
     changed=true
   fi
 
+  ensure_lesson_keys
   chmod 600 "$env_file"
   if [[ "$changed" == false ]]; then
     printf '[local-env] %s already contains the generated configuration; keeping the current configuration.\n' "$env_file"
@@ -133,5 +150,6 @@ bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 chmod 600 "$env_temp_file"
 mv -- "$env_temp_file" "$env_file"
 env_temp_file=""
+ensure_lesson_keys
 
 printf '[local-env] Created %s with development-only values.\n' "$env_file"

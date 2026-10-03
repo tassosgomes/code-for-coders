@@ -34,7 +34,9 @@ const isSessionExpiredState = (state: unknown) =>
   && 'sessionExpired' in state
   && state.sessionExpired === true;
 
-export const StudentLoginScreen = () => {
+type StudentLoginScreenProps = { returnTo?: string };
+
+export const StudentLoginScreen = ({ returnTo }: StudentLoginScreenProps) => {
   useDocumentTitle('Entrar');
   const form = useStudentLoginForm();
   const login = useCreateStudentSession();
@@ -71,7 +73,7 @@ export const StudentLoginScreen = () => {
       attemptRef.current = null;
       form.reset();
       clearSessionExpiredNotice();
-      await navigate(paths.home.getHref(), { replace: true });
+      await navigate(returnTo ?? paths.home.getHref(), { replace: true });
     } catch (error) {
       setNotConfirmed(getLoginErrorCode(error) === 'EMAIL_NOT_CONFIRMED');
     }

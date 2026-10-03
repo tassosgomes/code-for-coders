@@ -26,6 +26,12 @@ public static class ServiceConfigurationExtensions
                     && options.AudienceScopes.All(pair => !string.IsNullOrWhiteSpace(pair.Key)
                         && !string.IsNullOrWhiteSpace(pair.Value))),
                 "Configured student session audiences require an RSA signing key and a non-empty scope.")
+            .Validate(options => options.PreviousSigningPublicKeys.All(pair =>
+                !string.IsNullOrWhiteSpace(pair.Key) && pair.Key != options.SigningKeyId && IsValidPublicKey(pair.Value)),
+                "Previous student signing keys must have distinct identifiers and valid RSA public keys.")
+            .Validate(options => !options.AudienceScopes.ContainsKey("learning")
+                || options.AudienceScopes["learning"].Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("lessons:read"),
+                "The learning student audience requires lessons:read.")
             .ValidateOnStart();
         builder.Services.AddSingleton<StudentSessionTokenIssuer>();
         builder.Services.AddOptions<StaffSessionTokenOptions>()
