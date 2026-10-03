@@ -149,6 +149,7 @@ public sealed class CatalogCourseListingTests(CommerceIntegrationFixture fixture
                 {
                     options.HeartbeatQueue = "commerce.platform-heartbeat-transient-test";
                     options.CatalogCourseQueue = "commerce.catalog-transient-test";
+                    options.EntitlementCourseQueue = "commerce.catalog-test-entitlement-transient";
                     options.DeliveryLimit = 3;
                 });
             },

@@ -84,6 +84,23 @@ public static class ServiceConfigurationExtensions
                 options.Retry.MaxRetryAttempts = 3;
                 options.Retry.DisableForUnsafeHttpMethods();
             });
+        builder.Services.AddHttpClient<ICourtesyGrantsClient, CourtesyGrantsClient>((services, client) =>
+                client.BaseAddress = new Uri(services.GetRequiredService<IOptions<CommerceApiOptions>>().Value.BaseAddress))
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(10);
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
+        builder.Services.AddHttpClient<ICourtesyCoursesClient, CourtesyCoursesClient>((services, client) =>
+                client.BaseAddress = new Uri(services.GetRequiredService<IOptions<CommerceApiOptions>>().Value.BaseAddress))
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.Retry.MaxRetryAttempts = 3;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         builder.Services.AddHttpClient<IOfferReferenceClient, OfferReferenceClient>((services, client) =>
                 client.BaseAddress = new Uri(services.GetRequiredService<IOptions<CommerceApiOptions>>().Value.BaseAddress))
             .AddStandardResilienceHandler(options =>

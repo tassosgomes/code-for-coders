@@ -9,6 +9,10 @@ public static class EndpointExtensions
         app.MapPlatformEndpoints();
         app.MapFinanceAreaEndpoints();
         app.MapCatalogCourseEndpoints();
+        app.MapCourtesyCourseEndpoints();
+        app.MapCourtesyGrantEndpoints();
+        app.MapStudentAccessGrantEndpoints();
+        app.MapAccessDecisionEndpoints();
         app.MapOfferReferenceEndpoints();
         app.MapShowcaseEndpoints();
         app.MapPurchaseIntentEndpoints();

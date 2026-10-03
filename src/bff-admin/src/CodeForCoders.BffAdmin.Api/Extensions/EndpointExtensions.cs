@@ -15,10 +15,13 @@ public static class EndpointExtensions
         app.MapStaffMemberEndpoints();
         app.MapFinanceAreaEndpoints();
         app.MapCatalogCourseEndpoints();
+        app.MapCourtesyCourseEndpoints();
+        app.MapCourtesyGrantEndpoints();
         app.MapCatalogOfferEndpoints();
         app.MapVideoLibraryEndpoints();
         app.MapVideoUploadEndpoints();
         app.MapAuditRecordEndpoints();
+        app.MapStudentAccountEndpoints();
         app.MapProxyEndpoints();
     }
 }

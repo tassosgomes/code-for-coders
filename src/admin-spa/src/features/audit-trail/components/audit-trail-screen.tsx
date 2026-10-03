@@ -12,6 +12,7 @@ import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-tra
 const initialDraft: AuditTrailDraftFilters = { from: '', to: '', type: '' };
 const pageSize = 20;
 const typeOptions = [
+  { value: 'cortesia-concedida', label: 'Cortesia concedida' },
   { value: 'oferta-publicada', label: 'Oferta publicada' },
   { value: 'oferta-alterada', label: 'Oferta alterada' },
   { value: 'oferta-despublicada', label: 'Oferta despublicada' },

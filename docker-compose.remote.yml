@@ -17,6 +17,10 @@ services:
   identity:
     environment:
       <<: *remote-environment
+      ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-identity-1: ${COMMERCE_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__commerce__AllowedScopes__0: student-account:confirm
+      ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__9: ${BFF_ADMIN_STUDENT_LOOKUP_SCOPE:-student-account:lookup}
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
@@ -45,8 +49,19 @@ services:
   commerce:
     environment:
       <<: *remote-environment
+      StudentAccountIdentity__BaseAddress: http://identity:8080/
+      StudentAccountIdentity__Issuer: commerce
+      StudentAccountIdentity__SigningKeyBase64: ${COMMERCE_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StudentAccountIdentity__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
+      RabbitMq__EntitlementFactRetentionQueue: commerce.entitlement-fact-retention
+      RabbitMq__EntitlementFactRetentionMaxLength: ${ENTITLEMENT_FACT_RETENTION_MAX_LENGTH:-10000}
+      RabbitMq__EntitlementFactRetentionTtlMilliseconds: ${ENTITLEMENT_FACT_RETENTION_TTL_MS:-86400000}
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
-    depends_on: !reset {}
+    depends_on: !override
+      identity:
+        condition: service_healthy
+      audit:
+        condition: service_healthy
 
   notification:
     environment:

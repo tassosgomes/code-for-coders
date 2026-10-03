@@ -28,6 +28,13 @@ public sealed class RabbitMqOptions
     public string AuditExchange { get; set; } = "audit.events";
 
     [Required]
+    public string EntitlementFactRetentionQueue { get; set; } = "commerce.entitlement-fact-retention";
+    [Range(1, int.MaxValue)]
+    public int EntitlementFactRetentionMaxLength { get; set; } = 10000;
+    [Range(1, int.MaxValue)]
+    public int EntitlementFactRetentionTtlMilliseconds { get; set; } = 86400000;
+
+    [Required]
     public string OfferRetentionQueue { get; set; } = "commerce.catalog-offer-retention";
 
     [Range(1, int.MaxValue)]
@@ -47,6 +54,9 @@ public sealed class RabbitMqOptions
 
     [Required]
     public string CatalogCourseQueue { get; set; } = "commerce.catalog-course";
+
+    [Required]
+    public string EntitlementCourseQueue { get; set; } = "commerce.entitlement-course";
 
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;

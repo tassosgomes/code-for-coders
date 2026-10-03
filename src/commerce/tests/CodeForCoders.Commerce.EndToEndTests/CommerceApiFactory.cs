@@ -32,6 +32,8 @@ public sealed class CommerceApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
+        builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("EndToEndTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
         builder.UseSetting("RabbitMq:Username", "code_for_coders");

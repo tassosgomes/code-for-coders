@@ -6,7 +6,7 @@ public static class StaffRoleCatalog
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
         {
             [Administrator] = [ManageAccess],
-            [Finance] = [ReadFinance, EditOffers],
+            [Finance] = [ReadFinance, EditOffers, GrantCourtesy],
             [Teacher] = [ReadAuthoring, EditAuthoring, SendVideos],
             [Support] = [HandleSupport],
         };
@@ -18,6 +18,7 @@ public static class StaffRoleCatalog
 
     public const string ManageAccess = "acesso.gerir";
     public const string EditOffers = "oferta.editar";
+    public const string GrantCourtesy = "cortesia.conceder";
     public const string ReadFinance = "financeiro.ler";
     public const string EditAuthoring = "autoria.editar";
     public const string ReadAuthoring = "autoria.ler";

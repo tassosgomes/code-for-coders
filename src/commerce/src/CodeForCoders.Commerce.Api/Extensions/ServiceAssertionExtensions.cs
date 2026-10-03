@@ -14,7 +14,7 @@ public static class ServiceAssertionExtensions
         services.AddOptions<ServiceAssertionOptions>()
             .Bind(configuration.GetSection(ServiceAssertionOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Service assertion audience is required.")
-            .Validate(options => options.Issuers.Values.All(IsValidIssuer), "Service assertion issuers are incomplete or invalid.")
+            .Validate(options => options.Issuers.All(IsValidIssuer), "Service assertion issuers are incomplete or invalid.")
             .ValidateOnStart();
         services.AddScoped<ServiceAssertionVerifier>();
         services.AddAuthentication()
@@ -30,16 +30,25 @@ public static class ServiceAssertionExtensions
             policy => policy.AddAuthenticationSchemes(ServiceAssertionAuthenticationHandler.SchemeName)
                 .RequireAuthenticatedUser()
                 .RequireClaim(ServiceAssertionAuthenticationHandler.ScopeClaim, ServiceAssertionScopes.PurchaseIntentWrite)));
+        services.AddAuthorization(options => options.AddPolicy(AccessDecisionPolicies.Read,
+            policy => policy.AddAuthenticationSchemes(ServiceAssertionAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ServiceAssertionAuthenticationHandler.ScopeClaim, ServiceAssertionScopes.AccessDecisionRead)
+                .RequireAssertion(context => context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value != "bff-student")));
         return services;
     }
 
-    private static bool IsValidIssuer(ServiceAssertionIssuerOptions issuer)
-        => issuer.PublicKeys.Count > 0
+    private static bool IsValidIssuer(KeyValuePair<string, ServiceAssertionIssuerOptions> entry)
+    {
+        var issuer = entry.Value;
+        var scopes = entry.Key == "bff-student" ? ServiceAssertionScopes.Student : ServiceAssertionScopes.All;
+        return issuer.PublicKeys.Count > 0
             && issuer.PublicKeys.Values.All(IsValidPublicKey)
             && issuer.AllowedScopes.Length > 0
-            && issuer.AllowedScopes.All(scope => ServiceAssertionScopes.Student.Contains(scope, StringComparer.Ordinal))
+            && issuer.AllowedScopes.All(scope => scopes.Contains(scope, StringComparer.Ordinal))
             && issuer.AllowedTenantIds.Length > 0
             && issuer.AllowedTenantIds.All(value => Guid.TryParse(value, out var tenant) && tenant != Guid.Empty);
+    }
 
     private static bool IsValidPublicKey(string encodedKey)
     {

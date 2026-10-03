@@ -1,0 +1,4 @@
+using CodeForCoders.Identity.Application.Interfaces;
+namespace CodeForCoders.Identity.Application.UseCases.Accounts.ConfirmStudentAccountEligibility;
+
+public interface IConfirmStudentAccountEligibility : IUseCase<ConfirmStudentAccountEligibilityInput, bool>;

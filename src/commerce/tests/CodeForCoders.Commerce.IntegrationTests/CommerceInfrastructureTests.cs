@@ -28,6 +28,7 @@ public sealed class CommerceInfrastructureTests(CommerceIntegrationFixture fixtu
             ["RabbitMq:Exchange"] = "commerce.integration.events",
             ["RabbitMq:DeadLetterExchange"] = "commerce.integration.events.dlx",
             ["RabbitMq:CatalogCourseQueue"] = "commerce.integration.catalog-course",
+            ["RabbitMq:EntitlementCourseQueue"] = "commerce.integration.entitlement-course",
             ["RabbitMq:HeartbeatQueue"] = "commerce.integration.platform-heartbeat",
             ["Outbox:PollingIntervalSeconds"] = "5",
             ["Outbox:BatchSize"] = "10",

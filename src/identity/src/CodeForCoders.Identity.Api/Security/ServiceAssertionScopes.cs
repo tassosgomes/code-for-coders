@@ -2,6 +2,8 @@ namespace CodeForCoders.Identity.Api.Security;
 
 public static class ServiceAssertionScopes
 {
+    public static readonly string[] Commerce = ["student-account:confirm"];
+
     public static readonly string[] Student =
     [
         "student-accounts:create",
@@ -26,5 +28,6 @@ public static class ServiceAssertionScopes
         "staff-members:read",
         "staff-members:write",
         "audit-references:read",
+        "student-account:lookup",
     ];
 }

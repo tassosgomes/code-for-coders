@@ -2,12 +2,14 @@ using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using CodeForCoders.Commerce.Application.Common;
+using CodeForCoders.Commerce.Api.Authorization;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 
 namespace CodeForCoders.Commerce.Api.Security;
 
-/// <summary>Second authentication scheme of the service: it accepts only the <c>bff-student</c> service assertion.</summary>
+/// <summary>Authenticates trusted service issuers; each route enforces its own scope.</summary>
 public sealed class ServiceAssertionAuthenticationHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> schemeOptions,
     ILoggerFactory loggerFactory,
@@ -52,7 +54,7 @@ public sealed class ServiceAssertionAuthenticationHandler(
         return SecurityProblem.WriteAsync(
             Context,
             StatusCodes.Status401Unauthorized,
-            "SERVICE_ASSERTION_INVALID",
+            IsAccessDecision() ? "SERVICE_UNAUTHORIZED" : "SERVICE_ASSERTION_INVALID",
             "Credencial de serviço inválida.");
     }
 
@@ -82,6 +84,10 @@ public sealed class ServiceAssertionAuthenticationHandler(
             { "operation", Context.GetEndpoint()?.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName ?? "unknown" },
             { "result", result },
         };
-        CommerceTelemetry.ShowcaseReads.Add(1, tags);
+        if (!IsAccessDecision()) CommerceTelemetry.ShowcaseReads.Add(1, tags);
     }
+
+    private bool IsAccessDecision()
+        => Context.GetEndpoint()?.Metadata.GetOrderedMetadata<IAuthorizeData>()
+            .Any(policy => policy.Policy == AccessDecisionPolicies.Read) == true;
 }

@@ -13,7 +13,10 @@ public static class DependencyInjection
         services.AddScoped<IValidator<UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInput>, UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInputValidator>();
         services.AddScoped<IValidator<UseCases.Showcase.ListShowcaseCourses.ListShowcaseCoursesInput>, UseCases.Showcase.ListShowcaseCourses.ListShowcaseCoursesInputValidator>();
         services.AddScoped<IValidator<UseCases.Showcase.RegisterPurchaseIntent.RegisterPurchaseIntentInput>, UseCases.Showcase.RegisterPurchaseIntent.RegisterPurchaseIntentInputValidator>();
+        services.AddScoped<IValidator<UseCases.CourtesyGrants.GrantCourtesy.GrantCourtesyInput>, UseCases.CourtesyGrants.GrantCourtesy.GrantCourtesyInputValidator>();
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<IValidator<UseCases.StudentAccessGrants.ListStudentAccessGrants.ListStudentAccessGrantsInput>, UseCases.StudentAccessGrants.ListStudentAccessGrants.ListStudentAccessGrantsInputValidator>();
+        services.AddScoped<IValidator<UseCases.CourtesyCourses.ListCourtesyCourses.ListCourtesyCoursesInput>, UseCases.CourtesyCourses.ListCourtesyCourses.ListCourtesyCoursesInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogOffers.ResolveOfferReferences.ResolveOfferReferencesInput>, UseCases.CatalogOffers.ResolveOfferReferences.ResolveOfferReferencesInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogCourses.UpdateCatalogCourse.UpdateCatalogCourseInput>, UseCases.CatalogCourses.UpdateCatalogCourse.UpdateCatalogCourseInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogOffers.CreateOffer.CreateOfferInput>, UseCases.CatalogOffers.CreateOffer.CreateOfferInputValidator>();

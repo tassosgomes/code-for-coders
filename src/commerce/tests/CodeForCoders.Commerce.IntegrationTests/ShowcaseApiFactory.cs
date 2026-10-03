@@ -30,6 +30,8 @@ public sealed class ShowcaseApiFactory(CommerceIntegrationFixture fixture, param
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
+        builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("ShowcaseTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", fixture.PostgreSql.GetConnectionString());
         builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);

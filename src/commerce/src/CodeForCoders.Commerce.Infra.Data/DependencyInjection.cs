@@ -28,10 +28,24 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
+                // Reasons are confidential even in development: never log SQL parameter values.
             }
         });
+        services.AddScoped<ICourtesyGrantStore, Entitlement.CourtesyGrantStore>();
+        services.AddScoped<IEntitlementOutboxMessageWriter, EntitlementOutboxMessageWriter>();
+        services.AddHostedService<Entitlement.GrantReceiptCleanupWorker>();
+        services.AddOptions<AccessExpirationOptions>()
+            .Bind(configuration.GetSection(AccessExpirationOptions.SectionName))
+            .Validate(options => options.PollingIntervalSeconds is > 0 and <= 1800, "Access expiration polling must be between 1 and 1800 seconds.")
+            .Validate(options => options.BatchSize is > 0 and <= 1000, "Access expiration batch size must be between 1 and 1000.")
+            .ValidateOnStart();
+        services.AddScoped<Entitlement.AccessExpirationCycle>();
+        services.AddHostedService<Entitlement.AccessExpirationWorker>();
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
+        services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
+        services.AddScoped<IStudentAccessGrantQueries, Queries.StudentAccessGrantQueries>();
+        services.AddScoped<IAccessDecisionQueries, Entitlement.AccessDecisionQueries>();
+        services.AddScoped<IEntitlementCourseProjectionStore, Entitlement.EntitlementCourseProjectionStore>();
         services.AddScoped<IOfferReferenceQueries, Queries.OfferReferenceQueries>();
         services.AddHostedService<Catalog.PurchaseIntentReceiptCleanupWorker>();
         services.AddScoped<IPurchaseIntentStore, Catalog.PurchaseIntentStore>();

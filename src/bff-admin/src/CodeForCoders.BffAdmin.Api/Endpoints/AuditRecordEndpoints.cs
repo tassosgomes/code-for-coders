@@ -11,7 +11,7 @@ public static class AuditRecordEndpoints
     private const string AdministratorRole = "administrador";
     private const string AuditAudience = "audit";
     private const int IdentityReferenceBatchSize = 50;
-    private static readonly string[] IdentityReferenceTypes = ["conta-interna", "convite-interno"];
+    private static readonly string[] IdentityReferenceTypes = ["conta-interna", "convite-interno", "conta-aluno"];
 
     public static void MapAuditRecordEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -155,6 +155,23 @@ public static class AuditRecordEndpoints
         }
 
         var detail = audit.Detail;
+        if (detail.Type == "cortesia-concedida")
+        {
+            // Course titles are derived at read time; the audit record keeps only the identifier.
+            var attributes = new Dictionary<string, string>(detail.Attributes);
+            attributes.Remove("cursoTitulo");
+            if (attributes.TryGetValue("curso", out var courseId) && Guid.TryParse(courseId, out var id))
+            {
+                var courtesyCourseLabels = await courseReferences.ResolveAsync(
+                    access.SessionId, [new AuditRecordIdentityReferenceV1("curso", id)], cancellationToken);
+                if (courtesyCourseLabels.TryGetValue(id, out var title))
+                {
+                    attributes["cursoTitulo"] = title;
+                }
+            }
+
+            detail = detail with { Attributes = attributes };
+        }
         var offerLabels = await offerReferences.ResolveAsync(access.SessionId, [detail.Target], cancellationToken);
         detail = detail with { Target = OfferAuditReferenceEnricher.AddLabel(detail.Target, offerLabels) };
         var courseLabels = await courseReferences.ResolveAsync(access.SessionId, [detail.Target], cancellationToken);

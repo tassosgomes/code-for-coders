@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace CodeForCoders.Commerce.Api.Security;
 
 /// <summary>
-/// Verifies the service assertion of the <c>bff-student</c> (ADR-0009): signature, <c>kid</c>, issuer,
+/// Verifies trusted service assertions (ADR-0009/0011): signature, <c>kid</c>, issuer,
 /// audience, validity window, tenant and a single-use <c>jti</c>. Scope is reported, not enforced here.
 /// </summary>
 public sealed class ServiceAssertionVerifier(

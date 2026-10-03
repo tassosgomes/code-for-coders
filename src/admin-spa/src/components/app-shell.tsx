@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Menu, Moon, Sun, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
+import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Gift, Menu, Moon, Sun, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 
 import { paths } from '@/config/paths';
@@ -39,17 +39,17 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
         </Link>
         <nav aria-label={`${serviceName} navigation`} className="app-nav">
           <NavLink end to={paths.home.getHref()}><House size={18} />Início</NavLink>
-          {(['content', 'commerce', 'operations'] as const).map((section) => {
+          {(['content', 'commerce', 'finance', 'operations'] as const).map((section) => {
             const group = areas.filter((area) => {
               const areaSection = area.permission === 'autoria.ler' || area.permission === 'midia.enviar' ? 'content'
-                : area.permission === 'oferta.editar' || area.permission === 'financeiro.ler' ? 'commerce' : 'operations';
+                : area.permission === 'oferta.editar' ? 'commerce' : area.permission === 'financeiro.ler' || area.permission === 'cortesia.conceder' ? 'finance' : 'operations';
               return areaSection === section && area.href;
             });
             if ((isAuthoring || isDashboard) && section === 'content') group.sort((first, second) => Number(second.permission === 'autoria.ler') - Number(first.permission === 'autoria.ler'));
             if (group.length === 0) return null;
-            return <div className="sidebar-group" key={section}><p className="sidebar-heading">{section === 'content' ? 'Conteúdo' : section === 'commerce' ? 'Comercial' : 'Operação'}</p>
+            return <div className="sidebar-group" key={section}><p className="sidebar-heading">{section === 'content' ? 'Conteúdo' : section === 'commerce' ? 'Comercial' : section === 'finance' ? 'Financeiro' : 'Operação'}</p>
               {group.map((area) => <NavLink key={area.label} to={area.href!}>
-                {area.permission === 'autoria.ler' ? <BookOpen size={18} /> : area.permission === 'midia.enviar' ? <Clapperboard size={18} /> : area.permission === 'oferta.editar' ? <Tags size={18} /> : area.permission === 'financeiro.ler' ? <Wallet size={18} /> : area.role === 'administrador' ? <ScrollText size={18} /> : <Users size={18} />}
+                {area.permission === 'autoria.ler' ? <BookOpen size={18} /> : area.permission === 'midia.enviar' ? <Clapperboard size={18} /> : area.permission === 'oferta.editar' ? <Tags size={18} /> : area.permission === 'cortesia.conceder' ? <Gift size={18} /> : area.permission === 'financeiro.ler' ? <Wallet size={18} /> : area.role === 'administrador' ? <ScrollText size={18} /> : <Users size={18} />}
                 {area.label}
               </NavLink>)}
             </div>;

@@ -14,6 +14,8 @@ public sealed class FinanceAreaApiFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
+        builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("FinanceAreaTest");
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
         builder.UseSetting("FinanceAreaTokens:Audience", "commerce");

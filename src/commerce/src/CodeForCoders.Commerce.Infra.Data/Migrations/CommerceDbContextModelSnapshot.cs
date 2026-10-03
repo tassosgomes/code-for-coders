@@ -23,6 +23,99 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.AccessGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateOnly?>("EndsOn")
+                        .HasColumnType("date")
+                        .HasColumnName("ends_on");
+
+                    b.Property<Guid>("EnrollmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("enrollment_id");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid?>("ExpiryEventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("expiry_event_id");
+
+                    b.Property<DateTimeOffset?>("ExpiryPublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expiry_published_at");
+
+                    b.Property<DateTimeOffset>("GrantedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("granted_at");
+
+                    b.Property<Guid>("GrantedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("granted_by");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("origin");
+
+                    b.Property<Guid?>("OriginRef")
+                        .HasColumnType("uuid")
+                        .HasColumnName("origin_ref");
+
+                    b.Property<int?>("PeriodMonths")
+                        .HasColumnType("integer")
+                        .HasColumnName("period_months");
+
+                    b.Property<string>("PeriodType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("period_type");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EnrollmentId");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasFilter("expiry_published_at IS NULL AND expires_at IS NOT NULL");
+
+                    b.HasIndex("TenantId", "StudentId", "CourseId");
+
+                    b.HasIndex("TenantId", "StudentId", "GrantedAt")
+                        .IsDescending(false, false, true);
+
+                    b.ToTable("access_grants", "entitlement");
+                });
+
             modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.CatalogCourseView", b =>
                 {
                     b.Property<Guid>("TenantId")
@@ -198,6 +291,116 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                     b.ToTable("offers", "catalog");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.Enrollment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTimeOffset>("FirstGrantedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_granted_at");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "StudentId", "CourseId")
+                        .IsUnique();
+
+                    b.ToTable("enrollments", "entitlement");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.EntitlementCourseView", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<string>("NormalizedTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_title");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("TenantId", "CourseId")
+                        .HasName("PK_course_views1");
+
+                    b.HasIndex("TenantId", "Title", "CourseId")
+                        .HasDatabaseName("IX_course_views_tenant_id_title_course_id1");
+
+                    b.ToTable("course_views", "entitlement");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.GrantReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key_hash");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_json");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("TenantId", "ActorId", "KeyHash")
+                        .IsUnique();
+
+                    b.ToTable("grant_receipts", "entitlement");
+                });
+
             modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.PurchaseIntentDailyCount", b =>
                 {
                     b.Property<Guid>("TenantId")
@@ -309,6 +512,68 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                     b.ToTable("outbox_messages", "catalog");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Commerce.Infra.Data.Outbox.EntitlementOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset>("OccurredOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<DateTimeOffset?>("ProcessedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_on");
+
+                    b.Property<string>("RoutingKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("routing_key");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(55)
+                        .HasColumnType("character varying(55)")
+                        .HasColumnName("trace_parent");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_entitlement_outbox_messages");
+
+                    b.HasIndex("Id")
+                        .HasDatabaseName("ix_entitlement_outbox_messages_pending")
+                        .HasFilter("processed_on IS NULL");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_entitlement_outbox_messages_tenant_id");
+
+                    b.ToTable("outbox_messages", "entitlement");
+                });
+
             modelBuilder.Entity("CodeForCoders.Commerce.Infra.Data.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -368,6 +633,15 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasDatabaseName("ix_outbox_messages_tenant_id");
 
                     b.ToTable("outbox_messages", "sales");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.AccessGrant", b =>
+                {
+                    b.HasOne("CodeForCoders.Commerce.Domain.Entities.Enrollment", null)
+                        .WithMany()
+                        .HasForeignKey("EnrollmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.CatalogOffer", b =>

@@ -16,8 +16,11 @@ public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) 
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
+        builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("CatalogTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", DatabaseConnectionString ?? fixture.PostgreSql.GetConnectionString());
+        builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
         builder.UseSetting("FinanceAreaTokens:Audience", "commerce");
         builder.UseSetting("FinanceAreaTokens:JwksUrl", "http://identity.test/internal/v1/jwks");

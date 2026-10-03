@@ -67,7 +67,11 @@ services:
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__6: staff-members:read
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__7: staff-members:write
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__8: audit-references:read
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__9: ${BFF_ADMIN_STUDENT_LOOKUP_SCOPE:-student-account:lookup}
       ServiceAssertions__Issuers__bff-admin__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-identity-1: ${COMMERCE_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__commerce__AllowedScopes__0: student-account:confirm
+      ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -204,6 +208,15 @@ services:
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       FinanceAreaTokens__Issuer: identity
       FinanceAreaTokens__Audience: commerce
+      StudentAccountIdentity__BaseAddress: http://identity:8080/
+      StudentAccountIdentity__Issuer: commerce
+      StudentAccountIdentity__Audience: identity-internal
+      StudentAccountIdentity__SigningKeyId: local-commerce-identity-1
+      StudentAccountIdentity__SigningKeyBase64: ${COMMERCE_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StudentAccountIdentity__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
+      RabbitMq__EntitlementFactRetentionQueue: commerce.entitlement-fact-retention
+      RabbitMq__EntitlementFactRetentionMaxLength: ${ENTITLEMENT_FACT_RETENTION_MAX_LENGTH:-10000}
+      RabbitMq__EntitlementFactRetentionTtlMilliseconds: ${ENTITLEMENT_FACT_RETENTION_TTL_MS:-86400000}
       FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       ServiceAssertions__Audience: commerce
       ServiceAssertions__Issuers__bff-student__PublicKeys__local-commerce-1: ${BFF_COMMERCE_PUBLIC_KEY_B64:?set in Coolify}
@@ -217,6 +230,11 @@ services:
       RabbitMq__VirtualHost: code-for-coders
       Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+    depends_on:
+      identity:
+        condition: service_healthy
+      audit:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["5.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.UnitTests/CodeForCoders.Commerce.UnitTests.csproj -- --filter-class CodeForCoders.Commerce.UnitTests.AccessDecisionRulesTests --minimum-expected-tests 6 && dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.AccessDecisionTests --minimum-expected-tests 14'
@@ -67,9 +67,9 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 20 testes.
-- [ ] Composição: `commerce` inicia no ambiente de teste com os registros reais (esquema de asserção, política, replay em Valkey) e a rota é exercitada pela fronteira HTTP real.
-- [ ] Os casos de RF-06: cortesia de 6 meses → `allowed` com o término; sem concessão → `no-grant`; concessão vencida ontem → `grant-ended` **sem rotina rodada**; uma vencida e uma ativa → `allowed`; 3 meses e vitalícia → `lifetime`; outra escola e conta que não é de aluno → `no-grant`.
-- [ ] Nova versão do curso e alteração ou despublicação de oferta → a mesma decisão de antes; a resposta traz `Cache-Control: private, max-age=30`.
-- [ ] Asserção sem o escopo, com `jti` repetido, de `bff-student` ou JWT de ator na rota da decisão → recusada; asserção de serviço nas rotas de cortesia → recusada.
-- [ ] O teste de arquitetura prova que só `Entitlement` expõe a decisão; nenhum identificador de pessoa em log, span ou métrica.
+- [x] Gate passa (exit 0) com pelo menos 20 testes.
+- [x] Composição: `commerce` inicia no ambiente de teste com os registros reais (esquema de asserção, política, replay em Valkey) e a rota é exercitada pela fronteira HTTP real.
+- [x] Os casos de RF-06: cortesia de 6 meses → `allowed` com o término; sem concessão → `no-grant`; concessão vencida ontem → `grant-ended` **sem rotina rodada**; uma vencida e uma ativa → `allowed`; 3 meses e vitalícia → `lifetime`; outra escola e conta que não é de aluno → `no-grant`.
+- [x] Nova versão do curso e alteração ou despublicação de oferta → a mesma decisão de antes; a resposta traz `Cache-Control: private, max-age=30`.
+- [x] Asserção sem o escopo, com `jti` repetido, de `bff-student` ou JWT de ator na rota da decisão → recusada; asserção de serviço nas rotas de cortesia → recusada.
+- [x] O teste de arquitetura prova que só `Entitlement` expõe a decisão; nenhum identificador de pessoa em log, span ou métrica.

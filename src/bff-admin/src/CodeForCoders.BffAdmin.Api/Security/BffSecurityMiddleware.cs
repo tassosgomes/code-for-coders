@@ -15,6 +15,7 @@ public sealed class BffSecurityMiddleware(
     public async Task InvokeAsync(HttpContext context)
     {
         var settings = securityOptions.Value;
+        if (context.Request.Path.StartsWithSegments("/api/v1/student-account-lookups")) context.Response.Headers.CacheControl = "no-store";
         var isLogout = HttpMethods.IsDelete(context.Request.Method)
             && context.Request.Path.Equals("/api/v1/staff-sessions/current", StringComparison.OrdinalIgnoreCase);
         var requiresSession = IsProtectedRequest(context.Request);
@@ -138,7 +139,7 @@ public sealed class BffSecurityMiddleware(
             await WriteProblemAsync(
                 context,
                 statusCode,
-                "IDENTITY_UNAVAILABLE",
+                statusCode == StatusCodes.Status504GatewayTimeout && context.Request.Path.StartsWithSegments("/api/v1/student-account-lookups") ? "UPSTREAM_TIMEOUT" : "IDENTITY_UNAVAILABLE",
                 "The staff identity service is temporarily unavailable.");
             return;
         }

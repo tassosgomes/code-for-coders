@@ -5,7 +5,7 @@ export const formatOfferAuditAttribute = (key: string, value: string) => {
     const cents = Number(value);
     if (Number.isSafeInteger(cents)) return reais.format(cents / 100);
   }
-  if (key === 'vigenciaAnterior' || key === 'vigenciaNova') {
+  if (key === 'vigenciaAnterior' || key === 'vigenciaNova' || key === 'vigencia') {
     if (value === 'vitalicia') return 'Vitalícia';
     const months = /^(\d+)m$/.exec(value)?.[1];
     if (months) return `${Number(months)} ${Number(months) === 1 ? 'mês' : 'meses'}`;
@@ -13,7 +13,7 @@ export const formatOfferAuditAttribute = (key: string, value: string) => {
   return value;
 };
 
-const attributeOrder = ['curso', 'precoAnterior', 'precoNovo', 'vigenciaAnterior', 'vigenciaNova'];
+const attributeOrder = ['curso', 'precoAnterior', 'precoNovo', 'vigenciaAnterior', 'vigenciaNova', 'vigencia'];
 
 export const getOfferAuditAttributeEntries = (attributes: Record<string, string>) =>
   Object.entries(attributes).sort(([left], [right]) => {

@@ -11,6 +11,7 @@ import { AuditTrailForbidden } from '@/features/audit-trail/components/audit-tra
 import { parseAuditTrailNavigationState, type AuditTrailPersonFilter } from '@/features/audit-trail/types/audit-trail-navigation';
 
 const typeLabels: Record<string, string> = {
+  'cortesia-concedida': 'Cortesia concedida',
   'oferta-publicada': 'Oferta publicada',
   'oferta-alterada': 'Oferta alterada',
   'oferta-despublicada': 'Oferta despublicada',
@@ -233,7 +234,8 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
         <DetailField label="Origem">
           {query.data.origin === 'identidade'
             ? 'Identidade e Acesso'
-            : query.data.origin === 'conteudo' ? 'Conteúdo e Currículo' : query.data.origin === 'catalogo' ? 'Catálogo e Ofertas' : <code className="audit-mono">{query.data.origin}</code>}
+            : query.data.origin === 'matricula' ? 'Matrícula e Direito de Acesso'
+              : query.data.origin === 'conteudo' ? 'Conteúdo e Currículo' : query.data.origin === 'catalogo' ? 'Catálogo e Ofertas' : <code className="audit-mono">{query.data.origin}</code>}
         </DetailField>
         <DetailField label="Tipo">
           {query.data.type
@@ -245,11 +247,16 @@ export const AuditRecordDetailScreen = ({ recordId }: AuditRecordDetailScreenPro
         <DetailField label="Autor">
           <IdentityReference recordId={recordId} reference={query.data.author} filterKind="author" />
         </DetailField>
-        <DetailField label="Alvo">
+        <DetailField label={query.data.type === 'cortesia-concedida' ? 'Aluno' : 'Alvo'}>
           <IdentityReference recordId={recordId} reference={query.data.target} filterKind="target" />
         </DetailField>
-        {getOfferAuditAttributeEntries(query.data.attributes).map(([key, value]) => <DetailField key={key} label={attributeLabel(key)}>
-          {key === 'papel' ? <RoleBadge role={value} /> : <code className="audit-mono">{formatOfferAuditAttribute(key, value)}</code>}
+        {getOfferAuditAttributeEntries(query.data.attributes)
+          .filter(([key]) => query.data.type !== 'cortesia-concedida' || (key !== 'cursoTitulo' && key !== 'concessao'))
+          .map(([key, value]) => <DetailField key={key} label={attributeLabel(key)}>
+          {key === 'papel' ? <RoleBadge role={value} />
+            : query.data.type === 'cortesia-concedida' && key === 'curso' && query.data.attributes.cursoTitulo
+              ? <span>{query.data.attributes.cursoTitulo}</span>
+              : <code className="audit-mono">{formatOfferAuditAttribute(key, value)}</code>}
         </DetailField>)}
         <DetailField label="Motivo">
           {query.data.reason !== null
@@ -427,6 +434,7 @@ const attributeLabels: Record<string, string> = {
   precoNovo: 'Preço novo',
   vigenciaAnterior: 'Vigência anterior',
   vigenciaNova: 'Vigência nova',
+  vigencia: 'Vigência',
 };
 const attributeLabel = (key: string) => attributeLabels[key] ?? key;
 
@@ -434,6 +442,7 @@ const referenceTypeLabel = (type: string | null) => {
   if (type === 'curso') return 'Curso';
   if (type === 'oferta') return 'Oferta';
   if (type === 'conta-interna') return 'Conta interna';
+  if (type === 'conta-aluno') return 'Conta de aluno';
   if (type === 'convite-interno') return 'Convite interno';
   return type ?? 'Referência';
 };

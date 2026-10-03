@@ -4182,3 +4182,73 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .offer-option strong { font-size: 1.5rem; }
 .offer-change-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 @media (max-width: 640px) { .offer-change-comparison { grid-template-columns: 1fr; } }
+
+.courtesy-page { display: grid; gap: 24px; }
+.courtesy-page header p { color: var(--muted); }
+.courtesy-flow { width: min(100%, 880px); display: grid; gap: 24px; }
+.courtesy-stepper { display: flex; align-items: center; gap: 12px; padding: 0; list-style: none; }
+.courtesy-stepper li { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; }
+.courtesy-stepper li:not(:last-child) { flex: 1; }
+.courtesy-stepper li:not(:last-child)::after { content: ''; height: 2px; flex: 1; background: var(--border); }
+.courtesy-stepper li > span:first-child { display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; width: 28px; height: 28px; }
+.courtesy-stepper li[aria-current] { color: var(--primary); font-weight: 600; }
+.courtesy-stepper li[aria-current] > span:first-child { background: var(--primary); color: #fff; border-color: var(--primary); }
+.courtesy-lookup-card { margin-top: 0; display: grid; gap: 16px; padding: 24px; }
+.courtesy-step-heading, .courtesy-student-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+.courtesy-lookup-card .courtesy-step-heading h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 1.2px; font: 600 12px/16px Inter, sans-serif; }
+.courtesy-step-heading > span { font-size: 12px; color: var(--muted); }
+.courtesy-actions { display: flex; justify-content: end; }
+.courtesy-student-card { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; }
+.courtesy-student-card p { overflow-wrap: anywhere; }
+.courtesy-warning { padding: 12px; background: #f8f7fc; border: 1px solid var(--border); border-radius: 10px; }
+.courtesy-loading { padding: 24px; border-radius: 12px; background: #f8f7fc; }
+@media (max-width: 640px) {
+  .courtesy-stepper { gap: 6px; }
+  .courtesy-stepper li { gap: 6px; }
+  .courtesy-stepper li:not([aria-current]) > span:nth-child(2) { display: none; }
+  .courtesy-lookup-card { padding: 16px; }
+  .courtesy-account-status { display: none; }
+}
+
+.courtesy-lookup-card[hidden] { display: none; }
+.courtesy-course-list { list-style: none; padding: 0 !important; display: grid; gap: 12px; }
+.courtesy-course-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.courtesy-course-row.is-selected { border-color: var(--primary); background: var(--surface-raised, var(--surface)); }
+.courtesy-pagination, .courtesy-step-summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.courtesy-actions { gap: 12px; }
+.courtesy-course-loading { display: grid; gap: 12px; }
+@media (max-width: 600px) { .courtesy-course-row { align-items: start; flex-direction: column; } }
+
+.courtesy-lookup-card textarea, .courtesy-lookup-card input[type=number] {
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+  color: inherit; background: var(--surface); font: inherit;
+}
+.courtesy-lookup-card textarea { resize: vertical; }
+.courtesy-lookup-card fieldset { display: grid; gap: 12px; border: 0; padding: 0; }
+.courtesy-lookup-card fieldset label { display: flex; align-items: center; gap: 8px; }
+.courtesy-term-preview, .courtesy-review-sentence { padding: 16px; border-radius: 10px; background: var(--surface-raised, var(--surface)); }
+.courtesy-review-sentence, .courtesy-lookup-card p { overflow-wrap: anywhere; }
+.courtesy-student-grants { display: grid; gap: 12px; }
+.courtesy-access-grant-list { list-style: none; padding: 0 !important; margin: 0; }
+.courtesy-access-grant-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 210px 80px; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 20px; }
+.courtesy-access-grant-row strong { font-weight: 500; overflow-wrap: anywhere; }
+.courtesy-grant-mobile-meta { display: none; }
+.courtesy-access-grant-row .status-badge { justify-self: start; border: 1px solid var(--border); border-radius: 9999px; padding: 2px 10px; font-size: 12px; line-height: 16px; }
+.courtesy-access-grant-row .status-active { border: 0; color: var(--success-soft-foreground, #047857); background: var(--success-soft, #ecfdf5); }
+.courtesy-access-grant-row .status-badge:last-child:not(.status-active) { color: var(--primary); background: var(--surface-raised, #f5f3ff); border: 0; }
+.courtesy-lifetime-confirm { display: flex; align-items: start; gap: 12px; padding: 14px 16px; border: 1px solid var(--warning, #f59e0b); border-radius: 12px; color: var(--warning-soft-foreground, #b45309); background: var(--warning-soft, #fffbeb); font-size: 14px; font-weight: 500; line-height: 20px; }
+.courtesy-lifetime-checkbox { position: relative; flex-shrink: 0; width: 20px; height: 20px; }
+.courtesy-lifetime-checkbox input { appearance: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; }
+.courtesy-lifetime-checkbox input:checked { background: var(--primary); border-color: var(--primary); }
+.courtesy-lifetime-checkbox input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.courtesy-lifetime-checkbox svg { position: absolute; inset: 3px; color: #fff; pointer-events: none; display: none; }
+.courtesy-lifetime-checkbox input:checked + svg { display: block; }
+@media (max-width: 600px) {
+  .courtesy-access-grant-list { display: grid; gap: 12px; }
+  .courtesy-access-grant-row { grid-template-columns: minmax(0, 1fr) auto; border: 1px solid var(--border); border-radius: 12px; padding: 14px; gap: 4px 8px; }
+  .courtesy-access-grant-row strong { grid-column: 1 / -1; font-weight: 600; }
+  .courtesy-access-grant-row .courtesy-grant-origin, .courtesy-access-grant-row .courtesy-grant-months { display: none; }
+  .courtesy-grant-mobile-meta { display: block; grid-column: 1 / -1; color: var(--muted); font-size: 12px; line-height: 16px; }
+  .courtesy-access-grant-row > span:nth-child(4) { font-size: 12px; line-height: 16px; }
+}
+@media (max-width: 600px) { .courtesy-actions { flex-wrap: wrap; } }

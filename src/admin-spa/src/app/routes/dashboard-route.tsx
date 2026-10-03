@@ -6,5 +6,5 @@ import { DashboardScreen } from '@/features/admin-dashboard/components/dashboard
 
 export const DashboardRoute = () => {
   const session = useOutletContext<StaffSession>();
-  return <DashboardScreen areas={getStaffAreas(session.permissions, session.roles)} name={session.name} roles={session.roles} />;
+  return <DashboardScreen areas={getStaffAreas(session.permissions, session.roles).filter((area) => area.permission !== 'cortesia.conceder')} name={session.name} roles={session.roles} />;
 };

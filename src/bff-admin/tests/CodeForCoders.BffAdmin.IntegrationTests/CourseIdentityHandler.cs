@@ -8,6 +8,7 @@ public sealed class CourseIdentityHandler : HttpMessageHandler
 {
     public string[] Roles { get; set; } = ["professor"];
     public string[] Permissions { get; set; } = ["autoria.ler", "autoria.editar"];
+    public string[]? CommercePermissions { get; set; }
     public bool Revoked { get; set; }
     public string? LastAudience { get; private set; }
 
@@ -16,10 +17,11 @@ public sealed class CourseIdentityHandler : HttpMessageHandler
         var input = await request.Content!.ReadFromJsonAsync<StaffSessionValidationV1>(cancellationToken);
         LastAudience = input?.Audience;
         if (Revoked) return new(HttpStatusCode.Unauthorized) { Content = JsonContent.Create(new { code = "SESSION_REQUIRED" }) };
+        var permissions = input?.Audience == "commerce" && CommercePermissions is not null ? CommercePermissions : Permissions;
         return new(HttpStatusCode.OK)
         {
             Content = JsonContent.Create(new StaffSessionValidatedV1(
-            Guid.Parse("00000000-0000-7000-8000-000000000002"), "Validated teacher", Roles, Permissions,
+            Guid.Parse("00000000-0000-7000-8000-000000000002"), "Validated teacher", Roles, permissions,
             DateTimeOffset.UtcNow.AddHours(1), input?.Audience == "learning" ? "server-learning-token" : input?.Audience == "media" ? "server-media-token" : input?.Audience == "audit" ? "server-audit-token" : input?.Audience == "commerce" ? "server-commerce-token" : null))
         };
     }

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["5.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.AccessExpirationTests --minimum-expected-tests 7'
@@ -54,9 +54,9 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0) com pelo menos 7 testes.
-- [ ] Com relógio controlado: ao cruzar o término há **um** fato no ciclo seguinte; duas instâncias concorrentes e a rotina executada duas vezes → um fato; vitalícia → nenhum.
-- [ ] Rotina desligada ou fato perdido → a decisão de 7.0 continua `denied`/`grant-ended` do mesmo jeito.
-- [ ] Uma vencida e outra ativa → fato da primeira e `allowed` na decisão.
-- [ ] O alerta de defasagem dispara acima de 30 minutos (métrica sem rótulo de pessoa).
-- [ ] Smoke no Compose (o de 5.0): uma cortesia de 1 mês cujo término foi ajustado para o passado pelo relógio de teste gera, no ciclo seguinte, o fato na fila de retenção do RabbitMQ.
+- [x] Gate passa (exit 0) com pelo menos 7 testes.
+- [x] Com relógio controlado: ao cruzar o término há **um** fato no ciclo seguinte; duas instâncias concorrentes e a rotina executada duas vezes → um fato; vitalícia → nenhum.
+- [x] Rotina desligada ou fato perdido → a decisão de 7.0 continua `denied`/`grant-ended` do mesmo jeito.
+- [x] Uma vencida e outra ativa → fato da primeira e `allowed` na decisão.
+- [x] O alerta de defasagem dispara acima de 30 minutos (métrica sem rótulo de pessoa).
+- [x] Smoke no Compose (o de 5.0): uma cortesia de 1 mês cujo término foi ajustado para o passado pelo relógio de teste gera, no ciclo seguinte, o fato na fila de retenção do RabbitMQ.

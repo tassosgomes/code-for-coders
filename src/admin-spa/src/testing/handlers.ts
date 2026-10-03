@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw';
 
 import { env } from '@/config/env';
+import { courtesyGrantHandlers } from '@/testing/courtesy-grant-handlers';
+import { courtesyCourseHandlers } from '@/testing/courtesy-course-handlers';
 
 export const videoStatusFixtures = {
   received: {
@@ -54,6 +56,8 @@ export const videoStatusFixtures = {
 } as const;
 
 export const handlers = [
+  ...courtesyCourseHandlers,
+  ...courtesyGrantHandlers,
   http.post(`${env.API_URL}/api/v1/staff-sessions`, () =>
     HttpResponse.json({
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
