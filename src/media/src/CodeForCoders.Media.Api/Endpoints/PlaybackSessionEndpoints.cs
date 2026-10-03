@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CodeForCoders.Media.Application.UseCases.PlaybackSessions.RenewPlaybackSession;
 using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Application.UseCases.PlaybackSessions.OpenPlaybackSession;
 using CodeForCoders.Media.Application.UseCases.PlaybackSessions.GetPlaybackResource;
@@ -12,6 +13,7 @@ public static class PlaybackSessionEndpoints
         var lessons = endpoints.MapGroup("/internal/v1/lessons").RequireAuthorization(MediaAuthorization.PlaybackPolicyName);
         lessons.MapPost("/{lessonId:guid}/playback-sessions", OpenAsync);
         var sessions = endpoints.MapGroup("/internal/v1/playback-sessions").RequireAuthorization(MediaAuthorization.PlaybackPolicyName);
+        sessions.MapPost("/{sessionId:guid}/renewals", RenewAsync);
         sessions.MapGet("/{sessionId:guid}/playlist", PlaylistAsync);
         sessions.MapGet("/{sessionId:guid}/variants/{quality}", VariantAsync);
         sessions.MapGet("/{sessionId:guid}/key", KeyAsync);
@@ -24,6 +26,13 @@ public static class PlaybackSessionEndpoints
             Guid.Parse(context.User.FindFirstValue("tenantId")!),
             Guid.Parse(context.User.FindFirstValue("sub")!), lessonId, context.User.FindFirstValue("email")), cancellationToken);
         return Results.Created($"/playback-sessions/{result.SessionId:D}", result);
+    }
+
+    private static async Task<IResult> RenewAsync(Guid sessionId, HttpContext context, IRenewPlaybackSession useCase, CancellationToken cancellationToken)
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        return Results.Ok(await useCase.ExecuteAsync(new(Guid.Parse(context.User.FindFirstValue("sub")!),
+            sessionId, context.User.FindFirstValue("email")), cancellationToken));
     }
 
     private static Task<IResult> PlaylistAsync(Guid sessionId, HttpContext context, IGetPlaybackResource useCase, CancellationToken cancellationToken)

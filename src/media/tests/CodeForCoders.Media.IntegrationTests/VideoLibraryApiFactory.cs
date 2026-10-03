@@ -24,6 +24,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
 
     public string PlaybackMasterKey { get; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     public System.Collections.Concurrent.ConcurrentDictionary<Guid, int> PlaybackDecisions { get; } = new();
+    public System.Collections.Concurrent.ConcurrentDictionary<Guid, DateTimeOffset> PlaybackEndedAt { get; } = new();
     public System.Collections.Concurrent.ConcurrentDictionary<Guid, int> PlaybackDecisionCalls { get; } = new();
 
     public string JwksDocument { get; private set; } = string.Empty;
@@ -126,7 +127,8 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
                 {
                     decision = status == 403 ? "denied" : "allowed",
                     validity = status == 403 ? null : new { type = "lifetime" },
-                    deniedReason = status == 403 ? "no-grant" : null,
+                    deniedReason = status == 403 ? (factory.PlaybackEndedAt.ContainsKey(tenant) ? "grant-ended" : "no-grant") : null,
+                    lastExpiredAt = factory.PlaybackEndedAt.TryGetValue(tenant, out var endedAt) ? (DateTimeOffset?)endedAt : null,
                     decidedAt = DateTimeOffset.UtcNow,
                 }),
             });

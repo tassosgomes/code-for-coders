@@ -12,6 +12,13 @@ public sealed class PlaybackSession
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
 
+    public bool TryRenew(DateTimeOffset now)
+    {
+        if (ExpiresAt <= now) return false;
+        ExpiresAt = now.AddMinutes(5);
+        return true;
+    }
+
     public static PlaybackSession Create(PlaybackSessionCreateInput input)
     {
         if (input.TenantId == Guid.Empty || input.StudentId == Guid.Empty || input.LessonId == Guid.Empty

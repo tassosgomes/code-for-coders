@@ -8,6 +8,7 @@ public static class PlaybackSessionEndpoints
     public static void MapPlaybackSessionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/api/v1/lessons/{lessonId:guid}/playback-sessions", OpenAsync);
+        endpoints.MapPost("/api/v1/playback-sessions/{sessionId:guid}/renewals", RenewAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/playlist", PlaylistAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/variants/{quality}", VariantAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/key", KeyAsync);
@@ -15,6 +16,8 @@ public static class PlaybackSessionEndpoints
 
     private static Task<IResult> OpenAsync(Guid lessonId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Post, $"lessons/{lessonId:D}/playback-sessions", context, client, cancellationToken);
+    private static Task<IResult> RenewAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
+        => ProxyAsync(HttpMethod.Post, $"playback-sessions/{sessionId:D}/renewals", context, client, cancellationToken);
     private static Task<IResult> PlaylistAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Get, $"playback-sessions/{sessionId:D}/playlist", context, client, cancellationToken);
     private static Task<IResult> VariantAsync(Guid sessionId, string quality, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
@@ -39,6 +42,8 @@ public static class PlaybackSessionEndpoints
         return Results.Problem(statusCode: result.StatusCode, title: "Não foi possível iniciar a aula.", extensions: new Dictionary<string, object?>
         {
             ["code"] = result.Code,
+            ["reason"] = result.Reason,
+            ["accessEndedAt"] = result.AccessEndedAt,
             ["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier,
         });
     }

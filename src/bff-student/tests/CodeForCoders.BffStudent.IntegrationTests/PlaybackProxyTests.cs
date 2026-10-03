@@ -48,6 +48,42 @@ public sealed class PlaybackProxyTests
         identity.Verify(i => i.ValidateSessionAsync(It.IsAny<Guid>(), "media", It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact(DisplayName = nameof(RenewalRequiresCsrfAndUsesMediaAudience))]
+    public async Task RenewalRequiresCsrfAndUsesMediaAudience()
+    {
+        var boundary = new Boundary { Body = JsonSerializer.SerializeToUtf8Bytes(new { sessionId = Guid.CreateVersion7() }), ContentType = "application/json" };
+        var identity = Identity(200); await using var app = await Server(boundary, identity); using var client = Client(app);
+        var path = $"/api/v1/playback-sessions/{Guid.CreateVersion7():D}/renewals";
+        using var forbidden = await client.PostAsync(path, null, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode); Assert.Null(boundary.Token);
+        client.DefaultRequestHeaders.Add("Origin", "http://student.test"); client.DefaultRequestHeaders.Add("X-CSRF-Token", "csrf");
+        using var response = await client.PostAsync(path, null, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode); Assert.True(response.Headers.CacheControl!.NoStore);
+        Assert.Equal(boundary.Body, await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+        Assert.EndsWith("/renewals", boundary.Path); Assert.Equal(HttpMethod.Post, boundary.Method);
+        identity.Verify(i => i.ValidateSessionAsync(It.IsAny<Guid>(), "media", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory(DisplayName = nameof(RenewalPreservesContractualErrorsAndEndedAccess))]
+    [InlineData(403, "ACCESS_DENIED")]
+    [InlineData(503, "ACCESS_DECISION_UNAVAILABLE")]
+    [InlineData(404, "PLAYBACK_SESSION_NOT_FOUND")]
+    [InlineData(410, "PLAYBACK_SESSION_EXPIRED")]
+    [InlineData(422, "WATERMARK_UNAVAILABLE")]
+    public async Task RenewalPreservesContractualErrorsAndEndedAccess(int status, string code)
+    {
+        var ended = DateTimeOffset.UtcNow;
+        var boundary = new Boundary { Status = status, Body = JsonSerializer.SerializeToUtf8Bytes(new { code, reason = "grant-ended", accessEndedAt = ended }) };
+        await using var app = await Server(boundary, Identity(200)); using var client = Client(app);
+        client.DefaultRequestHeaders.Add("Origin", "http://student.test"); client.DefaultRequestHeaders.Add("X-CSRF-Token", "csrf");
+        using var response = await client.PostAsync($"/api/v1/playback-sessions/{Guid.CreateVersion7():D}/renewals", null, TestContext.Current.CancellationToken);
+        Assert.Equal(status, (int)response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(code, json.RootElement.GetProperty("code").GetString());
+        Assert.Equal("grant-ended", json.RootElement.GetProperty("reason").GetString());
+        Assert.Equal(ended, json.RootElement.GetProperty("accessEndedAt").GetDateTimeOffset());
+    }
+
     [Theory(DisplayName = nameof(MediaErrorsKeepTheirPublicCodes))]
     [InlineData(409, "MEDIA_NOT_READY")]
     [InlineData(422, "WATERMARK_UNAVAILABLE")]
@@ -114,10 +150,13 @@ public sealed class PlaybackProxyTests
         public int Status { get; set; } = 200;
         public string ContentType { get; set; } = "application/octet-stream";
         public string? Token { get; private set; }
+        public string? Path { get; private set; }
+        public HttpMethod? Method { get; private set; }
         public bool Timeout { get; set; }
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Token = request.Headers.Authorization?.Parameter;
+            Path = request.RequestUri!.AbsolutePath; Method = request.Method;
             if (Timeout) throw new OperationCanceledException();
             var content = new ByteArrayContent(Body); content.Headers.ContentType = new(ContentType);
             return Task.FromResult(new HttpResponseMessage((HttpStatusCode)Status) { Content = content });

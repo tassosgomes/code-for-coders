@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.UseCases.PlaybackSessions.Common;
 using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Domain.Entities;

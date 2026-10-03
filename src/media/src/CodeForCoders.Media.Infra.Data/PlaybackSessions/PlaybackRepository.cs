@@ -12,7 +12,7 @@ public sealed class PlaybackRepository(MediaDbContext context) : IPlaybackReposi
             where reference.LessonId == lessonId
             select new PlaybackLesson(reference.CourseId, video.VideoId, video.Status)).SingleOrDefaultAsync(cancellationToken);
     public Task<PlaybackSession?> FindSessionAsync(Guid sessionId, CancellationToken cancellationToken)
-        => context.PlaybackSessions.AsNoTracking().SingleOrDefaultAsync(session => session.SessionId == sessionId, cancellationToken);
+        => context.PlaybackSessions.SingleOrDefaultAsync(session => session.SessionId == sessionId, cancellationToken);
     public Task<PlaybackVideoKey?> FindVideoKeyAsync(Guid videoId, CancellationToken cancellationToken)
         => context.Videos.AsNoTracking().Where(video => video.VideoId == videoId && video.Status == "ready")
             .Select(video => new PlaybackVideoKey(video.VideoId, video.MasterKeyId!, video.EncryptedVideoKey!))

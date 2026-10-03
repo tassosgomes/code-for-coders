@@ -11,7 +11,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace CodeForCoders.Media.IntegrationTests;
 
 public sealed class PlaybackTestContext(VideoLibraryApiFactory factory)
+
 {
+    public Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> Host { get; init; } = factory;
     public Guid Tenant { get; } = Guid.CreateVersion7();
     public Guid Student { get; } = Guid.CreateVersion7();
     public Guid Lesson { get; } = Guid.CreateVersion7();
@@ -22,7 +24,7 @@ public sealed class PlaybackTestContext(VideoLibraryApiFactory factory)
 
     public async Task SeedAsync(bool ready, CancellationToken cancellationToken)
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = Host.Services.CreateScope();
         var tenant = scope.ServiceProvider.GetRequiredService<ITenantContext>(); tenant.Set(Tenant);
         var context = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
         var video = Video.Create(new VideoCreateInput(VideoId, Tenant, "Video", Guid.CreateVersion7(), "Actor",
@@ -50,7 +52,7 @@ public sealed class PlaybackTestContext(VideoLibraryApiFactory factory)
 
     public HttpClient Client(Guid? student = null, string? email = "student@example.com", string audience = "media")
     {
-        var client = factory.CreateClient();
+        var client = Host.CreateClient();
         client.DefaultRequestHeaders.Authorization = new("Bearer", factory.CreateStudentToken(Tenant, student ?? Student, email, audience));
         return client;
     }
@@ -65,14 +67,14 @@ public sealed class PlaybackTestContext(VideoLibraryApiFactory factory)
 
     public async Task<int> CountSessionsAsync(CancellationToken cancellationToken)
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = Host.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(Tenant);
         return await scope.ServiceProvider.GetRequiredService<MediaDbContext>().PlaybackSessions.CountAsync(cancellationToken);
     }
 
     public async Task ExpireAsync(Guid sessionId, CancellationToken cancellationToken)
     {
-        using var scope = factory.Services.CreateScope();
+        using var scope = Host.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(Tenant);
         await scope.ServiceProvider.GetRequiredService<MediaDbContext>().PlaybackSessions.Where(session => session.SessionId == sessionId)
             .ExecuteUpdateAsync(setters => setters.SetProperty(session => session.ExpiresAt, DateTimeOffset.UtcNow.AddMinutes(-1)), cancellationToken);

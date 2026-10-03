@@ -13,6 +13,11 @@ public sealed class AccessDecisionClient(HttpClient client, AccessDecisionAssert
     public async Task<StudentAccessDecision?> DecideAsync(AccessDecisionQuery query, CancellationToken cancellationToken)
     {
         if (cache.TryGetValue(query, out CachedDecision? cached) && cached is not null && cached.ExpiresAt > clock.GetUtcNow()) return cached.Decision;
+        return await DecideFreshAsync(query, cancellationToken);
+    }
+
+    public async Task<StudentAccessDecision?> DecideFreshAsync(AccessDecisionQuery query, CancellationToken cancellationToken)
+    {
         if (string.IsNullOrWhiteSpace(options.Value.SigningKeyBase64)) return null;
         using var request = new HttpRequestMessage(HttpMethod.Get, $"internal/v1/access-decision?studentId={query.StudentId:D}&courseId={query.CourseId:D}");
         request.Headers.Authorization = new("Bearer", assertions.Create(query.TenantId));

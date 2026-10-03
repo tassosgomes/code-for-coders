@@ -19,6 +19,7 @@ vi.mock('hls.js', () => ({
     attachMedia = hls.attachMedia;
     loadSource = hls.loadSource;
     destroy = hls.destroy;
+    stopLoad = vi.fn();
     on = vi.fn();
   },
 }));
@@ -49,7 +50,7 @@ describe('Playback opening', () => {
     [409, 'MEDIA_NOT_READY', 'Esta aula está indisponível no momento.'],
     [422, 'WATERMARK_UNAVAILABLE', 'Não foi possível iniciar a aula.'],
     [403, 'ACCESS_DENIED', 'Você não tem acesso a esta aula.'],
-    [503, 'ACCESS_DECISION_UNAVAILABLE', 'Não foi possível iniciar a aula.'],
+    [503, 'ACCESS_DECISION_UNAVAILABLE', 'Não foi possível verificar o acesso à aula. Tente de novo.'],
     [404, 'LESSON_NOT_AVAILABLE', 'Esta aula está indisponível no momento.'],
   ])('never starts HLS when opening fails with %s', async (status, code, message) => {
     server.use(http.post(endpoint, () => HttpResponse.json({ code }, { status: Number(status) })));

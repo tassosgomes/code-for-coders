@@ -4,9 +4,9 @@
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "target_ref": null,
-  "last_checkpoint": "4.0",
+  "last_checkpoint": "5.0",
   "phase": "checkpoint",
-  "active_task": "5.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,12 +19,12 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.LGTP0xJR",
+    "run_id": "run.weBwC7Bu",
     "role": "validator",
     "mode": "focused",
-    "task": "4.0",
+    "task": "5.0",
     "outcome": "approved",
-    "note": "2 falhas de transporte anteriores (result_missing, gate em background); resolvido com context-file exigindo gate foreground; detalhes em 4_task_review.md"
+    "note": "detalhes em 5_task_review.md"
   },
   "pending": null,
   "history": [
@@ -41,6 +41,14 @@
     "checkpoint 2.0 = commit d2b9ea53b86166c848349730984be661043507af; iniciando 3.0 (primeira vertical, full-stack)",
     "3.0 checkpoint-task ok (run.umqU86ac): 3_task.md done, tasks.md [x] 3.0, V-01 full-stack identity/commerce/learning/bff-student/student-spa+compose, review focused aprovada run.UOtcOCJY, gate 60 testes exit 0",
     "checkpoint 3.0 = commit b74f17bf2563139cfb39250965415775dd2d4106; nota: c4179ef (Atualizacao nas Skills) commitado pelo responsavel em paralelo, fora do escopo do PRD, sinalizar na full; iniciando 4.0",
-    "4.0 checkpoint-task ok (run.KPL3VMWE): 4_task.md done, tasks.md [x] 4.0, V-02 full-stack identity/commerce/media/media-edge/bff-student/student-spa+compose, review focused aprovada run.LGTP0xJR, gate 78 testes exit 0"
+    "4.0 checkpoint-task ok (run.KPL3VMWE): 4_task.md done, tasks.md [x] 4.0, V-02 full-stack identity/commerce/media/media-edge/bff-student/student-spa+compose, review focused aprovada run.LGTP0xJR, gate 78 testes exit 0",
+    "checkpoint 4.0 = commit 853c367b2e03fe9cda3790a0896328e9f8e666fb; iniciando 5.0",
+    "5.0 implement run.tLvGemA1: INTERROMPIDO por limite de uso do codex/gpt-6.1-sol (reset 18:22); diff parcial preservado; tentativa nao consumida",
+    "instrucao do responsavel: proximas implementacoes com codex + gpt-6-luna esforco max",
+    "run.kjV5y003 (codex/gpt-6-luna/max): quota da conta encerrada em 35s; sem efeitos",
+    "instrucao do responsavel: implementacao passa a usar kind agy; validacao mantem claude/sonnet-5-5",
+    "agy sem modo nao interativo travou em prompt de permissao (run.C6n2cmbF); resolvido com TSG_AGENT_EXTRA_ARGS=--dangerously-skip-permissions",
+    "5.0 fix run.5Jzfp7vM (agy): implementation_complete, gate exit 0 (21 testes)",
+    "5.0 checkpoint-task ok (run.vRO5z8YT): 5_task.md done, tasks.md [x] 5.0, V-03 RenewPlaybackSession media/bff-student/student-spa+scripts, review focused aprovada run.weBwC7Bu, gate 21 testes exit 0"
   ]
 }

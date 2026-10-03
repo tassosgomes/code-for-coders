@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query';
 import * as z from 'zod';
 
 import { apiClient } from '@/lib/api-client';
@@ -13,3 +14,9 @@ export type PlaybackSession = z.infer<typeof playbackSessionSchema>;
 export const openPlaybackSession = async (lessonId: string, csrfToken: string, signal: AbortSignal) =>
   playbackSessionSchema.parse(await apiClient.post('/api/v1/lessons/' + encodeURIComponent(lessonId) + '/playback-sessions', undefined,
     { headers: { 'X-CSRF-Token': csrfToken }, signal }));
+
+export const useOpenPlaybackSession = () => useMutation({
+  mutationFn: ({ lessonId, csrfToken, signal }: { lessonId: string; csrfToken: string; signal: AbortSignal }) =>
+    openPlaybackSession(lessonId, csrfToken, signal),
+  retry: false,
+});
