@@ -1,0 +1,141 @@
+asyncapi: 3.0.0
+id: urn:code-4-coders:media
+info:
+  title: Media — avanço da reprodução
+  version: 1.2.0
+  description: 'Recorte de `CAP-007`, `tasks/prd-reproducao-protegida/prd.md` v1.0 de 2026-10-03 (RF-07). Acrescenta
+    à aplicação produtora Media o fato `midia.reproducao-avancou.v1`. Os fatos da preparação (`tasks/prd-ingestao-midia/asyncapi-contract.yaml`
+    1.0.0) e a recepção da Referência de Uso (`tasks/prd-autoria-curso/asyncapi-contract-media.yaml` 1.1.0) não
+    mudam. Consumidor previsto: Aprendizagem e Progresso (`learning`), em `CAP-017`; **nenhum consumidor nesta entrega**.'
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  reproducaoAvancou:
+    address: midia.reproducao-avancou.v1
+    description: Avanço bruto de uma sessão de reprodução. O endereço não carrega dado pessoal (G23).
+    messages:
+      reproducaoAvancou:
+        $ref: '#/components/messages/ReproducaoAvancou'
+operations:
+  publicarReproducaoAvancou:
+    action: send
+    summary: Publicar o avanço de uma sessão de reprodução.
+    channel:
+      $ref: '#/channels/reproducaoAvancou'
+    messages:
+    - $ref: '#/channels/reproducaoAvancou/messages/reproducaoAvancou'
+    description: 'Compromissos observáveis (o mecanismo fica na TechSpec). (1) Pelo outbox (G06), a partir de `recordPlaybackProgress`.
+      (2) Um fato por (`sessionId`, `sequence`): `eventId` é fixo e toda republicação o repete; entrega ao menos
+      uma vez, consumidores deduplicam por `eventId` (G09). (3) Ordenação não garantida entre fatos; para a mesma
+      sessão vale `sequence`. (4) Cadência: no máximo um fato a cada 30 s de reprodução contínua mais um a cada
+      pausa, saída e fim, com intervalo mínimo de 10 s entre dois fatos da mesma sessão (RN-R05); nunca um fato
+      por segundo (RN-M14). (5) **Retenção sem consumidor:** como esta entrega não tem consumidor, nenhum fato pode
+      ser perdido por falta de fila ligada; os fatos ficam retidos no registro do outbox e podem ser reenviados
+      a uma fila nova quando `CAP-017` existir, sem efeito duplicado por (2). O mecanismo de retenção e reenvio
+      é da TechSpec. (6) Uma sessão que terminou por decisão negada não invalida fatos anteriores.'
+components:
+  messages:
+    ReproducaoAvancou:
+      name: ReproducaoAvancou
+      title: Reprodução avançou
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Headers'
+      payload:
+        $ref: '#/components/schemas/ReproducaoAvancouPayload'
+      examples:
+      - name: pausa
+        headers:
+          correlationId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        payload:
+          eventId: b7c8d9e0-f1a2-4b3c-8d4e-5f6a7b8c9d0e
+          tenantId: 2b3c4d5e-6f70-4a81-9b2c-3d4e5f607182
+          sessionId: e4b8c6a2-1d3f-4957-b0a8-6c2d4e8f1a73
+          studentId: 6f1e2d3c-4b5a-4968-8777-a1b2c3d4e5f6
+          courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+          lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+          sequence: 5
+          positionSeconds: 252
+          reason: paused
+          occurredAt: '2026-10-05T14:02:12Z'
+  schemas:
+    Headers:
+      type: object
+      additionalProperties: false
+      required:
+      - correlationId
+      properties:
+        correlationId:
+          type: string
+          description: traceparent do pedido de avanço que originou o fato.
+    ReproducaoAvancouPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - sessionId
+      - studentId
+      - courseId
+      - lessonId
+      - sequence
+      - positionSeconds
+      - reason
+      - occurredAt
+      description: 'Fato bruto de que uma Sessão de Reprodução chegou a certa posição da aula (RN-M14). Não é progresso
+        nem conclusão: concluir aula e calcular percentual são de Aprendizagem e Progresso. **Não leva e-mail, nome,
+        título nem percentual**; aluno, curso e aula são identificadores opacos (G23).'
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: 'Determinístico por (`sessionId`, `sequence`): a mesma sequência republicada repete o mesmo
+            `eventId`.'
+        tenantId:
+          type: string
+          format: uuid
+          description: Escola da sessão (G07).
+        sessionId:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+          description: Identificador opaco da conta de aluno em Identity (mesmo `studentId` de CAP-008).
+        courseId:
+          type: string
+          format: uuid
+          description: Da Referência de Uso da sessão; unidade sobre a qual Matrícula decide.
+        lessonId:
+          type: string
+          format: uuid
+          description: Da Referência de Uso; unidade de progresso em Aprendizagem (RN-C12).
+        sequence:
+          type: integer
+          minimum: 1
+          description: Sequência do player na sessão.
+        positionSeconds:
+          type: integer
+          minimum: 0
+          maximum: 43200
+        reason:
+          type: string
+          enum:
+          - heartbeat
+          - paused
+          - left
+          - ended
+          description: Consumidor deve tolerar valor novo.
+        occurredAt:
+          type: string
+          format: date-time
+          description: Quando Media recebeu o avanço.
