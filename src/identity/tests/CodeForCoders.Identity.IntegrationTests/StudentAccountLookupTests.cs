@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using CodeForCoders.Identity.Application.Common;
 using CodeForCoders.Identity.Domain.Entities;
 using CodeForCoders.Identity.Infra.Data;
@@ -56,13 +57,26 @@ public sealed class StudentAccountLookupTests(StudentAccountLookupFixture fixtur
         var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
         var internalEmail = await db.Accounts.IgnoreQueryFilters().Join(db.StaffSessions.IgnoreQueryFilters(), account => account.Id, session => session.AccountId,
             (account, session) => new { account.Email, session.Id }).Where(pair => pair.Id == sessionId).Select(pair => pair.Email).SingleAsync(CancellationToken);
+        JsonNode? previousProblem = null;
         foreach (var email in new[] { Email(), internalEmail, foreignEmail })
         {
             using var response = await fixture.LookupAsync(sessionId, new { email }, fixture.Assertion());
             await AssertProblemAsync(response, HttpStatusCode.NotFound, "STUDENT_ACCOUNT_NOT_FOUND");
             using var document = await ReadAsync(response);
-            Assert.Equal("Student account not found.", document.RootElement.GetProperty("title").GetString());
             Assert.DoesNotContain(email, document.RootElement.GetRawText());
+            Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+            Assert.True(response.Headers.CacheControl?.NoStore);
+            var problem = JsonNode.Parse(document.RootElement.GetRawText())!;
+            StudentAccountLookupContract.AssertNotFound(problem);
+            var withInstance = problem.DeepClone();
+            withInstance["instance"] = "/internal/v1/student-account-lookups";
+            Assert.False(StudentAccountLookupContract.IsValidProblem(withInstance));
+            var withoutTrace = problem.DeepClone().AsObject();
+            withoutTrace.Remove("traceId");
+            Assert.False(StudentAccountLookupContract.IsValidProblem(withoutTrace));
+            problem.AsObject().Remove("traceId");
+            if (previousProblem is not null) Assert.True(JsonNode.DeepEquals(previousProblem, problem));
+            previousProblem = problem;
         }
     }
 
