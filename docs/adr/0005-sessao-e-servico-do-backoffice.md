@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0005-sessao-e-servico-do-backoffice.md`
 - Domínios/componentes afetados: Identidade e Acesso, BFF do backoffice (`bff-admin`), serviços que recebem chamadas do backoffice (primeiro: `commerce`)
-- Origem histórica: `tasks/prd-acesso-interno`, CAP-002
+- Origem histórica: `tasks/archive/prd-acesso-interno`, CAP-002
 - Substitui: Nenhuma. Estende ao backoffice as decisões de [ADR-0003](0003-verificacao-de-sessao-do-aluno.md) e [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), que declararam expressamente não decidir o backoffice
 
 ## Data
@@ -77,4 +77,4 @@ ADR-0003 resolveu revogação imediata para o aluno com consulta à Identity a c
 - [Baseline arquitetural](../../context/architecture-baseline.md) — BA05, BA06, Autorização, JWKS.
 - [Domínio Identidade e Acesso](../../domains/identidade-e-acesso/domain.md) — RN-12, RN-16 a RN-18, RF-03.
 - [ADR-0003](0003-verificacao-de-sessao-do-aluno.md) e [ADR-0004](0004-autenticacao-de-servico-bff-identity.md).
-- [TechSpec de origem](../../tasks/prd-acesso-interno/techspec.md).
+- [TechSpec de origem](../../tasks/archive/prd-acesso-interno/techspec.md).

@@ -105,7 +105,7 @@ internos (suporte, financeiro, professor, admin).
 
 | Capacidade | O que este domínio entrega a ela | Situação |
 |---|---|---|
-| `CAP-001` | O ciclo completo da conta do aluno: cadastro, confirmação de e-mail, autenticação, sessão, encerramento e recuperação de acesso | **Entregue** — [PRD](../../tasks/prd-conta-aluno/prd.md), PR #6 integrado em 2026-09-24 |
+| `CAP-001` | O ciclo completo da conta do aluno: cadastro, confirmação de e-mail, autenticação, sessão, encerramento e recuperação de acesso | **Entregue** — [PRD](../../tasks/archive/prd-conta-aluno/prd.md), PR #6 integrado em 2026-09-24 |
 | `CAP-002` | O convite, a ativação, a concessão de papel, o exercício de permissão com menor privilégio e a revogação de acesso do pessoal interno | Não iniciada — aguarda o primeiro PRD de `CAP-030` |
 
 Ambas derivam de `C01` na visão.
@@ -120,12 +120,12 @@ Ambas derivam de `C01` na visão.
 | Entidades | Conta (lado aluno), Credencial, Sessão, Token de Verificação | Papel, Permissão, Convite de Acesso Interno e Conta de ator interno → `CAP-002` |
 | Regras | RN-01 a RN-11, RN-13, RN-13a, RN-13b, RN-21, RN-22, RN-24, RN-26, RN-27, RN-28 | RN-12, RN-14 a RN-20 e RN-25 → `CAP-002` |
 | Regra parcial | RN-23 — conta desativada não autentica nem confirma, mas **não há fluxo de desativação** | Desativar conta: nenhuma capacidade do MVP o expõe; exclusão e anonimização → `CAP-031` |
-| Eventos publicados | `identidade.conta-criada`, `identidade.conta-confirmada`, `identidade.senha-redefinida`, `notificacao.envio-solicitado` ([AsyncAPI](../../tasks/prd-conta-aluno/asyncapi-contract.yaml)) | `identidade.conta-desativada` (sem fluxo que o gere); os quatro atos administrativos → `CAP-002`, consumidos por `CAP-030` |
+| Eventos publicados | `identidade.conta-criada`, `identidade.conta-confirmada`, `identidade.senha-redefinida`, `notificacao.envio-solicitado` ([AsyncAPI](../../tasks/archive/prd-conta-aluno/asyncapi-contract.yaml)) | `identidade.conta-desativada` (sem fluxo que o gere); os quatro atos administrativos → `CAP-002`, consumidos por `CAP-030` |
 | Primeiro administrador (RN-25) | — | O seed da Fase 0 **ainda não existe**: depende do modelo de Papel, que chega com `CAP-002` |
 
 Pendências herdadas de `CAP-001` que não bloqueiam `CAP-002`, mas bloqueiam operação com aluno real:
 QT-01 (prazos de link e de inatividade — segurança e produto) e QT-02 (provedor, domínio e DNS de
-e-mail — plataforma), em [prd.md](../../tasks/prd-conta-aluno/prd.md).
+e-mail — plataforma), em [prd.md](../../tasks/archive/prd-conta-aluno/prd.md).
 
 ---
 

@@ -146,6 +146,7 @@ public sealed class AcceptAndDeliverAccountConfirmationTests(NotificationIntegra
                 cancellationToken: cancellationToken);
 
             var rawPayload = Encoding.UTF8.GetString(published.Body.Span);
+            NotificationMessages.AssertSends(published.RoutingKey, JsonDocument.Parse(published.Body).RootElement);
             var delivered = JsonSerializer.Deserialize<NotificationMessageDeliveredV1>(
                 published.Body.Span,
                 JsonOptions);

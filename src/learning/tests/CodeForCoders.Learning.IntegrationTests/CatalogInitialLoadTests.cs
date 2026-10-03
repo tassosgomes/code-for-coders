@@ -64,7 +64,7 @@ public sealed class CatalogInitialLoadTests(LearningIntegrationFixture infrastru
                 var message = await fixture.ReceiveAsync(queue);
                 Assert.Equal(PublishedCourseFact.Route, message.RoutingKey);
                 using var body = JsonDocument.Parse(message.Body);
-                PublishedCourseContract.AssertValid(body.RootElement);
+                LearningMessages.AssertSends("conteudo.versao-publicada.v1", body.RootElement);
                 var id = body.RootElement.GetProperty("eventId").GetGuid();
                 Assert.Equal(id.ToString(), message.BasicProperties.MessageId);
                 Assert.True(expected.Remove(id, out var version));
@@ -111,7 +111,7 @@ public sealed class CatalogInitialLoadTests(LearningIntegrationFixture infrastru
         await CatalogInitialLoadTestFixture.RunAsync(host);
         var replay = Assert.Single(await fixture.ReplaysAsync());
         using var body = JsonDocument.Parse(replay.Payload);
-        PublishedCourseContract.AssertValid(body.RootElement);
+        LearningMessages.AssertSends("conteudo.versao-publicada.v1", body.RootElement);
         Assert.Equal(version.Title, body.RootElement.GetProperty("title").GetString());
         Assert.Equal(version.Description, body.RootElement.GetProperty("description").GetString());
         Assert.Equal("beginner", body.RootElement.GetProperty("level").GetString());
@@ -140,7 +140,7 @@ public sealed class CatalogInitialLoadTests(LearningIntegrationFixture infrastru
         await using var context = new LearningDbContext(new DbContextOptionsBuilder<LearningDbContext>().UseNpgsql(legacy.ConnectionString).Options, new TenantContext());
         var row = await context.ContentOutboxMessages.IgnoreQueryFilters().SingleAsync(Cancellation);
         using var body = JsonDocument.Parse(row.Payload);
-        PublishedCourseContract.AssertValid(body.RootElement);
+        LearningMessages.AssertSends("conteudo.versao-publicada.v1", body.RootElement);
         Assert.Equal(JsonValueKind.Null, body.RootElement.GetProperty("level").ValueKind);
         var prerequisite = body.RootElement.GetProperty("prerequisite");
         Assert.Equal(JsonValueKind.Null, prerequisite.GetProperty("text").ValueKind);
@@ -165,7 +165,7 @@ public sealed class CatalogInitialLoadTests(LearningIntegrationFixture infrastru
         await host.Services.GetRequiredService<RabbitMqPublisher>().PublishAsync(row, Cancellation);
         var received = await fixture.ReceiveAsync(queue);
         using var body = JsonDocument.Parse(received.Body);
-        PublishedCourseContract.AssertValid(body.RootElement);
+        LearningMessages.AssertSends("conteudo.versao-publicada.v1", body.RootElement);
         Assert.Equal(row.Id, body.RootElement.GetProperty("eventId").GetGuid());
         Assert.Equal(row.Id.ToString(), received.BasicProperties.MessageId);
         Assert.Equal(result.VersionNumber, body.RootElement.GetProperty("versionNumber").GetInt32());

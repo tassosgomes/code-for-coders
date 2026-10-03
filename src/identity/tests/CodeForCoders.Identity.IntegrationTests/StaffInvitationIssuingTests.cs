@@ -70,6 +70,8 @@ public sealed class StaffInvitationIssuingTests(IdentityIntegrationFixture fixtu
             invitation.TokenHash);
 
         using var auditDocument = JsonDocument.Parse(protector.Unprotect(audit));
+        IdentityMessages.AssertSends(notification.RoutingKey, notificationDocument.RootElement);
+        IdentityMessages.AssertSends(audit.RoutingKey, auditDocument.RootElement);
         var auditPayload = auditDocument.RootElement;
         Assert.Equal(audit.Id, auditPayload.GetProperty("fatoId").GetGuid());
         Assert.Equal("identidade", auditPayload.GetProperty("origem").GetString());

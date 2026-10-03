@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - 'src/admin-spa/**'
+      - 'contracts/bff-admin/**'
       - '.github/workflows/admin-spa.yml'
   pull_request:
     paths:
       - 'src/admin-spa/**'
+      - 'contracts/bff-admin/**'
       - '.github/workflows/admin-spa.yml'
 
 permissions:

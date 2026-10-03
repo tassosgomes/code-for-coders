@@ -4,7 +4,7 @@
 > **Objetivo:** desenhar no Figma, sobre o Design System Code4Coders, as telas do backoffice que o PRD
 > de acesso interno entrega, antes da implementação no `admin-spa` (tasks 2.0–9.0).
 > Aprovado este ASCII → desenho no Figma → aprovação → implementação.
-> **Fontes:** `tasks/prd-acesso-interno/prd.md` (RF-01…RF-14), `techspec.md` (Bloco Frontend, V-01…V-08),
+> **Fontes:** `tasks/archive/prd-acesso-interno/prd.md` (RF-01…RF-14), `techspec.md` (Bloco Frontend, V-01…V-08),
 > `api-contract.yaml` 1.0.0, `docs/design/wireframes-conta-aluno.md` (padrões já aprovados),
 > `DESIGN.md`, `docs/design/Components.md`.
 

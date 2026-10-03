@@ -3,8 +3,8 @@
 > **Status:** aprovado (ASCII e Figma) em 2026-09-24 · refatoração ainda não iniciada
 > **Objetivo:** reconstruir no Figma, sobre o Design System Code4Coders, as telas já entregues,
 > antes de refatorar o `student-spa`. Aprovado este ASCII → desenho no Figma → aprovação → refatoração.
-> **Fontes:** `tasks/prd-conta-aluno/prd.md` (RF-01…RF-06), `tasks/prd-notificacao-transacional/prd.md`,
-> `tasks/prd-trilha-auditoria/prd.md`, `src/student-spa`, `src/admin-spa`, `DESIGN.md`, `docs/design/Components.md`.
+> **Fontes:** `tasks/archive/prd-conta-aluno/prd.md` (RF-01…RF-06), `tasks/archive/prd-notificacao-transacional/prd.md`,
+> `tasks/archive/prd-trilha-auditoria/prd.md`, `src/student-spa`, `src/admin-spa`, `DESIGN.md`, `docs/design/Components.md`.
 
 ---
 

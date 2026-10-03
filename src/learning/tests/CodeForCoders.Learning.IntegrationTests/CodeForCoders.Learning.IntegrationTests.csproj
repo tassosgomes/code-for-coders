@@ -8,8 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../../../tasks/prd-nivel-prerequisito-curso/asyncapi-contract.yaml" Link="Contracts/level.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../tasks/prd-autoria-curso/asyncapi-contract.yaml" Link="Contracts/authoring.yaml" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="JsonSchema.Net" />
     <PackageReference Include="YamlDotNet" />
     <ProjectReference Include="../../src/CodeForCoders.Learning.Api/CodeForCoders.Learning.Api.csproj" />
@@ -28,4 +26,5 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
+  <Import Project="../../../contract-testing/ContractTesting.props" />
 </Project>

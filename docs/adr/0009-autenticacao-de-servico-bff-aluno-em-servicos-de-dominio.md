@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md`
 - Domínios/componentes afetados: `bff-student` e serviços de domínio que ele chama sem sessão de aluno (primeiro: `commerce`, módulo Catálogo), Valkey do serviço de domínio
-- Origem histórica: `tasks/prd-vitrine-oferta`, CAP-003 (decisão C-04 do conjunto de contratos)
+- Origem histórica: `tasks/archive/prd-vitrine-oferta`, CAP-003 (decisão C-04 do conjunto de contratos)
 - Substitui: Nenhuma. Estende a [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), que decidiu só a chamada BFF → Identity e declarou não decidir "outros clientes futuros"
 
 ## Data
@@ -89,4 +89,4 @@ A vitrine pública de cursos (primeira superfície anônima de leitura de catál
 
 - [ADR-0001](0001-monorepo-de-codigo.md), [ADR-0002](0002-plataforma-de-runtime-coolify.md), [ADR-0003](0003-verificacao-de-sessao-do-aluno.md), [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md).
 - [Baseline arquitetural](../../context/architecture-baseline.md) — G07, G10, G15, G26; BA05.
-- Origem histórica: `tasks/prd-vitrine-oferta/techspec.md` e `tasks/prd-vitrine-oferta/contracts.md` (C-04).
+- Origem histórica: `tasks/archive/prd-vitrine-oferta/techspec.md` e `tasks/archive/prd-vitrine-oferta/contracts.md` (C-04).

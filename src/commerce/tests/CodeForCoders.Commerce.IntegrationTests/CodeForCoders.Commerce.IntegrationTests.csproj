@@ -34,10 +34,7 @@
     <Compile Include="../../../bff-student/src/CodeForCoders.BffStudent.Api/Security/CommerceServiceOptions.cs" Link="BffStudent/CommerceServiceOptions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="../../../../tasks/prd-concessao-acesso/internal-api-contract-commerce.yaml" Link="Contracts/access-decision.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../tasks/prd-concessao-acesso/asyncapi-contract.yaml" Link="Contracts/courtesy.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../tasks/prd-concessao-acesso/asyncapi-contract-audit.yaml" Link="Contracts/courtesy-audit.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../tasks/prd-vitrine-oferta/asyncapi-contract.yaml" Link="Contracts/offers.yaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="../../../../tasks/prd-vitrine-oferta/asyncapi-contract-audit.yaml" Link="Contracts/audit.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../contracts/commerce/openapi-internal.yaml" Link="Contracts/access-decision.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Import Project="../../../contract-testing/ContractTesting.props" />
 </Project>

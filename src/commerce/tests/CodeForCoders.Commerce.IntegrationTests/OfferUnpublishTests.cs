@@ -159,7 +159,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
         var fact = rows.Single(row => row.RoutingKey == "catalogo.oferta-despublicada.v1");
         var act = rows.Single(row => row.RoutingKey == "auditoria.ato-praticado.v1");
         using var factJson = JsonDocument.Parse(fact.Payload); using var actJson = JsonDocument.Parse(act.Payload);
-        OfferPublicationContract.AssertValid(factJson.RootElement); OfferPublicationContract.AssertValid(actJson.RootElement, true);
+        CommerceMessages.AssertSends(fact.RoutingKey, factJson.RootElement); CommerceMessages.AssertSends(act.RoutingKey, actJson.RootElement);
         Assert.Equal(3, factJson.RootElement.GetProperty("offerRevision").GetInt32());
         Assert.Equal("oferta-despublicada", actJson.RootElement.GetProperty("tipo").GetString());
         Assert.Equal(fact.Id, actJson.RootElement.GetProperty("fatoId").GetGuid());

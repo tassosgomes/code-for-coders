@@ -3,11 +3,11 @@
 > **Status:** aprovado (ASCII e Figma) em 2026-09-27 · implementação não iniciada
 > **Objetivo:** desenhar no Figma, sobre o Design System Code4Coders e o AppShell do backoffice
 > aprovado em CAP-002, as telas da área Auditoria antes da implementação no `admin-spa` (fatias
-> V-01…V-03 de `tasks/prd-consulta-trilha-auditoria`). Aprovado este ASCII → desenho no Figma →
+> V-01…V-03 de `tasks/archive/prd-consulta-trilha-auditoria`). Aprovado este ASCII → desenho no Figma →
 > aprovação → código.
-> **Fontes:** `tasks/prd-consulta-trilha-auditoria/prd.md` v1.0 (RF-01…RF-05, US-01…US-04,
+> **Fontes:** `tasks/archive/prd-consulta-trilha-auditoria/prd.md` v1.0 (RF-01…RF-05, US-01…US-04,
 > Experiência do Usuário, DP-01…DP-05), `techspec.md` v1.0 (Frontend, Jornada, V-01…V-03),
-> `api-contract.yaml` 1.1.0, `tasks/prd-trilha-auditoria/asyncapi-contract.yaml` (tipos de ato e
+> `api-contract.yaml` 1.1.0, `tasks/archive/prd-trilha-auditoria/asyncapi-contract.yaml` (tipos de ato e
 > atributos), `docs/design/wireframes-acesso-interno.md` (AppShell, B5, B12, B13, `RoleBadge`,
 > `ReasonField`, `EmptyState`), `docs/design/wireframes-videos.md` (padrões de lista),
 > `DESIGN.md`, `docs/design/Components.md`.
@@ -530,7 +530,7 @@ Select.
 Ajustes de desenho em relação ao ASCII, sem mudar comportamento:
 
 - A decisão 2 (nomes de autor e alvo na lista) foi aprovada, então A1.g (lista só com referências)
-  não foi desenhado. A [TechSpec 1.1](../../tasks/prd-consulta-trilha-auditoria/techspec.md)
+  não foi desenhado. A [TechSpec 1.1](../../tasks/archive/prd-consulta-trilha-auditoria/techspec.md)
   incorporou o ajuste: o BFF resolve os rótulos de Identity também para a página da lista.
 - A1.a (estado fechado do formulário) é o próprio A2.a: o botão *+ Acrescentar complemento*.
 - O filtro de situação usa o `Tab` do DS, como em Vídeos (não há `ToggleGroup` no arquivo).

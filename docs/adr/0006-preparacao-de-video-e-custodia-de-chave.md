@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0006-preparacao-de-video-e-custodia-de-chave.md`
 - Domínios/componentes afetados: Entrega de Mídia e Proteção (`media` — API e worker), implantação (compose e Coolify)
-- Origem histórica: `tasks/prd-ingestao-midia`, CAP-006
+- Origem histórica: `tasks/archive/prd-ingestao-midia`, CAP-006
 - Substitui: Nenhuma
 
 ## Data
@@ -102,4 +102,4 @@ durável para todo o domínio: **onde roda o ffmpeg** e **onde vive a chave**.
 - [Baseline arquitetural](../../context/architecture-baseline.md) — proteção de conteúdo sem DRM, G21, G22, camada anticorrupção.
 - [Domínio Entrega de Mídia e Proteção](../../domains/entrega-de-midia-e-protecao/domain.md) — RN-M01, RN-M07, RN-M08, RF-M06.
 - [ADR-0002](0002-plataforma-de-runtime-coolify.md) — compute no Coolify, AWS restrita a S3 + CloudFront.
-- [TechSpec de origem](../../tasks/prd-ingestao-midia/techspec.md).
+- [TechSpec de origem](../../tasks/archive/prd-ingestao-midia/techspec.md).
