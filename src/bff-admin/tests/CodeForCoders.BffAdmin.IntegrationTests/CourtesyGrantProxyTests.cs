@@ -32,6 +32,22 @@ public sealed class CourtesyGrantProxyTests
         using var forbidden = await GrantAsync(client); Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode); Assert.Equal(0, factory.Grants.Calls);
         using var anonymous = factory.CreateClient(); using var missing = await GrantAsync(anonymous); Assert.Equal(HttpStatusCode.Unauthorized, missing.StatusCode);
     }
+
+    [Fact(DisplayName = nameof(CommerceAudienceWithoutCourtesyPermissionIsRejectedBeforeGrantProxy))]
+    public async Task CommerceAudienceWithoutCourtesyPermissionIsRejectedBeforeGrantProxy()
+    {
+        await using var factory = Factory();
+        factory.Identity.CommercePermissions = ["financeiro.ler"];
+        using var client = await factory.AuthenticatedAsync();
+
+        using var response = await GrantAsync(client);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Contains("PERMISSION_DENIED", await response.Content.ReadAsStringAsync(Cancellation));
+        Assert.Equal("commerce", factory.Identity.LastAudience);
+        Assert.Equal(0, factory.Grants.Calls);
+    }
+
     [Theory(DisplayName = nameof(RejectionCodesAndIdentityOutageAreMappedWithoutChangingIntent))]
     [InlineData(422, "FIELD_INVALID", 422)]
     [InlineData(422, "IDEMPOTENCY_KEY_REUSED", 422)]
@@ -61,5 +77,20 @@ public sealed class CourtesyGrantProxyTests
         Assert.Equal("?months=6", factory.Grants.Uri!.Query); Assert.Contains("2027-04-15", await preview.Content.ReadAsStringAsync(Cancellation));
         using var get = await client.GetAsync($"/api/v1/courtesy-grants/{factory.Grants.GrantId}", Cancellation); Assert.Equal(HttpStatusCode.OK, get.StatusCode);
         factory.Grants.Status = 404; factory.Grants.Code = "GRANT_NOT_FOUND"; using var hidden = await client.GetAsync($"/api/v1/courtesy-grants/{Guid.CreateVersion7()}", Cancellation); Assert.Equal(HttpStatusCode.NotFound, hidden.StatusCode); Assert.Contains("GRANT_NOT_FOUND", await hidden.Content.ReadAsStringAsync(Cancellation));
+    }
+
+    [Theory(DisplayName = nameof(PreviewRejectsMonthsOutsideSupportedRange))]
+    [InlineData(0)]
+    [InlineData(61)]
+    public async Task PreviewRejectsMonthsOutsideSupportedRange(int months)
+    {
+        await using var factory = Factory();
+        using var client = await factory.AuthenticatedAsync();
+
+        using var response = await client.GetAsync($"/api/v1/courtesy-term-preview?months={months}", Cancellation);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("INVALID_REQUEST", await response.Content.ReadAsStringAsync(Cancellation));
+        Assert.Equal(0, factory.Grants.Calls);
     }
 }

@@ -1,30 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { routes } from '@/app/app-routes';
 import { env } from '@/config/env';
-import { courtesyStudentFixture, courtesyStudentLookupHandlers } from '@/testing/courtesy-student-lookup-handlers';
+import { courtesyStudentFixture } from '@/testing/courtesy-student-lookup-handlers';
+import { lookupCourtesyStudent, renderCourtesy } from '@/testing/courtesy-route-test-helpers';
 import { server } from '@/testing/server';
-
-const renderCourtesy = (permissions = ['financeiro.ler', 'cortesia.conceder'], role = 'financeiro') => {
-  server.use(...courtesyStudentLookupHandlers, http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () => HttpResponse.json({
-    accountId: '0198dfac-674a-7000-8000-000000000002', name: 'Financeiro', roles: [role], permissions, csrfToken: 'courtesy-csrf',
-  })));
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const router = createMemoryRouter(routes, { initialEntries: ['/cortesias'] });
-  render(<QueryClientProvider client={queryClient}><RouterProvider router={router} /></QueryClientProvider>);
-  return { router, queryClient };
-};
-const lookup = async (email = courtesyStudentFixture.email) => {
-  const user = userEvent.setup();
-  const input = await screen.findByRole('textbox', { name: 'E-mail do aluno' });
-  await user.clear(input); await user.type(input, email); await user.click(screen.getByRole('button', { name: 'Localizar' }));
-  return user;
-};
 
 describe('courtesy student lookup', () => {
   afterEach(cleanup);
@@ -39,7 +20,7 @@ describe('courtesy student lookup', () => {
     expect(await screen.findByRole('heading', { name: 'Conceder cortesia' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cortesias' })).toHaveAttribute('href', '/cortesias');
     expect(screen.getByRole('list', { name: 'Passos da cortesia' }).children).toHaveLength(6);
-    await lookup('  JOANA@STUDENT.TEST  ');
+    await lookupCourtesyStudent('  JOANA@STUDENT.TEST  ');
     expect(await screen.findByRole('heading', { name: 'Joana Ribeiro' })).toBeInTheDocument();
     expect(screen.getByText('joana@student.test')).toBeInTheDocument();
     expect(screen.getByText('E-mail ainda não confirmado. Isso não impede a cortesia.')).toBeInTheDocument();
@@ -64,19 +45,19 @@ describe('courtesy student lookup', () => {
     server.use(http.post(`${env.API_URL}/api/v1/student-account-lookups`, () => state === 'missing' ? HttpResponse.json({ code: 'STUDENT_ACCOUNT_NOT_FOUND' }, { status: 404 })
       : state === 'unavailable' ? HttpResponse.json({ code: 'IDENTITY_UNAVAILABLE' }, { status: 502 })
         : HttpResponse.json({ ...courtesyStudentFixture, status: state, emailConfirmed: true })));
-    await lookup();
+    await lookupCourtesyStudent();
     expect(await screen.findByText('Esta conta está desativada. Não é possível conceder cortesia.')).toBeInTheDocument();
-    state = 'missing'; await lookup('missing@student.test');
+    state = 'missing'; await lookupCourtesyStudent('missing@student.test');
     expect(await screen.findByText('Não há conta de aluno com este e-mail')).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Joana Ribeiro' })).not.toBeInTheDocument();
-    state = 'unavailable'; await lookup();
+    state = 'unavailable'; await lookupCourtesyStudent();
     expect(await screen.findByText('Não foi possível localizar o aluno agora. Tente de novo.')).toBeInTheDocument();
-    state = 'active'; await lookup();
+    state = 'active'; await lookupCourtesyStudent();
     expect(await screen.findByRole('heading', { name: 'Joana Ribeiro' })).toBeInTheDocument();
   });
 
   it('keeps email out of URL query keys and browser storage and discards form and mutation data on exit', async () => {
-    const { router, queryClient } = renderCourtesy(); const user = await lookup();
+    const { router, queryClient } = renderCourtesy(); const user = await lookupCourtesyStudent();
     expect(await screen.findByRole('heading', { name: 'Joana Ribeiro' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/cortesias'); expect(router.state.location.search).toBe('');
     expect(JSON.stringify(queryClient.getQueryCache().getAll().map((query) => query.queryKey))).not.toContain(courtesyStudentFixture.email);

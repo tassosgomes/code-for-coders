@@ -35,3 +35,5 @@ src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/StaffInvitationAcceptan
 # Falso positivo confirmado: routing key de domínio pública ("catalogo.oferta-alterada.v1"),
 # declarada no contrato AsyncAPI; não é segredo.
 src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OfferChangeTests.cs:generic-api-key:191
+# Falso positivo confirmado: routing key publica do evento de concessao de acesso.
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CourtesyGrantTests.cs:generic-api-key:32

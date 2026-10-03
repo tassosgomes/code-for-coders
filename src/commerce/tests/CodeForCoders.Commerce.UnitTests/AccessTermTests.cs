@@ -9,6 +9,7 @@ public sealed class AccessTermTests
     [InlineData("2027-03-15T15:00:00Z", 1, "2027-04-15", "2027-04-16T03:00:00Z")]
     [InlineData("2027-01-31T15:00:00Z", 1, "2027-02-28", "2027-03-01T03:00:00Z")]
     [InlineData("2028-01-31T15:00:00Z", 1, "2028-02-29", "2028-03-01T03:00:00Z")]
+    [InlineData("2027-03-15T15:00:00Z", 60, "2032-03-15", "2032-03-16T03:00:00Z")]
     [InlineData("2027-03-31T15:00:00Z", 6, "2027-09-30", "2027-10-01T03:00:00Z")]
     [InlineData("2027-03-16T02:59:00Z", 1, "2027-04-15", "2027-04-16T03:00:00Z")]
     public void CalendarTermUsesLocalDateAndExclusiveNextDay(string now, int months, string endsOn, string expiresAt)
@@ -16,6 +17,18 @@ public sealed class AccessTermTests
         var term = AccessTerm.Calculate(DateTimeOffset.Parse(now), "months", months, TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo"));
         Assert.Equal(DateOnly.Parse(endsOn), term.EndsOn); Assert.Equal(DateTimeOffset.Parse(expiresAt), term.ExpiresAt);
     }
+
+    [Theory(DisplayName = nameof(FiniteTermRejectsMonthsOutsideSupportedRange))]
+    [InlineData(0)]
+    [InlineData(61)]
+    public void FiniteTermRejectsMonthsOutsideSupportedRange(int months)
+    {
+        var error = Assert.Throws<EntitlementRuleException>(() => AccessTerm.Calculate(
+            DateTimeOffset.Parse("2027-03-15T15:00:00Z"), "months", months, TimeZoneInfo.Utc));
+
+        Assert.Equal("FIELD_INVALID", error.Code);
+    }
+
     [Fact(DisplayName = nameof(LifetimeHasNoEnd))]
     public void LifetimeHasNoEnd() => Assert.Equal(new AccessTerm(null, null), AccessTerm.Calculate(DateTimeOffset.UtcNow, "lifetime", null, TimeZoneInfo.Utc));
 
