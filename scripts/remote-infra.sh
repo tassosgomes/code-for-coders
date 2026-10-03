@@ -10,6 +10,9 @@ readonly database_bootstrap="$script_directory/init-local-databases.sql"
 readonly rabbitmq_vhost=code-for-coders
 readonly rabbitmq_user=code_for_coders
 readonly bff_admin_rabbitmq_user=code_for_coders_bff_admin
+readonly s3_bucket=code-for-coders-media
+readonly s3_user=code_for_coders_media
+readonly s3_mc_image=ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
 # service|Infra.Data project|database|migration role|design-time connection variable
 readonly migration_targets=(
   "identity|src/identity/src/CodeForCoders.Identity.Infra.Data|code_for_coders_identity|code_for_coders_identity|ConnectionStrings__DefaultConnection"
@@ -36,10 +39,11 @@ usage() {
 Usage: scripts/remote-infra.sh <provision|migrate|check>
 
 Commands:
-  provision  Create the PostgreSQL roles/databases, the RabbitMQ vhost/user, and store the
-             generated credentials in .env (idempotent; requires SSH to the infra server).
+  provision  Create the PostgreSQL roles/databases, the RabbitMQ vhost/user, the MinIO bucket and
+             bucket-scoped user, and store the generated credentials in .env (idempotent;
+             requires SSH to the infra server).
   migrate    Apply the EF Core migrations of every service to the remote databases.
-  check      Verify that PostgreSQL, RabbitMQ, Valkey, OTel, and SMTP accept connections.
+  check      Verify that PostgreSQL, RabbitMQ, Valkey, MinIO, OTel, and SMTP accept connections.
 
 Environment (read from .env, all optional):
   REMOTE_INFRA_HOST      Infra server address (default 192.168.0.5)
@@ -99,6 +103,7 @@ provision() {
   set_env_if_missing REMOTE_DB_PASSWORD "$(openssl rand -hex 24)"
   set_env_if_missing REMOTE_RABBITMQ_PASSWORD "$(openssl rand -hex 24)"
   set_env_if_missing BFF_ADMIN_RABBITMQ_PASSWORD "$(openssl rand -hex 24)"
+  set_env_if_missing REMOTE_S3_SECRET_KEY "$(openssl rand -hex 24)"
 
   if [[ -z "$(env_value REMOTE_VALKEY_PASSWORD)" ]]; then
     local valkey_password
@@ -111,10 +116,11 @@ provision() {
     set_env_if_missing REMOTE_VALKEY_PASSWORD "$valkey_password"
   fi
 
-  local db_password rabbitmq_password bff_admin_rabbitmq_password
+  local db_password rabbitmq_password bff_admin_rabbitmq_password s3_secret_key
   db_password="$(require_value REMOTE_DB_PASSWORD)"
   rabbitmq_password="$(require_value REMOTE_RABBITMQ_PASSWORD)"
   bff_admin_rabbitmq_password="$(require_value BFF_ADMIN_RABBITMQ_PASSWORD)"
+  s3_secret_key="$(require_value REMOTE_S3_SECRET_KEY)"
 
   log "Provisioning PostgreSQL roles and databases..."
   { printf "SET client_min_messages = warning;\n\\set app_password '%s'\n" "$db_password"; cat "$database_bootstrap"; } \
@@ -144,7 +150,46 @@ ctl set_permissions -p '$rabbitmq_vhost' '$bff_admin_rabbitmq_user' \
   '^(bff-admin\.events|bff-admin\.events\.dlx|bff-admin\.platform-heartbeat|bff-admin\.platform-heartbeat\.dlq)$' >/dev/null
 EOF
 
+  provision_s3 "$s3_secret_key"
+
   log "Remote infrastructure is provisioned. Next: scripts/remote-infra.sh migrate"
+}
+
+provision_s3() {
+  local secret_key=$1 root_credentials root_user root_password policy_file
+  command -v docker >/dev/null 2>&1 || die "Docker is required to provision MinIO."
+
+  # The root credentials stay in this process: they are never written to .env or to disk.
+  root_credentials="$(remote "grep -E '^MINIO_ROOT_(USER|PASSWORD)=' ~/infra/.env")"
+  root_user="$(sed -n 's/^MINIO_ROOT_USER=//p' <<<"$root_credentials" | tr -d "'\"")"
+  root_password="$(sed -n 's/^MINIO_ROOT_PASSWORD=//p' <<<"$root_credentials" | tr -d "'\"")"
+  [[ -n "$root_user" && -n "$root_password" ]] || die "MINIO_ROOT_USER/PASSWORD not found in ~/infra/.env on the server."
+  [[ "$root_user$root_password" =~ ^[A-Za-z0-9_]+$ ]] || die "The MinIO root credentials contain characters that break the mc alias URL."
+
+  policy_file="$(mktemp)"
+  cat >"$policy_file" <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Effect": "Allow", "Action": ["s3:ListBucket", "s3:GetBucketLocation"], "Resource": ["arn:aws:s3:::$s3_bucket"]},
+    {"Effect": "Allow", "Action": ["s3:*"], "Resource": ["arn:aws:s3:::$s3_bucket/*"]}
+  ]
+}
+EOF
+  chmod 644 "$policy_file"
+
+  log "Provisioning MinIO bucket '$s3_bucket' and user '$s3_user'..."
+  MC_HOST_infra="http://$root_user:$root_password@$(infra_host):9000" \
+    docker run --rm --pull missing -e MC_HOST_infra --entrypoint /bin/sh \
+    -v "$policy_file:/policy.json:ro" "$s3_mc_image" -c "
+      set -e
+      mc mb --ignore-existing infra/$s3_bucket
+      mc anonymous set none infra/$s3_bucket
+      mc admin user add infra '$s3_user' '$secret_key'
+      mc admin policy create infra '$s3_user' /policy.json
+      mc admin policy attach infra '$s3_user' --user '$s3_user'
+    " >/dev/null || { rm -f "$policy_file"; die "Could not provision MinIO."; }
+  rm -f "$policy_file"
 }
 
 migrate() {
@@ -216,6 +261,7 @@ check() {
     check_port Valkey 6379 || failed=1
   fi
 
+  check_port "MinIO (S3)" 9000 || failed=1
   check_port "OTel Collector (gRPC)" 4317 || failed=1
   check_port "smtp4dev (SMTP)" 25 || failed=1
 

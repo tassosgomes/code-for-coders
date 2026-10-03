@@ -52,19 +52,20 @@ Container logs can be followed with `docker compose logs -f <service>`.
 
 The APIs and SPAs can also run locally against the shared development server (`192.168.0.5`, see
 [docs/infra-servidor-desenv.md](docs/infra-servidor-desenv.md)) instead of local PostgreSQL,
-RabbitMQ, Valkey, OTel Collector, and smtp4dev containers. `docker-compose.remote.yml` overrides the
+RabbitMQ, Valkey, MinIO (S3), OTel Collector, and smtp4dev containers. `docker-compose.remote.yml` overrides the
 API settings; `scripts/remote-infra.sh` prepares the server and requires SSH access through the
 `desenv-server` host alias.
 
 ```bash
-./scripts/remote-infra.sh provision   # roles, databases, RabbitMQ vhost/user; stores secrets in .env
+./scripts/remote-infra.sh provision   # roles, databases, RabbitMQ vhost/user, S3 bucket/user; stores secrets in .env
 ./scripts/remote-infra.sh migrate     # applies the EF Core migrations of every service
 ./scripts/apps.sh start --remote
 ```
 
 `provision` and `migrate` are idempotent; run `migrate` again whenever a branch adds migrations.
 `scripts/remote-infra.sh check` verifies connectivity. The project uses the RabbitMQ vhost
-`code-for-coders` and Valkey database `1` (`REMOTE_VALKEY_DATABASE`). Emails land in the shared
+`code-for-coders`, Valkey database `1` (`REMOTE_VALKEY_DATABASE`), and the MinIO bucket
+`code-for-coders-media` with a bucket-scoped user. Emails land in the shared
 smtp4dev at <https://smtp.tasso.dev.br> and telemetry in Kibana at <https://kibana.tasso.dev.br>.
 
 ### Coolify development environment

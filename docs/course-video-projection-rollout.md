@@ -50,6 +50,34 @@ exit diferente de zero na falha; não iniciam outro consumidor nem o publisher p
    Não sintetizar fatos nem liberar um tenant com IDs faltantes. Desabilitar a flag é o rollback
    de exposição; preservar os dados e a migration.
 
+## Ativação no desenvolvimento com infraestrutura remota
+
+O PRD concluído indica que a implementação foi validada; a ativação é uma etapa por ambiente.
+A SPA pode mostrar Autoria enquanto a flag está desligada. Nesse caso, uma sessão autenticada
+recebe `404` vazio em `/api/v1/courses`, pois o BFF não registra essas rotas.
+
+Após cumprir os passos acima e os pré-requisitos de
+[`course-publication-rollout.md`](course-publication-rollout.md), configure
+`COURSE_AUTHORING_ENABLED=true` no `.env` da raiz. Preserve as demais configurações. A variável
+no `.env` mantém a ativação nas próximas execuções de `scripts/apps.sh start --remote`.
+
+O worker de Mídia deve estar ativo para consumir publicações. No modo remoto, inicie-o
+explicitamente e recrie o BFF para carregar a flag:
+
+```bash
+docker compose --file docker-compose.yml --file docker-compose.remote.yml \
+  up --detach --no-deps --wait media-worker
+docker compose --file docker-compose.yml --file docker-compose.remote.yml \
+  up --detach --no-deps --force-recreate --wait bff-admin
+```
+
+Confirme `CourseAuthoring__Enabled=true` no container e abra
+`http://localhost:8081/admin/autoria` com uma conta com `autoria.ler`. A chamada
+`GET /api/v1/courses?_page=1&_size=20` deve retornar `200` com `data` e `pagination`.
+Uma chamada sem sessão retorna `401` tanto antes quanto depois da ativação; portanto, esse
+teste sozinho não comprova que a rota foi registrada. `/health/ready` também pode estar
+saudável com a autoria desligada.
+
 Monitorar `learning.video_facts.consumed`, `learning.video_facts.lag` e
 `learning.video_facts.dead_lettered` pelo OTLP. `/health/ready` fica unhealthy se a DLQ contém
 mensagens ou não há consumidor. Alertar nessas condições e no crescimento do lag antes de

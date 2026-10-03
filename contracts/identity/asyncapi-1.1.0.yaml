@@ -1,0 +1,367 @@
+# Acordo de mensageria do recorte de CAP-002 (Acesso interno por papel e permissão).
+# Descreve a aplicação `identity` como PRODUTORA de duas mensagens endereçadas a outros donos:
+# o ato administrativo à Auditoria (contrato `urn:code-4-coders:audit` 1.0.1, sem alteração) e o
+# pedido de envio a Notificação (contrato `urn:code-4-coders:notification` 1.1.0, nesta pasta).
+# Não redefine os receptores. Decisões em contracts.md.
+asyncapi: 3.0.0
+id: urn:code-4-coders:identity
+info:
+  title: Identidade — atos administrativos de acesso interno e pedidos de envio do backoffice
+  version: 1.1.0
+  description: >
+    Recorte de `CAP-002`, PRD `tasks/prd-acesso-interno/prd.md` v1.0, aprovado em 2026-09-25.
+    Acrescenta à aplicação `identity` as operações deste PRD; as operações do recorte de `CAP-001`
+    (`tasks/prd-conta-aluno/asyncapi-contract.yaml` 1.0.0) continuam valendo sem mudança e não são
+    repetidas aqui. Nenhuma mensagem recebida neste escopo. Toda publicação sai pelo outbox, na
+    mesma transação da mudança de estado (G06, RF-14).
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  atoPraticado:
+    address: auditoria.ato-praticado.v1
+    description: >
+      Canal endereçado à Auditoria (dona do contrato, RN-A14). Identity publica no exchange efetivo
+      da Auditoria, como já faz com Notificação desde CAP-001 — routing key coincidente em outro
+      exchange não entrega.
+    messages:
+      atoPraticado:
+        $ref: '#/components/messages/AtoPraticado'
+  pedidoDeEnvio:
+    address: notificacao.envio-solicitado.v1
+    description: Canal endereçado a Notificação (dona do contrato). Mesmo canal de CAP-001.
+    messages:
+      pedidoDeEnvio:
+        $ref: '#/components/messages/PedidoDeEnvio'
+operations:
+  publicarAtoPraticado:
+    action: send
+    summary: Comunicar à Auditoria um dos quatro atos administrativos de acesso interno.
+    channel:
+      $ref: '#/channels/atoPraticado'
+    messages:
+      - $ref: '#/channels/atoPraticado/messages/atoPraticado'
+    description: >
+      Compromissos do produtor (o mecanismo fica na TechSpec).
+      (1) Um ato por mudança de estado efetiva: emitir convite, aceitar convite, conceder papel,
+      revogar papel. Ação que não muda estado (conceder papel já concedido, revogar papel ausente)
+      não publica (RF-06, RF-07). Ato que falha não publica.
+      (2) Trocar papel publica dois atos — `papel-revogado` e `papel-concedido` — com o mesmo autor,
+      motivo, `praticadoEm` e `correlationId`, e `fatoId` distintos; os dois saem na mesma transação
+      ou nenhum sai (OD22, RF-09). Não há campo de correlação no payload.
+      (3) Entrega ao menos uma vez: a reentrega repete o mesmo `fatoId`, que com `origem` é a chave de
+      idempotência da Auditoria. Um ato novo é sempre um `fatoId` novo.
+      (4) Broker indisponível não impede o ato; a mensagem sai quando o broker voltar (RF-14).
+      (5) Payload sem e-mail, nome, link ou token. Autor e alvo por referência (RN-A08).
+      (6) O seed do primeiro administrador não publica ato (RN-25, RN-A12).
+  publicarPedidoDeEnvio:
+    action: send
+    summary: Pedir a Notificação o e-mail de convite interno ou de recuperação de senha do ator interno.
+    channel:
+      $ref: '#/channels/pedidoDeEnvio'
+    messages:
+      - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvio'
+    description: >
+      Idempotente por `pedidoId`: reentrega repete o `pedidoId`; novo convite para o mesmo e-mail
+      (DP-04) ou novo pedido de recuperação é pedido novo, com `pedidoId` novo. Pedido de recuperação
+      para e-mail que não é de conta interna não é publicado (RN-04). Identity informa modelo, dados e
+      finalidade; nunca assunto ou corpo (RN-28).
+components:
+  messages:
+    AtoPraticado:
+      name: AtoPraticado
+      title: Ato administrativo praticado (origem identidade)
+      summary: Fato consumado de gestão de acesso interno, no envelope da Auditoria.
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        required: [correlationId]
+        properties:
+          correlationId:
+            type: string
+            description: Identificador da requisição do backoffice que praticou o ato. Sem dado pessoal.
+      payload:
+        $ref: '#/components/schemas/AtoPraticadoIdentidade'
+      examples:
+        - name: conviteInternoEmitido
+          headers:
+            correlationId: backoffice-2026-10-02-0041
+          payload:
+            fatoId: 1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+            origem: identidade
+            tipo: convite-interno-emitido
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            praticadoEm: '2026-10-02T14:05:11Z'
+            autor:
+              tipo: conta-interna
+              id: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            alvo:
+              tipo: convite-interno
+              id: 5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+            complemento:
+              papel: professor
+            motivo: Professora contratada para a trilha de .NET avançado
+        - name: conviteInternoAceito
+          headers:
+            correlationId: convite-aceite-2026-10-03-0003
+          payload:
+            fatoId: c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f
+            origem: identidade
+            tipo: convite-interno-aceito
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            praticadoEm: '2026-10-03T09:12:40Z'
+            autor:
+              tipo: conta-interna
+              id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+            alvo:
+              tipo: convite-interno
+              id: 5f6e7d8c-9b0a-4c1d-8e2f-3a4b5c6d7e8f
+        - name: trocaDePapelRevogado
+          summary: Primeiro dos dois atos de uma troca de professor para financeiro
+          headers:
+            correlationId: backoffice-2026-11-10-0107
+          payload:
+            fatoId: 9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b
+            origem: identidade
+            tipo: papel-revogado
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            praticadoEm: '2026-11-10T16:20:00Z'
+            autor:
+              tipo: conta-interna
+              id: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            alvo:
+              tipo: conta-interna
+              id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+            complemento:
+              papel: professor
+            motivo: Mudou de função para o time financeiro
+        - name: trocaDePapelConcedido
+          summary: Segundo dos dois atos da mesma troca — mesmo autor, motivo, momento e correlationId
+          headers:
+            correlationId: backoffice-2026-11-10-0107
+          payload:
+            fatoId: 2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e
+            origem: identidade
+            tipo: papel-concedido
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            praticadoEm: '2026-11-10T16:20:00Z'
+            autor:
+              tipo: conta-interna
+              id: 0d1c2b3a-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+            alvo:
+              tipo: conta-interna
+              id: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+            complemento:
+              papel: financeiro
+            motivo: Mudou de função para o time financeiro
+    PedidoDeEnvio:
+      name: PedidoDeEnvio
+      title: Pedido de envio (backoffice)
+      summary: Pedido endereçado a Notificação, no formato do contrato de Notificação 1.1.0.
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        required: [correlationId]
+        properties:
+          correlationId:
+            type: string
+            description: Identificador do fluxo de origem (a emissão do convite ou o pedido de recuperação).
+      payload:
+        $ref: '#/components/schemas/PedidoDeEnvioPayload'
+      examples:
+        - name: conviteInterno
+          headers:
+            correlationId: backoffice-2026-10-02-0041
+          payload:
+            pedidoId: 6d7e8f90-a1b2-4c3d-9e4f-5a6b7c8d9e0f
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            destinatario: marina.alves@code4coders.com.br
+            finalidade: convite-interno
+            modelo: convite-interno
+            dados:
+              papel: professor
+              link: 'https://backoffice.code4coders.com.br/convite?token=inv_Qm4Zt8Lw2Rp6Xa0c'
+            solicitadoEm: '2026-10-02T14:05:11Z'
+        - name: recuperacaoDeSenhaInterna
+          headers:
+            correlationId: backoffice-recuperacao-2026-10-20-0002
+          payload:
+            pedidoId: 0f1e2d3c-4b5a-4968-8778-695a4b3c2d1e
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            destinatario: marina.alves@code4coders.com.br
+            finalidade: recuperacao-de-senha
+            modelo: recuperacao-de-senha
+            dados:
+              nome: Marina Alves
+              link: 'https://backoffice.code4coders.com.br/redefinir-senha?token=rst_7Hq2LmN9pX4vZ1aB'
+            solicitadoEm: '2026-10-20T08:45:00Z'
+  schemas:
+    AtoPraticadoIdentidade:
+      type: object
+      description: >
+        Subconjunto do `AtoPraticadoPayload` da Auditoria 1.0.1 que Identity se obriga a produzir:
+        mesmos campos, nomes e formatos, com `origem` fixa e `tipo` restrito aos quatro atos deste
+        PRD. Motivo obrigatório exceto no aceite (RN-A05).
+      required: [fatoId, origem, tipo, tenantId, praticadoEm, autor, alvo]
+      additionalProperties: false
+      properties:
+        fatoId:
+          type: string
+          format: uuid
+          description: Identidade estável do ato, atribuída por Identity. Reentrega repete; ato novo é fatoId novo.
+        origem:
+          type: string
+          const: identidade
+        tipo:
+          type: string
+          enum: [convite-interno-emitido, convite-interno-aceito, papel-concedido, papel-revogado]
+        tenantId:
+          type: string
+          format: uuid
+          description: Tenant do ato (BA10 · G07); a Auditoria trata ato sem tenant válido como ilegível.
+        praticadoEm:
+          type: string
+          format: date-time
+          description: Momento em que o ato mudou o estado em Identity, não o da publicação.
+        autor:
+          $ref: '#/components/schemas/ReferenciaDeIdentidade'
+        alvo:
+          $ref: '#/components/schemas/ReferenciaDeIdentidade'
+        complemento:
+          type: object
+          additionalProperties: false
+          required: [papel]
+          description: Presente em convite-interno-emitido (papel ofertado), papel-concedido e papel-revogado.
+          properties:
+            papel:
+              type: string
+              enum: [professor, suporte, financeiro, administrador]
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Texto do administrador, sem aparar conteúdo. Nunca em log, métrica ou rastreamento.
+      allOf:
+        - if:
+            properties:
+              tipo:
+                enum: [convite-interno-emitido, papel-concedido, papel-revogado]
+            required: [tipo]
+          then:
+            required: [motivo, complemento]
+          else:
+            not:
+              anyOf:
+                - required: [motivo]
+                - required: [complemento]
+        - if:
+            properties:
+              tipo:
+                enum: [convite-interno-emitido, convite-interno-aceito]
+            required: [tipo]
+          then:
+            properties:
+              alvo:
+                properties:
+                  tipo:
+                    const: convite-interno
+          else:
+            properties:
+              alvo:
+                properties:
+                  tipo:
+                    const: conta-interna
+    ReferenciaDeIdentidade:
+      type: object
+      additionalProperties: false
+      required: [tipo, id]
+      description: Referência por identificador; nunca e-mail ou nome (RN-A08).
+      properties:
+        tipo:
+          type: string
+          enum: [conta-interna, convite-interno]
+          description: Autor é sempre `conta-interna`. Alvo é `convite-interno` nos atos de convite e `conta-interna` nos de papel.
+        id:
+          type: string
+          format: uuid
+    PedidoDeEnvioPayload:
+      type: object
+      additionalProperties: false
+      required: [pedidoId, tenantId, destinatario, finalidade, modelo, dados, solicitadoEm]
+      description: >
+        Recorte, dentro do contrato de Notificação 1.1.0, dos pedidos que este PRD produz. O pedido de
+        confirmação de conta de CAP-001 não muda.
+      properties:
+        pedidoId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        destinatario:
+          type: string
+          format: email
+          description: >
+            E-mail do convidado ou do ator interno. Mesma exceção declarada de RN-26 — é o
+            destinatário; nunca em log, span, métrica ou erro.
+        finalidade:
+          type: string
+          enum: [convite-interno, recuperacao-de-senha]
+        modelo:
+          type: string
+          enum: [convite-interno, recuperacao-de-senha]
+          description: Igual a `finalidade` nesta versão (um modelo por finalidade, decisão de CAP-026).
+        dados:
+          type: object
+          description: >
+            `convite-interno`: `papel` e `link` — o convidado ainda não tem nome na plataforma.
+            `recuperacao-de-senha`: `nome` e `link`, como em CAP-001; o link aponta para o backoffice.
+        solicitadoEm:
+          type: string
+          format: date-time
+      allOf:
+        - if:
+            properties:
+              modelo:
+                const: convite-interno
+            required: [modelo]
+          then:
+            properties:
+              finalidade:
+                const: convite-interno
+              dados:
+                type: object
+                additionalProperties: false
+                required: [papel, link]
+                properties:
+                  papel:
+                    type: string
+                    enum: [professor, suporte, financeiro, administrador]
+                  link:
+                    type: string
+                    format: uri
+          else:
+            properties:
+              finalidade:
+                const: recuperacao-de-senha
+              dados:
+                type: object
+                additionalProperties: false
+                required: [nome, link]
+                properties:
+                  nome:
+                    type: string
+                    minLength: 1
+                  link:
+                    type: string
+                    format: uri

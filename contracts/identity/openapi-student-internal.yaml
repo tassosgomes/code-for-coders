@@ -1,0 +1,347 @@
+openapi: 3.1.0
+info:
+  title: Identity — integração com BFF do aluno
+  version: 1.0.0
+  description: >-
+    Recorte interno de CAP-001. Consumidor único conhecido: BFF do aluno. A asserção de serviço
+    autentica o BFF inclusive antes do login; ela nunca representa um aluno. Toda chamada usa TLS.
+    O tenant é claim da asserção e Identity verifica que o BFF está autorizado para esse tenant.
+  contact:
+    name: Time de Identidade e Acesso
+servers:
+  - url: /internal/v1
+    description: Rota privada de Identity, inacessível ao navegador
+tags:
+  - name: StudentIdentity
+    description: Conta, credencial e sessão do aluno na fronteira interna
+paths:
+  /student-accounts:
+    post:
+      tags: [StudentIdentity]
+      summary: Cadastrar aluno
+      description: >-
+        Cria Conta não confirmada, Credencial, token de confirmação, pedido endereçado e fato
+        pelo outbox numa transação. A resposta nunca inclui senha ou token.
+      operationId: createStudentAccountInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Registration' }
+      responses:
+        '202': { description: Conta não confirmada criada; pedido de envio gravado. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /account-confirmations:
+    post:
+      tags: [StudentIdentity]
+      summary: Confirmar conta
+      description: Consome token de confirmação válido uma vez e grava o fato no mesmo commit.
+      operationId: confirmStudentAccountInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerificationToken' }
+      responses:
+        '204': { description: Conta confirmada. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /account-confirmation-requests:
+    post:
+      tags: [StudentIdentity]
+      summary: Pedir novo link de confirmação
+      description: >-
+        Se houver Conta não confirmada elegível, emite novo token e pedidoId. Reentrega com
+        mesma chave não gera segundo pedido; pedido deliberado com chave nova gera.
+      operationId: requestAccountConfirmationInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailInput' }
+      responses:
+        '202': { description: Pedido aceito sem declarar se há Conta elegível. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /student-sessions:
+    post:
+      tags: [StudentIdentity]
+      summary: Autenticar aluno e criar sessão
+      description: >-
+        Só credencial correta de Conta aluno ativa/confirmada cria sessão. Repetição com a
+        mesma chave/corpo devolve o mesmo sessionId lógico; não reativa sessão revogada.
+        O BFF gera cookie opaco próprio e não entrega sessionId interno ao navegador.
+      operationId: createStudentSessionInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginInput' }
+      responses:
+        '200':
+          description: Sessão lógica criada ou resposta idempotente; não inclui JWT.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionCreated' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /student-session-validations:
+    post:
+      tags: [StudentIdentity]
+      summary: Validar e renovar sessão
+      description: >-
+        Valida sessão, tenant, situação da Conta e expiração; renova inatividade atomicamente.
+        Se audience for fornecida, Identity emite JWT interno curto apenas para aquela
+        audiência autorizada. Repetição da validação não cria sessão. Falha fecha acesso.
+      operationId: validateStudentSessionInternal
+      security: [{BffServiceAssertion: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionValidationInput' }
+      responses:
+        '200':
+          description: Sessão ativa com expiração renovada e JWT opcional.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionValidated' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /student-session-revocations:
+    post:
+      tags: [StudentIdentity]
+      summary: Revogar sessão corrente
+      description: Revoga a sessão indicada; repetir ou enviar sessão já expirada não a reativa.
+      operationId: revokeStudentSessionInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SessionReference' }
+      responses:
+        '204': { description: Sessão revogada ou já inativa. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /password-reset-requests:
+    post:
+      tags: [StudentIdentity]
+      summary: Solicitar recuperação
+      description: >-
+        A resposta não distingue e-mail elegível de inelegível. Só Conta elegível gera token
+        e pedido endereçado pelo outbox.
+      operationId: requestPasswordResetInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailInput' }
+      responses:
+        '202': { description: 'Resposta neutra, independentemente da elegibilidade.' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /password-resets:
+    post:
+      tags: [StudentIdentity]
+      summary: Redefinir senha por link
+      description: >-
+        Consome token de recuperação, altera Credencial, invalida outros tokens de recuperação,
+        revoga sessões e grava fato no mesmo commit. Conta não confirmada continua assim.
+      operationId: resetStudentPasswordInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordResetInput' }
+      responses:
+        '204': { description: Senha redefinida. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/ServiceUnauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+  /password-changes:
+    post:
+      tags: [StudentIdentity]
+      summary: Trocar senha da sessão ativa
+      description: >-
+        Confere sessão e senha atual. Altera Credencial, invalida tokens de recuperação,
+        revoga outras sessões e grava fato no mesmo commit. Preserva sessão corrente.
+      operationId: changeStudentPasswordInternal
+      security: [{BffServiceAssertion: []}]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordChangeInput' }
+      responses:
+        '204': { description: Senha alterada; sessão corrente preservada. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/BusinessRule' }
+components:
+  securitySchemes:
+    BffServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        JWT de serviço assimétrico curto emitido pelo BFF do aluno. Identity valida assinatura,
+        kid, emissor, audiência, escopo, tenant, validade e jti contra replay. Não é JWT de aluno.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        Chave pública propagada sem alteração pelo BFF. Identidade isola por tenant,
+        operationId, conta quando autenticada, e chave. Janela de 24 horas; mesma chave e
+        fingerprint do corpo retornam o mesmo resultado lógico; corpo diferente retorna
+        422 IDEMPOTENCY_CONFLICT. Fingerprint e chave são armazenados sem segredo em claro.
+      schema: { type: string, minLength: 1 }
+  responses:
+    BadRequest:
+      description: JSON ou campo obrigatório inválido.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ServiceUnauthorized:
+      description: Asserção de serviço ausente, inválida ou expirada.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Asserção inválida, credencial errada ou sessão ausente/expirada/revogada; distinguir por code.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Audiência de JWT não autorizada para o BFF.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    BusinessRule:
+      description: >-
+        Regra violada; code inclui ACCOUNT_ALREADY_EXISTS, EMAIL_NOT_CONFIRMED,
+        INVALID_VERIFICATION_TOKEN, INVALID_CURRENT_PASSWORD ou IDEMPOTENCY_CONFLICT.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string }
+        traceId: { type: string }
+    Registration:
+      type: object
+      additionalProperties: false
+      required: [name, email, password]
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string, format: email }
+        password: { $ref: '#/components/schemas/StudentPassword' }
+    EmailInput:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+    VerificationToken:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: { type: string, minLength: 1 }
+    LoginInput:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { $ref: '#/components/schemas/StudentPassword' }
+    SessionReference:
+      type: object
+      additionalProperties: false
+      required: [sessionId]
+      properties:
+        sessionId: { type: string, format: uuid }
+    SessionCreated:
+      type: object
+      additionalProperties: false
+      required: [sessionId, accountId, name, expiresAt]
+      properties:
+        sessionId: { type: string, format: uuid }
+        accountId: { type: string, format: uuid }
+        name: { type: string }
+        expiresAt: { type: string, format: date-time }
+    SessionValidationInput:
+      type: object
+      additionalProperties: false
+      required: [sessionId]
+      properties:
+        sessionId: { type: string, format: uuid }
+        audience:
+          type: string
+          minLength: 1
+          description: Omitido quando o BFF só precisa consultar sessão; requerido para obter JWT de destino.
+    SessionValidated:
+      type: object
+      additionalProperties: false
+      required: [accountId, name, expiresAt]
+      properties:
+        accountId: { type: string, format: uuid }
+        name: { type: string }
+        expiresAt: { type: string, format: date-time }
+        accessToken:
+          type: string
+          description: JWT interno de aluno; presente somente quando audience foi solicitada.
+    PasswordResetInput:
+      type: object
+      additionalProperties: false
+      required: [token, newPassword]
+      properties:
+        token: { type: string, minLength: 1 }
+        newPassword: { $ref: '#/components/schemas/StudentPassword' }
+    PasswordChangeInput:
+      type: object
+      additionalProperties: false
+      required: [sessionId, currentPassword, newPassword]
+      properties:
+        sessionId: { type: string, format: uuid }
+        currentPassword: { type: string, format: password, minLength: 1, description: Credencial atual; senhas antigas podem preceder a política vigente. }
+        newPassword: { $ref: '#/components/schemas/StudentPassword' }
+    StudentPassword:
+      type: string
+      format: password
+      minLength: 8
+      description: >-
+        Nova senha com no mínimo oito caracteres, letra maiúscula, letra minúscula,
+        dígito e símbolo. Espaço não conta como símbolo.

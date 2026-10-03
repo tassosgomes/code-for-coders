@@ -1,0 +1,150 @@
+asyncapi: 3.0.0
+id: urn:code-4-coders:media
+info:
+  title: Media — fatos da preparação de vídeo
+  version: 1.0.0
+  description: >-
+    Recorte de CAP-006, PRD `tasks/prd-ingestao-midia/prd.md` v1.0 de 2026-09-25 (RF-09). Aplicação
+    produtora Media. Nenhuma mensagem recebida neste escopo; a Referência de Uso (OD30) chega com
+    CAP-005/CAP-007. Consumidor previsto: Conteúdo e Currículo (`learning`), em CAP-005, para manter a
+    própria visão de quais vídeos estão prontos para vínculo (C-12). Os fatos não carregam título, nome
+    de arquivo, nome do autor, endereço de armazenamento nem chave.
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  ativoPronto:
+    address: midia.ativo-pronto.v1
+    description: Publicar que um vídeo ficou pronto para vínculo e reprodução.
+    messages:
+      ativoPronto:
+        $ref: '#/components/messages/AtivoPronto'
+  preparacaoFalhou:
+    address: midia.preparacao-falhou.v1
+    description: Publicar que a preparação de um vídeo esgotou as tentativas.
+    messages:
+      preparacaoFalhou:
+        $ref: '#/components/messages/PreparacaoFalhou'
+operations:
+  publicarAtivoPronto:
+    action: send
+    summary: Publicar fato de vídeo pronto.
+    channel:
+      $ref: '#/channels/ativoPronto'
+    messages:
+      - $ref: '#/channels/ativoPronto/messages/ativoPronto'
+    description: >-
+      Publicação pelo outbox na mesma transação da mudança para `ready` (G06). Um fato por vídeo:
+      `eventId` é fixo para aquela transição, e toda republicação repete o mesmo `eventId`. Entrega ao
+      menos uma vez; consumidores deduplicam por `eventId`. Não há ordenação garantida entre canais; um
+      vídeo nunca publica os dois fatos, porque `ready` e `failed` são finais (RN-M05).
+  publicarPreparacaoFalhou:
+    action: send
+    summary: Publicar fato de preparação que falhou.
+    channel:
+      $ref: '#/channels/preparacaoFalhou'
+    messages:
+      - $ref: '#/channels/preparacaoFalhou/messages/preparacaoFalhou'
+    description: >-
+      Publicação pelo outbox na mesma transação da mudança para `failed`, só depois de esgotadas as
+      tentativas automáticas. Mesmas garantias de `publicarAtivoPronto`.
+components:
+  messages:
+    AtivoPronto:
+      name: AtivoPronto
+      title: Vídeo pronto
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Headers'
+      payload:
+        type: object
+        additionalProperties: false
+        required: [eventId, tenantId, videoId, occurredAt, durationSeconds]
+        description: >-
+          A Versão de Reprodução do vídeo existe e ele pode ser vinculado e reproduzido. Não diz quais
+          qualidades foram geradas: isso é detalhe de entrega de Media.
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          tenantId:
+            type: string
+            format: uuid
+            description: Escola dona do vídeo.
+          videoId:
+            type: string
+            format: uuid
+            description: O mesmo identificador de `videoId` na interface HTTP.
+          occurredAt:
+            type: string
+            format: date-time
+          durationSeconds:
+            type: integer
+            minimum: 1
+      examples:
+        - name: pronto
+          headers:
+            correlationId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+          payload:
+            eventId: 8d7c6b5a-4e3f-4a2b-9c1d-0e9f8a7b6c5d
+            tenantId: 2b3c4d5e-6f70-4a81-9b2c-3d4e5f607182
+            videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+            occurredAt: '2026-09-26T10:05:12Z'
+            durationSeconds: 2415
+    PreparacaoFalhou:
+      name: PreparacaoFalhou
+      title: Preparação falhou
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Headers'
+      payload:
+        type: object
+        additionalProperties: false
+        required: [eventId, tenantId, videoId, occurredAt, reason]
+        description: O vídeo não ficará pronto; o caminho é reenviar como vídeo novo.
+        properties:
+          eventId:
+            type: string
+            format: uuid
+          tenantId:
+            type: string
+            format: uuid
+          videoId:
+            type: string
+            format: uuid
+          occurredAt:
+            type: string
+            format: date-time
+          reason:
+            type: string
+            enum: [unreadable-file, unsupported-format, duration-exceeded, preparation-failed]
+            description: Mesma categoria de `failureReason` na interface HTTP. Consumidor deve tolerar valor novo.
+      examples:
+        - name: ilegivel
+          headers:
+            correlationId: 00-1a2b3c4d5e6f708192a3b4c5d6e7f809-1a2b3c4d5e6f7081-01
+          payload:
+            eventId: 4c5d6e7f-8091-4a2b-8c3d-4e5f60718293
+            tenantId: 2b3c4d5e-6f70-4a81-9b2c-3d4e5f607182
+            videoId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
+            occurredAt: '2026-09-26T08:21:40Z'
+            reason: unreadable-file
+  schemas:
+    Headers:
+      type: object
+      additionalProperties: false
+      required: [correlationId]
+      properties:
+        correlationId:
+          type: string
+          description: traceparent da conclusão do envio que originou a preparação.

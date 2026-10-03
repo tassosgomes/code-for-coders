@@ -1,0 +1,257 @@
+asyncapi: 3.0.0
+id: urn:code-4-coders:identity
+info:
+  title: Identidade — fatos da conta de aluno e pedido de envio
+  version: 1.0.0
+  description: Recorte de CAP-001, PRD v1.0 de 2026-09-22. Aplicação produtora Identity. Nenhuma mensagem
+    recebida neste escopo. O pedido de envio mantém a forma aprovada em CAP-026 v1.0.0.
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  contaCriada:
+    address: identidade.conta-criada.v1
+    description: Publicar fato de criação de conta.
+    messages:
+      contaCriada:
+        $ref: '#/components/messages/ContaCriada'
+  contaConfirmada:
+    address: identidade.conta-confirmada.v1
+    description: Publicar fato de confirmação de conta.
+    messages:
+      contaConfirmada:
+        $ref: '#/components/messages/ContaConfirmada'
+  senhaRedefinida:
+    address: identidade.senha-redefinida.v1
+    description: Publicar fato de alteração de senha.
+    messages:
+      senhaRedefinida:
+        $ref: '#/components/messages/SenhaRedefinida'
+  pedidoDeEnvio:
+    address: notificacao.envio-solicitado.v1
+    description: Pedir envio transacional à Notificação.
+    messages:
+      pedidoDeEnvio:
+        $ref: '#/components/messages/PedidoDeEnvioSolicitado'
+operations:
+  publicarContaCriada:
+    action: send
+    summary: Publicar fato de criação de conta.
+    channel:
+      $ref: '#/channels/contaCriada'
+    messages:
+    - $ref: '#/channels/contaCriada/messages/contaCriada'
+    description: Publicação pelo outbox. Entrega ao menos uma vez; consumidores dos fatos deduplicam por
+      eventId. Não há garantia de ordenação entre canais.
+  publicarContaConfirmada:
+    action: send
+    summary: Publicar fato de confirmação de conta.
+    channel:
+      $ref: '#/channels/contaConfirmada'
+    messages:
+    - $ref: '#/channels/contaConfirmada/messages/contaConfirmada'
+    description: Publicação pelo outbox. Entrega ao menos uma vez; consumidores dos fatos deduplicam por
+      eventId. Não há garantia de ordenação entre canais.
+  publicarSenhaRedefinida:
+    action: send
+    summary: Publicar fato de alteração de senha.
+    channel:
+      $ref: '#/channels/senhaRedefinida'
+    messages:
+    - $ref: '#/channels/senhaRedefinida/messages/senhaRedefinida'
+    description: Publicação pelo outbox. Entrega ao menos uma vez; consumidores dos fatos deduplicam por
+      eventId. Não há garantia de ordenação entre canais.
+  publicarPedidoDeEnvioSolicitado:
+    action: send
+    summary: Pedir envio transacional à Notificação.
+    channel:
+      $ref: '#/channels/pedidoDeEnvio'
+    messages:
+    - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvio'
+    description: Pedido endereçado a Notificação pelo outbox; um pedidoId por intenção, inclusive reenvio
+      deliberado. Notificação deduplica por pedidoId. Conteúdo sensível só neste canal.
+components:
+  messages:
+    ContaCriada:
+      name: ContaCriada
+      title: Conta criada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        additionalProperties: false
+        properties:
+          correlationId:
+            type: string
+        required:
+        - correlationId
+      payload:
+        type: object
+        additionalProperties: false
+        properties: &id001
+          eventId:
+            type: string
+            format: uuid
+          tenantId:
+            type: string
+          accountId:
+            type: string
+            format: uuid
+          occurredAt:
+            type: string
+            format: date-time
+        required:
+        - eventId
+        - tenantId
+        - accountId
+        - occurredAt
+        description: Conta de aluno criada, ainda não confirmada. Não carrega e-mail, token nem link.
+      examples:
+      - name: exemplo
+        headers:
+          correlationId: identity-flow-2026-09-22-0001
+        payload: &id002
+          eventId: 9f8afbd4-ec18-42a8-abfa-e988e47812f6
+          tenantId: code-4-coders
+          accountId: 550e8400-e29b-41d4-a716-446655440000
+          occurredAt: '2026-09-22T10:30:00Z'
+    ContaConfirmada:
+      name: ContaConfirmada
+      title: Conta confirmada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        additionalProperties: false
+        properties:
+          correlationId:
+            type: string
+        required:
+        - correlationId
+      payload:
+        type: object
+        additionalProperties: false
+        properties: *id001
+        required:
+        - eventId
+        - tenantId
+        - accountId
+        - occurredAt
+        description: E-mail da Conta de aluno comprovado. Não carrega e-mail nem token.
+      examples:
+      - name: exemplo
+        headers:
+          correlationId: identity-flow-2026-09-22-0001
+        payload: *id002
+    SenhaRedefinida:
+      name: SenhaRedefinida
+      title: Senha redefinida
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        additionalProperties: false
+        properties:
+          correlationId:
+            type: string
+        required:
+        - correlationId
+      payload:
+        type: object
+        additionalProperties: false
+        properties: *id001
+        required:
+        - eventId
+        - tenantId
+        - accountId
+        - occurredAt
+        description: Credencial alterada por recuperação ou troca autenticada, sem segredo nem e-mail.
+      examples:
+      - name: exemplo
+        headers:
+          correlationId: identity-flow-2026-09-22-0001
+        payload: *id002
+    PedidoDeEnvioSolicitado:
+      name: PedidoDeEnvioSolicitado
+      title: Envio solicitado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        type: object
+        additionalProperties: false
+        properties:
+          correlationId:
+            type: string
+        required:
+        - correlationId
+      payload:
+        type: object
+        additionalProperties: false
+        properties:
+          pedidoId:
+            type: string
+            format: uuid
+          tenantId:
+            type: string
+          destinatario:
+            type: string
+            format: email
+          finalidade:
+            type: string
+            enum:
+            - confirmacao-de-conta
+            - recuperacao-de-senha
+          modelo:
+            type: string
+            enum:
+            - confirmacao-de-conta
+            - recuperacao-de-senha
+          dados:
+            type: object
+            additionalProperties: false
+            properties:
+              nome:
+                type: string
+              link:
+                type: string
+                format: uri
+            required:
+            - nome
+            - link
+          solicitadoEm:
+            type: string
+            format: date-time
+        required:
+        - pedidoId
+        - tenantId
+        - destinatario
+        - finalidade
+        - modelo
+        - dados
+        - solicitadoEm
+        description: Mesmo payload de CAP-026 v1.0.0. Segredo apenas em dados.link, no canal endereçado
+          a Notificação; nunca nos fatos difundidos ou telemetria.
+      examples:
+      - name: exemplo
+        headers:
+          correlationId: identity-flow-2026-09-22-0001
+        payload:
+          pedidoId: 9f8afbd4-ec18-42a8-abfa-e988e47812f6
+          tenantId: code-4-coders
+          destinatario: aluno@example.com
+          finalidade: confirmacao-de-conta
+          modelo: confirmacao-de-conta
+          dados:
+            nome: Ana Souza
+            link: https://contas.code4coders.com.br/confirmar?token=abc123
+          solicitadoEm: '2026-09-22T10:30:00Z'
