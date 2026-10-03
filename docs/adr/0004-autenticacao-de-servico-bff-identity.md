@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0004-autenticacao-de-servico-bff-identity.md`
 - Domínios/componentes afetados: borda BFF do aluno, serviço Identity, chamadas pré-login e emissão de JWT interno
-- Origem histórica: `tasks/prd-conta-aluno`, CAP-001
+- Origem histórica: `tasks/archive/prd-conta-aluno`, CAP-001
 - Substitui: Nenhuma
 
 ## Data
@@ -69,4 +69,4 @@ Após validar credencial de aluno e situação da conta, somente Identity emite 
 - [Baseline arquitetural](../../context/architecture-baseline.md) — BA05/BA06, autenticação e JWKS.
 - [ADR-0002](0002-plataforma-de-runtime-coolify.md) — gestão de segredos no runtime.
 - [ADR-0003](0003-verificacao-de-sessao-do-aluno.md) — verificação de sessão entre BFF e Identity.
-- [TechSpec de origem](../../tasks/prd-conta-aluno/techspec.md) — contrato e fatias de CAP-001.
+- [TechSpec de origem](../../tasks/archive/prd-conta-aluno/techspec.md) — contrato e fatias de CAP-001.

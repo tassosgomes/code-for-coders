@@ -31,7 +31,7 @@ internal static class PublishedCourseContract
             if (obj["$ref"] is { } reference)
             {
                 var parts = reference.GetValue<string>().Split('#');
-                var source = parts[0].Length == 0 ? document : Read("authoring.yaml");
+                var source = parts[0].Length == 0 ? document : Read(parts[0]);
                 var target = source;
                 foreach (var segment in parts[1].Split('/').Skip(1)) target = target[segment]!;
                 return Inline(target, source);

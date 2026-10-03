@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0003-verificacao-de-sessao-do-aluno.md`
 - Domínios/componentes afetados: Identidade e Acesso, BFF do aluno, validação de sessão e emissão de JWT interno
-- Origem histórica: `tasks/prd-conta-aluno`, CAP-001
+- Origem histórica: `tasks/archive/prd-conta-aluno`, CAP-001
 - Substitui: Nenhuma; propõe exceção explícita à regra geral de `context/architecture-baseline.md` que dispensa consulta a Identity por request
 
 ## Data
@@ -73,4 +73,4 @@ Esta decisão não aplica limite de sessões, nem altera a separação entre ide
 - [Baseline arquitetural](../../context/architecture-baseline.md) — BA05/BA06, seção Sessão e autenticação, comunicação síncrona e G18.
 - [Domínio Identidade e Acesso](../../domains/identidade-e-acesso/domain.md) — Sessão, RN-07 a RN-09.
 - [ADR-0001](0001-monorepo-de-codigo.md) — serviços e dados independentes.
-- [TechSpec de origem](../../tasks/prd-conta-aluno/techspec.md) — fatias V-03 a V-05.
+- [TechSpec de origem](../../tasks/archive/prd-conta-aluno/techspec.md) — fatias V-03 a V-05.

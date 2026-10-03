@@ -11,7 +11,7 @@ internal static class OfferPublicationContract
     public static void AssertValid(JsonElement payload, bool audit = false, bool changed = false)
     {
         var document = Read(audit ? "audit.yaml" : "offers.yaml");
-        if (audit) Assert.Equal("1.3.0", document["info"]!["version"]!.GetValue<string>());
+        if (audit) Assert.Equal("1.4.0", document["info"]!["version"]!.GetValue<string>());
         var name = audit ? "AtoPraticadoPayload" : changed ? "OfertaAlteradaPayload" : "OfertaPayload";
         var schema = Inline(document["components"]!["schemas"]![name]!, document);
         var result = JsonSchema.FromText(schema.ToJsonString()).Evaluate(payload, new EvaluationOptions { RequireFormatValidation = true });

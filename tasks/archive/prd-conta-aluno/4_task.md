@@ -1,0 +1,95 @@
+---
+status: done
+task_kind: vertical
+blocked_by: [3.0]
+gate: 'dotnet test src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentPasswordRecoveryTests --minimum-expected-tests 4 && dotnet test src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.StudentPasswordRecoveryTests --minimum-expected-tests 2 && npm --prefix src/student-spa run test -- -t StudentPasswordRecovery'
+gate_expect: 'Pelo menos 7 testes passam: 4 Identity, 2 BFF e 1 SPA'
+---
+
+# 4.0 Recuperar senha sem revelar conta
+
+**Fatia:** V-04 · **Cobre:** RF-05, US-04, RN-03–08/21/24/26–28 · **Spec:** `techspec.md#v-04` · **ADR:** [0003](../../../docs/adr/0003-verificacao-de-sessao-do-aluno.md)
+
+## Comportamento
+
+A SPA solicita `requestPasswordReset` e exibe a mesma mensagem para endereço com ou sem Conta elegível. BFF devolve status/corpo públicos indistinguíveis; Identity só cria token de recuperação para Conta de aluno não desativada, grava hash e pedido `recuperacao-de-senha` no outbox com `pedidoId` estável e encaminha a Notificação. Conta inexistente, interna ou inelegível não produz pedido. O link aparece no smtp4dev local e a validade exibida coincide com a validada por Identity. Nenhum e-mail/segredo aparece em log, métrica ou fato difundido.
+
+A SPA captura o token do link, remove-o da URL e chama `resetStudentPassword` com nova senha. Token correto, não vencido, de finalidade e tenant corretos é consumido atomicamente junto da troca de Credencial, invalidação dos demais tokens de recuperação, revogação das sessões da Conta e gravação de `identidade.senha-redefinida`. A próxima ação de qualquer sessão antiga recebe 401, mesmo após falha ou reinício do BFF; senha antiga não autentica, nova senha autentica somente se a Conta já era confirmada. Recuperação de Conta não confirmada preserva seu estado. Token usado, alterado, expirado, de confirmação ou concorrente não muda Credencial; senha fora da política também não a muda e conserva o token válido até expirar. Replay da mesma intenção não duplica efeito; indisponibilidade do broker deixa pedido no outbox para retry.
+
+## Fora do escopo desta task
+
+Troca com senha atual e preservação da sessão corrente (5.0). Entrega a destinatários externos depende da configuração operacional do provedor.
+
+## Decisões fechadas
+
+- Resposta neutra e códigos seguem os OpenAPI; não diferenciar elegibilidade por corpo, status ou mensagem visível.
+- Política de senha é a mesma do cadastro; transação de Identity reúne Credencial, tokens, sessões e outbox. A revogação imediata segue ADR-0003.
+- Notificação recebe pedido endereçado no modelo `recuperacao-de-senha`; validade é configurada e validada, sem número fixado no plano.
+
+## Modificar / Referenciar
+
+- **modificar:** `src/identity/src/CodeForCoders.Identity.Infra.Data/IdentityDbContext.cs` e `src/identity/src/CodeForCoders.Identity.Api/Extensions/EndpointExtensions.cs` (token, Credencial, revogação e operações internas)
+- **modificar:** `src/identity/src/CodeForCoders.Identity.Infra.Messaging/RabbitMqTopologyInitializer.cs`, `src/identity/src/CodeForCoders.Identity.Infra.Messaging/RabbitMqPublisher.cs`, `src/identity/src/CodeForCoders.Identity.Infra.Messaging/Configuration/RabbitMqOptions.cs`, `src/identity/src/CodeForCoders.Identity.Infra.Data/Outbox/OutboxMessage.cs`, `src/identity/src/CodeForCoders.Identity.Infra.Data/Outbox/OutboxMessageConfiguration.cs` e `src/identity/src/CodeForCoders.Identity.Application/Interfaces/IOutboxMessageWriter.cs` (pedido e fato no destino correto)
+- **modificar:** `src/bff-student/src/CodeForCoders.BffStudent.Application/Common/OpaqueBffSession.cs`, `src/bff-student/src/CodeForCoders.BffStudent.Infra.Data/ValkeyBffSessionStore.cs` e `src/bff-student/src/CodeForCoders.BffStudent.Api/Security/BffSecurityMiddleware.cs` (recusa de sessão revogada)
+- **modificar:** `src/bff-student/src/CodeForCoders.BffStudent.Api/Extensions/EndpointExtensions.cs` e `src/bff-student/src/CodeForCoders.BffStudent.Api/Extensions/ServiceConfigurationExtensions.cs` (pedido e redefinição)
+- **modificar:** `src/student-spa/src/app/router.tsx`, `src/student-spa/src/config/paths.ts` e `src/student-spa/src/lib/api-client.ts` (pedido neutro, link e formulário)
+- **ref:** `src/notification/src/CodeForCoders.Notification.Api/Extensions/ServiceConfigurationExtensions.cs`, `src/notification/src/CodeForCoders.Notification.Infra.Data/Configuration/EmailOptions.cs` e `docker-compose.yml` (SMTP local de 1.0)
+- **ref:** `techspec.md#v-04`, `api-contract.yaml`, `internal-api-contract.yaml`, `asyncapi-contract.yaml`, `../prd-notificacao-transacional/asyncapi-contract.yaml`, `domains/identidade-e-acesso/domain.md` e skills `dotnet`/`react`
+
+## Pronto quando
+
+- [x] Gate passa (exit 0), com as três suítes selecionadas pelo comando do frontmatter.
+- [x] Pedido para conta elegível e inelegível tem resposta pública idêntica; só a elegível gera mensagem capturada no smtp4dev.
+- [x] Link válido troca a senha uma vez, mantém estado de confirmação e revoga sessões; token inválido ou senha fora da política preserva Credencial e sessões.
+
+## Decisão registrada (intervenção 2026-09-23)
+
+Bloqueante da revisão `run.05m9FlZW`: o token de verificação chegava em claro ao payload JSONB do outbox pelo link do
+pedido `notificacao.envio-solicitado.v1`. Decisão do responsável pelo produto: **cifrar no outbox**. Identity cifra o
+payload dos pedidos endereçados (que carregam link/destinatário) ao gravar a intenção, com chave de proteção
+fornecida por configuração validada na partida e sem segredo versionado, e decifra somente no publisher antes de
+publicar. Entrega e retry mantêm o mesmo `pedidoId`. Fatos difundidos continuam sem segredo e não precisam de cifra.
+A proteção vale para todo pedido endereçado gravado pelo writer compartilhado, incluindo os de confirmação das
+tasks 1.0/2.0. A evidência deve provar que o payload persistido não contém o token em claro e que a mensagem publicada
+ainda carrega o link correto.
+
+## Autorização de ambiente para o smoke (2026-09-23)
+
+O responsável autorizou parar o stack Compose `code-for-coders-*` em execução (de outra checkout) e subir o stack
+desta worktree para o smoke no smtp4dev, com chaves efêmeras geradas localmente conforme
+`docs/student-registration-local-development.md`, sem versionar nenhuma chave. O smoke deve cobrir cadastro →
+e-mail de confirmação, reenvio e pedido de recuperação → e-mail com link de redefinição capturado no smtp4dev.
+Registre a evidência no relatório.
+
+Nota do orquestrador (revisão `run.vWr3VWGi`): o stack desta worktree está em execução com `bff-student` caindo na
+partida por DI ausente de `ServiceAssertionTokenFactory`. Após corrigir, confirme que `bff-student` sobe saudável no
+Compose (a autorização acima vale também para reconstruir esse serviço) e, se possível, capture o smoke no smtp4dev.
+
+## Reabertura após validação full (run.W4iG4XKc, `prd_review.md`)
+
+Corrigir nesta task:
+- **B2 (parte desta task):** `react-hooks/refs` em
+  `src/student-spa/src/features/student-password-recovery/components/student-password-recovery-screen.tsx:40,46,67,85`.
+  Tire a leitura de ref do render (inicialização de `useRef` a partir de outro ref e callbacks passados a
+  `form.handleSubmit` durante o render), seguindo o padrão aplicado em cadastro/confirmação; não desabilite a regra.
+- **Base path do link de redefinição:** `docker-compose.yml:112` e `appsettings.json:30` usam
+  `http://localhost:8082/redefinir-senha`, sem o base path `/student/` servido pelo Nginx da SPA (mesmo defeito
+  corrigido na 1.0 para `/student/confirm-account`). Corrija para `/student/redefinir-senha`, confira a rota da SPA e
+  alinhe a documentação local.
+Evidência adicional além do gate: `npm --prefix src/student-spa run lint` limpo (SPA inteira), `npm --prefix src/student-spa run test`
+completo e evidência de que o URL gerado abre a rota servida pela SPA.
+
+## Reabertura — rodada full 2, tentativa 1 (run.TUd4coLe, `prd_review.md`)
+
+**B1 — token de link em logs/telemetria** (viola `prd.md:254` e `techspec.md:33`). Cobre os links de redefinição e
+de confirmação (`/student/redefinir-senha?token=…`, `/student/confirm-account?token=…`):
+- `src/student-spa/nginx.conf.template:23-25`: o access log padrão grava `$request` com a query. Use um `log_format`
+  que não registre query string (ex.: `$uri` em vez de `$request`/`$request_uri`) ao menos para as rotas com token,
+  sem quebrar o fallback da SPA.
+- Telemetria da SPA (`src/student-spa/src/main.tsx:10`, `telemetry.ts:49-63`): auto-instrumentações (ex.
+  `document-load`) podem registrar `url.full`/`http.url` com a query antes de a tela remover o token. Redija/sanitize
+  atributos de URL (remover `token` da query) ou desative a captura de query nessas instrumentações.
+- Testes: unitário do sanitizador de URL/atributos da telemetria e evidência de que o access log do Nginx da imagem da
+  SPA não contém `token=` após requisição a `/student/redefinir-senha?token=probe` (container isolado, sem tocar no
+  stack `code-for-coders-*` além do necessário).
+Execute comandos longos em primeiro plano e rode também `npm --prefix src/student-spa run lint` e `run test`.

@@ -50,7 +50,7 @@ describe('authoring version level', () => {
   });
 
   it('strict version schema parses the actual getCourseVersion OpenAPI 1.1.0 example', () => {
-    const document: unknown = parse(readFileSync('../../tasks/prd-nivel-prerequisito-curso/api-contract.yaml', 'utf8'));
+    const document: unknown = parse(readFileSync('../../contracts/bff-admin/openapi-autoria.yaml', 'utf8'));
     const contract = z.object({ info: z.object({ version: z.literal('1.1.0') }), paths: z.record(z.string(), z.unknown()) }).parse(document);
     const operation = z.object({ get: z.object({ responses: z.object({ '200': z.object({ content: z.object({ 'application/json': z.object({ examples: z.object({ versao4: z.object({ value: z.unknown() }) }) }) }) }) }) }) }).parse(contract.paths['/courses/{courseId}/versions/{versionNumber}']);
     const version = courseVersionSchema.parse(operation.get.responses['200'].content['application/json'].examples.versao4.value);

@@ -1,0 +1,525 @@
+openapi: 3.1.0
+info:
+  title: BFF do backoffice — consulta da trilha de auditoria
+  version: 1.2.0
+  description: |
+    Contrato **vigente** consolidado. Fronteira: `admin-spa` → `bff-admin`: busca, detalhe e complemento de registros de auditoria.
+
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
+    - `tasks/archive/prd-consulta-trilha-auditoria/api-contract.yaml` 1.2.0
+
+    **Notas de prd-consulta-trilha-auditoria (1.2.0):** Recorte de CAP-030, segundo PRD, para admin-spa → bff-admin. O BFF valida a sessão interna vigente a cada ação por Identity (ADR-0005), exige papel administrador e conserva o tenant da sessão. O serviço audit revalida papel e tenant com JWT interno. A confirmação é aceita para publicação durável; o complemento aparece somente depois que audit consome o fato. Motivo e explicação nunca entram em URL ou telemetria.
+  contact:
+    name: Time de Backoffice e Auditoria
+servers:
+- url: /api/v1
+  description: Borda do backoffice
+tags:
+- name: AuditRecords
+  description: Investigação da trilha e complementos
+paths:
+  /audit-record-searches:
+    post:
+      tags:
+      - AuditRecords
+      summary: Listar registros originais da trilha
+      description: Apenas administrador do tenant da sessão. Ordena por practicedAt decrescente e id decrescente
+        como desempate. Quando practicedAt está ausente, usa receivedAt apenas para posicionar o registro e exibe
+        practicedAt como null. Filtros são combinados e intervalo de practicedAt inclui ambos os extremos; registro
+        sem practicedAt não corresponde a um intervalo informado. A busca usa POST para manter as referências de
+        autor e alvo fora de URLs e históricos; não cria nem altera registro. Uma primeira página cria uma visão
+        estável dos IDs elegíveis; o snapshot opaco retornado deve acompanhar as páginas seguintes com os mesmos
+        filtros e _size. Complementos não são linhas da lista principal.
+      operationId: listAuditRecords
+      security:
+      - StaffSession: []
+        CsrfToken: []
+      parameters:
+      - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditRecordSearchRequest'
+            examples:
+              filtered:
+                value:
+                  _page: 1
+                  _size: 10
+                  from: '2026-09-27T00:00:00Z'
+                  to: '2026-09-27T23:59:59Z'
+                  authorId: 337fcd34-6bf6-4fe5-a1e6-608fe9426be7
+      responses:
+        '200':
+          description: Página da visão estável; data é [] quando vazia.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditRecordPage'
+              examples:
+                page:
+                  value:
+                    data:
+                    - id: 5137eb89-3e71-4462-9c52-3994f7be0f9a
+                      type: papel-concedido
+                      practicedAt: '2026-09-27T10:00:00Z'
+                      author:
+                        type: conta-interna
+                        id: 337fcd34-6bf6-4fe5-a1e6-608fe9426be7
+                      target:
+                        type: conta-interna
+                        id: 550e8400-e29b-41d4-a716-446655440000
+                      compliant: true
+                      hasComplements: false
+                      role: professor
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 1
+                      totalPages: 1
+                      snapshot: snap_7mQ2kV4b
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/InvalidFilter'
+  /audit-records/{recordId}:
+    parameters:
+    - $ref: '#/components/parameters/RecordId'
+    get:
+      tags:
+      - AuditRecords
+      summary: Examinar o registro original e seus complementos
+      description: Somente administrador do tenant. A identificação legível vem de Identity no momento da consulta;
+        label é ausente quando a referência não puder ser resolvida. Referência e conteúdo recebido permanecem intactos.
+        Um ID de outro tenant produz a mesma resposta que um ID inexistente.
+      operationId: getAuditRecord
+      security:
+      - StaffSession: []
+      responses:
+        '200':
+          description: Original, faltas e complementos em ordem de createdAt crescente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditRecordDetail'
+              examples:
+                nonCompliant:
+                  value:
+                    id: 5137eb89-3e71-4462-9c52-3994f7be0f9a
+                    type: papel-concedido
+                    origin: identidade
+                    practicedAt: '2026-09-27T10:00:00Z'
+                    receivedAt: '2026-09-27T10:00:04Z'
+                    author: null
+                    target:
+                      type: conta-interna
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      label: Marina Alves
+                    reason: null
+                    attributes:
+                      papel: professor
+                    compliant: false
+                    hasComplements: false
+                    nonComplianceReasons:
+                    - autor-ausente
+                    - motivo-ausente
+                    complements: []
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /audit-records/{recordId}/complement-confirmations:
+    parameters:
+    - $ref: '#/components/parameters/RecordId'
+    post:
+      tags:
+      - AuditRecords
+      summary: Confirmar explicação posterior para o registro original
+      description: Valida sessão, administrador, tenant e original existente antes de aceitar. Idempotency-Key identifica
+        uma confirmação no mesmo tenant, ator e operação; repetição com mesmo recordId e corpo devolve a mesma resposta
+        por 24 horas. Reuso da chave com outro recordId ou corpo é recusado. O aceite apenas torna durável o fato
+        para envio; nenhum registro é criado até audit consumir a mensagem. O cliente atualiza o detalhe até ver
+        o complemento com confirmationId correspondente.
+      operationId: confirmAuditRecordComplement
+      security:
+      - StaffSession: []
+        CsrfToken: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComplementConfirmationRequest'
+            examples:
+              explanation:
+                value:
+                  explanation: A autorização foi confirmada no chamado interno de suporte.
+      responses:
+        '202':
+          description: Confirmação aceita para publicação; complemento ainda pode não estar visível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplementConfirmationAccepted'
+              examples:
+                accepted:
+                  value:
+                    confirmationId: d69bd911-9631-4f59-8242-c43629806177
+                    status: accepted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/InvalidExplanation'
+components:
+  securitySchemes:
+    StaffSession:
+      type: apiKey
+      in: cookie
+      name: staff_session
+      description: Cookie opaco do backoffice, HttpOnly, Secure e SameSite; JWT nunca chega ao navegador.
+    CsrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Prova vinculada à sessão, fornecida por GET /staff-sessions/current.
+  parameters:
+    RecordId:
+      name: recordId
+      in: path
+      required: true
+      description: Identificador opaco do registro original; nunca contém dado pessoal.
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID gerado pelo cliente e reutilizado na mesma confirmação por 24 horas.
+      schema:
+        type: string
+        format: uuid
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Prova CSRF da sessão.
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    BadRequest:
+      description: Corpo, cabeçalho ou JSON inválido; code VALIDATION_ERROR.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: Sessão ausente, expirada ou revogada; code SESSION_REQUIRED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Ator autenticado sem papel administrador ou sem CSRF; code PERMISSION_DENIED ou CSRF_INVALID.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Registro ausente, fora do tenant ou complemento no lugar do original; code AUDIT_RECORD_NOT_FOUND.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InvalidFilter:
+      description: Intervalo invertido ou snapshot expirado/incompatível com filtros, tamanho, sessão ou tenant;
+        code AUDIT_FILTER_INVALID.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InvalidExplanation:
+      description: Explicação vazia (EXPLANATION_REQUIRED) ou chave de idempotência reutilizada com outro recordId
+        ou corpo (IDEMPOTENCY_CONFLICT).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    AuditRecordSearchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        _page:
+          type: integer
+          minimum: 1
+          default: 1
+        _size:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        snapshot:
+          type: string
+          minLength: 1
+          description: Obrigatório após a primeira página; vinculado a filtros, tamanho, tenant e sessão.
+        from:
+          type: string
+          format: date-time
+          description: Instante inicial inclusivo de practicedAt, ISO 8601 com offset.
+        to:
+          type: string
+          format: date-time
+          description: Instante final inclusivo de practicedAt, ISO 8601 com offset.
+        type:
+          type: string
+          minLength: 1
+          description: Tipo recebido, inclusive desconhecido preservado no registro.
+        authorId:
+          type: string
+          format: uuid
+          description: Referência do autor presente no original, inclusive não conforme.
+        targetId:
+          type: string
+          format: uuid
+          description: Referência do alvo presente no original, inclusive não conforme.
+        compliant:
+          type: boolean
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+    IdentityReference:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - id
+      properties:
+        type:
+          oneOf:
+          - type: string
+          - type: 'null'
+          description: Pode ser null quando a referência recebida estava incompleta.
+        id:
+          oneOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Pode ser null quando a referência recebida estava incompleta.
+        label:
+          type: string
+          description: Identificação legível obtida de Identity na consulta; ausência indica não resolução.
+    AuditRecordSummary:
+      type: object
+      required:
+      - id
+      - type
+      - practicedAt
+      - author
+      - target
+      - compliant
+      - hasComplements
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type:
+          - string
+          - 'null'
+        practicedAt:
+          oneOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        author:
+          type:
+          - object
+          - 'null'
+          oneOf:
+          - $ref: '#/components/schemas/IdentityReference'
+          - type: 'null'
+        target:
+          type:
+          - object
+          - 'null'
+          oneOf:
+          - $ref: '#/components/schemas/IdentityReference'
+          - type: 'null'
+        compliant:
+          type: boolean
+        hasComplements:
+          type: boolean
+        role:
+          type:
+          - string
+          - 'null'
+          description: Papel atribuído ou revogado no ato; null para outros tipos ou quando ausente.
+    Pagination:
+      type: object
+      additionalProperties: false
+      required:
+      - page
+      - size
+      - total
+      - totalPages
+      - snapshot
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+        snapshot:
+          type: string
+    AuditRecordPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditRecordSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Complement:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - confirmationId
+      - createdAt
+      - author
+      - explanation
+      properties:
+        id:
+          type: string
+          format: uuid
+        confirmationId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        author:
+          $ref: '#/components/schemas/IdentityReference'
+        explanation:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    AuditRecordDetail:
+      allOf:
+      - $ref: '#/components/schemas/AuditRecordSummary'
+      - type: object
+        required:
+        - origin
+        - receivedAt
+        - reason
+        - attributes
+        - nonComplianceReasons
+        - complements
+        properties:
+          origin:
+            type: string
+          receivedAt:
+            type: string
+            format: date-time
+          reason:
+            type:
+            - string
+            - 'null'
+          attributes:
+            type: object
+            additionalProperties:
+              type: string
+            description: Conteúdo adicional recebido da origem, sem dado pessoal copiado.
+          nonComplianceReasons:
+            type: array
+            items:
+              type: string
+              enum:
+              - tipo-desconhecido
+              - autor-ausente
+              - alvo-ausente
+              - motivo-ausente
+              - momento-ausente
+              - complemento-invalido
+              - motivo-excede-limite
+          complements:
+            type: array
+            items:
+              $ref: '#/components/schemas/Complement'
+    ComplementConfirmationRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - explanation
+      properties:
+        explanation:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          pattern: \S
+    ComplementConfirmationAccepted:
+      type: object
+      additionalProperties: false
+      required:
+      - confirmationId
+      - status
+      properties:
+        confirmationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - accepted

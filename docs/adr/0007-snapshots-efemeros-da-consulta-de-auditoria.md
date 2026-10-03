@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0007-snapshots-efemeros-da-consulta-de-auditoria.md`
 - Domínios/componentes afetados: Auditoria e Conformidade, serviço `audit`, infraestrutura Valkey
-- Origem histórica: `tasks/prd-consulta-trilha-auditoria`, CAP-030
+- Origem histórica: `tasks/archive/prd-consulta-trilha-auditoria`, CAP-030
 - Substitui: Nenhuma
 
 ## Data
@@ -99,4 +99,4 @@ chega. A liberação automática usa TTL absoluto, conforme [EXPIRE no Valkey](h
 - [ADR-0002](0002-plataforma-de-runtime-coolify.md) — Valkey na plataforma, sem ser fonte de verdade.
 - [Domínio Auditoria](../../domains/auditoria-e-conformidade/domain.md) — RN-A01, RN-A04, RN-A09 e RN-A13.
 - [ADR-0005](0005-sessao-e-servico-do-backoffice.md) — revalidação de sessão e JWT de `audit`.
-- [Contrato de consulta](../../tasks/prd-consulta-trilha-auditoria/contracts.md) — C-01, origem histórica.
+- [Contrato de consulta](../../tasks/archive/prd-consulta-trilha-auditoria/contracts.md) — C-01, origem histórica.
