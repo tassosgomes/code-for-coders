@@ -1,7 +1,7 @@
 # Wireframes ASCII — Tela da aula do aluno (CAP-007, 1º PRD)
 
 > **Status:** ASCII aprovado pelo responsável em 2026-10-03
-> **Figma:** a definir após a aprovação deste ASCII (seção 8, reservada ao handoff do Figma) · arquivo Code4Coders — Design System.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2332) · frames por tela na [seção 8](#8-handoff-do-figma--aguardando-aprovação) · arquivo Code4Coders — Design System.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 3.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados da **tela da aula** (`student-spa`) antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-reproducao-protegida/prd.md) v1.0 (Experiência do Usuário, RF-01 a RF-07, RN-R01 a RN-R08, DP-01 a DP-10), [TechSpec](../../tasks/prd-reproducao-protegida/techspec.md) v1.0 (Bloco Frontend, V-01 a V-06, Habilitadores inevitáveis, D-05, D-06, D-11, D-13), [contrato do BFF do aluno](../../tasks/prd-reproducao-protegida/api-contract.md) 1.0.0 ([YAML](../../tasks/prd-reproducao-protegida/api-contract.yaml)), [wireframes de Cortesias](wireframes-cortesias.md) (formato do documento e do registro de aprovação), [wireframes do Catálogo e vitrine](wireframes-catalogo-vitrine.md) e [wireframes da conta do aluno](wireframes-conta-aluno.md) (design system do aluno, layout público, AppShell logado), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -406,6 +406,104 @@ Tudo reusando o AppShell do aluno, `Alert`, `Skeleton`, `Accordion`, `Badge` e d
 
 ---
 
-## 8. Handoff do Figma — reservado
+## 8. Handoff do Figma — aguardando aprovação
 
-> **Aprovação:** reservado à aprovação explícita do responsável pelo ASCII e, depois, pelo Figma. Nenhum código de tela começa antes dos dois registros.
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-10-03, nas páginas `Fluxo — Aula` e `Screens — Aula`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2332).
+
+> **Aprovação:** aguardando a aprovação explícita do responsável sobre o Figma. Pedido de ajuste volta ao Figma (ou ao ASCII, se mudar conteúdo) antes do registro. Nenhum código de tela começa antes dele.
+
+### 8.1 Fluxos e navegação
+
+| Artefato | Link e `node-id` |
+|---|---|
+| Índice de revisão | [260:2332](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2332) |
+| Fluxo 1 · Aluno — abrir e assistir a aula | [261:2](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=261-2) |
+| Fluxo 2 · Rota direta de aula negada (A1.r) | [261:199](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=261-199) |
+| Página Fluxo — Aula | [255:2](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-2) |
+| Página Screens — Aula | [255:3](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-3) |
+
+Cada nó dos fluxos tem o botão **Revisar tela →**, que abre o frame correspondente pelo link do arquivo. A entrada sem login (A1.q) reusa o frame existente de Entrar da Conta do aluno ([51:537](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=51-537)). A1.o (renovação em curso) é invisível por decisão (G11): o nó do fluxo aponta para A1.a, sem frame próprio. Os dados são ilustrativos e o desenho não executa reprodução, decisão de acesso nem renovação; foco, teclado, leitor de tela e regras do servidor seguem as seções 1 a 5.
+
+### 8.2 Inventário de telas e estados
+
+Desktop em 1440 × 900; mobile em 390 de largura (altura 844, ou a do conteúdo quando ele passa disso); tela cheia no celular na horizontal (844 × 390). Light em todas as telas; Dark em A1.a e A1.f.
+
+**Ajustes de desenho sem mudar decisão:** o nome no menu da conta é o da aluna do exemplo (Marina Alves), o mesmo do e-mail da marca d'água, para não sugerir que a marca mostra outra pessoa; a imagem do vídeo é ilustrada com o `Code Window` do DS (princípio "código é a estrela"); no celular o vídeo 16:9 fica acima da barra de controles em duas linhas, dentro do mesmo contêiner, e as zonas da marca ficam sobre a imagem. Estados a mais que o ASCII desenhava em quadro próprio: A1.a2 (menu de velocidade aberto, desktop e celular) e A1.c no celular na horizontal. A1.p (exemplos de estado no celular) está coberto pelos frames de A1.f e A1.h em Mobile 390. Para A1.i, o desenho mostra o caso com a lista da versão vigente à mão (republicação), sem aula atual destacada.
+
+#### 🧩 Composições propostas — Aula — [grupo 255:4](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-4)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| Icon/play | 24 × 24 | [255:14](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-14) |
+| Icon/volume-2 | 24 × 24 | [255:19](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-19) |
+| Icon/maximize | 24 × 24 | [255:25](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-25) |
+| Icon/minimize | 24 × 24 | [255:31](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-31) |
+| Icon/monitor-x | 24 × 24 | [255:38](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-38) |
+| WatermarkTag | 177 × 24 | [255:42](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-42) |
+| PlayerControls (layout desktop · mobile · tela-cheia × estado reproduzindo · pausado) | 1490 × 594 | [255:202](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-202) |
+| SpeedOption | 370 × 66 | [255:213](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-213) |
+| SpeedMenu | 170 × 198 | [255:214](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-214) |
+| PersonalUseNotice | 888 × 44 | [255:236](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=255-236) |
+| LessonItem (aluno) — estado padrão · atual | 378 × 170 | [256:89](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-89) |
+| ModuleHeader (aluno) — aberto sim · não | 378 × 146 | [256:98](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-98) |
+| LessonList — carregada · carregando | 794 × 404 | [256:144](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-144) |
+| LessonState | 888 × 500 | [256:148](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-148) |
+| StudentHeader — desktop · mobile | 1490 × 210 | [256:202](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-202) |
+| StudentFooter — desktop · mobile | 1490 × 194 | [256:207](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-207) |
+| LessonPlayer — 4 zonas × desktop · mobile | 1900 × 1399 | [256:535](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=256-535) |
+| Ordem de foco do player (anotação) | 900 × 152 | [260:2292](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2292) |
+
+#### A1 · Tela da aula — reproduzir, velocidade, pausar, carregar — [grupo 257:419](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-419)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.a · Reproduzindo (marca na zona superior direita) | 1440 × 900 | [257:420](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-420) |
+| A1.a2 · Menu de velocidade aberto | 1440 × 900 | [257:530](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-530) |
+| A1.e · Pausado (marca visível) | 1440 × 900 | [257:659](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-659) |
+| A1.d · Carregando | 1440 × 900 | [257:793](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-793) |
+
+#### A1.c · Tela cheia — [grupo 257:831](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-831)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.c · Tela cheia (marca na zona inferior esquerda) | 1440 × 900 | [257:832](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-832) |
+| A1.c · Tela cheia, celular na horizontal | 844 × 390 | [257:898](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=257-898) |
+
+#### A1 · Estados — mensagem no lugar do player — [grupo 258:836](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-836)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.f · Sem acesso (sem título e sem lista) | 1440 × 900 | [258:837](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-837) |
+| A1.g · Acesso encerrado (sem título e sem lista) | 1440 × 900 | [258:878](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-878) |
+| A1.h · Indisponibilidade da decisão | 1440 × 900 | [258:919](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-919) |
+| A1.i · Aula não disponível (lista da versão vigente) | 1440 × 900 | [258:1001](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-1001) |
+| A1.j · Vídeo indisponível | 1440 × 900 | [258:1080](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-1080) |
+| A1.k · Não foi possível iniciar a aula | 1440 × 900 | [258:1167](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-1167) |
+| A1.l · Navegador sem suporte | 1440 × 900 | [258:1249](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-1249) |
+| A1.m · Reprodução interrompida — direito encerrado | 1440 × 900 | [258:1333](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-1333) |
+| A1.n · Reprodução interrompida — indisponível até o fim da validade | 1440 × 900 | [258:1414](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=258-1414) |
+
+#### Mobile 390 — tela da aula e estados — [grupo 259:1353](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1353)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.b · Reproduzindo (marca na zona superior direita) | 390 × 1035 | [259:1354](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1354) |
+| A1.a2 · Menu de velocidade aberto | 390 × 1035 | [259:1461](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1461) |
+| A1.e · Pausado (marca visível) | 390 × 1035 | [259:1587](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1587) |
+| A1.d · Carregando | 390 × 844 | [259:1721](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1721) |
+| A1.f · Sem acesso (A1.p) | 390 × 844 | [259:1753](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1753) |
+| A1.g · Acesso encerrado | 390 × 844 | [259:1788](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1788) |
+| A1.h · Indisponibilidade da decisão (A1.p) | 390 × 932 | [259:1823](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1823) |
+| A1.i · Aula não disponível | 390 × 844 | [259:1899](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1899) |
+| A1.j · Vídeo indisponível | 390 × 844 | [259:1972](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-1972) |
+| A1.k · Não foi possível iniciar a aula | 390 × 904 | [259:2053](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-2053) |
+| A1.l · Navegador sem suporte | 390 × 896 | [259:2129](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-2129) |
+| A1.m · Reprodução interrompida — direito encerrado | 390 × 896 | [259:2207](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-2207) |
+| A1.n · Reprodução interrompida — indisponível até o fim da validade | 390 × 896 | [259:2282](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=259-2282) |
+
+#### Dark mode — validação de tokens (Aula) — [grupo 260:2140](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2140)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.a · Reproduzindo — Dark | 1440 × 900 | [260:2141](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2141) |
+| A1.f · Sem acesso — Dark | 1440 × 900 | [260:2251](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=260-2251) |
