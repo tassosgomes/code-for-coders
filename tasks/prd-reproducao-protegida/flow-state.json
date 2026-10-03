@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "branch": "feature/reproducao-protegida",
+  "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
+  "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
+  "target_ref": null,
+  "last_checkpoint": "1.0",
+  "phase": "checkpoint",
+  "active_task": "2.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "specs": ["techspec.md", "contracts.md"],
+  "delivery": "pr",
+  "validated_commit": null,
+  "validated_tree": null,
+  "last_result": {
+    "run_id": "run.j4NSdp8n",
+    "role": "validator",
+    "mode": "focused",
+    "task": "1.0",
+    "outcome": "approved",
+    "note": "0 bloqueantes, 3 recomendacoes nao bloqueantes (destino de 'Ver outras aulas', frase de progresso em A1.m, registro do Figma em 2.0)"
+  },
+  "pending": null,
+  "history": [
+    "prepare-prd-branch ok (run.ez4xfIPY): feature/reproducao-protegida a partir de e3d2ed4, delivery=pr",
+    "1.0 implement run.26C852Kl: documento wireframes-aula.md completo, status neutro; TASK BLOCKED aguardando aprovacao do responsavel (tentativa nao consumida)",
+    "1.0 aprovacao ASCII pelo responsavel em 2026-10-03; status registrado; gate exit 0; seguindo para focused",
+    "1.0 focused run.j4NSdp8n: approved (0 bloqueantes)",
+    "1.0 checkpoint-task ok (run.l41Nvcvc): 1_task.md done, tasks.md [x] 1.0, wireframes-aula.md 411 linhas, review focused aprovada run.j4NSdp8n, gate rg exit 0"
+  ]
+}
