@@ -48,6 +48,7 @@ public sealed class StudentConfirmationTests(IdentityIntegrationFixture fixture)
         var fact = await verificationContext.OutboxMessages.SingleAsync(
             message => message.RoutingKey == "identidade.conta-confirmada.v1",
             cancellationToken);
+        IdentityMessages.AssertSends(fact.RoutingKey, OutboxTestProtection.ReadPayload(fact));
         Assert.True(account.IsConfirmed);
         Assert.NotNull(storedToken.ConsumedOn);
         Assert.Equal("identity.events", fact.Exchange);

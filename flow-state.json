@@ -1,17 +1,18 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-10-01",
-  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/prd-ingestao-midia, fora do indice por colisao de chave unica.",
+  "updated": "2026-10-03",
+  "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/archive/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/archive/prd-ingestao-midia, fora do indice por colisao de chave unica. PRDs concluidos ficam arquivados em tasks/archive/ (so historico, nao sao fonte da verdade). O contrato vigente de cada fronteira vive em contracts/ (artifacts.contracts); novos PRDs continuam em tasks/prd-[slug]/ e promovem o recorte para contracts/ ao concluir.",
   "artifacts": {
     "vision": "vision.md",
     "domain-map": "context/domain-map.md",
     "architecture-baseline": "context/architecture-baseline.md",
     "capability-backlog": "backlog/capabilities.md",
-    "prd": "tasks/prd-trilha-auditoria/prd.md",
-    "contract": "tasks/prd-trilha-auditoria/contracts.md",
-    "techspec": "tasks/prd-trilha-auditoria/techspec.md",
-    "CAP-006-ingestao:prd": "tasks/prd-ingestao-midia/prd.md"
+    "prd": "tasks/archive/prd-trilha-auditoria/prd.md",
+    "contract": "tasks/archive/prd-trilha-auditoria/contracts.md",
+    "techspec": "tasks/archive/prd-trilha-auditoria/techspec.md",
+    "CAP-006-ingestao:prd": "tasks/archive/prd-ingestao-midia/prd.md",
+    "contracts": "contracts/README.md"
   },
   "capability_stages": [
     "backlog",
@@ -29,7 +30,7 @@
       "stage": "done",
       "artifacts": {
         "domain": "domains/identidade-e-acesso/domain.md",
-        "prd": "tasks/prd-conta-aluno/prd.md"
+        "prd": "tasks/archive/prd-conta-aluno/prd.md"
       },
       "mvp_order": 1
     },
@@ -38,9 +39,9 @@
       "stage": "done",
       "artifacts": {
         "domain": "domains/identidade-e-acesso/domain.md",
-        "prd": "tasks/prd-acesso-interno/prd.md",
-        "contract": "tasks/prd-acesso-interno/contracts.md",
-        "techspec": "tasks/prd-acesso-interno/techspec.md"
+        "prd": "tasks/archive/prd-acesso-interno/prd.md",
+        "contract": "tasks/archive/prd-acesso-interno/contracts.md",
+        "techspec": "tasks/archive/prd-acesso-interno/techspec.md"
       },
       "mvp_order": 2
     },
@@ -49,13 +50,13 @@
       "stage": "done",
       "artifacts": {
         "domain": "domains/catalogo-e-oferta/domain.md",
-        "prd": "tasks/prd-vitrine-oferta/prd.md",
-        "contract": "tasks/prd-vitrine-oferta/contracts.md",
-        "techspec": "tasks/prd-vitrine-oferta/techspec.md"
+        "prd": "tasks/archive/prd-vitrine-oferta/prd.md",
+        "contract": "tasks/archive/prd-vitrine-oferta/contracts.md",
+        "techspec": "tasks/archive/prd-vitrine-oferta/techspec.md"
       },
       "mvp_order": 5,
       "delivered": [
-        "tasks/prd-vitrine-oferta (1o PRD, done, PR #128)"
+        "tasks/archive/prd-vitrine-oferta (1o PRD, done, PR #128)"
       ]
     },
     {
@@ -70,14 +71,14 @@
       "stage": "done",
       "artifacts": {
         "domain": "domains/conteudo-e-curriculo/domain.md",
-        "prd": "tasks/prd-nivel-prerequisito-curso/prd.md",
-        "contract": "tasks/prd-nivel-prerequisito-curso/contracts.md",
-        "techspec": "tasks/prd-nivel-prerequisito-curso/techspec.md"
+        "prd": "tasks/archive/prd-nivel-prerequisito-curso/prd.md",
+        "contract": "tasks/archive/prd-nivel-prerequisito-curso/contracts.md",
+        "techspec": "tasks/archive/prd-nivel-prerequisito-curso/techspec.md"
       },
       "mvp_order": 4,
       "delivered": [
-        "tasks/prd-autoria-curso (1o PRD, done, PR #98)",
-        "tasks/prd-nivel-prerequisito-curso (2o PRD, done, PR #101)"
+        "tasks/archive/prd-autoria-curso (1o PRD, done, PR #98)",
+        "tasks/archive/prd-nivel-prerequisito-curso (2o PRD, done, PR #101)"
       ]
     },
     {
@@ -85,9 +86,9 @@
       "stage": "done",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
-        "prd": "tasks/prd-observabilidade-midia/prd.md",
-        "techspec": "tasks/prd-observabilidade-midia/techspec.md",
-        "tasks": "tasks/prd-observabilidade-midia/tasks.md"
+        "prd": "tasks/archive/prd-observabilidade-midia/prd.md",
+        "techspec": "tasks/archive/prd-observabilidade-midia/techspec.md",
+        "tasks": "tasks/archive/prd-observabilidade-midia/tasks.md"
       },
       "mvp_order": 3
     },
@@ -101,14 +102,17 @@
     },
     {
       "id": "CAP-008",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/matricula-e-direito-de-acesso/domain.md",
-        "prd": "tasks/prd-concessao-acesso/prd.md",
-        "contract": "tasks/prd-concessao-acesso/contracts.md",
-        "techspec": "tasks/prd-concessao-acesso/techspec.md"
+        "prd": "tasks/archive/prd-concessao-acesso/prd.md",
+        "contract": "tasks/archive/prd-concessao-acesso/contracts.md",
+        "techspec": "tasks/archive/prd-concessao-acesso/techspec.md"
       },
-      "mvp_order": 6
+      "mvp_order": 6,
+      "delivered": [
+        "tasks/archive/prd-concessao-acesso (1o PRD, done, PR #141)"
+      ]
     },
     {
       "id": "CAP-009",
@@ -205,7 +209,7 @@
       "id": "CAP-026",
       "stage": "done",
       "artifacts": {
-        "prd": "tasks/prd-notificacao-transacional/prd.md"
+        "prd": "tasks/archive/prd-notificacao-transacional/prd.md"
       },
       "mvp_order": 1
     },
@@ -229,9 +233,9 @@
       "stage": "done",
       "artifacts": {
         "domain": "domains/auditoria-e-conformidade/domain.md",
-        "prd": "tasks/prd-consulta-trilha-auditoria/prd.md",
-        "contract": "tasks/prd-consulta-trilha-auditoria/contracts.md",
-        "techspec": "tasks/prd-consulta-trilha-auditoria/techspec.md"
+        "prd": "tasks/archive/prd-consulta-trilha-auditoria/prd.md",
+        "contract": "tasks/archive/prd-consulta-trilha-auditoria/contracts.md",
+        "techspec": "tasks/archive/prd-consulta-trilha-auditoria/techspec.md"
       },
       "mvp_order": 2
     },
@@ -241,14 +245,7 @@
       "artifacts": {}
     }
   ],
-  "next_actions": [
-    {
-      "id": "NA29",
-      "what": "Aprovar o plano tasks/prd-concessao-acesso/tasks.md (9 tasks: 1.0 e 2.0 de design, 3.0 a 9.0 verticais V-01 a V-07) e executar com o orquestrador, a partir da 1.0 (wireframe ASCII das Cortesias, aprovação do responsável)",
-      "skill": "tsg-flow-orchestrator",
-      "blocked_by": []
-    }
-  ],
+  "next_actions": [],
   "open_decisions": [
     {
       "id": "OD2",
@@ -271,7 +268,7 @@
     },
     {
       "id": "OD11",
-      "ref": "tasks/prd-notificacao-transacional/prd.md QP-01",
+      "ref": "tasks/archive/prd-notificacao-transacional/prd.md QP-01",
       "what": "Prazo de retencao da camada com dado pessoal do Registro de Entrega. A forma ja esta decidida (RN-N16: duas camadas, parametrizada); falta o numero. Recomendacao a validar: ordem de 90 dias, que e o que cobre a finalidade de diagnostico. Prazo de guarda longo (5-6 anos) vale para documento fiscal e contrato, nao para log de entrega de e-mail",
       "owner": "encarregado de dados + negocio",
       "blocks": []
@@ -402,7 +399,7 @@
     },
     {
       "id": "OD12",
-      "ref": "tasks/prd-notificacao-transacional/prd.md QP-02",
+      "ref": "tasks/archive/prd-notificacao-transacional/prd.md QP-02",
       "what": "Validade dos links de confirmacao e de recuperacao",
       "decided_at": "2026-09-20",
       "owner": "tasso",
@@ -410,7 +407,7 @@
     },
     {
       "id": "OD13",
-      "ref": "tasks/prd-notificacao-transacional/prd.md QP-03",
+      "ref": "tasks/archive/prd-notificacao-transacional/prd.md QP-03",
       "what": "Endereco remetente e dominio de envio",
       "decided_at": "2026-09-20",
       "owner": "tasso",
@@ -442,7 +439,7 @@
     },
     {
       "id": "OD18",
-      "ref": "CAP-001; tasks/prd-conta-aluno/prd.draft.md DP-01",
+      "ref": "CAP-001; tasks/archive/prd-conta-aluno/prd.draft.md DP-01",
       "what": "Recorte do primeiro PRD de CAP-001",
       "decided_at": "2026-09-22",
       "owner": "tasso",
@@ -474,7 +471,7 @@
     },
     {
       "id": "OD23",
-      "ref": "domains/auditoria-e-conformidade/domain.md RN-A14 · tasks/prd-trilha-auditoria DP-02",
+      "ref": "domains/auditoria-e-conformidade/domain.md RN-A14 · tasks/archive/prd-trilha-auditoria DP-02",
       "what": "Dono do formato da mensagem que a Auditoria recebe",
       "decided_at": "2026-09-24",
       "owner": "tasso",
@@ -482,7 +479,7 @@
     },
     {
       "id": "OD24",
-      "ref": "tasks/prd-trilha-auditoria/prd.md RF-04 · asyncapi-contract.yaml 1.0.1",
+      "ref": "tasks/archive/prd-trilha-auditoria/prd.md RF-04 · asyncapi-contract.yaml 1.0.1",
       "what": "Ato sem tenantId valido",
       "decided_at": "2026-09-24",
       "owner": "tasso",
@@ -514,7 +511,7 @@
     },
     {
       "id": "OD27",
-      "ref": "docs/adr/0005-sessao-e-servico-do-backoffice.md · tasks/prd-acesso-interno/techspec.md",
+      "ref": "docs/adr/0005-sessao-e-servico-do-backoffice.md · tasks/archive/prd-acesso-interno/techspec.md",
       "what": "Sessao do ator interno e autenticacao de servico do bff-admin",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -554,7 +551,7 @@
     },
     {
       "id": "OD32",
-      "ref": "tasks/prd-ingestao-midia/prd.md DP-06 (era QP-01)",
+      "ref": "tasks/archive/prd-ingestao-midia/prd.md DP-06 (era QP-01)",
       "what": "Retencao do arquivo original depois da preparacao",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -562,7 +559,7 @@
     },
     {
       "id": "OD33",
-      "ref": "tasks/prd-ingestao-midia/prd.md DP-01 a DP-05 · domain.md QM-01, QM-02, QM-03",
+      "ref": "tasks/archive/prd-ingestao-midia/prd.md DP-01 a DP-05 · domain.md QM-01, QM-02, QM-03",
       "what": "Qualidades, limite de envio, visibilidade e aviso da ingestao de video",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -570,7 +567,7 @@
     },
     {
       "id": "OD34",
-      "ref": "tasks/prd-ingestao-midia/contracts.md C-11",
+      "ref": "tasks/archive/prd-ingestao-midia/contracts.md C-11",
       "what": "Como o video de ate 5 GB chega ao armazenamento",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -578,7 +575,7 @@
     },
     {
       "id": "OD35",
-      "ref": "tasks/prd-ingestao-midia/contracts.md C-12",
+      "ref": "tasks/archive/prd-ingestao-midia/contracts.md C-12",
       "what": "Como Conteudo valida o video no vinculo (RF-08)",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -586,7 +583,7 @@
     },
     {
       "id": "OD36",
-      "ref": "docs/adr/0006-preparacao-de-video-e-custodia-de-chave.md · tasks/prd-ingestao-midia/techspec.draft.md D-01",
+      "ref": "docs/adr/0006-preparacao-de-video-e-custodia-de-chave.md · tasks/archive/prd-ingestao-midia/techspec.draft.md D-01",
       "what": "Onde roda o ffmpeg dentro do media",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -594,7 +591,7 @@
     },
     {
       "id": "OD37",
-      "ref": "tasks/prd-ingestao-midia/techspec.draft.md D-06 · PRD RF-11",
+      "ref": "tasks/archive/prd-ingestao-midia/techspec.draft.md D-06 · PRD RF-11",
       "what": "Metrica de volume por escola vs baseline (dimensao nunca e Id)",
       "owner": "tasso",
       "decided_at": "2026-09-25",
@@ -602,7 +599,7 @@
     },
     {
       "id": "OD38",
-      "ref": "tasks/prd-consulta-trilha-auditoria/prd.draft.md DP-05 · domains/auditoria-e-conformidade/domain.draft.md RN-A02",
+      "ref": "tasks/archive/prd-consulta-trilha-auditoria/prd.draft.md DP-05 · domains/auditoria-e-conformidade/domain.draft.md RN-A02",
       "what": "Quem inicia o complemento e como ele respeita a escrita por evento",
       "owner": "produto",
       "decided_at": "2026-09-27",
@@ -610,7 +607,7 @@
     },
     {
       "id": "OD39",
-      "ref": "tasks/prd-consulta-trilha-auditoria/prd.draft.md DP-04 · domains/auditoria-e-conformidade/domain.draft.md RN-A07",
+      "ref": "tasks/archive/prd-consulta-trilha-auditoria/prd.draft.md DP-04 · domains/auditoria-e-conformidade/domain.draft.md RN-A07",
       "what": "Conteudo do complemento de registro",
       "owner": "produto",
       "decided_at": "2026-09-27",
@@ -746,7 +743,7 @@
     },
     {
       "id": "OD55",
-      "ref": "tasks/prd-nivel-prerequisito-curso/prd.draft.md DP-01, DP-02",
+      "ref": "tasks/archive/prd-nivel-prerequisito-curso/prd.draft.md DP-01, DP-02",
       "what": "Fatia do 2o PRD de CAP-005 (nivel e pre-requisito)",
       "owner": "tasso",
       "decided_at": "2026-09-30",
@@ -754,7 +751,7 @@
     },
     {
       "id": "OD56",
-      "ref": "tasks/prd-nivel-prerequisito-curso/contracts.md C-01 · tasks/prd-vitrine-oferta/contracts.md C-01",
+      "ref": "tasks/archive/prd-nivel-prerequisito-curso/contracts.md C-01 · tasks/archive/prd-vitrine-oferta/contracts.md C-01",
       "what": "Carga inicial do Catalogo",
       "owner": "tasso",
       "decided_at": "2026-09-30",
@@ -762,7 +759,7 @@
     },
     {
       "id": "OD57",
-      "ref": "tasks/prd-vitrine-oferta/contracts.md C-04",
+      "ref": "tasks/archive/prd-vitrine-oferta/contracts.md C-04",
       "what": "Autenticacao bff-student -> commerce nas chamadas publicas",
       "owner": "tasso",
       "decided_at": "2026-09-30",
@@ -770,7 +767,7 @@
     },
     {
       "id": "OD58",
-      "ref": "tasks/prd-nivel-prerequisito-curso/contracts.md C-03",
+      "ref": "tasks/archive/prd-nivel-prerequisito-curso/contracts.md C-03",
       "what": "Descricao pedagogica no fato de versao",
       "owner": "tasso",
       "decided_at": "2026-09-30",
@@ -778,7 +775,7 @@
     },
     {
       "id": "OD59",
-      "ref": "tasks/prd-nivel-prerequisito-curso/techspec.md Decisoes Tecnicas",
+      "ref": "tasks/archive/prd-nivel-prerequisito-curso/techspec.md Decisoes Tecnicas",
       "what": "Decisoes locais da TechSpec de nivel e pre-requisito",
       "owner": "tasso",
       "decided_at": "2026-09-30",
@@ -794,7 +791,7 @@
     },
     {
       "id": "OD61",
-      "ref": "tasks/prd-concessao-acesso/prd.md Rastreabilidade",
+      "ref": "tasks/archive/prd-concessao-acesso/prd.md Rastreabilidade",
       "what": "Fatia do 1o PRD de CAP-008 (concessao e vigencia de direito de acesso)",
       "owner": "tasso",
       "decided_at": "2026-10-01",
@@ -802,7 +799,7 @@
     },
     {
       "id": "OD62",
-      "ref": "tasks/prd-concessao-acesso/prd.md DP-01 a DP-10",
+      "ref": "tasks/archive/prd-concessao-acesso/prd.md DP-01 a DP-10",
       "what": "Decisoes locais do PRD de concessao de acesso",
       "owner": "tasso",
       "decided_at": "2026-10-01",
@@ -818,7 +815,7 @@
     },
     {
       "id": "OD64",
-      "ref": "tasks/prd-concessao-acesso/contracts.md C-01 a C-10",
+      "ref": "tasks/archive/prd-concessao-acesso/contracts.md C-01 a C-10",
       "what": "Contratos do 1o PRD de CAP-008",
       "owner": "tasso",
       "decided_at": "2026-10-01",
@@ -826,7 +823,7 @@
     },
     {
       "id": "OD65",
-      "ref": "tasks/prd-concessao-acesso/techspec.md D-01 a D-10; ADR-0010; ADR-0011",
+      "ref": "tasks/archive/prd-concessao-acesso/techspec.md D-01 a D-10; ADR-0010; ADR-0011",
       "what": "TechSpec do 1o PRD de CAP-008",
       "owner": "tasso",
       "decided_at": "2026-10-01",

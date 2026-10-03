@@ -3,8 +3,8 @@
 > **Status:** aprovado (ASCII e Figma) em 2026-09-26 · implementação não iniciada
 > **Objetivo:** desenhar no Figma, sobre o Design System Code4Coders e o AppShell do backoffice
 > aprovado em CAP-002, as telas da área Vídeos antes da implementação no `admin-spa` (tasks 3.0–9.0 de
-> `tasks/prd-ingestao-midia`). Aprovado este ASCII → desenho no Figma (task 2.0) → aprovação → código.
-> **Fontes:** `tasks/prd-ingestao-midia/prd.md` (RF-01…RF-07, Experiência do Usuário, DP-01…DP-06),
+> `tasks/archive/prd-ingestao-midia`). Aprovado este ASCII → desenho no Figma (task 2.0) → aprovação → código.
+> **Fontes:** `tasks/archive/prd-ingestao-midia/prd.md` (RF-01…RF-07, Experiência do Usuário, DP-01…DP-06),
 > `techspec.md` (Bloco Frontend, V-01…V-06), `api-contract.yaml` 1.1.1,
 > `docs/design/wireframes-acesso-interno.md` (AppShell, B12, B13 e componentes aprovados),
 > `DESIGN.md`, `docs/design/Components.md`.

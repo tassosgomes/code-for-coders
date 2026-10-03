@@ -6,9 +6,9 @@
 > **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040) · task_01 concluída; gate visual das tasks 2.0–7.0 satisfeito, preservadas as demais dependências.
 > **Handoff:** usar estes fluxos, telas, estados e decisões no Figma; submeter o desenho visual à aprovação antes da implementação.
 > **Objetivo:** definir fluxos, conteúdo e estados das telas de Autoria do `admin-spa` antes do desenho no Figma.
-> **Fontes:** [PRD de autoria](../../tasks/prd-autoria-curso/prd.md) v1.0 (RF-01…RF-12, Experiência do Usuário),
-> [TechSpec](../../tasks/prd-autoria-curso/techspec.md) v1.0 (Bloco Frontend, V-01…V-06),
-> [contrato HTTP](../../tasks/prd-autoria-curso/api-contract.md) 1.0.0,
+> **Fontes:** [PRD de autoria](../../tasks/archive/prd-autoria-curso/prd.md) v1.0 (RF-01…RF-12, Experiência do Usuário),
+> [TechSpec](../../tasks/archive/prd-autoria-curso/techspec.md) v1.0 (Bloco Frontend, V-01…V-06),
+> [contrato HTTP](../../tasks/archive/prd-autoria-curso/api-contract.md) 1.0.0,
 > [wireframes de Vídeos](wireframes-videos.md), [Acesso interno](wireframes-acesso-interno.md),
 > [componentes](Components.md) e [Design System](../../DESIGN.md).
 
@@ -806,9 +806,9 @@ suas demais dependências e verificações de implementação permanecem obrigat
 
 > **Situação do adendo:** ASCII e Figma aprovados pelo responsável em 2026-09-30 (“Está aprovado” e
 > “Tá aprovado”), registrados na linha `> **Adendo nível e pré-requisito:** …` do cabeçalho.
-> **Fontes:** [PRD](../../tasks/prd-nivel-prerequisito-curso/prd.md) v1.0 (RF-01…RF-05, Experiência do
-> Usuário, DP-01, DP-02), [TechSpec](../../tasks/prd-nivel-prerequisito-curso/techspec.md) (Bloco
-> Frontend, V-01…V-03, EN-01), [contrato HTTP](../../tasks/prd-nivel-prerequisito-curso/api-contract.yaml).
+> **Fontes:** [PRD](../../tasks/archive/prd-nivel-prerequisito-curso/prd.md) v1.0 (RF-01…RF-05, Experiência do
+> Usuário, DP-01, DP-02), [TechSpec](../../tasks/archive/prd-nivel-prerequisito-curso/techspec.md) (Bloco
+> Frontend, V-01…V-03, EN-01), [contrato HTTP](../../tasks/archive/prd-nivel-prerequisito-curso/api-contract.yaml).
 
 Este adendo acrescenta telas e estados sobre A1, A3, A7, A10 e G12, **sem reabrir** as decisões G1–G13
 das seções 1–6, exceto o texto de G12 (7.2, N8). Convenções, legenda, componentes e AppShell são os

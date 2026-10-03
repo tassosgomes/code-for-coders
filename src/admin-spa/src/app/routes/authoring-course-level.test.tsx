@@ -115,7 +115,7 @@ describe('authoring course level', () => {
   });
 
   it('strict schemas parse actual getCourse and listCourses OpenAPI 1.1.0 examples', () => {
-    const document: unknown = parse(readFileSync('../../tasks/prd-nivel-prerequisito-curso/api-contract.yaml', 'utf8'));
+    const document: unknown = parse(readFileSync('../../contracts/bff-admin/openapi-autoria.yaml', 'utf8'));
     const contract = z.object({ info: z.object({ version: z.literal('1.1.0') }),
       components: z.object({ examples: z.object({ CourseWithLevel: z.object({ value: z.unknown() }) }) }),
       paths: z.record(z.string(), z.unknown()),

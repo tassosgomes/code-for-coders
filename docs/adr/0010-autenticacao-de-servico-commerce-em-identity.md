@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0010-autenticacao-de-servico-commerce-em-identity.md`
 - Domínios/componentes afetados: `commerce` (módulo Matrícula e Direito de Acesso, como chamador), `identity` (como destino), `bff-admin` (escopo novo no emissor que já existe)
-- Origem histórica: `tasks/prd-concessao-acesso`, CAP-008 (decisões C-02 e C-03 do conjunto de contratos)
+- Origem histórica: `tasks/archive/prd-concessao-acesso`, CAP-008 (decisões C-02 e C-03 do conjunto de contratos)
 - Substitui: Nenhuma. Estende a [ADR-0004](0004-autenticacao-de-servico-bff-identity.md) e a [ADR-0005](0005-sessao-e-servico-do-backoffice.md), que decidiram a autenticação de serviço de **BFFs** em Identity e previram "mais de um emissor, cada um com chaves e escopos próprios"
 
 ## Data
@@ -84,10 +84,10 @@ Até aqui, só BFFs chamam Identity, e Identity valida a asserção de serviço 
 
 - A chave privada de `commerce` e a configuração do emissor em Identity vêm do secret manager do ambiente (ADR-0002) e são validadas na partida; o emissor `commerce` **não** é criado em ambiente que não tenha o par de chaves.
 - Referência de comportamento do verificador: `src/identity/src/CodeForCoders.Identity.Api/Security/ServiceAssertionVerifier.cs`.
-- O OpenAPI interno de Identity descreve a asserção, os escopos e os erros (`tasks/prd-concessao-acesso/internal-api-contract-identity.yaml`).
+- O OpenAPI interno de Identity descreve a asserção, os escopos e os erros (`tasks/archive/prd-concessao-acesso/internal-api-contract-identity.yaml`).
 
 ## Referências
 
 - [ADR-0001](0001-monorepo-de-codigo.md), [ADR-0002](0002-plataforma-de-runtime-coolify.md), [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md), [ADR-0009](0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md).
 - [Baseline arquitetural](../../context/architecture-baseline.md) — G07, G10, G15, G23; BA05.
-- Origem histórica: `tasks/prd-concessao-acesso/techspec.md` e `tasks/prd-concessao-acesso/contracts.md` (C-02, C-03).
+- Origem histórica: `tasks/archive/prd-concessao-acesso/techspec.md` e `tasks/archive/prd-concessao-acesso/contracts.md` (C-02, C-03).

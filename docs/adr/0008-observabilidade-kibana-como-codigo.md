@@ -9,7 +9,7 @@ Accepted
 - Caminho: `docs/adr/0008-observabilidade-kibana-como-codigo.md`
 - Domínios/componentes afetados: infraestrutura de observabilidade (Elasticsearch/Kibana do
   servidor de desenvolvimento); todos os serviços que passarem a ter dashboard e alerta.
-- Origem histórica: `tasks/prd-observabilidade-midia` (CAP-006, segunda fatia).
+- Origem histórica: `tasks/archive/prd-observabilidade-midia` (CAP-006, segunda fatia).
 - Substitui: Nenhuma.
 
 ## Data
@@ -95,4 +95,4 @@ juntos.
 - `context/architecture-baseline.md` — Padrões de Observabilidade (emissão pela aplicação;
   dashboards e alerta do time de plataforma).
 - `docs/infra-servidor-desenv.md` — stack Elasticsearch/Kibana/Collector do servidor dev.
-- `tasks/prd-observabilidade-midia/` — PRD e TechSpec da primeira entrega a aplicar esta decisão.
+- `tasks/archive/prd-observabilidade-midia/` — PRD e TechSpec da primeira entrega a aplicar esta decisão.

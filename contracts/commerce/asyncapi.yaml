@@ -1,0 +1,601 @@
+asyncapi: 3.0.0
+info:
+  title: Commerce — fatos do Catálogo e da Matrícula
+  version: 1.1.0
+  description: |
+    Contrato **vigente** consolidado. Fronteira: Aplicação `commerce`.
+
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
+    - `tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml` 1.0.0
+    - `tasks/archive/prd-concessao-acesso/asyncapi-contract.yaml` 1.1.0
+
+    **Notas de prd-vitrine-oferta (1.0.0):** Recorte do primeiro PRD de CAP-003, `tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30. Aplicação `commerce`, módulo Catálogo (dono de Catálogo e Oferta). Recebe `conteudo.versao-publicada.v1` 1.1.0 para manter a própria visão dos cursos publicados (C-01, C-09 de CAP-005). Envia os fatos de oferta e os atos de oferta no envelope da Auditoria 1.3.0 (RN-O15). Nenhuma mensagem carrega nome, e-mail ou dado do visitante.
+
+    **Notas de prd-concessao-acesso (1.1.0):** Recorte do primeiro PRD de CAP-008, `tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01. Aplicação `commerce`, módulo Matrícula e Direito de Acesso (dono do direito de acesso), que evolui o contrato de `commerce` 1.0.0 (`tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml`, módulo Catálogo, sem mudança). Recebe `conteudo.versao-publicada.v1` 1.1.0 em **fila própria**, para manter a própria visão mínima dos cursos em que se pode conceder cortesia (C-01). Envia os fatos `matricula.acesso-concedido.v1` e `matricula.acesso-expirado.v1` e o ato de cortesia no envelope da Auditoria 1.4.0 (RN-D11). Nenhuma mensagem carrega e-mail, nome ou motivo: o aluno vai por referência (RN-21 de Identidade, G23).
+id: urn:code-4-coders:commerce
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  versaoPublicada:
+    address: conteudo.versao-publicada.v1
+    description: Fato de `learning` 1.1.0 (`tasks/archive/prd-nivel-prerequisito-curso/asyncapi-contract.yaml`). Matrícula
+      consome com fila própria, distinta da do Catálogo.
+    messages:
+      versaoPublicada:
+        $ref: ../learning/asyncapi.yaml#/components/messages/VersaoPublicada
+  ofertaPublicada:
+    address: catalogo.oferta-publicada.v1
+    description: Uma oferta passou a estar à venda.
+    messages:
+      ofertaPublicada:
+        $ref: '#/components/messages/OfertaPublicada'
+  ofertaAlterada:
+    address: catalogo.oferta-alterada.v1
+    description: Preço ou vigência de uma oferta publicada mudou, para compras futuras (RN-O10).
+    messages:
+      ofertaAlterada:
+        $ref: '#/components/messages/OfertaAlterada'
+  ofertaDespublicada:
+    address: catalogo.oferta-despublicada.v1
+    description: A oferta deixou de estar à venda (RN-O12).
+    messages:
+      ofertaDespublicada:
+        $ref: '#/components/messages/OfertaDespublicada'
+  atoPraticado:
+    address: auditoria.ato-praticado.v1
+    description: Canal da Auditoria (RN-A14), contrato 1.4.0 em `asyncapi-contract-audit.yaml`; aqui `commerce`
+      só produz.
+    messages:
+      atoPraticado:
+        $ref: ../audit/asyncapi.yaml#/components/messages/AtoPraticado
+  acessoConcedido:
+    address: matricula.acesso-concedido.v1
+    description: Uma concessão passou a valer, de qualquer origem.
+    messages:
+      acessoConcedido:
+        $ref: '#/components/messages/AcessoConcedido'
+  acessoExpirado:
+    address: matricula.acesso-expirado.v1
+    description: A vigência de uma concessão por período terminou. Informativo (RN-D06).
+    messages:
+      acessoExpirado:
+        $ref: '#/components/messages/AcessoExpirado'
+operations:
+  receberVersaoPublicada:
+    action: receive
+    summary: Atualizar a visão do Catálogo sobre o curso publicado.
+    channel:
+      $ref: '#/channels/versaoPublicada'
+    messages:
+    - $ref: '#/channels/versaoPublicada/messages/versaoPublicada'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Guarda, por curso e escola, o que a vitrine exibe e o que as regras exigem: título, descrição,
+      nível, pré-requisito (com o título de publicação de cada recomendado) e a estrutura com títulos de módulos
+      e aulas — sem `videoId`, que o Catálogo não usa. Aplica só a maior `versionNumber` por curso; fato com número
+      menor ou igual ao já aplicado é confirmado sem efeito. Deduplica por `eventId`. Mensagem 1.0.0 sem os campos
+      novos é aplicada como sem nível e sem pré-requisito. Falha transitória não confirma; esgotadas as entregas,
+      segue para a fila de erro e pode ser reprocessada sem efeito duplicado. Se a versão nova não tiver nível,
+      o curso sai da vitrine sem despublicar ofertas (DP-04). O consumidor precisa existir antes do reenvio de `learning`
+      (C-01).'
+  publicarOfertaPublicada:
+    action: send
+    summary: Comunicar que uma oferta passou a estar à venda.
+    channel:
+      $ref: '#/channels/ofertaPublicada'
+    messages:
+    - $ref: '#/channels/ofertaPublicada/messages/ofertaPublicada'
+    description: 'Pelo outbox, na mesma transação da publicação e do ato (G06). Ao menos uma vez; consumidores deduplicam
+      por `eventId`. Ordem não garantida: para a mesma oferta vale o maior `offerRevision`. Consumidores conhecidos:
+      nenhum nesta entrega (Inteligência de Negócio, depois).'
+  publicarOfertaAlterada:
+    action: send
+    summary: Comunicar mudança de preço ou vigência de oferta publicada.
+    channel:
+      $ref: '#/channels/ofertaAlterada'
+    messages:
+    - $ref: '#/channels/ofertaAlterada/messages/ofertaAlterada'
+    description: Mesmas garantias de `publicarOfertaPublicada`. Só quando preço ou vigência de oferta **publicada**
+      mudam; mudança só de nome não gera fato nem ato (DP-05).
+  publicarOfertaDespublicada:
+    action: send
+    summary: Comunicar que a oferta saiu da vitrine.
+    channel:
+      $ref: '#/channels/ofertaDespublicada'
+    messages:
+    - $ref: '#/channels/ofertaDespublicada/messages/ofertaDespublicada'
+    description: Mesmas garantias de `publicarOfertaPublicada`.
+  publicarAtoDeOferta:
+    action: send
+    summary: Comunicar à Auditoria os atos de publicar, alterar e despublicar oferta.
+    channel:
+      $ref: '#/channels/atoPraticado'
+    messages:
+    - $ref: '#/channels/atoPraticado/messages/atoPraticado'
+    description: 'Pelo outbox, na mesma transação do fato correspondente. Conteúdo fixo (C-09): `origem: catalogo`;
+      `tipo` = `oferta-publicada`, `oferta-alterada` ou `oferta-despublicada`; `autor` = conta interna do financeiro
+      (`sub`); `alvo` = `{tipo: oferta, id: offerId}`; `complemento.curso` = `courseId`; em `oferta-alterada`, `precoAnterior`/`precoNovo`
+      e/ou `vigenciaAnterior`/`vigenciaNova` do que mudou; `praticadoEm` = `occurredAt`; sem `motivo` (OD50). `fatoId`
+      = `eventId` do fato de oferta. **Ordem de implantação:** `audit` 1.3.0 antes do primeiro ato, senão ele é
+      gravado como não conforme.'
+  receberVersaoPublicadaEmMatricula:
+    action: receive
+    summary: Atualizar a visão de Matrícula sobre os cursos em que se pode conceder cortesia.
+    channel:
+      $ref: '#/channels/versaoPublicada'
+    messages:
+    - $ref: '#/channels/versaoPublicada/messages/versaoPublicada'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Guarda, por curso e escola, **só** o necessário a Matrícula: identificador do curso, título da
+      versão vigente e `versionNumber` — nada de estrutura, nível, descrição ou pré-requisito, que Matrícula não
+      usa (C-01). Aplica só o maior `versionNumber` por curso; fato com número menor ou igual ao já aplicado é confirmado
+      sem efeito. Deduplica por `eventId`. Falha transitória não confirma; esgotadas as entregas, segue para a fila
+      de erro e pode ser reprocessada sem efeito duplicado. Curso que nunca recebeu o fato **não existe** para Matrícula
+      (`COURSE_NOT_ELIGIBLE`, DP-05). **Carga inicial:** o reenvio de `learning` (C-01 de CAP-005) precisa acontecer
+      **depois** deste consumidor existir; se já aconteceu antes, é repetido na implantação desta entrega — os demais
+      consumidores já o ignoram por `versionNumber` e `eventId` (C-01 deste conjunto).'
+  publicarAcessoConcedido:
+    action: send
+    summary: Comunicar que uma concessão passou a valer.
+    channel:
+      $ref: '#/channels/acessoConcedido'
+    messages:
+    - $ref: '#/channels/acessoConcedido/messages/acessoConcedido'
+    description: 'Pelo outbox, na mesma transação da concessão e do ato (G06): **não existe cortesia gravada sem
+      o fato**. Ao menos uma vez; consumidores deduplicam por `eventId`. Ordem não garantida entre concessões; para
+      uma mesma concessão há um único fato. Publicado para toda origem (RN-D02); nesta entrega só `courtesy` ocorre.
+      Consumidores conhecidos: nenhum nesta entrega (Notificação e Inteligência de Negócio, depois — DP-08).'
+  publicarAcessoExpirado:
+    action: send
+    summary: Comunicar que a vigência de uma concessão terminou.
+    channel:
+      $ref: '#/channels/acessoExpirado'
+    messages:
+    - $ref: '#/channels/acessoExpirado/messages/acessoExpirado'
+    description: 'Pelo outbox, **depois** do término e em até uma hora dele (DP-10). Exatamente um fato por concessão
+      por período: uma rotina executada mais de uma vez não republica; consumidores ainda deduplicam por `eventId`.
+      É **informativo**: a decisão de acesso nunca depende dele (RN-D06) e atraso ou perda não mudam a decisão.
+      Refere-se à **concessão**, não ao acesso do aluno ao curso, que pode continuar por outra concessão. Concessão
+      vitalícia nunca o gera.'
+  publicarAtoDeCortesia:
+    action: send
+    summary: Comunicar à Auditoria o ato de conceder cortesia.
+    channel:
+      $ref: '#/channels/atoPraticado'
+    messages:
+    - $ref: '#/channels/atoPraticado/messages/atoPraticado'
+    description: 'Pelo outbox, na mesma transação da concessão e do fato `acesso-concedido`. Conteúdo fixo (C-06):
+      `origem: matricula`; `tipo: cortesia-concedida`; `autor` = conta interna do financeiro (`sub`); `alvo` = `{tipo:
+      conta-aluno, id: studentId}`; `complemento.curso` = `courseId`, `complemento.concessao` = `grantId`, `complemento.vigencia`
+      = `vitalicia` ou `{N}m`; **`motivo` obrigatório** (RN-D11); `praticadoEm` = `occurredAt`. `fatoId` = `eventId`
+      do fato `acesso-concedido`. **Ordem de implantação:** `audit` 1.4.0 antes do primeiro ato, senão ele é gravado
+      como não conforme (precedente de CAP-005 e CAP-003).'
+components:
+  messages:
+    OfertaPublicada:
+      name: OfertaPublicada
+      title: Oferta publicada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/OfertaPayload'
+      examples:
+      - name: dozeMeses
+        headers:
+          correlationId: 00-708192a3b4c5d6e7f8091a2b3c4d5e6f-708192a3b4c5d6e7-01
+        payload:
+          eventId: 3d4e5f60-7182-4a93-8ba4-b5c6d7e8f901
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerRevision: 2
+          occurredAt: '2026-10-07T10:05:00Z'
+          name: Acesso por 12 meses
+          priceCents: 49700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+    OfertaAlterada:
+      name: OfertaAlterada
+      title: Oferta publicada alterada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/OfertaAlteradaPayload'
+      examples:
+      - name: novoPreco
+        headers:
+          correlationId: 00-8192a3b4c5d6e7f8091a2b3c4d5e6f70-8192a3b4c5d6e7f8-01
+        payload:
+          eventId: 2c3d4e5f-6071-4a82-9b93-a4b5c6d7e8f9
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerRevision: 3
+          occurredAt: '2026-10-08T11:30:00Z'
+          name: Acesso por 12 meses
+          priceCents: 39700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+          previous:
+            priceCents: 49700
+            accessPeriod:
+              type: months
+              months: 12
+    OfertaDespublicada:
+      name: OfertaDespublicada
+      title: Oferta despublicada
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/OfertaPayload'
+      examples:
+      - name: saiu
+        headers:
+          correlationId: 00-92a3b4c5d6e7f8091a2b3c4d5e6f7081-92a3b4c5d6e7f809-01
+        payload:
+          eventId: 4e5f6071-8293-4aa4-8bb5-c6d7e8f9a012
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerRevision: 4
+          occurredAt: '2026-10-09T08:00:00Z'
+          name: Acesso por 12 meses
+          priceCents: 39700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+    AcessoConcedido:
+      name: AcessoConcedido
+      title: Acesso concedido
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/AcessoConcedidoPayload'
+      examples:
+      - name: cortesiaSeisMeses
+        headers:
+          correlationId: 00-81a2b3c4d5e6f708192a3b4c5d6e7f80-81a2b3c4d5e6f708-01
+        payload:
+          eventId: 5d6e7f80-9182-4a3b-8c4d-5e6f70819203
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          grantId: 4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+          studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          origin: courtesy
+          originRef: null
+          accessPeriod:
+            type: months
+            months: 6
+          grantedAt: '2026-10-12T14:10:00Z'
+          endsOn: '2027-04-12'
+          expiresAt: '2027-04-13T03:00:00Z'
+          occurredAt: '2026-10-12T14:10:00Z'
+      - name: cortesiaVitalicia
+        headers:
+          correlationId: 00-92b3c4d5e6f708192a3b4c5d6e7f8091-92b3c4d5e6f70819-01
+        payload:
+          eventId: 6e7f8091-a2b3-4c4d-9e5f-708192a3b4c5
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          grantId: 7f8091a2-b3c4-4d5e-8f60-71829304a5b6
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          origin: courtesy
+          originRef: null
+          accessPeriod:
+            type: lifetime
+          grantedAt: '2026-10-12T14:12:30Z'
+          endsOn: null
+          expiresAt: null
+          occurredAt: '2026-10-12T14:12:30Z'
+    AcessoExpirado:
+      name: AcessoExpirado
+      title: Vigência da concessão terminou
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/AcessoExpiradoPayload'
+      examples:
+      - name: concessaoVencida
+        headers:
+          correlationId: rotina-expiracao-2026-10-01T04
+        payload:
+          eventId: 8091a2b3-c4d5-4e6f-8071-8293a4b5c6d7
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          grantId: 0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d
+          studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+          origin: courtesy
+          expiresAt: '2026-10-01T03:00:00Z'
+          occurredAt: '2026-10-01T03:20:00Z'
+  schemas:
+    Cabecalho:
+      type: object
+      additionalProperties: false
+      required:
+      - correlationId
+      properties:
+        correlationId:
+          type: string
+          description: traceparent da requisição do backoffice, ou identificador da execução da rotina de expiração.
+            Sem dado pessoal.
+    Vigencia:
+      description: Vigência da concessão (RN-D04). Mesmo formato de `AccessPeriod` nas interfaces HTTP e do fato
+        de oferta.
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        - months
+        properties:
+          type:
+            const: months
+          months:
+            type: integer
+            minimum: 1
+            maximum: 60
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        properties:
+          type:
+            const: lifetime
+    OfertaPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - offerId
+      - courseId
+      - offerRevision
+      - occurredAt
+      - name
+      - priceCents
+      - currency
+      - accessPeriod
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por fato; chave de deduplicação. Também é o `fatoId` do ato correspondente.
+        tenantId:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+          description: Curso de Conteúdo e Currículo.
+        offerRevision:
+          type: integer
+          minimum: 1
+          description: Cresce a cada mudança da oferta; define o estado mais recente quando fatos chegam fora de
+            ordem.
+        occurredAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        priceCents:
+          type: integer
+          minimum: 1
+          maximum: 9999999
+          description: Preço em centavos de real, estado após o fato.
+        currency:
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+    OfertaAlteradaPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - offerId
+      - courseId
+      - offerRevision
+      - occurredAt
+      - name
+      - priceCents
+      - currency
+      - accessPeriod
+      - previous
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        offerRevision:
+          type: integer
+          minimum: 1
+        occurredAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        priceCents:
+          type: integer
+          minimum: 1
+          maximum: 9999999
+        currency:
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        previous:
+          type: object
+          additionalProperties: false
+          required:
+          - priceCents
+          - accessPeriod
+          description: Preço e vigência antes da mudança.
+          properties:
+            priceCents:
+              type: integer
+              minimum: 1
+              maximum: 9999999
+            accessPeriod:
+              $ref: '#/components/schemas/Vigencia'
+    OrigemDaConcessao:
+      type: string
+      enum:
+      - courtesy
+      - purchase
+      - subscription
+      - cohort
+      description: Origem da concessão (RN-D02). Nesta entrega só `courtesy` ocorre; `purchase`, `subscription`
+        e `cohort` nascem em `CAP-011`, `CAP-013`/`CAP-014` e `CAP-010`. Consumidores devem tolerar valor novo.
+    AcessoConcedidoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - grantId
+      - studentId
+      - courseId
+      - origin
+      - originRef
+      - accessPeriod
+      - grantedAt
+      - endsOn
+      - expiresAt
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por fato; chave de deduplicação. Também é o `fatoId` do ato de auditoria, quando a origem
+            é cortesia.
+        tenantId:
+          type: string
+          format: uuid
+        grantId:
+          type: string
+          format: uuid
+          description: Concessão em Matrícula e Direito de Acesso.
+        studentId:
+          type: string
+          format: uuid
+          description: Conta de aluno em Identidade e Acesso, por referência. Nunca e-mail nem nome.
+        courseId:
+          type: string
+          format: uuid
+          description: Curso de Conteúdo e Currículo. O direito é sobre o curso, não sobre uma versão (RN-D08).
+        origin:
+          $ref: '#/components/schemas/OrigemDaConcessao'
+        originRef:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Referência do fato de origem (RN-D02) — o pedido, quando a origem for compra. Nulo na cortesia,
+            cuja origem é o ato (mesmo `eventId`).
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        grantedAt:
+          type: string
+          format: date-time
+          description: Momento da concessão, em UTC; é de onde a vigência conta (RN-D04).
+        endsOn:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Último dia de acesso no fuso da escola (DP-03). Nulo na vitalícia.
+        expiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Instante, em UTC, em que o acesso deixa de valer (exclusivo). Nulo na vitalícia.
+        occurredAt:
+          type: string
+          format: date-time
+    AcessoExpiradoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - grantId
+      - studentId
+      - courseId
+      - origin
+      - expiresAt
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por concessão; chave de deduplicação.
+        tenantId:
+          type: string
+          format: uuid
+        grantId:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        origin:
+          $ref: '#/components/schemas/OrigemDaConcessao'
+        expiresAt:
+          type: string
+          format: date-time
+          description: Instante em que a vigência terminou, o mesmo `expiresAt` do fato de concessão.
+        occurredAt:
+          type: string
+          format: date-time
+          description: Momento em que o fato foi emitido, até uma hora depois de `expiresAt` (DP-10).

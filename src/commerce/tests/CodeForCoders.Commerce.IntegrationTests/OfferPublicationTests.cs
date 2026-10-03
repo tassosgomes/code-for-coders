@@ -106,7 +106,7 @@ public sealed class OfferPublicationTests(CommerceIntegrationFixture fixture)
         Assert.Equal(2, facts.Count); Assert.NotEqual(facts[0].Id, facts[1].Id);
         Assert.Equal(3, (await db.CatalogOffers.SingleAsync(Cancellation)).OfferRevision);
         Assert.Equal(2, await db.CatalogOutboxMessages.CountAsync(row => row.RoutingKey == "auditoria.ato-praticado.v1", Cancellation));
-        foreach (var fact in facts) OfferPublicationContract.AssertValid(JsonDocument.Parse(fact.Payload).RootElement);
+        foreach (var fact in facts) CommerceMessages.AssertSends(fact.RoutingKey, JsonDocument.Parse(fact.Payload).RootElement);
     }
 
     [Fact(DisplayName = nameof(FailureAfterSaveBeforeTransactionCommitRollsBackEverything))]
@@ -171,8 +171,8 @@ public sealed class OfferPublicationTests(CommerceIntegrationFixture fixture)
         var fact = await GetAsync(channel, $"retention-{_tenant:D}");
         var act = await GetAsync(channel, auditQueue);
         Assert.Equal($"commerce-{_tenant:D}", fact.Exchange); Assert.Equal($"audit-{_tenant:D}", act.Exchange);
-        OfferPublicationContract.AssertValid(JsonDocument.Parse(fact.Body).RootElement);
-        OfferPublicationContract.AssertValid(JsonDocument.Parse(act.Body).RootElement, true);
+        CommerceMessages.AssertSends(fact.RoutingKey, JsonDocument.Parse(fact.Body).RootElement);
+        CommerceMessages.AssertSends(act.RoutingKey, JsonDocument.Parse(act.Body).RootElement);
         Assert.Equal(JsonDocument.Parse(fact.Body).RootElement.GetProperty("eventId").GetGuid(),
             JsonDocument.Parse(act.Body).RootElement.GetProperty("fatoId").GetGuid());
         var headers = act.BasicProperties.Headers!;
@@ -244,7 +244,7 @@ public sealed class OfferPublicationTests(CommerceIntegrationFixture fixture)
         var fact = rows.Single(row => row.RoutingKey == "catalogo.oferta-publicada.v1");
         var act = rows.Single(row => row.RoutingKey == "auditoria.ato-praticado.v1");
         using var factJson = JsonDocument.Parse(fact.Payload); using var actJson = JsonDocument.Parse(act.Payload);
-        OfferPublicationContract.AssertValid(factJson.RootElement); OfferPublicationContract.AssertValid(actJson.RootElement, true);
+        CommerceMessages.AssertSends(fact.RoutingKey, factJson.RootElement); CommerceMessages.AssertSends(act.RoutingKey, actJson.RootElement);
         Assert.Equal(fact.Id, actJson.RootElement.GetProperty("fatoId").GetGuid());
         Assert.Equal(_actor, actJson.RootElement.GetProperty("autor").GetProperty("id").GetGuid());
         Assert.Equal(_tenant, actJson.RootElement.GetProperty("tenantId").GetGuid());

@@ -80,6 +80,7 @@ public sealed class FailImmediatelyOnPermanentProviderErrorTests(NotificationInt
                 multiple: false,
                 cancellationToken: cancellationToken);
 
+            NotificationMessages.AssertSends(published.RoutingKey, JsonDocument.Parse(published.Body).RootElement);
             var failed = JsonSerializer.Deserialize<NotificationDeliveryFailedV1>(
                 published.Body.Span,
                 JsonOptions);

@@ -29,6 +29,7 @@
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="../../../../tasks/prd-concessao-acesso/internal-api-contract-identity.yaml" Link="Contracts/student-account-confirmation.yaml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../../contracts/identity/openapi-internal.yaml" Link="Contracts/student-account-confirmation.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Import Project="../../../contract-testing/ContractTesting.props" />
 </Project>

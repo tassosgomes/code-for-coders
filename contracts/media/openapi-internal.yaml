@@ -2,12 +2,14 @@ openapi: 3.1.0
 info:
   title: Media — vídeos do backoffice (interno)
   version: 1.0.1
-  description: 'Recorte interno de CAP-006, PRD `tasks/prd-ingestao-midia/prd.md` v1.0. Consumidor único conhecido:
-    `bff-admin`. `media` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity,
-    emissor `identity`, audiência `media`, validade) e exige `midia.enviar` no claim `permissions`, sem consultar
-    Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações espelham
-    1:1 o contrato público do BFF (`api-contract.yaml` 1.1.1); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID`
-    em vez de `SESSION_REQUIRED`, e `uploaderName` no início do envio.'
+  description: |
+    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `media`.
+
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
+    - `tasks/archive/prd-ingestao-midia/internal-api-contract.yaml` 1.0.1
+
+    **Notas de prd-ingestao-midia (1.0.1):** Recorte interno de CAP-006, PRD `tasks/archive/prd-ingestao-midia/prd.md` v1.0. Consumidor único conhecido: `bff-admin`. `media` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `media`, validade) e exige `midia.enviar` no claim `permissions`, sem consultar Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações espelham 1:1 o contrato público do BFF (`api-contract.yaml` 1.1.1); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, e `uploaderName` no início do envio.
   contact:
     name: Time de Entrega de Mídia
 servers:
@@ -24,16 +26,11 @@ paths:
       tags:
       - Envio
       summary: Iniciar ou retomar o envio de um vídeo
-      description: 'Verifica formato e tamanho **antes** de qualquer byte ser transferido (RF-02). Se o mesmo ator
-        já tem um envio pendente e não expirado com a mesma `fingerprint`, devolve esse envio (200), com as partes
-        já recebidas, em vez de criar outro (RF-03). Fingerprint igual de outro ator não retoma nada: cada ator
-        só vê os próprios envios pendentes.
-
-        '
+      description: |
+        Verifica formato e tamanho **antes** de qualquer byte ser transferido (RF-02). Se o mesmo ator já tem um envio pendente e não expirado com a mesma `fingerprint`, devolve esse envio (200), com as partes já recebidas, em vez de criar outro (RF-03). Fingerprint igual de outro ator não retoma nada: cada ator só vê os próprios envios pendentes.
       operationId: createVideoUploadInternal
       security:
-      - &id001
-        StaffUserToken: []
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -115,13 +112,11 @@ paths:
       tags:
       - Envio
       summary: Listar os envios pendentes do próprio ator
-      description: 'Só os envios do ator corrente que ainda não foram concluídos nem expiraram (RF-03). Serve para
-        a tela avisar que há um envio a retomar. Nunca lista envios de outros atores.
-
-        '
+      description: |
+        Só os envios do ator corrente que ainda não foram concluídos nem expiraram (RF-03). Serve para a tela avisar que há um envio a retomar. Nunca lista envios de outros atores.
       operationId: listPendingVideoUploadsInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
@@ -168,13 +163,11 @@ paths:
       tags:
       - Envio
       summary: Consultar um envio pendente
-      description: 'Devolve as partes que o armazenamento já confirmou, para o cliente enviar só as que faltam.
-        Envio de outro ator, expirado ou já concluído responde o mesmo 404.
-
-        '
+      description: |
+        Devolve as partes que o armazenamento já confirmou, para o cliente enviar só as que faltam. Envio de outro ator, expirado ou já concluído responde o mesmo 404.
       operationId: getVideoUploadInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/UploadId'
       responses:
@@ -200,15 +193,11 @@ paths:
       tags:
       - Envio
       summary: Obter URLs assinadas para enviar partes
-      description: 'Emite uma URL opaca, de vida curta e de escrita única para cada parte pedida (até 100 por chamada).
-        O cliente envia os bytes da parte com `PUT` direto nessa URL, sem cookie e sem cabeçalho do BFF. A URL não
-        serve para ler nada. Cada emissão renova `expiresAt` do envio. Não altera estado de negócio; repetir o pedido
-        emite URLs novas para as mesmas partes.
-
-        '
+      description: |
+        Emite uma URL opaca, de vida curta e de escrita única para cada parte pedida (até 100 por chamada). O cliente envia os bytes da parte com `PUT` direto nessa URL, sem cookie e sem cabeçalho do BFF. A URL não serve para ler nada. Cada emissão renova `expiresAt` do envio. Não altera estado de negócio; repetir o pedido emite URLs novas para as mesmas partes.
       operationId: createVideoUploadPartUrlsInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/UploadId'
       requestBody:
@@ -269,14 +258,11 @@ paths:
       tags:
       - Envio
       summary: Concluir o envio
-      description: 'O serviço de mídia confere no armazenamento que **todas** as partes chegaram, e só então cria
-        o vídeo no estado `received`, com o ator como autor. A preparação começa sozinha (RF-04). Repetir a conclusão
-        do mesmo envio devolve o mesmo vídeo, nunca um segundo (RF-02), mesmo com outra `Idempotency-Key`.
-
-        '
+      description: |
+        O serviço de mídia confere no armazenamento que **todas** as partes chegaram, e só então cria o vídeo no estado `received`, com o ator como autor. A preparação começa sozinha (RF-04). Repetir a conclusão do mesmo envio devolve o mesmo vídeo, nunca um segundo (RF-02), mesmo com outra `Idempotency-Key`.
       operationId: completeVideoUploadInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/UploadId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -327,15 +313,11 @@ paths:
       tags:
       - Vídeos
       summary: Listar os vídeos da escola
-      description: 'Todos os vídeos da escola do ator, de qualquer autor (DP-03), do mais recente ao mais antigo.
-        Filtro por estado e busca por trecho do título, sem diferenciar maiúsculas nem acento. A tela consulta de
-        novo enquanto houver vídeo em `received` ou `preparing` (DP-04). Serve também ao seletor de vídeo pronto
-        da tela de aula (RF-08), com `status=ready`.
-
-        '
+      description: |
+        Todos os vídeos da escola do ator, de qualquer autor (DP-03), do mais recente ao mais antigo. Filtro por estado e busca por trecho do título, sem diferenciar maiúsculas nem acento. A tela consulta de novo enquanto houver vídeo em `received` ou `preparing` (DP-04). Serve também ao seletor de vídeo pronto da tela de aula (RF-08), com `status=ready`.
       operationId: listVideosInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - name: status
         in: query
@@ -410,13 +392,11 @@ paths:
       tags:
       - Vídeos
       summary: Consultar um vídeo
-      description: 'Existência, estado, título e duração de um vídeo da escola do ator (RF-08). Vídeo de outra escola
-        responde o mesmo 404 de vídeo inexistente. Nunca devolve endereço, chave nem nome de arquivo guardado.
-
-        '
+      description: |
+        Existência, estado, título e duração de um vídeo da escola do ator (RF-08). Vídeo de outra escola responde o mesmo 404 de vídeo inexistente. Nunca devolve endereço, chave nem nome de arquivo guardado.
       operationId: getVideoInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/VideoId'
       responses:
@@ -439,13 +419,11 @@ paths:
       tags:
       - Vídeos
       summary: Corrigir o título de um vídeo
-      description: 'Qualquer ator com `midia.enviar` corrige o título de qualquer vídeo da escola, em qualquer estado
-        (RF-07). Não muda nada além do título.
-
-        '
+      description: |
+        Qualquer ator com `midia.enviar` corrige o título de qualquer vídeo da escola, em qualquer estado (RF-07). Não muda nada além do título.
       operationId: updateVideoTitleInternal
       security:
-      - *id001
+      - StaffUserToken: []
       parameters:
       - $ref: '#/components/parameters/VideoId'
       - $ref: '#/components/parameters/IdempotencyKey'
@@ -616,7 +594,9 @@ components:
                 code: TOKEN_INVALID
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     StorageUnavailable:
-      description: O armazenamento de objetos não respondeu ou recusou a operação (C-16). Nenhum estado de negócio muda; o cliente pode repetir com a mesma `Idempotency-Key`. O corpo não traz bucket, host nem identificador do upload do provedor.
+      description: O armazenamento de objetos não respondeu ou recusou a operação (C-16). Nenhum estado de negócio
+        muda; o cliente pode repetir com a mesma `Idempotency-Key`. O corpo não traz bucket, host nem identificador
+        do upload do provedor.
       content:
         application/problem+json:
           schema:
@@ -734,10 +714,8 @@ components:
       type: string
       minLength: 1
       maxLength: 200
-      description: 'Nome do vídeo para reconhecê-lo no vínculo à aula. Não é título de aula. Só espaços é recusado
-        com `TITLE_REQUIRED`.
-
-        '
+      description: |
+        Nome do vídeo para reconhecê-lo no vínculo à aula. Não é título de aula. Só espaços é recusado com `TITLE_REQUIRED`.
       examples:
       - Aula 3 — Injeção de dependência
     VideoStatus:
@@ -747,11 +725,8 @@ components:
       - preparing
       - ready
       - failed
-      description: '`received` recebido e aguardando preparação; `preparing` em preparação; `ready` pronto para
-        vínculo e reprodução; `failed` a preparação esgotou as tentativas. Só anda para frente; `ready` e `failed`
-        são finais (RN-M05).
-
-        '
+      description: |
+        `received` recebido e aguardando preparação; `preparing` em preparação; `ready` pronto para vínculo e reprodução; `failed` a preparação esgotou as tentativas. Só anda para frente; `ready` e `failed` são finais (RN-M05).
     FailureReason:
       type: string
       enum:
@@ -759,11 +734,8 @@ components:
       - unsupported-format
       - duration-exceeded
       - preparation-failed
-      description: 'Categoria do motivo da falha. O SPA mostra o texto do PRD (RF-05): "arquivo de vídeo ilegível",
-        "formato de vídeo não suportado", "duração acima de 3 horas", "não foi possível preparar este vídeo — envie
-        novamente".
-
-        '
+      description: |
+        Categoria do motivo da falha. O SPA mostra o texto do PRD (RF-05): "arquivo de vídeo ilegível", "formato de vídeo não suportado", "duração acima de 3 horas", "não foi possível preparar este vídeo — envie novamente".
     CreateVideoUploadRequest:
       type: object
       additionalProperties: false
@@ -789,21 +761,16 @@ components:
         contentType:
           type: string
           minLength: 1
-          description: 'Tipo declarado pelo navegador. Aceitos: `video/mp4`, `video/quicktime`, `video/x-matroska`,
-            conferidos junto com a extensão de `fileName` (`.mp4`, `.mov`, `.mkv`). Outro → 422 `FORMAT_NOT_SUPPORTED`.
-            A leitura real do conteúdo acontece na preparação (RF-04).
-
-            '
+          description: |
+            Tipo declarado pelo navegador. Aceitos: `video/mp4`, `video/quicktime`, `video/x-matroska`, conferidos junto com a extensão de `fileName` (`.mp4`, `.mov`, `.mkv`). Outro → 422 `FORMAT_NOT_SUPPORTED`. A leitura real do conteúdo acontece na preparação (RF-04).
           examples:
           - video/mp4
         fingerprint:
           type: string
           minLength: 16
           maxLength: 128
-          description: 'Impressão opaca do arquivo calculada pelo cliente (nome, tamanho e data de modificação).
-            Só serve para reconhecer o mesmo arquivo na retomada (RF-03).
-
-            '
+          description: |
+            Impressão opaca do arquivo calculada pelo cliente (nome, tamanho e data de modificação). Só serve para reconhecer o mesmo arquivo na retomada (RF-03).
         uploaderName:
           type: string
           minLength: 1
@@ -849,10 +816,8 @@ components:
         expiresAt:
           type: string
           format: date-time
-          description: 'Até quando o envio pode ser retomado. Pelo menos 24 horas depois da validade da última URL
-            de parte emitida (RF-03); depois disso o envio e as partes são descartados.
-
-            '
+          description: |
+            Até quando o envio pode ser retomado. Pelo menos 24 horas depois da validade da última URL de parte emitida (RF-03); depois disso o envio e as partes são descartados.
     VideoUploadPage:
       type: object
       additionalProperties: false
@@ -903,10 +868,8 @@ components:
               url:
                 type: string
                 format: uri
-                description: 'URL opaca de escrita de uma única parte. O cliente não interpreta host nem parâmetros;
-                  só envia `PUT` com os bytes da parte até `expiresAt`.
-
-                  '
+                description: |
+                  URL opaca de escrita de uma única parte. O cliente não interpreta host nem parâmetros; só envia `PUT` com os bytes da parte até `expiresAt`.
               expiresAt:
                 type: string
                 format: date-time

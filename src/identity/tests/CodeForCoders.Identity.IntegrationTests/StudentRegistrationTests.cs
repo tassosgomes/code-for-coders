@@ -49,6 +49,7 @@ public sealed class StudentRegistrationTests(IdentityIntegrationFixture fixture)
 
         var messages = await dbContext.OutboxMessages.ToListAsync(cancellationToken);
         Assert.Equal(2, messages.Count);
+        foreach (var message in messages) IdentityMessages.AssertSends(message.RoutingKey, OutboxTestProtection.ReadPayload(message));
         var fact = Assert.Single(messages, message => message.RoutingKey == "identidade.conta-criada.v1");
         Assert.Equal("identity.events", fact.Exchange);
         Assert.DoesNotContain("student@example.com", fact.Payload, StringComparison.OrdinalIgnoreCase);

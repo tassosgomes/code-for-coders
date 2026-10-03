@@ -13,6 +13,14 @@
 * Ao criar uma nova dependência de infraestrutura em `docker-compose.yml`, replique o override em `docker-compose.remote.yml` para o modo `--remote` não depender de hostnames locais (`valkey`, `rabbitmq`, `minio`, etc.).
 * Testes com **Testcontainers** consomem muitos recursos: evite executar vários em paralelo. A disputa por recursos degrada o tempo e a estabilidade dos testes (flakiness). Prefira execução sequencial ou paralelismo mínimo.
 
+## PRDs arquivados e fonte da verdade
+
+* `tasks/archive/prd-*/` guarda PRDs **concluídos** (PRD, TechSpec, tasks, reviews e os contratos de recorte da época). É só histórico: **não use como fonte da verdade** do comportamento, das regras ou das interfaces do sistema. Eles podem estar superados por PRDs posteriores e pelo código.
+* Para saber como o sistema é hoje, consulte nesta ordem: o código em `src/`, os contratos vigentes em `contracts/` (ver `contracts/README.md`), as ADRs em `docs/adr/` e os domain docs em `domains/`.
+* Contrato de integração (OpenAPI/AsyncAPI) vigente está **somente** em `contracts/`. Ao planejar um PRD novo, parta de lá; o recorte do PRD fica em `tasks/prd-[slug]/` e, ao concluir o PRD, é promovido para `contracts/` antes de a pasta ir para `tasks/archive/`.
+* Não edite nada em `tasks/archive/`. Se precisar citar um PRD arquivado (motivação de uma decisão, por exemplo), cite como referência histórica e confirme o fato no código ou em `contracts/`.
+* Testes e código nunca leem arquivos de `tasks/` (nem de `tasks/archive/`); testes de contrato leem `contracts/`.
+
 <!-- groma:start -->
 ## Groma
 

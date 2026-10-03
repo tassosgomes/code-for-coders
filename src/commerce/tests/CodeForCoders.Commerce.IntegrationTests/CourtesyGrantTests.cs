@@ -31,10 +31,10 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
         var messages = await db.EntitlementOutboxMessages.ToListAsync(Cancellation); Assert.Equal(2, messages.Count);
         var factMessage = messages.Single(item => item.RoutingKey == "matricula.acesso-concedido.v1");
         using var fact = JsonDocument.Parse(factMessage.Payload); Assert.Equal(12, fact.RootElement.EnumerateObject().Count());
-        CourtesyGrantContract.AssertValid(fact.RootElement);
+        CommerceMessages.AssertSends(factMessage.RoutingKey, fact.RootElement);
         Assert.False(fact.RootElement.TryGetProperty("reason", out _)); Assert.DoesNotContain("Bolsa", factMessage.Payload); Assert.DoesNotContain("email", factMessage.Payload); Assert.DoesNotContain("name", factMessage.Payload);
         using var act = JsonDocument.Parse(messages.Single(item => item.RoutingKey == "auditoria.ato-praticado.v1").Payload);
-        CourtesyGrantContract.AssertValid(act.RootElement, true);
+        CommerceMessages.AssertSends("auditoria.ato-praticado.v1", act.RootElement);
         Assert.Equal(fact.RootElement.GetProperty("eventId").GetGuid(), act.RootElement.GetProperty("fatoId").GetGuid());
         Assert.DoesNotContain(test.Logs.Concat(test.Spans), entry => entry.Contains("Bolsa de mentoria", StringComparison.Ordinal) || entry.Contains("courtesy-test-key", StringComparison.Ordinal));
         Assert.Equal("Bolsa de mentoria", act.RootElement.GetProperty("motivo").GetString()); Assert.Equal("6m", act.RootElement.GetProperty("complemento").GetProperty("vigencia").GetString());

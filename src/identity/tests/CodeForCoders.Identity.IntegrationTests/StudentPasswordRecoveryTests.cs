@@ -177,6 +177,7 @@ public sealed class StudentPasswordRecoveryTests(IdentityIntegrationFixture fixt
         var resetFact = await verificationContext.OutboxMessages.SingleAsync(
             message => message.RoutingKey == "identidade.senha-redefinida.v1",
             cancellationToken);
+        IdentityMessages.AssertSends(resetFact.RoutingKey, OutboxTestProtection.ReadPayload(resetFact));
 
         Assert.True(verifiedAccount.IsConfirmed);
         Assert.NotEqual(oldPasswordHash, credential.PasswordHash);

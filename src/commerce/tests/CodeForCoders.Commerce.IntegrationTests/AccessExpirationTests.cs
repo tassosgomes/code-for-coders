@@ -29,7 +29,7 @@ public sealed class AccessExpirationTests(CommerceIntegrationFixture infra)
         Assert.Equal(1, await test.CycleAsync());
         var fact = Assert.Single(await test.FactsAsync());
         using var json = JsonDocument.Parse(fact.Payload);
-        AccessExpirationContract.AssertValid(json.RootElement);
+        CommerceMessages.AssertSends("matricula.acesso-expirado.v1", json.RootElement);
         Assert.Equal("matricula.acesso-expirado.v1", fact.RoutingKey);
         Assert.Equal("AcessoExpirado", fact.Type);
         Assert.Equal(test.Tenant, fact.TenantId);
@@ -219,7 +219,7 @@ public sealed class AccessExpirationTests(CommerceIntegrationFixture infra)
         Assert.NotNull(delivered);
         Assert.Equal("matricula.acesso-expirado.v1", delivered.RoutingKey);
         using var json = JsonDocument.Parse(delivered.Body);
-        AccessExpirationContract.AssertValid(json.RootElement);
+        CommerceMessages.AssertSends("matricula.acesso-expirado.v1", json.RootElement);
         Assert.Equal(grant.Id, json.RootElement.GetProperty("grantId").GetGuid());
         Assert.Equal((await test.ReloadAsync(grant.Id)).ExpiryEventId!.Value.ToString(), delivered.BasicProperties.MessageId);
         Assert.NotNull(delivered.BasicProperties.Headers!["correlationId"]);

@@ -40,7 +40,7 @@ public sealed class CourseLevelPublicationTests(CourseApiFactory factory)
         var persisted = await db.CourseVersions.IgnoreQueryFilters().SingleAsync(item => item.CourseId == course.Id, Cancellation);
         var row = await db.ContentOutboxMessages.IgnoreQueryFilters().SingleAsync(item => item.Id == persisted.Id, Cancellation);
         using var json = JsonDocument.Parse(row.Payload); var payload = json.RootElement;
-        PublishedCourseContract.AssertValid(payload);
+        LearningMessages.AssertSends("conteudo.versao-publicada.v1", payload);
         Assert.Equal(persisted.Id, payload.GetProperty("eventId").GetGuid());
         Assert.Equal(level, payload.GetProperty("level").GetString());
         Assert.Equal(prerequisites ? "Pedagogical description" : string.Empty, payload.GetProperty("description").GetString());
@@ -150,7 +150,7 @@ public sealed class CourseLevelPublicationTests(CourseApiFactory factory)
         Assert.Equal(first.GetProperty("modules").GetRawText(), second.GetProperty("modules").GetRawText());
         await using var db = Context(); var version = await db.CourseVersions.IgnoreQueryFilters().SingleAsync(item => item.CourseId == course.Id && item.VersionNumber == 2, Cancellation);
         var fact = await db.ContentOutboxMessages.IgnoreQueryFilters().SingleAsync(item => item.Id == version.Id, Cancellation);
-        PublishedCourseContract.AssertValid(JsonDocument.Parse(fact.Payload).RootElement);
+        LearningMessages.AssertSends("conteudo.versao-publicada.v1", JsonDocument.Parse(fact.Payload).RootElement);
         var acts = await db.ContentOutboxMessages.IgnoreQueryFilters().Where(item => item.TenantId == course.TenantId && item.RoutingKey == "auditoria.ato-praticado.v1").ToListAsync(Cancellation);
         Assert.Equal(2, acts.Count); Assert.Contains(acts, item => JsonDocument.Parse(item.Payload).RootElement.GetProperty("fatoId").GetGuid() == version.Id);
     }
