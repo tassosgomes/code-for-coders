@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useLocation, useNavigate } from 'react-router';
 
@@ -7,6 +7,7 @@ import axios from 'axios';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { AppShell } from '@/components/app-shell';
 import { paths } from '@/config/paths';
+import { activeStaffSessionMarker, expiredStaffSessionMarker } from '@/config/session-markers';
 import { useEndCurrentStaffSession } from '@/features/staff-session/api/staff-session';
 import { getStaffAreas } from '@/features/staff-session/utils/get-staff-areas';
 
@@ -38,17 +39,36 @@ const AdminLayoutContent = ({ serviceName, session, title }: AdminLayoutContentP
   const navigate = useNavigate();
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const endSession = useEndCurrentStaffSession();
+  const sessionExpiredHandled = useRef(false);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (sessionExpiredHandled.current) {
+        return;
+      }
+
+      sessionExpiredHandled.current = true;
+      queryClient.clear();
+      window.sessionStorage.removeItem(activeStaffSessionMarker);
+      window.sessionStorage.setItem(expiredStaffSessionMarker, 'true');
+      void navigate(paths.staffLogin.getHref(), { replace: true });
+    };
+
+    window.addEventListener('app:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('app:session-expired', handleSessionExpired);
+  }, [navigate, queryClient]);
 
   const logout = async () => {
     setLogoutError(null);
     try {
       await endSession.mutateAsync();
       queryClient.clear();
+      window.sessionStorage.removeItem(activeStaffSessionMarker);
+      window.sessionStorage.removeItem(expiredStaffSessionMarker);
       await navigate(paths.staffLogin.getHref(), { replace: true });
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         queryClient.clear();
-        await navigate(paths.staffLogin.getHref(), { replace: true });
         return;
       }
 

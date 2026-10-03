@@ -92,8 +92,8 @@ export const StudentLoginScreen = () => {
         <CardContent className="pb-0">
           <Alert aria-live="polite" role="status">
             <InfoIcon aria-hidden="true" />
-            <AlertTitle>Sua sessão expirou</AlertTitle>
-            <AlertDescription>Entre de novo para continuar no seu espaço de aprendizagem.</AlertDescription>
+            <AlertTitle>Sessão Expirada</AlertTitle>
+            <AlertDescription>Sua sessão expirou. Entre de novo para continuar no seu espaço de aprendizagem.</AlertDescription>
           </Alert>
         </CardContent>
       ) : null}

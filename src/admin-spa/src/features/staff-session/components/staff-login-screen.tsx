@@ -8,6 +8,7 @@ import axios from 'axios';
 
 import { paths } from '@/config/paths';
 import { AuthLayout } from '@/components/auth-layout';
+import { activeStaffSessionMarker, expiredStaffSessionMarker } from '@/config/session-markers';
 import {
   staffSessionLoginSchema,
   useCreateStaffSession,
@@ -16,6 +17,9 @@ import {
 
 export const StaffLoginScreen = () => {
   const [requestError, setRequestError] = useState<'credentials' | 'generic' | null>(null);
+  const [showSessionExpired, setShowSessionExpired] = useState(
+    () => window.sessionStorage.getItem(expiredStaffSessionMarker) === 'true',
+  );
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const createSession = useCreateStaffSession();
@@ -28,6 +32,9 @@ export const StaffLoginScreen = () => {
     setRequestError(null);
     try {
       await createSession.mutateAsync(input);
+      window.sessionStorage.setItem(activeStaffSessionMarker, 'true');
+      window.sessionStorage.removeItem(expiredStaffSessionMarker);
+      setShowSessionExpired(false);
       await navigate(paths.home.getHref(), { replace: true });
     } catch (error: unknown) {
       setRequestError(axios.isAxiosError(error) && error.response?.status === 401 ? 'credentials' : 'generic');
@@ -40,6 +47,15 @@ export const StaffLoginScreen = () => {
         <p className="eyebrow">Backoffice</p>
         <h1 id="staff-login-title">Entrar na operação</h1>
         <p>Acesso da equipe da escola. Alunos entram por code4coders.com.br/entrar.</p>
+        {showSessionExpired ? (
+          <div className="login-request-error" role="status">
+            <CircleAlert aria-hidden="true" size={16} />
+            <div className="login-request-error-content">
+              <p className="login-request-error-title">Sessão Expirada</p>
+              <p>Entre de novo para continuar.</p>
+            </div>
+          </div>
+        ) : null}
         {requestError ? (
           <div className="login-request-error" role="alert">
             <CircleAlert aria-hidden="true" size={16} />
