@@ -17,5 +17,9 @@ public sealed class PlaybackRepository(MediaDbContext context) : IPlaybackReposi
         => context.Videos.AsNoTracking().Where(video => video.VideoId == videoId && video.Status == "ready")
             .Select(video => new PlaybackVideoKey(video.VideoId, video.MasterKeyId!, video.EncryptedVideoKey!))
             .SingleOrDefaultAsync(cancellationToken);
+    public Task<int?> FindVideoDurationAsync(Guid videoId, CancellationToken cancellationToken)
+        => context.Videos.AsNoTracking().Where(video => video.VideoId == videoId)
+            .Select(video => video.DurationSeconds)
+            .SingleOrDefaultAsync(cancellationToken);
     public void Add(PlaybackSession session) => context.PlaybackSessions.Add(session);
 }

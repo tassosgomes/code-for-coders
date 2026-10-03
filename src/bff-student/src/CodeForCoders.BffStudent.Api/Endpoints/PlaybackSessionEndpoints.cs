@@ -9,6 +9,7 @@ public static class PlaybackSessionEndpoints
     {
         endpoints.MapPost("/api/v1/lessons/{lessonId:guid}/playback-sessions", OpenAsync);
         endpoints.MapPost("/api/v1/playback-sessions/{sessionId:guid}/renewals", RenewAsync);
+        endpoints.MapPost("/api/v1/playback-sessions/{sessionId:guid}/progress", ProgressAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/playlist", PlaylistAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/variants/{quality}", VariantAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/key", KeyAsync);
@@ -18,6 +19,33 @@ public static class PlaybackSessionEndpoints
         => ProxyAsync(HttpMethod.Post, $"lessons/{lessonId:D}/playback-sessions", context, client, cancellationToken);
     private static Task<IResult> RenewAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Post, $"playback-sessions/{sessionId:D}/renewals", context, client, cancellationToken);
+    private static async Task<IResult> ProgressAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
+    {
+        context.Response.Headers.CacheControl = "no-store";
+        using var reader = new StreamReader(context.Request.Body);
+        var rawBody = await reader.ReadToEndAsync(cancellationToken);
+        using var content = new StringContent(rawBody, System.Text.Encoding.UTF8, "application/json");
+        var result = await client.SendAsync(
+            HttpMethod.Post,
+            $"playback-sessions/{sessionId:D}/progress",
+            BffSessionContext.GetAccessToken(context)!,
+            content,
+            TimeSpan.FromSeconds(3),
+            cancellationToken);
+
+        if (result.StatusCode == 200)
+        {
+            return new PlaybackBodyResult(result.Body!, result.ContentType!, result.StatusCode);
+        }
+
+        return Results.Problem(statusCode: result.StatusCode, title: "Não foi possível registrar o avanço.", extensions: new Dictionary<string, object?>
+        {
+            ["code"] = result.Code,
+            ["reason"] = result.Reason,
+            ["accessEndedAt"] = result.AccessEndedAt,
+            ["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier,
+        });
+    }
     private static Task<IResult> PlaylistAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Get, $"playback-sessions/{sessionId:D}/playlist", context, client, cancellationToken);
     private static Task<IResult> VariantAsync(Guid sessionId, string quality, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)

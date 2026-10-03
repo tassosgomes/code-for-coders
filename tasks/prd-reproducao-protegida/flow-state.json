@@ -4,9 +4,9 @@
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "target_ref": null,
-  "last_checkpoint": "6.0",
+  "last_checkpoint": "7.0",
   "phase": "checkpoint",
-  "active_task": "7.0",
+  "active_task": "8.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,12 +19,12 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.Lm6O8Vsr",
+    "run_id": "run.MxOfvRL7",
     "role": "validator",
     "mode": "revalidation",
-    "task": "6.0",
+    "task": "7.0",
     "outcome": "approved",
-    "note": "B1 resolvido; detalhes em 6_task_review.md"
+    "note": "B1 e B2 resolvidos; detalhes em 7_task_review.md"
   },
   "pending": null,
   "history": [
@@ -50,6 +50,8 @@
     "agy sem modo nao interativo travou em prompt de permissao (run.C6n2cmbF); resolvido com TSG_AGENT_EXTRA_ARGS=--dangerously-skip-permissions",
     "5.0 fix run.5Jzfp7vM (agy): implementation_complete, gate exit 0 (21 testes)",
     "5.0 checkpoint-task ok (run.vRO5z8YT): 5_task.md done, tasks.md [x] 5.0, V-03 RenewPlaybackSession media/bff-student/student-spa+scripts, review focused aprovada run.weBwC7Bu, gate 21 testes exit 0",
-    "6.0 checkpoint-task ok (run.Vhcspt7O): 6_task.md done, tasks.md [x] 6.0, V-04 PublishedLessonRepublication learning/student-spa+nav, review revalidation aprovada run.Lm6O8Vsr, gate 12 testes exit 0"
+    "6.0 checkpoint-task ok (run.Vhcspt7O): 6_task.md done, tasks.md [x] 6.0, V-04 PublishedLessonRepublication learning/student-spa+nav, review revalidation aprovada run.Lm6O8Vsr, gate 12 testes exit 0",
+    "checkpoint 6.0 = commit b6a51ef26b28d3d6bc22acbea9b6cb7c5c3fbb21 (routing.default.json do responsavel fora do checkpoint); iniciando 7.0",
+    "7.0 checkpoint-task ok (run.HSGjXnZW): 7_task.md done, tasks.md [x] 7.0, V-05 recordPlaybackProgress media/bff-student/student-spa, review revalidation aprovada run.MxOfvRL7, gate 34 testes exit 0"
   ]
 }

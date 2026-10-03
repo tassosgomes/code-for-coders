@@ -1,6 +1,7 @@
 using System.Diagnostics.Metrics;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

@@ -11,12 +11,44 @@ public sealed class PlaybackSession
     public Guid VideoId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
+    public int? LastSequence { get; private set; }
+    public DateTimeOffset? LastProgressAt { get; private set; }
+    public int? LastPositionSeconds { get; private set; }
 
     public bool TryRenew(DateTimeOffset now)
     {
         if (ExpiresAt <= now) return false;
         ExpiresAt = now.AddMinutes(5);
         return true;
+    }
+
+    public bool TryRecordProgress(int sequence, DateTimeOffset now, int positionSeconds, int minGapSeconds = 10)
+    {
+        if (LastSequence.HasValue && sequence <= LastSequence.Value)
+        {
+            return false;
+        }
+
+        if (LastProgressAt.HasValue && (now - LastProgressAt.Value).TotalSeconds < minGapSeconds)
+        {
+            return false;
+        }
+
+        LastSequence = sequence;
+        LastProgressAt = now;
+        LastPositionSeconds = positionSeconds;
+        return true;
+    }
+
+    public static Guid CreateDeterministicEventId(Guid sessionId, int sequence)
+    {
+        var input = $"{sessionId:D}:{sequence}";
+        var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(input));
+        Span<byte> bytes = stackalloc byte[16];
+        hash.AsSpan(0, 16).CopyTo(bytes);
+        bytes[6] = (byte)((bytes[6] & 0x0F) | 0x50);
+        bytes[8] = (byte)((bytes[8] & 0x3F) | 0x80);
+        return new Guid(bytes);
     }
 
     public static PlaybackSession Create(PlaybackSessionCreateInput input)

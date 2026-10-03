@@ -6,20 +6,30 @@ public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClien
 {
     private static readonly HashSet<(int, string)> KnownErrors =
     [
+        (400, "VALIDATION_ERROR"),
         (404, "LESSON_NOT_AVAILABLE"), (409, "MEDIA_NOT_READY"), (403, "ACCESS_DENIED"),
         (503, "ACCESS_DECISION_UNAVAILABLE"), (422, "WATERMARK_UNAVAILABLE"),
         (404, "SESSION_NOT_FOUND"), (410, "SESSION_EXPIRED"),
         (404, "PLAYBACK_SESSION_NOT_FOUND"), (410, "PLAYBACK_SESSION_EXPIRED"),
     ];
 
-    public async Task<PlaybackProxyResult> SendAsync(HttpMethod method, string path, string accessToken, CancellationToken cancellationToken)
+    public Task<PlaybackProxyResult> SendAsync(HttpMethod method, string path, string accessToken, CancellationToken cancellationToken)
+        => SendAsync(method, path, accessToken, null, null, cancellationToken);
+
+    public async Task<PlaybackProxyResult> SendAsync(HttpMethod method, string path, string accessToken, HttpContent? content, TimeSpan? timeout, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(method, "internal/v1/" + path);
         request.Headers.Authorization = new("Bearer", accessToken);
+        if (content is not null) request.Content = content;
+
+        using var cts = timeout.HasValue ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken) : null;
+        if (timeout.HasValue) cts!.CancelAfter(timeout.Value);
+        var effectiveToken = cts?.Token ?? cancellationToken;
+
         try
         {
-            using var response = await client.SendAsync(request, cancellationToken);
-            var body = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            using var response = await client.SendAsync(request, effectiveToken);
+            var body = await response.Content.ReadAsByteArrayAsync(effectiveToken);
             var status = (int)response.StatusCode;
             var contentType = response.Content.Headers.ContentType?.ToString();
             if (status is 200 or 201)

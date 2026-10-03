@@ -6,6 +6,7 @@ import { studentLessonData } from '@/testing/student-lesson-data';
 
 export const handlers = [
   http.post(env.API_URL + "/api/v1/playback-sessions/:sessionId/renewals", () => HttpResponse.json(playbackData())), 
+  http.post(env.API_URL + "/api/v1/playback-sessions/:sessionId/progress", () => HttpResponse.json({ recorded: true })), 
   http.post(env.API_URL + "/api/v1/lessons/:lessonId/playback-sessions", () => HttpResponse.json(playbackData(), { status: 201 })),
   http.get("*/api/v1/playback-sessions/:sessionId/playlist", () => HttpResponse.text("#EXTM3U")),
   http.get("*/api/v1/playback-sessions/:sessionId/variants/:quality", () => HttpResponse.text("#EXTM3U")),

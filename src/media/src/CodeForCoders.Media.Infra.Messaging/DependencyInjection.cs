@@ -1,4 +1,5 @@
 using CodeForCoders.Media.Application.Interfaces;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using CodeForCoders.Media.Infra.Messaging.Health;
 using Microsoft.Extensions.Configuration;

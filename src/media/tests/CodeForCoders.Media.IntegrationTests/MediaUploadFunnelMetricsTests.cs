@@ -7,6 +7,7 @@ using System.Text.Json;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.AspNetCore.Hosting;

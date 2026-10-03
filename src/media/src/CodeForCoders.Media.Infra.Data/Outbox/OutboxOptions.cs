@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace CodeForCoders.Media.Infra.Messaging.Configuration;
+namespace CodeForCoders.Media.Infra.Data.Outbox;
 
 public sealed class OutboxOptions
 {
@@ -20,4 +20,11 @@ public sealed class OutboxOptions
 
     [Required]
     public string VideoFactReplayQueue { get; set; } = "learning.video-availability";
+
+    public List<string> RetainedRoutingKeys { get; set; } = [];
+
+    public Guid? ProgressFactReplayTenantId { get; set; }
+
+    [Required]
+    public string ProgressFactReplayQueue { get; set; } = "learning.playback-progress";
 }

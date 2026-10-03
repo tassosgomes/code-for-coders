@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.PlaybackProgressTests --minimum-expected-tests 10 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.RetainedOutboxFactTests --minimum-expected-tests 6 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.PlaybackProgressProxyTests --minimum-expected-tests 4 && npm --prefix src/student-spa run test -- playback-progress'
@@ -81,7 +81,7 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0), com os mínimos do `gate`.
+- [x] Gate focalizado passa (exit 0), com os mínimos do `gate`.
 - [ ] 10 minutos contínuos de reprodução simulada produzem cerca de 20 fatos; pausa aos 252 s produz um fato com posição 252.
 - [ ] A saúde do outbox não acusa pendência nem esgotamento com fatos retidos; a operação de reenvio publica numa fila de teste, com o broker real, cada `eventId` **uma vez**, também de uma sessão que terminou por decisão negada.
 - [ ] O fato publicado confere com `asyncapi-contract.yaml` e não contém e-mail, nome, título ou percentual.

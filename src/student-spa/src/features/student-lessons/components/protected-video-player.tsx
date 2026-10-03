@@ -18,7 +18,7 @@ type ProtectedVideoPlayerProps = { lessonId: string; csrfToken: string };
 export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { status, watermark, zone, playing, togglePlayback, retry, loadedMetadata, onPlay, onPause } =
+  const { status, watermark, zone, playing, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
     useProtectedPlayback({ lessonId, csrfToken, videoRef });
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
@@ -48,7 +48,7 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlay
         if (event.key === 'f') fullscreen();
       }}>
       <video ref={videoRef} className="aspect-video w-full" playsInline disablePictureInPicture
-        onPlay={onPlay} onPause={onPause} onEnded={onPause}
+        onPlay={onPlay} onPause={onPause} onEnded={onEnded}
         onLoadedMetadata={() => {
           setDuration(videoRef.current?.duration ?? 0);
           loadedMetadata();
