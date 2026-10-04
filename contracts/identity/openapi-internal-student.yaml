@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
   title: Identity — integração com o BFF do aluno
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `bff-student` → `identity`: conta, sessão e senha do aluno.
 
     Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-conta-aluno/internal-api-contract.yaml` 1.0.0
+    - `tasks/archive/prd-reproducao-protegida/internal-api-contract-identity.yaml` 1.1.0
 
     **Notas de prd-conta-aluno (1.0.0):** Recorte interno de CAP-001. Consumidor único conhecido: BFF do aluno. A asserção de serviço autentica o BFF inclusive antes do login; ela nunca representa um aluno. Toda chamada usa TLS. O tenant é claim da asserção e Identity verifica que o BFF está autorizado para esse tenant.
+
+    **Notas de prd-reproducao-protegida (1.1.0):** Recorte de `CAP-007` sobre `tasks/archive/prd-conta-aluno/internal-api-contract.yaml` 1.0.0. Só `validateStudentSessionInternal` é alterada com mudança aditiva (C-04): `media` e `learning` passam a ser audiências autorizadas para o BFF do aluno, e o JWT de aluno para a audiência `media` carrega a claim `email` (para compor a marca d'água de proteção; Identidade RN-21). Nenhuma outra operação de Identity muda.
   contact:
     name: Time de Identidade e Acesso
 servers:
@@ -136,9 +139,10 @@ paths:
       tags:
       - StudentIdentity
       summary: Validar e renovar sessão
-      description: Valida sessão, tenant, situação da Conta e expiração; renova inatividade atomicamente. Se audience
-        for fornecida, Identity emite JWT interno curto apenas para aquela audiência autorizada. Repetição da validação
-        não cria sessão. Falha fecha acesso.
+      description: 'Sem mudança de comportamento em relação a 1.0.0: valida sessão, tenant, situação da Conta e
+        expiração; renova a inatividade atomicamente; com `audience`, emite JWT de aluno curto só para aquela audiência
+        autorizada. Mudança aditiva deste recorte (C-04): `media` e `learning` passam a ser audiências autorizadas,
+        e o JWT de `media` carrega `email`. Falha fecha acesso.'
       operationId: validateStudentSessionInternal
       security:
       - BffServiceAssertion: []
@@ -148,6 +152,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SessionValidationInput'
+            examples:
+              paraMedia:
+                value:
+                  sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+                  audience: media
       responses:
         '200':
           description: Sessão ativa com expiração renovada e JWT opcional.
@@ -342,8 +351,23 @@ components:
           type: string
         code:
           type: string
+          description: Código estável para tratamento no cliente.
         traceId:
           type: string
+        reason:
+          type: string
+          enum:
+          - no-grant
+          - grant-ended
+          description: 'Só em `ACCESS_DENIED`: `no-grant` (nunca teve acesso ao curso) ou `grant-ended` (já teve,
+            nenhuma concessão está ativa). Clientes devem tolerar valor novo (`suspended` e `revoked` virão com
+            `CAP-009`).'
+        accessEndedAt:
+          type: string
+          format: date-time
+          description: 'Só em `ACCESS_DENIED` com `reason: grant-ended`: término (exclusivo, UTC) da última concessão.
+            O último dia de acesso é o dia anterior a este instante, no fuso da escola (DP-03 de `CAP-008`); é a
+            data da mensagem "Seu acesso a este curso terminou em ...".'
     Registration:
       type: object
       additionalProperties: false
@@ -431,7 +455,11 @@ components:
         audience:
           type: string
           minLength: 1
-          description: Omitido quando o BFF só precisa consultar sessão; requerido para obter JWT de destino.
+          description: 'Omitido quando o BFF só precisa consultar a sessão; obrigatório para obter JWT de destino.
+            Audiências de aluno autorizadas para o BFF do aluno, neste recorte: `media` e `learning` (C-04). Audiência
+            não autorizada → 403.'
+          examples:
+          - media
     SessionValidated:
       type: object
       additionalProperties: false
@@ -450,7 +478,10 @@ components:
           format: date-time
         accessToken:
           type: string
-          description: JWT interno de aluno; presente somente quando audience foi solicitada.
+          description: 'JWT interno de aluno; presente somente quando `audience` foi solicitada. Vida curta, RS256,
+            claims `iss`, `aud`, `sub`, `tenantId`, `sessionId`, `exp`, `jti`. **Com `audience: media`, acrescenta
+            a claim `email`**, o e-mail da conta: exposição declarada de Identidade RN-21, para a marca d''água.
+            Em nenhuma outra audiência a claim existe. O e-mail nunca vai em log, URL ou métrica.'
     PasswordResetInput:
       type: object
       additionalProperties: false

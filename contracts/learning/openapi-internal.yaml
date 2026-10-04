@@ -1,18 +1,21 @@
 openapi: 3.1.0
 info:
-  title: Learning — API interna de autoria de cursos
-  version: 1.1.0
+  title: Learning — API interna de autoria de cursos e aula do aluno
+  version: 1.2.0
   description: |
-    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `learning` e serviços → `learning` (resolução de referências de curso).
+    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `learning`, `bff-student` → `learning` e serviços → `learning` (resolução de referências de curso).
 
     Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-autoria-curso/internal-api-contract-learning.yaml` 1.0.0
     - `tasks/archive/prd-nivel-prerequisito-curso/internal-api-contract-learning.yaml` 1.1.0
+    - `tasks/archive/prd-reproducao-protegida/internal-api-contract-learning.yaml` 1.1.0
 
     **Notas de prd-autoria-curso (1.0.0):** Recorte interno do primeiro PRD de CAP-005, `tasks/archive/prd-autoria-curso/prd.md` v1.0. Consumidor único conhecido: `bff-admin`. `learning` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `learning`, validade) e exige `autoria.ler` nas leituras e `autoria.editar` nas escritas no claim `permissions`, sem consultar Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações de autoria espelham 1:1 o contrato público (`api-contract.yaml` 1.0.0); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, sem 502/504, header `X-Actor-Name` nas escritas (C-04), e o vídeo da aula só com `videoId` (o BFF enriquece, C-05). Acrescenta `resolveCourseReferencesInternal`, para a consulta da trilha de auditoria (C-08).
 
     **Notas de prd-nivel-prerequisito-curso (1.1.0):** Recorte interno do segundo PRD de CAP-005 (`tasks/archive/prd-nivel-prerequisito-curso/prd.md` v1.0). Interface `bff-admin` → `learning`, derivada do recorte público (`api-contract.yaml` 1.1.0) pela mesma transformação mecânica usada em 1.0.0: sem cookie nem CSRF; JWT de ator com audiência `learning`; `X-Actor-Name` nas escritas (C-04); sem as respostas 502/504, que são do BFF. `learning` decide `autoria.ler`/`autoria.editar` pelas claims e valida cursos recomendados (escola, versão vigente, não o próprio curso). Evolui aditivamente `learning` 1.0.0 (`tasks/archive/prd-autoria-curso/internal-api-contract-learning.yaml`); as demais operações não mudam.
+
+    **Notas de prd-reproducao-protegida (1.1.0):** Recorte interno de `CAP-007`, `tasks/archive/prd-reproducao-protegida/prd.md` v1.0. Acrescenta uma leitura ao contrato interno de `learning` (`getStudentLessonInternal` em `/lessons/{lessonId}`). Consumidor único conhecido: `bff-student`. `learning` valida localmente o JWT de aluno com audiência `learning` (ADR-0003) e, **antes de devolver a estrutura**, consulta a decisão de acesso em `commerce` com a asserção de serviço de `learning` (escopo `access-decision:read`, ADR-0011; C-02). Nada do curso é devolvido a quem não pode acessá-lo. As operações de autoria de CAP-005 não mudam.
   contact:
     name: Time de Conteúdo e Currículo
 servers:
@@ -27,6 +30,8 @@ tags:
   description: Publicar, republicar, descartar alterações e histórico de versões (RF-06 a RF-08)
 - name: Auditoria
   description: Identificação legível do curso na trilha (C-08)
+- name: Aula
+  description: A aula e a estrutura vigente do curso, para o aluno com direito
 paths:
   /courses:
     get:
@@ -864,6 +869,73 @@ paths:
               examples:
                 semPapel:
                   $ref: '#/components/examples/PermissionDenied'
+  /lessons/{lessonId}:
+    get:
+      tags:
+      - Aula
+      summary: Obter a aula e a lista de aulas do curso
+      description: 'Devolve a aula pedida e o curso **na versão vigente**, para a tela da aula (RF-01, RF-06). Ordem
+        das verificações: (1) a aula existe na versão vigente de um curso publicado da escola do aluno; (2) Matrícula
+        responde que o aluno pode acessar o curso agora (`decideAccessInternal`, cache de até 30 s, falha fechada:
+        BA07, G11). Nada do conteúdo é devolvido antes da decisão positiva (RN-R07). Todas as aulas estão abertas
+        a quem tem direito; não há liberação progressiva (RN-R06, G20).'
+      operationId: getStudentLessonInternal
+      security:
+      - StudentUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/LessonId'
+      responses:
+        '200':
+          description: A aula e o curso na versão vigente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonScreen'
+              examples:
+                aula:
+                  value:
+                    lesson:
+                      lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                      moduleId: c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f
+                      title: Injeção de dependência na prática
+                      position: 2
+                    course:
+                      courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      title: APIs com .NET do zero ao deploy
+                      versionNumber: 3
+                      modules:
+                      - moduleId: c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f
+                        title: Fundamentos
+                        position: 1
+                        lessons:
+                        - lessonId: 5c2e8f4d-7b60-4a13-9a13-3f6a1c527d84
+                          title: Visão geral do curso
+                          position: 1
+                        - lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                          title: Injeção de dependência na prática
+                          position: 2
+                      - moduleId: d2e3f4a5-b6c7-4d8e-9fa0-1b2c3d4e5f60
+                        title: Persistência
+                        position: 2
+                        lessons:
+                        - lessonId: 7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d
+                          title: Migrations com Entity Framework
+                          position: 1
+          headers:
+            Cache-Control:
+              description: '`private, no-store`.'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/LessonNotAvailable'
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
 components:
   securitySchemes:
     StaffUserToken:
@@ -873,6 +945,14 @@ components:
       description: 'JWT RS256 de ator interno emitido por Identity na validação de sessão (`validateStaffSessionInternal`
         com `audience: learning`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions,
         exp, jti. Chave pública por `kid` no JWKS de Identity.'
+    StudentUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT RS256 de aluno emitido por Identity em `validateStudentSessionInternal` com a audiência do
+        serviço dono (ADR-0003), vida curta, claims `iss`, `aud`, `sub` (= `studentId`), `tenantId`, `sessionId`,
+        `exp` e `jti`. Validado localmente pelo JWKS de Identity, sem consulta a Identity. A escola é sempre a do
+        token (G07).
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -1098,6 +1178,61 @@ components:
                 detail: recommendedCourseIds[0] não é um curso publicado desta escola.
                 code: RECOMMENDED_COURSE_INVALID
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    LessonNotAvailable:
+      description: Aula inexistente, de outra escola, de curso não publicado ou removida da versão vigente. A resposta
+        **não distingue** o motivo (RN-R07).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Esta aula não está disponível.
+                status: 404
+                code: LESSON_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AccessDecisionUnavailable:
+      description: 'Matrícula não respondeu a tempo ou respondeu com erro. **Não é negação** (RN-R02, DP-08): nenhuma
+        sessão abre nem se estende. O cliente oferece *Tentar de novo*.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível confirmar seu acesso agora.
+                status: 503
+                code: ACCESS_DECISION_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AccessDenied:
+      description: Matrícula respondeu que o aluno não pode acessar o curso agora. `reason` distingue nunca ter
+        tido de ter vencido; nada do conteúdo do curso é revelado.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semAcesso:
+              value:
+                type: about:blank
+                title: Você não tem acesso a este curso.
+                status: 403
+                code: ACCESS_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                reason: no-grant
+            vencido:
+              value:
+                type: about:blank
+                title: Seu acesso a este curso terminou.
+                status: 403
+                code: ACCESS_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                reason: grant-ended
+                accessEndedAt: '2026-10-04T03:00:00Z'
   schemas:
     Problem:
       type: object
@@ -1124,6 +1259,20 @@ components:
           description: Código estável para tratamento no cliente.
         traceId:
           type: string
+        reason:
+          type: string
+          enum:
+          - no-grant
+          - grant-ended
+          description: 'Só em `ACCESS_DENIED`: `no-grant` (nunca teve acesso ao curso) ou `grant-ended` (já teve,
+            nenhuma concessão está ativa). Clientes devem tolerar valor novo (`suspended` e `revoked` virão com
+            `CAP-009`).'
+        accessEndedAt:
+          type: string
+          format: date-time
+          description: 'Só em `ACCESS_DENIED` com `reason: grant-ended`: término (exclusivo, UTC) da última concessão.
+            O último dia de acesso é o dia anterior a este instante, no fuso da escola (DP-03 de `CAP-008`); é a
+            data da mensagem "Seu acesso a este curso terminou em ...".'
         pendencies:
           type: array
           description: Só em `COURSE_INCOMPLETE`. Uma entrada por falta, na ordem do currículo.
@@ -1703,6 +1852,105 @@ components:
           description: Na ordem escolhida pelo professor.
           items:
             $ref: '#/components/schemas/RecommendedCourse'
+    LessonOutline:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - title
+      - position
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+          description: Identidade estável entre versões (RN-C07).
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        position:
+          type: integer
+          minimum: 1
+    ModuleOutline:
+      type: object
+      additionalProperties: false
+      required:
+      - moduleId
+      - title
+      - position
+      - lessons
+      properties:
+        moduleId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        position:
+          type: integer
+          minimum: 1
+        lessons:
+          type: array
+          maxItems: 200
+          items:
+            $ref: '#/components/schemas/LessonOutline'
+    LessonScreen:
+      type: object
+      additionalProperties: false
+      required:
+      - lesson
+      - course
+      description: 'O necessário para desenhar a tela da aula: a aula pedida e o curso na **versão vigente**, com
+        módulos e aulas na ordem do currículo (RF-06). Não leva `videoId`, estado de progresso nem liberação: todas
+        as aulas estão abertas a quem tem direito (RN-R06).'
+      properties:
+        lesson:
+          type: object
+          additionalProperties: false
+          required:
+          - lessonId
+          - moduleId
+          - title
+          - position
+          properties:
+            lessonId:
+              type: string
+              format: uuid
+            moduleId:
+              type: string
+              format: uuid
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+            position:
+              type: integer
+              minimum: 1
+        course:
+          type: object
+          additionalProperties: false
+          required:
+          - courseId
+          - title
+          - versionNumber
+          - modules
+          properties:
+            courseId:
+              type: string
+              format: uuid
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+            versionNumber:
+              type: integer
+              minimum: 1
+            modules:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/ModuleOutline'
   examples:
     PermissionDenied:
       value:

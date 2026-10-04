@@ -11,6 +11,11 @@
 *.user
 *.suo
 
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
 # SKILLs
 .tsg
 .tsg-flow

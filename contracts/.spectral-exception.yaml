@@ -1,0 +1,35 @@
+# Ruleset vigente dos contratos OpenAPI: estende o ruleset padrão da skill com a exceção C-08.
+# As operações de entrega HLS (playlist master, playlist variante e chave de cifra) devolvem
+# texto de playlist e bytes de chave binária, que não são JSON. A regra `tsg-content-type-json-only`
+# é redeclarada para restringir apenas corpos de requisição a JSON, e `tsg-content-type-json-only-response`
+# aceita também os media types da entrega HLS (application/vnd.apple.mpegurl e application/octet-stream).
+# Nenhuma outra regra do ruleset muda.
+extends:
+  - ../.agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml
+rules:
+  tsg-content-type-json-only:
+    description: Corpos de requisição só JSON; respostas JSON, problem+json e, na entrega HLS (C-08), playlist e chave.
+    severity: error
+    given:
+      - $.paths[*][*].requestBody.content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+  tsg-content-type-json-only-response:
+    description: Respostas em JSON, problem+json ou, na entrega HLS (C-08), playlist HLS e chave binária.
+    severity: error
+    given:
+      - $.paths[*][*].responses[*].content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+          - application/vnd.apple.mpegurl
+          - application/octet-stream
