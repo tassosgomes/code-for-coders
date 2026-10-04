@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.StudentCourseAccessListTests --minimum-expected-tests 8 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.StudentCourseAccessClientTests --minimum-expected-tests 4 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.StudentCoursesListingTests --minimum-expected-tests 9 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.MyCoursesProxyTests --minimum-expected-tests 4 && npm --prefix src/student-spa run test -- my-courses-active'

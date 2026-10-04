@@ -75,7 +75,7 @@ cada rota (4.0 e 5.0).
 - [x] 2.0 Figma de "meus cursos" e da retomada na aula aprovado
 - [x] 3.0 O avanço da reprodução vira progresso por aula, sem perder o que foi retido
 - [x] 4.0 Ao abrir a aula, o aluno retoma de onde parou e vê as concluídas e o percentual
-- [ ] 5.0 O aluno vê os cursos vigentes em "meus cursos" e continua de onde parou
+- [x] 5.0 O aluno vê os cursos vigentes em "meus cursos" e continua de onde parou
 - [x] 6.0 "Meus cursos" mostra o acesso encerrado e não mente quando algo falha
 
 ## Caminho crítico e lanes

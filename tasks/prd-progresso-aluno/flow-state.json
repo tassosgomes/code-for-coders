@@ -4,9 +4,9 @@
   "original_base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "target_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
-  "last_checkpoint": "3b8339a",
+  "last_checkpoint": "d303339",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "5.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 1,
@@ -19,13 +19,12 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.jySFBoUe",
+    "run_id": "run.Zegjs7XR",
     "role": "validator",
-    "kind": "agy",
+    "kind": "claude",
     "mode": "revalidation",
-    "task": "3.0",
-    "outcome": "approved",
-    "report": "tasks/prd-progresso-aluno/3.0_task_review.md"
+    "task": "5.0",
+    "outcome": "approved"
   },
   "pending": null,
   "routing_overrides": {
@@ -69,7 +68,9 @@
     "full 1/3 rejeitada (run.th6TLndb): B1/B2 -> 3.0, B3 -> 5.0; rede code-for-coders_default recriada a pedido do responsável (sem NAT para o broker)",
     "3.0 fix (run.8wIbc9Xf, claude escalonado): B1 suíte learning 214/214; B2 teste do appsettings real com mutante morto; apps.sh --remote ok após recriar a rede",
     "3.0 revalidation run.6nWwePRy: TRANSPORT_FAILURE (codex sem cota); orquestrador registrou aprovação por engano e o integrador recusou o checkpoint (run.km7znWy2, revalidation_required) — corrigido, nenhum commit feito",
-    "responsável escolheu agy no lugar do codex enquanto a cota não renova"
+    "responsável escolheu agy no lugar do codex enquanto a cota não renova",
+    "3.0 revalidation aprovada (run.jySFBoUe, agy); checkpoint 838f080",
+    "5.0 fix (run.U5AVLuBE, agy): teste de outro aluno na mesma escola mata o mutante B3; navegador não feito (Postgres remoto com timeouts de autenticação)"
   ],
   "notes_for_full": [
     "3.0 rec1: VideoAvailabilityFact.Parse lê durationSeconds sem validar; KeyNotFoundException não é capturada pelo consumidor (mensagem fora do contrato ficaria sem ack)",

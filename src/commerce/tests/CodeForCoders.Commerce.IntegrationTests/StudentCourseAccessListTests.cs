@@ -32,9 +32,9 @@ public sealed class StudentCourseAccessListTests(CommerceIntegrationFixture infr
     });
 
     private static Task<HttpResponseMessage> GetAsync(AccessDecisionFixture test, string scope = "course-access:read",
-        string issuer = "learning", Guid? tenant = null)
+        string issuer = "learning", Guid? tenant = null, Guid? student = null)
         => test.RequestAsync(test.Assertion(scope, tenant, issuer),
-            $"/internal/v1/course-access?studentId={test.Courtesy.Student:D}");
+            $"/internal/v1/course-access?studentId={(student ?? test.Courtesy.Student):D}");
 
     private static async Task<JsonDocument> BodyAsync(HttpResponseMessage response)
         => JsonDocument.Parse(await response.Content.ReadAsStringAsync(Cancellation));
@@ -139,5 +139,39 @@ public sealed class StudentCourseAccessListTests(CommerceIntegrationFixture infr
         using var response = await test.RequestAsync(test.Assertion("course-access:read", issuer: "learning"),
             $"/internal/v1/course-access?studentId={Guid.Empty}");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact(DisplayName = nameof(GrantOfAnotherStudentInSameSchoolAndCourseNeverAppearsInList))]
+    public async Task GrantOfAnotherStudentInSameSchoolAndCourseNeverAppearsInList()
+    {
+        await using var test = Fixture();
+        await test.Courtesy.SeedAsync();
+        var otherStudent = Guid.CreateVersion7();
+        await test.GrantAsync(studentId: otherStudent);
+
+        using var response = await GetAsync(test);
+        response.EnsureSuccessStatusCode();
+        using var body = await BodyAsync(response);
+        Assert.Empty(body.RootElement.GetProperty("data").EnumerateArray());
+
+        using var otherResponse = await GetAsync(test, student: otherStudent);
+        otherResponse.EnsureSuccessStatusCode();
+        using var otherBody = await BodyAsync(otherResponse);
+        var otherData = otherBody.RootElement.GetProperty("data");
+        Assert.Single(otherData.EnumerateArray());
+        Assert.Equal(test.Courtesy.Course, otherData[0].GetProperty("courseId").GetGuid());
+        Assert.Equal("active", otherData[0].GetProperty("status").GetString());
+
+        var expired = await test.GrantAsync(1);
+        test.Courtesy.Clock.Now = expired.ExpiresAt!.Value;
+
+        using var studentResponse = await GetAsync(test);
+        studentResponse.EnsureSuccessStatusCode();
+        using var studentBody = await BodyAsync(studentResponse);
+        var studentData = studentBody.RootElement.GetProperty("data");
+        Assert.Single(studentData.EnumerateArray());
+        Assert.Equal(test.Courtesy.Course, studentData[0].GetProperty("courseId").GetGuid());
+        Assert.Equal("ended", studentData[0].GetProperty("status").GetString());
+        Assert.Equal(expired.ExpiresAt, studentData[0].GetProperty("endedAt").GetDateTimeOffset());
     }
 }

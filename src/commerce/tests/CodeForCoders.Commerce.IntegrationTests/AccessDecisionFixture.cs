@@ -77,13 +77,13 @@ public sealed class AccessDecisionFixture : IAsyncDisposable
 
     private static string Encode(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-    public async Task<StudentAccessGrant> GrantAsync(int months = 6, string type = "months")
+    public async Task<StudentAccessGrant> GrantAsync(int months = 6, string type = "months", Guid? studentId = null)
     {
         Courtesy.Authorize();
         object period = type == "months" ? new { type, months } : new { type };
         var body = new
         {
-            studentId = Courtesy.Student,
+            studentId = studentId ?? Courtesy.Student,
             courseId = Courtesy.Course,
             accessPeriod = period,
             reason = "Test scholarship"
