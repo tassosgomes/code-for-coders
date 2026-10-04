@@ -1,0 +1,81 @@
+asyncapi: 3.0.0
+info:
+  title: Learning — consumo do avanço da reprodução e da duração do vídeo
+  version: 1.2.0
+  description: |
+    Recorte de `CAP-017`, `tasks/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Aplicação `learning`, agora também dona de Aprendizagem e Progresso (módulo Progress, baseline BA12/§serviços). Evolui `contracts/learning/asyncapi.yaml` 1.1.0 de forma aditiva:
+
+    - **nova** operação `receberReproducaoAvancou`: consome `midia.reproducao-avancou.v1` (`contracts/media/asyncapi.yaml` 1.2.0, sem mudança de mensagem) e registra o progresso (RF-01, RF-02);
+    - `receberAtivoPronto` **passa a guardar também a duração** do vídeo para o progresso (RN-P06, C-07). A mensagem não muda.
+
+    Os envios de `learning` (`conteudo.versao-publicada.v1`, ato de auditoria), `receberPreparacaoFalhou` e `reenviarVersaoVigente` não mudam. Nenhum fato novo é publicado: curso concluído fica para a Fase 3 (PRD, OD72).
+id: urn:code-4-coders:learning
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  reproducaoAvancou:
+    address: midia.reproducao-avancou.v1
+    description: Fato da Media (`contracts/media/asyncapi.yaml` 1.2.0), sem mudança. O endereço não carrega dado
+      pessoal (G23).
+    messages:
+      reproducaoAvancou:
+        $ref: ../../contracts/media/asyncapi.yaml#/components/messages/ReproducaoAvancou
+  ativoPronto:
+    address: midia.ativo-pronto.v1
+    description: Fato da Media (`contracts/media/asyncapi.yaml` 1.2.0), sem mudança.
+    messages:
+      ativoPronto:
+        $ref: ../../contracts/media/asyncapi.yaml#/components/messages/AtivoPronto
+operations:
+  receberReproducaoAvancou:
+    action: receive
+    summary: Registrar o avanço da reprodução como progresso do aluno.
+    channel:
+      $ref: '#/channels/reproducaoAvancou'
+    messages:
+    - $ref: '#/channels/reproducaoAvancou/messages/reproducaoAvancou'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Compromissos observáveis (o mecanismo fica na TechSpec). (1) **Registro bruto:** cada fato é registrado,
+      na escola do fato (G07), com `sessionId`, `studentId`, `courseId`, `lessonId`, `positionSeconds`, `reason` e
+      `occurredAt` (RN-P03, insumo de `CAP-029`, OD71); nada além do que o fato traz, e nenhum e-mail, nome ou título.
+      (2) **Idempotência:** deduplicação por `eventId` (G09); reentrega não muda o progresso (RN-P01). (3) **Ordem:**
+      não garantida. A última posição do aluno na aula é a do fato com maior `occurredAt` entre todas as sessões; empate
+      no mesmo instante e mesma sessão resolve por maior `sequence` (RN-P02). Fato atrasado é registrado e não faz
+      a posição andar para trás. (4) **Conclusão:** a aula fica concluída quando um fato tem `reason` `ended` ou `positionSeconds`
+      ≥ 90% da duração do vídeo que a aula usa na versão vigente (RN-P04, C-07); nunca se desfaz (RN-P05). Fato que
+      chega antes da duração é registrado, e a conclusão é reavaliada quando a duração chegar, sem esperar novo fato.
+      (5) **Versão:** fato de aula fora da versão vigente é registrado igual (RN-C09) e só não entra no percentual.
+      Fato de curso ou aula desconhecidos para `learning` é registrado e confirmado; nada é criado em Conteúdo. (6)
+      **Valor novo de `reason`** é registrado e tratado como `heartbeat` (não conclui). (7) **Falha:** transitória
+      não confirma a mensagem, que volta; esgotadas as entregas, segue para a fila de erro e pode ser reprocessada
+      sem efeito duplicado, por (2). (8) **Retidos:** os fatos retidos em `media` desde `CAP-007` chegam por `reenviarReproducaoAvancouRetido`
+      (`asyncapi-contract-media.yaml`) com o mesmo `eventId` e são tratados como qualquer outro (C-08). (9) **Prazo
+      percebido:** o progresso reflete o fato em até 1 minuto (p95) depois da publicação, em operação normal.'
+  receberAtivoPronto:
+    action: receive
+    summary: Passar a oferecer o vídeo para vínculo e guardar a duração para o progresso.
+    channel:
+      $ref: '#/channels/ativoPronto'
+    messages:
+    - $ref: '#/channels/ativoPronto/messages/ativoPronto'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Compromissos de 1.1.0 mantidos: registra o vídeo como pronto na visão local de Conteúdo, com a escola
+      do fato; idempotente por `eventId`; até o fato chegar, o vínculo responde `VIDEO_NOT_AVAILABLE` (RN-C04); falha
+      transitória volta, esgotada segue para a fila de erro. **Novo em 1.2.0:** a mesma recepção guarda `durationSeconds`
+      por `videoId` **no módulo de progresso**, nunca em Conteúdo (RN-C04, RN-C15), como a duração de Media para
+      decidir conclusão e retomada (RN-P06, C-07). Media é a única fonte; `learning` não estima duração. A duração
+      vale para a aula que usa aquele vídeo na versão vigente; trocar o vídeo da aula troca a duração usada dali em
+      diante, sem desfazer conclusão (RN-P05).'

@@ -1,0 +1,223 @@
+openapi: 3.1.0
+info:
+  title: Commerce — API interna, cursos do aluno em Matrícula
+  version: 1.3.0
+  description: |
+    Recorte interno de `CAP-017`, `tasks/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Evolui `contracts/commerce/openapi-internal.yaml` 1.2.0 de forma aditiva com uma leitura de Matrícula: os cursos sobre os quais um aluno tem ou teve concessão, com a situação **agregada por curso** (RN-D07). As demais operações não mudam; `decideAccessInternal` continua a fonte única de "pode acessar agora?" e não muda.
+
+    Consumidor único conhecido: `learning`, para compor "meus cursos" (C-02). Autenticação pela asserção de serviço de `learning` (ADR-0012) com escopo **novo** `course-access:read`, concedido só ao emissor `learning` (C-03). A asserção prova só o chamador; o aluno vai na consulta, e é o `sub` do JWT de aluno que `learning` validou (ADR-0013, item 5). Nenhum dado pessoal na consulta nem na resposta (G10, G23); sem motivo da cortesia, sem origem, sem `grantId`.
+  contact:
+    name: Time de Commerce
+servers:
+- url: /internal/v1
+  description: Rota privada de Commerce, inacessível ao navegador
+tags:
+- name: Decisão de acesso
+  description: '"Este aluno pode acessar este curso agora?" e os cursos do aluno, consultados por outros serviços'
+paths:
+  /course-access:
+    get:
+      tags:
+      - Decisão de acesso
+      summary: Listar os cursos do aluno com acesso vigente ou encerrado
+      description: 'Um item por curso sobre o qual o aluno tem ou teve concessão, na escola da asserção (RN-D17).
+        `status` é **calculado na leitura**, como em `decideAccessInternal` (RN-D06, RN-D07): `active` se ao menos uma
+        concessão do curso está ativa e dentro da vigência agora; `ended` se houve concessão e nenhuma vale agora.
+        Para `active`, `since` é o momento da concessão ativa mais recente (ordenação de "meus cursos"); para `ended`,
+        `endedOn` e `endedAt` são os da concessão que terminou por último. Aluno sem concessão, desconhecido ou de outra
+        escola devolve lista vazia, indistinta (G07). A resposta **não é réplica do direito**: `learning` a usa para
+        montar a tela e não a guarda além da requisição; abrir aula continua exigindo `decideAccessInternal` (G11).
+        Quem não obtiver resposta não mostra lista vazia (RF-04 do PRD).'
+      operationId: listStudentCourseAccessInternal
+      security:
+      - DomainServiceAssertion: []
+      parameters:
+      - name: studentId
+        in: query
+        required: true
+        description: Conta de aluno em Identidade e Acesso (`sub` do JWT de aluno validado pelo chamador).
+        schema:
+          type: string
+          format: uuid
+        examples:
+          aluno:
+            value: 6f1e2d3c-4b5a-4968-8777-a1b2c3d4e5f6
+      responses:
+        '200':
+          description: Os cursos do aluno, um item por curso.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: a situação muda com o tempo (RN-D06) e não é guardada pelo consumidor.'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentCourseAccessList'
+              examples:
+                vigenteEEncerrado:
+                  value:
+                    data:
+                    - courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      status: active
+                      since: '2026-10-01T12:00:00Z'
+                      endedOn: null
+                      endedAt: null
+                      endedReason: null
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      status: ended
+                      since: null
+                      endedOn: '2028-03-15'
+                      endedAt: '2028-03-16T03:00:00Z'
+                      endedReason: grant-ended
+                semConcessao:
+                  value:
+                    data: []
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/ServiceUnauthorized'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
+components:
+  securitySchemes:
+    DomainServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Asserção de serviço assimétrica e curta assinada pela chave exclusiva do serviço chamador (ADR-0012).
+        `commerce` valida assinatura, `kid`, emissor, audiência `commerce`, escopo, `tenantId` permitido ao emissor,
+        validade e `jti` contra replay. Nesta rota o escopo é `course-access:read`, concedido só a `learning` (C-03);
+        `access-decision:read` não basta. Não representa aluno.
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+    StudentCourseAccess:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - status
+      - since
+      - endedOn
+      - endedAt
+      - endedReason
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - ended
+          description: Agregado por curso (RN-D07). `suspended` virá com Cobrança (Fase 2); clientes devem tolerar
+            valor novo e tratá-lo como sem ação de abrir aula.
+        since:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Só em `active`. Momento da concessão ativa mais recente, em UTC.
+        endedOn:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Só em `ended`. Último dia de acesso, no fuso da escola (DP-03 de `CAP-008`), o mesmo `endsOn`
+            da concessão que terminou por último.
+        endedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Só em `ended`. Instante exclusivo do término, em UTC; ordena os encerrados.
+        endedReason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - grant-ended
+          - null
+          description: Só em `ended`. `grant-ended` nesta entrega; `revoked` virá com `CAP-009` (QA-03 do PRD). Clientes
+            devem tolerar valor novo.
+    StudentCourseAccessList:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          maxItems: 500
+          description: Sem paginação; teto fixo declarado (C-05). Sem ordem garantida; quem ordena é `learning`.
+          items:
+            $ref: '#/components/schemas/StudentCourseAccess'
+  responses:
+    InvalidRequest:
+      description: '`studentId` ausente ou não é UUID.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ServiceUnauthorized:
+      description: Asserção ausente, inválida, expirada, de emissor desconhecido ou repetida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalida:
+              value:
+                type: about:blank
+                title: Serviço não autenticado.
+                status: 401
+                code: SERVICE_UNAUTHORIZED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ScopeDenied:
+      description: Asserção válida sem o escopo `course-access:read` (por exemplo, a de `media`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semEscopo:
+              value:
+                type: about:blank
+                title: Escopo insuficiente.
+                status: 403
+                code: SCOPE_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
