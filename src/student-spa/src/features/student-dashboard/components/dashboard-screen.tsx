@@ -9,6 +9,8 @@ type DashboardScreenProps = {
   account?: ReactNode;
   courses?: MyCourses;
   isCoursesLoading?: boolean;
+  isCoursesError?: boolean;
+  onRetryCourses?: () => void;
   isSessionLoading?: boolean;
   studentName?: string;
 };
@@ -17,6 +19,8 @@ export const DashboardScreen = ({
   account,
   courses,
   isCoursesLoading = false,
+  isCoursesError = false,
+  onRetryCourses,
   isSessionLoading = false,
   studentName,
 }: DashboardScreenProps) => (
@@ -59,7 +63,7 @@ export const DashboardScreen = ({
       </div>
     ) : (
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <MyCoursesList courses={courses} isLoading={isCoursesLoading} />
+        <MyCoursesList courses={courses} isLoading={isCoursesLoading} isError={isCoursesError} onRetry={onRetryCourses} />
         {account}
       </div>
     )}

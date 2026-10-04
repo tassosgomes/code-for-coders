@@ -24,6 +24,7 @@ public sealed class StudentLessonApiFactory : WebApplicationFactory<Program>, IA
     private readonly RSA assertionKey = RSA.Create(2048);
     private readonly PostgreSqlContainer database = new PostgreSqlBuilder("postgres:18").Build();
     public LessonCommerceBoundaryHandler Commerce { get; } = new();
+    public StudentCoursesReadFailureInterceptor CourseReads { get; } = new();
     public string DatabaseConnection => database.GetConnectionString();
     public RsaSecurityKey AssertionPublicKey => new(assertionKey);
     public async ValueTask InitializeAsync()
@@ -43,6 +44,7 @@ public sealed class StudentLessonApiFactory : WebApplicationFactory<Program>, IA
         builder.UseSetting("AccessDecision:SigningKeyBase64", Convert.ToBase64String(assertionKey.ExportPkcs8PrivateKey()));
         builder.ConfigureTestServices(services =>
         {
+            services.AddDbContext<LearningDbContext>(options => options.AddInterceptors(CourseReads));
             foreach (var item in services.Where(item => item.ServiceType == typeof(IHostedService)).ToList()) services.Remove(item);
             var p = key.ExportParameters(false);
             var jwks = JsonSerializer.Serialize(new { keys = new[] { new { kid = "student-test", kty = "RSA", use = "sig", alg = "RS256", n = Base64UrlEncoder.Encode(p.Modulus!), e = Base64UrlEncoder.Encode(p.Exponent!) } } });

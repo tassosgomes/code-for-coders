@@ -18,3 +18,22 @@ export const myCoursesData: MyCourses = {
   ],
   ended: [],
 };
+
+export const endedCoursesData: MyCourses = {
+  progressAvailable: true,
+  active: [],
+  ended: [{
+    courseId: '018f1000-0000-7000-8000-000000000003', title: 'C# e ASP.NET Core',
+    endedOn: '2026-10-01', endedReason: 'grant-ended',
+    progress: { completedLessons: 5, totalLessons: 10, percent: 50 },
+  }],
+};
+
+export const unavailableProgressData: MyCourses = {
+  progressAvailable: false,
+  active: myCoursesData.active.map((course) => ({
+    ...course, started: null, lastActivityAt: null, progress: null,
+    continueLessonId: startLessonId,
+  })),
+  ended: endedCoursesData.ended.map((course) => ({ ...course, progress: null })),
+};

@@ -14,17 +14,19 @@ public sealed class ListStudentCourses(IStudentCoursesQueries queries, IStudentC
         var ids = grants.Data.Select(grant => grant.CourseId).ToArray();
         var versions = await queries.ListCurrentVersionsAsync(ids, cancellationToken);
         var progress = await queries.ListProgressAsync(input.StudentId, versions.Select(version => version.CourseId).ToArray(), cancellationToken);
-        var activity = progress.ToLookup(item => item.CourseId);
+        var activity = (progress ?? []).ToLookup(item => item.CourseId);
         var courses = versions.Where(version => version.LessonIds.Count > 0).ToDictionary(version => version.CourseId);
         var active = grants.Data.Where(grant => grant.Status == "active" && courses.ContainsKey(grant.CourseId))
-            .Select(grant => (Grant: grant, Course: CreateActive(courses[grant.CourseId], activity[grant.CourseId].ToArray())))
+            .Select(grant => (Grant: grant, Course: progress is null
+                ? new ActiveStudentCourse(grant.CourseId, courses[grant.CourseId].Title, null, null, courses[grant.CourseId].LessonIds[0], null)
+                : CreateActive(courses[grant.CourseId], activity[grant.CourseId].ToArray())))
             .OrderByDescending(item => item.Course.LastActivityAt).ThenByDescending(item => item.Grant.Since).ThenBy(item => item.Course.CourseId)
             .Select(item => item.Course).ToArray();
         var ended = grants.Data.Where(grant => grant.Status == "ended" && courses.ContainsKey(grant.CourseId))
             .OrderByDescending(grant => grant.EndedAt).ThenBy(grant => grant.CourseId)
             .Select(grant => new EndedStudentCourse(grant.CourseId, courses[grant.CourseId].Title,
-                grant.EndedOn!.Value, grant.EndedReason!, Summary(courses[grant.CourseId], activity[grant.CourseId].ToArray()))).ToArray();
-        return new(true, active, ended);
+                grant.EndedOn!.Value, grant.EndedReason!, progress is null ? null : Summary(courses[grant.CourseId], activity[grant.CourseId].ToArray()))).ToArray();
+        return new(progress is not null, active, ended);
     }
 
     private static ActiveStudentCourse CreateActive(CurrentStudentCourse course, IReadOnlyList<StudentCourseLessonActivity> progress)

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["5.0"]
 gate: 'dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.StudentCoursesDegradationTests --minimum-expected-tests 5 && npm --prefix src/student-spa run test -- my-courses-degraded'
@@ -47,6 +47,6 @@ Arquivos a criar não são listados: a estrutura vem das skills `dotnet` e `reac
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] No ambiente de desenvolvimento: antecipar o `expires_at` de uma cortesia com `scripts/expire-playback-grant.sh` (de `CAP-007`) → o curso migra para "Acesso encerrado" com a data; nova cortesia → volta para "Seus cursos" com o progresso.
-- [ ] Com `commerce` parado, o Início mostra a indisponibilidade com *Tentar de novo*, e não o vazio.
+- [x] Gate focalizado passa (exit 0).
+- [x] No ambiente de desenvolvimento: antecipar o `expires_at` de uma cortesia com `scripts/expire-playback-grant.sh` (de `CAP-007`) → o curso migra para "Acesso encerrado" com a data; nova cortesia → volta para "Seus cursos" com o progresso.
+- [x] Com `commerce` parado, o Início mostra a indisponibilidade com *Tentar de novo*, e não o vazio.

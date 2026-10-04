@@ -1,9 +1,11 @@
+using System.Data.Common;
 using CodeForCoders.Learning.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CodeForCoders.Learning.Infra.Data.Queries;
 
-public sealed class StudentCoursesQueries(LearningDbContext db) : IStudentCoursesQueries
+public sealed class StudentCoursesQueries(LearningDbContext db, ILogger<StudentCoursesQueries> logger) : IStudentCoursesQueries
 {
     public async Task<IReadOnlyList<CurrentStudentCourse>> ListCurrentVersionsAsync(IReadOnlyList<Guid> courseIds, CancellationToken cancellationToken)
     {
@@ -20,8 +22,30 @@ public sealed class StudentCoursesQueries(LearningDbContext db) : IStudentCourse
                 .Select(lesson => lesson.LessonId).ToArray())).ToArray();
     }
 
-    public async Task<IReadOnlyList<StudentCourseLessonActivity>> ListProgressAsync(Guid studentId, IReadOnlyList<Guid> courseIds, CancellationToken cancellationToken)
-        => await db.LessonProgress.AsNoTracking().Where(item => item.StudentId == studentId && courseIds.Contains(item.CourseId))
-            .Select(item => new StudentCourseLessonActivity(item.CourseId, item.LessonId, item.LastActivityAt, item.CompletedAt))
-            .ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<StudentCourseLessonActivity>?> ListProgressAsync(Guid studentId, IReadOnlyList<Guid> courseIds, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await db.LessonProgress.AsNoTracking().Where(item => item.StudentId == studentId && courseIds.Contains(item.CourseId))
+                .Select(item => new StudentCourseLessonActivity(item.CourseId, item.LessonId, item.LastActivityAt, item.CompletedAt))
+                .ToListAsync(cancellationToken);
+        }
+        catch (DbException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning("Student course progress read is unavailable ({FailureType})", exception.GetType().Name);
+            return null;
+        }
+        catch (TimeoutException) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning("Student course progress read timed out");
+            return null;
+        }
+        catch (InvalidOperationException exception) when (exception.InnerException is DbException or TimeoutException
+            && !cancellationToken.IsCancellationRequested)
+        {
+            // The provider wraps transient read failures in its execution strategy.
+            logger.LogWarning("Student course progress read is unavailable ({FailureType})", exception.InnerException.GetType().Name);
+            return null;
+        }
+    }
 }

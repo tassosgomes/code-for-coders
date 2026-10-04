@@ -41,6 +41,8 @@ export const DashboardRoute = () => {
       account={<StudentAccountCard name={studentSession.data?.name ?? ''} />}
       courses={courses.isError ? undefined : courses.data}
       isCoursesLoading={courses.isPending}
+      isCoursesError={courses.isError}
+      onRetryCourses={() => void courses.refetch()}
       isSessionLoading={studentSession.isPending}
       studentName={studentSession.data?.name}
     />
