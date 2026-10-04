@@ -4,27 +4,27 @@
   "original_base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "target_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
-  "last_checkpoint": "d303339",
-  "phase": "checkpoint",
-  "active_task": "5.0",
+  "last_checkpoint": "ad7f1b8",
+  "phase": "complete",
+  "active_task": null,
   "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 3,
   "specs": [
     "techspec.md",
     "contracts.md"
   ],
   "delivery": "pr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "ad7f1b8b0e7b7eb0b4301fe22626b833ff409946",
+  "validated_tree": "9cf141d9439b5511f29ffc4a3dec007245e59adb",
   "last_result": {
-    "run_id": "run.Zegjs7XR",
+    "run_id": "run.DNJg0XpO",
     "role": "validator",
-    "kind": "claude",
-    "mode": "revalidation",
-    "task": "5.0",
-    "outcome": "approved"
+    "mode": "full",
+    "attempt": "2/3",
+    "outcome": "approved",
+    "report": "tasks/prd-progresso-aluno/prd_review.md"
   },
   "pending": null,
   "routing_overrides": {
@@ -70,7 +70,10 @@
     "3.0 revalidation run.6nWwePRy: TRANSPORT_FAILURE (codex sem cota); orquestrador registrou aprovação por engano e o integrador recusou o checkpoint (run.km7znWy2, revalidation_required) — corrigido, nenhum commit feito",
     "responsável escolheu agy no lugar do codex enquanto a cota não renova",
     "3.0 revalidation aprovada (run.jySFBoUe, agy); checkpoint 838f080",
-    "5.0 fix (run.U5AVLuBE, agy): teste de outro aluno na mesma escola mata o mutante B3; navegador não feito (Postgres remoto com timeouts de autenticação)"
+    "5.0 fix (run.U5AVLuBE, agy): teste de outro aluno na mesma escola mata o mutante B3; navegador não feito (Postgres remoto com timeouts de autenticação)",
+    "5.0 revalidation aprovada (run.Zegjs7XR, claude); checkpoint ad7f1b8",
+    "prepare-integration ok (run.cD5YWXHO): base inalterada; full 2/3",
+    "full 2/3 aprovada (run.DNJg0XpO; transporte relatou result_missing, resultado escrito depois): 0 bloqueantes; todos os componentes exit 0; mutantes B2/B3 mortos"
   ],
   "notes_for_full": [
     "3.0 rec1: VideoAvailabilityFact.Parse lê durationSeconds sem validar; KeyNotFoundException não é capturada pelo consumidor (mensagem fora do contrato ficaria sem ack)",
