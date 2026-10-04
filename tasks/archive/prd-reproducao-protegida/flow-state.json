@@ -71,6 +71,7 @@
     "checkpoint 4.0-fix = commit 4f9b776; todas as 8 tasks done novamente; seguindo prepare-integration e full 2/3 (com sensor de discriminacao exigivel)",
     "prepare-integration ok (run.AxY6GUaO): integration_ready em 4f9b776, base/target=e3d2ed4, sem rebase",
     "full 2/3 run.j4as8nYb: FULL VALIDATION APROVADA (0 bloqueantes, 5 recomendacoes); matriz CI verde; sensor discriminacao 11 mutacoes/0 sobreviventes; B1/B2 confirmados resolvidos; validated 4f9b776/1815d59",
-    "complete-prd run.6AEs9EYS: PRD COMPLETE, delivery=pr, HEAD 4f9b776/tree 1815d59 == validated; base/target main e3d2ed4 conferida; eviencia final commitada (prd_review.md + flow-state.json); routing.default.json/__pycache__/prompt.txt fora; promocao de contratos para contracts/ pendente (etapa de arquivamento)"
+    "complete-prd run.6AEs9EYS: PRD COMPLETE, delivery=pr, HEAD 4f9b776/tree 1815d59 == validated; base/target main e3d2ed4 conferida; eviencia final commitada (prd_review.md + flow-state.json); routing.default.json/__pycache__/prompt.txt fora; promocao de contratos para contracts/ pendente (etapa de arquivamento)",
+    "finalizacao 2026-10-04: contratos promovidos a contracts/ pelo contract-creator (run.promote-contracts, agy) — openapi-aula 1.0.0 novo, media openapi-internal 1.1.0, learning 1.2.0, identity-student 1.1.0, media asyncapi 1.2.0, excecao C-08 em contracts/.spectral-exception.yaml; revisao independente APPROVED (claude) com validacoes reexecutadas; R1 do README ajustado a pedido do responsavel; .gitignore ganhou __pycache__ (R5 da full); PRD arquivado em tasks/archive; commit direto em main autorizado pelo responsavel"
   ]
 }
