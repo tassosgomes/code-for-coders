@@ -15,7 +15,10 @@ const unavailableMessage = 'Não foi possível verificar o acesso à aula. Tente
 const expiredMessage = 'A sessão de reprodução terminou.';
 const retryMilliseconds = 5000;
 
-type PlaybackOptions = { lessonId: string; csrfToken: string; videoRef: RefObject<HTMLVideoElement | null> };
+type PlaybackOptions = {
+  lessonId: string; csrfToken: string; videoRef: RefObject<HTMLVideoElement | null>;
+  initialPosition?: number; enabled?: boolean; onProgressRefresh?: () => void;
+};
 
 const errorMessage = (error: unknown) => {
   const problem = axios.isAxiosError(error) ? error.response?.data : undefined;
@@ -32,7 +35,7 @@ const errorMessage = (error: unknown) => {
   return 'Não foi possível iniciar a aula.';
 };
 
-export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: PlaybackOptions) => {
+export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPosition = 0, enabled = true, onProgressRefresh }: PlaybackOptions) => {
   const { mutateAsync: open } = useOpenPlaybackSession();
   const { mutateAsync: renew } = useRenewPlaybackSession();
   const [attempt, setAttempt] = useState(0);
@@ -43,7 +46,10 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
   const sessionRef = useRef<PlaybackSession | null>(null);
   const playingRef = useRef(false);
   const resumeRef = useRef(false);
-  const positionRef = useRef(0);
+  const positionRef = useRef(initialPosition);
+  const initializedRef = useRef(false);
+  const refreshProgressRef = useRef(onProgressRefresh);
+  useEffect(() => { refreshProgressRef.current = onProgressRefresh; }, [onProgressRefresh]);
   const playRef = useRef<() => void>(() => undefined);
   const pauseRef = useRef<() => void>(() => undefined);
   const endRef = useRef<() => void>(() => undefined);
@@ -52,6 +58,11 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
   const hasLeftRef = useRef(false);
 
   useEffect(() => {
+    if (!enabled) return;
+    if (!initializedRef.current) {
+      positionRef.current = initialPosition;
+      initializedRef.current = true;
+    }
     const controller = new AbortController();
     let renewalController: AbortController | undefined;
     let hls: Hls | undefined;
@@ -59,6 +70,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
     let expiration: ReturnType<typeof setTimeout> | undefined;
     let renewal: ReturnType<typeof setTimeout> | undefined;
     let progressInterval: ReturnType<typeof setInterval> | undefined;
+    let progressRefreshInterval: ReturnType<typeof setInterval> | undefined;
     let unavailable = false;
     sessionRef.current = null;
     playingRef.current = false;
@@ -115,15 +127,15 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
         return;
       }
 
-      void recordPlaybackProgress(session.sessionId, csrfToken, payload).catch(() => {
-        // ignore progress recording failures without interrupting playback
+      return recordPlaybackProgress(session.sessionId, csrfToken, payload).catch(() => {
+        // Recording failures must not interrupt the video or the next progress read.
       });
     };
 
     const stop = (message: string) => {
       clearTimeout(renewal);
       clearTimeout(expiration);
-      clearInterval(progressInterval);
+      clearInterval(progressInterval); clearInterval(progressRefreshInterval);
       renewalController?.abort();
       positionRef.current = videoRef.current?.currentTime ?? video?.currentTime ?? positionRef.current;
       videoRef.current?.pause();
@@ -180,20 +192,21 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
       setPlaying(true);
       endedRef.current = false;
       schedule();
-      clearInterval(progressInterval);
+      clearInterval(progressInterval); clearInterval(progressRefreshInterval);
       const intervalMs = (sessionRef.current?.progress.intervalSeconds ?? 30) * 1000;
       progressInterval = setInterval(() => {
-        reportProgress('heartbeat');
+        void reportProgress('heartbeat');
       }, intervalMs);
+      progressRefreshInterval = setInterval(() => refreshProgressRef.current?.(), 60_000);
     };
     pauseRef.current = () => {
       playingRef.current = false;
       setPlaying(false);
       clearTimeout(renewal);
-      clearInterval(progressInterval);
+      clearInterval(progressInterval); clearInterval(progressRefreshInterval);
       renewalController?.abort();
       if (!endedRef.current && !hasLeftRef.current) {
-        reportProgress('paused');
+        void Promise.resolve(reportProgress('paused')).then(() => { if (!controller.signal.aborted) refreshProgressRef.current?.(); });
       }
     };
     endRef.current = () => {
@@ -201,14 +214,14 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
       setPlaying(false);
       endedRef.current = true;
       clearTimeout(renewal);
-      clearInterval(progressInterval);
+      clearInterval(progressInterval); clearInterval(progressRefreshInterval);
       renewalController?.abort();
-      reportProgress('ended');
+      void Promise.resolve(reportProgress('ended')).then(() => { if (!controller.signal.aborted) refreshProgressRef.current?.(); });
     };
     const onPageHide = () => {
       if (!hasLeftRef.current && sessionRef.current) {
         hasLeftRef.current = true;
-        clearInterval(progressInterval);
+        clearInterval(progressInterval); clearInterval(progressRefreshInterval);
         reportProgress('left', true);
       }
     };
@@ -256,13 +269,13 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
       }
       if (!hasLeftRef.current && sessionRef.current) {
         hasLeftRef.current = true;
-        clearInterval(progressInterval);
+        clearInterval(progressInterval); clearInterval(progressRefreshInterval);
         reportProgress('left', true);
       }
       controller.abort(); renewalController?.abort(); hls?.destroy();
-      clearInterval(reposition); clearInterval(progressInterval); clearTimeout(expiration); clearTimeout(renewal);
+      clearInterval(reposition); clearInterval(progressInterval); clearInterval(progressRefreshInterval); clearTimeout(expiration); clearTimeout(renewal);
     };
-  }, [lessonId, csrfToken, attempt, open, renew, videoRef]);
+  }, [lessonId, csrfToken, attempt, open, renew, videoRef, enabled, initialPosition]);
 
   const retry = (resume = false) => {
     positionRef.current = videoRef.current?.currentTime ?? positionRef.current;
@@ -277,12 +290,17 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef }: Playback
     if (!sessionRef.current || Date.now() >= Date.parse(sessionRef.current.expiresAt)) { retry(true); return; }
     void video.play().catch(() => setStatus('Não foi possível iniciar a aula.'));
   };
+  const restart = () => {
+    positionRef.current = 0;
+    if (videoRef.current) videoRef.current.currentTime = 0;
+  };
   const loadedMetadata = () => {
-    if (!resumeRef.current || !videoRef.current) return;
+    if (!videoRef.current) return;
     videoRef.current.currentTime = positionRef.current;
+    if (!resumeRef.current) return;
     resumeRef.current = false;
     void videoRef.current.play().catch(() => setStatus('Não foi possível iniciar a aula.'));
   };
-  return { status, watermark, zone, playing, togglePlayback, retry: () => retry(true), loadedMetadata,
+  return { restart, status, watermark, zone, playing, togglePlayback, retry: () => retry(true), loadedMetadata,
     onPlay: () => playRef.current(), onPause: () => pauseRef.current(), onEnded: () => endRef.current() };
 };

@@ -9,5 +9,6 @@ public static class EndpointExtensions
         app.MapPlatformEndpoints();
         app.MapCourseEndpoints();
         app.MapStudentLessonEndpoints();
+        app.MapStudentCourseProgressEndpoints();
     }
 }

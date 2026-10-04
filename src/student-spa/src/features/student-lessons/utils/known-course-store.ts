@@ -60,3 +60,15 @@ export const findKnownSiblingLessonId = (lessonId: string): string | undefined =
   }
   return undefined;
 };
+
+export const findKnownCourseId = (lessonId: string): string | undefined => {
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return undefined;
+    // recordKnownCourse writes this identity-only mapping; no progress is read or stored here.
+    const mapping = JSON.parse(raw) as StoredMapping;
+    return mapping[lessonId]?.courseId;
+  } catch {
+    return undefined;
+  }
+};

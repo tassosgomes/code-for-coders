@@ -50,11 +50,11 @@ public sealed class StudentLessonApiFactory : WebApplicationFactory<Program>, IA
             services.AddHttpClient<IAccessDecisionClient, AccessDecisionClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
         });
     }
-    public HttpClient Student(Guid tenant, Guid student, string scope = "lessons:read", bool actor = false)
+    public HttpClient Student(Guid tenant, Guid student, string scope = "lessons:read", bool actor = false, string audience = "learning")
     {
         var claims = new List<Claim> { new("tenantId", tenant.ToString()), new("sub", student.ToString()), new("sessionId", Guid.CreateVersion7().ToString()), new("scope", scope) };
         if (actor) claims.Add(new("permissions", "autoria.ler"));
-        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken("identity", "learning", claims, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(5), new SigningCredentials(new RsaSecurityKey(key) { KeyId = "student-test" }, SecurityAlgorithms.RsaSha256));
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken("identity", audience, claims, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(5), new SigningCredentials(new RsaSecurityKey(key) { KeyId = "student-test" }, SecurityAlgorithms.RsaSha256));
         var client = CreateClient(); client.DefaultRequestHeaders.Authorization = new("Bearer", new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token)); return client;
     }
     public new async ValueTask DisposeAsync() { await base.DisposeAsync(); key.Dispose(); assertionKey.Dispose(); await database.DisposeAsync(); }

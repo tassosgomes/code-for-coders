@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0", "3.0"]
 gate: 'dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.CourseProgressReadTests --minimum-expected-tests 12 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.CourseProgressProxyTests --minimum-expected-tests 5 && npm --prefix src/student-spa run test -- lesson-resume-progress'
@@ -59,8 +59,8 @@ Testcontainers pesados rodam **em sequência** (AGENTS.md).
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] No navegador, com cortesia real: assistir até 4:12, fechar o navegador, voltar à aula → começa em 4:12 com o aviso; Começar do início volta a 0:00.
-- [ ] Passar dos 90% marca a aula na lista em até 1 minuto, sem recarregar.
-- [ ] Com o progresso fora do ar, o vídeo toca do início e a lista fica sem marcas.
-- [ ] Aluno sem concessão não recebe nada do curso pela rota de progresso.
+- [x] Gate focalizado passa (exit 0).
+- [x] No navegador, com cortesia real: assistir até 4:12, fechar o navegador, voltar à aula → começa em 4:12 com o aviso; Começar do início volta a 0:00.
+- [x] Passar dos 90% marca a aula na lista em até 1 minuto, sem recarregar.
+- [x] Com o progresso fora do ar, o vídeo toca do início e a lista fica sem marcas.
+- [x] Aluno sem concessão não recebe nada do curso pela rota de progresso.

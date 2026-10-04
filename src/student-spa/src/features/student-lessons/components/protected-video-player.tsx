@@ -8,18 +8,21 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ResumeNotice } from '@/features/student-lessons/components/resume-notice';
 import { supportMessage, useProtectedPlayback } from '@/features/student-lessons/hooks/use-protected-playback';
 
 const zones = ['left-4 top-4', 'right-4 top-4', 'left-4 top-1/2', 'right-4 top-1/2'];
 const speeds = [0.5, 1, 1.25, 1.5, 2];
 
-type ProtectedVideoPlayerProps = { lessonId: string; csrfToken: string };
+type ProtectedVideoPlayerProps = {
+  lessonId: string; csrfToken: string; initialPosition?: number; waitForProgress?: boolean; onProgressRefresh?: () => void;
+};
 
-export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlayerProps) => {
+export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, waitForProgress = false, onProgressRefresh }: ProtectedVideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { status, watermark, zone, playing, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
-    useProtectedPlayback({ lessonId, csrfToken, videoRef });
+  const { restart, status, watermark, zone, playing, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
+    useProtectedPlayback({ lessonId, csrfToken, videoRef, initialPosition, enabled: !waitForProgress || initialPosition !== undefined, onProgressRefresh });
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -94,6 +97,8 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken }: ProtectedVideoPlay
         <Button aria-label="Tela cheia" onClick={fullscreen}>Tela cheia</Button>
       </div>
     </div>
+    {initialPosition !== undefined && initialPosition > 0 ? <ResumeNotice seconds={initialPosition}
+      onRestart={() => { restart(); setPosition(0); }} /> : null}
     <p className="mt-2 text-sm text-muted-foreground">Este conteúdo é de uso pessoal. O seu e-mail aparece sobre o vídeo durante a aula.</p>
     {status && status !== 'Carregando vídeo…' && status !== supportMessage
       ? <Button className="mt-2" onClick={retry}>Tentar de novo</Button> : null}
