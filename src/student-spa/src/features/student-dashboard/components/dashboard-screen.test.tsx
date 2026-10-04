@@ -1,3 +1,5 @@
+import { MemoryRouter } from 'react-router';
+
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
@@ -5,15 +7,15 @@ import { DashboardScreen } from '@/features/student-dashboard/components/dashboa
 import { renderWithProviders } from '@/testing/test-utils';
 
 describe('student dashboard screen', () => {
-  it('welcomes the student and shows an honest empty state without a catalog action', () => {
-    renderWithProviders(<DashboardScreen studentName="Ana Souza" />);
+  it('welcomes the student and links an empty course list to the catalog', () => {
+    renderWithProviders(<MemoryRouter><DashboardScreen studentName="Ana Souza" courses={{ progressAvailable: true, active: [], ended: [] }} /></MemoryRouter>);
 
     expect(screen.getByRole('heading', { name: 'Olá, Ana Souza 👋' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Seus cursos aparecem aqui' })).toBeInTheDocument();
-    expect(screen.getByText('Sua conta está pronta.')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /curso|catálogo/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Você ainda não tem cursos' })).toBeInTheDocument();
+    expect(screen.getByText('Bora continuar de onde parou.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Explorar cursos' })).toHaveAttribute('href', '/cursos');
     expect(screen.queryByText(/workspace service|runtime check/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/cursos\.length/)).not.toBeInTheDocument();
+    expect(screen.getByText('cursos.length === 0')).toBeInTheDocument();
   });
 
   it('shows accessible loading skeletons for the account and course cards', () => {

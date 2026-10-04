@@ -24,7 +24,7 @@ public sealed class AccessDecisionFixture : IAsyncDisposable
     public ConcurrentQueue<string> Measurements { get; } = new();
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
-    public AccessDecisionFixture(CommerceIntegrationFixture infra)
+    public AccessDecisionFixture(CommerceIntegrationFixture infra, Action<ServiceAssertionOptions>? configure = null)
     {
         var tenant = Guid.CreateVersion7();
         var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
@@ -43,6 +43,7 @@ public sealed class AccessDecisionFixture : IAsyncDisposable
                 AllowedScopes = ServiceAssertionScopes.Student,
                 AllowedTenantIds = [tenant.ToString("D")]
             };
+            configure?.Invoke(options);
         }), tenant);
         metrics.InstrumentPublished = (instrument, listener) => listener.EnableMeasurementEvents(instrument);
         metrics.SetMeasurementEventCallback<long>(CaptureMeasurement);

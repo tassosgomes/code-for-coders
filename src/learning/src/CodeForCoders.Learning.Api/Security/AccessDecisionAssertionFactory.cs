@@ -7,7 +7,7 @@ namespace CodeForCoders.Learning.Api.Security;
 
 public sealed class AccessDecisionAssertionFactory(IOptions<AccessDecisionOptions> options, TimeProvider clock)
 {
-    public string Create(Guid tenantId)
+    public string Create(Guid tenantId, string scope)
     {
         var settings = options.Value;
         using var rsa = RSA.Create();
@@ -20,7 +20,7 @@ public sealed class AccessDecisionAssertionFactory(IOptions<AccessDecisionOption
             sub = "learning",
             aud = "commerce",
             tenantId,
-            scope = "access-decision:read",
+            scope,
             jti = Guid.CreateVersion7(now).ToString("D"),
             iat = now.ToUnixTimeSeconds(),
             nbf = now.AddSeconds(-5).ToUnixTimeSeconds(),

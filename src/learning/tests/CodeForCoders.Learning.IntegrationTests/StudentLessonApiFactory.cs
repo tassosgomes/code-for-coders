@@ -47,6 +47,7 @@ public sealed class StudentLessonApiFactory : WebApplicationFactory<Program>, IA
             var p = key.ExportParameters(false);
             var jwks = JsonSerializer.Serialize(new { keys = new[] { new { kid = "student-test", kty = "RSA", use = "sig", alg = "RS256", n = Base64UrlEncoder.Encode(p.Modulus!), e = Base64UrlEncoder.Encode(p.Exponent!) } } });
             services.AddHttpClient(LearningJwksConfigurationManager.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new CourseJwksHandler(jwks));
+            services.AddHttpClient<IStudentCourseAccessClient, StudentCourseAccessClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
             services.AddHttpClient<IAccessDecisionClient, AccessDecisionClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
         });
     }

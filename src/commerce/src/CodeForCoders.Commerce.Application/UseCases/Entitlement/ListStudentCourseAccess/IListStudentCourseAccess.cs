@@ -1,0 +1,3 @@
+namespace CodeForCoders.Commerce.Application.UseCases.Entitlement.ListStudentCourseAccess;
+
+public interface IListStudentCourseAccess : IUseCase<ListStudentCourseAccessInput, StudentCourseAccessList>;

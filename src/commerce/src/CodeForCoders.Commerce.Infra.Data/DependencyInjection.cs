@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
         services.AddScoped<IStudentAccessGrantQueries, Queries.StudentAccessGrantQueries>();
+        services.AddScoped<IStudentCourseAccessQueries, Entitlement.StudentCourseAccessQueries>();
         services.AddScoped<IAccessDecisionQueries, Entitlement.AccessDecisionQueries>();
         services.AddScoped<IEntitlementCourseProjectionStore, Entitlement.EntitlementCourseProjectionStore>();
         services.AddScoped<IOfferReferenceQueries, Queries.OfferReferenceQueries>();

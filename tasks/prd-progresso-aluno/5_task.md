@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.StudentCourseAccessListTests --minimum-expected-tests 8 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.StudentCourseAccessClientTests --minimum-expected-tests 4 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.StudentCoursesListingTests --minimum-expected-tests 9 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.MyCoursesProxyTests --minimum-expected-tests 4 && npm --prefix src/student-spa run test -- my-courses-active'
@@ -66,8 +66,8 @@ Testcontainers pesados rodam **em sequência** (AGENTS.md).
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] `commerce` e `learning` iniciam com os registros reais (política, cliente, emissor com dois escopos) no ambiente de teste.
-- [ ] No navegador: o financeiro concede cortesia em dois cursos; o aluno entra e cai no Início com o começado primeiro ("37% · 3 de 8 aulas", Continuar) e o outro com Começar; Continuar abre a aula certa, na posição de retomada.
-- [ ] Aluno sem concessão vê "Você ainda não tem cursos" com o caminho para a vitrine.
-- [ ] Asserção de `media` na rota da lista recebe 403.
+- [x] Gate focalizado passa (exit 0).
+- [x] `commerce` e `learning` iniciam com os registros reais (política, cliente, emissor com dois escopos) no ambiente de teste.
+- [x] No navegador: o financeiro concede cortesia em dois cursos; o aluno entra e cai no Início com o começado primeiro ("37% · 3 de 8 aulas", Continuar) e o outro com Começar; Continuar abre a aula certa, na posição de retomada.
+- [x] Aluno sem concessão vê "Você ainda não tem cursos" com o caminho para a vitrine.
+- [x] Asserção de `media` na rota da lista recebe 403.

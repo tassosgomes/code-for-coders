@@ -17,6 +17,7 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail) = exception switch
         {
+            StudentLessonException { Code: "COURSE_ACCESS_UNAVAILABLE" } => (503, "about:blank", "Não foi possível carregar seus cursos agora.", "Não foi possível carregar seus cursos agora."),
             StudentLessonException { Code: "COURSE_NOT_AVAILABLE" } => (404, "about:blank", "Este curso não está disponível.", "Este curso não está disponível."),
             StudentLessonException { Code: "LESSON_NOT_AVAILABLE" } => (404, "about:blank", "Esta aula não está disponível.", "Esta aula não está disponível."),
             StudentLessonException { Code: "ACCESS_DENIED" } => (403, "about:blank", "Você não tem acesso a este curso.", "Você não tem acesso a este curso."),

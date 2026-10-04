@@ -15,7 +15,7 @@ public sealed class AccessDecisionClient(HttpClient client, AccessDecisionAssert
         if (cache.TryGetValue(query, out CachedDecision? cached) && cached is not null && cached.ExpiresAt > clock.GetUtcNow()) return cached.Decision;
         if (string.IsNullOrWhiteSpace(options.Value.SigningKeyBase64)) return null;
         using var request = new HttpRequestMessage(HttpMethod.Get, $"internal/v1/access-decision?studentId={query.StudentId:D}&courseId={query.CourseId:D}");
-        request.Headers.Authorization = new("Bearer", assertions.Create(query.TenantId));
+        request.Headers.Authorization = new("Bearer", assertions.Create(query.TenantId, "access-decision:read"));
         try
         {
             using var response = await client.SendAsync(request, cancellationToken);

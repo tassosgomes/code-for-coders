@@ -15,6 +15,7 @@ public static class EndpointExtensions
         app.MapShowcaseEndpoints();
         app.MapStudentLessonEndpoints();
         app.MapCourseProgressEndpoints();
+        app.MapMyCoursesEndpoints();
         app.MapPlaybackSessionEndpoints();
         app.MapProxyEndpoints();
     }

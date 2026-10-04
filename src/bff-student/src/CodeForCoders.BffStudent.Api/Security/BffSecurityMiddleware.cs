@@ -116,7 +116,8 @@ public sealed class BffSecurityMiddleware(
         {
             var isLesson = context.Request.Path.StartsWithSegments("/api/v1/lessons")
                 || context.Request.Path.StartsWithSegments("/api/v1/playback-sessions");
-            var isCourseProgress = context.Request.Path.StartsWithSegments("/api/v1/courses");
+            var isCourseProgress = context.Request.Path.StartsWithSegments("/api/v1/courses")
+                || context.Request.Path.StartsWithSegments("/api/v1/my-courses");
             var statusCode = validation.StatusCode == StatusCodes.Status504GatewayTimeout ? 504
                 : isLesson && validation.StatusCode == 503 ? 503 : 502;
             await WriteProblemAsync(

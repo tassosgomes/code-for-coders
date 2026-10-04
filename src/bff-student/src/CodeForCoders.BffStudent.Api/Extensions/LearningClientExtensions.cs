@@ -23,6 +23,12 @@ public static class LearningClientExtensions
             client.BaseAddress = new Uri(options.BaseAddress);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
         });
+        services.AddHttpClient<IMyCoursesLearningClient, MyCoursesLearningClient>((provider, client) =>
+        {
+            var options = provider.GetRequiredService<IOptions<LearningServiceOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseAddress);
+            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+        });
         return services;
     }
 }

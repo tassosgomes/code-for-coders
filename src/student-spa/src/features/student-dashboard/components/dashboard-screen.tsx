@@ -1,21 +1,26 @@
 import type { ReactNode } from 'react';
-import { BookOpen } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { MyCourses } from '@/features/student-dashboard/api/get-my-courses';
+import { MyCoursesList } from '@/features/student-dashboard/components/my-courses-list';
 
 type DashboardScreenProps = {
   account?: ReactNode;
+  courses?: MyCourses;
+  isCoursesLoading?: boolean;
   isSessionLoading?: boolean;
   studentName?: string;
 };
 
 export const DashboardScreen = ({
   account,
+  courses,
+  isCoursesLoading = false,
   isSessionLoading = false,
   studentName,
 }: DashboardScreenProps) => (
-  <div aria-busy={isSessionLoading} className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+  <div aria-busy={isSessionLoading || isCoursesLoading} className="mx-auto flex w-full max-w-7xl flex-col gap-8">
     <header className="space-y-2">
       <p className="typo-overline text-primary">Início</p>
       {isSessionLoading ? (
@@ -28,7 +33,7 @@ export const DashboardScreen = ({
           <h2 className="typo-h2">
             {studentName ? `Olá, ${studentName} 👋` : 'Olá!'}
           </h2>
-          <p className="text-muted-foreground">Sua conta está pronta.</p>
+          <p className="text-muted-foreground">Bora continuar de onde parou.</p>
         </>
       )}
     </header>
@@ -54,19 +59,7 @@ export const DashboardScreen = ({
       </div>
     ) : (
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <Card className="min-w-0">
-          <CardContent className="flex flex-col gap-5">
-            <div aria-hidden="true" className="flex size-12 items-center justify-center rounded-full bg-muted">
-              <BookOpen className="size-6 text-muted-foreground" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="typo-h4">Seus cursos aparecem aqui</h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Quando você se matricular em um curso, é por aqui que retoma as aulas.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <MyCoursesList courses={courses} isLoading={isCoursesLoading} />
         {account}
       </div>
     )}

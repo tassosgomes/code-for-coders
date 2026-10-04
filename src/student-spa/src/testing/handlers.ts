@@ -6,6 +6,7 @@ import { playbackData } from '@/testing/playback-data';
 import { studentLessonData } from '@/testing/student-lesson-data';
 
 export const handlers = [
+  http.get(`${env.API_URL}/api/v1/my-courses`, () => HttpResponse.json({ progressAvailable: true, active: [], ended: [] })),
   http.get(`${env.API_URL}/api/v1/courses/:courseId/progress`, () => HttpResponse.json(courseProgressData)),
   http.post(env.API_URL + "/api/v1/playback-sessions/:sessionId/renewals", () => HttpResponse.json(playbackData())), 
   http.post(env.API_URL + "/api/v1/playback-sessions/:sessionId/progress", () => HttpResponse.json({ recorded: true })), 

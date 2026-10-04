@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<ICourseVersionStore, Repositories.CourseVersionStore>();
         services.AddScoped<ICourseQueries, Queries.CourseQueries>();
         services.AddScoped<IStudentLessonQueries, Queries.CourseQueries>();
+        services.AddScoped<IStudentCoursesQueries, Queries.StudentCoursesQueries>();
         services.AddScoped<IStudentCourseProgressQueries, Queries.StudentCourseProgressQueries>();
         services.AddScoped<ICurrentLessonVideoQueries, Queries.CurrentLessonVideoQueries>();
         services.AddScoped<IReadyVideoQueries, VideoProjection.ReadyVideoQueries>();
