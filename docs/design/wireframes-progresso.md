@@ -1,6 +1,6 @@
 # Wireframes ASCII — Progresso do aluno: meus cursos e retomada na aula (CAP-017, 1º PRD)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-10-04 (10 pontos da seção 7; o card "Sua conta" de I1.a sem e-mail, que o contrato de sessão não fornece). Figma pendente (task 2.0).
+> **Status:** ASCII e Figma aprovados pelo responsável em 2026-10-04 (Figma aprovado como entregue: Dark em I1.a e I1.e; Módulo 2 aberto em A1.P; aviso de I1.f só com título). Código de tela liberado a partir da task 4.0.
 > **Revisão:** responsável humano (Tasso) — reveja a [seção 7](#7-decisões-para-você-aprovar) (10 pontos) e os quadros I1.a–I1.h e A1.P–A1.S; o gate da task 1.0 só passa após o registro da aprovação neste cabeçalho.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 4.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados de **"meus cursos"** (o Início, `/`) e das **mudanças na tela da aula** (`student-spa`) antes do desenho no Figma.
@@ -406,3 +406,66 @@ Páginas novas no arquivo `Code4Coders — Design System`, sem mexer nas existen
 3. **Components (proposta)**, na página de Screens: `MyCoursesList`, `CourseProgressCard`, `EndedAccessCard`, `ResumeNotice`, `LessonList+Progress` (marca "✓ Concluída" + percentual).
 
 Tudo reusando o AppShell do aluno, `Card`, `Progress`, `Alert`, `Skeleton` e demais componentes do DS, sem valor fixo.
+
+---
+
+## 9. Handoff do Figma — aprovado
+
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-10-04, nas páginas `Fluxo — Progresso` e `Screens — Progresso`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-37125).
+
+> **Aprovação:** Figma aprovado pelo responsável em 2026-10-04.
+
+**Ajustes de desenho sem mudar decisão:** o card "Sua conta" do Início não mostra e-mail, porque o contrato de sessão não o fornece (decisão da aprovação do ASCII). No ASCII, I1.b e A1.Q são os celulares de I1.a e A1.P; no Figma, cada estado tem o seu par desktop e celular, com o mesmo código. Em A1.P o Módulo 2 aparece aberto para mostrar a aula atual. Em I1.f o aviso ("Seu progresso não pôde ser carregado agora") usa o `Alert` do DS, sem texto de descrição.
+
+### 9.1 Fluxos e navegação
+
+| Artefato | Descrição | Link e `node-id` |
+|---|---|---|
+| Índice de revisão | Links para cada grupo de telas | [274:37125](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-37125) |
+| Fluxo 1 · Aluno — entrar, escolher, continuar, assistir, voltar | Entrada, estados do Início e tela da aula; cada nó tem **Revisar tela →** | [274:37058](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-37058) |
+| Página Fluxo — Progresso | Página do arquivo | [270:4259](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-4259) |
+| Página Screens — Progresso | Página do arquivo | [270:4260](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-4260) |
+
+### 9.2 Inventário de telas e estados
+
+Desktop em 1440 × 900; celular em 390 de largura (altura 844, ou a do conteúdo quando ele passa disso). Light em todas as telas; Dark em I1.a e I1.e (desktop).
+
+#### I1 · Início = meus cursos — [seção 274:36985](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-36985)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| I1.a · Com cursos (vigentes + encerrado) — Desktop | 1440 × 900 | [270:4261](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-4261) |
+| I1.b · Com cursos — Mobile | 390 × 1188 | [270:4296](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-4296) |
+| I1.c · Carregando — Desktop | 1440 × 900 | [272:74](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-74) |
+| I1.c · Carregando — Mobile | 390 × 844 | [272:108](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-108) |
+| I1.d · Vazio — Desktop | 1440 × 900 | [272:139](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-139) |
+| I1.d · Vazio — Mobile | 390 × 867 | [272:173](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-173) |
+| I1.e · Indisponível — Desktop | 1440 × 900 | [272:204](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-204) |
+| I1.e · Indisponível — Mobile | 390 × 844 | [272:238](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-238) |
+| I1.f · Progresso indisponível — Desktop | 1440 × 900 | [272:269](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-269) |
+| I1.f · Progresso indisponível — Mobile | 390 × 962 | [272:303](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=272-303) |
+| I1.a · Com cursos — Desktop Dark | 1440 × 900 | [273:36334](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36334) |
+| I1.e · Indisponível — Desktop Dark | 1440 × 900 | [273:36371](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36371) |
+
+#### A1 · Tela da aula — [seção 274:36987](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-36987)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A1.P · Lista com concluídas + percentual + retomada — Desktop | 1440 × 900 | [273:36681](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36681) |
+| A1.Q · Com progresso e retomada — Mobile | 390 × 1175 | [273:36841](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36841) |
+| A1.R · Sem retomada (começa do início) — Desktop | 1440 × 900 | [273:36998](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36998) |
+| A1.R · Sem retomada — Mobile | 390 × 1069 | [273:37148](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-37148) |
+| A1.S · Progresso indisponível — Desktop | 1440 × 900 | [273:37295](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-37295) |
+| A1.S · Progresso indisponível — Mobile | 390 × 1035 | [273:37404](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-37404) |
+
+#### 🧩 Composições propostas — Progresso — [seção 274:36988](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-36988)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| CourseProgressCard (continuar · começar · sem número) | 708 × 618 | [270:36160](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36160) |
+| EndedAccessCard | 708 × 134 | [270:36175](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36175) |
+| ResumeNotice (desktop · mobile) | 888 × 220 | [270:36199](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36199) |
+| LessonItem+Progress (padrão · concluída · atual) | 328 × 236 | [270:36221](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36221) |
+| LessonList+Progress | 360 × 388 | [273:36456](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36456) |
+
+`MyCoursesList` é a composição "Seus cursos" + `CourseProgressCard` por curso vigente, desenhada diretamente em I1.a, I1.b e I1.f; não tem componente próprio. Os componentes novos acima estão registrados em [`docs/design/Components.md`](Components.md#progresso-do-aluno-cap-017).

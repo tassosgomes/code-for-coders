@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["1.0"]
 gate: 'rg -q "^> \*\*Status:\*\* ASCII e Figma aprovados pelo responsável em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-progresso.md'
@@ -36,6 +36,6 @@ Os estados aprovados em 1.0 existem como frames no arquivo Code4Coders — Desig
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0).
-- [ ] Cada estado de 1.0 tem frame no Figma, com link no documento.
-- [ ] O responsável aprovou o Figma, e a aprovação está registrada no cabeçalho com a data.
+- [x] Gate passa (exit 0).
+- [x] Cada estado de 1.0 tem frame no Figma, com link no documento.
+- [x] O responsável aprovou o Figma, e a aprovação está registrada no cabeçalho com a data.

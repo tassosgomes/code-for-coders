@@ -272,6 +272,20 @@ Figma: `Lesson Item` · `state` = completed | current | locked.
 
 Duração à direita em `font-mono text-xs text-muted-foreground`. Sempre renderize como `<button>` ou `<Link>`, nunca como `<div onClick>`.
 
+### Progresso do aluno (CAP-017)
+
+Componentes novos aprovados no Figma em 2026-10-04 (página *Screens — Progresso*, seção [Composições propostas](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=274-36988); inventário em `wireframes-progresso.md`, seção 9). Compõem `Card`, `Progress`, `Button`, `Alert` e `LessonItem`; sem cores, raios ou sombras novos. Estado concluído é sempre ícone **e** texto, nunca só cor.
+
+| Componente | Figma | Uso |
+|---|---|---|
+| `CourseProgressCard` | [270:36160](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36160) | Curso vigente em "Seus cursos" (Início). Título + `Progress` + "37% · 3 de 8 aulas" + `Button` **Continuar** (com progresso) ou **Começar** (sem). Variante "sem número": mostra só a ação quando o progresso não está disponível. |
+| `EndedAccessCard` | [270:36175](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36175) | Curso com acesso encerrado. `bg-muted`; título + percentual + "Seu acesso terminou em dd/mm/aaaa"; **sem ação**. |
+| `ResumeNotice` | [270:36199](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36199) | Na tela da aula: "Retomando de m:ss" + link/botão *Começar do início*. Renderize em região de status (`role="status"`, `aria-live="polite"`). Desktop e mobile. |
+| `LessonItem+Progress` | [270:36221](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=270-36221) | Extensão de `LessonItem` com estados padrão · concluída · atual. Concluída ganha o texto "✓ Concluída" além do ícone. Sem cadeado: aula não concluída abre normalmente. |
+| `LessonList+Progress` | [273:36456](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=273-36456) | `LessonList` da aula com o percentual do curso no cabeçalho ("37% · 3 de 8 aulas") e `LessonItem+Progress` nos itens. |
+
+`MyCoursesList` (seção "Seus cursos" + um `CourseProgressCard` por curso vigente) é só composição de tela, sem componente próprio. Quando `CourseProgressCard` e `LessonItem+Progress` forem implementados, siga a regra 2 da seção 1 para decidir entre `blocks/` e composição inline.
+
 ---
 
 ## 5. Padrões recorrentes

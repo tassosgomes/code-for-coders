@@ -4,13 +4,13 @@
   "original_base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "target_ref": null,
-  "last_checkpoint": "1.0",
+  "last_checkpoint": "5e11125",
   "phase": "checkpoint",
   "active_task": "2.0",
-  "attempt": 1,
+  "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 0,
+  "transport_retries": 1,
   "specs": [
     "techspec.md",
     "contracts.md"
@@ -19,13 +19,11 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.7mJqORZE",
+    "run_id": "run.TBapFxei",
     "role": "validator",
-    "mode": "focused",
-    "task": "1.0",
-    "attempt": "1/3",
-    "outcome": "approved",
-    "report": "tasks/prd-progresso-aluno/1.0_task_review.md"
+    "mode": "revalidation",
+    "task": "2.0",
+    "outcome": "approved"
   },
   "pending": null,
   "routing_overrides": {
@@ -43,6 +41,10 @@
     "1.0 implement (run.ln0V222L, opencode): docs/design/wireframes-progresso.md entregue; TASK BLOCKED aguardando aprovação humana do ASCII (sem consumir tentativa)",
     "1.0: ASCII aprovado pelo responsável em 2026-10-04 (registro no cabeçalho; e-mail removido do card de conta); gate exit 0",
     "1.0 focused run.7mJqORZE: approved (0 bloqueantes, 3 recomendacoes nao bloqueantes)",
-    "1.0 checkpoint-task ok (run.eFR7PxeK): 1_task.md done, tasks.md [x] 1.0, wireframes-progresso.md, review focused aprovada run.7mJqORZE, gate rg exit 0"
+    "1.0 checkpoint-task ok (run.eFR7PxeK): 1_task.md done, tasks.md [x] 1.0, wireframes-progresso.md, review focused aprovada run.7mJqORZE, gate rg exit 0",
+    "1.0 focused aprovada (run.7mJqORZE, claude); checkpoint 5e11125 (run.eFR7PxeK, falha de transporte reconciliada, sem repetição)",
+    "2.0 implement (run.UWJU02Of, claude sonnet 5.5 medium): frames no Figma e seção 9 do documento; TASK BLOCKED aguardando aprovação humana",
+    "2.0: Figma aprovado pelo responsável em 2026-10-04 (como entregue); componentes registrados em Components.md (run.I353sjwH)",
+    "2.0 focused rejeitada (run.htRJJ8pb, codex): B1 barra mobile 79% vs 37%; B2 mensagem I1.e mobile cortada"
   ]
 }
