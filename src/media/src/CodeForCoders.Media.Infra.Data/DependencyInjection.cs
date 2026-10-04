@@ -35,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
         services.AddScoped<IVideoQueries, VideoQueries>();
+        services.AddScoped<IPlaybackRepository, PlaybackSessions.PlaybackRepository>();
+        services.AddScoped<IPlaybackSessionMaintenance, PlaybackSessions.PlaybackSessionMaintenance>();
         services.AddScoped<IVideoUploadRepository, VideoUploadRepository>();
         services.AddScoped<IVideoPreparationRepository, VideoPreparationRepository>();
         services.AddScoped<IOperationIdempotencyRepository, OperationIdempotencyRepository>();
@@ -49,6 +51,23 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddSingleton<S3MediaClientPair>();
         services.AddScoped<IMediaStoragePort, S3MediaStorageAdapter>();
+        services.AddScoped<IPlaybackPlaylistStore, PlaybackPlaylistStore>();
+        services.AddSingleton<PlaybackPlaylistCache>();
+        services.AddScoped<IPlaybackPlaylistReader, S3MediaStorageAdapter>();
+        services.AddOptions<PlaybackDeliveryOptions>().Bind(configuration.GetSection(PlaybackDeliveryOptions.SectionName))
+            .Validate(options => options.Adapter is "DevelopmentEdge" or "CloudFront"
+                && Uri.TryCreate(options.BaseAddress, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https",
+                "Playback delivery settings are invalid.")
+            .Validate(options => configuration["Media:Role"] == "worker" || options.HasValidCredentials(), "Playback delivery credentials are invalid.")
+            .Validate(options => configuration["Media:Role"] == "worker" || options.Adapter != "DevelopmentEdge" || !environment.IsProduction(),
+                "The development delivery edge cannot be used in Production.")
+            .ValidateOnStart();
+        services.AddSingleton<ISegmentDeliveryPort>(provider =>
+        {
+            var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PlaybackDeliveryOptions>>();
+            return options.Value.Adapter == "CloudFront"
+                ? new CloudFrontDeliveryAdapter(options) : new DevelopmentEdgeDeliveryAdapter(options);
+        });
         services.AddOptions<ValkeyOptions>()
             .Bind(configuration.GetSection(ValkeyOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionString), "Valkey connection string is required.")

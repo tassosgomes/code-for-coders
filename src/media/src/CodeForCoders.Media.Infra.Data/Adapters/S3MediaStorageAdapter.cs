@@ -10,7 +10,7 @@ namespace CodeForCoders.Media.Infra.Data.Adapters;
 
 public sealed class S3MediaStorageAdapter(
     S3MediaClientPair clients,
-    IOptions<AwsMediaOptions> options) : IMediaStoragePort
+    IOptions<AwsMediaOptions> options) : IMediaStoragePort, IPlaybackPlaylistReader
 {
     public async Task<string> InitiateMultipartUploadAsync(
         string objectKey,
@@ -131,6 +131,18 @@ public sealed class S3MediaStorageAdapter(
             // Aborting an upload that is already absent is an idempotent cleanup operation.
         }
     }
+
+    public Task<string> ReadPlaylistAsync(string objectKey, CancellationToken cancellationToken)
+        => ExecuteAsync(async token =>
+        {
+            using var response = await clients.Internal.GetObjectAsync(new GetObjectRequest
+            {
+                BucketName = options.Value.BucketName,
+                Key = GetKey(objectKey),
+            }, token);
+            using var reader = new StreamReader(response.ResponseStream);
+            return await reader.ReadToEndAsync(token);
+        }, cancellationToken);
 
     public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken)
         => ExecuteAsync(

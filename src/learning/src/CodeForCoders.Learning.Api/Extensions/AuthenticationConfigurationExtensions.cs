@@ -25,7 +25,11 @@ public static class AuthenticationConfigurationExtensions
         services.AddSingleton<IConfigureOptions<JwtBearerOptions>, LearningJwtBearerOptionsSetup>();
         services.AddAuthorization(options =>
         {
-            options.AddPolicy(LearningAuthorization.Administrator, policy => policy.RequireAuthenticatedUser().RequireClaim("roles", "administrador"));
+            options.AddPolicy(LearningAuthorization.Student, policy => policy.RequireAuthenticatedUser()
+                .RequireAssertion(context => !context.User.HasClaim(claim => claim.Type == "permissions")
+                    && context.User.FindAll("scope").Any(claim => claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("lessons:read"))
+                    && Guid.TryParse(context.User.FindFirst("sessionId")?.Value, out var sessionId) && sessionId != Guid.Empty));
+            options.AddPolicy(LearningAuthorization.Administrator, policy => policy.RequireAuthenticatedUser().RequireClaim("roles", "administrador").RequireClaim("permissions"));
             options.AddPolicy(LearningAuthorization.Read, policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", "autoria.ler"));
             options.AddPolicy(LearningAuthorization.Edit, policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", "autoria.editar"));
         });

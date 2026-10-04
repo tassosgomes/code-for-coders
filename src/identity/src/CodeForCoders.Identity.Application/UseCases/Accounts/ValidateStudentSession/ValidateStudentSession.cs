@@ -25,6 +25,6 @@ public sealed class ValidateStudentSession(
             cancellationToken);
         return active is null
             ? null
-            : new ValidateStudentSessionOutput(active.AccountId, active.Name, active.ExpiresAt);
+            : new ValidateStudentSessionOutput(active.AccountId, active.Name, active.ExpiresAt, active.Email);
     }
 }

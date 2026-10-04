@@ -339,6 +339,11 @@ namespace CodeForCoders.Learning.Infra.Data.Migrations
 
                     b.HasIndex("CourseId");
 
+                    b.HasIndex("Modules");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Modules"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Modules"), new[] { "jsonb_path_ops" });
+
                     b.HasIndex("TenantId", "CourseId", "VersionNumber")
                         .IsUnique();
 

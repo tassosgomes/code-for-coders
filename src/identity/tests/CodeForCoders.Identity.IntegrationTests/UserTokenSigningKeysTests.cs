@@ -84,6 +84,7 @@ public sealed class UserTokenSigningKeysTests
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
         builder.Services.AddSingleton<IOptions<StaffSessionTokenOptions>>(Options.Create(options));
+        builder.Services.AddSingleton<IOptions<StudentSessionTokenOptions>>(Options.Create(new StudentSessionTokenOptions()));
         builder.Services.AddSingleton<UserTokenSigningKeySet>();
         var app = builder.Build();
         app.MapSigningKeyEndpoints();

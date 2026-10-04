@@ -15,6 +15,8 @@ public sealed class MediaDbContext(
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<PlaybackSession> PlaybackSessions => Set<PlaybackSession>();
+
     public DbSet<Video> Videos => Set<Video>();
 
     public DbSet<VideoUpload> VideoUploads => Set<VideoUpload>();
@@ -24,6 +26,7 @@ public sealed class MediaDbContext(
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(MediaSchema.Name);
+        modelBuilder.Entity<PlaybackSession>().HasQueryFilter(session => tenantContext.TenantId.HasValue && session.TenantId == tenantContext.TenantId.Value);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MediaDbContext).Assembly);
         modelBuilder.Entity<CourseReferences.CourseReferenceVersion>().HasQueryFilter(reference => tenantContext.TenantId.HasValue && reference.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CourseReferences.CourseVideoReference>().HasQueryFilter(reference => tenantContext.TenantId.HasValue && reference.TenantId == tenantContext.TenantId.Value);

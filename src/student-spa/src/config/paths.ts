@@ -13,7 +13,7 @@ export const paths = {
   },
   studentLogin: {
     path: '/entrar',
-    getHref: () => '/entrar',
+    getHref: (returnTo?: string) => returnTo ? `/entrar?returnTo=${encodeURIComponent(returnTo)}` : '/entrar',
   },
   studentPasswordRecovery: {
     path: '/recuperar-senha',
@@ -30,6 +30,10 @@ export const paths = {
   studentShowcaseCourse: {
     path: '/cursos/:courseId',
     getHref: (courseId: string) => `/cursos/${encodeURIComponent(courseId)}`,
+  },
+  studentLesson: {
+    path: '/aulas/:lessonId',
+    getHref: (lessonId: string) => `/aulas/${encodeURIComponent(lessonId)}`,
   },
   studentPasswordChange: {
     path: '/trocar-senha',

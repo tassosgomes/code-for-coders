@@ -12,5 +12,9 @@ public sealed class MediaApiException(
 
     public string Title { get; } = title;
 
+    public string? Reason { get; init; }
+
+    public DateTimeOffset? AccessEndedAt { get; init; }
+
     public string? Detail { get; } = detail;
 }

@@ -7,13 +7,13 @@ import { activeStudentSessionMarker, expiredStudentSessionMarker } from '@/confi
 import { studentSessionQueryKey, studentSessionSchema } from '@/features/student-session/api/student-session';
 
 export const useStudentSessionEvents = () => {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleSessionExpired = () => {
-      if (pathname !== paths.home.path && pathname !== paths.studentPasswordChange.path) {
+      if (pathname !== paths.home.path && pathname !== paths.studentPasswordChange.path && !pathname.startsWith(`${paths.studentLesson.path.replace(':lessonId', '')}`)) {
         return;
       }
 
@@ -24,7 +24,7 @@ export const useStudentSessionEvents = () => {
       queryClient.removeQueries({ queryKey: studentSessionQueryKey });
       window.sessionStorage.setItem(expiredStudentSessionMarker, 'true');
       window.localStorage.removeItem(activeStudentSessionMarker);
-      void navigate(paths.studentLogin.getHref(), {
+      void navigate(paths.studentLogin.getHref(pathname.startsWith('/aulas/') ? `${pathname}${search}` : undefined), {
         replace: true,
         state: { sessionExpired: true },
       });
@@ -46,5 +46,5 @@ export const useStudentSessionEvents = () => {
       window.removeEventListener('app:session-expired', handleSessionExpired);
       window.removeEventListener('app:csrf-refreshed', handleCsrfRefreshed);
     };
-  }, [navigate, pathname, queryClient]);
+  }, [navigate, pathname, search, queryClient]);
 };

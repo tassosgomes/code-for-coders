@@ -13,6 +13,7 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddMediaConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddAccessDecisionConfiguration(builder.Configuration);
         if (MediaRoleOptions.ReadRole(builder.Configuration) == MediaServiceRole.Worker)
         {
             builder.Services.AddVideoPreparationConfiguration();
@@ -44,6 +45,11 @@ public static class ServiceConfigurationExtensions
             MediaAuthorization.PolicyName,
             policy => policy.RequireAuthenticatedUser()
                 .RequireClaim(MediaAuthorization.PermissionClaim, MediaAuthorization.RequiredPermission)));
+        builder.Services.AddAuthorization(options => options.AddPolicy(
+            MediaAuthorization.PlaybackPolicyName, policy => policy.RequireAuthenticatedUser()
+                .RequireAssertion(context => Guid.TryParse(context.User.FindFirst("sessionId")?.Value, out var sessionId)
+                    && sessionId != Guid.Empty && !context.User.HasClaim(claim => claim.Type == "permissions" || claim.Type == "roles")
+                    && (context.User.FindFirst("scope")?.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Contains("playback:use") ?? false))));
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);

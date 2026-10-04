@@ -1,6 +1,7 @@
 using System.Diagnostics.Metrics;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
     private readonly TimeProvider timeProvider;
     private readonly ILogger<MediaVolumeMetricsWorker> logger;
     private readonly int outboxMaxAttempts;
-    private MetricsSnapshot snapshot = new(0, 0, [], 0, 0, 0, 0, 0);
+    private MetricsSnapshot snapshot = new(0, 0, [], 0, 0, 0, 0, 0, 0);
 
     public MediaVolumeMetricsWorker(
         IServiceScopeFactory scopeFactory,
@@ -38,6 +39,7 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         MediaTelemetry.Meter.CreateObservableGauge("media.outbox.pending", () => Volatile.Read(ref snapshot).PendingOutboxMessages, unit: "{message}");
         MediaTelemetry.Meter.CreateObservableGauge("media.outbox.oldest_pending", () => Volatile.Read(ref snapshot).OldestPendingOutboxSeconds, unit: "s");
         MediaTelemetry.Meter.CreateObservableGauge("media.outbox.exhausted", () => Volatile.Read(ref snapshot).ExhaustedOutboxMessages, unit: "{message}");
+        MediaTelemetry.Meter.CreateObservableGauge("media.students.active", () => Volatile.Read(ref snapshot).ActiveStudents, unit: "{student}");
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
@@ -76,6 +78,12 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
                 """)
             .IgnoreQueryFilters()
             .LongCountAsync(cancellationToken);
+        var thirtyDaysAgo = now.AddDays(-30);
+        var activeStudents = await dbContext.PlaybackSessions.IgnoreQueryFilters().AsNoTracking()
+            .Where(session => session.CreatedAt >= thirtyDaysAgo)
+            .Select(session => session.StudentId)
+            .Distinct()
+            .LongCountAsync(cancellationToken);
         var statusCounts = rows.ToDictionary(row => row.Status, row => row.Count, StringComparer.Ordinal);
         var counts = KnownStatuses.Select(status => new Measurement<long>(
             statusCounts.GetValueOrDefault(status),
@@ -88,7 +96,8 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
             oldestWaitingSeconds,
             pendingOutboxMessages,
             oldestPendingOutboxSeconds,
-            exhaustedOutboxMessages));
+            exhaustedOutboxMessages,
+            activeStudents));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -126,5 +135,6 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         double OldestWaitingSeconds,
         long PendingOutboxMessages,
         double OldestPendingOutboxSeconds,
-        long ExhaustedOutboxMessages);
+        long ExhaustedOutboxMessages,
+        long ActiveStudents);
 }

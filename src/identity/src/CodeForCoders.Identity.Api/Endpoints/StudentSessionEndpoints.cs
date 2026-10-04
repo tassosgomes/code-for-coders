@@ -120,7 +120,7 @@ public static class StudentSessionEndpoints
 
         var accessToken = string.IsNullOrWhiteSpace(request.Audience)
             ? null
-            : tokenIssuer.Create(request.Audience, assertion.TenantId, session.AccountId, request.SessionId);
+            : tokenIssuer.Create(request.Audience, assertion.TenantId, session.AccountId, request.SessionId, session.Email);
         return Results.Ok(new StudentSessionValidatedV1(
             session.AccountId,
             session.Name,

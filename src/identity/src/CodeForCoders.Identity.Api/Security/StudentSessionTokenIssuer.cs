@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 
 namespace CodeForCoders.Identity.Api.Security;
@@ -15,7 +16,7 @@ public sealed class StudentSessionTokenIssuer(
         => !string.IsNullOrWhiteSpace(audience)
             && options.Value.AudienceScopes.ContainsKey(audience);
 
-    public string Create(string audience, Guid tenantId, Guid accountId, Guid sessionId)
+    public string Create(string audience, Guid tenantId, Guid accountId, Guid sessionId, string? email = null)
     {
         var settings = options.Value;
         if (!settings.AudienceScopes.TryGetValue(audience, out var scope))
@@ -39,7 +40,8 @@ public sealed class StudentSessionTokenIssuer(
                 now.ToUnixTimeSeconds(),
                 now.AddSeconds(-5).ToUnixTimeSeconds(),
                 now.AddMinutes(settings.LifetimeMinutes).ToUnixTimeSeconds(),
-                Guid.CreateVersion7(now).ToString("D")),
+                Guid.CreateVersion7(now).ToString("D"),
+                settings.EmailAudiences.Contains(audience, StringComparer.Ordinal) ? email : null),
             JsonOptions));
         var signingInput = Encoding.ASCII.GetBytes($"{header}.{claims}");
         var signature = rsa.SignData(signingInput, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
@@ -61,5 +63,6 @@ public sealed class StudentSessionTokenIssuer(
         long Iat,
         long Nbf,
         long Exp,
-        string Jti);
+        string Jti,
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Email);
 }

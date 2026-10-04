@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.PlaybackRenewalTests --minimum-expected-tests 8 && npm --prefix src/student-spa run test -- playback-renewal'
@@ -69,7 +69,7 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0), com os mínimos do `gate`.
-- [ ] A integração usa **relógio controlado** em `media` e um `commerce` de teste que responde negado, indisponível e volta a responder; o player é testado com sessão e relógio simulados.
+- [x] Gate focalizado passa (exit 0), com os mínimos do `gate`.
+- [x] A integração usa **relógio controlado** em `media` e um `commerce` de teste que responde negado, indisponível e volta a responder; o player é testado com sessão e relógio simulados.
 - [ ] No ambiente de desenvolvimento, com um aluno assistindo, o `expires_at` da concessão no banco de `commerce` é antecipado por script de apoio do cenário, e a reprodução para dentro da janela com a mensagem do estado.
 - [ ] Assistir 20 minutos seguidos não produz pausa nem recarga da playlist.

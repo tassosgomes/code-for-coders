@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Moq" />
     <ProjectReference Include="../../src/CodeForCoders.BffStudent.Api/CodeForCoders.BffStudent.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.BffStudent.Application/CodeForCoders.BffStudent.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.BffStudent.Contracts/CodeForCoders.BffStudent.Contracts.csproj" />

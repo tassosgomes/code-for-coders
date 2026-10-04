@@ -18,7 +18,8 @@ public sealed class StudentAccountConfirmationClient(HttpClient client, StudentA
             if (!response.IsSuccessStatusCode) return null;
             using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
             var root = document.RootElement;
-            return root.ValueKind == JsonValueKind.Object && root.EnumerateObject().Count() == 1
+            return root.ValueKind == JsonValueKind.Object && root.EnumerateObject().Count() == 2
+                && root.TryGetProperty("studentId", out var confirmed) && confirmed.ValueKind == JsonValueKind.String && confirmed.TryGetGuid(out var confirmedId) && confirmedId == studentId
                 && root.TryGetProperty("eligible", out var eligible) && eligible.ValueKind is JsonValueKind.True or JsonValueKind.False
                 ? eligible.GetBoolean() : null;
         }

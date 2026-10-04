@@ -91,6 +91,11 @@ public sealed class GlobalExceptionHandler(
         {
             problemDetails.Extensions["code"] = code;
         }
+        if (exception is MediaApiException { Reason: not null } denied)
+        {
+            problemDetails.Extensions["reason"] = denied.Reason;
+            if (denied.AccessEndedAt.HasValue) problemDetails.Extensions["accessEndedAt"] = denied.AccessEndedAt;
+        }
         if (exception is ValidationException validationException)
         {
             problemDetails.Extensions["errors"] = validationException.Errors

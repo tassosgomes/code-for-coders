@@ -35,7 +35,7 @@
       "source": "tassosgomes/my-skills",
       "sourceType": "github",
       "skillPath": "skills/tsg-flow-contract-creator/SKILL.md",
-      "computedHash": "45235d4fd0b32b0973c2a623c2c08d87ddb46ab2e97fd251ce1954dd332629da"
+      "computedHash": "1256856c4d37de1623e04605396ad7858ad4b082a4a33f2388e15697d20b7711"
     },
     "tsg-flow-domain-creator": {
       "source": "tassosgomes/my-skills",
@@ -53,7 +53,7 @@
       "source": "tassosgomes/my-skills",
       "sourceType": "github",
       "skillPath": "skills/tsg-flow-implementer/SKILL.md",
-      "computedHash": "d35163e1f2d7dff4d6aa342bf2f5bd514c5787f352dbccfbeff0ba39be6162fa"
+      "computedHash": "387141f23da9dfe08e5ab45296d46e2e48091e57443fe89566a01e9ba6c7f176"
     },
     "tsg-flow-integrator": {
       "source": "tassosgomes/my-skills",
@@ -71,7 +71,7 @@
       "source": "tassosgomes/my-skills",
       "sourceType": "github",
       "skillPath": "skills/tsg-flow-orchestrator/SKILL.md",
-      "computedHash": "66e5bcf0de96196080d9f001960cac2d37398f2fc67ffe3408f07fade5b356c5"
+      "computedHash": "6b7fbf936078cb621b004484ff4a00a753afb9e80c0ccc1216c7ef78c01d544c"
     },
     "tsg-flow-prd-creator": {
       "source": "tassosgomes/my-skills",
@@ -95,7 +95,7 @@
       "source": "tassosgomes/my-skills",
       "sourceType": "github",
       "skillPath": "skills/tsg-flow-validator/SKILL.md",
-      "computedHash": "857707e37e72eb78497e8b954a9bab24ee1a9eb1f4e8eee0b26b4aa13f7fb30c"
+      "computedHash": "07bf3244e6158cc8a1dbfea8202eec88a4f2f64f13a25312f388522e35af1787"
     },
     "tsg-flow-vision-creator": {
       "source": "tassosgomes/my-skills",

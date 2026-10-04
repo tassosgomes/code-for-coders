@@ -1,4 +1,5 @@
 using CodeForCoders.Media.Application.Interfaces;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using CodeForCoders.Media.Infra.Messaging.Health;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +26,11 @@ public static class DependencyInjection
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<HeartbeatReceiptStore>();
+        services.AddOptions<VideoPreparationOptions>()
+            .Bind(configuration.GetSection(VideoPreparationOptions.SectionName))
+            .Validate(options => options.HasValidMasterKey() && !string.IsNullOrWhiteSpace(options.MasterKeyId), "Video key custody settings are invalid.")
+            .ValidateOnStart();
+        services.AddSingleton<IVideoKeyProtector, AesVideoKeyProtector>();
         services.AddScoped<CourseReferenceStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
@@ -38,10 +44,11 @@ public static class DependencyInjection
                 .Bind(configuration.GetSection(VideoPreparationOptions.SectionName))
                 .Validate(options => options.HasValidWorkerSettings(), "Media video preparation configuration is invalid.")
                 .ValidateOnStart();
-            services.AddSingleton<IVideoKeyProtector, AesVideoKeyProtector>();
+
             services.AddSingleton<IVideoTranscoder, FfmpegVideoTranscoder>();
             services.AddHostedService<CourseReferenceConsumerWorker>();
             services.AddHostedService<ExpiredVideoUploadWorker>();
+            services.AddHostedService<ExpiredPlaybackSessionWorker>();
             services.AddHostedService<VideoPreparationWorker>();
             services.AddHostedService<MediaVolumeMetricsWorker>();
             services.AddHttpClient<RabbitMqManagementClient>()

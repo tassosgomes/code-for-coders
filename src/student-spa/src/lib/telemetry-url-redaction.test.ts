@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createUrlRedactionSpanProcessor,
   redactSensitiveUrl,
+  registerTelemetrySecret,
 } from './telemetry-url-redaction';
 
 const resetLink = 'http://localhost:8082/student/redefinir-senha?token=reset-secret&step=1#top';
@@ -65,6 +66,35 @@ describe('telemetry URL redaction', () => {
       'http://localhost:8082/student/confirm-account?token=REDACTED',
     );
 
+    await provider.shutdown();
+  });
+});
+
+describe('Playback secret redaction', () => {
+  it.each([
+    'opaque=signature-secret&expires=1999999999',
+    'https://edge.test/segment.ts?opaque=signature-secret&expires=1999999999',
+    'signature-secret',
+    'opaque%3Dsignature-secret%26expires%3D1999999999',
+  ])('removes registered provider-independent secrets from %s', (value) => {
+    registerTelemetrySecret('opaque=signature-secret&expires=1999999999', Date.now() + 300_000);
+    expect(redactSensitiveUrl(value)).not.toContain('signature-secret');
+  });
+  it('removes student email from telemetry attributes', () => {
+    expect(redactSensitiveUrl('student@example.com')).toBe('REDACTED');
+  });
+  it('removes opaque credentials from exported span events links and arrays', async () => {
+    const query = 'opaque=export-signature-secret&expires=1999999999';
+    registerTelemetrySecret(query, Date.now() + 300_000);
+    const exporter = new InMemorySpanExporter();
+    const provider = new WebTracerProvider({ spanProcessors: [createUrlRedactionSpanProcessor(), new SimpleSpanProcessor(exporter)] });
+    const parent = provider.getTracer('playback').startSpan('parent');
+    const span = provider.getTracer('playback').startSpan('segment', {
+      attributes: { query, values: ['export-signature-secret', encodeURIComponent(query)] },
+      links: [{ context: parent.spanContext(), attributes: { query } }],
+    });
+    span.addEvent('request', { query }); span.end(); parent.end(); await provider.forceFlush();
+    expect(JSON.stringify(exporter.getFinishedSpans().map(({ attributes, events, links }) => ({ attributes, events, links })))).not.toContain('export-signature-secret');
     await provider.shutdown();
   });
 });

@@ -33,8 +33,11 @@ public sealed class MediaApiFactory : WebApplicationFactory<Program>, IAsyncLife
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("EndToEndTest");
+        builder.UseSetting("Playback:Delivery:SharedSecret", "development-test-secret");
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
         builder.UseSetting("Media:Role", "api");
+        builder.UseSetting("Preparation:MasterKey", Convert.ToBase64String(new byte[32]));
+        builder.UseSetting("Preparation:MasterKeyId", "media-e2e-test");
         builder.UseSetting("RabbitMq:Username", "code_for_coders");
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
         builder.ConfigureTestServices(services =>

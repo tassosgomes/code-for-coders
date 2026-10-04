@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 public sealed class CourtesyIdentityConfirmationHandler : HttpMessageHandler
@@ -15,6 +16,9 @@ public sealed class CourtesyIdentityConfirmationHandler : HttpMessageHandler
         Calls++; Assertion = request.Headers.Authorization?.Parameter;
         if (Timeout) await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
         if (Unavailable) throw new HttpRequestException("Controlled identity outage.");
-        return new(HttpStatusCode.OK) { Content = new StringContent(Response, Encoding.UTF8, "application/json") };
+        using var requestBody = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
+        var body = JsonNode.Parse(Response)!.AsObject();
+        body["studentId"] = requestBody.RootElement.GetProperty("studentId").GetGuid().ToString("D");
+        return new(HttpStatusCode.OK) { Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json") };
     }
 }

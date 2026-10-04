@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["3.0"]
 gate: 'dotnet test --project src/identity/tests/CodeForCoders.Identity.UnitTests/CodeForCoders.Identity.UnitTests.csproj -- --filter-class CodeForCoders.Identity.UnitTests.StudentTokenEmailClaimTests --minimum-expected-tests 4 && dotnet test --project src/identity/tests/CodeForCoders.Identity.IntegrationTests/CodeForCoders.Identity.IntegrationTests.csproj -- --filter-class CodeForCoders.Identity.IntegrationTests.StudentSessionEmailTests --minimum-expected-tests 2 && dotnet test --project src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CodeForCoders.Commerce.IntegrationTests.csproj -- --filter-class CodeForCoders.Commerce.IntegrationTests.AccessDecisionIssuersTests --minimum-expected-tests 5 && dotnet test --project src/media/tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj -- --filter-class CodeForCoders.Media.UnitTests.PlaylistRewriterTests --minimum-expected-tests 6 && dotnet test --project src/media/tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj -- --filter-class CodeForCoders.Media.UnitTests.DeliveryCredentialTests --minimum-expected-tests 6 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.PlaybackSessionOpenTests --minimum-expected-tests 9 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.PlaybackDeliveryTests --minimum-expected-tests 11 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.IntegrationTests/CodeForCoders.BffStudent.IntegrationTests.csproj -- --filter-class CodeForCoders.BffStudent.IntegrationTests.PlaybackProxyTests --minimum-expected-tests 9 && npm --prefix src/student-spa run test -- playback-open && npm --prefix src/student-spa run test -- telemetry-url-redaction'
@@ -116,8 +116,8 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0), com os mínimos do `gate`.
-- [ ] A aplicação de `media` inicia com os registros reais (política de aluno, cliente da decisão, adaptador de distribuição) e os adaptadores de armazenamento e de distribuição são exercitados **de verdade** (S3/MinIO e a credencial de cada adaptador), não por dublê da porta.
+- [x] Gate focalizado passa (exit 0), com os mínimos do `gate`.
+- [x] A aplicação de `media` inicia com os registros reais (política de aluno, cliente da decisão, adaptador de distribuição) e os adaptadores de armazenamento e de distribuição são exercitados **de verdade** (S3/MinIO e a credencial de cada adaptador), não por dublê da porta.
 - [ ] No navegador, contra o ambiente de desenvolvimento: aluno com cortesia assiste a uma aula de ponta a ponta com o e-mail sobre o vídeo, **inclusive em tela cheia**, trocando de posição; o endereço de um segmento copiado, sem a credencial e com a credencial vencida, é recusado pela borda. Pré-requisitos reproduzíveis: `scripts/remote-infra.sh provision` e `migrate`, `scripts/apps.sh start --remote` com `media-edge`, vídeo preparado de verdade (pipeline de CAP-006), duas aulas publicadas, cortesia concedida pelo backoffice.
 - [ ] A busca do e-mail de teste em log, spans, métricas, endereços, nomes de objeto e mensagens não encontra nada além de `watermark.text` e da claim para `media`; a `segmentAccess.query` de teste não aparece nos spans exportados.
-- [ ] Dois alunos recebem os mesmos objetos e a mesma chave do vídeo.
+- [x] Dois alunos recebem os mesmos objetos e a mesma chave do vídeo.

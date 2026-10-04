@@ -1,0 +1,3 @@
+namespace CodeForCoders.Media.Application.UseCases.PlaybackSessions.RecordPlaybackProgress;
+
+public interface IRecordPlaybackProgress : IUseCase<RecordPlaybackProgressInput, RecordPlaybackProgressOutput>;

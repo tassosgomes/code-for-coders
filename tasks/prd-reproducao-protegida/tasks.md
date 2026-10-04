@@ -72,14 +72,14 @@ de Identity e o emissor `learning` nascem em 3.0, o e-mail e o emissor `media` e
 
 ## Tasks
 
-- [ ] 1.0 Wireframes ASCII da tela da aula aprovados
-- [ ] 2.0 Figma da tela da aula aprovado
-- [ ] 3.0 O aluno com direito abre a aula e vê a lista de aulas; sem direito, vê o motivo
-- [ ] 4.0 O aluno assiste à aula, com marca d'água e sem link solto
-- [ ] 5.0 A reprodução continua sem interrupção e para quando o direito acaba
-- [ ] 6.0 O aluno troca de aula e ajusta a velocidade
-- [ ] 7.0 O avanço da reprodução chega como fato, sem e-mail e sem perder nada
-- [ ] 8.0 A equipe vê custo, erros e cache da entrega
+- [x] 1.0 Wireframes ASCII da tela da aula aprovados
+- [x] 2.0 Figma da tela da aula aprovado
+- [x] 3.0 O aluno com direito abre a aula e vê a lista de aulas; sem direito, vê o motivo
+- [x] 4.0 O aluno assiste à aula, com marca d'água e sem link solto
+- [x] 5.0 A reprodução continua sem interrupção e para quando o direito acaba
+- [x] 6.0 O aluno troca de aula e ajusta a velocidade
+- [x] 7.0 O avanço da reprodução chega como fato, sem e-mail e sem perder nada
+- [x] 8.0 A equipe vê custo, erros e cache da entrega
 
 ## Caminho crítico e lanes
 

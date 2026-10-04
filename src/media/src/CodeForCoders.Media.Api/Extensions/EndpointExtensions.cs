@@ -14,6 +14,7 @@ public static class EndpointExtensions
 
         app.MapPlatformEndpoints();
         app.MapVideoEndpoints();
+        app.MapPlaybackSessionEndpoints();
         app.MapVideoUploadEndpoints();
     }
 }

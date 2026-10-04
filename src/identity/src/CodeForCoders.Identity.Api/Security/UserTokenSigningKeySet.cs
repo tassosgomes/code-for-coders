@@ -4,7 +4,8 @@ using Microsoft.Extensions.Options;
 
 namespace CodeForCoders.Identity.Api.Security;
 
-public sealed class UserTokenSigningKeySet(IOptions<StaffSessionTokenOptions> options)
+public sealed class UserTokenSigningKeySet(IOptions<StaffSessionTokenOptions> options,
+    IOptions<StudentSessionTokenOptions> studentOptions)
 {
     public JsonWebKeySetResponse GetPublicKeys()
     {
@@ -25,6 +26,19 @@ public sealed class UserTokenSigningKeySet(IOptions<StaffSessionTokenOptions> op
             keys.Add(ToJsonWebKey(previousKey.Key, rsa.ExportParameters(includePrivateParameters: false)));
         }
 
+        var student = studentOptions.Value;
+        if (!string.IsNullOrWhiteSpace(student.SigningKeyId) && !string.IsNullOrWhiteSpace(student.SigningKeyBase64))
+        {
+            using var rsa = RSA.Create();
+            rsa.ImportPkcs8PrivateKey(Convert.FromBase64String(student.SigningKeyBase64), out _);
+            keys.Add(ToJsonWebKey(student.SigningKeyId, rsa.ExportParameters(false)));
+        }
+        foreach (var previousKey in student.PreviousSigningPublicKeys)
+        {
+            using var rsa = RSA.Create();
+            rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(previousKey.Value), out _);
+            keys.Add(ToJsonWebKey(previousKey.Key, rsa.ExportParameters(false)));
+        }
         return new JsonWebKeySetResponse(keys);
     }
 

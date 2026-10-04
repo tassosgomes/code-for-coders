@@ -130,4 +130,43 @@ public sealed class OutboxPublisherWorker(
             after = batch[^1].Id;
         }
     }
+
+    public async Task<int> ReplayProgressFactsAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(tenantId, Guid.Empty);
+        await publisher.EnsureReplayQueueAsync(options.Value.ProgressFactReplayQueue, cancellationToken);
+        var count = 0;
+        DateTimeOffset? afterOccurredOn = null;
+        Guid? afterId = null;
+        while (true)
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+            var query = dbContext.OutboxMessages.IgnoreQueryFilters().AsNoTracking()
+                .Where(message => message.TenantId == tenantId
+                    && message.RoutingKey == "midia.reproducao-avancou.v1"); // gitleaks:allow - routing keys RabbitMQ, nao segredos
+            if (afterOccurredOn.HasValue && afterId.HasValue)
+            {
+                var curOccurredOn = afterOccurredOn.Value;
+                var curId = afterId.Value;
+                query = query.Where(message => message.OccurredOn > curOccurredOn
+                    || (message.OccurredOn == curOccurredOn && message.Id.CompareTo(curId) > 0));
+            }
+            var batch = await query
+                .OrderBy(message => message.OccurredOn)
+                .ThenBy(message => message.Id)
+                .Take(options.Value.BatchSize)
+                .ToListAsync(cancellationToken);
+            if (batch.Count == 0) return count;
+            foreach (var message in batch)
+            {
+                // Republish the retained row verbatim; never reset the live outbox or mint a new event.
+                await publisher.PublishAsync(message, cancellationToken);
+                count++;
+            }
+            afterOccurredOn = batch[^1].OccurredOn;
+            afterId = batch[^1].Id;
+        }
+    }
 }
+

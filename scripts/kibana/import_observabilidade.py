@@ -51,6 +51,23 @@ INSTRUMENT_FIELDS = {
     "media.outbox.published": "metrics.media.outbox.published",
     "media.outbox.publish_failed": "metrics.media.outbox.publish_failed",
     "media.messaging.dlq.messages": "metrics.media.messaging.dlq.messages",
+    "media.playback.opened": "metrics.media.playback.opened",
+    "media.playback.rejected": "metrics.media.playback.rejected",
+    "media.decision.duration": "metrics.media.decision.duration",
+    "media.decision.failed": "metrics.media.decision.failed",
+    "media.students.active": "metrics.media.students.active",
+    "media.playback.time_to_start": "metrics.media.playback.time_to_start",
+    "media.distribution.cache_hit_rate": "metrics.media.distribution.cache_hit_rate",
+}
+
+# Instrumentos cuja fonte vem da infraestrutura/distribuição externa (CloudFront/CDN),
+# provisionada pela plataforma. Em ambiente de desenvolvimento local sem essa fonte externa,
+# estes instrumentos não são emitidos pelos serviços da aplicação e o alerta correspondente não dispara.
+PLATFORM_PROVIDED_INSTRUMENTS = {
+    "media.distribution.cache_hit_rate": (
+        "A taxa de acerto de cache vem da distribuição de borda (CloudFront/CDN), entregue pela "
+        "plataforma (ADR-0008, G22). Sem essa fonte em desenvolvimento, o alerta G22 não dispara."
+    ),
 }
 
 PANEL_TITLES = {
@@ -71,6 +88,13 @@ PANEL_TITLES = {
     "outbox-snapshot": "Outbox · Pendentes, idade e esgotados",
     "outbox-publishes": "Outbox · Publicações por evento na janela",
     "dlq-depth": "Outbox · Profundidade da DLQ",
+    "playback-outcomes": "Reprodução · Sessões por desfecho na janela",
+    "decision-unavailable": "Decisão de acesso · Indisponíveis na janela",
+    "playback-time-to-start": "Reprodução · Tempo até começar (s)",
+    "decision-latency": "Decisão de acesso · Latência da consulta (s)",
+    "students-active": "Alunos ativos (últimos 30 dias)",
+    "cost-per-active-student": "Custo por aluno ativo · Armazenamento",
+    "distribution-cache-hit-rate": "Distribuição · Taxa de acerto de cache",
 }
 PANEL_VISUALIZATIONS = {
     "videos-by-state": "lnsDatatable",
@@ -90,6 +114,13 @@ PANEL_VISUALIZATIONS = {
     "outbox-snapshot": "lnsDatatable",
     "outbox-publishes": "lnsDatatable",
     "dlq-depth": "lnsMetric",
+    "playback-outcomes": "lnsDatatable",
+    "decision-unavailable": "lnsDatatable",
+    "playback-time-to-start": "lnsDatatable",
+    "decision-latency": "lnsDatatable",
+    "students-active": "lnsMetric",
+    "cost-per-active-student": "lnsDatatable",
+    "distribution-cache-hit-rate": "lnsMetric",
 }
 STALENESS_PANEL_TITLE = PANEL_TITLES["snapshot-staleness"]
 REFRESH_INTERVAL_MS = 60_000
@@ -109,6 +140,8 @@ COUNTER_PANEL_FIELDS = {
     "preparation-outcomes": ("media.videos.completed", "media.videos.retried"),
     "preparation-failures": ("media.videos.failed",),
     "outbox-publishes": ("media.outbox.published", "media.outbox.publish_failed"),
+    "playback-outcomes": ("media.playback.opened", "media.playback.rejected"),
+    "decision-unavailable": ("media.decision.failed",),
 }
 COUNTER_PANEL_DIMENSION = {
     "upload-funnel": None,
@@ -116,6 +149,8 @@ COUNTER_PANEL_DIMENSION = {
     "preparation-outcomes": None,
     "preparation-failures": "reason",
     "outbox-publishes": "event",
+    "playback-outcomes": None,
+    "decision-unavailable": None,
 }
 CUMULATIVE_COUNTER_FIELDS = tuple(
     dict.fromkeys(field for fields in COUNTER_PANEL_FIELDS.values() for field in fields)
@@ -406,6 +441,23 @@ ALERT_RULES = {
             " AND metrics.media.messaging.dlq.messages IS NOT NULL"
             " | STATS dlq_messages = MAX(metrics.media.messaging.dlq.messages)"
             " | WHERE dlq_messages > 0"
+        ),
+    },
+    "midia-g22-taxa-acerto-cache": {
+        "code": "G22",
+        "name": "[Mídia] G22 · Taxa de acerto de cache",
+        "instruments": ("media.distribution.cache_hit_rate",),
+        "threshold_markers": ("cache_hit_rate < 0.85",),
+        "limitation": (
+            "A fonte da taxa de acerto é a distribuição (CloudFront/CDN). "
+            "Sem essa fonte em desenvolvimento, o alerta não dispara."
+        ),
+        "esql": (
+            "FROM metrics-generic*"
+            " | WHERE @timestamp >= NOW() - 15 minutes"
+            " AND metrics.media.distribution.cache_hit_rate IS NOT NULL"
+            " | STATS cache_hit_rate = AVG(metrics.media.distribution.cache_hit_rate)"
+            " | WHERE cache_hit_rate < 0.85"
         ),
     },
 }
@@ -846,6 +898,39 @@ def nested_strings(value) -> str:
     return ""
 
 
+def find_instrument_producers(repo_root: Path = REPOSITORY_ROOT) -> dict[str, list[str]]:
+    """Encontra os arquivos de código de produção (em src/) que produzem ou emitem cada instrumento."""
+    src_dir = repo_root / "src"
+    producers: dict[str, list[str]] = {instrument: [] for instrument in INSTRUMENT_FIELDS}
+    if not src_dir.is_dir():
+        return producers
+
+    ignore_dirs = {"bin", "obj", "node_modules", "tests", ".git"}
+    for root_str, dirnames, filenames in os.walk(src_dir):
+        dirnames[:] = [d for d in dirnames if d not in ignore_dirs]
+        path_root = Path(root_str)
+        if any(ignored in path_root.parts for ignored in ignore_dirs):
+            continue
+
+        for filename in filenames:
+            if not filename.endswith((".cs", ".ts", ".tsx", ".js")):
+                continue
+            if ".test." in filename or ".spec." in filename:
+                continue
+
+            filepath = path_root / filename
+            try:
+                content = filepath.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+
+            for instrument in INSTRUMENT_FIELDS:
+                if instrument in content:
+                    producers[instrument].append(str(filepath.relative_to(repo_root)))
+
+    return producers
+
+
 def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], dict]:
     saved_objects, summary = load_saved_objects(path)
     by_type_and_id = {}
@@ -905,6 +990,15 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     for instrument_name, field_name in INSTRUMENT_FIELDS.items():
         if instrument_name not in field_name or field_name not in query_text:
             raise ValueError(f"métrica do manifesto não referenciada: {instrument_name}")
+
+    producers = find_instrument_producers(REPOSITORY_ROOT)
+    for instrument_name in INSTRUMENT_FIELDS:
+        if instrument_name in PLATFORM_PROVIDED_INSTRUMENTS:
+            continue
+        if not producers.get(instrument_name):
+            raise ValueError(
+                f"métrica do manifesto sem produtor no código de produção: {instrument_name}"
+            )
 
     for key, title in PANEL_TITLES.items():
         panel = panels_by_id[stable_id(key)]
@@ -1037,6 +1131,54 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
         or "LATEST(" not in dlq_query
     ):
         raise ValueError("painel de outbox deve exibir o snapshot mais recente de media.messaging.dlq.messages")
+
+    playback_outcomes_query = panel_query(panels_by_id[stable_id("playback-outcomes")])
+    playback_instruments = ("media.playback.opened", "media.playback.rejected")
+    if any(INSTRUMENT_FIELDS[instrument] not in playback_outcomes_query for instrument in playback_instruments):
+        raise ValueError("painel de reprodução deve comparar aberturas e recusas na janela")
+    verify_counter_increment_shape(
+        playback_outcomes_query, "playback-outcomes", PANEL_TITLES["playback-outcomes"]
+    )
+
+    decision_unavailable_query = panel_query(panels_by_id[stable_id("decision-unavailable")])
+    if INSTRUMENT_FIELDS["media.decision.failed"] not in decision_unavailable_query:
+        raise ValueError("painel de decisão deve contabilizar falhas de consulta na janela")
+    verify_counter_increment_shape(
+        decision_unavailable_query, "decision-unavailable", PANEL_TITLES["decision-unavailable"]
+    )
+
+    playback_time_query = panel_query(panels_by_id[stable_id("playback-time-to-start")])
+    if (
+        INSTRUMENT_FIELDS["media.playback.time_to_start"] not in playback_time_query
+        or "PERCENTILE(" not in playback_time_query
+    ):
+        raise ValueError("painel de reprodução deve calcular percentis de media.playback.time_to_start")
+
+    decision_latency_query = panel_query(panels_by_id[stable_id("decision-latency")])
+    if (
+        INSTRUMENT_FIELDS["media.decision.duration"] not in decision_latency_query
+        or "PERCENTILE(" not in decision_latency_query
+    ):
+        raise ValueError("painel de decisão deve calcular percentis de media.decision.duration")
+
+    students_active_query = panel_query(panels_by_id[stable_id("students-active")])
+    if (
+        INSTRUMENT_FIELDS["media.students.active"] not in students_active_query
+        or "LATEST(" not in students_active_query
+    ):
+        raise ValueError("painel de alunos ativos deve exibir o snapshot mais recente de media.students.active")
+
+    cost_query = panel_query(panels_by_id[stable_id("cost-per-active-student")])
+    cost_instruments = ("media.storage.used", "media.students.active")
+    if any(INSTRUMENT_FIELDS[instrument] not in cost_query for instrument in cost_instruments):
+        raise ValueError("painel de custo por aluno deve comparar armazenamento usado e alunos ativos")
+
+    cache_hit_query = panel_query(panels_by_id[stable_id("distribution-cache-hit-rate")])
+    if (
+        INSTRUMENT_FIELDS["media.distribution.cache_hit_rate"] not in cache_hit_query
+        or "LATEST(" not in cache_hit_query
+    ):
+        raise ValueError("painel de taxa de acerto de cache deve exibir o snapshot mais recente de media.distribution.cache_hit_rate")
 
     status_panel = panels_by_id[stable_id("videos-by-state")]
     status_state = status_panel["embeddableConfig"]["attributes"]["state"]
@@ -1250,6 +1392,41 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             24,
             78,
         ),
+        (
+            "playback-outcomes",
+            counter_increment_query("playback-outcomes"),
+            [("opened", "number"), ("rejected", "number")],
+            0,
+            100,
+        ),
+        (
+            "decision-unavailable",
+            counter_increment_query("decision-unavailable"),
+            [("failed", "number")],
+            24,
+            100,
+        ),
+        (
+            "playback-time-to-start",
+            "FROM metrics-generic* | WHERE metrics.media.playback.time_to_start IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.playback.time_to_start, 50), p95_seconds = PERCENTILE(metrics.media.playback.time_to_start, 95)",
+            [("p50_seconds", "number"), ("p95_seconds", "number")],
+            0,
+            112,
+        ),
+        (
+            "decision-latency",
+            "FROM metrics-generic* | WHERE metrics.media.decision.duration IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.decision.duration, 50), p95_seconds = PERCENTILE(metrics.media.decision.duration, 95)",
+            [("p50_seconds", "number"), ("p95_seconds", "number")],
+            24,
+            112,
+        ),
+        (
+            "cost-per-active-student",
+            "FROM metrics-generic* | WHERE metrics.media.storage.used IS NOT NULL OR metrics.media.students.active IS NOT NULL | STATS storage_bytes = LATEST(metrics.media.storage.used), active_students = LATEST(metrics.media.students.active) | EVAL bytes_per_student = CASE(active_students > 0, storage_bytes * 1.0 / active_students, storage_bytes)",
+            [("storage_bytes", "number"), ("active_students", "number"), ("bytes_per_student", "number")],
+            24,
+            124,
+        ),
     ]
     # Counter panels owned by earlier slices (funnel, claims) are rewritten in
     # place with the canonical increment query, preserving their grid position.
@@ -1300,6 +1477,34 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
         data_view,
         0,
         90,
+        24,
+        10,
+    )
+
+    students_active_id = stable_id("students-active")
+    existing_panels[students_active_id] = make_lens_metric_panel(
+        students_active_id,
+        PANEL_TITLES["students-active"],
+        "FROM metrics-generic* | WHERE metrics.media.students.active IS NOT NULL | STATS active_students = LATEST(metrics.media.students.active)",
+        "active_students",
+        data_view_id,
+        data_view,
+        0,
+        124,
+        24,
+        12,
+    )
+
+    cache_hit_id = stable_id("distribution-cache-hit-rate")
+    existing_panels[cache_hit_id] = make_lens_metric_panel(
+        cache_hit_id,
+        PANEL_TITLES["distribution-cache-hit-rate"],
+        "FROM metrics-generic* | WHERE metrics.media.distribution.cache_hit_rate IS NOT NULL | STATS cache_hit_rate = LATEST(metrics.media.distribution.cache_hit_rate)",
+        "cache_hit_rate",
+        data_view_id,
+        data_view,
+        0,
+        136,
         24,
         10,
     )

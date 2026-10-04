@@ -3,4 +3,5 @@ namespace CodeForCoders.Identity.Application.UseCases.Accounts.ValidateStudentSe
 public sealed record ValidateStudentSessionOutput(
     Guid AccountId,
     string Name,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    string? Email = null);

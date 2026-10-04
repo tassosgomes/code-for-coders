@@ -10,7 +10,11 @@ public sealed class StudentSessionTokenOptions
 
     public string SigningKeyBase64 { get; set; } = string.Empty;
 
+    public Dictionary<string, string> PreviousSigningPublicKeys { get; set; } = [];
+
     public int LifetimeMinutes { get; set; } = 5;
+
+    public string[] EmailAudiences { get; set; } = ["media"];
 
     public Dictionary<string, string> AudienceScopes { get; set; } = [];
 }

@@ -1,5 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
+import { StudentLessonRoute } from '@/app/routes/student-lesson-route';
+
 import { paths } from '@/config/paths';
 
 import { DashboardRoute, requireStudentSession } from '@/app/routes/dashboard-route';
@@ -48,6 +50,7 @@ const routes: RouteObject[] = [
         errorElement: <RouteError layout="app" />,
         children: [
           { index: true, element: <DashboardRoute /> },
+          { path: paths.studentLesson.path.slice(1), element: <StudentLessonRoute /> },
           { path: paths.studentPasswordChange.path.slice(1), element: <StudentPasswordChangeRoute /> },
         ],
       },

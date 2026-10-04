@@ -2,6 +2,7 @@ using System.Diagnostics.Metrics;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using Microsoft.EntityFrameworkCore;
@@ -80,6 +81,7 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
                 "media.outbox.exhausted",
                 "media.outbox.pending",
                 "media.storage.used",
+                "media.students.active",
                 "media.uploads.pending",
                 "media.videos.count",
                 "media.videos.stuck",

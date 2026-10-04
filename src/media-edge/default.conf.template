@@ -1,0 +1,40 @@
+js_import signing from /etc/nginx/s3-signing.js;
+js_set $origin_date signing.date;
+js_set $origin_authorization signing.authorization;
+server {
+    listen 8080;
+    set $origin_host "${MEDIA_EDGE_S3_HOST}";
+    set $origin_access_key "${MEDIA_EDGE_S3_ACCESS_KEY}";
+    set $origin_secret_key "${MEDIA_EDGE_S3_SECRET_KEY}";
+    set $origin_region "${MEDIA_EDGE_S3_REGION}";
+    set $origin_path "/${MEDIA_EDGE_S3_BUCKET}/${MEDIA_EDGE_S3_PREFIX}$uri";
+    add_header Access-Control-Allow-Origin "${MEDIA_EDGE_SPA_ORIGIN}" always;
+    add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Range" always;
+    add_header Access-Control-Expose-Headers "Content-Length, Content-Range, Accept-Ranges" always;
+    location = /healthz { access_log off; return 200 'ok'; }
+    location ~ "^/(?<tenant>[a-f0-9-]+)/(?<video>[a-f0-9-]+)/hls/(480p|720p|1080p)/segment_[0-9]+\.ts$" {
+        if ($request_method = OPTIONS) { return 204; }
+        limit_except GET HEAD { deny all; }
+        set $video_prefix "/$tenant/$video/hls/";
+        secure_link $arg_st,$arg_e;
+        secure_link_md5 "$secure_link_expires$video_prefix ${MEDIA_EDGE_SHARED_SECRET}";
+        if ($secure_link = "") { return 403; }
+        if ($secure_link = "0") { return 410; }
+        resolver 127.0.0.11 ipv6=off valid=30s;
+        proxy_set_header Host $origin_host;
+        proxy_set_header Authorization $origin_authorization;
+        proxy_set_header x-amz-date $origin_date;
+        proxy_set_header x-amz-content-sha256 "UNSIGNED-PAYLOAD";
+        proxy_set_header Range $http_range;
+        proxy_set_header Cookie "";
+        proxy_set_header Referer "";
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Methods;
+        proxy_hide_header Access-Control-Allow-Headers;
+        proxy_hide_header Access-Control-Allow-Credentials;
+        proxy_hide_header Access-Control-Expose-Headers;
+        proxy_pass http://$origin_host$origin_path;
+    }
+    location / { return 403; }
+}
