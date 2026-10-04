@@ -72,6 +72,9 @@ public sealed class MediaInfrastructureTests(MediaIntegrationFixture fixture)
         {
             ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
             ["Media:Role"] = "api",
+            ["Preparation:MasterKey"] = Convert.ToBase64String(new byte[32]),
+            ["Preparation:MasterKeyId"] = "media-test",
+            ["Playback:Delivery:SharedSecret"] = "development-test-secret",
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",

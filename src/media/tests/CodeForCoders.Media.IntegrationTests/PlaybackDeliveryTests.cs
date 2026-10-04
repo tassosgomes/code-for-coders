@@ -1,4 +1,6 @@
 using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
@@ -25,6 +27,8 @@ public sealed class PlaybackDeliveryTests(VideoLibraryApiFactory factory)
         using var reader = test.Client(scenario == "other" ? Guid.CreateVersion7() : test.Student);
         using var response = await reader.GetAsync($"/internal/v1/playback-sessions/{(scenario == "unknown" ? Guid.CreateVersion7() : session):D}/{resource}", ct);
         Assert.Equal(expected, (int)response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+        Assert.Equal(expected == 410 ? "PLAYBACK_SESSION_EXPIRED" : "PLAYBACK_SESSION_NOT_FOUND", problem.GetProperty("code").GetString());
     }
 
     [Fact(DisplayName = nameof(TwoStudentsReadSameRealS3ObjectsAndDecryptedVideoKey))]

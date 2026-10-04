@@ -3,13 +3,13 @@
   "branch": "feature/reproducao-protegida",
   "original_base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
   "base_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
-  "target_ref": null,
-  "last_checkpoint": "8.0",
+  "target_ref": "e3d2ed468054f904c3cf6cc41e9bec56d191fa2e",
+  "last_checkpoint": "2ec1552e12288b5e2796e3978e7553107aa19baf",
   "phase": "checkpoint",
-  "active_task": "8.0",
-  "attempt": 2,
+  "active_task": "4.0",
+  "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 0,
   "specs": [
     "techspec.md",
@@ -19,14 +19,21 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.uWcNbDib",
+    "run_id": "run.UKGEAx7m",
     "role": "validator",
     "mode": "revalidation",
-    "task": "8.0",
+    "task": "4.0",
+    "attempt": "1/3",
     "outcome": "approved",
-    "note": "B1 resolvido; detalhes em 8_task_review.md"
+    "report": "tasks/prd-reproducao-protegida/4.0_task_review.md"
   },
-  "pending": null,
+  "pending": {
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "4.0",
+    "attempt": "1/3",
+    "run_id": null
+  },
   "history": [
     "prepare-prd-branch ok (run.ez4xfIPY): feature/reproducao-protegida a partir de e3d2ed4, delivery=pr",
     "1.0 implement run.26C852Kl: documento wireframes-aula.md completo, status neutro; TASK BLOCKED aguardando aprovacao do responsavel (tentativa nao consumida)",
@@ -53,6 +60,11 @@
     "6.0 checkpoint-task ok (run.Vhcspt7O): 6_task.md done, tasks.md [x] 6.0, V-04 PublishedLessonRepublication learning/student-spa+nav, review revalidation aprovada run.Lm6O8Vsr, gate 12 testes exit 0",
     "checkpoint 6.0 = commit b6a51ef26b28d3d6bc22acbea9b6cb7c5c3fbb21 (routing.default.json do responsavel fora do checkpoint); iniciando 7.0",
     "7.0 checkpoint-task ok (run.HSGjXnZW): 7_task.md done, tasks.md [x] 7.0, V-05 recordPlaybackProgress media/bff-student/student-spa, review revalidation aprovada run.MxOfvRL7, gate 34 testes exit 0",
-    "8.0 checkpoint-task ok (run.1f9Y1cPX): 8_task.md done, tasks.md [x] 8.0, V-06 observabilidade media/student-spa+kibana, review revalidation aprovada run.uWcNbDib, gate 28 testes + verify-only exit 0 (routing.default.json do responsavel fora do checkpoint)"
+    "8.0 checkpoint-task ok (run.1f9Y1cPX): 8_task.md done, tasks.md [x] 8.0, V-06 observabilidade media/student-spa+kibana, review revalidation aprovada run.uWcNbDib, gate 28 testes + verify-only exit 0 (routing.default.json do responsavel fora do checkpoint)",
+    "full 1/3 run.Ejq25cS3: FULL VALIDATION REPROVADA (2 bloqueantes B1/B2 atribuidos a task 4.0; 5 recomendacoes nao bloqueantes); matriz CI no prd_review.md; limites de ambiente (OTEL sandbox, remote-infra) classificados",
+    "pane wC:p7N preservado com rascunho nao enviado do responsavel (nao submetido; correcao segue ciclo reopen->fix->revalidation)",
+    "reopen-task 4.0 ok (run.ZqKVkZJQ): in_progress + checkbox aberto, motivo B1/B2 do prd_review.md",
+    "4.0 fix run.1g32xQda (agy explicito): implementation_complete gate passed; B1+B2 corrigidos; medias 229/229 e bff-student 205/205 exit 0; transporte reportou result_missing mas worker concluiu apos a janela (suite media em background), sem consumo de tentativa extra",
+    "4.0 revalidation run.UKGEAx7m (claude/sonnet-5-5): approved"
   ]
 }

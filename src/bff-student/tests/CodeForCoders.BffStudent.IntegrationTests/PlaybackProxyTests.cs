@@ -89,8 +89,8 @@ public sealed class PlaybackProxyTests
     [InlineData(422, "WATERMARK_UNAVAILABLE")]
     [InlineData(403, "ACCESS_DENIED")]
     [InlineData(503, "ACCESS_DECISION_UNAVAILABLE")]
-    [InlineData(404, "SESSION_NOT_FOUND")]
-    [InlineData(410, "SESSION_EXPIRED")]
+    [InlineData(404, "PLAYBACK_SESSION_NOT_FOUND")]
+    [InlineData(410, "PLAYBACK_SESSION_EXPIRED")]
     public async Task MediaErrorsKeepTheirPublicCodes(int status, string code)
     {
         var boundary = new Boundary { Status = status, Body = JsonSerializer.SerializeToUtf8Bytes(new { code }) };

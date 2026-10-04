@@ -12,17 +12,17 @@ public sealed class GetPlaybackResource(IPlaybackRepository repository, IPlaybac
     {
         var session = await repository.FindSessionAsync(input.SessionId, cancellationToken);
         if (session is null || session.StudentId != input.StudentId)
-            throw new MediaApiException(404, "SESSION_NOT_FOUND", "Sessão de reprodução não encontrada.");
+            throw new MediaApiException(404, "PLAYBACK_SESSION_NOT_FOUND", "Sessão de reprodução não encontrada.");
         if (session.ExpiresAt <= clock.GetUtcNow())
-            throw new MediaApiException(410, "SESSION_EXPIRED", "A sessão de reprodução terminou.");
+            throw new MediaApiException(410, "PLAYBACK_SESSION_EXPIRED", "A sessão de reprodução terminou.");
         if (input.Resource == "key")
         {
             var key = await repository.FindVideoKeyAsync(session.VideoId, cancellationToken)
-                ?? throw new MediaApiException(404, "SESSION_NOT_FOUND", "Sessão de reprodução não encontrada.");
+                ?? throw new MediaApiException(404, "PLAYBACK_SESSION_NOT_FOUND", "Sessão de reprodução não encontrada.");
             return new(keys.Unprotect(key.VideoId, key.MasterKeyId, key.Ciphertext), "application/octet-stream");
         }
         if (input.Resource == "variant" && (input.Quality is null || !PlaylistRewriter.IsQuality(input.Quality)))
-            throw new MediaApiException(404, "SESSION_NOT_FOUND", "Sessão de reprodução não encontrada.");
+            throw new MediaApiException(404, "PLAYBACK_SESSION_NOT_FOUND", "Sessão de reprodução não encontrada.");
         var prefix = $"{session.TenantId:D}/{session.VideoId:D}/hls/";
         var original = await playlists.ReadAsync(prefix + (input.Resource == "variant" ? $"{input.Quality}.m3u8" : "master.m3u8"), cancellationToken);
         var segmentBase = delivery.CreateSegmentAccess(prefix, session.ExpiresAt).BaseAddress;

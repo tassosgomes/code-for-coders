@@ -9,7 +9,6 @@ public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClien
         (400, "VALIDATION_ERROR"),
         (404, "LESSON_NOT_AVAILABLE"), (409, "MEDIA_NOT_READY"), (403, "ACCESS_DENIED"),
         (503, "ACCESS_DECISION_UNAVAILABLE"), (422, "WATERMARK_UNAVAILABLE"),
-        (404, "SESSION_NOT_FOUND"), (410, "SESSION_EXPIRED"),
         (404, "PLAYBACK_SESSION_NOT_FOUND"), (410, "PLAYBACK_SESSION_EXPIRED"),
     ];
 

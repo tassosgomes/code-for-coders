@@ -230,6 +230,9 @@ public sealed class VideoLibraryAuthorizationTests(VideoLibraryApiFactory factor
             builder.UseEnvironment("IntegrationTest");
             builder.UseSetting("ConnectionStrings:DefaultConnection", "Host=127.0.0.1;Port=1;Database=unavailable");
             builder.UseSetting("Media:Role", "api");
+            builder.UseSetting("Preparation:MasterKey", Convert.ToBase64String(new byte[32]));
+            builder.UseSetting("Preparation:MasterKeyId", "media-test");
+            builder.UseSetting("Playback:Delivery:SharedSecret", "development-test-secret");
             builder.UseSetting("RabbitMq:Username", "integration-test");
             builder.UseSetting("RabbitMq:Password", "integration-test");
             builder.UseSetting("MediaTokens:Issuer", "identity");
