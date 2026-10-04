@@ -5,10 +5,12 @@ using System.Text.Json;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
@@ -399,6 +401,28 @@ public sealed class PlaybackProgressTests(VideoLibraryApiFactory factory)
 
         var count = await db.OutboxMessages.IgnoreQueryFilters().CountAsync(m => m.TenantId == test.Tenant, Cancellation);
         Assert.Equal(1, count);
+    }
+
+    [Fact(DisplayName = nameof(DeliveredConfigurationPublishesProgressLiveInsteadOfRetainingIt))]
+    public async Task DeliveredConfigurationPublishesProgressLiveInsteadOfRetainingIt()
+    {
+        // No retention override here: the host loads the appsettings.json that media ships.
+        var test = new PlaybackTestContext(factory);
+        await test.SeedAsync(true, Cancellation);
+        using var client = test.Client();
+        var sessionId = await test.OpenAsync(client, Cancellation);
+
+        using var response = await SendProgress(client, sessionId, new { sequence = 1, positionSeconds = 10, reason = "heartbeat" });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = test.Host.Services.CreateScope();
+        Assert.DoesNotContain("midia.reproducao-avancou.v1",
+            scope.ServiceProvider.GetRequiredService<IOptions<OutboxOptions>>().Value.RetainedRoutingKeys, StringComparer.OrdinalIgnoreCase);
+        scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(test.Tenant);
+        var db = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        var outbox = await db.OutboxMessages.IgnoreQueryFilters()
+            .SingleAsync(m => m.Id == PlaybackSession.CreateDeterministicEventId(sessionId, 1), Cancellation);
+        Assert.Null(outbox.ProcessedOn); // Pending for the publisher, not born retained
     }
 
     private Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> ClockHost(AdjustableTimeProvider clock)

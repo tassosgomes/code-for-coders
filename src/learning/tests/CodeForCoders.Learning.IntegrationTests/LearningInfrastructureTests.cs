@@ -28,6 +28,8 @@ public sealed class LearningInfrastructureTests(LearningIntegrationFixture fixtu
             ["RabbitMq:Exchange"] = "learning.integration.events",
             ["RabbitMq:DeadLetterExchange"] = "learning.integration.events.dlx",
             ["RabbitMq:HeartbeatQueue"] = "learning.integration.platform-heartbeat",
+            ["RabbitMq:VideoFactsQueue"] = "learning.integration.video-availability",
+            ["RabbitMq:PlaybackProgressQueue"] = "learning.integration.playback-progress",
             ["Outbox:PollingIntervalSeconds"] = "5",
             ["Outbox:BatchSize"] = "10",
             ["Outbox:MaxAttempts"] = "3",

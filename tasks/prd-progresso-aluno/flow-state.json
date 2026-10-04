@@ -3,14 +3,14 @@
   "branch": "feature/progresso-aluno",
   "original_base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
   "base_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
-  "target_ref": null,
-  "last_checkpoint": "c226d55",
+  "target_ref": "3e0dc57894d280301799af616c4b8cb3690317f3",
+  "last_checkpoint": "3b8339a",
   "phase": "checkpoint",
-  "active_task": "6.0",
-  "attempt": 1,
+  "active_task": "3.0",
+  "attempt": 2,
   "max_attempts": 3,
-  "full_attempt": 0,
-  "transport_retries": 1,
+  "full_attempt": 1,
+  "transport_retries": 3,
   "specs": [
     "techspec.md",
     "contracts.md"
@@ -19,11 +19,13 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.Spn92XsK",
+    "run_id": "run.jySFBoUe",
     "role": "validator",
-    "mode": "focused",
-    "task": "6.0",
-    "outcome": "approved"
+    "kind": "agy",
+    "mode": "revalidation",
+    "task": "3.0",
+    "outcome": "approved",
+    "report": "tasks/prd-progresso-aluno/3.0_task_review.md"
   },
   "pending": null,
   "routing_overrides": {
@@ -33,6 +35,12 @@
       "model": "claude-sonnet-5-5",
       "effort": "medium",
       "source": "responsável, 2026-10-04"
+    },
+    "codex_unavailable": {
+      "since": "2026-10-04",
+      "replacement": "agy",
+      "source": "responsável",
+      "reason": "codex sem cota de uso"
     }
   },
   "history": [
@@ -55,7 +63,13 @@
     "4.0 focused aprovada (run.BNaabRZ6); checkpoint a277672",
     "5.0 implement (run.xohlK3df, codex): gate ok; SPA 150 testes; navegador pendente por ambiente",
     "5.0 focused aprovada (run.9z5UpRkG); checkpoint c226d55",
-    "6.0 implement (run.IZ5bEZMb, codex): gate 15 testes; SPA 157; navegador pendente por ambiente"
+    "6.0 implement (run.IZ5bEZMb, codex): gate 15 testes; SPA 157; navegador pendente por ambiente",
+    "6.0 focused aprovada (run.Spn92XsK); checkpoint f2cfbef; todas as tasks done",
+    "prepare-integration ok (run.Fln2vuIH): base inalterada 3e0dc57; full 1/3",
+    "full 1/3 rejeitada (run.th6TLndb): B1/B2 -> 3.0, B3 -> 5.0; rede code-for-coders_default recriada a pedido do responsável (sem NAT para o broker)",
+    "3.0 fix (run.8wIbc9Xf, claude escalonado): B1 suíte learning 214/214; B2 teste do appsettings real com mutante morto; apps.sh --remote ok após recriar a rede",
+    "3.0 revalidation run.6nWwePRy: TRANSPORT_FAILURE (codex sem cota); orquestrador registrou aprovação por engano e o integrador recusou o checkpoint (run.km7znWy2, revalidation_required) — corrigido, nenhum commit feito",
+    "responsável escolheu agy no lugar do codex enquanto a cota não renova"
   ],
   "notes_for_full": [
     "3.0 rec1: VideoAvailabilityFact.Parse lê durationSeconds sem validar; KeyNotFoundException não é capturada pelo consumidor (mensagem fora do contrato ficaria sem ack)",

@@ -45,6 +45,7 @@ public sealed class CatalogInitialLoadTestFixture(LearningIntegrationFixture inf
             ["RabbitMq:DeadLetterExchange"] = Exchange + ".dlx",
             ["RabbitMq:HeartbeatQueue"] = Exchange + ".heartbeat",
             ["RabbitMq:VideoFactsQueue"] = Exchange + ".video",
+            ["RabbitMq:PlaybackProgressQueue"] = Exchange + ".playback-progress",
             ["Outbox:PollingIntervalSeconds"] = "1",
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
         };
