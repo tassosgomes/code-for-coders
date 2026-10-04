@@ -10,6 +10,10 @@ public sealed class LearningDbContext(
     DbContextOptions<LearningDbContext> options,
     ITenantContext tenantContext) : DbContext(options)
 {
+    public DbSet<Progress.PlaybackAdvance> PlaybackAdvances => Set<Progress.PlaybackAdvance>();
+    public DbSet<Progress.LessonProgress> LessonProgress => Set<Progress.LessonProgress>();
+    public DbSet<Progress.VideoDuration> VideoDurations => Set<Progress.VideoDuration>();
+
     public DbSet<CourseVersion> CourseVersions => Set<CourseVersion>();
 
     public DbSet<Course> Courses => Set<Course>();
@@ -28,6 +32,9 @@ public sealed class LearningDbContext(
     {
         modelBuilder.HasDefaultSchema(LearningSchemas.Content);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LearningDbContext).Assembly);
+        modelBuilder.Entity<Progress.PlaybackAdvance>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<Progress.LessonProgress>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<Progress.VideoDuration>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<VideoProjection.ProjectedVideo>().HasQueryFilter(video => tenantContext.TenantId.HasValue && video.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<VideoProjection.VideoFactReceipt>().HasQueryFilter(receipt => tenantContext.TenantId.HasValue && receipt.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<CourseVersion>().HasQueryFilter(version => tenantContext.TenantId.HasValue && version.TenantId == tenantContext.TenantId.Value);

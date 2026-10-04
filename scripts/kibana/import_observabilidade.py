@@ -29,6 +29,9 @@ TIME_FIELD = "@timestamp"
 # The instrument names are the TechSpec contract. Elastic's OTel mapping stores
 # each numeric point at metrics.<instrument name> in metrics-generic*.
 INSTRUMENT_FIELDS = {
+    "learning.playback_progress.consumed": "metrics.learning.playback_progress.consumed",
+    "learning.playback_progress.dead_lettered": "metrics.learning.playback_progress.dead_lettered",
+    "learning.playback_progress.lag": "metrics.learning.playback_progress.lag",
     "media.videos.count": "metrics.media.videos.count",
     "media.videos.stuck": "metrics.media.videos.stuck",
     "media.storage.used": "metrics.media.storage.used",
@@ -71,6 +74,8 @@ PLATFORM_PROVIDED_INSTRUMENTS = {
 }
 
 PANEL_TITLES = {
+    "progress-consumption": "Progresso · Fatos consumidos e enviados à fila de erro",
+    "progress-lag": "Progresso · Atraso p50 e p95 (s)",
     "videos-by-state": "Fila · Profundidade por estado",
     "videos-stuck": "Fila · Vídeos presos",
     "storage-used": "Armazenamento usado (bytes)",
@@ -97,6 +102,8 @@ PANEL_TITLES = {
     "distribution-cache-hit-rate": "Distribuição · Taxa de acerto de cache",
 }
 PANEL_VISUALIZATIONS = {
+    "progress-consumption": "lnsDatatable",
+    "progress-lag": "lnsDatatable",
     "videos-by-state": "lnsDatatable",
     "videos-stuck": "lnsMetric",
     "storage-used": "lnsMetric",
@@ -131,6 +138,7 @@ REFRESH_INTERVAL_MS = 60_000
 # Lens para que o baseline permaneça acessível, mas usam os limites do seletor
 # do dashboard (?_tstart/?_tend) na própria query.
 COUNTER_PANEL_FIELDS = {
+    "progress-consumption": ("learning.playback_progress.consumed", "learning.playback_progress.dead_lettered"),
     "upload-funnel": (
         "media.upload.created",
         "media.upload.completed",
@@ -144,6 +152,7 @@ COUNTER_PANEL_FIELDS = {
     "decision-unavailable": ("media.decision.failed",),
 }
 COUNTER_PANEL_DIMENSION = {
+    "progress-consumption": None,
     "upload-funnel": None,
     "queue-claims": None,
     "preparation-outcomes": None,
@@ -345,6 +354,18 @@ ALERT_TIME_WINDOW_SIZE = 15
 ALERT_TIME_WINDOW_UNIT = "m"
 ALERT_TAG = "observabilidade-midia"
 ALERT_RULES = {
+    "learning-p1-atraso-progresso": {
+        "code": "P1",
+        "name": "[Aprendizagem] P1 · Atraso do progresso p95 acima de 60 s",
+        "instruments": ("learning.playback_progress.lag",),
+        "threshold_markers": ("p95_seconds > 60",),
+        "esql": (
+            "FROM metrics-generic* | WHERE @timestamp >= NOW() - 15 minutes"
+            " AND metrics.learning.playback_progress.lag IS NOT NULL"
+            " | STATS p95_seconds = PERCENTILE(metrics.learning.playback_progress.lag, 95)"
+            " | WHERE p95_seconds > 60"
+        ),
+    },
     "midia-a1-video-preso": {
         "code": "A1",
         "name": "[Mídia] A1 · Vídeo preso",
@@ -1132,6 +1153,15 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     ):
         raise ValueError("painel de outbox deve exibir o snapshot mais recente de media.messaging.dlq.messages")
 
+    progress_query = panel_query(panels_by_id[stable_id("progress-consumption")])
+    verify_counter_increment_shape(progress_query, "progress-consumption", PANEL_TITLES["progress-consumption"])
+    progress_lag_query = panel_query(panels_by_id[stable_id("progress-lag")])
+    if (
+        INSTRUMENT_FIELDS["learning.playback_progress.lag"] not in progress_lag_query
+        or "PERCENTILE(metrics.learning.playback_progress.lag, 95)" not in progress_lag_query
+    ):
+        raise ValueError("painel de atraso do progresso deve mostrar p95 do histograma")
+
     playback_outcomes_query = panel_query(panels_by_id[stable_id("playback-outcomes")])
     playback_instruments = ("media.playback.opened", "media.playback.rejected")
     if any(INSTRUMENT_FIELDS[instrument] not in playback_outcomes_query for instrument in playback_instruments):
@@ -1350,6 +1380,20 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
     data_view = queue_state["adHocDataViews"][data_view_id]
 
     panel_definitions = [
+        (
+            "progress-consumption",
+            counter_increment_query("progress-consumption"),
+            [("consumed", "number"), ("dead_lettered", "number")],
+            0,
+            136,
+        ),
+        (
+            "progress-lag",
+            "FROM metrics-generic* | WHERE metrics.learning.playback_progress.lag IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.learning.playback_progress.lag, 50), p95_seconds = PERCENTILE(metrics.learning.playback_progress.lag, 95)",
+            [("p50_seconds", "number"), ("p95_seconds", "number")],
+            24,
+            136,
+        ),
         (
             "preparation-stage-duration",
             "FROM metrics-generic* | WHERE metrics.media.videos.prepare_duration IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.videos.prepare_duration, 50), p95_seconds = PERCENTILE(metrics.media.videos.prepare_duration, 95) BY stage = attributes.stage | SORT stage ASC",

@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace CodeForCoders.Learning.Infra.Messaging;
 
-public sealed record VideoAvailabilityFact(Guid EventId, Guid TenantId, Guid VideoId, DateTimeOffset OccurredAt, bool IsReady)
+public sealed record VideoAvailabilityFact(Guid EventId, Guid TenantId, Guid VideoId, DateTimeOffset OccurredAt, bool IsReady, int? DurationSeconds = null)
 {
     public const string ReadyRoute = "midia.ativo-pronto.v1";
     public const string FailedRoute = "midia.preparacao-falhou.v1";
@@ -24,6 +24,7 @@ public sealed record VideoAvailabilityFact(Guid EventId, Guid TenantId, Guid Vid
         if (routingKey == FailedRoute && (!root.TryGetProperty("reason", out var reason)
             || reason.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(reason.GetString())))
             throw new JsonException("Invalid video failure reason.");
-        return new(eventId, tenantId, videoId, occurredAt.ToUniversalTime(), routingKey == ReadyRoute);
+        return new(eventId, tenantId, videoId, occurredAt.ToUniversalTime(), routingKey == ReadyRoute,
+            routingKey == ReadyRoute ? root.GetProperty("durationSeconds").GetInt32() : null);
     }
 }

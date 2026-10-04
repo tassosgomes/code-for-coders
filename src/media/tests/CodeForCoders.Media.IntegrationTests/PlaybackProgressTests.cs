@@ -402,11 +402,15 @@ public sealed class PlaybackProgressTests(VideoLibraryApiFactory factory)
     }
 
     private Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> ClockHost(AdjustableTimeProvider clock)
-        => factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        => factory.WithWebHostBuilder(builder =>
         {
-            services.RemoveAll<TimeProvider>();
-            services.AddSingleton<TimeProvider>(clock);
-        }));
+            builder.UseSetting("Outbox:RetainedRoutingKeys:0", "midia.reproducao-avancou.v1");
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton<TimeProvider>(clock);
+            });
+        });
 
     private static Task<HttpResponseMessage> SendProgress(HttpClient client, Guid sessionId, object payload)
         => client.PostAsJsonAsync($"/internal/v1/playback-sessions/{sessionId:D}/progress", payload, Cancellation);

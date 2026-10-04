@@ -73,7 +73,7 @@ cada rota (4.0 e 5.0).
 
 - [x] 1.0 Wireframes ASCII de "meus cursos" e da retomada na aula aprovados
 - [x] 2.0 Figma de "meus cursos" e da retomada na aula aprovado
-- [ ] 3.0 O avanço da reprodução vira progresso por aula, sem perder o que foi retido
+- [x] 3.0 O avanço da reprodução vira progresso por aula, sem perder o que foi retido
 - [ ] 4.0 Ao abrir a aula, o aluno retoma de onde parou e vê as concluídas e o percentual
 - [ ] 5.0 O aluno vê os cursos vigentes em "meus cursos" e continua de onde parou
 - [ ] 6.0 "Meus cursos" mostra o acesso encerrado e não mente quando algo falha

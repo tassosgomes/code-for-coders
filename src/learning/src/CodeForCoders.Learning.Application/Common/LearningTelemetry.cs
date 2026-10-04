@@ -11,6 +11,9 @@ public static class LearningTelemetry
 
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
+    public static readonly Counter<long> PlaybackProgressConsumed = Meter.CreateCounter<long>("learning.playback_progress.consumed", "{fact}");
+    public static readonly Counter<long> PlaybackProgressDeadLettered = Meter.CreateCounter<long>("learning.playback_progress.dead_lettered", "{fact}");
+    public static readonly Histogram<double> PlaybackProgressLag = Meter.CreateHistogram<double>("learning.playback_progress.lag", "s");
     public static readonly Counter<long> HeartbeatsRecorded = Meter.CreateCounter<long>(
         "learning.platform.heartbeat.recorded",
         unit: "{heartbeat}");

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: []
 gate: 'dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.PlaybackProgressConsumerTests --minimum-expected-tests 11 && dotnet test --project src/learning/tests/CodeForCoders.Learning.IntegrationTests/CodeForCoders.Learning.IntegrationTests.csproj -- --filter-class CodeForCoders.Learning.IntegrationTests.VideoDurationProjectionTests --minimum-expected-tests 4 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.ProgressFactPublicationTests --minimum-expected-tests 3 && python3 scripts/kibana/import_observabilidade.py --verify-only'
@@ -62,7 +62,7 @@ Cobertura agregada ≥ 70%, `dotnet publish` e imagens ficam para a validação 
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] A aplicação `learning` inicia com os registros reais (fila, consumidor, DbContext) no ambiente de teste.
-- [ ] No ambiente de desenvolvimento (`scripts/remote-infra.sh migrate`, `scripts/apps.sh start --remote`): com avanços retidos de `CAP-007`, implantar `learning`, desligar a retenção e rodar o reenvio → a contagem de avanços brutos é igual à de linhas do outbox de `media` daquela rota; repetir o reenvio não muda nada.
-- [ ] Um avanço com `event_id` repetido não altera o progresso; um avanço fora de ordem não faz a posição voltar.
+- [x] Gate focalizado passa (exit 0).
+- [x] A aplicação `learning` inicia com os registros reais (fila, consumidor, DbContext) no ambiente de teste.
+- [x] No ambiente de desenvolvimento (`scripts/remote-infra.sh migrate`, `scripts/apps.sh start --remote`): com avanços retidos de `CAP-007`, implantar `learning`, desligar a retenção e rodar o reenvio → a contagem de avanços brutos é igual à de linhas do outbox de `media` daquela rota; repetir o reenvio não muda nada.
+- [x] Um avanço com `event_id` repetido não altera o progresso; um avanço fora de ordem não faz a posição voltar.

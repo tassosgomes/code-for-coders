@@ -39,6 +39,9 @@ public sealed class RabbitMqOptions
     [Required]
     public string VideoFactsQueue { get; set; } = "learning.video-availability";
 
+    [Required]
+    public string PlaybackProgressQueue { get; set; } = "learning.playback-progress";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 
