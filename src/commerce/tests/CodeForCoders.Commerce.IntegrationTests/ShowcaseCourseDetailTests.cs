@@ -12,7 +12,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture)
+public sealed class ShowcaseCourseDetailTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static readonly DateTimeOffset Start = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
 
@@ -23,7 +23,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(PageCarriesTheCourseStructureWithoutVideoAndThePublishedOffersFromCheapestToDearest))]
     public async Task PageCarriesTheCourseStructureWithoutVideoAndThePublishedOffersFromCheapestToDearest()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Advanced course", "advanced", description: "Do primeiro programa a uma API.",
             prerequisiteText: "Git e C# básico.", modules: Modules(("Fundamentos", ["Tipos", "Controle de fluxo"]), ("API", ["Rotas"])),
             offers: [(89700, "lifetime", null), (39700, "months", 12), (100, "months", 1)]);
@@ -52,7 +52,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(OnlyPublishedOffersAppearAndAnEmptyDescriptionStaysEmpty))]
     public async Task OnlyPublishedOffersAppearAndAnEmptyDescriptionStaysEmpty()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", description: "",
             offers: [(30000, "lifetime", null)], draftPrices: [100], unpublishedPrices: [200]);
 
@@ -67,7 +67,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(RecommendedCourseInTheShowcaseIsFlaggedAndShownWithItsCurrentTitle))]
     public async Task RecommendedCourseInTheShowcaseIsFlaggedAndShownWithItsCurrentTitle()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var recommended = await SeedAsync(factory, tenant, "Fundamentos de C# (novo título)", "beginner", offers: [(29700, "lifetime", null)]);
         var courseId = await SeedAsync(factory, tenant, "Course", "advanced", offers: [(39700, "lifetime", null)],
             recommended: [(recommended, "Fundamentos de C# (título antigo)")]);
@@ -83,7 +83,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(RecommendedCourseOutsideTheShowcaseIsFlaggedFalseWithCurrentOrPublicationTitle))]
     public async Task RecommendedCourseOutsideTheShowcaseIsFlaggedFalseWithCurrentOrPublicationTitle()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var noOffer = await SeedAsync(factory, tenant, "Introdução a APIs (atual)", "beginner");
         var unknown = Guid.CreateVersion7();
         var courseId = await SeedAsync(factory, tenant, "Course", "advanced", offers: [(39700, "lifetime", null)],
@@ -100,7 +100,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     public async Task UnknownOutsideTheShowcaseAndAnotherSchoolsCourseGetIdenticalNotFoundResponses()
     {
         var other = Guid.CreateVersion7();
-        await using var factory = new ShowcaseApiFactory(fixture, tenant, other);
+        var factory = hosts.Showcase(tenant, other);
         var outside = await SeedAsync(factory, tenant, "No offer", "beginner");
         var noLevel = await SeedAsync(factory, tenant, "No level", null, offers: [(100, "lifetime", null)], offersWhileLevelPresent: true);
         var ofOther = await SeedAsync(factory, other, "Other school", "beginner", offers: [(100, "lifetime", null)]);
@@ -121,7 +121,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(ResponseNeverCarriesPersonVideoOrInternalFieldsAndIsNotCacheable))]
     public async Task ResponseNeverCarriesPersonVideoOrInternalFieldsAndIsNotCacheable()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", offers: [(100, "lifetime", null)], tagline: "Chamada comercial");
 
         using var response = await GetAsync(factory, tenant, courseId);
@@ -142,7 +142,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(RepublishedCourseWithANewLessonShowsItWithoutAnyActionFromFinance))]
     public async Task RepublishedCourseWithANewLessonShowsItWithoutAnyActionFromFinance()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", offers: [(100, "lifetime", null)],
             modules: Modules(("Módulo", ["Aula 1"])));
         Assert.Equal(1, LessonCount(await GetPageAsync(factory, tenant, courseId)));
@@ -158,7 +158,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(CourseThatLosesItsLevelOrItsLastPublishedOfferLeavesThePageAndComesBack))]
     public async Task CourseThatLosesItsLevelOrItsLastPublishedOfferLeavesThePageAndComesBack()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", offers: [(100, "lifetime", null)]);
         Assert.Equal(HttpStatusCode.OK, await StatusAsync(factory, tenant, courseId));
 
@@ -176,7 +176,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     public async Task AssertionOfAnotherSchoolOnlyReadsThatSchoolsPage()
     {
         var other = Guid.CreateVersion7();
-        await using var factory = new ShowcaseApiFactory(fixture, tenant, other);
+        var factory = hosts.Showcase(tenant, other);
         var courseOfA = await SeedAsync(factory, tenant, "School A", "beginner", offers: [(100, "lifetime", null)]);
 
         Assert.Equal(HttpStatusCode.OK, await StatusAsync(factory, tenant, courseOfA));
@@ -186,7 +186,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(MissingAssertionIsUnauthorizedAndWrongScopeIsForbidden))]
     public async Task MissingAssertionIsUnauthorizedAndWrongScopeIsForbidden()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", offers: [(100, "lifetime", null)]);
         using var anonymous = factory.CreateClient();
 
@@ -202,7 +202,7 @@ public sealed class ShowcaseCourseDetailTests(CommerceIntegrationFixture fixture
     [Fact(DisplayName = nameof(ReplayedAssertionIsUnauthorized))]
     public async Task ReplayedAssertionIsUnauthorized()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", offers: [(100, "lifetime", null)]);
         var assertion = factory.CreateAssertion(tenant);
 

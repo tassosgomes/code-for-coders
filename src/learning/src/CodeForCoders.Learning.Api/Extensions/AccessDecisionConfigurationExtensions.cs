@@ -25,6 +25,13 @@ public static class AccessDecisionConfigurationExtensions
             client.BaseAddress = new Uri(options.BaseAddress);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
         });
+        // The course list must always reflect current access; no cache or retries (ADR-0015).
+        services.AddHttpClient<IStudentCourseAccessClient, StudentCourseAccessClient>((provider, client) =>
+        {
+            var options = provider.GetRequiredService<IOptions<AccessDecisionOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseAddress);
+            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+        });
         return services;
     }
 

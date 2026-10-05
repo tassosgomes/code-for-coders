@@ -23,7 +23,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
+public sealed class OfferChangeTests(CommerceIntegrationFixture fixture, CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private readonly Guid _tenant = Guid.CreateVersion7();
     private readonly Guid _actor = Guid.CreateVersion7();
@@ -37,7 +37,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [InlineData(true, true)]
     public async Task ChangedPairsMatchContractsAndShareOneFact(bool price, bool period)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.Catalog; using var client = factory.CreateClient();
         var offer = await SeedAsync(factory);
         var body = new
         {
@@ -59,7 +59,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(NameOnlySavesWithoutOutboxMessages))]
     public async Task NameOnlySavesWithoutOutboxMessages()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
         using var response = await SendAsync(factory, client, offer.OfferId, new { name = "Renamed" }, "rename");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         await using var scope = Scope(factory); var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
@@ -71,7 +71,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(IdenticalValuesPreserveStoredOfferAndEmitNothing))]
     public async Task IdenticalValuesPreserveStoredOfferAndEmitNothing()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
         using var response = await SendAsync(factory, client, offer.OfferId,
             new { offer.Name, offer.PriceCents, offer.AccessPeriod }, "identical");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -86,7 +86,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [InlineData("unpublished")]
     public async Task DraftAndUnpublishedEditsAreSilent(string status)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); var offer = await SeedAsync(factory, status);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offer = await SeedAsync(factory, status);
         using var response = await SendAsync(factory, client, offer.OfferId,
             new { priceCents = 39700, accessPeriod = new { type = "lifetime" } }, "silent");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -99,7 +99,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(MonthDurationChangeProducesOnlyPeriodPair))]
     public async Task MonthDurationChangeProducesOnlyPeriodPair()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
         using var response = await SendAsync(factory, client, offer.OfferId, new { accessPeriod = new { type = "months", months = 6 } }, "duration");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         await using var scope = Scope(factory); var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
@@ -110,7 +110,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentReplayEmitsOnePairAndConflictingBodyIsRejected))]
     public async Task ConcurrentReplayEmitsOnePairAndConflictingBodyIsRejected()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
         var responses = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => SendAsync(factory, client, offer.OfferId, new { priceCents = 39700 }, "same")));
         var json = await responses[0].Content.ReadAsStringAsync(Cancellation);
         foreach (var response in responses)
@@ -141,7 +141,7 @@ public sealed class OfferChangeTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(LimitsTenantPermissionAndMissingKeyNeverChangePublishedOffer))]
     public async Task LimitsTenantPermissionAndMissingKeyNeverChangePublishedOffer()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offer = await SeedAsync(factory);
         foreach (var price in new[] { 0m, 10000000m, 49700.5m })
         {
             using var response = await SendAsync(factory, client, offer.OfferId, new { priceCents = price }, $"invalid-{price}");

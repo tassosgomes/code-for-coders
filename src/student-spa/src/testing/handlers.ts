@@ -1,10 +1,13 @@
 import { http, HttpResponse } from 'msw';
 
 import { env } from '@/config/env';
+import { courseProgressData } from '@/testing/course-progress-data';
 import { playbackData } from '@/testing/playback-data';
 import { studentLessonData } from '@/testing/student-lesson-data';
 
 export const handlers = [
+  http.get(`${env.API_URL}/api/v1/my-courses`, () => HttpResponse.json({ progressAvailable: true, active: [], ended: [] })),
+  http.get(`${env.API_URL}/api/v1/courses/:courseId/progress`, () => HttpResponse.json(courseProgressData)),
   http.post(env.API_URL + "/api/v1/playback-sessions/:sessionId/renewals", () => HttpResponse.json(playbackData())), 
   http.post(env.API_URL + "/api/v1/playback-sessions/:sessionId/progress", () => HttpResponse.json({ recorded: true })), 
   http.post(env.API_URL + "/api/v1/lessons/:lessonId/playback-sessions", () => HttpResponse.json(playbackData(), { status: 201 })),

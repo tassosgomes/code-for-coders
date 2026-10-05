@@ -3,6 +3,7 @@ import { redirect, type LoaderFunctionArgs } from 'react-router';
 
 import { paths } from '@/config/paths';
 import { activeStudentSessionMarker } from '@/config/session-markers';
+import { useMyCourses } from '@/features/student-dashboard/api/get-my-courses';
 import { DashboardScreen } from '@/features/student-dashboard/components/dashboard-screen';
 import {
   getCurrentStudentSession,
@@ -33,10 +34,15 @@ export const requireStudentSession = async (args?: LoaderFunctionArgs) => {
 
 export const DashboardRoute = () => {
   const studentSession = useStudentSession();
+  const courses = useMyCourses(studentSession.isSuccess);
 
   return (
     <DashboardScreen
       account={<StudentAccountCard name={studentSession.data?.name ?? ''} />}
+      courses={courses.isError ? undefined : courses.data}
+      isCoursesLoading={courses.isPending}
+      isCoursesError={courses.isError}
+      onRetryCourses={() => void courses.refetch()}
       isSessionLoading={studentSession.isPending}
       studentName={studentSession.data?.name}
     />

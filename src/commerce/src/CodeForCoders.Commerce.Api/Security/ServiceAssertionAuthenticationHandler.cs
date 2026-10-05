@@ -54,7 +54,7 @@ public sealed class ServiceAssertionAuthenticationHandler(
         return SecurityProblem.WriteAsync(
             Context,
             StatusCodes.Status401Unauthorized,
-            IsAccessDecision() ? "SERVICE_UNAUTHORIZED" : "SERVICE_ASSERTION_INVALID",
+            IsEntitlementRead() ? "SERVICE_UNAUTHORIZED" : "SERVICE_ASSERTION_INVALID",
             "Credencial de serviço inválida.");
     }
 
@@ -84,10 +84,10 @@ public sealed class ServiceAssertionAuthenticationHandler(
             { "operation", Context.GetEndpoint()?.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName ?? "unknown" },
             { "result", result },
         };
-        if (!IsAccessDecision()) CommerceTelemetry.ShowcaseReads.Add(1, tags);
+        if (!IsEntitlementRead()) CommerceTelemetry.ShowcaseReads.Add(1, tags);
     }
 
-    private bool IsAccessDecision()
+    private bool IsEntitlementRead()
         => Context.GetEndpoint()?.Metadata.GetOrderedMetadata<IAuthorizeData>()
-            .Any(policy => policy.Policy == AccessDecisionPolicies.Read) == true;
+            .Any(policy => policy.Policy == AccessDecisionPolicies.Read || policy.Policy == StudentCourseAccessPolicies.Read) == true;
 }

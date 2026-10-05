@@ -16,7 +16,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
+public sealed class OfferDraftTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
     private readonly Guid _tenant = Guid.CreateVersion7();
@@ -29,7 +29,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(TwoPromiseFormsPersistReadAndDeleteWithoutOutbox))]
     public async Task TwoPromiseFormsPersistReadAndDeleteWithoutOutbox()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var first = await CreateAsync(factory, client, Terms(), "months");
         var second = await CreateAsync(factory, client, new { name = "Acesso vitalício", priceCents = 89700, accessPeriod = new { type = "lifetime" } }, "lifetime");
         Assert.Equal("draft", first.Status); Assert.Null(first.PublishedAt); Assert.Equal("lifetime", second.AccessPeriod.Type);
@@ -62,7 +62,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [InlineData(9999999, 60)]
     public async Task InclusiveLimitsAreAccepted(int price, int months)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var offer = await CreateAsync(factory, client, Terms(price, months), "limit"); Assert.Equal(price, offer.PriceCents); Assert.Equal(months, offer.AccessPeriod.Months);
     }
 
@@ -76,7 +76,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [InlineData(49700.5, 12, "priceCents")]
     public async Task InvalidContentReturns422AndDoesNotPersist(decimal price, decimal months, string field)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var response = await SendAsync(factory, client, HttpMethod.Post, CreatePath, new { name = "Option", priceCents = price, accessPeriod = new { type = "months", months } }, "invalid");
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode); var error = await response.Content.ReadAsStringAsync(Cancellation);
         Assert.Contains("FIELD_INVALID", error); Assert.Contains(field, error);
@@ -87,7 +87,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentSameIntentCreatesOneOfferAndCanonicalReplayIsStable))]
     public async Task ConcurrentSameIntentCreatesOneOfferAndCanonicalReplayIsStable()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var responses = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => SendAsync(factory, client, HttpMethod.Post, CreatePath, Terms(), "same")));
         var body = await responses[0].Content.ReadAsStringAsync(Cancellation);
         foreach (var response in responses) { Assert.Equal(HttpStatusCode.Created, response.StatusCode); Assert.Equal(body, await response.Content.ReadAsStringAsync(Cancellation)); response.Dispose(); }
@@ -103,7 +103,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(PartialAndIdenticalUpdatesPreserveValuesAndRevision))]
     public async Task PartialAndIdenticalUpdatesPreserveValuesAndRevision()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var offer = await CreateAsync(factory, client, Terms(), "create");
         using var identical = await SendAsync(factory, client, HttpMethod.Patch, OfferPath(offer.OfferId), Terms(), "identical");
         Assert.Equal(HttpStatusCode.OK, identical.StatusCode); Assert.InRange((offer.UpdatedAt - (await identical.Content.ReadFromJsonAsync<CatalogOfferDetail>(Cancellation))!.UpdatedAt).Duration(), TimeSpan.Zero, TimeSpan.FromMicroseconds(1));
@@ -122,7 +122,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [InlineData("unpublished")]
     public async Task NonDraftDeletionReturnsStateConflict(string status)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var offer = await CreateAsync(factory, client, Terms(), "create");
         await using (var scope = Scope(factory)) await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().Database.ExecuteSqlAsync($"UPDATE catalog.offers SET status = {status} WHERE offer_id = {offer.OfferId}", Cancellation);
         using var response = await SendAsync(factory, client, HttpMethod.Delete, OfferPath(offer.OfferId), key: "delete"); Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
@@ -133,7 +133,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentCreationCannotExceedFiftyOffers))]
     public async Task ConcurrentCreationCannotExceedFiftyOffers()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         await using (var scope = Scope(factory))
         {
             var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>(); var course = await db.CatalogCourseViews.SingleAsync(Cancellation);
@@ -151,7 +151,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(TenantIsolationAndUnknownResourcesReturn404))]
     public async Task TenantIsolationAndUnknownResourcesReturn404()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var offer = await CreateAsync(factory, client, Terms(), "create");
         foreach (var method in new[] { HttpMethod.Patch, HttpMethod.Delete })
         {
@@ -166,7 +166,7 @@ public sealed class OfferDraftTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(MissingKeysInvalidShapeAndForbiddenWritesNeverPersist))]
     public async Task MissingKeysInvalidShapeAndForbiddenWritesNeverPersist()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var key = await SendAsync(factory, client, HttpMethod.Post, CreatePath, Terms()); Assert.Equal(HttpStatusCode.BadRequest, key.StatusCode);
         using var shape = await SendAsync(factory, client, HttpMethod.Post, CreatePath, new { name = "Option", priceCents = "49700" }, "shape"); Assert.Equal(HttpStatusCode.BadRequest, shape.StatusCode);
         using var permission = await SendAsync(factory, client, HttpMethod.Post, CreatePath, Terms(), "forbidden", permission: "autoria.editar"); Assert.Equal(HttpStatusCode.Forbidden, permission.StatusCode);

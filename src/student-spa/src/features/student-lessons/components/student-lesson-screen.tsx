@@ -18,8 +18,10 @@ import {
 } from '@/features/student-lessons/api/get-student-lesson';
 import {
   findKnownSiblingLessonId,
+  findKnownCourseId,
   recordKnownCourse,
 } from '@/features/student-lessons/utils/known-course-store';
+import { useLessonResumeProgress } from '@/features/student-lessons/hooks/use-lesson-resume-progress';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const problemSchema = z.object({
@@ -39,6 +41,8 @@ export const StudentLessonScreen = ({ lessonId, csrfToken }: StudentLessonScreen
   const location = useLocation();
   const navState = location.state as NavigationState;
   const query = useStudentLesson(lessonId);
+  const courseId = query.data?.course.courseId ?? navState?.course?.courseId ?? findKnownCourseId(lessonId);
+  const resume = useLessonResumeProgress(lessonId, courseId, query.data?.course.versionNumber);
 
   useEffect(() => {
     if (query.isSuccess) {
@@ -161,16 +165,17 @@ export const StudentLessonScreen = ({ lessonId, csrfToken }: StudentLessonScreen
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <section>
         <Button asChild variant="link" className="px-0">
-          <Link to={paths.studentShowcaseCourse.getHref(course.courseId)}>Voltar para o curso</Link>
+          <Link to={paths.home.getHref()}>Voltar para o Início</Link>
         </Button>
         <h1 className="typo-h3 mb-4">{lesson.title}</h1>
         {csrfToken ? (
-          <ProtectedVideoPlayer lessonId={lessonId} csrfToken={csrfToken} />
+          <ProtectedVideoPlayer lessonId={lessonId} csrfToken={csrfToken} initialPosition={resume.initialPosition}
+            waitForProgress onProgressRefresh={resume.refresh} />
         ) : (
           <div role="status">Carregando vídeo…</div>
         )}
       </section>
-      <StudentLessonNav course={course} currentLessonId={lesson.lessonId} />
+      <StudentLessonNav course={course} currentLessonId={lesson.lessonId} progress={resume.progress} />
     </div>
   );
 };

@@ -83,6 +83,19 @@ def parse_sources(valor):
     return itens
 
 
+def caminho_arquivado(caminho):
+    """'tasks/prd-x/prd.md' -> 'tasks/archive/prd-x/prd.md'.
+
+    Ao concluir, a pasta do PRD vai para tasks/archive/ e o frontmatter dos
+    arquivos arquivados continua declarando a origem que tinha na epoca. O
+    arquivo e historico e nao se edita; quem resolve o caminho e o gate.
+    """
+    prefixo = "tasks/"
+    if caminho.startswith(prefixo) and not caminho.startswith(prefixo + "archive/"):
+        return prefixo + "archive/" + caminho[len(prefixo):]
+    return None
+
+
 def chave_versao(versao):
     partes = re.findall(r"\d+", versao or "")
     return tuple(int(p) for p in partes) if partes else None
@@ -159,7 +172,7 @@ def checar_procedencia(artefatos, erros, avisos):
         tipos_declarados = set()
 
         for caminho, versao in parse_sources(fm.get("sources")):
-            fonte = artefatos.get(caminho)
+            fonte = artefatos.get(caminho) or artefatos.get(caminho_arquivado(caminho))
             if fonte is None:
                 erros.append(f"{rel}: declara origem '{caminho}', que nao e um artefato "
                              f"conhecido do flow-state.json")

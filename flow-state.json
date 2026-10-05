@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-10-03",
+  "updated": "2026-10-04",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/archive/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/archive/prd-ingestao-midia, fora do indice por colisao de chave unica. PRDs concluidos ficam arquivados em tasks/archive/ (so historico, nao sao fonte da verdade). O contrato vigente de cada fronteira vive em contracts/ (artifacts.contracts); novos PRDs continuam em tasks/prd-[slug]/ e promovem o recorte para contracts/ ao concluir.",
   "artifacts": {
     "vision": "vision.md",
@@ -94,15 +94,18 @@
     },
     {
       "id": "CAP-007",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
-        "prd": "tasks/prd-reproducao-protegida/prd.md",
-        "contract": "tasks/prd-reproducao-protegida/contracts.md",
-        "techspec": "tasks/prd-reproducao-protegida/techspec.md",
-        "tasks": "tasks/prd-reproducao-protegida/tasks.md"
+        "prd": "tasks/archive/prd-reproducao-protegida/prd.md",
+        "contract": "tasks/archive/prd-reproducao-protegida/contracts.md",
+        "techspec": "tasks/archive/prd-reproducao-protegida/techspec.md",
+        "tasks": "tasks/archive/prd-reproducao-protegida/tasks.md"
       },
-      "mvp_order": 7
+      "mvp_order": 7,
+      "delivered": [
+        "tasks/archive/prd-reproducao-protegida (1o PRD, done, PR #152; contratos promovidos em df1fbb3)"
+      ]
     },
     {
       "id": "CAP-008",
@@ -165,8 +168,13 @@
     },
     {
       "id": "CAP-017",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "tasks",
+      "artifacts": {
+        "prd": "tasks/prd-progresso-aluno/prd.md",
+        "contract": "tasks/prd-progresso-aluno/contracts.md",
+        "techspec": "tasks/prd-progresso-aluno/techspec.md",
+        "tasks": "tasks/prd-progresso-aluno/tasks.md"
+      },
       "mvp_order": 7
     },
     {
@@ -249,7 +257,14 @@
       "artifacts": {}
     }
   ],
-  "next_actions": [],
+  "next_actions": [
+    {
+      "id": "NA22",
+      "what": "CAP-017: confirmar o plano de tasks/prd-progresso-aluno/tasks.md e executar pelo orquestrador (1.0 design ASCII e 3.0 em paralelo)",
+      "skill": "tsg-flow-orchestrator",
+      "blocked_by": []
+    }
+  ],
   "open_decisions": [
     {
       "id": "OD2",
@@ -835,7 +850,7 @@
     },
     {
       "id": "OD66",
-      "ref": "tasks/prd-reproducao-protegida/prd.md DP-01 a DP-10",
+      "ref": "tasks/archive/prd-reproducao-protegida/prd.md DP-01 a DP-10",
       "what": "Decisões locais do PRD de CAP-007",
       "owner": "tasso",
       "decided_at": "2026-10-03",
@@ -851,7 +866,7 @@
     },
     {
       "id": "OD68",
-      "ref": "tasks/prd-reproducao-protegida/contracts.md C-01 a C-12",
+      "ref": "tasks/archive/prd-reproducao-protegida/contracts.md C-01 a C-12",
       "what": "Contratos de CAP-007",
       "owner": "tasso",
       "decided_at": "2026-10-03",
@@ -859,7 +874,7 @@
     },
     {
       "id": "OD69",
-      "ref": "tasks/prd-reproducao-protegida/techspec.draft.md D-10, ADR-0014",
+      "ref": "tasks/archive/prd-reproducao-protegida/techspec.draft.md D-10, ADR-0014",
       "what": "Entrega de segmentos em desenvolvimento",
       "owner": "tasso",
       "decided_at": "2026-10-03",
@@ -867,11 +882,51 @@
     },
     {
       "id": "OD70",
-      "ref": "tasks/prd-reproducao-protegida/techspec.md D-01 a D-13; ADR-0012 a ADR-0014",
+      "ref": "tasks/archive/prd-reproducao-protegida/techspec.md D-01 a D-13; ADR-0012 a ADR-0014",
       "what": "TechSpec de CAP-007",
       "owner": "tasso",
       "decided_at": "2026-10-03",
       "decision": "Aprovada: sessao em Postgres de media; cache de decisao em memoria (30 s, nunca indisponivel); timeouts 2 s na decisao e 5 s/3 s no BFF; playlists reescritas por requisicao; hls.js e controles proprios; fato de avanco retido no outbox ate haver consumidor, com reenvio; janela de avanco de 60 min; sem cache de JWT nem de asserção; ADR-0012 substitui a ADR-0011, ADR-0013 e ADR-0014 aceitas. Descartado: Valkey para sessao, retry no servidor, fila de retencao no broker, HLS nativo."
+    },
+    {
+      "id": "OD71",
+      "ref": "tasks/archive/prd-reproducao-protegida/prd.md QA-01; architecture-baseline.md BA16; capabilities.md CAP-029",
+      "what": "Quem materializa a medicao de sobreposicao de aulas distintas (BA16)",
+      "owner": "tasso",
+      "decided_at": "2026-10-04",
+      "decision": "CAP-029 (Fase 2, so a medicao agregada), que ja foi antecipada para isso e depende de CAP-017. O PRD de CAP-017 nao calcula sobreposicao: so garante que o avanco persistido preserve o que a medicao precisa (sessao, aluno, aula, instante). Descartado: CAP-017 calcular a sobreposicao no MVP, porque aumenta o PRD e mistura progresso de aprendizagem com sinal de compartilhamento de conta."
+    },
+    {
+      "id": "OD72",
+      "ref": "conversa 2026-10-04 · CAP-017",
+      "what": "Fatia do 1o PRD de CAP-017 (percurso e progresso do aluno)",
+      "owner": "tasso",
+      "decided_at": "2026-10-04",
+      "decision": "Consome o fato de avanco emitido por CAP-007 e persiste progresso por aula: aula concluida, percentual do curso, tela 'meus cursos' e retomar de onde parou (encerra a DP-06 de CAP-007). Sem domain doc: CAP-018 e CAP-019 sao Fase 3, fora do horizonte; regras no proprio PRD. Fica fora: curso concluido como marco formal, que volta na Fase 3 com CAP-018. Descartado: so progresso sem retomar (manteria a aula sempre do inicio por mais um PRD) e capacidade inteira (antecipa a entrada do certificado sem consumidora no MVP)."
+    },
+    {
+      "id": "OD73",
+      "ref": "tasks/prd-progresso-aluno/prd.md DP-01 a DP-09",
+      "what": "Decisoes locais do PRD de CAP-017",
+      "owner": "tasso",
+      "decided_at": "2026-10-04",
+      "decision": "Aprovado: aula concluida a 90% da duracao ou no avanco de fim (duracao vem de Midia); conclusao permanente; sem marcacao manual; percentual por contagem de aulas da versao vigente, arredondado para baixo; aula removida sai do percentual e a conclusao e preservada; retomar na ultima posicao (inicio se fim, < 10 s do fim ou alem da duracao); Continuar na aula mais recente ou na proxima nao concluida; meus cursos com secao de acesso encerrado e lista sempre vinda de Matricula; meus cursos como destino pos-login; reflexo do progresso em ate 1 min. Descartado: concluir so no fim, marcacao manual, percentual ponderado por tempo, curso encerrado sumir da lista, meus cursos derivado do progresso, descartar o avanco bruto."
+    },
+    {
+      "id": "OD74",
+      "ref": "tasks/prd-progresso-aluno/contracts.md C-01 a C-10",
+      "what": "Contratos de CAP-017",
+      "owner": "tasso",
+      "decided_at": "2026-10-04",
+      "decision": "Aprovado: GET /my-courses e GET /courses/{courseId}/progress no bff-student (aula 1.1.0), progresso separado da tela da aula; meus cursos composto por learning consultando listStudentCourseAccessInternal em commerce (1.3.0) com escopo novo course-access:read so para learning (revisar ADR-0012); progresso do curso exige decisao de acesso; sem paginacao, tetos 500/20000; reuso do escopo lessons:read; duracao guardada por learning a partir de midia.ativo-pronto (videos prontos antes desta entrega so concluem pelo fim); reenvio unico dos avancos retidos por media (1.3.0); encerrado com endedOn calculado por Matricula (fecha QA-03); retomada e Continuar calculados em learning. Descartado: progresso embutido em getStudentLesson, BFF compondo com JWT de aluno para commerce, reuso de access-decision:read, progresso sem decisao, leitura sincrona de duracao em media, duracao no fato de avanco."
+    },
+    {
+      "id": "OD75",
+      "ref": "tasks/prd-progresso-aluno/techspec.md; ADR-0015",
+      "what": "TechSpec de CAP-017",
+      "owner": "tasso",
+      "decided_at": "2026-10-04",
+      "decision": "Aprovada: modulo Progress de learning com avanco bruto (recibo e insumo de CAP-029), progresso por aula e duracao no schema progress; percentual, retomada e Continuar calculados na leitura sobre a versao vigente; duracao gravada fora do recibo de Content (reenvio de fatos de video preenche videos antigos); media so configuracao: fila learning.playback-progress antes, retencao desligada depois, reenvio existente uma vez; meus cursos no Inicio (/); player espera o progresso ate 2 s sem salto tardio; ADR-0015 aceita (um escopo por rota, course-access:read so para learning) e ADR-0012 superada. Descartado: percentual materializado, recibo separado do avanco bruto, fila propria para duracao, comecar e saltar depois."
     }
   ]
 }

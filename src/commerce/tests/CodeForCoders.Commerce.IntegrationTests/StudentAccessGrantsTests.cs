@@ -11,7 +11,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
+public sealed class StudentAccessGrantsTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
     private static string ListPath(CourtesyGrantFixture test) => $"/internal/v1/students/{test.Student}/access-grants";
@@ -34,7 +34,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [InlineData(1, "expired")]
     public async Task StatusIsCalculatedAtReadWithoutExpirationWorker(int secondsFromExpiry, string expected)
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         var grant = await GrantAsync(test, "expiry"); test.Clock.Now = grant.ExpiresAt!.Value.AddSeconds(secondsFromExpiry);
         var page = await ListAsync(test); Assert.Equal(expected, Assert.Single(page.Data).Status);
         await using var scope = test.Factory.Services.CreateAsyncScope(); scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(test.Tenant);
@@ -44,7 +44,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(LifetimeAndLatestCourseTitleAreReadFromCurrentProjection))]
     public async Task LifetimeAndLatestCourseTitleAreReadFromCurrentProjection()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); await GrantAsync(test, "lifetime", true);
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); await GrantAsync(test, "lifetime", true);
         test.Clock.Now = test.Clock.Now.AddYears(20);
         await using var scope = test.Factory.Services.CreateAsyncScope(); scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(test.Tenant);
         await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().EntitlementCourseViews.ExecuteUpdateAsync(update => update.SetProperty(course => course.Title, "Current course title"), Cancellation);
@@ -56,7 +56,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [InlineData(false)]
     public async Task ListResponseMatchesPublishedSchemaAndRejectsInvalidAccessPeriod(bool lifetime)
     {
-        await using var test = new CourtesyGrantFixture(infra);
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy);
         await test.SeedAsync();
         await GrantAsync(test, "schema", lifetime);
         using var response = await test.Client.GetAsync(ListPath(test), Cancellation);
@@ -80,7 +80,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(PaginationOrdersNewestFirstWithStableIdTieBreaker))]
     public async Task PaginationOrdersNewestFirstWithStableIdTieBreaker()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         var first = await GrantAsync(test, "first"); var second = await GrantAsync(test, "second");
         test.Clock.Now = test.Clock.Now.AddMinutes(1); var third = await GrantAsync(test, "third");
         var expected = new[] { first, second, third }.OrderByDescending(grant => grant.GrantedAt).ThenByDescending(grant => grant.GrantId).Select(grant => grant.GrantId).ToArray();
@@ -95,7 +95,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(AllOriginsAreListedAndNonCourtesyReasonIsNull))]
     public async Task AllOriginsAreListedAndNonCourtesyReasonIsNull()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         foreach (var origin in new[] { "courtesy", "purchase", "subscription", "cohort" })
         {
             var grant = await GrantAsync(test, origin);
@@ -113,7 +113,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [InlineData("other-school")]
     public async Task UnknownEmptyAndOtherSchoolStudentsReturnEmptyPage(string scenario)
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         if (scenario != "empty") await GrantAsync(test, "seed");
         if (scenario == "other-school") test.Authorize(Guid.CreateVersion7());
         var path = scenario == "unknown" ? $"/internal/v1/students/{Guid.CreateVersion7()}/access-grants" : ListPath(test);
@@ -124,7 +124,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(SecondCourtesyCoexistsOnSameEnrollmentWithoutChangingFirst))]
     public async Task SecondCourtesyCoexistsOnSameEnrollmentWithoutChangingFirst()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); var first = await GrantAsync(test, "first");
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); var first = await GrantAsync(test, "first");
         test.Clock.Now = test.Clock.Now.AddDays(1); var second = await GrantAsync(test, "second");
         var page = await ListAsync(test); Assert.Equal(2, page.Data.Count); Assert.Equal(second.GrantId, page.Data[0].GrantId);
         Assert.Equal(first, page.Data.Single(grant => grant.GrantId == first.GrantId)); Assert.All(page.Data, grant => Assert.Equal("active", grant.Status));
@@ -138,7 +138,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [InlineData("other-school")]
     public async Task CourtesyReadHidesUnknownOtherOriginAndOtherSchoolGrants(string scenario)
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); var grant = await GrantAsync(test, "seed");
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); var grant = await GrantAsync(test, "seed");
         if (scenario == "other-origin")
         {
             await using var scope = test.Factory.Services.CreateAsyncScope(); scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(test.Tenant);
@@ -151,7 +151,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(CourtesyReadReturnsOnlyOwnSchoolCourtesyWithCurrentStatus))]
     public async Task CourtesyReadReturnsOnlyOwnSchoolCourtesyWithCurrentStatus()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); var grant = await GrantAsync(test, "seed");
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); var grant = await GrantAsync(test, "seed");
         test.Clock.Now = grant.ExpiresAt!.Value;
         using var response = await test.Client.GetAsync($"/internal/v1/courtesy-grants/{grant.GrantId}", Cancellation);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode); var read = (await response.Content.ReadFromJsonAsync<StudentAccessGrant>(Cancellation))!;
@@ -160,7 +160,7 @@ public sealed class StudentAccessGrantsTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(SessionPermissionAndPaginationAreEnforced))]
     public async Task SessionPermissionAndPaginationAreEnforced()
     {
-        await using var test = new CourtesyGrantFixture(infra); test.Authorize(permission: "financeiro.ler");
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); test.Authorize(permission: "financeiro.ler");
         using var forbidden = await test.Client.GetAsync(ListPath(test), Cancellation); Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
         test.Client.DefaultRequestHeaders.Authorization = null;
         using var unauthorized = await test.Client.GetAsync(ListPath(test), Cancellation); Assert.Equal(HttpStatusCode.Unauthorized, unauthorized.StatusCode);

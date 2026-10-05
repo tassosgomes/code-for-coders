@@ -7,12 +7,12 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class AccessDecisionIssuersTests(CommerceIntegrationFixture infra)
+public sealed class AccessDecisionIssuersTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     [Fact(DisplayName = nameof(LearningAssertionCanReadDecision))]
     public async Task LearningAssertionCanReadDecision()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         ConfigureLearning(test);
         using var response = await test.RequestAsync(test.Assertion(issuer: "learning"));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -21,7 +21,7 @@ public sealed class AccessDecisionIssuersTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(LearningCannotUseStudentShowcaseScope))]
     public async Task LearningCannotUseStudentShowcaseScope()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         ConfigureLearning(test);
         using var response = await test.RequestAsync(test.Assertion(issuer: "learning", scope: "showcase:read"));
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -30,7 +30,7 @@ public sealed class AccessDecisionIssuersTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(UnregisteredIssuerCannotReadDecision))]
     public async Task UnregisteredIssuerCannotReadDecision()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         using var response = await test.RequestAsync(test.Assertion(issuer: "learning"));
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -38,7 +38,7 @@ public sealed class AccessDecisionIssuersTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(MediaAssertionCanReadDecision))]
     public async Task MediaAssertionCanReadDecision()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         ConfigureMedia(test);
         using var response = await test.RequestAsync(test.Assertion(issuer: "media"));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -47,7 +47,7 @@ public sealed class AccessDecisionIssuersTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(MediaCannotUseShowcaseScope))]
     public async Task MediaCannotUseShowcaseScope()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         ConfigureMedia(test);
         using var response = await test.RequestAsync(test.Assertion(issuer: "media", scope: "showcase:read"));
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);

@@ -12,11 +12,14 @@ public sealed class LessonCommerceBoundaryHandler : HttpMessageHandler
     public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
     public StudentAccessDecision Decision { get; set; } = new("allowed", new("lifetime", null), null, null, DateTimeOffset.UtcNow);
     public Guid? PermittedCourseId { get; set; }
+    public StudentCourseAccessList CourseAccess { get; set; } = new([]);
     public bool Timeout { get; set; }
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Calls++; Assertion = request.Headers.Authorization?.Parameter; Path = request.RequestUri!.PathAndQuery;
         if (Timeout) throw new TaskCanceledException("Controlled upstream timeout");
+        if (Path.StartsWith("/internal/v1/course-access", StringComparison.Ordinal))
+            return Task.FromResult(new HttpResponseMessage(Status) { Content = JsonContent.Create(CourseAccess) });
         return Task.FromResult(new HttpResponseMessage(Status)
         {
             Content = JsonContent.Create(PermittedCourseId.HasValue && !Path.Contains($"courseId={PermittedCourseId:D}", StringComparison.Ordinal)

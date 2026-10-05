@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CodeForCoders.Learning.Infra.Messaging;
 
-public sealed class VideoProjectionStore(LearningDbContext dbContext, TimeProvider timeProvider)
+public sealed class VideoProjectionStore(LearningDbContext dbContext, TimeProvider timeProvider, VideoDurationStore durations)
 {
     public async Task ApplyAsync(VideoAvailabilityFact fact, CancellationToken cancellationToken)
     {
@@ -24,6 +24,7 @@ public sealed class VideoProjectionStore(LearningDbContext dbContext, TimeProvid
                 WHERE (EXCLUDED.occurred_at, EXCLUDED.event_id) > (projected_videos.occurred_at, projected_videos.event_id)
                 """, cancellationToken);
         }
+        await durations.ApplyAsync(fact, cancellationToken);
         await transaction.CommitAsync(CancellationToken.None);
     }
 }

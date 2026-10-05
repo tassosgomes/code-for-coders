@@ -21,7 +21,7 @@ public sealed class BffSecurityOptions
     [Range(1, 1440)]
     public int SessionTtlMinutes { get; set; } = 60;
 
-    public Dictionary<string, string> RouteAudiences { get; set; } = new() { ["/api/v1/lessons"] = "learning", ["/api/v1/playback-sessions"] = "media" };
+    public Dictionary<string, string> RouteAudiences { get; set; } = new() { ["/api/v1/lessons"] = "learning", ["/api/v1/courses"] = "learning", ["/api/v1/my-courses"] = "learning", ["/api/v1/playback-sessions"] = "media" };
 
     public string ProxyAudience { get; set; } = string.Empty;
 

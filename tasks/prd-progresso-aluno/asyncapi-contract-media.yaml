@@ -1,0 +1,38 @@
+asyncapi: 3.0.0
+info:
+  title: Media — reenvio do avanço retido para o primeiro consumidor
+  version: 1.3.0
+  description: |
+    Recorte de `CAP-017`, `tasks/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04 (RF-01). Aplicação `media`. Evolui `contracts/media/asyncapi.yaml` 1.2.0 de forma aditiva com uma operação de envio única: o reenvio dos fatos `midia.reproducao-avancou.v1` retidos desde `CAP-007`, que o compromisso (5) de `publicarReproducaoAvancou` previu "quando `CAP-017` existir". A mensagem, o canal e as demais operações não mudam.
+id: urn:code-4-coders:media
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  reproducaoAvancou:
+    address: midia.reproducao-avancou.v1
+    description: Avanço bruto de uma sessão de reprodução (1.2.0, sem mudança). O endereço não carrega dado pessoal
+      (G23).
+    messages:
+      reproducaoAvancou:
+        $ref: ../../contracts/media/asyncapi.yaml#/components/messages/ReproducaoAvancou
+operations:
+  reenviarReproducaoAvancouRetido:
+    action: send
+    summary: Reenviar, uma vez, os avanços retidos antes de existir consumidor.
+    channel:
+      $ref: '#/channels/reproducaoAvancou'
+    messages:
+    - $ref: '#/channels/reproducaoAvancou/messages/reproducaoAvancou'
+    description: 'Executado na implantação desta entrega, **depois** que a fila de `learning` está ligada ao canal
+      (C-08). Reenvia todo fato retido no registro do outbox, com o **mesmo `eventId`**, o mesmo payload e o mesmo
+      `correlationId` da publicação original: um consumidor que já o viu não muda nada (G09). Sem ordem garantida,
+      como em `publicarReproducaoAvancou`. Pode ser repetido sem efeito. Fatos publicados depois de a fila existir
+      seguem o caminho normal de `publicarReproducaoAvancou` e não dependem desta operação. O que acontece com o
+      registro retido depois do reenvio (expurgo, prazo) é da TechSpec e de QA-01 do PRD.'

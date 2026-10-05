@@ -7,12 +7,12 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class CourtesyTermPreviewTests(CommerceIntegrationFixture infra)
+public sealed class CourtesyTermPreviewTests(CommerceIntegrationFixture infra, CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     [Fact(DisplayName = nameof(PreviewUsesSameTermAsGrantWithoutWriting))]
     public async Task PreviewUsesSameTermAsGrantWithoutWriting()
     {
-        await using var test = new CourtesyGrantFixture(infra);
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy);
         using var response = await test.Client.GetAsync("/internal/v1/courtesy-term-preview?months=6", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode); var preview = (await response.Content.ReadFromJsonAsync<CourtesyTermPreview>(TestContext.Current.CancellationToken))!;
         await test.AssertEmptyAsync(); await test.SeedAsync(); using var granted = await test.GrantAsync();
@@ -23,13 +23,13 @@ public sealed class CourtesyTermPreviewTests(CommerceIntegrationFixture infra)
     [InlineData(61)]
     public async Task InvalidMonthsReturn400AndNeverWrite(int months)
     {
-        await using var test = new CourtesyGrantFixture(infra); using var response = await test.Client.GetAsync($"/internal/v1/courtesy-term-preview?months={months}", TestContext.Current.CancellationToken);
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); using var response = await test.Client.GetAsync($"/internal/v1/courtesy-term-preview?months={months}", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode); await test.AssertEmptyAsync();
     }
     [Fact(DisplayName = nameof(PreviewRequiresGrantPermission))]
     public async Task PreviewRequiresGrantPermission()
     {
-        await using var test = new CourtesyGrantFixture(infra); test.Authorize(permission: "financeiro.ler");
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); test.Authorize(permission: "financeiro.ler");
         using var response = await test.Client.GetAsync("/internal/v1/courtesy-term-preview?months=6", TestContext.Current.CancellationToken); Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode); await test.AssertEmptyAsync();
     }
     [Fact(DisplayName = nameof(InvalidSchoolTimeZonePreventsRealHostStartup))]

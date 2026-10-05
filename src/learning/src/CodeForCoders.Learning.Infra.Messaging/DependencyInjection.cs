@@ -27,10 +27,13 @@ public static class DependencyInjection
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<HeartbeatReceiptStore>();
         services.AddScoped<VideoProjectionStore>();
+        services.AddScoped<VideoDurationStore>();
+        services.AddScoped<PlaybackProgressStore>();
         services.AddHostedService<RabbitMqTopologyInitializer>();
         services.AddHostedService<OutboxPublisherWorker>();
         services.AddHostedService<HeartbeatConsumerWorker>();
         services.AddHostedService<VideoProjectionConsumerWorker>();
+        services.AddHostedService<PlaybackProgressConsumerWorker>();
 
         return services;
     }

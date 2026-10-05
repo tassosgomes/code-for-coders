@@ -28,11 +28,23 @@ public sealed class ShowcaseApiFactory(CommerceIntegrationFixture fixture, param
             Options.Create(new CommerceServiceOptions { SigningKeyId = KeyId, Scope = scope, SigningKeyBase64 = Convert.ToBase64String(bffKey.ExportPkcs8PrivateKey()) }),
             TimeProvider.System).Create(ServiceAssertionDestination.Commerce, scope);
 
+    /// <summary>
+    /// Restricts the <c>bff-student</c> issuer to the schools of the running test. A host shared by several
+    /// tests trusts exactly the tenants each test declares, as a host built for that test did.
+    /// </summary>
+    public ShowcaseApiFactory AllowTenants(params Guid[] tenants)
+    {
+        var issuer = Services.GetRequiredService<IOptions<ServiceAssertionOptions>>().Value.Issuers["bff-student"];
+        issuer.AllowedTenantIds = [.. tenants.Select(tenant => tenant.ToString("D"))];
+        return this;
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
         builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("ShowcaseTest");
+        CommerceTestHost.UseShortTelemetryExportTimeout(builder);
         builder.UseSetting("ConnectionStrings:DefaultConnection", fixture.PostgreSql.GetConnectionString());
         builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
@@ -56,8 +68,7 @@ public sealed class ShowcaseApiFactory(CommerceIntegrationFixture fixture, param
                 services.Remove(hostedService);
             }
 
-            services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName)
-                .ConfigurePrimaryHttpMessageHandler(() => JwksHandler);
+            CommerceTestHost.UseHandler(services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName), JwksHandler);
         });
     }
 

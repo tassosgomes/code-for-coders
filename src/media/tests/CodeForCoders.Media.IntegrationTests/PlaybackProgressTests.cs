@@ -5,10 +5,12 @@ using System.Text.Json;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data;
+using CodeForCoders.Media.Infra.Data.Outbox;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace CodeForCoders.Media.IntegrationTests;
@@ -401,12 +403,38 @@ public sealed class PlaybackProgressTests(VideoLibraryApiFactory factory)
         Assert.Equal(1, count);
     }
 
+    [Fact(DisplayName = nameof(DeliveredConfigurationPublishesProgressLiveInsteadOfRetainingIt))]
+    public async Task DeliveredConfigurationPublishesProgressLiveInsteadOfRetainingIt()
+    {
+        // No retention override here: the host loads the appsettings.json that media ships.
+        var test = new PlaybackTestContext(factory);
+        await test.SeedAsync(true, Cancellation);
+        using var client = test.Client();
+        var sessionId = await test.OpenAsync(client, Cancellation);
+
+        using var response = await SendProgress(client, sessionId, new { sequence = 1, positionSeconds = 10, reason = "heartbeat" });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = test.Host.Services.CreateScope();
+        Assert.DoesNotContain("midia.reproducao-avancou.v1",
+            scope.ServiceProvider.GetRequiredService<IOptions<OutboxOptions>>().Value.RetainedRoutingKeys, StringComparer.OrdinalIgnoreCase);
+        scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(test.Tenant);
+        var db = scope.ServiceProvider.GetRequiredService<MediaDbContext>();
+        var outbox = await db.OutboxMessages.IgnoreQueryFilters()
+            .SingleAsync(m => m.Id == PlaybackSession.CreateDeterministicEventId(sessionId, 1), Cancellation);
+        Assert.Null(outbox.ProcessedOn); // Pending for the publisher, not born retained
+    }
+
     private Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program> ClockHost(AdjustableTimeProvider clock)
-        => factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        => factory.WithWebHostBuilder(builder =>
         {
-            services.RemoveAll<TimeProvider>();
-            services.AddSingleton<TimeProvider>(clock);
-        }));
+            builder.UseSetting("Outbox:RetainedRoutingKeys:0", "midia.reproducao-avancou.v1");
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton<TimeProvider>(clock);
+            });
+        });
 
     private static Task<HttpResponseMessage> SendProgress(HttpClient client, Guid sessionId, object payload)
         => client.PostAsJsonAsync($"/internal/v1/playback-sessions/{sessionId:D}/progress", payload, Cancellation);

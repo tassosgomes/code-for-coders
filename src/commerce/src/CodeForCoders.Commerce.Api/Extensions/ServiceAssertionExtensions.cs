@@ -35,6 +35,11 @@ public static class ServiceAssertionExtensions
                 .RequireAuthenticatedUser()
                 .RequireClaim(ServiceAssertionAuthenticationHandler.ScopeClaim, ServiceAssertionScopes.AccessDecisionRead)
                 .RequireAssertion(context => context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value != "bff-student")));
+        services.AddAuthorization(options => options.AddPolicy(StudentCourseAccessPolicies.Read,
+            policy => policy.AddAuthenticationSchemes(ServiceAssertionAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ServiceAssertionAuthenticationHandler.ScopeClaim, ServiceAssertionScopes.CourseAccessRead)
+                .RequireClaim(System.Security.Claims.ClaimTypes.NameIdentifier, "learning")));
         return services;
     }
 

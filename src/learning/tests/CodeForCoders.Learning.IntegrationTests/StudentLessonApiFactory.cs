@@ -24,6 +24,7 @@ public sealed class StudentLessonApiFactory : WebApplicationFactory<Program>, IA
     private readonly RSA assertionKey = RSA.Create(2048);
     private readonly PostgreSqlContainer database = new PostgreSqlBuilder("postgres:18").Build();
     public LessonCommerceBoundaryHandler Commerce { get; } = new();
+    public StudentCoursesReadFailureInterceptor CourseReads { get; } = new();
     public string DatabaseConnection => database.GetConnectionString();
     public RsaSecurityKey AssertionPublicKey => new(assertionKey);
     public async ValueTask InitializeAsync()
@@ -43,18 +44,20 @@ public sealed class StudentLessonApiFactory : WebApplicationFactory<Program>, IA
         builder.UseSetting("AccessDecision:SigningKeyBase64", Convert.ToBase64String(assertionKey.ExportPkcs8PrivateKey()));
         builder.ConfigureTestServices(services =>
         {
+            services.AddDbContext<LearningDbContext>(options => options.AddInterceptors(CourseReads));
             foreach (var item in services.Where(item => item.ServiceType == typeof(IHostedService)).ToList()) services.Remove(item);
             var p = key.ExportParameters(false);
             var jwks = JsonSerializer.Serialize(new { keys = new[] { new { kid = "student-test", kty = "RSA", use = "sig", alg = "RS256", n = Base64UrlEncoder.Encode(p.Modulus!), e = Base64UrlEncoder.Encode(p.Exponent!) } } });
             services.AddHttpClient(LearningJwksConfigurationManager.HttpClientName).ConfigurePrimaryHttpMessageHandler(() => new CourseJwksHandler(jwks));
+            services.AddHttpClient<IStudentCourseAccessClient, StudentCourseAccessClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
             services.AddHttpClient<IAccessDecisionClient, AccessDecisionClient>().ConfigurePrimaryHttpMessageHandler(() => Commerce);
         });
     }
-    public HttpClient Student(Guid tenant, Guid student, string scope = "lessons:read", bool actor = false)
+    public HttpClient Student(Guid tenant, Guid student, string scope = "lessons:read", bool actor = false, string audience = "learning")
     {
         var claims = new List<Claim> { new("tenantId", tenant.ToString()), new("sub", student.ToString()), new("sessionId", Guid.CreateVersion7().ToString()), new("scope", scope) };
         if (actor) claims.Add(new("permissions", "autoria.ler"));
-        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken("identity", "learning", claims, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(5), new SigningCredentials(new RsaSecurityKey(key) { KeyId = "student-test" }, SecurityAlgorithms.RsaSha256));
+        var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken("identity", audience, claims, DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(5), new SigningCredentials(new RsaSecurityKey(key) { KeyId = "student-test" }, SecurityAlgorithms.RsaSha256));
         var client = CreateClient(); client.DefaultRequestHeaders.Authorization = new("Bearer", new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token)); return client;
     }
     public new async ValueTask DisposeAsync() { await base.DisposeAsync(); key.Dispose(); assertionKey.Dispose(); await database.DisposeAsync(); }

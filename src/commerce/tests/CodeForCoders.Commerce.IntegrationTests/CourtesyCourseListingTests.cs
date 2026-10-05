@@ -19,14 +19,14 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixture)
+public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixture, CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact(DisplayName = nameof(RealHostStartsWithConsumerAndListsOnlyPublishedCourses))]
     public async Task RealHostStartsWithConsumerAndListsOnlyPublishedCourses()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         using var response = await SendAsync(factory, client, Guid.CreateVersion7());
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Empty((await response.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data);
@@ -39,7 +39,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [InlineData("suporte", "suporte.atender")]
     public async Task OtherRolesCannotListTheCatalog(string role, string permission)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         using var response = await SendAsync(factory, client, Guid.CreateVersion7(), permission, role);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Contains("PERMISSION_DENIED", await response.Content.ReadAsStringAsync(Cancellation));
@@ -48,7 +48,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(MissingAndInvalidTokensReturn401))]
     public async Task MissingAndInvalidTokensReturn401()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         using var missing = await client.GetAsync("/internal/v1/courtesy-courses", Cancellation);
         Assert.Equal(HttpStatusCode.Unauthorized, missing.StatusCode);
         client.DefaultRequestHeaders.Authorization = new("Bearer", "invalid");
@@ -59,7 +59,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(CatalogIsIsolatedByTenantAndOrdersAndPaginatesByTitle))]
     public async Task CatalogIsIsolatedByTenantAndOrdersAndPaginatesByTitle()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         var tenant = Guid.CreateVersion7(); var other = Guid.CreateVersion7();
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), title: "Zebra"));
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), rich: true, title: "Alpha"));
@@ -80,7 +80,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(BrokerDeliveryIgnoresEqualAndOlderVersionsIncludingRichReplay))]
     public async Task BrokerDeliveryIgnoresEqualAndOlderVersionsIncludingRichReplay()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         var tenant = Guid.CreateVersion7(); var courseId = Guid.CreateVersion7();
         await PublishAsync(factory, CatalogCourseFactFixture.Create(tenant, courseId, 2, title: "Fundamentos de C#"));
         await WaitForAsync(factory, tenant, courseId, course => course.VersionNumber == 2);
@@ -99,7 +99,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [InlineData("{\"courseId\":\"00000000-0000-7000-8000-000000000001\"}")]
     public async Task PermanentErrorsGoToDeadLetterWithoutRetry(string payload)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         await using var channel = await factory.Services.GetRequiredService<RabbitMqConnectionProvider>().CreateChannelAsync(Cancellation);
         await channel.QueuePurgeAsync("commerce.entitlement-course.dlq", Cancellation);
         var body = Encoding.UTF8.GetBytes(payload); await PublishAsync(factory, body);
@@ -117,7 +117,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(ConcurrentFirstInsertAndUpdatesKeepTheGreatestVersion))]
     public async Task ConcurrentFirstInsertAndUpdatesKeepTheGreatestVersion()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         var tenant = Guid.CreateVersion7(); var course = Guid.CreateVersion7();
         await Task.WhenAll(Enumerable.Range(1, 8).Select(version => ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, course, version, true))));
         var result = await WaitForAsync(factory, tenant, course, row => row.VersionNumber == 8);
@@ -127,7 +127,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(TitleSearchIsCaseAndAccentInsensitiveAndTreatsWildcardsLiterally))]
     public async Task TitleSearchIsCaseAndAccentInsensitiveAndTreatsWildcardsLiterally()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         var tenant = Guid.CreateVersion7();
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), title: "Fundaméntos de C#"));
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(tenant, Guid.CreateVersion7(), title: "Ação 100%_"));
@@ -142,7 +142,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(MissingTenantCannotReadAnySchool))]
     public async Task MissingTenantCannotReadAnySchool()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         var token = new JwtSecurityToken("identity", "commerce", [new Claim("permissions", "cortesia.conceder")],
             DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(2), new SigningCredentials(factory.JwksHandler.SigningKey, SecurityAlgorithms.RsaSha256));
         client.DefaultRequestHeaders.Authorization = new("Bearer", new JwtSecurityTokenHandler().WriteToken(token));
@@ -187,7 +187,7 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
     [Fact(DisplayName = nameof(InvalidPaginationReturnsContractProblem))]
     public async Task InvalidPaginationReturnsContractProblem()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
         using var response = await SendAsync(factory, client, Guid.CreateVersion7(), path: "?_page=0&_size=100");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("INVALID_REQUEST", await response.Content.ReadAsStringAsync(Cancellation));

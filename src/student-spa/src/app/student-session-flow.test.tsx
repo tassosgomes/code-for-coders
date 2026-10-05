@@ -84,7 +84,7 @@ describe('StudentSession flow', () => {
     await screen.findByRole('heading', { name: 'Olá, Ana Souza 👋' });
     window.dispatchEvent(new Event('app:session-expired'));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Sua sessão expirou');
+    expect(await screen.findByText('Sua sessão expirou. Entre de novo para continuar no seu espaço de aprendizagem.')).toBeInTheDocument();
   });
 
   it('creates a session, displays the student identity and ends the session', async () => {

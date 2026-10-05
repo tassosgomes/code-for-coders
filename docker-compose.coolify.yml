@@ -249,6 +249,7 @@ services:
       ServiceAssertions__Issuers__media__AllowedScopes__0: access-decision:read
       ServiceAssertions__Issuers__media__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ServiceAssertions__Issuers__learning__AllowedScopes__0: access-decision:read
+      ServiceAssertions__Issuers__learning__AllowedScopes__1: course-access:read
       ServiceAssertions__Issuers__learning__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
