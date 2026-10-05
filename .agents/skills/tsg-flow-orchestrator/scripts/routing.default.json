@@ -51,7 +51,7 @@
         "{effort}"
       ],
       "effort": null,
-      "extra_args": []
+      "extra_args": ["--dangerously-skip-permissions"]
     }
   },
   "routes": [
