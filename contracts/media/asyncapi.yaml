@@ -1,7 +1,7 @@
 asyncapi: 3.0.0
 info:
   title: Media — fatos da preparação de vídeo, Referências de Uso e avanço da reprodução
-  version: 1.2.0
+  version: 1.3.0
   description: |
     Contrato **vigente** consolidado. Fronteira: Aplicação `media`.
 
@@ -10,12 +10,15 @@ info:
     - `tasks/archive/prd-ingestao-midia/asyncapi-contract.yaml` 1.0.0
     - `tasks/archive/prd-autoria-curso/asyncapi-contract-media.yaml` 1.1.0
     - `tasks/archive/prd-reproducao-protegida/asyncapi-contract.yaml` 1.2.0
+    - `tasks/archive/prd-progresso-aluno/asyncapi-contract-media.yaml` 1.3.0
 
     **Notas de prd-ingestao-midia (1.0.0):** Recorte de CAP-006, PRD `tasks/archive/prd-ingestao-midia/prd.md` v1.0 de 2026-09-25 (RF-09). Aplicação produtora Media. Nenhuma mensagem recebida neste escopo; a Referência de Uso (OD30) chega com CAP-005/CAP-007. Consumidor previsto: Conteúdo e Currículo (`learning`), em CAP-005, para manter a própria visão de quais vídeos estão prontos para vínculo (C-12). Os fatos não carregam título, nome de arquivo, nome do autor, endereço de armazenamento nem chave.
 
     **Notas de prd-autoria-curso (1.1.0):** Recorte do primeiro PRD de CAP-005, `tasks/archive/prd-autoria-curso/prd.md` v1.0 de 2026-09-28 (RF-12, DP-04). Acrescenta à aplicação Media a recepção de `conteudo.versao-publicada`. Os fatos que Media produz (`tasks/archive/prd-ingestao-midia/asyncapi-contract.yaml` 1.0.0) não mudam e não são repetidos aqui. Nenhuma interface HTTP de Media muda; o uso das referências na abertura de sessão é de CAP-007 (RN-M10).
 
     **Notas de prd-reproducao-protegida (1.2.0):** Recorte de `CAP-007`, `tasks/archive/prd-reproducao-protegida/prd.md` v1.0 de 2026-10-03 (RF-07). Acrescenta à aplicação produtora Media o fato `midia.reproducao-avancou.v1` (canal `reproducaoAvancou`, mensagem `reproducaoAvancou`, operação `publicarReproducaoAvancou`). Os fatos da preparação e a recepção da Referência de Uso não mudam. Consumidor previsto: Aprendizagem e Progresso (`learning`), em `CAP-017`; nenhum consumidor nesta entrega.
+
+    **Notas de prd-progresso-aluno (1.3.0):** Recorte de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04 (RF-01). Aplicação `media`. Evolui `contracts/media/asyncapi.yaml` 1.2.0 de forma aditiva com uma operação de envio única: o reenvio dos fatos `midia.reproducao-avancou.v1` retidos desde `CAP-007`, que o compromisso (5) de `publicarReproducaoAvancou` previu "quando `CAP-017` existir". A mensagem, o canal e as demais operações não mudam.
 id: urn:code-4-coders:media
 defaultContentType: application/json
 servers:
@@ -104,10 +107,23 @@ operations:
       uma vez, consumidores deduplicam por `eventId` (G09). (3) Ordenação não garantida entre fatos; para a mesma
       sessão vale `sequence`. (4) Cadência: no máximo um fato a cada 30 s de reprodução contínua mais um a cada
       pausa, saída e fim, com intervalo mínimo de 10 s entre dois fatos da mesma sessão (RN-R05); nunca um fato
-      por segundo (RN-M14). (5) **Retenção sem consumidor:** como esta entrega não tem consumidor, nenhum fato pode
-      ser perdido por falta de fila ligada; os fatos ficam retidos no registro do outbox e podem ser reenviados
-      a uma fila nova quando `CAP-017` existir, sem efeito duplicado por (2). O mecanismo de retenção e reenvio
-      é da TechSpec. (6) Uma sessão que terminou por decisão negada não invalida fatos anteriores.'
+      por segundo (RN-M14). (5) **Retenção e reenvio:** até `CAP-017` os fatos ficaram retidos no registro do outbox;
+      desde 1.3.0 são publicados ao vivo para o consumidor (`learning`, fila `learning.playback-progress`), e os
+      retidos são reenviados uma vez por `reenviarReproducaoAvancouRetido`, sem efeito duplicado por (2). (6) Uma
+      sessão que terminou por decisão negada não invalida fatos anteriores.'
+  reenviarReproducaoAvancouRetido:
+    action: send
+    summary: Reenviar, uma vez, os avanços retidos antes de existir consumidor.
+    channel:
+      $ref: '#/channels/reproducaoAvancou'
+    messages:
+    - $ref: '#/channels/reproducaoAvancou/messages/reproducaoAvancou'
+    description: 'Executado na implantação desta entrega, **depois** que a fila de `learning` está ligada ao canal
+      (C-08). Reenvia todo fato retido no registro do outbox, com o **mesmo `eventId`**, o mesmo payload e o mesmo
+      `correlationId` da publicação original: um consumidor que já o viu não muda nada (G09). Sem ordem garantida,
+      como em `publicarReproducaoAvancou`. Pode ser repetido sem efeito. Fatos publicados depois de a fila existir
+      seguem o caminho normal de `publicarReproducaoAvancou` e não dependem desta operação. O que acontece com o
+      registro retido depois do reenvio (expurgo, prazo) é da TechSpec e de QA-01 do PRD.'
 components:
   messages:
     AtivoPronto:

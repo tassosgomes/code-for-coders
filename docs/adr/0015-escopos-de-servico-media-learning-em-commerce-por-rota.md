@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0015-escopos-de-servico-media-learning-em-commerce-por-rota.md`
 - Domínios/componentes afetados: `commerce` (módulo Matrícula e Direito de Acesso, como destino), `learning` (como chamador), configuração de emissores de `commerce` nos três ambientes de compose
-- Origem histórica: `tasks/prd-progresso-aluno`, `CAP-017` (decisões C-02 e C-03 do conjunto de contratos)
+- Origem histórica: `tasks/archive/prd-progresso-aluno`, `CAP-017` (decisões C-02 e C-03 do conjunto de contratos)
 - Substitui: [ADR-0012](0012-autenticacao-de-servico-media-learning-em-commerce-revisada.md). A ADR-0012 passa a `Superseded by ADR-0015` quando esta for aceita. Os itens 1, 3, 4, 5 e 6 são mantidos; o item 2 muda.
 
 ## Data
@@ -76,7 +76,7 @@ Essa rota responde outra pergunta e expõe mais do que a decisão: dado um aluno
 
 - `ServiceAssertionScopes` de `commerce` ganha `course-access:read`; a política da rota nova exige esse escopo.
 - Configuração: `ServiceAssertions__Issuers__learning__AllowedScopes__1: course-access:read` nos três arquivos de compose.
-- O contrato está em `tasks/prd-progresso-aluno/internal-api-contract-commerce.yaml` (`commerce` 1.3.0), a promover para `contracts/commerce/openapi-internal.yaml` ao fim do PRD.
+- O contrato vigente está em `contracts/commerce/openapi-internal.yaml` (`commerce` 1.3.0), promovido em 2026-10-04 a partir do recorte histórico `tasks/archive/prd-progresso-aluno/internal-api-contract-commerce.yaml`.
 
 ## Referências
 

@@ -168,14 +168,17 @@
     },
     {
       "id": "CAP-017",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
-        "prd": "tasks/prd-progresso-aluno/prd.md",
-        "contract": "tasks/prd-progresso-aluno/contracts.md",
-        "techspec": "tasks/prd-progresso-aluno/techspec.md",
-        "tasks": "tasks/prd-progresso-aluno/tasks.md"
+        "prd": "tasks/archive/prd-progresso-aluno/prd.md",
+        "contract": "tasks/archive/prd-progresso-aluno/contracts.md",
+        "techspec": "tasks/archive/prd-progresso-aluno/techspec.md",
+        "tasks": "tasks/archive/prd-progresso-aluno/tasks.md"
       },
-      "mvp_order": 7
+      "mvp_order": 7,
+      "delivered": [
+        "tasks/archive/prd-progresso-aluno (1o PRD, done, PR #153; contratos promovidos em contracts/ em 2026-10-04)"
+      ]
     },
     {
       "id": "CAP-018",
@@ -259,10 +262,12 @@
   ],
   "next_actions": [
     {
-      "id": "NA22",
-      "what": "CAP-017: confirmar o plano de tasks/prd-progresso-aluno/tasks.md e executar pelo orquestrador (1.0 design ASCII e 3.0 em paralelo)",
-      "skill": "tsg-flow-orchestrator",
-      "blocked_by": []
+      "id": "NA23",
+      "what": "Próxima da fila MVP: CAP-011 (compra avulsa, ordem 8), bloqueada por OD5 (contratar gateway de pagamento). Ao entrar CAP-009 (revogação): o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-next",
+      "blocked_by": [
+        "OD5"
+      ]
     }
   ],
   "open_decisions": [
@@ -290,6 +295,22 @@
       "ref": "tasks/archive/prd-notificacao-transacional/prd.md QP-01",
       "what": "Prazo de retencao da camada com dado pessoal do Registro de Entrega. A forma ja esta decidida (RN-N16: duas camadas, parametrizada); falta o numero. Recomendacao a validar: ordem de 90 dias, que e o que cobre a finalidade de diagnostico. Prazo de guarda longo (5-6 anos) vale para documento fiscal e contrato, nao para log de entrega de e-mail",
       "owner": "encarregado de dados + negocio",
+      "blocks": []
+    },
+    {
+      "id": "OD76",
+      "ref": "tasks/archive/prd-progresso-aluno/prd.md QA-01",
+      "what": "Prazo de guarda do avanço bruto (progress.playback_advances em learning) e das linhas do outbox de media depois do reenvio. Dado pessoal pseudonimizado, insumo de CAP-029; recomendação: mesmo critério de OD11, cobrindo a janela de observação de CAP-029",
+      "owner": "encarregado de dados + negócio",
+      "blocks": [
+        "CAP-029"
+      ]
+    },
+    {
+      "id": "OD77",
+      "ref": "tasks/archive/prd-progresso-aluno/prd.md QA-02",
+      "what": "Registrar no Domain Map a duração do vídeo como parte da junta Mídia → Aprendizagem (hoje só no PRD e na TechSpec de CAP-017); junto de QC-05",
+      "owner": "tasso",
       "blocks": []
     }
   ],
@@ -906,7 +927,7 @@
     },
     {
       "id": "OD73",
-      "ref": "tasks/prd-progresso-aluno/prd.md DP-01 a DP-09",
+      "ref": "tasks/archive/prd-progresso-aluno/prd.md DP-01 a DP-09",
       "what": "Decisoes locais do PRD de CAP-017",
       "owner": "tasso",
       "decided_at": "2026-10-04",
@@ -914,7 +935,7 @@
     },
     {
       "id": "OD74",
-      "ref": "tasks/prd-progresso-aluno/contracts.md C-01 a C-10",
+      "ref": "tasks/archive/prd-progresso-aluno/contracts.md C-01 a C-10",
       "what": "Contratos de CAP-017",
       "owner": "tasso",
       "decided_at": "2026-10-04",
@@ -922,7 +943,7 @@
     },
     {
       "id": "OD75",
-      "ref": "tasks/prd-progresso-aluno/techspec.md; ADR-0015",
+      "ref": "tasks/archive/prd-progresso-aluno/techspec.md; ADR-0015",
       "what": "TechSpec de CAP-017",
       "owner": "tasso",
       "decided_at": "2026-10-04",

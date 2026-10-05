@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Commerce — API interna
-  version: 1.2.0
+  version: 1.3.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `bff-admin` → `commerce` (área financeira, Catálogo, cortesias), `bff-student` → `commerce` (vitrine) e serviços → `commerce` (decisão de acesso).
 
@@ -10,12 +10,15 @@ info:
     - `tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml` 1.0.0
     - `tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml` 1.1.0
     - `tasks/archive/prd-concessao-acesso/internal-api-contract-commerce.yaml` 1.2.0
+    - `tasks/archive/prd-progresso-aluno/internal-api-contract-commerce.yaml` 1.3.0
 
     **Notas de prd-acesso-interno (1.0.0):** Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, V-07; ADR-0005). Consumidor único conhecido: `bff-admin`. `commerce` valida localmente o JWT de usuário emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `commerce`, validade) e decide pela permissão do claim `permissions`, sem consultar Identity e sem confiar no BFF. A área não tem dado até CAP-011.
 
     **Notas de prd-vitrine-oferta (1.1.0):** Recorte interno do primeiro PRD de CAP-003 (`tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30). Evolui `commerce` 1.0.0 (`tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml`, área financeira reservada, sem mudança) com o módulo Catálogo. Três consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de ficha e oferta, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF), e `resolveOfferReferencesInternal` para a consulta da trilha; (2) `bff-student`, com asserção de serviço própria (C-04) — vitrine, página e clique, derivadas de `api-contract-student.yaml` 1.0.0. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da asserção (G07).
 
     **Notas de prd-concessao-acesso (1.2.0):** Recorte interno do primeiro PRD de CAP-008 (`tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01). Evolui `commerce` 1.1.0 (`tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml`, Catálogo e vitrine, sem mudança) com o módulo Matrícula. Dois consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de cortesia, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF); (2) `media` e `learning`, com asserção de serviço própria (C-04) — a decisão "pode acessar agora?", fonte única do direito (RN-D01), sem consumidor nesta entrega. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da asserção (G07). A localização do aluno por e-mail não passa por aqui: é de Identity (`internal-api-contract-identity.yaml`).
+
+    **Notas de prd-progresso-aluno (1.3.0):** Recorte interno de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Evolui `contracts/commerce/openapi-internal.yaml` 1.2.0 de forma aditiva com uma leitura de Matrícula: os cursos sobre os quais um aluno tem ou teve concessão, com a situação **agregada por curso** (RN-D07). As demais operações não mudam; `decideAccessInternal` continua a fonte única de "pode acessar agora?" e não muda.
   contact:
     name: Time de Commerce
 servers:
@@ -970,6 +973,72 @@ paths:
           $ref: '#/components/responses/ServiceUnauthorized'
         '403':
           $ref: '#/components/responses/ScopeDenied'
+  /course-access:
+    get:
+      tags:
+      - Decisão de acesso
+      summary: Listar os cursos do aluno com acesso vigente ou encerrado
+      description: 'Um item por curso sobre o qual o aluno tem ou teve concessão, na escola da asserção (RN-D17).
+        `status` é **calculado na leitura**, como em `decideAccessInternal` (RN-D06, RN-D07): `active` se ao menos
+        uma concessão do curso está ativa e dentro da vigência agora; `ended` se houve concessão e nenhuma vale
+        agora. Para `active`, `since` é o momento da concessão ativa mais recente (ordenação de "meus cursos");
+        para `ended`, `endedOn` e `endedAt` são os da concessão que terminou por último. Aluno sem concessão, desconhecido
+        ou de outra escola devolve lista vazia, indistinta (G07). A resposta **não é réplica do direito**: `learning`
+        a usa para montar a tela e não a guarda além da requisição; abrir aula continua exigindo `decideAccessInternal`
+        (G11). Quem não obtiver resposta não mostra lista vazia (RF-04 do PRD).'
+      operationId: listStudentCourseAccessInternal
+      security:
+      - DomainServiceAssertion: []
+      parameters:
+      - name: studentId
+        in: query
+        required: true
+        description: Conta de aluno em Identidade e Acesso (`sub` do JWT de aluno validado pelo chamador).
+        schema:
+          type: string
+          format: uuid
+        examples:
+          aluno:
+            value: 6f1e2d3c-4b5a-4968-8777-a1b2c3d4e5f6
+      responses:
+        '200':
+          description: Os cursos do aluno, um item por curso.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: a situação muda com o tempo (RN-D06) e não é guardada pelo consumidor.'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentCourseAccessList'
+              examples:
+                vigenteEEncerrado:
+                  value:
+                    data:
+                    - courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      status: active
+                      since: '2026-10-01T12:00:00Z'
+                      endedOn: null
+                      endedAt: null
+                      endedReason: null
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      status: ended
+                      since: null
+                      endedOn: '2028-03-15'
+                      endedAt: '2028-03-16T03:00:00Z'
+                      endedReason: grant-ended
+                semConcessao:
+                  value:
+                    data: []
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/ServiceUnauthorized'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
 components:
   securitySchemes:
     StaffUserToken:
@@ -991,11 +1060,11 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Asserção de serviço assimétrica e curta assinada pela chave exclusiva do serviço chamador (`media`
-        ou `learning`), no mecanismo da ADR-0004 estendido por ADR-0009; a extensão a serviços de domínio como emissores
-        é registrada em ADR própria pela TechSpec (C-04). `commerce` valida assinatura, `kid`, emissor, audiência
-        `commerce`, escopo `access-decision:read`, `tenantId` permitido ao emissor, validade e `jti` contra replay.
-        Não representa aluno.
+      description: 'Asserção de serviço assimétrica e curta assinada pela chave exclusiva do serviço chamador (`media`
+        ou `learning`), no mecanismo da ADR-0004 estendido por ADR-0009 (emissores: ADR-0012, revisada pela ADR-0015).
+        `commerce` valida assinatura, `kid`, emissor, audiência `commerce`, o escopo da rota (ADR-0015: `access-decision:read`
+        em `decideAccessInternal`, para `media` e `learning`; `course-access:read` em `listStudentCourseAccessInternal`,
+        só para `learning`), `tenantId` permitido ao emissor, validade e `jti` contra replay. Não representa aluno.'
   schemas:
     Problem:
       type: object
@@ -1763,6 +1832,67 @@ components:
           type: string
           format: date-time
           description: Instante, em UTC, em que o acesso deixa de valer (exclusivo).
+    StudentCourseAccess:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - status
+      - since
+      - endedOn
+      - endedAt
+      - endedReason
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - ended
+          description: Agregado por curso (RN-D07). `suspended` virá com Cobrança (Fase 2); clientes devem tolerar
+            valor novo e tratá-lo como sem ação de abrir aula.
+        since:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Só em `active`. Momento da concessão ativa mais recente, em UTC.
+        endedOn:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Só em `ended`. Último dia de acesso, no fuso da escola (DP-03 de `CAP-008`), o mesmo `endsOn`
+            da concessão que terminou por último.
+        endedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Só em `ended`. Instante exclusivo do término, em UTC; ordena os encerrados.
+        endedReason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - grant-ended
+          - null
+          description: Só em `ended`. `grant-ended` nesta entrega; `revoked` virá com `CAP-009` (QA-03 do PRD).
+            Clientes devem tolerar valor novo.
+    StudentCourseAccessList:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          maxItems: 500
+          description: Sem paginação; teto fixo declarado (C-05). Sem ordem garantida; quem ordena é `learning`.
+          items:
+            $ref: '#/components/schemas/StudentCourseAccess'
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
