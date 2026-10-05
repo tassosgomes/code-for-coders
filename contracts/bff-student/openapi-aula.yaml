@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
   title: BFF do aluno — reprodução protegida
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `student-spa` → `bff-student`: tela da aula, reprodução protegida, entrega HLS e progresso.
 
     Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-reproducao-protegida/api-contract.yaml` 1.0.0
+    - `tasks/archive/prd-progresso-aluno/api-contract.yaml` 1.1.0
 
     **Notas de prd-reproducao-protegida (1.0.0):** Recorte de `CAP-007`, `tasks/archive/prd-reproducao-protegida/prd.md` v1.0 de 2026-10-03. Interface SPA → BFF do aluno para a tela da aula e a reprodução. O BFF não decide nada: valida a sessão em Identity (ADR-0003), obtém o JWT de aluno com a audiência do serviço dono (`learning` ou `media`) e repassa. Escritas exigem `X-CSRF-Token` (G18). As playlists e a chave passam pelo BFF (G15) e são repassadas sem alteração; os segmentos vêm direto da distribuição, por endereço sem credencial mais `segmentAccess.query` (C-01, C-06). Nenhuma operação de `CAP-001` a `CAP-008` muda.
+
+    **Notas de prd-progresso-aluno (1.1.0):** Recorte de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Evolui `contracts/bff-student/openapi-aula.yaml` 1.0.0 de forma aditiva com duas leituras: **meus cursos** (RF-04, RF-05) e o **progresso do curso** para a tela da aula (RF-05, RF-06). As sete operações de `CAP-007` não mudam.
   contact:
     name: Time de Entrega de Mídia e Proteção
 servers:
@@ -22,6 +25,10 @@ tags:
   description: Sessão de Reprodução, renovação e avanço (RF-02, RF-07)
 - name: Entrega
   description: Playlist, variantes e chave de cifra (RF-03, RF-05)
+- name: Meus cursos
+  description: Cursos do aluno com acesso vigente e encerrado, com o progresso de cada um (RF-04, RF-05)
+- name: Progresso
+  description: Progresso do aluno no curso, para retomar a aula e marcar as concluídas (RF-05, RF-06)
 paths:
   /lessons/{lessonId}:
     get:
@@ -462,6 +469,154 @@ paths:
           $ref: '#/components/responses/UpstreamUnavailable'
         '504':
           $ref: '#/components/responses/UpstreamTimeout'
+  /my-courses:
+    get:
+      tags:
+      - Meus cursos
+      summary: Listar meus cursos
+      description: 'Os cursos do aluno corrente em duas listas (RF-04): `active` (Matrícula responde que há acesso
+        agora) e `ended` (houve concessão e nenhuma vale agora). A lista vem **sempre de Matrícula**; progresso
+        nunca põe curso na lista (RN-P08). Um curso aparece uma vez (RN-D07). `active` vem ordenada pelo avanço
+        mais recente; os nunca começados por último, do acesso mais recente para o mais antigo. `ended` vem do término
+        mais recente para o mais antigo. Se Matrícula não responde, 503 `COURSE_ACCESS_UNAVAILABLE` e **nunca**
+        lista vazia (RF-04). Se só o progresso não está disponível, 200 com `progressAvailable: false`, `progress:
+        null` e `continueLessonId` na primeira aula do curso.'
+      operationId: listMyCourses
+      security:
+      - StudentSessionCookie: []
+      responses:
+        '200':
+          description: Os cursos do aluno.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyCourses'
+              examples:
+                comProgresso:
+                  value:
+                    progressAvailable: true
+                    active:
+                    - courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      title: APIs com .NET do zero ao deploy
+                      started: true
+                      lastActivityAt: '2026-10-05T14:02:12Z'
+                      continueLessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                      progress:
+                        completedLessons: 3
+                        totalLessons: 8
+                        percent: 37
+                    - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                      title: Fundamentos de C#
+                      started: false
+                      lastActivityAt: null
+                      continueLessonId: 5c2e8f4d-7b60-4a13-9a13-3f6a1c527d84
+                      progress:
+                        completedLessons: 0
+                        totalLessons: 12
+                        percent: 0
+                    ended:
+                    - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                      title: Testes automatizados em .NET
+                      endedOn: '2028-03-15'
+                      endedReason: grant-ended
+                      progress:
+                        completedLessons: 5
+                        totalLessons: 10
+                        percent: 50
+                semCursos:
+                  value:
+                    progressAvailable: true
+                    active: []
+                    ended: []
+                progressoIndisponivel:
+                  value:
+                    progressAvailable: false
+                    active:
+                    - courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      title: APIs com .NET do zero ao deploy
+                      started: null
+                      lastActivityAt: null
+                      continueLessonId: 5c2e8f4d-7b60-4a13-9a13-3f6a1c527d84
+                      progress: null
+                    ended: []
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '503':
+          $ref: '#/components/responses/CourseAccessUnavailable'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /courses/{courseId}/progress:
+    get:
+      tags:
+      - Progresso
+      summary: Obter meu progresso no curso
+      description: 'O progresso do aluno corrente no curso, sobre a **versão vigente** (RF-03, RF-05, RF-06): contagem
+        e percentual, e, por aula com algum registro, se está concluída e de onde retomar. Aula sem registro não
+        aparece em `lessons`: não está concluída e começa do início. A tela da aula combina esta resposta com a
+        estrutura de `getStudentLesson`. Exige o mesmo direito que a tela da aula (C-04): `learning` consulta a
+        decisão de acesso antes de responder (cache de até 30 s, falha fechada), e nada do curso é devolvido a quem
+        não pode acessá-lo. Uma falha aqui **não** impede a reprodução: a aula começa do início e a lista fica sem
+        marcas.'
+      operationId: getCourseProgress
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: O progresso no curso.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseProgress'
+              examples:
+                emAndamento:
+                  value:
+                    courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                    versionNumber: 3
+                    completedLessons: 3
+                    totalLessons: 8
+                    percent: 37
+                    lessons:
+                    - lessonId: 5c2e8f4d-7b60-4a13-9a13-3f6a1c527d84
+                      completed: true
+                      lastPositionSeconds: 598
+                      resumeAtSeconds: 0
+                    - lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                      completed: false
+                      lastPositionSeconds: 252
+                      resumeAtSeconds: 252
+                naoComecado:
+                  value:
+                    courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
+                    versionNumber: 1
+                    completedLessons: 0
+                    totalLessons: 12
+                    percent: 0
+                    lessons: []
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/CourseNotAvailable'
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+      x-frontend-notes: Chamar ao abrir a aula, em paralelo com `getStudentLesson`, e de novo ao pausar, ao chegar
+        ao fim e a cada 60 s de reprodução, para a marca de concluída aparecer sem recarregar (RF-06). `resumeAtSeconds`
+        da aula aberta é a posição inicial do player; acima de 0, mostrar "Retomando de m:ss" com Começar do início.
 components:
   securitySchemes:
     StudentSessionCookie:
@@ -510,6 +665,17 @@ components:
       description: Prova CSRF vinculada à sessão do aluno (`csrfToken` de `getCurrentStudentSession`).
       schema:
         type: string
+    CourseId:
+      name: courseId
+      in: path
+      required: true
+      description: Identidade do curso em Conteúdo e Currículo.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        curso:
+          value: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
   schemas:
     Problem:
       type: object
@@ -784,6 +950,187 @@ components:
           type: boolean
           description: '`false` quando o avanço foi recebido mas **não** vira fato: repetição de `sequence`, ou
             menos de `progress.minGapSeconds` desde o avanço anterior aceito da mesma sessão (RN-R05). Não é erro.'
+    ProgressSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - completedLessons
+      - totalLessons
+      - percent
+      description: 'Contagem sobre a **versão vigente** (RN-P07): aulas concluídas da versão vigente, total de aulas
+        da versão vigente e percentual inteiro arredondado para baixo, todas com o mesmo peso. 100 só quando todas
+        estão concluídas. Aula removida numa republicação não conta em nenhum dos dois.'
+      properties:
+        completedLessons:
+          type: integer
+          minimum: 0
+        totalLessons:
+          type: integer
+          minimum: 0
+        percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+    ActiveCourse:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - started
+      - lastActivityAt
+      - continueLessonId
+      - progress
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Título do curso na versão vigente.
+        started:
+          type:
+          - boolean
+          - 'null'
+          description: '`true` se o aluno tem algum avanço no curso (ação **Continuar**); `false` se não (ação **Começar**).
+            Nulo quando `progressAvailable` é `false`.'
+        lastActivityAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Instante do avanço mais recente do aluno no curso. Nulo se não começou ou sem progresso disponível.
+        continueLessonId:
+          type: string
+          format: uuid
+          description: Aula que Continuar (ou Começar) abre, pela regra RN-P10 sobre a versão vigente. Sem progresso
+            disponível, ou nunca começado, é a primeira aula do curso.
+        progress:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/ProgressSummary'
+          description: Nulo quando `progressAvailable` é `false`.
+    EndedCourse:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - title
+      - endedOn
+      - endedReason
+      - progress
+      description: Curso com acesso encerrado (DP-02). Sem ação de abrir aula.
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        endedOn:
+          type: string
+          format: date
+          description: Último dia de acesso, no fuso da escola, para "Seu acesso terminou em dd/mm/aaaa". Com várias
+            concessões encerradas, o da que terminou por último.
+        endedReason:
+          type: string
+          enum:
+          - grant-ended
+          description: '`grant-ended`: a vigência terminou. `revoked` virá com `CAP-009`; clientes devem tolerar
+            valor novo e exibir a mesma frase com `endedOn` (QA-03 do PRD).'
+        progress:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/ProgressSummary'
+          description: O progresso como estava, sobre a versão vigente. Nulo quando `progressAvailable` é `false`.
+    MyCourses:
+      type: object
+      additionalProperties: false
+      required:
+      - progressAvailable
+      - active
+      - ended
+      properties:
+        progressAvailable:
+          type: boolean
+          description: '`false` quando a lista veio de Matrícula, mas o progresso não pôde ser lido: a tela mostra
+            "Seu progresso não pôde ser carregado agora".'
+        active:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/ActiveCourse'
+        ended:
+          type: array
+          maxItems: 500
+          items:
+            $ref: '#/components/schemas/EndedCourse'
+    LessonProgress:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - completed
+      - lastPositionSeconds
+      - resumeAtSeconds
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+          description: Identidade estável da aula (RN-C07).
+        completed:
+          type: boolean
+          description: Concluída por RN-P04; permanente (RN-P05).
+        lastPositionSeconds:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Posição do avanço mais recente pelo instante do avanço, em qualquer aparelho (RN-P02).
+        resumeAtSeconds:
+          type: integer
+          minimum: 0
+          description: 'Onde o player começa (RN-P09): a última posição, ou 0 se o último avanço foi de fim, se
+            está a menos de 10 s do fim do vídeo ou se passa da duração atual.'
+    CourseProgress:
+      type: object
+      additionalProperties: false
+      required:
+      - courseId
+      - versionNumber
+      - completedLessons
+      - totalLessons
+      - percent
+      - lessons
+      properties:
+        courseId:
+          type: string
+          format: uuid
+        versionNumber:
+          type: integer
+          minimum: 1
+          description: Versão vigente sobre a qual a contagem foi feita; a mesma de `getStudentLesson` quando lidas
+            juntas.
+        completedLessons:
+          type: integer
+          minimum: 0
+        totalLessons:
+          type: integer
+          minimum: 0
+        percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        lessons:
+          type: array
+          maxItems: 20000
+          description: Só aulas da versão vigente com algum registro do aluno. Teto = 100 módulos × 200 aulas, o
+            limite da estrutura em `openapi-aula.yaml`.
+          items:
+            $ref: '#/components/schemas/LessonProgress'
   responses:
     InvalidRequest:
       description: JSON malformado, parâmetro ou campo inválido.
@@ -946,3 +1293,39 @@ components:
                 status: 504
                 code: UPSTREAM_TIMEOUT
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CourseNotAvailable:
+      description: Curso inexistente, de outra escola ou sem versão vigente; indistintos.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Este curso não está disponível.
+                status: 404
+                code: COURSE_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CourseAccessUnavailable:
+      description: Matrícula não respondeu com os cursos do aluno. A tela mostra indisponibilidade com Tentar de
+        novo, **nunca** "Você ainda não tem cursos" (RF-04).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível carregar seus cursos agora. Tente de novo em instantes.
+                status: 503
+                code: COURSE_ACCESS_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  headers:
+    NoStore:
+      description: '`private, no-store`: dado pessoal do aluno, que muda a cada avanço.'
+      schema:
+        type: string
+        examples:
+        - private, no-store

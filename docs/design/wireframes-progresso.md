@@ -4,7 +4,7 @@
 > **Revisão:** responsável humano (Tasso) — reveja a [seção 7](#7-decisões-para-você-aprovar) (10 pontos) e os quadros I1.a–I1.h e A1.P–A1.S; o gate da task 1.0 só passa após o registro da aprovação neste cabeçalho.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 4.0 em diante). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados de **"meus cursos"** (o Início, `/`) e das **mudanças na tela da aula** (`student-spa`) antes do desenho no Figma.
-> **Fontes:** [PRD](../../tasks/prd-progresso-aluno/prd.md) v1.0 (Experiência do Usuário, RF-04 a RF-06, RN-P01 a RN-P10, DP-01 a DP-09), [TechSpec](../../tasks/prd-progresso-aluno/techspec.md) v1.0 (Bloco Frontend, Habilitadores inevitáveis), [wireframes da tela da aula](wireframes-aula.md) (formato, tela da aula aprovada em CAP-007), [wireframes da conta do aluno](wireframes-conta-aluno.md) (T6 Início e sidebar), [Design System](../../DESIGN.md) e [componentes](Components.md).
+> **Fontes:** [PRD](../../tasks/archive/prd-progresso-aluno/prd.md) v1.0 (Experiência do Usuário, RF-04 a RF-06, RN-P01 a RN-P10, DP-01 a DP-09), [TechSpec](../../tasks/archive/prd-progresso-aluno/techspec.md) v1.0 (Bloco Frontend, Habilitadores inevitáveis), [wireframes da tela da aula](wireframes-aula.md) (formato, tela da aula aprovada em CAP-007), [wireframes da conta do aluno](wireframes-conta-aluno.md) (T6 Início e sidebar), [Design System](../../DESIGN.md) e [componentes](Components.md).
 
 ---
 
