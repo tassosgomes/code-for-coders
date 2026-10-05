@@ -8,13 +8,14 @@ using Xunit;
 
 namespace CodeForCoders.Commerce.IntegrationTests;
 
-public sealed class FinanceAreaAuthorizationTests
+/// <remarks>The scenarios share one host; JWKS unavailability needs a host whose first key fetch fails.</remarks>
+public sealed class FinanceAreaAuthorizationTests(FinanceAreaApiFactory host) : IClassFixture<FinanceAreaApiFactory>
 {
     [Fact(DisplayName = nameof(FinanceArea_RejectsMissingToken))]
     [Trait("Layer", "Commerce finance area - Integration")]
     public async Task FinanceArea_RejectsMissingToken()
     {
-        using var factory = new FinanceAreaApiFactory();
+        var factory = host;
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync("/internal/v1/finance-area", TestContext.Current.CancellationToken);
@@ -26,7 +27,7 @@ public sealed class FinanceAreaAuthorizationTests
     [Trait("Layer", "Commerce finance area - Integration")]
     public async Task FinanceArea_RejectsTokenSignedByUnknownKey()
     {
-        using var factory = new FinanceAreaApiFactory();
+        var factory = host;
         using var client = factory.CreateClient();
         using var unknownKey = RSA.Create(2048);
 
@@ -41,7 +42,7 @@ public sealed class FinanceAreaAuthorizationTests
     [Trait("Layer", "Commerce finance area - Integration")]
     public async Task FinanceArea_RejectsTokenForAnotherAudience()
     {
-        using var factory = new FinanceAreaApiFactory();
+        var factory = host;
         using var client = factory.CreateClient();
 
         using var response = await GetWithTokenAsync(
@@ -55,7 +56,7 @@ public sealed class FinanceAreaAuthorizationTests
     [Trait("Layer", "Commerce finance area - Integration")]
     public async Task FinanceArea_RejectsExpiredToken()
     {
-        using var factory = new FinanceAreaApiFactory();
+        var factory = host;
         using var client = factory.CreateClient();
 
         using var response = await GetWithTokenAsync(
@@ -72,7 +73,7 @@ public sealed class FinanceAreaAuthorizationTests
     [Trait("Layer", "Commerce finance area - Integration")]
     public async Task FinanceArea_RejectsValidTokenWithoutFinancePermission()
     {
-        using var factory = new FinanceAreaApiFactory();
+        var factory = host;
         using var client = factory.CreateClient();
 
         using var response = await GetWithTokenAsync(
@@ -86,7 +87,7 @@ public sealed class FinanceAreaAuthorizationTests
     [Trait("Layer", "Commerce finance area - Integration")]
     public async Task FinanceArea_ReturnsReservedAreaForAuthorizedActor()
     {
-        using var factory = new FinanceAreaApiFactory();
+        var factory = host;
         using var client = factory.CreateClient();
 
         using var response = await GetWithTokenAsync(

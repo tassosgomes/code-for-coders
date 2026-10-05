@@ -1,47 +1,53 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Net.Http.Json;
-using CodeForCoders.Commerce.Api.Clients;
 using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Application.Interfaces;
 using CodeForCoders.Commerce.Infra.Data;
-using CodeForCoders.Commerce.Domain.Entities;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using System.Diagnostics;
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
+/// <summary>
+/// Per-test view of a <see cref="CourtesyHost"/>: new tenant, actor, student and course, a new client and
+/// span capture. A shared host is reset, never disposed, here; a host with injected faults is owned.
+/// </summary>
 public sealed class CourtesyGrantFixture : IAsyncDisposable
 {
-    public ConcurrentQueue<string> Logs { get; } = new();
+    private readonly CourtesyHost host;
+    private readonly bool ownsHost;
+    public ConcurrentQueue<string> Logs => host.Logs;
     public ConcurrentQueue<string> Spans { get; } = new();
     private readonly ActivityListener listener;
     public Guid Tenant { get; }
     public Guid Actor { get; } = Guid.CreateVersion7();
     public Guid Student { get; } = Guid.CreateVersion7();
     public Guid Course { get; } = Guid.CreateVersion7();
-    public CourtesyIdentityConfirmationHandler Identity { get; } = new();
-    public CourtesyGrantTestClock Clock { get; } = new();
-    public CatalogCourseApiFactory Factory { get; }
+    public CourtesyIdentityConfirmationHandler Identity => host.Identity;
+    public CourtesyGrantTestClock Clock => host.Clock;
+    public CatalogCourseApiFactory Factory => host.Factory;
     public HttpClient Client { get; }
+
+    /// <summary>Builds a host only for this test, for the scenarios that inject services (faults).</summary>
     public CourtesyGrantFixture(CommerceIntegrationFixture infra, Action<IServiceCollection>? customize = null, Guid? tenant = null)
+        : this(new CourtesyHost(infra, customize), ownsHost: true, tenant)
     {
+    }
+
+    /// <summary>Uses a host shared by the tests of the class.</summary>
+    public CourtesyGrantFixture(CourtesyHost host, Guid? tenant = null) : this(host, ownsHost: false, tenant)
+    {
+    }
+
+    private CourtesyGrantFixture(CourtesyHost host, bool ownsHost, Guid? tenant)
+    {
+        this.host = host; this.ownsHost = ownsHost;
         Tenant = tenant ?? Guid.CreateVersion7();
-        Factory = new(infra)
-        {
-            CustomizeServices = services =>
-        {
-            services.AddLogging(logging => logging.AddProvider(new CourtesyCapturedLogProvider(Logs)));
-            services.RemoveAll<TimeProvider>(); services.AddSingleton<TimeProvider>(Clock);
-            services.AddHttpClient<IStudentAccountConfirmationClient, StudentAccountConfirmationClient>().ConfigurePrimaryHttpMessageHandler(() => Identity);
-            customize?.Invoke(services);
-        }
-        };
+        host.Reset();
         listener = new ActivityListener
         {
             ShouldListenTo = _ => true,
@@ -80,5 +86,9 @@ public sealed class CourtesyGrantFixture : IAsyncDisposable
         Assert.False(await db.GrantReceipts.IgnoreQueryFilters().AnyAsync(item => item.TenantId == Tenant, TestContext.Current.CancellationToken));
         Assert.False(await db.EntitlementOutboxMessages.IgnoreQueryFilters().AnyAsync(item => item.TenantId == Tenant, TestContext.Current.CancellationToken));
     }
-    public async ValueTask DisposeAsync() { Client.Dispose(); await Factory.DisposeAsync(); listener.Dispose(); }
+    public async ValueTask DisposeAsync()
+    {
+        Client.Dispose(); listener.Dispose();
+        if (ownsHost) await host.DisposeAsync();
+    }
 }

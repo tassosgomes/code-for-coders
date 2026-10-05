@@ -11,6 +11,10 @@ public sealed class CourtesyIdentityConfirmationHandler : HttpMessageHandler
     public bool Timeout { get; set; }
     public bool Unavailable { get; set; }
     public string? Assertion { get; private set; }
+    public void Reset()
+    {
+        Calls = 0; Response = "{\"eligible\":true}"; Timeout = false; Unavailable = false; Assertion = null;
+    }
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Calls++; Assertion = request.Headers.Authorization?.Parameter;

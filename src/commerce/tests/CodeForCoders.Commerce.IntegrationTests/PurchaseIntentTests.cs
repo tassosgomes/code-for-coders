@@ -17,7 +17,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
+public sealed class PurchaseIntentTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private readonly Guid tenant = Guid.CreateVersion7();
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
@@ -25,7 +25,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ClickCountsOnlyTheSelectedOfferAndReturnsTheContract))]
     public async Task ClickCountsOnlyTheSelectedOfferAndReturnsTheContract()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         using var response = await SendAsync(factory, offers[1], "one-click");
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -38,7 +38,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(RepeatedKeyIsAcceptedWithoutCountingAgain))]
     public async Task RepeatedKeyIsAcceptedWithoutCountingAgain()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         using var first = await SendAsync(factory, offers[0], "retry");
         using var second = await SendAsync(factory, offers[0], "retry");
@@ -50,7 +50,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentRepetitionsCountExactlyOnce))]
     public async Task ConcurrentRepetitionsCountExactlyOnce()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => SendAsync(factory, offers[0], "concurrent")));
         foreach (var response in responses) { Assert.Equal(HttpStatusCode.Accepted, response.StatusCode); response.Dispose(); }
@@ -60,7 +60,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentDifferentClicksDoNotLoseIncrements))]
     public async Task ConcurrentDifferentClicksDoNotLoseIncrements()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(index => SendAsync(factory, offers[0], $"distinct-{index}")));
         foreach (var response in responses) { Assert.Equal(HttpStatusCode.Accepted, response.StatusCode); response.Dispose(); }
@@ -71,7 +71,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     public async Task UnpublishedDraftUnknownAndOtherSchoolsOffersAreNotCounted()
     {
         var other = Guid.CreateVersion7();
-        await using var factory = new ShowcaseApiFactory(fixture, tenant, other);
+        var factory = hosts.Showcase(tenant, other);
         var (course, offers) = await SeedAsync(factory, tenant);
         var (_, others) = await SeedAsync(factory, other);
         await using var scope = Scope(factory, tenant);
@@ -91,7 +91,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(UnpublicationInProgressWinsBeforeTheClickAndLeavesTheCountUnchanged))]
     public async Task UnpublicationInProgressWinsBeforeTheClickAndLeavesTheCountUnchanged()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         await using var scope = Scope(factory, tenant);
         var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
@@ -117,7 +117,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ReceiptStoresOnlyTheHashAndExpiresAfter24Hours))]
     public async Task ReceiptStoresOnlyTheHashAndExpiresAfter24Hours()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (_, offers) = await SeedAsync(factory, tenant);
         var before = DateTimeOffset.UtcNow;
         using var response = await SendAsync(factory, offers[0], "opaque-secret-click");
@@ -136,7 +136,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ExpiredKeyCanCountAgainAndCatalogSumsEveryUtcDay))]
     public async Task ExpiredKeyCanCountAgainAndCatalogSumsEveryUtcDay()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         using var first = await SendAsync(factory, offers[0], "expired");
         Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
@@ -155,7 +155,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(MissingAssertionAndReadOnlyScopeCannotRegisterClicks))]
     public async Task MissingAssertionAndReadOnlyScopeCannotRegisterClicks()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (_, offers) = await SeedAsync(factory, tenant);
         using var anonymous = await SendAsync(factory, offers[0], "anonymous", scope: null);
         using var readOnly = await SendAsync(factory, offers[0], "read-only", scope: "showcase:read");
@@ -166,7 +166,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(InvalidKeysDoNotProduceReceiptsOrCounts))]
     public async Task InvalidKeysDoNotProduceReceiptsOrCounts()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (course, offers) = await SeedAsync(factory, tenant);
         foreach (var key in new[] { "", new string('a', 129) })
         {
@@ -196,7 +196,7 @@ public sealed class PurchaseIntentTests(CommerceIntegrationFixture fixture)
         };
         meters.SetMeasurementEventCallback<long>((instrument, value, tags, _) => measurements.Enqueue((instrument.Name, value, tags.ToArray())));
         meters.Start();
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var (_, offers) = await SeedAsync(factory, tenant);
         using var counted = await SendAsync(factory, offers[0], "telemetry-private-key");
         using var repeated = await SendAsync(factory, offers[0], "telemetry-private-key");

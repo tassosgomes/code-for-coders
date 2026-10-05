@@ -20,14 +20,14 @@ namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
 [Trait("Api", "AccessDecision - Integration")]
-public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
+public sealed class AccessDecisionTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
     [Fact(DisplayName = nameof(SixMonthCourtesyAllowsUntilItsExpiry))]
     public async Task SixMonthCourtesyAllowsUntilItsExpiry()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         var grant = await test.GrantAsync();
         var decision = await test.DecideAsync();
@@ -46,7 +46,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [InlineData("other-school")]
     public async Task UnknownAccountsCoursesAndOtherSchoolsAreIndistinguishable(string scenario)
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         if (scenario != "no-grants") await test.GrantAsync();
         var student = scenario == "unknown-student" ? Guid.CreateVersion7() : scenario == "staff-account" ? test.Courtesy.Actor : test.Courtesy.Student;
@@ -61,7 +61,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(ExpiredYesterdayDeniesWithoutRunningAnyExpirationRoutine))]
     public async Task ExpiredYesterdayDeniesWithoutRunningAnyExpirationRoutine()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         var grant = await test.GrantAsync();
         test.Courtesy.Clock.Now = grant.ExpiresAt!.Value.AddDays(1);
@@ -82,7 +82,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [InlineData(0, "denied")]
     public async Task LastNightEndsExactlyAtTheFollowingMidnight(int offset, string expected)
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         var grant = await test.GrantAsync();
         test.Courtesy.Clock.Now = grant.ExpiresAt!.Value.AddSeconds(offset);
@@ -97,7 +97,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(ExpiredAndActiveGrantsAllowByTheLongestActiveExpiry))]
     public async Task ExpiredAndActiveGrantsAllowByTheLongestActiveExpiry()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         var expired = await test.GrantAsync(1);
         var longest = await test.GrantAsync(6);
@@ -112,7 +112,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(AllExpiredGrantsReportTheLatestExpiry))]
     public async Task AllExpiredGrantsReportTheLatestExpiry()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         var longest = await test.GrantAsync(6);
         await test.GrantAsync(3);
@@ -125,7 +125,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(LifetimeDominatesThreeMonthsAndHasNoExpiresAtProperty))]
     public async Task LifetimeDominatesThreeMonthsAndHasNoExpiresAtProperty()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         await test.GrantAsync(3);
         await test.GrantAsync(type: "lifetime");
@@ -140,7 +140,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(InactiveGrantsDoNotAuthorizeOrOverrideTheActiveExpiry))]
     public async Task InactiveGrantsDoNotAuthorizeOrOverrideTheActiveExpiry()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         await test.GrantAsync(type: "lifetime");
         await using var scope = Scope(test);
@@ -154,7 +154,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(NewCourseVersionOfferChangesAndUnpublishingPreserveTheDecision))]
     public async Task NewCourseVersionOfferChangesAndUnpublishingPreserveTheDecision()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         await test.GrantAsync();
         var original = await test.DecideAsync();
@@ -185,7 +185,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(DecisionDoesNotReadIdentityOrCourseProjectionAndDoesNotLeakPersonIdentifiers))]
     public async Task DecisionDoesNotReadIdentityOrCourseProjectionAndDoesNotLeakPersonIdentifiers()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await test.Courtesy.SeedAsync();
         await test.GrantAsync();
         var identityCalls = test.Courtesy.Identity.Calls;
@@ -214,7 +214,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [InlineData("key", 401, "SERVICE_UNAUTHORIZED")]
     public async Task InvalidServiceCredentialsCannotAuthorizeDecision(string scenario, int status, string code)
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         var token = scenario switch
         {
             "missing" => null,
@@ -237,7 +237,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(AssertionReplayIsRejectedByTheRealValkeyStore))]
     public async Task AssertionReplayIsRejectedByTheRealValkeyStore()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         await using var scope = Scope(test);
         Assert.IsType<ServiceAssertionReplayStore>(scope.ServiceProvider.GetRequiredService<IServiceAssertionReplayStore>());
         var token = test.Assertion();
@@ -255,7 +255,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [InlineData("/internal/v1/students/00000000-0000-7000-8000-000000000001/access-grants")]
     public async Task ServiceAssertionIsRefusedByCourtesyActorRoutes(string path)
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         using var response = await test.RequestAsync(test.Assertion(), path);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -263,7 +263,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(ServiceAssertionCannotCreateCourtesyGrants))]
     public async Task ServiceAssertionCannotCreateCourtesyGrants()
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         test.Courtesy.Client.DefaultRequestHeaders.Authorization = new("Bearer", test.Assertion());
         using var response = await test.Courtesy.GrantAsync();
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -276,7 +276,7 @@ public sealed class AccessDecisionTests(CommerceIntegrationFixture infra)
     [InlineData("?courseId=00000000-0000-7000-8000-000000000001")]
     public async Task MissingAndMalformedQueryIdentifiersAreRejected(string query)
     {
-        await using var test = new AccessDecisionFixture(infra);
+        await using var test = new AccessDecisionFixture(hosts.Courtesy);
         using var response = await test.RequestAsync(test.Assertion(), "/internal/v1/access-decision" + query);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }

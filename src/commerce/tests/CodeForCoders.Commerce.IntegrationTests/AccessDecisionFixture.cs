@@ -9,6 +9,7 @@ using CodeForCoders.Commerce.Api.Security;
 using CodeForCoders.Commerce.Application.Interfaces;
 using CodeForCoders.Commerce.Application.UseCases.Entitlement.DecideAccess;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace CodeForCoders.Commerce.IntegrationTests;
@@ -24,27 +25,36 @@ public sealed class AccessDecisionFixture : IAsyncDisposable
     public ConcurrentQueue<string> Measurements { get; } = new();
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
-    public AccessDecisionFixture(CommerceIntegrationFixture infra, Action<ServiceAssertionOptions>? configure = null)
+    /// <summary>
+    /// Trusts only ephemeral test issuers, scoped to this test's schools, on the courtesy host of the class.
+    /// The options are rewritten per test, as the configuration of a host built for the test was.
+    /// </summary>
+    public AccessDecisionFixture(CourtesyHost host, Action<ServiceAssertionOptions>? configure = null)
     {
         var tenant = Guid.CreateVersion7();
         var publicKey = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
-        Courtesy = new(infra, services => services.Configure<ServiceAssertionOptions>(options =>
+        Courtesy = new(host, tenant);
+        var options = Courtesy.Factory.Services.GetRequiredService<IOptions<ServiceAssertionOptions>>().Value;
+        // Only ephemeral test issuers are configured. No production consumer keys are provisioned.
+        options.Issuers[Issuer] = new()
         {
-            // Only ephemeral test issuers are configured. No production consumer keys are provisioned.
-            options.Issuers[Issuer] = new()
-            {
-                PublicKeys = new() { [KeyId] = publicKey },
-                AllowedScopes = [ServiceAssertionScopes.AccessDecisionRead, ServiceAssertionScopes.ShowcaseRead],
-                AllowedTenantIds = [tenant.ToString("D"), OtherTenant.ToString("D")]
-            };
-            options.Issuers["bff-student"] = new()
-            {
-                PublicKeys = new() { [KeyId] = publicKey },
-                AllowedScopes = ServiceAssertionScopes.Student,
-                AllowedTenantIds = [tenant.ToString("D")]
-            };
-            configure?.Invoke(options);
-        }), tenant);
+            PublicKeys = new() { [KeyId] = publicKey },
+            AllowedScopes = [ServiceAssertionScopes.AccessDecisionRead, ServiceAssertionScopes.ShowcaseRead],
+            AllowedTenantIds = [tenant.ToString("D"), OtherTenant.ToString("D")]
+        };
+        options.Issuers["bff-student"] = new()
+        {
+            PublicKeys = new() { [KeyId] = publicKey },
+            AllowedScopes = ServiceAssertionScopes.Student,
+            AllowedTenantIds = [tenant.ToString("D")]
+        };
+        configure?.Invoke(options);
+        // The host validated its issuers on start; the issuers of this test pass the same validation.
+        foreach (var validation in Courtesy.Factory.Services.GetServices<IValidateOptions<ServiceAssertionOptions>>())
+        {
+            var result = validation.Validate(Options.DefaultName, options);
+            Assert.False(result.Failed, result.FailureMessage);
+        }
         metrics.InstrumentPublished = (instrument, listener) => listener.EnableMeasurementEvents(instrument);
         metrics.SetMeasurementEventCallback<long>(CaptureMeasurement);
         metrics.SetMeasurementEventCallback<double>(CaptureMeasurement);

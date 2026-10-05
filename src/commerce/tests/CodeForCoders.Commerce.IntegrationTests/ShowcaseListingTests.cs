@@ -16,7 +16,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
+public sealed class ShowcaseListingTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private const string Route = "/internal/v1/showcase/courses";
 
@@ -29,7 +29,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(OnlyCoursesWithLevelAndAPublishedOfferAppear))]
     public async Task OnlyCoursesWithLevelAndAPublishedOfferAppear()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var visible = await SeedAsync(factory, tenant, "Visible", "beginner", published: [49700]);
         await SeedAsync(factory, tenant, "Draft only", "beginner", draft: [10000]);
         await SeedAsync(factory, tenant, "No offers", "beginner");
@@ -48,7 +48,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(CardsAreOrderedByShowcaseEntryDescendingThenCourseId))]
     public async Task CardsAreOrderedByShowcaseEntryDescendingThenCourseId()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var oldest = await SeedAsync(factory, tenant, "Oldest", "beginner", published: [100], at: Start);
         var newest = await SeedAsync(factory, tenant, "Newest", "advanced", published: [100], at: Start.AddHours(2));
         var tieA = await SeedAsync(factory, tenant, "Tie A", "beginner", published: [100], at: Start.AddHours(1));
@@ -66,7 +66,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [InlineData("advanced")]
     public async Task LevelFilterKeepsOnlyThatLevel(string level)
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         foreach (var each in new[] { "beginner", "intermediate", "advanced" })
         {
             await SeedAsync(factory, tenant, $"Course {each}", each, published: [100]);
@@ -82,7 +82,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(FilterWithoutResultsReturnsAnEmptyPage))]
     public async Task FilterWithoutResultsReturnsAnEmptyPage()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         await SeedAsync(factory, tenant, "Only beginner", "beginner", published: [100]);
 
         var page = await ListAsync(factory, tenant, "?level=advanced");
@@ -101,7 +101,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [InlineData("?_page=0")]
     public async Task InvalidQueryIsRefusedWithInvalidRequest(string query)
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
 
         using var response = await GetAsync(factory, tenant, query);
 
@@ -112,7 +112,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(PaginationDefaultsToTwelveAndHonoursPageAndSize))]
     public async Task PaginationDefaultsToTwelveAndHonoursPageAndSize()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         for (var index = 0; index < 5; index++)
         {
             await SeedAsync(factory, tenant, $"Course {index}", "beginner", published: [100], at: Start.AddMinutes(index));
@@ -132,7 +132,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(CardShowsLowestPriceAndPublishedOfferCountOnly))]
     public async Task CardShowsLowestPriceAndPublishedOfferCountOnly()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         await SeedAsync(factory, tenant, "Many offers", "intermediate", published: [49700, 29700], draft: [100]);
 
         var card = (await ListAsync(factory, tenant)).GetProperty("data")[0];
@@ -144,7 +144,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(SummaryIsTheTaglineOrTheDescriptionCutAtTwoHundredCharacters))]
     public async Task SummaryIsTheTaglineOrTheDescriptionCutAtTwoHundredCharacters()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var longDescription = new string('a', 150) + new string('b', 150);
         await SeedAsync(factory, tenant, "With tagline", "beginner", published: [100], description: longDescription, tagline: "Chamada comercial", at: Start);
         await SeedAsync(factory, tenant, "Long description", "beginner", published: [100], description: longDescription, at: Start.AddMinutes(1));
@@ -161,7 +161,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ResponseNeverCarriesPersonVideoOrInternalFieldsAndIsNotCacheable))]
     public async Task ResponseNeverCarriesPersonVideoOrInternalFieldsAndIsNotCacheable()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         await SeedAsync(factory, tenant, "Course", "beginner", published: [100]);
 
         using var response = await GetAsync(factory, tenant);
@@ -182,7 +182,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(CourseThatLosesItsLevelLeavesTheShowcaseWithoutUnpublishingAndComesBack))]
     public async Task CourseThatLosesItsLevelLeavesTheShowcaseWithoutUnpublishingAndComesBack()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var courseId = await SeedAsync(factory, tenant, "Course", "beginner", published: [100]);
         Assert.Single((await ListAsync(factory, tenant)).GetProperty("data").EnumerateArray());
 
@@ -200,7 +200,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     public async Task AssertionOfAnotherSchoolOnlySeesThatSchool()
     {
         var other = Guid.CreateVersion7();
-        await using var factory = new ShowcaseApiFactory(fixture, tenant, other);
+        var factory = hosts.Showcase(tenant, other);
         await SeedAsync(factory, tenant, "School A", "beginner", published: [100]);
         await SeedAsync(factory, other, "School B", "beginner", published: [100]);
 
@@ -214,7 +214,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(AssertionOfASchoolOutsideTheIssuerAllowListIsRejected))]
     public async Task AssertionOfASchoolOutsideTheIssuerAllowListIsRejected()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
 
         using var response = await GetAsync(factory, Guid.CreateVersion7());
 
@@ -225,7 +225,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(MissingAssertionIsUnauthorized))]
     public async Task MissingAssertionIsUnauthorized()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync(Route, Cancellation);
@@ -237,7 +237,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(AssertionWithoutTheShowcaseScopeIsForbidden))]
     public async Task AssertionWithoutTheShowcaseScopeIsForbidden()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
 
         using var response = await SendAsync(factory, factory.CreateAssertion(tenant, "purchase-intent:write"));
 
@@ -248,7 +248,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ReplayedAssertionIsUnauthorized))]
     public async Task ReplayedAssertionIsUnauthorized()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var assertion = factory.CreateAssertion(tenant);
 
         using var first = await SendAsync(factory, assertion);
@@ -262,7 +262,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ActorJwtOnThePublicRouteIsUnauthorized))]
     public async Task ActorJwtOnThePublicRouteIsUnauthorized()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var token = new JwtSecurityToken("identity", "commerce",
             [new Claim("sub", Guid.CreateVersion7().ToString()), new Claim("tenantId", tenant.ToString()), new Claim("permissions", "oferta.editar")],
             DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(2), new SigningCredentials(factory.JwksHandler.SigningKey, SecurityAlgorithms.RsaSha256));
@@ -276,7 +276,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ServiceAssertionOnAnActorRouteIsUnauthorized))]
     public async Task ServiceAssertionOnAnActorRouteIsUnauthorized()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new("Bearer", factory.CreateAssertion(tenant));
 
@@ -289,7 +289,7 @@ public sealed class ShowcaseListingTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(RealHostRegistersBothSchemesAndAcceptsTheAssertionSignedByTheBffFactory))]
     public async Task RealHostRegistersBothSchemesAndAcceptsTheAssertionSignedByTheBffFactory()
     {
-        await using var factory = new ShowcaseApiFactory(fixture, tenant);
+        var factory = hosts.Showcase(tenant);
         var schemes = (await factory.Services.GetRequiredService<IAuthenticationSchemeProvider>().GetAllSchemesAsync()).Select(scheme => scheme.Name).ToArray();
 
         using var response = await GetAsync(factory, tenant);

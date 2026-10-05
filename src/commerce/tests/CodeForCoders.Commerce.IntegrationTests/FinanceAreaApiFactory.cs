@@ -17,6 +17,7 @@ public sealed class FinanceAreaApiFactory : WebApplicationFactory<Program>
         using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
         builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("FinanceAreaTest");
+        CommerceTestHost.UseShortTelemetryExportTimeout(builder);
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
         builder.UseSetting("FinanceAreaTokens:Audience", "commerce");
         builder.UseSetting("FinanceAreaTokens:JwksUrl", "http://identity.test/internal/v1/jwks");
@@ -31,8 +32,7 @@ public sealed class FinanceAreaApiFactory : WebApplicationFactory<Program>
                 services.Remove(hostedService);
             }
 
-            services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName)
-                .ConfigurePrimaryHttpMessageHandler(() => JwksHandler);
+            CommerceTestHost.UseHandler(services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName), JwksHandler);
         });
     }
 }

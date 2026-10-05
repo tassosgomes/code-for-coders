@@ -12,13 +12,13 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
+public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra, CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
     [Fact(DisplayName = nameof(GrantCreatesEnrollmentReceiptFactAndActAtomicallyWithoutPersonalDataInFact))]
     public async Task GrantCreatesEnrollmentReceiptFactAndActAtomicallyWithoutPersonalDataInFact()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         using var response = await test.GrantAsync(); Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var grant = (await response.Content.ReadFromJsonAsync<CourtesyGrant>(Cancellation))!;
         Assert.Equal(DateOnly.Parse("2027-04-15"), grant.EndsOn); Assert.Equal("courtesy", grant.Origin); Assert.Equal("active", grant.Status);
@@ -51,7 +51,7 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(ConcurrentSameKeyCreatesOneGrantAndReplaysOriginalWithoutReconfirming))]
     public async Task ConcurrentSameKeyCreatesOneGrantAndReplaysOriginalWithoutReconfirming()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         var responses = await Task.WhenAll(test.GrantAsync(), test.GrantAsync());
         Assert.Equal(new[] { HttpStatusCode.OK, HttpStatusCode.Created }, responses.Select(item => item.StatusCode).Order().ToArray());
         Assert.Equal(await responses[0].Content.ReadAsStringAsync(Cancellation), await responses[1].Content.ReadAsStringAsync(Cancellation));
@@ -65,13 +65,13 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(ChangedBodyWithSameKeyIsRejected))]
     public async Task ChangedBodyWithSameKeyIsRejected()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); using var first = await test.GrantAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); using var first = await test.GrantAsync();
         using var second = await test.GrantAsync(test.Body("Other reason")); await AssertCodeAsync(second, 422, "IDEMPOTENCY_KEY_REUSED");
     }
     [Fact(DisplayName = nameof(DifferentKeysAllowMultipleActiveGrantsOnOneEnrollment))]
     public async Task DifferentKeysAllowMultipleActiveGrantsOnOneEnrollment()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         var responses = await Task.WhenAll(test.GrantAsync(key: "first"), test.GrantAsync(key: "second"));
         foreach (var response in responses) { Assert.Equal(HttpStatusCode.Created, response.StatusCode); response.Dispose(); }
         await using var scope = test.Factory.Services.CreateAsyncScope(); var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
@@ -86,7 +86,7 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [InlineData("Valid reason", 61)]
     public async Task InvalidReasonAndMonthsRejectWithoutAnyWrite(string reason, int months)
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         using var response = await test.GrantAsync(test.Body(reason == "long" ? new string('a', 501) : reason, months));
         await AssertCodeAsync(response, 422, "FIELD_INVALID"); Assert.Equal(0, test.Identity.Calls); await test.AssertEmptyAsync();
     }
@@ -95,13 +95,13 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [InlineData(true)]
     public async Task UnpublishedAndOtherTenantCoursesRejectWithoutIdentityCheck(bool otherTenant)
     {
-        await using var test = new CourtesyGrantFixture(infra); if (otherTenant) { await test.SeedAsync(); test.Authorize(Guid.CreateVersion7()); }
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); if (otherTenant) { await test.SeedAsync(); test.Authorize(Guid.CreateVersion7()); }
         using var response = await test.GrantAsync(); await AssertCodeAsync(response, 422, "COURSE_NOT_ELIGIBLE"); Assert.Equal(0, test.Identity.Calls); await test.AssertEmptyAsync();
     }
     [Fact(DisplayName = nameof(ReconfirmedIneligibleAccountRejectsWithoutWrite))]
     public async Task ReconfirmedIneligibleAccountRejectsWithoutWrite()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); test.Identity.Response = "{\"eligible\":false}";
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); test.Identity.Response = "{\"eligible\":false}";
         using var response = await test.GrantAsync(); await AssertCodeAsync(response, 422, "STUDENT_ACCOUNT_NOT_ELIGIBLE"); await test.AssertEmptyAsync();
     }
     [Theory(DisplayName = nameof(UnavailableMalformedAndTimedOutIdentityFailClosedWithoutRetry))]
@@ -110,7 +110,7 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [InlineData("timeout")]
     public async Task UnavailableMalformedAndTimedOutIdentityFailClosedWithoutRetry(string mode)
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); test.Identity.Unavailable = mode == "unavailable";
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); test.Identity.Unavailable = mode == "unavailable";
         test.Identity.Timeout = mode == "timeout"; if (mode == "malformed") test.Identity.Response = "{\"eligible\":\"true\"}";
         using var response = await test.GrantAsync(); await AssertCodeAsync(response, 503, "STUDENT_ACCOUNT_CHECK_UNAVAILABLE");
         Assert.Equal(1, test.Identity.Calls); await test.AssertEmptyAsync();
@@ -118,7 +118,7 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(LifetimeHasNullDatesAndRejectsMonths))]
     public async Task LifetimeHasNullDatesAndRejectsMonths()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync();
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync();
         using var response = await test.GrantAsync(new { studentId = test.Student, courseId = test.Course, accessPeriod = new { type = "lifetime" }, reason = "Partnership" });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode); var grant = (await response.Content.ReadFromJsonAsync<CourtesyGrant>(Cancellation))!; Assert.Null(grant.EndsOn); Assert.Null(grant.ExpiresAt);
         using var invalid = await test.GrantAsync(new { studentId = test.Student, courseId = test.Course, accessPeriod = new { type = "lifetime", months = 6 }, reason = "Partnership" }, "new"); await AssertCodeAsync(invalid, 422, "FIELD_INVALID");
@@ -134,7 +134,7 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(PermissionIsRequiredAndGetHidesOtherTenantsAndUnknownGrants))]
     public async Task PermissionIsRequiredAndGetHidesOtherTenantsAndUnknownGrants()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); test.Authorize(permission: "financeiro.ler");
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); test.Authorize(permission: "financeiro.ler");
         using var forbidden = await test.GrantAsync(); await AssertCodeAsync(forbidden, 403, "PERMISSION_DENIED"); await test.AssertEmptyAsync();
         test.Authorize(); using var granted = await test.GrantAsync(); var grant = (await granted.Content.ReadFromJsonAsync<CourtesyGrant>(Cancellation))!;
         await using (var scope = test.Factory.Services.CreateAsyncScope())
@@ -146,7 +146,7 @@ public sealed class CourtesyGrantTests(CommerceIntegrationFixture infra)
     [Fact(DisplayName = nameof(ExpiredReceiptAllowsNewIntentAndHourlyCleanupDeletesOnlyExpiredRows))]
     public async Task ExpiredReceiptAllowsNewIntentAndHourlyCleanupDeletesOnlyExpiredRows()
     {
-        await using var test = new CourtesyGrantFixture(infra); await test.SeedAsync(); using var first = await test.GrantAsync(); test.Clock.Now = test.Clock.Now.AddHours(25);
+        await using var test = new CourtesyGrantFixture(hosts.Courtesy); await test.SeedAsync(); using var first = await test.GrantAsync(); test.Clock.Now = test.Clock.Now.AddHours(25);
         using var second = await test.GrantAsync(test.Body("New intent")); Assert.Equal(HttpStatusCode.Created, second.StatusCode);
         using var third = await test.GrantAsync(key: "expired-key"); test.Clock.Now = test.Clock.Now.AddHours(25);
         using var fourth = await test.GrantAsync(key: "retained-key");

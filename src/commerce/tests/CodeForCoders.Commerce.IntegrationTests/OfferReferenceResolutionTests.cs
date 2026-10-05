@@ -16,7 +16,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class OfferReferenceResolutionTests(CommerceIntegrationFixture fixture)
+public sealed class OfferReferenceResolutionTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
     private readonly Guid _tenant = Guid.CreateVersion7();
@@ -26,7 +26,7 @@ public sealed class OfferReferenceResolutionTests(CommerceIntegrationFixture fix
     [Fact]
     public async Task AdministratorWithoutEditPermissionResolvesFiftyCurrentLabelsWithoutSideEffects()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture);
+        var factory = hosts.Catalog;
         var ids = await SeedAsync(factory, 50);
         using var client = factory.CreateClient();
         using var response = await SendAsync(factory, client, new { offerIds = ids });
@@ -44,7 +44,7 @@ public sealed class OfferReferenceResolutionTests(CommerceIntegrationFixture fix
     [Fact]
     public async Task MissingAdministratorRoleReturnsPermissionDeniedEvenWithEditPermission()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture);
+        var factory = hosts.Catalog;
         using var client = factory.CreateClient();
         using var response = await SendAsync(factory, client, new { offerIds = new[] { Guid.CreateVersion7() } }, role: "financeiro");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
@@ -54,7 +54,7 @@ public sealed class OfferReferenceResolutionTests(CommerceIntegrationFixture fix
     [Fact]
     public async Task OtherTenantUnknownAndDeletedOffersAreIndistinguishablyOmitted()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture);
+        var factory = hosts.Catalog;
         var ids = await SeedAsync(factory, 2);
         await using (var scope = Scope(factory))
         {
@@ -81,7 +81,7 @@ public sealed class OfferReferenceResolutionTests(CommerceIntegrationFixture fix
     [InlineData("extra")]
     public async Task InvalidBatchReturns400(string scenario)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture);
+        var factory = hosts.Catalog;
         using var client = factory.CreateClient();
         var id = Guid.CreateVersion7();
         object body = scenario switch
@@ -101,7 +101,7 @@ public sealed class OfferReferenceResolutionTests(CommerceIntegrationFixture fix
     [Fact]
     public async Task MissingOrInvalidTokenReturns401()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture);
+        var factory = hosts.Catalog;
         using var client = factory.CreateClient();
         using var missing = await client.PostAsJsonAsync(Path, new { offerIds = new[] { Guid.CreateVersion7() } }, Cancellation);
         Assert.Equal(HttpStatusCode.Unauthorized, missing.StatusCode);

@@ -20,7 +20,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
+public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture, CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private readonly Guid _tenant = Guid.CreateVersion7();
     private readonly Guid _actor = Guid.CreateVersion7();
@@ -37,7 +37,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(UnpublishAndOutboxMatchApprovedContractsAndAuthor))]
     public async Task UnpublishAndOutboxMatchApprovedContractsAndAuthor()
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
         using var response = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "unpublish");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = (await response.Content.ReadFromJsonAsync<CatalogOfferDetail>(Cancellation))!;
@@ -52,7 +52,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(UnpublishingOneOfTwoKeepsTheShowcaseMomentAndLastOneClearsIt))]
     public async Task UnpublishingOneOfTwoKeepsTheShowcaseMomentAndLastOneClearsIt()
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published", "published");
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published", "published");
         var entry = await ShowcaseSinceAsync(factory);
         using var first = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "first"); Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         Assert.Equal(entry, await ShowcaseSinceAsync(factory)); Assert.NotNull(entry);
@@ -70,7 +70,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [InlineData("unpublished")]
     public async Task OfferThatIsNotPublishedConflictsWithoutMessagesOrReceipt(string status)
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, status);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, status);
         using var response = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "conflict");
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync(Cancellation);
@@ -84,7 +84,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentSameKeyReturnsOneResponseOneFactAndOneAct))]
     public async Task ConcurrentSameKeyReturnsOneResponseOneFactAndOneAct()
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
         var responses = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "same")));
         var json = await responses[0].Content.ReadAsStringAsync(Cancellation);
         foreach (var response in responses)
@@ -99,7 +99,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(NewIntentConflictsAndKeyCannotTargetAnotherOffer))]
     public async Task NewIntentConflictsAndKeyCannotTargetAnotherOffer()
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
         using var first = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "first"); Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         using var conflict = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "second");
         Assert.Equal(HttpStatusCode.UnprocessableEntity, conflict.StatusCode); Assert.Contains("OFFER_STATE_CONFLICT", await conflict.Content.ReadAsStringAsync(Cancellation));
@@ -111,7 +111,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(UnpublishedOfferCannotBeDeletedAndCanBeRepublished))]
     public async Task UnpublishedOfferCannotBeDeletedAndCanBeRepublished()
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
         using var unpublished = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "unpublish"); Assert.Equal(HttpStatusCode.OK, unpublished.StatusCode);
         using var deleted = await SendAsync(factory, client, HttpMethod.Delete, $"/internal/v1/catalog/offers/{offers[0]:D}", "delete");
         Assert.Equal(HttpStatusCode.UnprocessableEntity, deleted.StatusCode); Assert.Contains("OFFER_STATE_CONFLICT", await deleted.Content.ReadAsStringAsync(Cancellation));
@@ -144,7 +144,7 @@ public sealed class OfferUnpublishTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(MissingKeyForeignTenantAndPermissionCannotUnpublish))]
     public async Task MissingKeyForeignTenantAndPermissionCannotUnpublish()
     {
-        await using var factory = Factory(); using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); var offers = await SeedAsync(factory, "published");
         using var absent = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), null); Assert.Equal(HttpStatusCode.BadRequest, absent.StatusCode);
         using var foreign = await SendAsync(factory, client, HttpMethod.Post, Path(offers[0]), "foreign", Guid.CreateVersion7()); Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
         using var missing = await SendAsync(factory, client, HttpMethod.Post, Path(Guid.CreateVersion7()), "missing"); Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);

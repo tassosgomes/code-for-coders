@@ -15,7 +15,7 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
+public sealed class CatalogCourseRecordTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
     private readonly Guid _tenant = Guid.CreateVersion7();
@@ -25,7 +25,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(KnownCourseHasImplicitRecordAndCurrentRecommendedTitles))]
     public async Task KnownCourseHasImplicitRecordAndCurrentRecommendedTitles()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.Catalog; using var client = factory.CreateClient();
         var known = Guid.CreateVersion7(); var unknown = Guid.CreateVersion7(); var foreign = Guid.CreateVersion7();
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(_tenant, known, rich: true, title: "Current title"));
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(Guid.CreateVersion7(), foreign, rich: true, title: "Private title"));
@@ -48,7 +48,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(LegacyRecordHasNullLevelAndEmptyPrerequisite))]
     public async Task LegacyRecordHasNullLevelAndEmptyPrerequisite()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.Catalog; using var client = factory.CreateClient();
         await SeedAsync(factory, rich: false); using var response = await SendAsync(factory, client);
         var record = await response.Content.ReadFromJsonAsync<CatalogCourseDetail>(Cancellation);
         Assert.Null(record!.Level); Assert.Null(record.Prerequisite.Text); Assert.Empty(record.Prerequisite.RecommendedCourses);
@@ -57,7 +57,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(TaglinePersistsAndNullClearsWithoutOutboxMessages))]
     public async Task TaglinePersistsAndNullClearsWithoutOutboxMessages()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var saved = await SendAsync(factory, client, "{\"tagline\":\"Commercial\"}", "save"); Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
         using var reread = await SendAsync(factory, client); Assert.Contains("Commercial", await reread.Content.ReadAsStringAsync(Cancellation));
         using var cleared = await SendAsync(factory, client, "{\"tagline\":null}", "clear");
@@ -72,7 +72,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [InlineData(161)]
     public async Task InvalidTaglineReturns422WithFieldAndLimit(int length)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var response = await SendAsync(factory, client, JsonSerializer.Serialize(new { tagline = new string('a', length) }), "invalid");
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         var problem = await response.Content.ReadAsStringAsync(Cancellation);
@@ -83,7 +83,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(MissingIdempotencyKeyAndWrongFieldTypeReturn400))]
     public async Task MissingIdempotencyKeyAndWrongFieldTypeReturn400()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var missing = await SendAsync(factory, client, "{\"tagline\":\"Test\"}");
         using var invalid = await SendAsync(factory, client, "{\"tagline\":42}", "invalid");
         Assert.Equal(HttpStatusCode.BadRequest, missing.StatusCode); Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
@@ -95,7 +95,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [InlineData(true)]
     public async Task OtherSchoolAndMissingCourseAreIndistinguishable(bool edit)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient();
+        var factory = hosts.Catalog; using var client = factory.CreateClient();
         await ApplyAsync(factory, CatalogCourseFactFixture.Create(Guid.CreateVersion7(), _course, rich: true));
         using var other = await SendAsync(factory, client, edit ? "{\"tagline\":null}" : null, "other");
         using var missing = await SendAsync(factory, client, edit ? "{\"tagline\":null}" : null, "missing", courseId: Guid.CreateVersion7());
@@ -107,7 +107,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ReplayReturnsStoredResponseAndDoesNotReapplyAfterAnotherEdit))]
     public async Task ReplayReturnsStoredResponseAndDoesNotReapplyAfterAnotherEdit()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var first = await SendAsync(factory, client, "{\"tagline\":\"First\"}", "intent");
         using var second = await SendAsync(factory, client, "{\"tagline\":\"Second\"}", "next");
         using var replay = await SendAsync(factory, client, "{ \"tagline\" : \"First\" }", "intent");
@@ -119,7 +119,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ChangedBodyAndChangedCourseWithSameKeyReturn422))]
     public async Task ChangedBodyAndChangedCourseWithSameKeyReturn422()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var other = Guid.CreateVersion7(); await ApplyAsync(factory, CatalogCourseFactFixture.Create(_tenant, other, rich: true));
         using var first = await SendAsync(factory, client, "{\"tagline\":\"First\"}", "intent");
         using var changed = await SendAsync(factory, client, "{\"tagline\":\"Second\"}", "intent");
@@ -131,7 +131,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ConcurrentReplayCreatesOneReceipt))]
     public async Task ConcurrentReplayCreatesOneReceipt()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         var responses = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => SendAsync(factory, client, "{\"tagline\":\"Concurrent\"}", "same")));
         foreach (var response in responses) { Assert.Equal(HttpStatusCode.OK, response.StatusCode); response.Dispose(); }
         await using var scope = Scope(factory); Assert.Single(await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().CatalogEditReceipts.ToListAsync(Cancellation));
@@ -140,7 +140,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(ReceiptExpiresAfter24HoursAndActorsHaveSeparateKeys))]
     public async Task ReceiptExpiresAfter24HoursAndActorsHaveSeparateKeys()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var first = await SendAsync(factory, client, "{\"tagline\":\"First\"}", "intent");
         await using (var scope = Scope(factory))
         {
@@ -157,7 +157,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [Fact(DisplayName = nameof(AbsentTaglineLeavesTheValueUnchanged))]
     public async Task AbsentTaglineLeavesTheValueUnchanged()
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var first = await SendAsync(factory, client, "{\"tagline\":\"Original\"}", "set");
         using var absent = await SendAsync(factory, client, "{}", "no-change"); Assert.Equal(HttpStatusCode.OK, absent.StatusCode);
         Assert.Equal("Original", (await absent.Content.ReadFromJsonAsync<CatalogCourseDetail>(Cancellation))!.Tagline);
@@ -168,7 +168,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [InlineData(true)]
     public async Task ReadAndWriteRequireEditOffers(bool edit)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var response = await SendAsync(factory, client, edit ? "{\"tagline\":null}" : null, "forbidden", permission: "autoria.editar");
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
@@ -181,7 +181,7 @@ public sealed class CatalogCourseRecordTests(CommerceIntegrationFixture fixture)
     [InlineData(129, HttpStatusCode.BadRequest)]
     public async Task IdempotencyKeyUsesContractLengthLimit(int length, HttpStatusCode status)
     {
-        await using var factory = new CatalogCourseApiFactory(fixture); using var client = factory.CreateClient(); await SeedAsync(factory);
+        var factory = hosts.Catalog; using var client = factory.CreateClient(); await SeedAsync(factory);
         using var response = await SendAsync(factory, client, "{\"tagline\":null}", new string('k', length));
         Assert.Equal(status, response.StatusCode);
     }

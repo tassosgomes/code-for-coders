@@ -10,11 +10,11 @@ using Xunit;
 namespace CodeForCoders.Commerce.IntegrationTests;
 
 [Collection(CommerceIntegrationCollection.Name)]
-public sealed class StudentCourseAccessListTests(CommerceIntegrationFixture infra)
+public sealed class StudentCourseAccessListTests(CommerceHosts hosts) : IClassFixture<CommerceHosts>
 {
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
-    private AccessDecisionFixture Fixture() => new(infra, options =>
+    private AccessDecisionFixture Fixture() => new(hosts.Courtesy, options =>
     {
         var trusted = options.Issuers["access-decision-test"];
         options.Issuers["learning"] = new()

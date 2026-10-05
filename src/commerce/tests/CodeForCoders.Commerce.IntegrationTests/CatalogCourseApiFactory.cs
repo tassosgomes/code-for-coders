@@ -10,6 +10,13 @@ public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) 
 {
     public string? DatabaseConnectionString { get; init; }
 
+    /// <summary>
+    /// When <c>false</c>, the commerce workers (outbox publisher, consumers, topology, expiration and cleanup)
+    /// are not started: the host only serves HTTP and persistence scenarios, so a host shared by many tests
+    /// never drains or changes rows of other tests in the background.
+    /// </summary>
+    public bool BackgroundWorkers { get; init; } = true;
+
     public Action<IServiceCollection>? CustomizeServices { get; set; }
 
     public IdentityJwksMessageHandler JwksHandler { get; } = new();
@@ -19,6 +26,7 @@ public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) 
         using var commerceKey = System.Security.Cryptography.RSA.Create(2048);
         builder.UseSetting("StudentAccountIdentity:SigningKeyBase64", Convert.ToBase64String(commerceKey.ExportPkcs8PrivateKey()));
         builder.UseEnvironment("CatalogTest");
+        CommerceTestHost.UseShortTelemetryExportTimeout(builder);
         builder.UseSetting("ConnectionStrings:DefaultConnection", DatabaseConnectionString ?? fixture.PostgreSql.GetConnectionString());
         builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);
         builder.UseSetting("FinanceAreaTokens:Issuer", "identity");
@@ -30,8 +38,12 @@ public sealed class CatalogCourseApiFactory(CommerceIntegrationFixture fixture) 
         builder.UseSetting("RabbitMq:Password", "code_for_coders");
         builder.ConfigureTestServices(services =>
         {
-            services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName)
-                .ConfigurePrimaryHttpMessageHandler(() => JwksHandler);
+            CommerceTestHost.UseHandler(services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName), JwksHandler);
+            if (!BackgroundWorkers)
+            {
+                CommerceTestHost.RemoveCommerceWorkers(services);
+            }
+
             CustomizeServices?.Invoke(services);
         });
     }
