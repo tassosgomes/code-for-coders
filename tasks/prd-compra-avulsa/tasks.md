@@ -71,7 +71,7 @@ Não há outro habilitador técnico: o schema e as filas de Vendas nascem em 4.0
 ## Tasks
 
 - [x] 1.0 Wireframes ASCII da compra, do pedido e dos pedidos no backoffice aprovados
-- [ ] 2.0 Figma da compra, do pedido e dos pedidos no backoffice aprovado
+- [x] 2.0 Figma da compra, do pedido e dos pedidos no backoffice aprovado
 - [x] 3.0 A unidade `billing` compila, sobe saudável e está na esteira e nos ambientes
 - [ ] 4.0 O aluno escolhe uma opção e ganha um pedido com preço e vigência congelados
 - [ ] 5.0 O aluno paga com cartão e o acesso ao curso é liberado sozinho

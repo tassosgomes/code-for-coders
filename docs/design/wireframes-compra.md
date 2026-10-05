@@ -1,7 +1,7 @@
 # Wireframes ASCII — Compra avulsa, pedido, Meus pedidos e Pedidos no backoffice (CAP-011)
 
-> **Status:** ASCII aprovado pelo responsável em 2026-10-05 (com "Wireframe aprovado"; propostas da seção 1.4, P1 a P10, aceitas como desenhadas). Figma pendente (task 2.0).
-> **Figma:** pendente (task 2.0, depois da aprovação do ASCII).
+> **Status:** ASCII e Figma aprovados pelo responsável em 2026-10-05 (ASCII aprovado em 2026-10-05 com "Wireframe aprovado", propostas P1 a P10 da seção 1.4 aceitas como desenhadas; Figma aprovado em 2026-10-05 com "Aprovado!", incluindo o texto do comprovante (R1) e a Sidebar com Início, Meus pedidos e Trocar senha; frames na [seção 8](#8-handoff-do-figma--aprovado)). Código de tela liberado a partir da task 4.0.
+> **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=295-88) · frames por tela na [seção 8](#8-handoff-do-figma--aprovado) · arquivo Code4Coders — Design System.
 > **Handoff:** aprovado o ASCII → desenho no Figma (task 2.0) → aprovação → código de tela (tasks 4.0 a 7.0, 9.0 e 10.0). Pedido de ajuste volta a este documento antes de qualquer registro.
 > **Objetivo:** definir fluxos, conteúdo e estados da compra (botão *Comprar*, resumo, pedido), de *Meus pedidos* (`student-spa`) e da área financeira com lista e detalhe de pedidos (`admin-spa`) antes do desenho no Figma.
 > **Fontes:** [PRD](../../tasks/prd-compra-avulsa/prd.md) v1.0 (RF-01, RF-02, RF-05, RF-06, RF-10, RF-11, Experiência do Usuário, RN-V01…RN-V12, RN-CB01…RN-CB06, DP-01…DP-09), [TechSpec](../../tasks/prd-compra-avulsa/techspec.md) (§ Bloco Frontend, § URLs públicas, § Habilitadores inevitáveis), contratos do recorte [do aluno](../../tasks/prd-compra-avulsa/api-contract.md) e [do backoffice](../../tasks/prd-compra-avulsa/api-contract-admin.md), [wireframes do Catálogo e vitrine](wireframes-catalogo-vitrine.md) (página do curso, P2/P3), [wireframes da Conta do aluno](wireframes-conta-aluno.md) (AppShell do aluno), [wireframes de Progresso](wireframes-progresso.md) (Início "meus cursos"), [wireframes de Acesso interno](wireframes-acesso-interno.md) (B11 Financeiro, B12), [wireframes de Cortesias](wireframes-cortesias.md) (formato, busca de aluno por e-mail), [componentes](Components.md) e [Design System](../../DESIGN.md).
@@ -59,11 +59,11 @@
 | G6 | Ida ao pagamento | Aviso fixo acima do botão: "Você será levado ao ambiente seguro de pagamento. Cartão, PIX ou boleto são escolhidos lá." O clique cria o pedido e abre o pagamento; botão desabilitado com spinner "Abrindo o pagamento…" até a resposta (G09, sem pedido duplicado) |
 | G7 | O pedido é a única página de situação | Retorno do gateway, retomada, *Meus pedidos* e comprovante por e-mail levam todos a `/pedidos/:orderId`. A tela mostra a situação **real** (RN-CB04): o retorno do aluno nunca confirma nada sozinho |
 | G8 | Estado "Confirmando" vs. "aguardando sem meio" | Os dois são `awaiting-payment` sem meio escolhido. Quem volta com `?resultado=concluido` vê **Confirmando pagamento**; sem o parâmetro ou com `?resultado=saiu` vê **Aguardando sem meio** (Continuar pagamento / Desistir). Ver ponto em aberto P3 |
-| G9 | Atualização sem recarregar | "Confirmando" e "Liberando seu acesso" consultam o pedido de novo a cada 3 s por até 2 min; depois entra o aviso de demora e a consulta passa a 15 s. A troca de estado é anunciada: `aria-live="polite"` na região do estado, foco não se move |
+| G9 | Atualização sem recarregar | "Confirmando" e "Liberando seu acesso" consultam o pedido de novo a cada 3 s por até 2 min; depois entra o aviso de demora e a consulta passa a 15 s. A troca de estado é anunciada: `aria-live="polite"` na região do estado. O foco só se move na troca para **Compra confirmada** (vai a *Ir para o curso*, O3); nas demais trocas e no aviso de demora o foco fica onde está |
 | G10 | Situação nunca só por cor | Toda situação é `Badge` com **ícone + texto**: Aguardando pagamento (`warning`, relógio), Pago (`success`, check), Expirado (`destructive`, relógio riscado), Cancelado (`secondary`, X). O mesmo vale na lista do backoffice |
 | G11 | Desistir | Confirmação em `AlertDialog` (desktop) / `Sheet` inferior (mobile): "Desistir deste pedido?" Cancelar não tem volta; depois o aluno compra de novo pelas condições vigentes (RN-V07, DP-04). Fica visível só em pedido aguardando pagamento |
 | G12 | Ver boleto / Ver código PIX | O botão chama `startOrderPayment` e leva o aluno ao endereço das instruções no gateway (o contrato devolve o endereço, não o código). A plataforma não mostra QR Code nem linha digitável próprios e não guarda o endereço (RN-CB01) |
-| G13 | Meus pedidos | Entra na Sidebar do aluno (item **Meus pedidos**, ícone `receipt`, abaixo de Início) e no menu da conta (`DropdownMenu`), como atalho. Lista do mais recente ao mais antigo, 10 por página. Pendente em destaque com `Card` de borda de acento e o prazo |
+| G13 | Meus pedidos | Entra na Sidebar do aluno (item **Meus pedidos**, ícone `receipt`, entre Início e Trocar senha) e no menu da conta (`DropdownMenu`), como atalho. Lista do mais recente ao mais antigo, 10 por página. Pendente em destaque com `Card` de borda de acento e o prazo |
 | G14 | Backoffice | A tela "Área reservada" (B11) sai: `/financeiro` passa a ser a lista de pedidos. O item **Financeiro** do menu continua onde está, sob `financeiro.ler`. Título da página: **Pedidos** (sobretítulo FINANCEIRO) |
 | G15 | Filtros do backoffice | Situação, curso, período (de/até, datas inclusivas, DD/MM/AAAA) e e-mail do aluno. O e-mail usa a mesma busca de aluno de Cortesias: nunca vai para a URL; o filtro guarda a conta localizada. Filtros aplicam em **Filtrar**; **Limpar filtros** volta ao padrão |
 | G16 | Detalhe só leitura | Nenhum botão de ação sobre pedido, pagamento ou acesso (DP-09). A referência do gateway aparece com botão de copiar, só isso |
@@ -155,6 +155,7 @@ Reusa o AppShell aprovado em CAP-001 e mantido em CAP-017: `Sidebar` 264, `Topba
 │                  ├──────────────────────────────────────────────────────────────────────┤
 │ ▣ Início         │ bg-muted                                                             │
 │ 🧾 Meus pedidos  │   << C1 · O · M >>                                                   │
+│ 🔑 Trocar senha  │                                                                      │
 │ Sidebar 264      │                                                                      │
 └──────────────────┴──────────────────────────────────────────────────────────────────────┘
 ```
@@ -391,14 +392,14 @@ O3  Compra confirmada  (paid com accessGrantedAt; o curso aparece em "meus curso
 │ │ (✓)  Compra confirmada                                                      (H3)  │ │
 │ │ Seu acesso a .NET do zero à API está liberado. Acesso por 12 meses, contados a    │ │
 │ │ partir da liberação do acesso.                                                    │ │
-│ │ Enviamos o comprovante para o seu e-mail.                                         │ │
+│ │ Você receberá o comprovante por e-mail.                                           │ │
 │ │                                              [ Ir para o curso ]                  │ │
 │ └───────────────────────────────────────────────────────────────────────────────────┘ │
 Mudança de "Confirmando pagamento" para "Compra confirmada": anunciada a leitor de tela
 (`aria-live="polite"`, "Compra confirmada"); o foco vai para [ Ir para o curso ].
 Vitalícia: "Seu acesso a … está liberado. Acesso vitalício."
 [ Ir para o curso ] leva a /aulas/{continueLessonId} do curso (listMyCourses, de CAP-017).
-A linha "Enviamos o comprovante para o seu e-mail." aparece só quando o pedido passou por aqui
+A linha "Você receberá o comprovante por e-mail." aparece só quando o pedido passou por aqui
 na mesma visita; ao abrir o pedido pago depois, o painel mostra só o texto de acesso e o botão.
 
 O4  Liberando seu acesso  (paid sem accessGrantedAt, ou concessão ainda não visível em "meus cursos")
@@ -514,18 +515,26 @@ O13  Mobile 390 — Compra confirmada (O3), as outras variantes mantêm a mesma 
 │ │ API está liberado. Acesso por│ │
 │ │ 12 meses, contados a partir  │ │
 │ │ da liberação do acesso.      │ │
-│ │ Enviamos o comprovante para  │ │
-│ │ o seu e-mail.                │ │
+│ │ Você receberá o comprovante  │ │
+│ │ por e-mail.                  │ │
 │ │ [ Ir para o curso ]          │ │
 │ └──────────────────────────────┘ │
 │ ┌─ Resumo do pedido ───────────┐ │
+│ │ Curso      .NET do zero à API│ │
+│ │ Opção      Acesso por 12 meses│ │
+│ │ Vigência   Acesso por 12     │ │
+│ │ meses, contados a partir da  │ │
+│ │ liberação do acesso          │ │
+│ │ Valor      R$ 497,00         │ │
 │ │ Meio       Cartão de crédito │ │
 │ │ Situação   ( ✓ Pago )        │ │
 │ └──────────────────────────────┘ │
 │ _← Meus pedidos_                 │
 └──────────────────────────────────┘
 Ações de O5…O10 ficam em largura total, empilhadas, com a ação principal primeiro e [ Desistir… ]
-como `Button` outline. O8 vira Sheet inferior.
+como `Button` outline. O8 vira Sheet inferior. O Resumo do pedido repete todas as linhas do desktop
+(Curso, Opção, Vigência, Valor, Meio, Situação) em todas as variantes mobile, inclusive as pendentes
+(O5, O7) e as de Expirado e Cancelado.
 ```
 
 ### M · Meus pedidos — `/pedidos`
@@ -585,7 +594,7 @@ M5  Mobile 390 — cada pedido vira um card (sem tabela)
 │ MINHA CONTA                      │
 │ Meus pedidos                     │
 │ ┌─ pendente (destaque) ────────┐ │
-│ │ #000124                      │ │
+│ │ #000124 · 06/10/2026         │ │
 │ │ React na prática             │ │
 │ │ Acesso por 6 meses           │ │
 │ │ R$ 297,00 · Boleto           │ │
@@ -621,13 +630,13 @@ N1  Sidebar (desktop) e Sheet (mobile)               N2  Menu da conta (Dropdown
 │                  │                                  │ ─────────────────────────── │
 │ ▣ Início         │ ◀ ativo em /                     │ 🧾 Meus pedidos             │
 │ 🧾 Meus pedidos  │ ◀ ativo em /pedidos e            │ 🔑 Trocar senha             │
-│                  │   /pedidos/:orderId              │ ↪ Sair                      │
+│ 🔑 Trocar senha  │   /pedidos/:orderId              │ ↪ Sair                      │
 └──────────────────┘                                  └─────────────────────────────┘
 ```
 
-- **Meus pedidos** é o segundo item da Sidebar, abaixo de Início, e fica ativo também no detalhe do pedido (`aria-current="page"` na lista; no detalhe, na Sidebar o item fica ativo e o caminho "← Meus pedidos" volta à lista).
+- **Meus pedidos** é o segundo item da Sidebar, entre Início e Trocar senha, e fica ativo também no detalhe do pedido (`aria-current="page"` na lista; no detalhe, na Sidebar o item fica ativo e o caminho "← Meus pedidos" volta à lista).
 - O atalho no menu da conta repete o destino, sem badge nem contador.
-- A Sidebar deixa de ter só Início (mudança sobre G10 de CAP-017, que dizia "nenhum item novo"; aqui ele nasce porque a tela nova precisa de um ponto de entrada fixo).
+- A Sidebar de hoje já tem **Início** e **Trocar senha** (`app-shell.tsx`); **Trocar senha** não muda de lugar nem de destino e continua também no menu da conta. O item novo entra entre os dois (mudança sobre G10 de CAP-017, que dizia "nenhum item novo"; aqui ele nasce porque a tela nova precisa de um ponto de entrada fixo).
 
 ---
 
@@ -803,6 +812,9 @@ F3.g  Mobile 390 — os Cards empilham; cada linha "rótulo: valor" vira rótulo
 │ .NET do zero à API               │
 │ Opção · Valor                    │
 │ Acesso por 12 meses · R$ 497,00  │
+│ Vigência prometida               │
+│ Acesso por 12 meses, contados a  │
+│ partir da liberação do acesso    │
 │ PAGAMENTO                        │
 │ Meio: Cartão de crédito          │
 │ Referência no gateway            │
@@ -837,8 +849,174 @@ F3.g  Mobile 390 — os Cards empilham; cada linha "rótulo: valor" vira rótulo
 
 ## 7. Fora deste documento
 
-- **Figma:** task 2.0, depois da aprovação do ASCII.
+- **Figma:** na [seção 8](#8-handoff-do-figma--aprovado) (task 2.0), aprovado pelo responsável em 2026-10-05.
 - **Comprovante por e-mail (RF-09):** o texto é do modelo de Notificação (task 8.0), não de tela.
 - **Página de pagamento:** é do gateway (DP-01); este documento registra só o que o aluno vê antes de ir e ao voltar.
 - **Backoffice do Catálogo:** a contagem de cliques rotulada "cliques antes da venda abrir" (DP-06) não é desenhada aqui (ponto P9).
 - **Ação do financeiro sobre pedido:** fora da entrega (DP-09).
+
+---
+
+## 8. Handoff do Figma — aprovado
+
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-10-05, nas páginas `Fluxo — Compra` e `Screens — Compra`, sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem estados. A revisão começa pelo [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=295-88).
+
+> **Aprovação:** Figma aprovado pelo responsável em 2026-10-05 ("Aprovado!"). Código de tela liberado a partir da task 4.0.
+
+### 8.1 Fluxos e navegação
+
+| Artefato | Link e `node-id` |
+|---|---|
+| Índice de revisão | [295:88](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=295-88) |
+| Fluxo 1 · Aluno — comprar um curso | [295:170](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=295-170) |
+| Fluxo 2 · Aluno — PIX/boleto, retomar, desistir, Meus pedidos | [295:273](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=295-273) |
+| Fluxo 3 · Financeiro — consultar pedidos | [295:376](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=295-376) |
+| Página Fluxo — Compra | [284:13062](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=284-13062) |
+| Página Screens — Compra | [284:13063](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=284-13063) |
+
+Cada passo dos fluxos tem o link **Revisar tela →**, que abre o frame correspondente pelo link do arquivo. B12 (sem permissão, [90:2842](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=90-2842)) e B1 (sessão encerrada, [70:199](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=70-199)) reusam os frames de Acesso interno. Os dados são ilustrativos e o desenho não executa pagamento, consulta nem autorização; foco, teclado, polling, idempotência e regras do servidor seguem as seções 1 a 6.
+
+### 8.2 Inventário de telas e estados
+
+Desktop em 1440 de largura (altura 900, ou a do conteúdo quando ele passa disso); mobile em 390. Light em todas as telas; Dark em quatro (O3, M1, F1.b e C1.b). Reuso do AppShell do aluno e do backoffice, `Button`, `Badge`, `Avatar`, `Empty State`, `OfferOption` e `Sidebar Nav Item` do design system, com variáveis e estilos de texto do arquivo (sem valor fixo de cor).
+
+**Ajustes de desenho sem mudar decisão:** estados a mais que o ASCII listava: O3.b (vitalícia, aberta depois), O5.b e O7.b (pagamento indisponível ao obter instruções), O8.b (erro na desistência), F2.c (período inválido), F3.b1 a F3.b5 (variantes do detalhe), F2.b (estados da busca de e-mail), e as versões mobile de M2, M3 e M4. O ícone da situação é um vetor `lucide` (relógio, check, relógio riscado, X), nunca só cor; o Skeleton usa `secondary`. Quatro ícones lucide novos foram criados como componentes: `Icon/receipt`, `Icon/timer-off`, `Icon/loader-circle` e `Icon/copy`.
+
+**Aplicação das recomendações da revisão da task 1.0:** R2 (foco): uma regra só, no G9; R3 (campos completos): vigência no F3.g, data de criação no pendente do M5 e Resumo completo nas variantes mobile do pedido (O13, O5.m, O7.m, O9.m, O10.m); R4 (navegação): a Sidebar do desenho mostra **Início**, **Meus pedidos** e **Trocar senha**, nessa ordem, como no `AppShell` de hoje.
+
+**Texto proposto para aprovação (R1):** no estado Compra confirmada (O3 e O13), o Figma usa **"Você receberá o comprovante por e-mail."** no lugar de "Enviamos o comprovante para o seu e-mail." do ASCII, porque a concessão pode acontecer antes de o envio estar confirmado (RF-09). Aprovado pelo responsável em 2026-10-05; o ASCII de O3 e O13 foi alinhado no mesmo registro.
+
+
+#### 🧩 Composições propostas — Compra — [grupo 287:37138](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=287-37138)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| OrderStatusBadge | 562 × 48 | [287:37139](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=287-37139) |
+| PurchaseSummaryCard | 640 × 404 | [294:39040](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39040) |
+| OrderStatePanel | 760 × 246 | [294:39057](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39057) |
+| OrderRow | 1112 × 116 | [294:39069](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39069) |
+| FinanceOrderRow | 1110 × 66 | [294:39096](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39096) |
+| FinanceFilterBar | 1112 × 328 | [294:39130](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39130) |
+| OrderTimeline | 760 × 174 | [294:39150](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39150) |
+
+#### P2 · Página do curso — botão Comprar (CAP-003) — [grupo 294:2003](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-2003)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| P2.a · Opções de acesso (lateral) 1440 | 1440 × 659 | [294:2027](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-2027) |
+| P2.b · Opções de acesso | 390 × 671 | [294:2029](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-2029) |
+| P2.c · Login/cadastro vindo de uma compra — recorte | 520 × 252 | [294:2049](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-2049) |
+
+#### C1 · Resumo da compra — /comprar/:offerId — [grupo 288:84](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-84)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| C1.a · Resumo | 1440 × 900 | [288:85](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-85) |
+| C1.b · Com aviso de acesso existente | 1440 × 900 | [288:151](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-151) |
+| C1.c · Pedido pendente na mesma opção | 1440 × 900 | [288:225](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-225) |
+| C1.d · Opção indisponível | 1440 × 900 | [288:280](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-280) |
+| C1.e · Pagamento indisponível | 1440 × 900 | [288:346](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-346) |
+| C1.f · Carregando | 1440 × 900 | [288:427](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-427) |
+| C1.g · Erro ao carregar | 1440 × 900 | [288:472](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-472) |
+| C1.h · Resumo | 390 × 844 | [288:522](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=288-522) |
+
+#### O · Pedido — /pedidos/:orderId — [grupo 289:286](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-286)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| O1 · Confirmando pagamento | 1440 × 900 | [289:287](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-287) |
+| O2 · Confirmação demorando | 1440 × 900 | [289:363](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-363) |
+| O3 · Compra confirmada | 1440 × 900 | [289:448](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-448) |
+| O3.b · Compra confirmada, vitalícia, aberta depois | 1440 × 900 | [289:528](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-528) |
+| O4 · Liberando seu acesso | 1440 × 900 | [289:604](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-604) |
+| O5 · Aguardando pagamento do boleto | 1440 × 900 | [289:685](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-685) |
+| O5.b · Boleto — erro ao obter instruções | 1440 × 982 | [289:769](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-769) |
+| O6 · Aguardando pagamento do PIX | 1440 × 900 | [289:865](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-865) |
+| O7 · Aguardando pagamento sem meio escolhido | 1440 × 900 | [289:949](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-949) |
+| O7.b · Pagamento indisponível ao continuar | 1440 × 958 | [289:1033](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1033) |
+| O8 · Confirmar desistência (AlertDialog) | 1440 × 900 | [289:1129](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1129) |
+| O8.b · Desistência com erro | 1440 × 900 | [289:1228](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1228) |
+| O9 · Expirado | 1440 × 918 | [289:1331](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1331) |
+| O10 · Cancelado | 1440 × 918 | [289:1425](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1425) |
+| O11 · Pedido não encontrado | 1440 × 900 | [289:1510](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1510) |
+| O12.a · Carregando o pedido | 1440 × 900 | [289:1558](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1558) |
+| O12.b · Erro ao carregar o pedido | 1440 × 900 | [289:1607](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1607) |
+| O12.c · Consulta de acompanhamento falhou | 1440 × 900 | [289:1654](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=289-1654) |
+
+#### O · Pedido — Mobile 390 — [grupo 290:796](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-796)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| O1.m · Confirmando pagamento | 390 × 844 | [290:797](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-797) |
+| O13 · Compra confirmada | 390 × 898 | [290:852](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-852) |
+| O5.m · Aguardando pagamento do boleto | 390 × 974 | [290:911](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-911) |
+| O7.m · Aguardando pagamento sem meio escolhido | 390 × 934 | [290:971](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-971) |
+| O8.m · Confirmar desistência (Sheet inferior) | 390 × 974 | [290:1031](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-1031) |
+| O9.m · Expirado | 390 × 976 | [290:1102](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-1102) |
+| O10.m · Cancelado | 390 × 1040 | [290:1172](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=290-1172) |
+
+#### M · Meus pedidos — /pedidos — [grupo 291:960](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-960)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| M1 · Com pedidos | 1440 × 900 | [291:961](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-961) |
+| M2 · Vazio | 1440 × 900 | [291:1115](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1115) |
+| M3 · Carregando | 1440 × 900 | [291:1167](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1167) |
+| M4 · Erro ao carregar | 1440 × 900 | [291:1214](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1214) |
+| M5 · Meus pedidos | 390 × 1130 | [291:1264](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1264) |
+| M2.m · Vazio | 390 × 844 | [291:1351](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1351) |
+| M3.m · Carregando | 390 × 844 | [291:1379](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1379) |
+| M4.m · Erro ao carregar | 390 × 844 | [291:1401](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1401) |
+
+#### N · Navegação da conta — onde Meus pedidos aparece — [grupo 291:1427](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1427)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| N1.a · Sidebar (desktop) — ativo em / | 264 × 360 | [291:1428](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1428) |
+| N1.b · Sidebar (desktop) — ativo em /pedidos e /pedidos/:orderId | 264 × 360 | [291:1453](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1453) |
+| N1.c · Sheet (mobile) — menu ☰ | 390 × 844 | [291:1479](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1479) |
+| N2 · Menu da conta (DropdownMenu) | 232 × 195 | [291:1507](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=291-1507) |
+
+#### F · Pedidos — lista e filtros — /financeiro — [grupo 292:1223](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1223)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| F1.a · Lista com filtro aplicado | 1440 × 900 | [292:1277](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1277) |
+| F1.b · Lista sem filtros | 1440 × 1065 | [292:1492](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1492) |
+| F1.c · Carregando | 1440 × 900 | [292:1559](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1559) |
+| F1.d · Sem resultado com filtros | 1440 × 900 | [292:1631](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1631) |
+| F1.e · Sem pedidos | 1440 × 900 | [292:1701](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1701) |
+| F1.f · Erro ao carregar | 1440 × 900 | [292:1772](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1772) |
+| F2.c · Período inválido | 1440 × 1087 | [292:1986](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-1986) |
+
+#### F · Pedido — detalhe só leitura — /financeiro/pedidos/:orderId — [grupo 292:2048](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2048)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| F3.a · Pedido pago | 1440 × 1136 | [292:2050](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2050) |
+| F3.b1 · Aguardando pagamento | 1440 × 996 | [292:2139](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2139) |
+| F3.b2 · Pago, acesso em liberação | 1440 × 1100 | [292:2214](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2214) |
+| F3.b3 · Expirado | 1440 × 960 | [292:2298](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2298) |
+| F3.b4 · Cancelado | 1440 × 960 | [292:2373](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2373) |
+| F3.b5 · Pago depois de expirar (RN-V08) | 1440 × 1136 | [292:2445](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2445) |
+| F3.c · Pedido não encontrado | 1440 × 900 | [292:2534](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2534) |
+| F3.d · Carregando | 1440 × 900 | [292:2564](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2564) |
+| F3.e · Erro ao carregar | 1440 × 900 | [292:2595](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2595) |
+
+#### F · Mobile 390 — lista, filtros e detalhe — [grupo 292:2049](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2049)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| F1.i · Lista | 390 × 926 | [292:2624](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2624) |
+| F2.a · Filtros (Sheet inferior) | 390 × 844 | [292:2710](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2710) |
+| F3.g · Pedido pago | 390 × 1268 | [292:2806](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2806) |
+| F2.b · Busca de e-mail — estados (Light) | 560 × 414 | [292:2904](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=292-2904) |
+
+#### Dark mode — validação de tokens — [grupo 294:39229](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39229)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| O3 · Compra confirmada (Dark) | 1440 × 900 | [294:39230](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39230) |
+| M1 · Com pedidos (Dark) | 1440 × 900 | [294:39282](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39282) |
+| F1.b · Lista sem filtros (Dark) | 1440 × 1065 | [294:39382](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39382) |
+| C1.b · Com aviso de acesso existente (Dark) | 1440 × 900 | [294:39562](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=294-39562) |
