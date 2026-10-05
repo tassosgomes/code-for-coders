@@ -41,6 +41,18 @@ tmux_cmd() {
   fi
 }
 
+# Docker writes rules through iptables-nft, but a leftover iptables-legacy
+# FORWARD DROP policy still filters bridge traffic and blocks container DNS paths.
+clear_legacy_iptables() {
+  command -v iptables-legacy >/dev/null 2>&1 || return 0
+  sudo iptables-legacy -P INPUT ACCEPT || true
+  sudo iptables-legacy -P FORWARD ACCEPT || true
+  sudo iptables-legacy -P OUTPUT ACCEPT || true
+  sudo iptables-legacy -F || true
+  sudo iptables-legacy -t nat -F || true
+  sudo iptables-legacy -t mangle -F || true
+}
+
 stack_is_ready() {
   local url
   for url in "${readiness_urls[@]}"; do
@@ -107,6 +119,7 @@ prepare_local_databases() {
 }
 
 ensure_docker
+clear_legacy_iptables
 
 if stack_is_ready; then
   log "Local application stack is already ready."
@@ -118,6 +131,7 @@ prepare_local_databases
 apply_local_migrations
 
 log "Building and starting APIs, workers, and SPAs..."
+clear_legacy_iptables
 bash "$repository_root/scripts/apps.sh" start
 
 log "Local stack is ready."

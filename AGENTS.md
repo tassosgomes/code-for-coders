@@ -15,7 +15,7 @@
 ## Cursor Cloud specific instructions
 
 * Cloud Agents sobem a stack local completa com `scripts/apps.sh start` (PostgreSQL, RabbitMQ, Valkey, MinIO, smtp4dev, OTel, as oito APIs e os dois SPAs). O endereço do servidor compartilhado fica fora desta VM.
-* `.cursor/cloud-agent-install.sh` instala Docker Engine, o SDK .NET 10 e restaura NuGet e `npm ci` dos SPAs. `.cursor/cloud-agent-start.sh` sobe o `dockerd` com `fuse-overlayfs` (não há systemd), gera `.env` com `scripts/generate-local-env.sh`, aplica `dotnet ef database update` em `localhost` e só então chama `apps.sh start`.
+* `.cursor/cloud-agent-install.sh` instala Docker Engine, o SDK .NET 10 e Node 24, e restaura NuGet e `npm ci` dos SPAs. `.cursor/cloud-agent-start.sh` sobe o `dockerd` com `fuse-overlayfs` (não há systemd), descarta regras órfãs do `iptables-legacy` (senão o bridge não entrega tráfego entre containers), gera `.env` com `scripts/generate-local-env.sh`, aplica `dotnet ef database update` em `localhost` e só então chama `apps.sh start`.
 * `/health/ready` lê as tabelas de outbox. Aplique as migrations antes de esperar os health checks.
 * O install coloca Node 24 em `/usr/local/lib/nodejs` e o antepõe no PATH via `/etc/profile.d/nodejs.sh` (login shells). O `node` de `/exec-daemon` é mais antigo que o exigido pelo `react-router`.
 
