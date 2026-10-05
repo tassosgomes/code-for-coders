@@ -4,9 +4,9 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "target_ref": null,
-  "last_checkpoint": "6dbbdaa",
+  "last_checkpoint": "304bb51",
   "phase": "checkpoint",
-  "active_task": "2.0",
+  "active_task": "4.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -21,15 +21,15 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "2.0"
+    "task": "4.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "focused",
-    "task": "2.0",
-    "run_id": "run.G4G9eIbk",
+    "task": "4.0",
+    "run_id": "run.buc7ubI4",
     "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/2.0_task_review.md"
+    "report": "tasks/prd-compra-avulsa/4.0_task_review.md"
   },
   "history": [
     {
@@ -87,14 +87,45 @@
       "ts": "2026-10-05",
       "event": "2.0 aprovada em focused (0 bloqueantes)",
       "run_id": "run.G4G9eIbk"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "2.0 checkpoint 304bb51"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "4.0 TASK BLOCKED (contratos); responsável decidiu promoção aditiva por task; retomada sem consumir tentativa"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "4.0 aprovada em focused (0 bloqueantes, 3 recomendações)",
+      "run_id": "run.buc7ubI4"
     }
   ],
-  "blocked_tasks": {
-    "2.0": {
-      "reason": "aguardando aprovação humana do Figma e do texto R1",
-      "run_id": "run.uTWghIOd",
-      "attempt_consumed": false,
-      "resolved": "aprovação humana 2026-10-05 (\"Aprovado!\"), incl. R1 e Sidebar; registrada pelo orquestrador"
+  "blocked_tasks": {},
+  "decisions": [
+    {
+      "ts": "2026-10-05",
+      "by": "responsável",
+      "decision": "Contratos: promoção aditiva por task em contracts/ na branch do PRD (só o que a task implementa, validado); versão/README/origem consolidam na conclusão; regra 2 do contracts/README ajustada em 4.0",
+      "trigger": "run.83M43uDs TASK BLOCKED"
     }
-  }
+  ],
+  "open_recommendations": [
+    {
+      "task": "4.0",
+      "id": "R1",
+      "note": "openapi-compra.yaml info.description reescrita; ajustar na consolidação"
+    },
+    {
+      "task": "4.0",
+      "id": "R2",
+      "note": "CreateOrder: pendente + oferta despublicada → 404 em vez do pendente (RN-V06); avaliar em full"
+    },
+    {
+      "task": "4.0",
+      "id": "R3",
+      "note": "acompanhar cobertura agregada ≥70% na full"
+    }
+  ]
 }

@@ -13,7 +13,7 @@ export const useStudentSessionEvents = () => {
 
   useEffect(() => {
     const handleSessionExpired = () => {
-      if (pathname !== paths.home.path && pathname !== paths.studentPasswordChange.path && !pathname.startsWith(`${paths.studentLesson.path.replace(':lessonId', '')}`)) {
+      if (pathname !== paths.home.path && pathname !== paths.studentPasswordChange.path && !pathname.startsWith(`${paths.studentLesson.path.replace(':lessonId', '')}`) && !pathname.startsWith('/comprar/') && !pathname.startsWith('/pedidos/')) {
         return;
       }
 
@@ -24,7 +24,7 @@ export const useStudentSessionEvents = () => {
       queryClient.removeQueries({ queryKey: studentSessionQueryKey });
       window.sessionStorage.setItem(expiredStudentSessionMarker, 'true');
       window.localStorage.removeItem(activeStudentSessionMarker);
-      void navigate(paths.studentLogin.getHref(pathname.startsWith('/aulas/') ? `${pathname}${search}` : undefined), {
+      void navigate(paths.studentLogin.getHref(pathname.startsWith('/aulas/') || pathname.startsWith('/comprar/') || pathname.startsWith('/pedidos/') ? `${pathname}${search}` : undefined), {
         replace: true,
         state: { sessionExpired: true },
       });

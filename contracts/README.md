@@ -12,9 +12,11 @@ atual.
 
 1. Um PRD novo trabalha em `tasks/prd-[slug]/` e usa o arquivo daqui como contrato anterior.
    O recorte do PRD (`api-contract.yaml`, `asyncapi-contract*.yaml` etc.) registra só o que muda.
-2. Ao concluir o PRD, o recorte aprovado é **promovido** para o arquivo da fronteira aqui:
-   juntar operações, canais e componentes; subir `info.version`; acrescentar a linha de origem
-   em `info.description`; validar (abaixo); atualizar a tabela deste README.
+2. Durante o PRD, a branch acrescenta aditivamente ao arquivo da fronteira aqui somente as
+   operações, canais, mensagens e schemas aprovados que cada task implementa, para os testes
+   de conformidade, e valida os arquivos tocados (abaixo). Ao concluir o PRD, consolida o recorte:
+   subir `info.version`, acrescentar a linha de origem em `info.description` e atualizar a tabela
+   deste README. O `main` recebe contrato e código juntos no merge.
 3. Só então a pasta do PRD vai para `tasks/archive/`. Nada em `tasks/archive/` é editado depois.
 4. Mudança de contrato fora de um PRD entra por PR direto neste diretório.
 

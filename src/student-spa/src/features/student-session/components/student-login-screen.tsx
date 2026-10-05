@@ -34,9 +34,9 @@ const isSessionExpiredState = (state: unknown) =>
   && 'sessionExpired' in state
   && state.sessionExpired === true;
 
-type StudentLoginScreenProps = { returnTo?: string };
+type StudentLoginScreenProps = { returnTo?: string; pendingPurchaseHref?: string };
 
-export const StudentLoginScreen = ({ returnTo }: StudentLoginScreenProps) => {
+export const StudentLoginScreen = ({ returnTo, pendingPurchaseHref }: StudentLoginScreenProps) => {
   useDocumentTitle('Entrar');
   const form = useStudentLoginForm();
   const login = useCreateStudentSession();
@@ -73,7 +73,7 @@ export const StudentLoginScreen = ({ returnTo }: StudentLoginScreenProps) => {
       attemptRef.current = null;
       form.reset();
       clearSessionExpiredNotice();
-      await navigate(returnTo ?? paths.home.getHref(), { replace: true });
+      await navigate(returnTo ?? pendingPurchaseHref ?? paths.home.getHref(), { replace: true });
     } catch (error) {
       setNotConfirmed(getLoginErrorCode(error) === 'EMAIL_NOT_CONFIRMED');
     }
@@ -90,6 +90,7 @@ export const StudentLoginScreen = ({ returnTo }: StudentLoginScreenProps) => {
         <CardTitle className="typo-h3"><h1>Entrar</h1></CardTitle>
         <CardDescription>Entre para acessar seu espaço de aprendizagem.</CardDescription>
       </CardHeader>
+      {pendingPurchaseHref ? <CardContent><Alert><InfoIcon aria-hidden="true" /><AlertTitle>Entre para continuar sua compra</AlertTitle><AlertDescription>Depois de entrar, você volta ao resumo da opção que escolheu.</AlertDescription></Alert></CardContent> : null}
       {showSessionExpired ? (
         <CardContent className="pb-0">
           <Alert aria-live="polite" role="status">

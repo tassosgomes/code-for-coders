@@ -21,6 +21,7 @@ public sealed class GlobalExceptionHandler(
         var (status, type, title, detail) = exception switch
         {
             StudentAccountCheckUnavailableException => (503, "about:blank", "Student account check unavailable", "Student account confirmation is unavailable."),
+            OrderRuleException => (422, "about:blank", "Order rejected", exception.Message),
             EntitlementRuleException => (422, "about:blank", "Courtesy rejected", exception.Message),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
@@ -73,6 +74,8 @@ public sealed class GlobalExceptionHandler(
         if (exception is StudentAccountCheckUnavailableException) problemDetails.Extensions["code"] = "STUDENT_ACCOUNT_CHECK_UNAVAILABLE";
         if (exception is EntitlementRuleException entitlement) problemDetails.Extensions["code"] = entitlement.Code;
         if (exception is NotFoundException { Message: "GRANT_NOT_FOUND" }) problemDetails.Extensions["code"] = "GRANT_NOT_FOUND";
+        if (exception is OrderRuleException orderRule) problemDetails.Extensions["code"] = orderRule.Code;
+        if (exception is NotFoundException { Message: "ORDER_NOT_FOUND" }) problemDetails.Extensions["code"] = "ORDER_NOT_FOUND";
         if (exception is CatalogRuleException catalogRule) problemDetails.Extensions["code"] = catalogRule.Code;
         if (exception is NotFoundException && exception.Message is "CATALOG_COURSE_NOT_FOUND" or "OFFER_NOT_FOUND" or GetShowcaseCourse.NotFoundCode or RegisterPurchaseIntent.NotFoundCode)
             problemDetails.Extensions["code"] = exception.Message;

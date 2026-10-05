@@ -456,10 +456,10 @@ components:
           type: string
           minLength: 1
           description: 'Omitido quando o BFF só precisa consultar a sessão; obrigatório para obter JWT de destino.
-            Audiências de aluno autorizadas para o BFF do aluno, neste recorte: `media` e `learning` (C-04). Audiência
-            não autorizada → 403.'
+            Audiências de aluno autorizadas para o BFF do aluno: `media`, `learning` e, a partir de 1.2.0, `commerce`
+            (C-03). Audiência não autorizada → 403.'
           examples:
-          - media
+          - commerce
     SessionValidated:
       type: object
       additionalProperties: false

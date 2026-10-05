@@ -64,7 +64,7 @@ public sealed class FinanceAreaJwtBearerOptionsSetup(
             OnForbidden = context => WriteProblemAsync(
                 context.HttpContext,
                 StatusCodes.Status403Forbidden,
-                "PERMISSION_DENIED",
+                context.HttpContext.GetEndpoint()?.Metadata.GetOrderedMetadata<IAuthorizeData>().Any(data => data.Policy == StudentOrderPolicies.Use) == true ? "SCOPE_DENIED" : "PERMISSION_DENIED",
                 "Sem permissão para esta área."),
         };
     }

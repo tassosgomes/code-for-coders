@@ -130,46 +130,43 @@ paths:
     - name: offerId
       in: path
       required: true
-      description: Oferta publicada cujo botão *Comprar* foi clicado.
+      description: Oferta publicada.
       schema:
         type: string
         format: uuid
     post:
       tags:
       - Vitrine
-      summary: Registrar um clique em Comprar
+      summary: Registrar um clique em Comprar (depreciada)
       description: |
-        Soma um à contagem anônima da oferta (RF-09, OD53) e responde que a compra estará disponível em breve. Sem corpo. Nada que identifique a pessoa é recebido ou guardado: nem sessão, nem cookie, nem identificador de navegador, nem IP (G10, G26). A `Idempotency-Key`, gerada por clique no navegador, evita contar duas vezes a repetição automática de uma mesma requisição (G09). Não exige prova CSRF: não usa sessão, e o pior efeito de uma requisição forjada é um clique a mais num sinal sem valor financeiro (C-08). Oferta não publicada → 404, sem contar. Quando `CAP-011` existir, o botão passa a levar ao checkout e esta operação deixa de ser chamada.
+        **Depreciada em 1.1.0 (DP-06).** O `student-spa` deixa de chamá-la: *Comprar* leva a `getPurchaseSummary`. Quem ainda chamar recebe 202 com `purchaseAvailability: available` e **nada é contado**; a contagem histórica fica como estava na oferta. Oferta não publicada → 404. Remoção em versão futura.
       operationId: registerPurchaseIntent
+      deprecated: true
       security: []
       parameters:
       - name: Idempotency-Key
         in: header
         required: true
-        description: Chave opaca por clique; repetição na janela de 24 horas não conta de novo.
+        description: Mantida por compatibilidade; sem efeito.
         schema:
           type: string
           minLength: 1
           maxLength: 128
       responses:
         '202':
-          description: Clique contado; a compra ainda não está disponível.
+          description: Nada contado; a compra está disponível.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PurchaseIntentAccepted'
               examples:
-                emBreve:
+                disponivel:
                   value:
-                    purchaseAvailability: coming-soon
+                    purchaseAvailability: available
         '404':
           $ref: '#/components/responses/OfferNotAvailable'
         '429':
           $ref: '#/components/responses/TooManyRequests'
-        '502':
-          $ref: '#/components/responses/ShowcaseUnavailable'
-        '504':
-          $ref: '#/components/responses/ShowcaseTimeout'
 components:
   parameters:
     Page:
@@ -396,8 +393,9 @@ components:
           type: string
           enum:
           - coming-soon
-          description: Estado da compra da oferta. `CAP-011` substitui este fluxo; clientes devem tolerar valor
-            novo.
+          - available
+          description: '`available` a partir de 1.1.0: a compra existe e o clique não é contado. `coming-soon` não
+            volta a ocorrer.'
     Problem:
       type: object
       required:

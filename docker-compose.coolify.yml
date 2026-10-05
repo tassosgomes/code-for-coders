@@ -39,6 +39,7 @@ services:
       StudentSessionTokens__SigningKeyBase64: ${IDENTITY_STUDENT_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StudentSessionTokens__LifetimeMinutes: "5"
       StudentSessionTokens__AudienceScopes__learning: lessons:read
+      StudentSessionTokens__AudienceScopes__commerce: orders:use
       StudentSessionTokens__AudienceScopes__media: playback:use
       StudentSessionTokens__EmailAudiences__0: media
       ASPNETCORE_ENVIRONMENT: Development

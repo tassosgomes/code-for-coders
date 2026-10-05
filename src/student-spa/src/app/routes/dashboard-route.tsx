@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { redirect, type LoaderFunctionArgs } from 'react-router';
 
+import { clearPendingPurchase, savePendingPurchase } from '@/features/student-purchase/utils/pending-purchase';
+
 import { paths } from '@/config/paths';
 import { activeStudentSessionMarker } from '@/config/session-markers';
 import { useMyCourses } from '@/features/student-dashboard/api/get-my-courses';
@@ -18,6 +20,7 @@ export const requireStudentSession = async (args?: LoaderFunctionArgs) => {
     const session = await getCurrentStudentSession();
     queryClient.setQueryData(studentSessionQueryKey, session);
     window.localStorage.setItem(activeStudentSessionMarker, 'true');
+    if (args && new URL(args.request.url).pathname.includes('/comprar/')) clearPendingPurchase();
     return null;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -25,6 +28,9 @@ export const requireStudentSession = async (args?: LoaderFunctionArgs) => {
       const base = import.meta.env.BASE_URL.replace(/\/$/u, '');
       const pathname = url?.pathname;
       const internal = pathname && base && pathname.startsWith(`${base}/`) ? pathname.slice(base.length) : pathname;
+      const offerId = internal?.match(/^\/comprar\/([^/]+)$/u)?.[1];
+      const courseId = url?.searchParams.get('courseId');
+      if (offerId && courseId) savePendingPurchase(offerId, courseId);
       return redirect(paths.studentLogin.getHref(internal ? `${internal}${url?.search ?? ''}${url?.hash ?? ''}` : undefined));
     }
 

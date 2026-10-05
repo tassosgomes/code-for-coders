@@ -68,6 +68,12 @@ channels:
     messages:
       acessoExpirado:
         $ref: '#/components/messages/AcessoExpirado'
+  pedidoCriado:
+    address: vendas.pedido-criado.v1
+    description: Um pedido nasceu, com a condição congelada.
+    messages:
+      pedidoCriado:
+        $ref: '#/components/messages/PedidoCriado'
 operations:
   receberVersaoPublicada:
     action: receive
@@ -183,6 +189,16 @@ operations:
       = `vitalicia` ou `{N}m`; **`motivo` obrigatório** (RN-D11); `praticadoEm` = `occurredAt`. `fatoId` = `eventId`
       do fato `acesso-concedido`. **Ordem de implantação:** `audit` 1.4.0 antes do primeiro ato, senão ele é gravado
       como não conforme (precedente de CAP-005 e CAP-003).'
+  publicarPedidoCriado:
+    action: send
+    summary: Comunicar que um pedido nasceu.
+    channel:
+      $ref: '#/channels/pedidoCriado'
+    messages:
+    - $ref: '#/channels/pedidoCriado/messages/pedidoCriado'
+    description: 'Pelo outbox, na mesma transação da criação (G06). Ao menos uma vez; consumidores deduplicam por
+      `eventId`. Repetição idempotente da criação (mesma `Idempotency-Key`) e retorno do pedido pendente existente
+      (RN-V06) não geram outro fato. Consumidores conhecidos: nenhum nesta entrega (Inteligência de Negócio, depois).'
 components:
   messages:
     OfertaPublicada:
@@ -340,6 +356,34 @@ components:
           origin: courtesy
           expiresAt: '2026-10-01T03:00:00Z'
           occurredAt: '2026-10-01T03:20:00Z'
+    PedidoCriado:
+      name: PedidoCriado
+      title: Pedido criado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PedidoCriadoPayload'
+      examples:
+      - name: dozeMeses
+        headers:
+          correlationId: 00-e5f60718293a4b5c6d7e8f9001122334-e5f60718293a4b5c-01
+        payload:
+          eventId: 6f708192-a3b4-4c5d-8e6f-708192a3b4c5
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          orderNumber: '000123'
+          studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          priceCents: 49700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+          occurredAt: '2026-10-05T14:19:30Z'
   schemas:
     Cabecalho:
       type: object
@@ -599,3 +643,54 @@ components:
           type: string
           format: date-time
           description: Momento em que o fato foi emitido, até uma hora depois de `expiresAt` (DP-10).
+    PedidoCriadoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - orderId
+      - orderNumber
+      - studentId
+      - courseId
+      - offerId
+      - priceCents
+      - currency
+      - accessPeriod
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por fato; chave de deduplicação.
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          pattern: ^[0-9]{6,}$
+        studentId:
+          type: string
+          format: uuid
+          description: Conta de aluno, por referência. Nunca e-mail nem nome.
+        courseId:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        priceCents:
+          type: integer
+          minimum: 1
+          description: Preço congelado, em centavos de real.
+        currency:
+          type: string
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        occurredAt:
+          type: string
+          format: date-time
