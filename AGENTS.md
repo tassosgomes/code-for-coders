@@ -11,7 +11,6 @@
 * O servidor já tem PostgreSQL, RabbitMQ, Valkey, **S3 (MinIO)**, OTel Collector e smtp4dev. Não suba essa infraestrutura localmente (nem o MinIO). A não ser que seja explicitamente solicitado
 * Apenas os containers de aplicação (APIs e SPAs, mais leves) sobem na máquina local, apontando para o servidor: `scripts/remote-infra.sh provision && scripts/remote-infra.sh migrate` (idempotentes, rode `migrate` quando houver novas migrations) e `scripts/apps.sh start --remote`. Use `scripts/remote-infra.sh check` para validar a conectividade.
 * Ao criar uma nova dependência de infraestrutura em `docker-compose.yml`, replique o override em `docker-compose.remote.yml` para o modo `--remote` não depender de hostnames locais (`valkey`, `rabbitmq`, `minio`, etc.).
-* Testes com **Testcontainers** consomem muitos recursos: evite executar vários em paralelo. A disputa por recursos degrada o tempo e a estabilidade dos testes (flakiness). Prefira execução sequencial ou paralelismo mínimo.
 
 ## PRDs arquivados e fonte da verdade
 
