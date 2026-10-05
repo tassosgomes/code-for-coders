@@ -1,3 +1,4 @@
+using CodeForCoders.Commerce.Application.UseCases.Sales.StartOrderPayment;
 using CodeForCoders.Commerce.Api.ApiModels;
 using CodeForCoders.Commerce.Api.Authorization;
 using CodeForCoders.Commerce.Application.Common;
@@ -13,6 +14,7 @@ public static class StudentOrderEndpoints
         var group = endpoints.MapGroup("/internal/v1").RequireAuthorization(StudentOrderPolicies.Use).WithTags("Orders");
         group.MapGet("/offers/{offerId:guid}/purchase-summary", SummaryAsync).WithName("getPurchaseSummaryInternal");
         group.MapPost("/orders", CreateAsync).WithName("createOrderInternal");
+        group.MapPost("/orders/{orderId:guid}/payment-session", PaymentAsync).WithName("startOrderPaymentInternal");
         group.MapGet("/orders/{orderId:guid}", GetAsync).WithName("getStudentOrderInternal");
     }
     private static async Task<IResult> SummaryAsync(Guid offerId, HttpContext context, ITenantContext tenant,
@@ -38,6 +40,20 @@ public static class StudentOrderEndpoints
         var result = await useCase.ExecuteAsync(new(tenant.TenantId!.Value, student, body.OfferId, key,
             System.Diagnostics.Activity.Current?.Id), cancellationToken);
         return result.StatusCode == 201 ? Results.Created($"/internal/v1/orders/{result.Order.OrderId:D}", result.Order) : Results.Ok(result.Order);
+    }
+    private static async Task<IResult> PaymentAsync(Guid orderId, HttpContext context, ITenantContext tenant,
+        IStartOrderPayment useCase, CancellationToken cancellationToken)
+    {
+        if (!SetBuyer(context, tenant, out var student)) return Problem(401, "TOKEN_INVALID");
+        context.Response.Headers.CacheControl = "no-store";
+        var session = await useCase.ExecuteAsync(new(student, orderId), cancellationToken);
+        return Results.Ok(new
+        {
+            orderId = session.OrderId,
+            kind = session.Kind,
+            paymentUrl = session.PaymentUrl,
+            expiresAt = session.ExpiresAt
+        });
     }
     private static bool SetBuyer(HttpContext context, ITenantContext tenant, out Guid student)
     {

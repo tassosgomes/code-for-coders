@@ -58,6 +58,11 @@ public sealed class RabbitMqOptions
     [Required]
     public string EntitlementCourseQueue { get; set; } = "commerce.entitlement-course";
 
+    [Required] public string BillingExchange { get; set; } = "billing.events";
+    [Required] public string SalesPaymentsQueue { get; set; } = "commerce.sales-payments";
+    [Required] public string EntitlementPurchasesQueue { get; set; } = "commerce.entitlement-purchases";
+    [Required] public string SalesAccessGrantedQueue { get; set; } = "commerce.sales-access-granted";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 

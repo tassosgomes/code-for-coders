@@ -1,3 +1,4 @@
+using CodeForCoders.Billing.Domain.Entities;
 using CodeForCoders.Billing.Application.Exceptions;
 using CodeForCoders.Billing.Domain.SeedWork;
 using FluentValidation;
@@ -17,6 +18,10 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail) = exception switch
         {
+            GatewayUnavailableException or GatewayInboxUnavailableException => (503, "about:blank", "Payment temporarily unavailable", "Please retry later."),
+            GatewaySignatureException => (400, "about:blank", "Invalid signature", "Gateway signature or event is invalid."),
+            PaymentRuleException { Code: "INVALID_REQUEST" } => (StatusCodes.Status400BadRequest, "about:blank", "Invalid request", exception.Message),
+            PaymentRuleException => (422, "about:blank", "Payment not available", exception.Message),
             ValidationException => (
                 StatusCodes.Status400BadRequest,
                 "/problems/validation-error",
@@ -55,6 +60,15 @@ public sealed class GlobalExceptionHandler(
             Title = title,
             Detail = detail,
             Instance = httpContext.Request.Path,
+        };
+        problemDetails.Extensions["code"] = exception switch
+        {
+            PaymentRuleException rule => rule.Code,
+            GatewayUnavailableException => "GATEWAY_UNAVAILABLE",
+            GatewayInboxUnavailableException => "TEMPORARILY_UNAVAILABLE",
+            GatewaySignatureException => "SIGNATURE_INVALID",
+            ValidationException => "INVALID_REQUEST",
+            _ => "UNEXPECTED_ERROR"
         };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;

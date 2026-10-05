@@ -17,13 +17,16 @@ public sealed class OrdersCommerceClient(HttpClient client) : IOrdersCommerceCli
             var body = json.RootElement;
             if (body.ValueKind != JsonValueKind.Object) return new(502, "COMMERCE_UNAVAILABLE");
             var status = (int)response.StatusCode;
-            if (status is 200 or 201 && OrderResponseValidation.IsValid(body, input.Path.EndsWith("/purchase-summary", StringComparison.Ordinal)))
+            var payment = input.Path.EndsWith("/payment-session", StringComparison.Ordinal);
+            if (status is 200 or 201 && (payment ? PaymentResponseValidation.IsValid(body, input.Path) : OrderResponseValidation.IsValid(body, input.Path.EndsWith("/purchase-summary", StringComparison.Ordinal))))
                 return new(status, Body: body.Clone());
             var code = body.TryGetProperty("code", out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
             return (status, code) switch
             {
                 (400, "INVALID_REQUEST" or "FIELD_INVALID") => new(400, "VALIDATION_ERROR"),
                 (404, "OFFER_NOT_AVAILABLE" or "ORDER_NOT_FOUND") => new(404, code),
+                (503, "PAYMENT_PROVIDER_UNAVAILABLE") => new(503, code),
+                (422, "ORDER_NOT_PAYABLE") => new(422, code),
                 (422, "IDEMPOTENCY_KEY_REUSED") => new(422, code),
                 _ => new(502, "COMMERCE_UNAVAILABLE")
             };

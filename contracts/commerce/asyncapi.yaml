@@ -2,17 +2,34 @@ asyncapi: 3.0.0
 info:
   title: Commerce — fatos do Catálogo e da Matrícula
   version: 1.1.0
-  description: |
-    Contrato **vigente** consolidado. Fronteira: Aplicação `commerce`.
+  description: 'Contrato **vigente** consolidado. Fronteira: Aplicação `commerce`.
 
-    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte
+    do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
 
     - `tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml` 1.0.0
+
     - `tasks/archive/prd-concessao-acesso/asyncapi-contract.yaml` 1.1.0
 
-    **Notas de prd-vitrine-oferta (1.0.0):** Recorte do primeiro PRD de CAP-003, `tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30. Aplicação `commerce`, módulo Catálogo (dono de Catálogo e Oferta). Recebe `conteudo.versao-publicada.v1` 1.1.0 para manter a própria visão dos cursos publicados (C-01, C-09 de CAP-005). Envia os fatos de oferta e os atos de oferta no envelope da Auditoria 1.3.0 (RN-O15). Nenhuma mensagem carrega nome, e-mail ou dado do visitante.
 
-    **Notas de prd-concessao-acesso (1.1.0):** Recorte do primeiro PRD de CAP-008, `tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01. Aplicação `commerce`, módulo Matrícula e Direito de Acesso (dono do direito de acesso), que evolui o contrato de `commerce` 1.0.0 (`tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml`, módulo Catálogo, sem mudança). Recebe `conteudo.versao-publicada.v1` 1.1.0 em **fila própria**, para manter a própria visão mínima dos cursos em que se pode conceder cortesia (C-01). Envia os fatos `matricula.acesso-concedido.v1` e `matricula.acesso-expirado.v1` e o ato de cortesia no envelope da Auditoria 1.4.0 (RN-D11). Nenhuma mensagem carrega e-mail, nome ou motivo: o aluno vai por referência (RN-21 de Identidade, G23).
+    **Notas de prd-vitrine-oferta (1.0.0):** Recorte do primeiro PRD de CAP-003, `tasks/archive/prd-vitrine-oferta/prd.md`
+    v1.0, aprovado em 2026-09-30. Aplicação `commerce`, módulo Catálogo (dono de Catálogo e Oferta). Recebe `conteudo.versao-publicada.v1`
+    1.1.0 para manter a própria visão dos cursos publicados (C-01, C-09 de CAP-005). Envia os fatos de oferta e
+    os atos de oferta no envelope da Auditoria 1.3.0 (RN-O15). Nenhuma mensagem carrega nome, e-mail ou dado do
+    visitante.
+
+
+    **Notas de prd-concessao-acesso (1.1.0):** Recorte do primeiro PRD de CAP-008, `tasks/archive/prd-concessao-acesso/prd.md`
+    v1.0, aprovado em 2026-10-01. Aplicação `commerce`, módulo Matrícula e Direito de Acesso (dono do direito de
+    acesso), que evolui o contrato de `commerce` 1.0.0 (`tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml`,
+    módulo Catálogo, sem mudança). Recebe `conteudo.versao-publicada.v1` 1.1.0 em **fila própria**, para manter
+    a própria visão mínima dos cursos em que se pode conceder cortesia (C-01). Envia os fatos `matricula.acesso-concedido.v1`
+    e `matricula.acesso-expirado.v1` e o ato de cortesia no envelope da Auditoria 1.4.0 (RN-D11). Nenhuma mensagem
+    carrega e-mail, nome ou motivo: o aluno vai por referência (RN-21 de Identidade, G23).
+
+    '
 id: urn:code-4-coders:commerce
 defaultContentType: application/json
 servers:
@@ -26,8 +43,8 @@ servers:
 channels:
   versaoPublicada:
     address: conteudo.versao-publicada.v1
-    description: Fato de `learning` 1.1.0 (`tasks/archive/prd-nivel-prerequisito-curso/asyncapi-contract.yaml`). Matrícula
-      consome com fila própria, distinta da do Catálogo.
+    description: Fato de `learning` 1.1.0 (`tasks/archive/prd-nivel-prerequisito-curso/asyncapi-contract.yaml`).
+      Matrícula consome com fila própria, distinta da do Catálogo.
     messages:
       versaoPublicada:
         $ref: ../learning/asyncapi.yaml#/components/messages/VersaoPublicada
@@ -74,6 +91,18 @@ channels:
     messages:
       pedidoCriado:
         $ref: '#/components/messages/PedidoCriado'
+  compraConcluida:
+    address: vendas.compra-concluida.v1
+    description: Um pedido foi pago. É a ordem de concessão que Matrícula consome (domain doc de Matrícula §7).
+    messages:
+      compraConcluida:
+        $ref: '#/components/messages/CompraConcluida'
+  pagamentoConfirmado:
+    address: cobranca.pagamento-confirmado.v1
+    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    messages:
+      pagamentoConfirmado:
+        $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoConfirmado
 operations:
   receberVersaoPublicada:
     action: receive
@@ -199,6 +228,65 @@ operations:
     description: 'Pelo outbox, na mesma transação da criação (G06). Ao menos uma vez; consumidores deduplicam por
       `eventId`. Repetição idempotente da criação (mesma `Idempotency-Key`) e retorno do pedido pendente existente
       (RN-V06) não geram outro fato. Consumidores conhecidos: nenhum nesta entrega (Inteligência de Negócio, depois).'
+  publicarCompraConcluida:
+    action: send
+    summary: Ordenar a concessão do pedido pago.
+    channel:
+      $ref: '#/channels/compraConcluida'
+    messages:
+    - $ref: '#/channels/compraConcluida/messages/compraConcluida'
+    description: 'Pelo outbox, na mesma transação que marca o pedido `paid` e que registra o pedido de envio do
+      comprovante (G06): **não existe pedido pago sem a ordem de concessão**. **Um único fato por pedido** (RN-V09):
+      confirmações repetidas, ou confirmação de pedido já pago, não geram outro. Ao menos uma vez; consumidores
+      deduplicam por `eventId` e, para o efeito, por `orderId`. Consumidor: Matrícula (`commerce`); depois, Fiscal
+      (`CAP-016`) e Inteligência de Negócio.'
+  receberPagamentoConfirmado:
+    action: receive
+    summary: Concluir o pedido pago.
+    channel:
+      $ref: '#/channels/pagamentoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoConfirmado/messages/pagamentoConfirmado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Pedido `awaiting-payment`, `expired` ou `cancelled` → `paid` (RN-V08), com `paidAt` = `confirmedAt`,
+      meio, valor confirmado e referência do gateway; publica a compra concluída e o pedido de envio. Pedido já
+      `paid` → confirmado sem efeito. Valor confirmado diferente do congelado **não impede** a conclusão: fica visível
+      no detalhe do backoffice (`paidAmountCents`). Pedido desconhecido (de outra escola ou inexistente) → fila
+      de erro e alerta: não há pedido a concluir, e não se inventa um.'
+  receberCompraConcluidaEmMatricula:
+    action: receive
+    summary: Conceder o acesso comprado.
+    channel:
+      $ref: '#/channels/compraConcluida'
+    messages:
+    - $ref: '#/channels/compraConcluida/messages/compraConcluida'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Matrícula, em **fila própria**, cria a concessão `origin purchase`, `originRef` = `orderId`, com
+      a vigência **da mensagem** (RN-D03 — nunca consulta o Catálogo), contada do momento da concessão (RN-D04),
+      e publica `matricula.acesso-concedido.v1` na mesma transação. **A mesma origem não gera duas concessões**
+      (RN-D10): mensagem repetida para o mesmo pedido é confirmada sem efeito, sem novo fato. Curso que Matrícula
+      não conhece → fila de erro e alerta, sem conceder. Indisponibilidade de Matrícula não perde a ordem: a mensagem
+      fica na fila e a concessão nasce quando ela voltar (RF-07, último critério).'
+  receberAcessoConcedidoEmVendas:
+    action: receive
+    summary: Registrar no pedido que o acesso foi liberado.
+    channel:
+      $ref: '#/channels/acessoConcedido'
+    messages:
+    - $ref: '#/channels/acessoConcedido/messages/acessoConcedido'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Vendas, em fila própria, só para `origin purchase`: preenche `grantId` e `accessGrantedAt` do
+      pedido `originRef` (C-07). Outras origens → confirmado sem efeito. **Exibição**: nada decide acesso a partir
+      disso (RN-V10).'
 components:
   messages:
     OfertaPublicada:
@@ -384,6 +472,56 @@ components:
             type: months
             months: 12
           occurredAt: '2026-10-05T14:19:30Z'
+    CompraConcluida:
+      name: CompraConcluida
+      title: Compra concluída
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/CompraConcluidaPayload'
+      examples:
+      - name: cartaoDozeMeses
+        headers:
+          correlationId: 00-b2c3d4e5f60718293a4b5c6d7e8f9001-b2c3d4e5f6071829-01
+        payload:
+          eventId: 92a3b4c5-d6e7-4f80-9192-a3b4c5d6e7f8
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          orderNumber: '000123'
+          studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          priceCents: 49700
+          paidAmountCents: 49700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+          paymentMethod: card
+          paidAt: '2026-10-05T14:21:02Z'
+          occurredAt: '2026-10-05T14:21:03Z'
+      - name: boletoVitalicioTardio
+        headers:
+          correlationId: 00-a3b4c5d6e7f8091a2b3c4d5e6f708192-a3b4c5d6e7f8091a-01
+        payload:
+          eventId: a3b4c5d6-e7f8-4091-82a3-b4c5d6e7f809
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 3d4e5f60-7182-4a93-8ba4-b5c6d7e8f9a0
+          orderNumber: '000131'
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerId: 8d9e0f1a-2b3c-4d4e-9f5a-6b7c8d9e0f1a
+          priceCents: 89700
+          paidAmountCents: 89700
+          currency: BRL
+          accessPeriod:
+            type: lifetime
+          paymentMethod: boleto
+          paidAt: '2026-10-12T11:05:00Z'
+          occurredAt: '2026-10-12T11:05:02Z'
   schemas:
     Cabecalho:
       type: object
@@ -691,6 +829,78 @@ components:
           const: BRL
         accessPeriod:
           $ref: '#/components/schemas/Vigencia'
+        occurredAt:
+          type: string
+          format: date-time
+    CompraConcluidaPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - orderId
+      - orderNumber
+      - studentId
+      - courseId
+      - offerId
+      - priceCents
+      - paidAmountCents
+      - currency
+      - accessPeriod
+      - paymentMethod
+      - paidAt
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por pedido; chave de deduplicação.
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+          description: O pedido pago. É o `originRef` da concessão (RN-D02) e a chave que impede segunda concessão
+            (RN-D10).
+        orderNumber:
+          type: string
+          pattern: ^[0-9]{6,}$
+        studentId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+          description: O direito é sobre o curso, não sobre uma versão (RN-D08).
+        offerId:
+          type: string
+          format: uuid
+          description: A oferta comprada, para rastreabilidade (RN-O11). Matrícula não a consulta.
+        priceCents:
+          type: integer
+          minimum: 1
+          description: Preço congelado no pedido.
+        paidAmountCents:
+          type: integer
+          minimum: 1
+          description: Valor confirmado pelo gateway.
+        currency:
+          type: string
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        paymentMethod:
+          type: string
+          enum:
+          - card
+          - pix
+          - boleto
+          description: Consumidores devem tolerar valor novo.
+        paidAt:
+          type: string
+          format: date-time
+          description: Momento da confirmação do pagamento. A vigência **não** conta daqui, e sim da concessão (RN-D04).
         occurredAt:
           type: string
           format: date-time

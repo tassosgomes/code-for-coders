@@ -170,7 +170,7 @@ components:
         description:
           type: string
           minLength: 1
-          maxLength: 200
+          maxLength: 263
           description: Texto exibido na página de pagamento e no extrato do gateway — título do curso e nome da opção
             congelados no pedido. Sem dado pessoal.
         successUrl:

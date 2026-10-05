@@ -5,5 +5,5 @@ public sealed record StudentOrder(Guid OrderId, string Number, string Status, Or
 {
     public static StudentOrder FromOrder(CodeForCoders.Commerce.Domain.Entities.Order order) => new(order.Id, order.Number, order.Status,
         new(order.CourseId, order.CourseTitle), new(order.OfferId, order.OfferName), order.PriceCents, order.Currency,
-        new(order.PeriodType, order.PeriodMonths), null, null, null, null, order.CreatedAt, null, null, null);
+        new(order.PeriodType, order.PeriodMonths), order.PaymentMethod, null, order.PaymentPageExpiresAt, order.AccessGrantedAt, order.CreatedAt, order.PaidAt, null, null);
 }

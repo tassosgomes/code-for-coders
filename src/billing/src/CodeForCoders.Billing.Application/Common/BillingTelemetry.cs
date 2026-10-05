@@ -29,4 +29,10 @@ public static class BillingTelemetry
     public static readonly Counter<long> BillingsManualTreatmentRequired = Meter.CreateCounter<long>(
         "billing.delivery.manual_treatment_required",
         unit: "{request}");
+    public static readonly Counter<long> GatewayEventsReceived = Meter.CreateCounter<long>(
+        "billing.gateway.events.received",
+        unit: "{event}");
+    public static readonly Counter<long> GatewaySignaturesRefused = Meter.CreateCounter<long>(
+        "billing.gateway.signatures.refused",
+        unit: "{request}");
 }

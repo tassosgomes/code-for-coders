@@ -16,6 +16,11 @@ public sealed class ConventionTest
             .AndShould().Be(UseCases)
             .Check(Architecture);
 
+    [Fact(DisplayName = nameof(GatewayImplementationStaysInsideAdapterOrCompositionRoot))]
+    public void GatewayImplementationStaysInsideAdapterOrCompositionRoot()
+        => Types().That().Are(DomainLayer).Or().Are(ApplicationLayer).Or().Are(ApiLayer).And().AreNot(ApiExtensions)
+            .Should().NotDependOnAny(Types().That().HaveFullNameContaining("CodeForCoders.Billing.Infra.Gateway.")).Check(Architecture);
+
     [Fact(DisplayName = nameof(NoMediatR))]
     [Trait("Architecture", "Conventions")]
     public void NoMediatR()

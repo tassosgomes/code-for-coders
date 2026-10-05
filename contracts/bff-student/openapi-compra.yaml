@@ -2,21 +2,21 @@ openapi: 3.1.0
 info:
   title: BFF do aluno — compra e pedidos
   version: 1.0.0
-  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo** da
-    fronteira `student-spa` → `bff-student` para a compra: resumo, pedido, ida ao pagamento, desistência e *Meus pedidos*
-    (RF-01 a RF-06, RF-10).
+  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
+    novo** da fronteira `student-spa` → `bff-student` para a compra: resumo, pedido, ida ao pagamento, desistência
+    e *Meus pedidos* (RF-01 a RF-06, RF-10).
 
 
     O BFF não decide nada: valida a sessão do aluno em Identity (ADR-0003), obtém o JWT de aluno com audiência `commerce`
-    (C-03) e repassa a `commerce`, que é o dono do pedido. Toda operação exige a sessão do aluno: um visitante recebe 401
-    e o cliente o leva a entrar ou criar conta, voltando depois à mesma opção de compra (RF-01). Escritas exigem `X-CSRF-Token`
-    (G18). As operações de vitrine, conta, aula e progresso não mudam; o clique anônimo de intenção de compra é depreciado
-    em `api-contract-vitrine.yaml`.
+    (C-03) e repassa a `commerce`, que é o dono do pedido. Toda operação exige a sessão do aluno: um visitante recebe
+    401 e o cliente o leva a entrar ou criar conta, voltando depois à mesma opção de compra (RF-01). Escritas exigem
+    `X-CSRF-Token` (G18). As operações de vitrine, conta, aula e progresso não mudam; o clique anônimo de intenção
+    de compra é depreciado em `api-contract-vitrine.yaml`.
 
 
-    O pagamento acontece fora da plataforma, na página do gateway (DP-01): o BFF devolve o endereço, o cliente navega para
-    ele, e o aluno volta para a página de retorno do pedido. Nenhum dado de cartão, CPF ou nome do pagador passa por aqui
-    (RN-CB01).
+    O pagamento acontece fora da plataforma, na página do gateway (DP-01): o BFF devolve o endereço, o cliente navega
+    para ele, e o aluno volta para a página de retorno do pedido. Nenhum dado de cartão, CPF ou nome do pagador
+    passa por aqui (RN-CB01).
 
     '
   contact:
@@ -37,8 +37,8 @@ paths:
       tags:
       - Compra
       summary: Resumir a compra de uma opção
-      description: 'Curso, opção, preço e vigência que o pedido congelaria agora (RF-01), o aviso de acesso já existente (RF-02)
-        e o pedido pendente nesta opção, se houver (RN-V06). Sem efeito. Repasse de `getPurchaseSummaryInternal`.
+      description: 'Curso, opção, preço e vigência que o pedido congelaria agora (RF-01), o aviso de acesso já existente
+        (RF-02) e o pedido pendente nesta opção, se houver (RN-V06). Sem efeito. Repasse de `getPurchaseSummaryInternal`.
 
         '
       operationId: getPurchaseSummary
@@ -82,9 +82,9 @@ paths:
           $ref: '#/components/responses/UpstreamUnavailable'
         '504':
           $ref: '#/components/responses/UpstreamTimeout'
-      x-frontend-notes: 'Com `pendingOrderId`, o botão leva a `/pedidos/{pendingOrderId}` em vez de criar pedido. Com `existingAccess`,
-        mostra "Você já tem acesso a este curso até DD/MM/AAAA (cortesia)" ou "acesso vitalício", sem bloquear. 401 → entrar
-        ou criar conta, voltando para esta opção.
+      x-frontend-notes: 'Com `pendingOrderId`, o botão leva a `/pedidos/{pendingOrderId}` em vez de criar pedido.
+        Com `existingAccess`, mostra "Você já tem acesso a este curso até DD/MM/AAAA (cortesia)" ou "acesso vitalício",
+        sem bloquear. 401 → entrar ou criar conta, voltando para esta opção.
 
         '
   /orders:
@@ -92,9 +92,10 @@ paths:
       tags:
       - Compra
       summary: Criar o pedido de uma opção
-      description: 'Cria o pedido com preço e vigência congelados agora (RF-03). Se já existe pedido do aluno aguardando pagamento
-        nesta opção, devolve **esse** com 200, sem criar outro (RN-V06). `Idempotency-Key` gerada pelo cliente por confirmação:
-        o mesmo clique repetido pela rede devolve o mesmo pedido (RF-03, último critério). Repasse de `createOrderInternal`.
+      description: 'Cria o pedido com preço e vigência congelados agora (RF-03). Se já existe pedido do aluno aguardando
+        pagamento nesta opção, devolve **esse** com 200, sem criar outro (RN-V06). `Idempotency-Key` gerada pelo
+        cliente por confirmação: o mesmo clique repetido pela rede devolve o mesmo pedido (RF-03, último critério).
+        Repasse de `createOrderInternal`.
 
         '
       operationId: createOrder
@@ -160,10 +161,10 @@ paths:
       tags:
       - Meus pedidos
       summary: Obter um pedido meu
-      description: 'A situação real do pedido, para a página de retorno e para a retomada (RF-05, RF-06). A página de retorno
-        consulta de novo a cada poucos segundos enquanto o pedido estiver `awaiting-payment` sem `pendingPayment` depois de
-        o aluno ter concluído na página do gateway ("Confirmando"), e para quando a situação muda; passados 2 minutos, mostra
-        o aviso de demora (RF-05). Pedido de outro aluno → 404, como inexistente. Repasse de `getStudentOrderInternal`.
+      description: 'A situação real do pedido, para a página de retorno e para a retomada (RF-05, RF-06). A página
+        de retorno consulta de novo a cada poucos segundos enquanto o pedido estiver `awaiting-payment` sem `pendingPayment`
+        depois de o aluno ter concluído na página do gateway ("Confirmando"), e para quando a situação muda; passados
+        2 minutos, mostra o aviso de demora (RF-05). Pedido de outro aluno → 404, como inexistente. Repasse de `getStudentOrderInternal`.
 
         '
       operationId: getMyOrder
@@ -192,19 +193,68 @@ paths:
           $ref: '#/components/responses/UpstreamUnavailable'
         '504':
           $ref: '#/components/responses/UpstreamTimeout'
-      x-frontend-notes: 'A volta do gateway chega como `/pedidos/{orderId}?resultado=concluido` ou `?resultado=saiu`. `paid`
-        com `accessGrantedAt` → *Ir para o curso*; `paid` sem ele → "Liberando seu acesso", consultando de novo. A mudança
-        para "Compra confirmada" é anunciada a leitor de tela.
+      x-frontend-notes: 'A volta do gateway chega como `/pedidos/{orderId}?resultado=concluido` ou `?resultado=saiu`.
+        `paid` com `accessGrantedAt` → *Ir para o curso*; `paid` sem ele → "Liberando seu acesso", consultando de
+        novo. A mudança para "Compra confirmada" é anunciada a leitor de tela.
 
         '
+  /orders/{orderId}/payment-session:
+    parameters:
+    - $ref: '#/components/parameters/OrderId'
+    post:
+      tags:
+      - Compra
+      summary: Ir para o pagamento
+      description: 'Devolve o endereço do gateway para onde o cliente navega: a página de pagamento ou, com PIX
+        ou boleto já gerados, as instruções deles (RF-04, RF-06). Repetir é seguro. Pedido pago, expirado ou cancelado
+        → 422 `ORDER_NOT_PAYABLE`. Gateway indisponível → 503 `PAYMENT_PROVIDER_UNAVAILABLE`, e o cliente oferece
+        *Tentar de novo*, que usa o mesmo pedido. O BFF não guarda nem registra `paymentUrl`. Repasse de `startOrderPaymentInternal`.
+
+        '
+      operationId: startOrderPayment
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '200':
+          description: Para onde levar o aluno.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRedirect'
+              examples:
+                pagina:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    kind: checkout
+                    paymentUrl: https://checkout.stripe.com/c/pay/cs_test_a1B2c3D4e5F6g7H8
+                    expiresAt: '2026-10-06T14:20:00Z'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/CsrfInvalid'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+        '422':
+          $ref: '#/components/responses/OrderNotPayable'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '503':
+          $ref: '#/components/responses/PaymentProviderUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
 components:
   securitySchemes:
     StudentSessionCookie:
       type: apiKey
       in: cookie
       name: student_session
-      description: Cookie opaco de sessão do aluno, HttpOnly, Secure e SameSite (CAP-001). O BFF valida a sessão em Identity a
-        cada ação protegida (ADR-0003). Nenhum bearer token chega ao navegador.
+      description: Cookie opaco de sessão do aluno, HttpOnly, Secure e SameSite (CAP-001). O BFF valida a sessão
+        em Identity a cada ação protegida (ADR-0003). Nenhum bearer token chega ao navegador.
   headers:
     NoStore:
       description: '`private, no-store`: a situação do pedido muda com o tempo.'
@@ -224,8 +274,8 @@ components:
       name: Idempotency-Key
       in: header
       required: true
-      description: Chave opaca por confirmação de compra (G09). Mesma chave e mesmo corpo → mesmo resultado em 24 horas; corpo
-        diferente → 422 `IDEMPOTENCY_KEY_REUSED`.
+      description: Chave opaca por confirmação de compra (G09). Mesma chave e mesmo corpo → mesmo resultado em 24
+        horas; corpo diferente → 422 `IDEMPOTENCY_KEY_REUSED`.
       schema:
         type: string
         minLength: 1
@@ -288,7 +338,8 @@ components:
       type: string
       const: BRL
     AccessPeriod:
-      description: Vigência prometida, contada a partir da liberação do acesso (RN-D04) — por meses inteiros ou vitalícia.
+      description: Vigência prometida, contada a partir da liberação do acesso (RN-D04) — por meses inteiros ou
+        vitalícia.
       oneOf:
       - type: object
         additionalProperties: false
@@ -533,6 +584,31 @@ components:
           - string
           - 'null'
           format: date-time
+    PaymentRedirect:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - kind
+      - paymentUrl
+      - expiresAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - checkout
+          - pix-instructions
+          - boleto-instructions
+        paymentUrl:
+          type: string
+          format: uri
+          description: Endereço do gateway. O cliente navega para ele e não o guarda.
+        expiresAt:
+          type: string
+          format: date-time
   examples:
     OrderAwaitingNoMethod:
       summary: Pedido criado
@@ -655,8 +731,8 @@ components:
                 code: CSRF_INVALID
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     OfferNotAvailable:
-      description: Opção não mais à venda, inexistente ou de outra escola; code `OFFER_NOT_AVAILABLE`. Nada criado (RF-01,
-        quarto critério).
+      description: Opção não mais à venda, inexistente ou de outra escola; code `OFFER_NOT_AVAILABLE`. Nada criado
+        (RF-01, quarto critério).
       content:
         application/problem+json:
           schema:
@@ -698,8 +774,8 @@ components:
                 code: IDEMPOTENCY_KEY_REUSED
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     UpstreamUnavailable:
-      description: '`commerce` ou `identity` não respondeu ou falhou: `COMMERCE_UNAVAILABLE` ou `IDENTITY_UNAVAILABLE`. Nada
-        mudou de forma visível ao cliente.'
+      description: '`commerce` ou `identity` não respondeu ou falhou: `COMMERCE_UNAVAILABLE` ou `IDENTITY_UNAVAILABLE`.
+        Nada mudou de forma visível ao cliente.'
       content:
         application/problem+json:
           schema:
@@ -725,4 +801,33 @@ components:
                 title: O serviço demorou a responder.
                 status: 504
                 code: UPSTREAM_TIMEOUT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PaymentProviderUnavailable:
+      description: O pagamento não pôde ser aberto agora; o pedido continua aguardando. code `PAYMENT_PROVIDER_UNAVAILABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível abrir o pagamento agora.
+                status: 503
+                code: PAYMENT_PROVIDER_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OrderNotPayable:
+      description: Pedido pago, expirado ou cancelado, ou prazo vencido; code `ORDER_NOT_PAYABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            expirado:
+              value:
+                type: about:blank
+                title: Este pedido não pode mais ser pago.
+                status: 422
+                detail: O prazo de pagamento venceu; o pedido está expirado.
+                code: ORDER_NOT_PAYABLE
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01

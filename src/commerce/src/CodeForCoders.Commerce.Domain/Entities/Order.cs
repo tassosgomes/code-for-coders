@@ -17,6 +17,31 @@ public sealed class Order
     public string PeriodType { get; private set; } = "";
     public int? PeriodMonths { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset? PaymentPageExpiresAt { get; private set; }
+    public DateTimeOffset? PaidAt { get; private set; }
+    public string? PaymentMethod { get; private set; }
+    public int? PaidAmountCents { get; private set; }
+    public string? GatewayReference { get; private set; }
+    public Guid? GrantId { get; private set; }
+    public DateTimeOffset? AccessGrantedAt { get; private set; }
+    public void EnsurePayable()
+    { if (Status != "awaiting-payment") throw new OrderRuleException("ORDER_NOT_PAYABLE", "Order is not payable."); }
+    public void OpenPayment(DateTimeOffset expiresAt) { EnsurePayable(); PaymentPageExpiresAt = expiresAt; }
+    public bool ConfirmPayment(OrderPaymentConfirmation confirmation)
+    {
+        if (Status == "paid") return false;
+        if (confirmation.AmountCents < 1 || confirmation.Currency != Currency || confirmation.Method is not ("card" or "pix" or "boleto")
+            || string.IsNullOrWhiteSpace(confirmation.GatewayReference))
+            throw new OrderRuleException("PAYMENT_INVALID", "Payment confirmation is invalid.");
+        Status = "paid"; PaidAt = confirmation.ConfirmedAt; PaymentMethod = confirmation.Method;
+        PaidAmountCents = confirmation.AmountCents; GatewayReference = confirmation.GatewayReference; return true;
+    }
+    public void RecordAccess(Guid grantId, DateTimeOffset grantedAt)
+    {
+        if (grantId == Guid.Empty || Status != "paid") throw new OrderRuleException("ACCESS_INVALID", "Access confirmation is invalid.");
+        if (GrantId is not null) return;
+        GrantId = grantId; AccessGrantedAt = grantedAt;
+    }
     public static Order Create(Guid tenantId, Guid studentId, OrderCreation creation) => new()
     {
         Id = Guid.CreateVersion7(),

@@ -57,7 +57,7 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("granted_at");
 
-                    b.Property<Guid>("GrantedBy")
+                    b.Property<Guid?>("GrantedBy")
                         .HasColumnType("uuid")
                         .HasColumnName("granted_by");
 
@@ -82,7 +82,6 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasColumnName("period_type");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("reason");
@@ -107,6 +106,10 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
 
                     b.HasIndex("ExpiresAt")
                         .HasFilter("expiry_published_at IS NULL AND expires_at IS NOT NULL");
+
+                    b.HasIndex("TenantId", "Origin", "OriginRef")
+                        .IsUnique()
+                        .HasFilter("origin_ref IS NOT NULL");
 
                     b.HasIndex("TenantId", "StudentId", "CourseId");
 
@@ -407,6 +410,10 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTimeOffset?>("AccessGrantedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("access_granted_at");
+
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uuid")
                         .HasColumnName("course_id");
@@ -427,6 +434,15 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("currency");
 
+                    b.Property<string>("GatewayReference")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("gateway_reference");
+
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -442,6 +458,23 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("character varying(60)")
                         .HasColumnName("offer_name");
+
+                    b.Property<int?>("PaidAmountCents")
+                        .HasColumnType("integer")
+                        .HasColumnName("paid_amount_cents");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("payment_method");
+
+                    b.Property<DateTimeOffset?>("PaymentPageExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("payment_page_expires_at");
 
                     b.Property<int?>("PeriodMonths")
                         .HasColumnType("integer")

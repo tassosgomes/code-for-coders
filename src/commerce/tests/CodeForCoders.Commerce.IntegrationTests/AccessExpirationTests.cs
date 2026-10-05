@@ -168,6 +168,23 @@ public sealed class AccessExpirationTests(CommerceIntegrationFixture infra)
         Assert.DoesNotContain(test.Student.ToString("D"), logs, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact(DisplayName = nameof(PaidOrdersWithoutAccessForMoreThanTenMinutesAreCountedWithoutIdentifiers))]
+    public async Task PaidOrdersWithoutAccessForMoreThanTenMinutesAreCountedWithoutIdentifiers()
+    {
+        await using var test = await AccessExpirationFixture.CreateAsync(infra);
+        var now = test.Clock.Now;
+        await test.SeedOrderAsync(null, number: 1);
+        await test.SeedOrderAsync(now.AddMinutes(-9), number: 2);
+        await test.SeedOrderAsync(now.AddMinutes(-30), granted: true, number: 3);
+        await test.CycleAsync();
+        Assert.Equal((0L, 0), test.OverdueMeasurements.Last());
+        await test.SeedOrderAsync(now.AddMinutes(-11), number: 4);
+        await test.SeedOrderAsync(now.AddHours(-3), number: 5);
+        await test.CycleAsync();
+        Assert.Equal((2L, 0), test.OverdueMeasurements.Last());
+        Assert.All(test.OverdueMeasurements, item => Assert.Equal(0, item.Tags));
+    }
+
     [Fact(DisplayName = nameof(FailedBatchRollsBackAllFactsAndMarkersAndCanBeRetried))]
     public async Task FailedBatchRollsBackAllFactsAndMarkersAndCanBeRetried()
     {

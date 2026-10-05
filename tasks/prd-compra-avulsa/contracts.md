@@ -15,6 +15,7 @@ sources: tasks/prd-compra-avulsa/prd.md@1.0, domains/catalogo-e-oferta/domain.md
 > - Estado do conjunto: **Aprovado para implementação (1.0)** em 2026-10-05 — C-01 a C-12 aprovadas pelo responsável; todos os documentos validados sem erros.
 
 > - **Errata 1.0.0 (2026-10-05, aprovada com a TechSpec, D-11):** `ensurePaymentSessionInternal` aceita `http` nas URLs de volta apenas em host local de desenvolvimento autorizado, para o smoke local em `http://localhost:8082`. Só a descrição muda; schema e versão do contrato permanecem.
+> - **Errata 1.0.0 (2026-10-05, decisão do responsável nesta chamada):** `PaymentSessionInput.description` passa de `maxLength: 200` para `263` (título 200 + separador 3 + opção 60). A descrição inteira é enviada ao gateway, sem truncamento; versão mantida.
 
 Este conjunto registra o acordo para o primeiro PRD de `CAP-011`. A aprovação significa acordo para implementar; não afirma implantação. O contrato anterior de cada fronteira é o vigente em `contracts/` (ver `contracts/README.md`), e os recortes daqui registram só o que muda; ao concluir o PRD, são promovidos para lá.
 

@@ -71,6 +71,7 @@ public sealed class RabbitMqTopologyInitializer(
             await channel.QueueBindAsync(settings.EntitlementFactRetentionQueue, settings.Exchange, key, null, cancellationToken: cancellationToken);
         await DeclareCatalogAsync(channel, settings, cancellationToken);
         await DeclareEntitlementAsync(channel, settings, cancellationToken);
+        await DeclarePurchasesAsync(channel, settings, cancellationToken);
         await channel.ExchangeDeclareAsync(settings.AuditExchange, ExchangeType.Topic, durable: true,
             autoDelete: false, arguments: null, cancellationToken: cancellationToken);
         await channel.QueueDeclareAsync(settings.OfferRetentionQueue, durable: true, exclusive: false,
@@ -128,6 +129,28 @@ public sealed class RabbitMqTopologyInitializer(
             }, cancellationToken: cancellationToken);
         await channel.QueueBindAsync(settings.EntitlementCourseQueue, settings.LearningExchange,
             PublishedCourseFact.RoutingKey, null, cancellationToken: cancellationToken);
+    }
+
+    private static async Task DeclarePurchasesAsync(IChannel channel, RabbitMqOptions settings, CancellationToken cancellationToken)
+    {
+        await channel.ExchangeDeclareAsync(settings.BillingExchange, ExchangeType.Topic, true, false, null, cancellationToken: cancellationToken);
+        foreach (var (queue, exchange, key) in new[] {
+            (settings.SalesPaymentsQueue, settings.BillingExchange, "cobranca.pagamento-confirmado.v1"),
+            (settings.EntitlementPurchasesQueue, settings.Exchange, "vendas.compra-concluida.v1"),
+            (settings.SalesAccessGrantedQueue, settings.Exchange, "matricula.acesso-concedido.v1") })
+        {
+            await channel.QueueDeclareAsync($"{queue}.dlq", true, false, false,
+                new Dictionary<string, object?> { ["x-queue-type"] = "quorum" }, cancellationToken: cancellationToken);
+            await channel.QueueBindAsync($"{queue}.dlq", settings.DeadLetterExchange, queue, null, cancellationToken: cancellationToken);
+            await channel.QueueDeclareAsync(queue, true, false, false, new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-dead-letter-exchange"] = settings.DeadLetterExchange,
+                ["x-dead-letter-routing-key"] = queue,
+                ["x-delivery-limit"] = settings.DeliveryLimit
+            }, cancellationToken: cancellationToken);
+            await channel.QueueBindAsync(queue, exchange, key, null, cancellationToken: cancellationToken);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

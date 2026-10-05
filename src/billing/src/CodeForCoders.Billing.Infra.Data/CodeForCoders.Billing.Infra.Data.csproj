@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../CodeForCoders.Billing.Contracts/CodeForCoders.Billing.Contracts.csproj" />
     <ProjectReference Include="../CodeForCoders.Billing.Application/CodeForCoders.Billing.Application.csproj" />
     <ProjectReference Include="../CodeForCoders.Billing.Domain/CodeForCoders.Billing.Domain.csproj" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />

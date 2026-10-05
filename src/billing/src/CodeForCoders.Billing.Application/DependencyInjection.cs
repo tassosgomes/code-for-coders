@@ -21,6 +21,9 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddScoped<ITenantContext>(serviceProvider => new TenantContext(
             serviceProvider.GetRequiredService<IOptions<BillingProcessingOptions>>().Value.Namespace));
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IValidator<UseCases.Payments.EnsurePaymentSession.EnsurePaymentSessionInput>, UseCases.Payments.EnsurePaymentSession.EnsurePaymentSessionInputValidator>();
+        services.AddScoped<UseCases.Payments.ReceiveGatewayEvent.IReceiveGatewayEvent, UseCases.Payments.ReceiveGatewayEvent.ReceiveGatewayEvent>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()

@@ -17,6 +17,7 @@ public static class ObservabilityExtensions
     {
         var serviceName = configuration["OpenTelemetry:ServiceName"]
             ?? throw new InvalidOperationException("OpenTelemetry:ServiceName is required.");
+        var exportEnabled = configuration.GetValue("OpenTelemetry:ExportEnabled", true);
         var serviceVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "0.0.0";
 
         services.AddOpenTelemetry()
@@ -26,27 +27,33 @@ public static class ObservabilityExtensions
                 {
                     new KeyValuePair<string, object>("deployment.environment.name", environment.EnvironmentName),
                 }))
-            .WithTracing(tracing => tracing
+            .WithTracing(tracing =>
+            {
+                tracing
                 .AddAspNetCoreInstrumentation(options =>
                     options.Filter = context => !context.Request.Path.StartsWithSegments("/health"))
                 .AddHttpClientInstrumentation()
                 .AddEntityFrameworkCoreInstrumentation()
                 .AddSource(CommerceTelemetry.ActivitySourceName)
-                .AddSource(RabbitMqTelemetry.SourceName)
-                .AddOtlpExporter())
-            .WithMetrics(metrics => metrics
+                .AddSource(RabbitMqTelemetry.SourceName);
+                if (exportEnabled) tracing.AddOtlpExporter();
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
-                .AddMeter(CommerceTelemetry.MeterName)
-                .AddOtlpExporter());
+                .AddMeter(CommerceTelemetry.MeterName);
+                if (exportEnabled) metrics.AddOtlpExporter();
+            });
 
         services.AddLogging(logging => logging.AddOpenTelemetry(options =>
         {
             options.IncludeScopes = true;
             options.IncludeFormattedMessage = true;
             options.ParseStateValues = true;
-            options.AddOtlpExporter();
+            if (exportEnabled) options.AddOtlpExporter();
         }));
 
         return services;

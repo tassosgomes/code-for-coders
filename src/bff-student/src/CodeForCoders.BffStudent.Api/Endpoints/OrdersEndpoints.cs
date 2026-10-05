@@ -9,6 +9,7 @@ public static class OrdersEndpoints
     {
         endpoints.MapGet("/api/v1/offers/{offerId:guid}/purchase-summary", SummaryAsync).WithName("getPurchaseSummary");
         endpoints.MapPost("/api/v1/orders", CreateAsync).WithName("createOrder");
+        endpoints.MapPost("/api/v1/orders/{orderId:guid}/payment-session", PaymentAsync).WithName("startOrderPayment");
         endpoints.MapGet("/api/v1/orders/{orderId:guid}", GetAsync).WithName("getMyOrder");
     }
     private static async Task<IResult> SummaryAsync(Guid offerId, HttpContext context, IOrdersCommerceClient client, CancellationToken cancellationToken)
@@ -21,6 +22,12 @@ public static class OrdersEndpoints
     {
         context.Response.Headers.CacheControl = "private, no-store";
         return Result(await client.SendAsync(new(HttpMethod.Get, $"internal/v1/orders/{orderId:D}",
+            BffSessionContext.GetAccessToken(context)!), cancellationToken));
+    }
+    private static async Task<IResult> PaymentAsync(Guid orderId, HttpContext context, IOrdersCommerceClient client, CancellationToken cancellationToken)
+    {
+        context.Response.Headers.CacheControl = "private, no-store";
+        return Result(await client.SendAsync(new(HttpMethod.Post, $"internal/v1/orders/{orderId:D}/payment-session",
             BffSessionContext.GetAccessToken(context)!), cancellationToken));
     }
     private static async Task<IResult> CreateAsync(CreateOrderRequest body, HttpContext context, IOrdersCommerceClient client, CancellationToken cancellationToken)

@@ -27,9 +27,12 @@ public static class DependencyInjection
             if (environment.IsDevelopment())
             {
                 options.EnableDetailedErrors();
-                options.EnableSensitiveDataLogging();
+                // Never expose payment descriptions or references in SQL logs.
             }
         });
+        services.AddHostedService<Payments.GatewayInboxWorker>();
+        services.AddScoped<IPaymentStore, Payments.PaymentStore>();
+        services.AddScoped<IServiceAssertionReplayStore, ServiceAssertionReplayStore>();
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, BillingUnitOfWork>();
         services.AddOptions<ValkeyOptions>()

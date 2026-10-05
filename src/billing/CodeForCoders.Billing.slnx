@@ -5,6 +5,7 @@
     <Project Path="src/CodeForCoders.Billing.Contracts/CodeForCoders.Billing.Contracts.csproj" />
     <Project Path="src/CodeForCoders.Billing.Domain/CodeForCoders.Billing.Domain.csproj" />
     <Project Path="src/CodeForCoders.Billing.Infra.Data/CodeForCoders.Billing.Infra.Data.csproj" />
+    <Project Path="src/CodeForCoders.Billing.Infra.Gateway/CodeForCoders.Billing.Infra.Gateway.csproj" />
     <Project Path="src/CodeForCoders.Billing.Infra.Messaging/CodeForCoders.Billing.Infra.Messaging.csproj" />
   </Folder>
   <Folder Name="/tests/">

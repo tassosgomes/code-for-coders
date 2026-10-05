@@ -31,6 +31,10 @@ public static class DependencyInjection
                 // Reasons are confidential even in development: never log SQL parameter values.
             }
         });
+        services.AddScoped<ISalesPaymentSink, Sales.SalesPaymentSink>();
+        services.AddScoped<IPurchaseGrantSink, Entitlement.PurchaseGrantSink>();
+        services.AddScoped<ISalesAccessSink, Sales.SalesAccessSink>();
+        services.AddScoped<IOrderPaymentStore, Sales.OrderPaymentStore>();
         services.AddScoped<IOrderStore, Sales.OrderStore>();
         services.AddScoped<ICatalogPurchaseOfferQueries, Catalog.PurchaseOfferReader>();
         services.AddScoped<IExistingCourseAccessQueries, Entitlement.ExistingCourseAccessReader>();

@@ -1,0 +1,150 @@
+asyncapi: 3.0.0
+info:
+  title: Billing — fatos de pagamento
+  version: 1.0.0
+  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
+    novo**: aplicação `billing` (Cobrança e Assinatura em fatia mínima, C-01).
+
+
+    `billing` traduz os eventos do gateway (`webhook-contract-billing.yaml`) para três fatos no vocabulário da plataforma
+    (RN-CB05) e recebe a desistência do pedido para cancelar o pagamento pendente no gateway. Nenhuma mensagem carrega
+    e-mail, nome, CPF, dado de cartão ou endereço do gateway: o aluno vai por referência, e a referência do gateway
+    é um identificador opaco.
+
+
+    Consumidor conhecido dos três fatos: `commerce` (módulo Vendas). Fiscal, Notificação e Inteligência de Negócio
+    podem consumi-los depois sem mudança aqui.
+
+    '
+id: urn:code-4-coders:billing
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline (exchange `topic`, filas quorum, DLX/DLQ por fila e `x-delivery-limit`, G06);
+      topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+operations:
+  publicarPagamentoConfirmado:
+    action: send
+    summary: Comunicar que um pagamento foi confirmado.
+    channel:
+      $ref: '#/channels/pagamentoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoConfirmado/messages/pagamentoConfirmado'
+    description: 'Pelo outbox, só depois de a confirmação do gateway ter sido aceita como autêntica (RN-CB04). **Um
+      fato por pagamento**: eventos repetidos do gateway não geram outro (G09). Ao menos uma vez; consumidores deduplicam
+      por `eventId` e, para o efeito, por `orderId`. Publicado também quando a confirmação chega para pagamento
+      cujo pedido já expirou ou foi cancelado (RN-V08): `billing` não julga o pedido.'
+channels:
+  pagamentoConfirmado:
+    address: cobranca.pagamento-confirmado.v1
+    description: O gateway confirmou o pagamento de um pedido.
+    messages:
+      pagamentoConfirmado:
+        $ref: '#/components/messages/PagamentoConfirmado'
+components:
+  messages:
+    PagamentoConfirmado:
+      name: PagamentoConfirmado
+      title: Pagamento confirmado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PagamentoConfirmadoPayload'
+      examples:
+      - name: cartao
+        headers:
+          correlationId: 00-b2c3d4e5f60718293a4b5c6d7e8f9001-b2c3d4e5f6071829-01
+        payload:
+          eventId: 1b2c3d4e-5f60-4718-892a-3b4c5d6e7f80
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          paymentId: 4f5a6b7c-8d9e-4f0a-9b1c-2d3e4f5a6b7c
+          orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          method: card
+          amountCents: 49700
+          currency: BRL
+          gatewayReference: pi_3Q2w3E4r5T6y7U8i0
+          confirmedAt: '2026-10-05T14:21:02Z'
+          occurredAt: '2026-10-05T14:21:03Z'
+  schemas:
+    PagamentoConfirmadoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - paymentId
+      - orderId
+      - method
+      - amountCents
+      - currency
+      - gatewayReference
+      - confirmedAt
+      - occurredAt
+      properties:
+        eventId:
+          $ref: '#/components/schemas/EventId'
+        tenantId:
+          type: string
+          format: uuid
+        paymentId:
+          $ref: '#/components/schemas/PaymentId'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        method:
+          $ref: '#/components/schemas/Meio'
+        amountCents:
+          type: integer
+          minimum: 1
+          description: Valor confirmado pelo gateway, em centavos.
+        currency:
+          type: string
+          const: BRL
+        gatewayReference:
+          $ref: '#/components/schemas/GatewayReference'
+        confirmedAt:
+          type: string
+          format: date-time
+          description: Momento da confirmação segundo o gateway.
+        occurredAt:
+          type: string
+          format: date-time
+    GatewayReference:
+      type: string
+      maxLength: 255
+      description: Identificador opaco do pagamento no gateway, para localizar no painel dele. Não é credencial.
+    Meio:
+      type: string
+      enum:
+      - card
+      - pix
+      - boleto
+      description: Meio de pagamento (RN-CB02, RN-CB05). Consumidores devem tolerar valor novo.
+    OrderId:
+      type: string
+      format: uuid
+      description: Pedido em Vendas a que o pagamento se refere.
+    PaymentId:
+      type: string
+      format: uuid
+      description: Pagamento em `billing`.
+    EventId:
+      type: string
+      format: uuid
+      description: Um por fato; chave de deduplicação.
+    Cabecalho:
+      type: object
+      additionalProperties: false
+      required:
+      - correlationId
+      properties:
+        correlationId:
+          type: string
+          description: traceparent da requisição ou do evento do gateway que originou o fato. Sem dado pessoal.

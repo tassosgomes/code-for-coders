@@ -24,6 +24,13 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(item => item.PeriodType).HasColumnName("period_type").HasMaxLength(20);
         builder.Property(item => item.PeriodMonths).HasColumnName("period_months");
         builder.Property(item => item.CreatedAt).HasColumnName("created_at");
+        builder.Property(item => item.PaymentPageExpiresAt).HasColumnName("payment_page_expires_at");
+        builder.Property(item => item.PaidAt).HasColumnName("paid_at");
+        builder.Property(item => item.PaymentMethod).HasColumnName("payment_method").HasMaxLength(255);
+        builder.Property(item => item.PaidAmountCents).HasColumnName("paid_amount_cents");
+        builder.Property(item => item.GatewayReference).HasColumnName("gateway_reference").HasMaxLength(255);
+        builder.Property(item => item.GrantId).HasColumnName("grant_id");
+        builder.Property(item => item.AccessGrantedAt).HasColumnName("access_granted_at");
         builder.HasIndex(item => new { item.TenantId, item.StudentId, item.OfferId }).IsUnique().HasFilter("status = 'awaiting-payment'").HasDatabaseName("ux_orders_pending");
         builder.HasIndex(item => new { item.TenantId, item.Number }).IsUnique();
     }

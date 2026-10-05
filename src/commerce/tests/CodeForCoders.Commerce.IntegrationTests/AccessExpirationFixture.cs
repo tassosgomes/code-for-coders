@@ -30,6 +30,7 @@ public sealed class AccessExpirationFixture : IAsyncDisposable
     public Guid Course { get; } = Guid.CreateVersion7();
     public ConcurrentQueue<string> Logs { get; } = new();
     public ConcurrentQueue<(double Seconds, int Tags)> Measurements { get; } = new();
+    public ConcurrentQueue<(long Orders, int Tags)> OverdueMeasurements { get; } = new();
     public string Queue { get; }
     private static CancellationToken Cancellation => TestContext.Current.CancellationToken;
 
@@ -70,8 +71,10 @@ public sealed class AccessExpirationFixture : IAsyncDisposable
         };
         metrics.InstrumentPublished = (instrument, listener) =>
         {
-            if (instrument.Name == "commerce.entitlement.expiration.lag") listener.EnableMeasurementEvents(instrument);
+            if (instrument.Name is "commerce.entitlement.expiration.lag" or "commerce.sales.payment.access-overdue")
+                listener.EnableMeasurementEvents(instrument);
         };
+        metrics.SetMeasurementEventCallback<long>((_, value, tags, _) => OverdueMeasurements.Enqueue((value, tags.Length)));
         metrics.SetMeasurementEventCallback<double>((_, value, tags, _) => Measurements.Enqueue((value, tags.Length)));
         metrics.Start();
     }
@@ -119,6 +122,22 @@ public sealed class AccessExpirationFixture : IAsyncDisposable
         db.AccessGrants.Add(grant);
         await db.SaveChangesAsync(Cancellation);
         return grant;
+    }
+
+    public async Task<Order> SeedOrderAsync(DateTimeOffset? paidAt, bool granted = false, long number = 1)
+    {
+        await using var scope = Scope();
+        var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
+        var order = Order.Create(Tenant, Student, new(number,
+            new(Course, "Metric proof", Guid.CreateVersion7(), "12 months", 49700, "months", 12), Clock.Now));
+        if (paidAt is { } at)
+        {
+            order.ConfirmPayment(new("card", 49700, "BRL", "pi_metric_" + number, at));
+            if (granted) order.RecordAccess(Guid.CreateVersion7(), at);
+        }
+        db.Orders.Add(order);
+        await db.SaveChangesAsync(Cancellation);
+        return order;
     }
 
     public async Task<int> CycleAsync()

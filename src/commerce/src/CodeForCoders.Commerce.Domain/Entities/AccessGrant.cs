@@ -16,8 +16,8 @@ public sealed class AccessGrant
     public DateTimeOffset GrantedAt { get; private set; }
     public DateOnly? EndsOn { get; private set; }
     public DateTimeOffset? ExpiresAt { get; private set; }
-    public string Reason { get; private set; } = "";
-    public Guid GrantedBy { get; private set; }
+    public string? Reason { get; private set; }
+    public Guid? GrantedBy { get; private set; }
     public Guid? ExpiryEventId { get; private set; }
     public DateTimeOffset? ExpiryPublishedAt { get; private set; }
 
@@ -27,6 +27,27 @@ public sealed class AccessGrant
             throw new EntitlementRuleException("EXPIRY_FACT_INVALID", "Only an expired grant without an expiry fact can be marked.");
         ExpiryEventId = eventId;
         ExpiryPublishedAt = now;
+    }
+
+    public static AccessGrant CreatePurchase(Enrollment enrollment, PurchaseGrantDetails details, TimeZoneInfo zone)
+    {
+        if (details.OrderId == Guid.Empty) throw new EntitlementRuleException("FIELD_INVALID", "Order is required.");
+        var term = AccessTerm.Calculate(details.Now, details.PeriodType, details.Months, zone);
+        return new()
+        {
+            Id = Guid.CreateVersion7(),
+            TenantId = enrollment.TenantId,
+            EnrollmentId = enrollment.Id,
+            StudentId = enrollment.StudentId,
+            CourseId = enrollment.CourseId,
+            Origin = "purchase",
+            OriginRef = details.OrderId,
+            PeriodType = details.PeriodType,
+            PeriodMonths = details.Months,
+            GrantedAt = details.Now,
+            EndsOn = term.EndsOn,
+            ExpiresAt = term.ExpiresAt
+        };
     }
 
     public static AccessGrant CreateCourtesy(Enrollment enrollment, CourtesyGrantDetails details, TimeZoneInfo zone)

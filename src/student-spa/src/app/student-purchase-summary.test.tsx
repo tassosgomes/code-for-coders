@@ -74,7 +74,7 @@ describe('student-purchase-summary', () => {
     const router = renderRoute(); await userEvent.click(await screen.findByRole('button', { name: 'Confirmar compra' }));
     expect(await screen.findByRole('heading', { name: 'Pedido nº 000123' })).toBeInTheDocument(); expect(screen.getByText('Aguardando pagamento')).toBeInTheDocument();
     expect(input).toEqual({ offerId: purchaseOfferId }); expect(received?.headers.get('X-CSRF-Token')).toBe('csrf'); expect(received?.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/u);
-    expect(router.state.location.pathname).toBe(paths.studentOrder.getHref(purchaseOrderId)); expect(screen.queryByRole('button', { name: 'Ir para o pagamento' })).not.toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(paths.studentOrder.getHref(purchaseOrderId)); expect(screen.getByRole('button', { name: 'Ir para o pagamento' })).toBeEnabled();
   });
   it('pending offer links to the existing order without showing current conditions or creating another', async () => {
     let creates = 0;

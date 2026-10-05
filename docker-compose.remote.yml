@@ -80,6 +80,16 @@ services:
 
   commerce:
     environment:
+      BillingClient__BaseUrl: http://billing:8080/
+      BillingClient__Issuer: commerce
+      BillingClient__Audience: billing
+      BillingClient__SigningKeyId: local-commerce-billing-1
+      BillingClient__SigningKeyBase64: ${COMMERCE_BILLING_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StudentApp__PublicBaseUrl: ${STUDENT_APP_PUBLIC_BASE_URL:-http://localhost:8082}
+      RabbitMq__BillingExchange: billing.events
+      RabbitMq__SalesPaymentsQueue: commerce.sales-payments
+      RabbitMq__EntitlementPurchasesQueue: commerce.entitlement-purchases
+      RabbitMq__SalesAccessGrantedQueue: commerce.sales-access-granted
       ServiceAssertions__Issuers__learning__PublicKeys__local-learning-commerce-1: ${LEARNING_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__media__PublicKeys__local-media-commerce-1: ${MEDIA_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__media__AllowedScopes__0: access-decision:read

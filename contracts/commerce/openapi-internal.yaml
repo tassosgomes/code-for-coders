@@ -2,23 +2,56 @@ openapi: 3.1.0
 info:
   title: Commerce — API interna
   version: 1.3.0
-  description: |
-    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `commerce` (área financeira, Catálogo, cortesias), `bff-student` → `commerce` (vitrine) e serviços → `commerce` (decisão de acesso).
+  description: 'Contrato **vigente** consolidado. Fronteira: `bff-admin` → `commerce` (área financeira, Catálogo,
+    cortesias), `bff-student` → `commerce` (vitrine) e serviços → `commerce` (decisão de acesso).
 
-    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte
+    do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
 
     - `tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml` 1.0.0
+
     - `tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml` 1.1.0
+
     - `tasks/archive/prd-concessao-acesso/internal-api-contract-commerce.yaml` 1.2.0
+
     - `tasks/archive/prd-progresso-aluno/internal-api-contract-commerce.yaml` 1.3.0
 
-    **Notas de prd-acesso-interno (1.0.0):** Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, V-07; ADR-0005). Consumidor único conhecido: `bff-admin`. `commerce` valida localmente o JWT de usuário emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `commerce`, validade) e decide pela permissão do claim `permissions`, sem consultar Identity e sem confiar no BFF. A área não tem dado até CAP-011.
 
-    **Notas de prd-vitrine-oferta (1.1.0):** Recorte interno do primeiro PRD de CAP-003 (`tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30). Evolui `commerce` 1.0.0 (`tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml`, área financeira reservada, sem mudança) com o módulo Catálogo. Três consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de ficha e oferta, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF), e `resolveOfferReferencesInternal` para a consulta da trilha; (2) `bff-student`, com asserção de serviço própria (C-04) — vitrine, página e clique, derivadas de `api-contract-student.yaml` 1.0.0. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da asserção (G07).
+    **Notas de prd-acesso-interno (1.0.0):** Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, V-07;
+    ADR-0005). Consumidor único conhecido: `bff-admin`. `commerce` valida localmente o JWT de usuário emitido por
+    Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `commerce`, validade) e decide pela
+    permissão do claim `permissions`, sem consultar Identity e sem confiar no BFF. A área não tem dado até CAP-011.
 
-    **Notas de prd-concessao-acesso (1.2.0):** Recorte interno do primeiro PRD de CAP-008 (`tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01). Evolui `commerce` 1.1.0 (`tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml`, Catálogo e vitrine, sem mudança) com o módulo Matrícula. Dois consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de cortesia, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF); (2) `media` e `learning`, com asserção de serviço própria (C-04) — a decisão "pode acessar agora?", fonte única do direito (RN-D01), sem consumidor nesta entrega. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da asserção (G07). A localização do aluno por e-mail não passa por aqui: é de Identity (`internal-api-contract-identity.yaml`).
 
-    **Notas de prd-progresso-aluno (1.3.0):** Recorte interno de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Evolui `contracts/commerce/openapi-internal.yaml` 1.2.0 de forma aditiva com uma leitura de Matrícula: os cursos sobre os quais um aluno tem ou teve concessão, com a situação **agregada por curso** (RN-D07). As demais operações não mudam; `decideAccessInternal` continua a fonte única de "pode acessar agora?" e não muda.
+    **Notas de prd-vitrine-oferta (1.1.0):** Recorte interno do primeiro PRD de CAP-003 (`tasks/archive/prd-vitrine-oferta/prd.md`
+    v1.0, aprovado em 2026-09-30). Evolui `commerce` 1.0.0 (`tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml`,
+    área financeira reservada, sem mudança) com o módulo Catálogo. Três consumidores e dois esquemas de segurança:
+    (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de ficha e oferta, derivadas
+    mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF), e `resolveOfferReferencesInternal`
+    para a consulta da trilha; (2) `bff-student`, com asserção de serviço própria (C-04) — vitrine, página e clique,
+    derivadas de `api-contract-student.yaml` 1.0.0. `commerce` decide pelas claims, sem confiar no BFF. A escola
+    vem do `tenantId` do token ou da asserção (G07).
+
+
+    **Notas de prd-concessao-acesso (1.2.0):** Recorte interno do primeiro PRD de CAP-008 (`tasks/archive/prd-concessao-acesso/prd.md`
+    v1.0, aprovado em 2026-10-01). Evolui `commerce` 1.1.0 (`tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml`,
+    Catálogo e vitrine, sem mudança) com o módulo Matrícula. Dois consumidores e dois esquemas de segurança: (1)
+    `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de cortesia, derivadas mecanicamente
+    de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF); (2) `media` e `learning`, com
+    asserção de serviço própria (C-04) — a decisão "pode acessar agora?", fonte única do direito (RN-D01), sem consumidor
+    nesta entrega. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da
+    asserção (G07). A localização do aluno por e-mail não passa por aqui: é de Identity (`internal-api-contract-identity.yaml`).
+
+
+    **Notas de prd-progresso-aluno (1.3.0):** Recorte interno de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md`
+    v1.0 de 2026-10-04. Evolui `contracts/commerce/openapi-internal.yaml` 1.2.0 de forma aditiva com uma leitura
+    de Matrícula: os cursos sobre os quais um aluno tem ou teve concessão, com a situação **agregada por curso**
+    (RN-D07). As demais operações não mudam; `decideAccessInternal` continua a fonte única de "pode acessar agora?"
+    e não muda.
+
+    '
   contact:
     name: Time de Commerce
 servers:
@@ -533,8 +566,12 @@ paths:
       tags:
       - Vitrine
       summary: Registrar um clique em Comprar (depreciada)
-      description: |
-        **Depreciada em 1.4.0 (DP-06, C-08).** O botão *Comprar* passa a levar à compra (`getPurchaseSummaryInternal`, `createOrderInternal`), e esta operação **deixa de contar**: responde 202 com `purchaseAvailability: available` sem somar nada. A contagem histórica continua visível na oferta como estava (`purchaseIntentCount`, inalterado). Oferta não publicada → 404. Remoção em versão futura, quando nenhum cliente a chamar.
+      description: '**Depreciada em 1.4.0 (DP-06, C-08).** O botão *Comprar* passa a levar à compra (`getPurchaseSummaryInternal`,
+        `createOrderInternal`), e esta operação **deixa de contar**: responde 202 com `purchaseAvailability: available`
+        sem somar nada. A contagem histórica continua visível na oferta como estava (`purchaseIntentCount`, inalterado).
+        Oferta não publicada → 404. Remoção em versão futura, quando nenhum cliente a chamar.
+
+        '
       operationId: registerPurchaseIntentInternal
       deprecated: true
       security:
@@ -1039,13 +1076,22 @@ paths:
       tags:
       - Compra
       summary: Resumir a compra de uma oferta
-      description: |
-        O que o aluno vê antes de ir ao pagamento (RF-01, RF-02): curso, opção, preço e vigência prometida **vigentes agora** — os que o pedido congelaria se fosse criado neste instante (RN-V03). Sem efeito.
+      description: 'O que o aluno vê antes de ir ao pagamento (RF-01, RF-02): curso, opção, preço e vigência prometida
+        **vigentes agora** — os que o pedido congelaria se fosse criado neste instante (RN-V03). Sem efeito.
 
-        - `pendingOrderId`: pedido do aluno aguardando pagamento **nesta** oferta, se houver (RN-V06); o cliente leva a ele em vez de criar outro.
-        - `existingAccess`: concessão ativa e dentro da vigência do aluno sobre o curso, de qualquer origem, a que termina por último (vitalícia prevalece). **Informativo** (RN-V11, DP-08): não bloqueia nem libera nada. Se Matrícula não responder, `existingAccessChecked: false` e `existingAccess: null`, e o resumo sai mesmo assim (RF-02, quarto critério).
+
+        - `pendingOrderId`: pedido do aluno aguardando pagamento **nesta** oferta, se houver (RN-V06); o cliente
+        leva a ele em vez de criar outro.
+
+        - `existingAccess`: concessão ativa e dentro da vigência do aluno sobre o curso, de qualquer origem, a que
+        termina por último (vitalícia prevalece). **Informativo** (RN-V11, DP-08): não bloqueia nem libera nada.
+        Se Matrícula não responder, `existingAccessChecked: false` e `existingAccess: null`, e o resumo sai mesmo
+        assim (RF-02, quarto critério).
+
 
         Oferta não publicada, inexistente ou de outra escola → 404 indistinto (RN-V02).
+
+        '
       operationId: getPurchaseSummaryInternal
       security:
       - StudentUserToken: []
@@ -1106,14 +1152,23 @@ paths:
       tags:
       - Compra
       summary: Criar o pedido de uma oferta
-      description: |
-        Cria o pedido em `awaiting-payment` com curso, opção, preço e vigência da oferta **congelados neste instante** (RF-03, RN-V03, RN-V04). Só conta de aluno (RN-V01): token de ator interno não tem o escopo de aluno e é recusado com 403.
+      description: 'Cria o pedido em `awaiting-payment` com curso, opção, preço e vigência da oferta **congelados
+        neste instante** (RF-03, RN-V03, RN-V04). Só conta de aluno (RN-V01): token de ator interno não tem o escopo
+        de aluno e é recusado com 403.
 
-        - Já existe pedido do aluno aguardando pagamento **para a mesma oferta** → 200 com **esse** pedido, inalterado, sem criar outro (RN-V06). Pedido pendente de outra oferta do mesmo curso não impede (RF-03, quinto critério).
+
+        - Já existe pedido do aluno aguardando pagamento **para a mesma oferta** → 200 com **esse** pedido, inalterado,
+        sem criar outro (RN-V06). Pedido pendente de outra oferta do mesmo curso não impede (RF-03, quinto critério).
+
         - Oferta não publicada, inexistente ou de outra escola → 404, nada criado (RN-V02).
-        - `Idempotency-Key` obrigatória (G09): repetição com o mesmo corpo devolve o mesmo resultado e o mesmo status; corpo diferente → 422 `IDEMPOTENCY_KEY_REUSED`.
+
+        - `Idempotency-Key` obrigatória (G09): repetição com o mesmo corpo devolve o mesmo resultado e o mesmo status;
+        corpo diferente → 422 `IDEMPOTENCY_KEY_REUSED`.
+
 
         Publica `vendas.pedido-criado.v1` pelo outbox, na mesma transação (G06). Não abre pagamento: isso é `startOrderPaymentInternal`.
+
+        '
       operationId: createOrderInternal
       security:
       - StudentUserToken: []
@@ -1172,15 +1227,24 @@ paths:
       tags:
       - Meus pedidos
       summary: Obter um pedido do aluno
-      description: |
-        A situação **real** do pedido, para a página de retorno e para a retomada (RF-05, RF-06, RN-CB04). O cliente consulta de novo até a situação mudar; a resposta não é guardada (`no-store`).
+      description: 'A situação **real** do pedido, para a página de retorno e para a retomada (RF-05, RF-06, RN-CB04).
+        O cliente consulta de novo até a situação mudar; a resposta não é guardada (`no-store`).
+
 
         - `paid` → pago; `accessGrantedAt` preenchido quando a concessão existe (RF-05: *Ir para o curso*).
+
         - `awaiting-payment` com `pendingPayment` → PIX ou boleto gerado, ainda não pago.
-        - `awaiting-payment` sem `pendingPayment` → página de pagamento aberta (`paymentPageExpiresAt`) ou ainda não aberta (nulo). O cliente sabe se o aluno concluiu ou saiu pela própria volta da página; "Confirmando" é `awaiting-payment` sem `pendingPayment` depois de o aluno ter concluído.
+
+        - `awaiting-payment` sem `pendingPayment` → página de pagamento aberta (`paymentPageExpiresAt`) ou ainda
+        não aberta (nulo). O cliente sabe se o aluno concluiu ou saiu pela própria volta da página; "Confirmando"
+        é `awaiting-payment` sem `pendingPayment` depois de o aluno ter concluído.
+
         - `expired`, `cancelled` → terminais sem concessão, salvo confirmação tardia (RN-V08), que muda para `paid`.
 
+
         Pedido de outro aluno, de outra escola ou inexistente → 404 indistinto.
+
+        '
       operationId: getStudentOrderInternal
       security:
       - StudentUserToken: []
@@ -1207,16 +1271,78 @@ paths:
           $ref: '#/components/responses/StudentScopeDenied'
         '404':
           $ref: '#/components/responses/OrderNotFound'
+  /orders/{orderId}/payment-session:
+    parameters:
+    - $ref: '#/components/parameters/OrderId'
+    post:
+      tags:
+      - Compra
+      summary: Ir para o pagamento do pedido
+      description: 'Devolve para onde levar o aluno (RF-04, RF-06): a página de pagamento ou, com PIX ou boleto
+        já gerados, as instruções desse pagamento. `commerce` pede a `billing` (`ensurePaymentSessionInternal`)
+        com o valor, a moeda e a descrição **congelados no pedido** e os endereços de volta da escola; repetir é
+        seguro, porque `billing` é idempotente por pedido. Na primeira página aberta, o pedido passa a ter `paymentPageExpiresAt`.
+
+
+        - Pedido `paid`, `expired` ou `cancelled` → 422 `ORDER_NOT_PAYABLE`, sem chamar `billing`.
+
+        - `billing` responde que o prazo venceu → 422 `ORDER_NOT_PAYABLE`; o pedido expira pelo fato `cobranca.pagamento-nao-confirmado.v1`.
+
+        - `billing` ou o gateway indisponível → 503 `PAYMENT_PROVIDER_UNAVAILABLE`; o pedido continua `awaiting-payment`
+        e uma nova tentativa usa o mesmo pedido (RF-04, último critério).
+
+
+        Sem corpo. `paymentUrl` é credencial de acesso ao pagamento: o BFF a entrega ao navegador do dono do pedido
+        e não a guarda nem a registra.
+
+        '
+      operationId: startOrderPaymentInternal
+      security:
+      - StudentUserToken: []
+      responses:
+        '200':
+          description: Para onde levar o aluno.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPaymentRedirect'
+              examples:
+                pagina:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    kind: checkout
+                    paymentUrl: https://checkout.stripe.com/c/pay/cs_test_a1B2c3D4e5F6g7H8
+                    expiresAt: '2026-10-06T14:20:00Z'
+                pix:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    kind: pix-instructions
+                    paymentUrl: https://payments.stripe.com/pix/instructions/test_YWNjdF8xUDJ
+                    expiresAt: '2026-10-06T14:35:00Z'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/StudentScopeDenied'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+        '422':
+          $ref: '#/components/responses/OrderNotPayable'
+        '503':
+          $ref: '#/components/responses/PaymentProviderUnavailable'
 components:
   securitySchemes:
     StudentUserToken:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'JWT RS256 de aluno emitido por Identity (`validateStudentSessionInternal` com `audience: commerce`), vida
-        de 5 minutos, validado localmente pelo JWKS de Identity (ADR-0013, estendida a `commerce` por C-03; ADR própria na TechSpec).
-        Política de aluno: `scope` igual a `orders:use` **e ausência da claim `permissions`**. Claims `iss`, `aud`, `sub` (= `studentId`),
-        `tenantId`, `sessionId`, `scope`, `exp`, `jti`. **Sem `email`**: a claim só existe na audiência `media`.'
+      description: 'JWT RS256 de aluno emitido por Identity (`validateStudentSessionInternal` com `audience: commerce`),
+        vida de 5 minutos, validado localmente pelo JWKS de Identity (ADR-0013, estendida a `commerce` por C-03;
+        ADR própria na TechSpec). Política de aluno: `scope` igual a `orders:use` **e ausência da claim `permissions`**.
+        Claims `iss`, `aud`, `sub` (= `studentId`), `tenantId`, `sessionId`, `scope`, `exp`, `jti`. **Sem `email`**:
+        a claim só existe na audiência `media`.'
     StaffUserToken:
       type: http
       scheme: bearer
@@ -1293,8 +1419,10 @@ components:
       examples:
       - 49700
     AccessPeriod:
-      description: |
-        Vigência da concessão, na forma única de `AccessPeriod` de CAP-003 (C-05): por período, em meses inteiros de 1 a 60 (DP-04), contados a partir do momento da concessão (RN-D04), ou vitalícia.
+      description: 'Vigência da concessão, na forma única de `AccessPeriod` de CAP-003 (C-05): por período, em meses
+        inteiros de 1 a 60 (DP-04), contados a partir do momento da concessão (RN-D04), ou vitalícia.
+
+        '
       oneOf:
       - type: object
         additionalProperties: false
@@ -1330,8 +1458,10 @@ components:
       - draft
       - published
       - unpublished
-      description: |
-        `draft` — nunca publicada; pode ser excluída. `published` — à venda. `unpublished` — já foi publicada, não está à venda e não pode ser excluída (RN-O11).
+      description: '`draft` — nunca publicada; pode ser excluída. `published` — à venda. `unpublished` — já foi
+        publicada, não está à venda e não pode ser excluída (RN-O11).
+
+        '
     OfferInput:
       type: object
       additionalProperties: false
@@ -1799,8 +1929,11 @@ components:
           minLength: 1
           maxLength: 500
           pattern: \S
-          description: |
-            Motivo obrigatório (RN-D11, DP-04): de 1 a 500 caracteres, com ao menos um caractere que não seja espaço. Não deve conter dado pessoal de terceiros (RN-A08). Vai ao ato de auditoria e à concessão; nunca a log, métrica ou rastreamento.
+          description: 'Motivo obrigatório (RN-D11, DP-04): de 1 a 500 caracteres, com ao menos um caractere que
+            não seja espaço. Não deve conter dado pessoal de terceiros (RN-A08). Vai ao ato de auditoria e à concessão;
+            nunca a log, métrica ou rastreamento.
+
+            '
           examples:
           - Bolsa do programa de mentoria, turma de outubro
     AccessGrant:
@@ -1839,15 +1972,19 @@ components:
           - purchase
           - subscription
           - cohort
-          description: |
-            Origem da concessão (RN-D02). Nesta entrega só `courtesy` é concedível; os demais valores nascem em `CAP-011`, `CAP-013`/`CAP-014` e `CAP-010`. Clientes devem tolerar valor novo.
+          description: 'Origem da concessão (RN-D02). Nesta entrega só `courtesy` é concedível; os demais valores
+            nascem em `CAP-011`, `CAP-013`/`CAP-014` e `CAP-010`. Clientes devem tolerar valor novo.
+
+            '
         status:
           type: string
           enum:
           - active
           - expired
-          description: |
-            Calculado na leitura (RN-D06): `expired` quando o momento atual é igual ou posterior a `expiresAt`. `suspended` e `revoked` virão com `CAP-009`; clientes devem tolerar valor novo.
+          description: 'Calculado na leitura (RN-D06): `expired` quando o momento atual é igual ou posterior a `expiresAt`.
+            `suspended` e `revoked` virão com `CAP-009`; clientes devem tolerar valor novo.
+
+            '
         accessPeriod:
           $ref: '#/components/schemas/AccessPeriod'
         grantedAt:
@@ -1859,8 +1996,10 @@ components:
           - string
           - 'null'
           format: date
-          description: |
-            Último dia de acesso, no fuso da escola (horário de Brasília na Fase 1, DP-03), para exibir "até DD/MM/AAAA". Nulo na vitalícia. Mês sem o dia → último dia do mês.
+          description: 'Último dia de acesso, no fuso da escola (horário de Brasília na Fase 1, DP-03), para exibir
+            "até DD/MM/AAAA". Nulo na vitalícia. Mês sem o dia → último dia do mês.
+
+            '
           examples:
           - '2027-10-12'
         expiresAt:
@@ -1868,8 +2007,10 @@ components:
           - string
           - 'null'
           format: date-time
-          description: |
-            Instante, em UTC, em que o acesso **deixa** de valer (exclusivo): o início do dia seguinte a `endsOn` no fuso da escola. Há acesso se o momento da pergunta é anterior a ele. Nulo na vitalícia.
+          description: 'Instante, em UTC, em que o acesso **deixa** de valer (exclusivo): o início do dia seguinte
+            a `endsOn` no fuso da escola. Há acesso se o momento da pergunta é anterior a ele. Nulo na vitalícia.
+
+            '
           examples:
           - '2027-10-13T03:00:00Z'
         reason:
@@ -2127,15 +2268,15 @@ components:
           - string
           - 'null'
           format: date-time
-          description: Até quando vale a página de pagamento aberta sem meio escolhido (24 h, RN-CB03). Nulo se nunca
-            foi aberta, depois de escolhido o meio, ou em pedido terminal.
+          description: Até quando vale a página de pagamento aberta sem meio escolhido (24 h, RN-CB03). Nulo se
+            nunca foi aberta, depois de escolhido o meio, ou em pedido terminal.
         accessGrantedAt:
           type:
           - string
           - 'null'
           format: date-time
-          description: Momento da concessão deste pedido em Matrícula, quando já existe (C-07). **Exibição**, não decisão
-            de acesso (RN-V10).
+          description: Momento da concessão deste pedido em Matrícula, quando já existe (C-07). **Exibição**, não
+            decisão de acesso (RN-V10).
         createdAt:
           type: string
           format: date-time
@@ -2314,13 +2455,41 @@ components:
           $ref: '#/components/schemas/Currency'
         accessPeriod:
           $ref: '#/components/schemas/AccessPeriod'
+    OrderPaymentRedirect:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - kind
+      - paymentUrl
+      - expiresAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - checkout
+          - pix-instructions
+          - boleto-instructions
+          description: Página para escolher o meio e pagar, ou instruções do PIX ou do boleto já gerados.
+        paymentUrl:
+          type: string
+          format: uri
+          description: Endereço do gateway para o navegador. Credencial de acesso ao pagamento; nunca registrado.
+        expiresAt:
+          type: string
+          format: date-time
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
       in: header
       required: true
-      description: |
-        Chave opaca única por intenção de escrita (G09). Repetição com o mesmo corpo devolve o mesmo resultado na janela de 24 horas; corpo diferente com a mesma chave → 422 `IDEMPOTENCY_KEY_REUSED`.
+      description: 'Chave opaca única por intenção de escrita (G09). Repetição com o mesmo corpo devolve o mesmo
+        resultado na janela de 24 horas; corpo diferente com a mesma chave → 422 `IDEMPOTENCY_KEY_REUSED`.
+
+        '
       schema:
         type: string
         minLength: 1
@@ -2438,8 +2607,10 @@ components:
                 code: OFFER_NOT_FOUND
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     InvalidOfferContent:
-      description: |
-        Conteúdo fora das regras: `FIELD_INVALID` (preço, vigência, nome ou chamada fora dos limites de DP-03, com o campo em `detail`) ou `IDEMPOTENCY_KEY_REUSED`.
+      description: 'Conteúdo fora das regras: `FIELD_INVALID` (preço, vigência, nome ou chamada fora dos limites
+        de DP-03, com o campo em `detail`) ou `IDEMPOTENCY_KEY_REUSED`.
+
+        '
       content:
         application/problem+json:
           schema:
@@ -2604,8 +2775,12 @@ components:
                 code: GRANT_NOT_FOUND
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     GrantRejected:
-      description: |
-        Regra violada, nada concedido: `FIELD_INVALID` (motivo vazio ou acima de 500 caracteres, meses fora de 1 a 60, com o campo em `detail`), `STUDENT_ACCOUNT_NOT_ELIGIBLE` (conta inexistente, de outra escola, deixou de ser de aluno ou está desativada — RN-D09), `COURSE_NOT_ELIGIBLE` (curso nunca publicado ou de outra escola — DP-05, RN-D17) ou `IDEMPOTENCY_KEY_REUSED`.
+      description: 'Regra violada, nada concedido: `FIELD_INVALID` (motivo vazio ou acima de 500 caracteres, meses
+        fora de 1 a 60, com o campo em `detail`), `STUDENT_ACCOUNT_NOT_ELIGIBLE` (conta inexistente, de outra escola,
+        deixou de ser de aluno ou está desativada — RN-D09), `COURSE_NOT_ELIGIBLE` (curso nunca publicado ou de
+        outra escola — DP-05, RN-D17) ou `IDEMPOTENCY_KEY_REUSED`.
+
+        '
       content:
         application/problem+json:
           schema:
@@ -2697,6 +2872,36 @@ components:
                 title: Chave de idempotência já usada com outro conteúdo.
                 status: 422
                 code: IDEMPOTENCY_KEY_REUSED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PaymentProviderUnavailable:
+      description: '`billing` ou o gateway não responderam; nada mudou no pedido. code `PAYMENT_PROVIDER_UNAVAILABLE`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível abrir o pagamento agora.
+                status: 503
+                code: PAYMENT_PROVIDER_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OrderNotPayable:
+      description: Pedido `paid`, `expired` ou `cancelled`, ou prazo de pagamento vencido; code `ORDER_NOT_PAYABLE`,
+        com a situação atual em `detail`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            expirado:
+              value:
+                type: about:blank
+                title: Este pedido não pode mais ser pago.
+                status: 422
+                detail: O prazo de pagamento venceu; o pedido está expirado.
+                code: ORDER_NOT_PAYABLE
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   examples:
     OfferDraft:

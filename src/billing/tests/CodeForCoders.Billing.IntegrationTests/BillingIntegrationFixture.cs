@@ -1,5 +1,7 @@
 using CodeForCoders.Billing.Application.Common;
 using CodeForCoders.Billing.Infra.Data;
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Testcontainers.PostgreSql;
@@ -21,9 +23,19 @@ public sealed class BillingIntegrationFixture : IAsyncLifetime
         .WithPassword("code_for_coders")
         .Build();
 
+    private const int ValkeyPort = 6379;
+
+    public IContainer Valkey { get; } = new ContainerBuilder("valkey/valkey:8.1-alpine")
+        .WithPortBinding(ValkeyPort, true)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Ready to accept connections"))
+        .Build();
+
+    public string ValkeyConnectionString
+        => $"{Valkey.Hostname}:{Valkey.GetMappedPublicPort(ValkeyPort)},abortConnect=false";
+
     public async ValueTask InitializeAsync()
     {
-        await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync());
+        await Task.WhenAll(PostgreSql.StartAsync(), RabbitMq.StartAsync(), Valkey.StartAsync());
 
         var dbOptions = new DbContextOptionsBuilder<BillingDbContext>()
             .UseNpgsql(PostgreSql.GetConnectionString())
@@ -40,9 +52,9 @@ public sealed class BillingIntegrationFixture : IAsyncLifetime
         await connection.OpenAsync();
         string[] tables =
         [
+            "payments",
+            "gateway_inbox",
             "outbox_messages",
-            "delivery_records",
-            "delivery_outcome_counters",
         ];
         foreach (var table in tables)
         {
@@ -56,6 +68,7 @@ public sealed class BillingIntegrationFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        await Valkey.DisposeAsync();
         await RabbitMq.DisposeAsync();
         await PostgreSql.DisposeAsync();
     }

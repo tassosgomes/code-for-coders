@@ -18,10 +18,11 @@ internal static class ProjectArchitecture
     private static readonly Assembly ApplicationAssembly = typeof(IUseCase<,>).Assembly;
     private static readonly Assembly InfraDataAssembly = typeof(BillingDbContext).Assembly;
     private static readonly Assembly InfraMessagingAssembly = typeof(RabbitMqPublisher).Assembly;
+    private static readonly Assembly InfraGatewayAssembly = typeof(CodeForCoders.Billing.Infra.Gateway.StripeGatewayAdapter).Assembly;
     private static readonly Assembly ApiAssembly = typeof(PlatformEndpoints).Assembly;
 
     public static readonly Architecture Architecture = new ArchLoader()
-        .LoadAssemblies(DomainAssembly, ApplicationAssembly, InfraDataAssembly, InfraMessagingAssembly, ApiAssembly)
+        .LoadAssemblies(DomainAssembly, ApplicationAssembly, InfraDataAssembly, InfraMessagingAssembly, InfraGatewayAssembly, ApiAssembly)
         .Build();
 
     public static readonly IObjectProvider<IType> DomainLayer =
@@ -29,7 +30,7 @@ internal static class ProjectArchitecture
     public static readonly IObjectProvider<IType> ApplicationLayer =
         Types().That().ResideInAssembly(ApplicationAssembly).As("Application");
     public static readonly IObjectProvider<IType> InfraLayer =
-        Types().That().ResideInAssembly(InfraDataAssembly).Or().ResideInAssembly(InfraMessagingAssembly).As("Infra");
+        Types().That().ResideInAssembly(InfraDataAssembly).Or().ResideInAssembly(InfraMessagingAssembly).Or().ResideInAssembly(InfraGatewayAssembly).As("Infra");
     public static readonly IObjectProvider<IType> ApiLayer =
         Types().That().ResideInAssembly(ApiAssembly).As("Api");
 

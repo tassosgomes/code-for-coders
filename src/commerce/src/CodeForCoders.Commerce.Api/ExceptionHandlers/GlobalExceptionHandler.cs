@@ -20,6 +20,7 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail) = exception switch
         {
+            PaymentProviderUnavailableException => (503, "about:blank", "Payment unavailable", "Payment is temporarily unavailable."),
             StudentAccountCheckUnavailableException => (503, "about:blank", "Student account check unavailable", "Student account confirmation is unavailable."),
             OrderRuleException => (422, "about:blank", "Order rejected", exception.Message),
             EntitlementRuleException => (422, "about:blank", "Courtesy rejected", exception.Message),
@@ -52,7 +53,7 @@ public sealed class GlobalExceptionHandler(
                 "An unexpected error occurred.")
         };
 
-        if (status >= StatusCodes.Status500InternalServerError && exception is not StudentAccountCheckUnavailableException)
+        if (status >= StatusCodes.Status500InternalServerError && exception is not (StudentAccountCheckUnavailableException or PaymentProviderUnavailableException))
         {
             logger.LogError(exception, "Unhandled exception while processing {Path}.", httpContext.Request.Path);
         }
@@ -71,6 +72,7 @@ public sealed class GlobalExceptionHandler(
         };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
             ?? httpContext.TraceIdentifier;
+        if (exception is PaymentProviderUnavailableException) problemDetails.Extensions["code"] = "PAYMENT_PROVIDER_UNAVAILABLE";
         if (exception is StudentAccountCheckUnavailableException) problemDetails.Extensions["code"] = "STUDENT_ACCOUNT_CHECK_UNAVAILABLE";
         if (exception is EntitlementRuleException entitlement) problemDetails.Extensions["code"] = entitlement.Code;
         if (exception is NotFoundException { Message: "GRANT_NOT_FOUND" }) problemDetails.Extensions["code"] = "GRANT_NOT_FOUND";

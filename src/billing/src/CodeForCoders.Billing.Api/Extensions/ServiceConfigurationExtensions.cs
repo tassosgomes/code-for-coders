@@ -1,3 +1,4 @@
+using CodeForCoders.Billing.Infra.Gateway;
 using System.Security.Cryptography;
 using CodeForCoders.Billing.Api.Security;
 using CodeForCoders.Billing.Application;
@@ -14,6 +15,9 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddBillingConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddScoped<ServiceAssertionVerifier>();
+        builder.Services.AddScoped<CodeForCoders.Billing.Application.Interfaces.IPaymentReturnPolicy, PaymentReturnPolicy>();
+        builder.Services.AddGatewayConfiguration(builder.Configuration);
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddMessagingConfiguration(builder.Configuration);
         builder.Services.AddBillingConfigurationValidation(builder.Environment);
