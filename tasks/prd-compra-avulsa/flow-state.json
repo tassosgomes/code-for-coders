@@ -4,9 +4,9 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "target_ref": null,
-  "last_checkpoint": "026de4d",
+  "last_checkpoint": "d77542b",
   "phase": "checkpoint",
-  "active_task": "5.0",
+  "active_task": "6.0",
   "attempt": 2,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -21,17 +21,16 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "5.0"
+    "task": "6.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "5.0",
-    "run_id": "run.8zg24NHX",
+    "task": "6.0",
+    "run_id": "run.VnjZ45p8",
     "kind": "cursor",
-    "model": "grok-4.7-high",
     "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/5.0_task_review.md"
+    "report": "tasks/prd-compra-avulsa/6.0_task_review.md"
   },
   "history": [
     {
@@ -136,6 +135,20 @@
       "ts": "2026-10-05T17:56",
       "event": "5.0 aprovada em revalidation (cursor grok-4.7-high)",
       "run_id": "run.8zg24NHX"
+    },
+    {
+      "ts": "2026-10-05T17:58",
+      "event": "5.0 checkpoint d77542b"
+    },
+    {
+      "ts": "2026-10-05T18:45",
+      "event": "6.0 reprovada em focused (B1 meio de pagamento); tentativa 1 consumida",
+      "run_id": "run.FsSnrOU0"
+    },
+    {
+      "ts": "2026-10-05T18:56",
+      "event": "6.0 aprovada em revalidation (cursor grok-4.7-high)",
+      "run_id": "run.VnjZ45p8"
     }
   ],
   "blocked_tasks": {},
@@ -172,6 +185,10 @@
     {
       "task": "5.0",
       "note": "ver seção Recomendações de 5.0_task_review.md (inbox travando; paymentUrl só https; checkpoint sandbox Stripe não executado)"
+    },
+    {
+      "task": "6.0",
+      "note": "2 recomendações em 6.0_task_review.md"
     }
   ],
   "routing_override": {

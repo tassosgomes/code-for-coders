@@ -31,4 +31,19 @@ public sealed class SalesPaymentSink(IOrderPaymentStore store, ITenantContext te
         }
         await transaction.CompleteAsync(cancellationToken);
     }
+
+    public async Task ApplyAwaitingAsync(PaymentAwaitingFact fact, CancellationToken cancellationToken)
+    {
+        if (fact.EventId == Guid.Empty || fact.TenantId == Guid.Empty || fact.OrderId == Guid.Empty)
+            throw new OrderRuleException("PAYMENT_INVALID", "Payment fact is invalid.");
+        tenant.Set(fact.TenantId);
+        await using var transaction = await store.LockAsync(fact.TenantId, fact.OrderId, cancellationToken);
+        var order = await store.FindAsync(fact.OrderId, cancellationToken)
+         ?? throw new OrderRuleException("ORDER_UNKNOWN", "Payment refers to an unknown order.");
+        if (order.RecordPendingPayment(fact.Method, fact.GatewayReference, fact.ExpiresAt))
+        {
+            await unitOfWork.CommitAsync(cancellationToken);
+        }
+        await transaction.CompleteAsync(cancellationToken);
+    }
 }

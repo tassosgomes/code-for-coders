@@ -18,6 +18,7 @@ public sealed class Order
     public int? PeriodMonths { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset? PaymentPageExpiresAt { get; private set; }
+    public DateTimeOffset? PendingPaymentExpiresAt { get; private set; }
     public DateTimeOffset? PaidAt { get; private set; }
     public string? PaymentMethod { get; private set; }
     public int? PaidAmountCents { get; private set; }
@@ -26,7 +27,20 @@ public sealed class Order
     public DateTimeOffset? AccessGrantedAt { get; private set; }
     public void EnsurePayable()
     { if (Status != "awaiting-payment") throw new OrderRuleException("ORDER_NOT_PAYABLE", "Order is not payable."); }
-    public void OpenPayment(DateTimeOffset expiresAt) { EnsurePayable(); PaymentPageExpiresAt = expiresAt; }
+    public void OpenPayment(DateTimeOffset expiresAt)
+    {
+        EnsurePayable();
+        if (PendingPaymentExpiresAt is null) PaymentPageExpiresAt = expiresAt;
+    }
+    public bool RecordPendingPayment(string method, string gatewayReference, DateTimeOffset expiresAt)
+    {
+        if (Status != "awaiting-payment") return false;
+        PaymentMethod = method;
+        GatewayReference = gatewayReference;
+        PendingPaymentExpiresAt = expiresAt;
+        PaymentPageExpiresAt = null;
+        return true;
+    }
     public bool ConfirmPayment(OrderPaymentConfirmation confirmation)
     {
         if (Status == "paid") return false;

@@ -26,6 +26,8 @@ public sealed class StripeGatewayAdapter(HttpClient client, IOptions<StripeGatew
             ["payment_method_types[0]"] = "card",
             ["payment_method_types[1]"] = "pix",
             ["payment_method_types[2]"] = "boleto",
+            ["payment_method_options[pix][expires_after_seconds]"] = "86400",
+            ["payment_method_options[boleto][expires_after_days]"] = "3",
             ["success_url"] = input.SuccessUrl,
             ["cancel_url"] = input.CancelUrl
         };
@@ -39,6 +41,58 @@ public sealed class StripeGatewayAdapter(HttpClient client, IOptions<StripeGatew
     {
         using var request = Request(HttpMethod.Get, $"v1/checkout/sessions/{Uri.EscapeDataString(reference)}");
         return await SendSessionAsync(request, cancellationToken);
+    }
+    public async Task<string> GetInstructionsUrlAsync(string paymentReference, string method, CancellationToken cancellationToken)
+    {
+        using var request = Request(HttpMethod.Get, $"v1/payment_intents/{Uri.EscapeDataString(paymentReference)}");
+        try
+        {
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode) throw new GatewayUnavailableException();
+            using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            var root = json.RootElement;
+            if (!root.TryGetProperty("next_action", out var nextAction) || nextAction.ValueKind != JsonValueKind.Object)
+                throw new GatewayUnavailableException();
+
+            string? url = null;
+            if (method == "pix" && nextAction.TryGetProperty("pix_display_qr_code", out var pix) && pix.TryGetProperty("hosted_instructions_url", out var pixUrl))
+                url = pixUrl.GetString();
+            else if (method == "boleto" && nextAction.TryGetProperty("boleto_display_details", out var boleto) && boleto.TryGetProperty("hosted_voucher_url", out var boletoUrl))
+                url = boletoUrl.GetString();
+            else if (nextAction.TryGetProperty("hosted_instructions_url", out var hostedUrl))
+                url = hostedUrl.GetString();
+            else if (nextAction.TryGetProperty("url", out var fallbackUrl))
+                url = fallbackUrl.GetString();
+
+            if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != "https" && uri.Scheme != "http"))
+                throw new GatewayUnavailableException();
+
+            return url;
+        }
+        catch (HttpRequestException) { throw new GatewayUnavailableException(); }
+        catch (JsonException) { throw new GatewayUnavailableException(); }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new GatewayUnavailableException(); }
+    }
+    public async Task<string> GetPaymentMethodAsync(string paymentReference, CancellationToken cancellationToken)
+    {
+        using var request = Request(HttpMethod.Get, $"v1/payment_intents/{Uri.EscapeDataString(paymentReference)}?expand[]=payment_method");
+        try
+        {
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode) throw new GatewayUnavailableException();
+            using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            var root = json.RootElement;
+            string? method = null;
+            if (root.TryGetProperty("payment_method", out var paymentMethod) && paymentMethod.ValueKind == JsonValueKind.Object
+             && paymentMethod.TryGetProperty("type", out var type) && type.ValueKind == JsonValueKind.String)
+                method = type.GetString();
+            else if (root.TryGetProperty("next_action", out var next) && next.ValueKind == JsonValueKind.Object)
+                method = next.TryGetProperty("pix_display_qr_code", out _) ? "pix" : next.TryGetProperty("boleto_display_details", out _) ? "boleto" : null;
+            return method is "card" or "pix" or "boleto" ? method : throw new GatewayUnavailableException();
+        }
+        catch (HttpRequestException) { throw new GatewayUnavailableException(); }
+        catch (JsonException) { throw new GatewayUnavailableException(); }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new GatewayUnavailableException(); }
     }
     public GatewayEvent VerifyEvent(string body, string? signature)
      => StripeEventTranslator.Verify(body, signature, options.Value.WebhookSigningSecret, clock.GetUtcNow());

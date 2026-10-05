@@ -24,9 +24,19 @@ public sealed class EnsurePaymentSession(IPaymentStore store, IPaymentGateway ga
             payment.Open(session.Reference, session.ExpiresAt, clock.GetUtcNow()); store.Add(payment);
             await unitOfWork.CommitAsync(cancellationToken);
         }
+        else if (payment.Status == "awaiting")
+        {
+            payment.EnsureTerms(terms);
+            payment.EnsurePayable(clock.GetUtcNow());
+            var kind = $"{payment.Method}-instructions";
+            var instructionsUrl = await gateway.GetInstructionsUrlAsync(payment.GatewayReference!, payment.Method!, cancellationToken);
+            await transaction.CompleteAsync(cancellationToken);
+            return new(input.OrderId, kind, instructionsUrl, payment.Method, payment.ExpiresAt);
+        }
         else
         {
-            payment.EnsureTerms(terms); payment.EnsurePayable(clock.GetUtcNow());
+            payment.EnsureTerms(terms);
+            payment.EnsurePayable(clock.GetUtcNow());
             session = await gateway.GetAsync(payment.SessionReference, cancellationToken);
         }
         await transaction.CompleteAsync(cancellationToken);

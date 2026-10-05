@@ -42,27 +42,55 @@ public sealed class PaymentStore(BillingDbContext db, ITenantContext tenant, IOu
          .ToListAsync(cancellationToken);
         foreach (var entry in entries)
         {
-            if (entry.Outcome != "confirmed") { entry.MarkProcessed(clock.GetUtcNow()); continue; }
-            if (entry.TenantId is not { } school || entry.OrderId is not { } orderId || entry.AmountCents is not > 0
-             || entry.Currency != "BRL" || string.IsNullOrEmpty(entry.PaymentReference))
+            if (entry.Outcome != "confirmed" && entry.Outcome != "awaiting") { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+            if (entry.TenantId is not { } school || entry.OrderId is not { } orderId || string.IsNullOrEmpty(entry.PaymentReference))
             { entry.MarkProcessed(clock.GetUtcNow()); continue; }
             tenant.Set(school);
             var key = $"payment/{tenant.Namespace}/{school:D}/{orderId:D}";
             await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken);
             var payment = await FindAsync(orderId, cancellationToken);
-            // A webhook may beat the creation transaction. Leave it durable for the next cycle.
-            if (payment is null) continue;
-            if (payment.SessionReference != entry.SessionReference) { entry.MarkProcessed(clock.GetUtcNow()); continue; }
-            if (payment.Confirm(entry.PaymentReference, entry.OccurredAt))
+            // A webhook may beat the creation transaction. Leave it durable for a short grace window.
+            if (payment is null)
             {
-                var eventId = Guid.CreateVersion7(); var now = clock.GetUtcNow();
-                var fact = new PaymentConfirmedV1(eventId, school, payment.Id, orderId, entry.Method!, entry.AmountCents.Value,
-                 entry.Currency, entry.PaymentReference, entry.OccurredAt, now);
-                await outbox.AppendAsync(new(eventId, school, "PagamentoConfirmado", "cobranca.pagamento-confirmado.v1", fact,
-                 now, Activity.Current?.Id, Activity.Current?.Id ?? eventId.ToString("D")), cancellationToken);
+                if (clock.GetUtcNow() - entry.OccurredAt > TimeSpan.FromMinutes(10))
+                    entry.MarkProcessed(clock.GetUtcNow());
+                continue;
+            }
+            if (payment.SessionReference != entry.SessionReference) { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+            if (entry.Outcome == "awaiting")
+            {
+                if (entry.Method is not { } method) { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+                var expiresAt = method == "pix" ? entry.OccurredAt.AddHours(24) : CalculateBoletoExpiration(entry.OccurredAt);
+                if (payment.MarkAwaiting(method, entry.PaymentReference, expiresAt))
+                {
+                    var eventId = Guid.CreateVersion7(); var now = clock.GetUtcNow();
+                    var fact = new PaymentAwaitingV1(eventId, school, payment.Id, orderId, method, expiresAt, entry.PaymentReference, entry.OccurredAt);
+                    await outbox.AppendAsync(new(eventId, school, "PagamentoAguardando", "cobranca.pagamento-aguardando.v1", fact,
+                     now, Activity.Current?.Id, Activity.Current?.Id ?? eventId.ToString("D")), cancellationToken);
+                }
+            }
+            else if (entry.Outcome == "confirmed")
+            {
+                if (entry.AmountCents is not > 0 || entry.Currency != "BRL") { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+                if ((payment.Method ?? entry.Method) is not { } method) { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+                if (payment.Confirm(entry.PaymentReference, method, entry.OccurredAt))
+                {
+                    var eventId = Guid.CreateVersion7(); var now = clock.GetUtcNow();
+                    var fact = new PaymentConfirmedV1(eventId, school, payment.Id, orderId, method, entry.AmountCents.Value,
+                     entry.Currency, entry.PaymentReference, entry.OccurredAt, now);
+                    await outbox.AppendAsync(new(eventId, school, "PagamentoConfirmado", "cobranca.pagamento-confirmado.v1", fact,
+                     now, Activity.Current?.Id, Activity.Current?.Id ?? eventId.ToString("D")), cancellationToken);
+                }
             }
             entry.MarkProcessed(clock.GetUtcNow());
         }
         await db.SaveChangesAsync(cancellationToken); await transaction.CommitAsync(cancellationToken); return entries.Count;
+    }
+    private static DateTimeOffset CalculateBoletoExpiration(DateTimeOffset occurred)
+    {
+        var saoPauloOffset = TimeSpan.FromHours(-3);
+        var localDate = occurred.ToOffset(saoPauloOffset).Date;
+        var expiryLocalDate = localDate.AddDays(3);
+        return new DateTimeOffset(expiryLocalDate.Year, expiryLocalDate.Month, expiryLocalDate.Day, 23, 59, 59, saoPauloOffset).ToUniversalTime();
     }
 }

@@ -20,7 +20,7 @@ public sealed class PurchaseGrantSink(CommerceDbContext db, ITenantContext tenan
             throw new EntitlementRuleException("COURSE_UNKNOWN", "Purchase refers to an unknown course.");
         var now = clock.GetUtcNow();
         var enrollment = await enrollmentStore.GetOrCreateEnrollmentAsync(fact.StudentId, fact.CourseId, now, cancellationToken);
-        var grant = AccessGrant.CreatePurchase(enrollment, new(fact.OrderId, fact.AccessPeriod.Type, fact.AccessPeriod.Months, now), zone.Zone);
+        var grant = AccessGrant.CreatePurchase(enrollment, new(fact.OrderId, fact.AccessPeriod.Type, fact.AccessPeriod.Months, fact.PaidAt), zone.Zone);
         db.AccessGrants.Add(grant); var eventId = Guid.CreateVersion7();
         var granted = new
         {

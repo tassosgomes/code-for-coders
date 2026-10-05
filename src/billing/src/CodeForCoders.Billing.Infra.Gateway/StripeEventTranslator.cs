@@ -27,10 +27,19 @@ public static class StripeEventTranslator
             var order = GuidValue(item, "metadata", "orderId");
             if (order is null && Guid.TryParse(Text(item, "client_reference_id"), out var clientOrder)) order = clientOrder;
             var isSession = type.StartsWith("checkout.session.", StringComparison.Ordinal);
-            var payment = Text(item, "payment_intent");
-            var outcome = type == "checkout.session.completed" && Text(item, "payment_status") == "paid" ? "confirmed" : null;
-            // A paid, synchronous Checkout completion is a card payment. Pending asynchronous means arrive in V-03.
-            var method = outcome == "confirmed" ? "card" : null;
+            var payment = Text(item, "payment_intent") ?? (item.TryGetProperty("payment_intent", out var piObj) && piObj.ValueKind == JsonValueKind.Object ? Text(piObj, "id") : null);
+            string? outcome = null;
+            string? method = null;
+
+            // The session only echoes the allowed types; the chosen method lives on the PaymentIntent and is resolved by the
+            // use case. Among card/pix/boleto only card settles synchronously, so a session completed as paid was paid by card.
+            if (type == "checkout.session.completed")
+            {
+                if (Text(item, "payment_status") == "paid") { outcome = "confirmed"; method = "card"; }
+                else outcome = "awaiting";
+            }
+            else if (type == "checkout.session.async_payment_succeeded") outcome = "confirmed";
+
             int? amount = item.TryGetProperty("amount_total", out var amountValue) && amountValue.TryGetInt32(out var cents) ? cents : null;
             return new(id, type, occurred, objectReference, isSession ? objectReference : null, payment, tenant, order,
              outcome, method, amount, Text(item, "currency")?.ToUpperInvariant());

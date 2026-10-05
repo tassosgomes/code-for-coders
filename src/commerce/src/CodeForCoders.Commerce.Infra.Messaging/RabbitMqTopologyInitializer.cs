@@ -151,6 +151,7 @@ public sealed class RabbitMqTopologyInitializer(
             }, cancellationToken: cancellationToken);
             await channel.QueueBindAsync(queue, exchange, key, null, cancellationToken: cancellationToken);
         }
+        await channel.QueueBindAsync(settings.SalesPaymentsQueue, settings.BillingExchange, "cobranca.pagamento-aguardando.v1", null, cancellationToken: cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

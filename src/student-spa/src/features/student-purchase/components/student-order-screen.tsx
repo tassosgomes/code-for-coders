@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { paths } from '@/config/paths';
 import { useOrder } from '@/features/student-purchase/api/get-order';
 import { useStartOrderPayment } from '@/features/student-purchase/api/start-order-payment';
-import { purchasePeriod, purchasePrice } from '@/features/student-purchase/utils/purchase-labels';
+import { formatPendingPaymentDeadline, purchasePeriod, purchasePrice } from '@/features/student-purchase/utils/purchase-labels';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
 type StudentOrderScreenProps = { orderId: string; order: ReturnType<typeof useOrder>; result: string | null; delayed: boolean; lessonId?: string; csrfToken: string };
@@ -24,7 +24,37 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
   if (!order.data) return <Alert variant="destructive"><AlertTitle>{axios.isAxiosError(order.error) && order.error.response?.status === 404 ? 'Pedido não encontrado.' : 'Não foi possível carregar o pedido agora.'}</AlertTitle><Button onClick={() => void order.refetch()}>Tentar de novo</Button></Alert>;
   const data = order.data;
   const following = result === 'concluido' && !confirmed;
-  const status = confirmed ? 'Compra confirmada' : data.status === 'paid' ? 'Liberando seu acesso' : following ? 'Confirmando pagamento' : 'Aguardando pagamento';
+  const pendingPayment = data.status === 'awaiting-payment' ? data.pendingPayment : null;
+  const status = confirmed
+    ? 'Compra confirmada'
+    : data.status === 'paid'
+      ? 'Liberando seu acesso'
+      : following
+        ? 'Confirmando pagamento'
+        : pendingPayment?.method === 'pix'
+          ? 'Aguardando pagamento do PIX'
+          : pendingPayment?.method === 'boleto'
+            ? 'Aguardando pagamento do boleto'
+            : 'Aguardando pagamento';
+
+  const paymentMethodLabel = data.paymentMethod === 'card'
+    ? 'Cartão de crédito'
+    : data.paymentMethod === 'pix'
+      ? 'PIX'
+      : data.paymentMethod === 'boleto'
+        ? 'Boleto'
+        : data.paymentMethod;
+
+  const actionButtonText = payment.isError
+    ? 'Tentar de novo'
+    : pendingPayment?.method === 'pix'
+      ? 'Ver código PIX'
+      : pendingPayment?.method === 'boleto'
+        ? 'Ver boleto'
+        : result === 'saiu'
+          ? 'Continuar pagamento'
+          : 'Ir para o pagamento';
+
   return <div className="grid max-w-[640px] gap-6">
     <p className="text-sm text-muted-foreground">PEDIDO #{data.number}</p>
     <h1 className="typo-h2">Pedido nº {data.number}</h1>
@@ -33,15 +63,27 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
     {following && delayed && <p role="status">A confirmação está demorando um pouco. Você pode voltar a este pedido depois; continuamos acompanhando por aqui.</p>}
     {confirmed && result === 'concluido' && <p>Você receberá o comprovante por e-mail.</p>}
     {confirmed && lessonId && <Button asChild><Link ref={courseLink} to={paths.studentLesson.getHref(lessonId)}>Ir para o curso</Link></Button>}
-    {data.status === 'awaiting-payment' && !following && <div className="grid gap-3">
+    {pendingPayment && !following && <div className="grid gap-3">
+      {pendingPayment.method === 'pix' && <p>
+        Pague o PIX até {formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso será liberado sozinho assim que o pagamento for confirmado. O curso ainda não está liberado.
+      </p>}
+      {pendingPayment.method === 'boleto' && <p>
+        Pague o boleto até {formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso a {data.course.title} será liberado sozinho quando o pagamento for compensado, o que pode levar até 3 dias úteis. O curso ainda não está liberado.
+      </p>}
       {payment.isError && <p role="alert">Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.</p>}
       <Button disabled={payment.isPending || !csrfToken} onClick={() => payment.mutate({ orderId, csrfToken })}>
-        {payment.isError ? 'Tentar de novo' : result === 'saiu' ? 'Continuar pagamento' : 'Ir para o pagamento'}
+        {actionButtonText}
+      </Button>
+    </div>}
+    {data.status === 'awaiting-payment' && !pendingPayment && !following && <div className="grid gap-3">
+      {payment.isError && <p role="alert">Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.</p>}
+      <Button disabled={payment.isPending || !csrfToken} onClick={() => payment.mutate({ orderId, csrfToken })}>
+        {actionButtonText}
       </Button>
     </div>}
     <Card><CardHeader><CardTitle>Resumo do pedido</CardTitle></CardHeader><CardContent className="grid gap-4">
       <p>{data.course.title}</p><p>{data.offer.name}</p><p>{purchasePeriod(data.accessPeriod)}</p><p className="text-xl font-semibold">{purchasePrice(data.priceCents)}</p>
-      {data.paymentMethod && <p>Meio de pagamento: {data.paymentMethod === 'card' ? 'Cartão de crédito' : data.paymentMethod}</p>}
+      {data.paymentMethod && <p>Meio de pagamento: {paymentMethodLabel}</p>}
       <p>Situação: {data.status === 'paid' ? 'Pago' : 'Aguardando pagamento'}</p>
     </CardContent></Card>
   </div>;

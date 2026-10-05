@@ -97,6 +97,12 @@ channels:
     messages:
       compraConcluida:
         $ref: '#/components/messages/CompraConcluida'
+  pagamentoAguardando:
+    address: cobranca.pagamento-aguardando.v1
+    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    messages:
+      pagamentoAguardando:
+        $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoAguardando
   pagamentoConfirmado:
     address: cobranca.pagamento-confirmado.v1
     description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
@@ -240,6 +246,21 @@ operations:
       confirmações repetidas, ou confirmação de pedido já pago, não geram outro. Ao menos uma vez; consumidores
       deduplicam por `eventId` e, para o efeito, por `orderId`. Consumidor: Matrícula (`commerce`); depois, Fiscal
       (`CAP-016`) e Inteligência de Negócio.'
+  receberPagamentoAguardando:
+    action: receive
+    summary: Registrar no pedido o PIX ou boleto pendente.
+    channel:
+      $ref: '#/channels/pagamentoAguardando'
+    messages:
+    - $ref: '#/channels/pagamentoAguardando/messages/pagamentoAguardando'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Pedido `awaiting-payment` passa a ter `paymentMethod`, `pendingPayment` (meio e prazo) e a referência
+      do gateway. Pedido já `paid`, `expired` ou `cancelled` → confirmado sem efeito (ordem não garantida). Deduplica
+      por `eventId`. Falha transitória não confirma; esgotadas as entregas, fila de erro, reprocessável sem efeito
+      duplicado (mesmo padrão para as operações de recebimento abaixo).'
   receberPagamentoConfirmado:
     action: receive
     summary: Concluir o pedido pago.

@@ -15,6 +15,8 @@ public sealed class Payment
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset? ConfirmedAt { get; private set; }
     public string? GatewayReference { get; private set; }
+    public string Status { get; private set; } = "open";
+    public string? Method { get; private set; }
     public static Payment Create(Guid tenantId, Guid orderId, PaymentTerms terms)
     {
         if (tenantId == Guid.Empty || orderId == Guid.Empty || terms.StudentId == Guid.Empty || terms.AmountCents < 1
@@ -37,15 +39,28 @@ public sealed class Payment
             throw new PaymentRuleException("PAYMENT_TERMS_CONFLICT", "Payment terms differ from the original request.");
     }
     public void Open(string sessionReference, DateTimeOffset expiresAt, DateTimeOffset now)
-    { SessionReference = sessionReference; ExpiresAt = expiresAt; CreatedAt = now; }
+    { SessionReference = sessionReference; ExpiresAt = expiresAt; CreatedAt = now; Status = "open"; }
     public void EnsurePayable(DateTimeOffset now)
     {
-        if (ConfirmedAt is not null) throw new PaymentRuleException("PAYMENT_ALREADY_CONFIRMED", "Payment was already confirmed.");
+        if (ConfirmedAt is not null || Status == "confirmed") throw new PaymentRuleException("PAYMENT_ALREADY_CONFIRMED", "Payment was already confirmed.");
         if (ExpiresAt <= now) throw new PaymentRuleException("PAYMENT_EXPIRED", "Payment page has expired.");
     }
-    public bool Confirm(string gatewayReference, DateTimeOffset confirmedAt)
+    public bool MarkAwaiting(string method, string gatewayReference, DateTimeOffset expiresAt)
     {
-        if (ConfirmedAt is not null) return false;
+        if (ConfirmedAt is not null || Status == "confirmed") return false;
+        if (Status == "awaiting") return false;
+        Status = "awaiting";
+        Method = method;
+        GatewayReference = gatewayReference;
+        ExpiresAt = expiresAt;
+        return true;
+    }
+    public bool Confirm(string gatewayReference, DateTimeOffset confirmedAt) => Confirm(gatewayReference, null, confirmedAt);
+    public bool Confirm(string gatewayReference, string? method, DateTimeOffset confirmedAt)
+    {
+        if (ConfirmedAt is not null || Status == "confirmed") return false;
+        Status = "confirmed";
+        if (!string.IsNullOrEmpty(method)) Method = method;
         GatewayReference = gatewayReference; ConfirmedAt = confirmedAt; return true;
     }
 }

@@ -76,6 +76,8 @@ public sealed class StripeGatewayAdapterTests
         Assert.Equal("card", form["payment_method_types[0]"]);
         Assert.Equal("pix", form["payment_method_types[1]"]);
         Assert.Equal("boleto", form["payment_method_types[2]"]);
+        Assert.Equal("86400", form["payment_method_options[pix][expires_after_seconds]"]);
+        Assert.Equal("3", form["payment_method_options[boleto][expires_after_days]"]);
         Assert.Equal("https://app.code4coders.com.br/success", form["success_url"]);
         Assert.Equal("https://app.code4coders.com.br/cancel", form["cancel_url"]);
 
@@ -133,6 +135,109 @@ public sealed class StripeGatewayAdapterTests
         var terms = new PaymentTerms(Guid.CreateVersion7(), 49700, "BRL", "Curso");
         await Assert.ThrowsAsync<GatewayUnavailableException>(() =>
             adapter.OpenAsync(new(Guid.CreateVersion7(), Guid.CreateVersion7(), terms, "https://app.code4coders.com.br/success", "https://app.code4coders.com.br/cancel"), Cancellation));
+    }
+
+    [Fact(DisplayName = nameof(GetInstructionsUrlAsyncReturnsPixHostedInstructionsUrl))]
+    public async Task GetInstructionsUrlAsyncReturnsPixHostedInstructionsUrl()
+    {
+        var handler = new MockHttpMessageHandler((req, _) =>
+        {
+            Assert.Equal(HttpMethod.Get, req.Method);
+            Assert.Equal("/v1/payment_intents/pi_test_pix_123", req.RequestUri?.AbsolutePath);
+            var responseJson = JsonSerializer.Serialize(new
+            {
+                id = "pi_test_pix_123",
+                next_action = new
+                {
+                    type = "pix_display_qr_code",
+                    pix_display_qr_code = new
+                    {
+                        hosted_instructions_url = "https://payments.stripe.com/pix/instructions/test_123"
+                    }
+                }
+            });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+            });
+        });
+
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5999/") };
+        var options = Options.Create(new StripeGatewayOptions { SecretKey = "sk_test_key" });
+        var adapter = new StripeGatewayAdapter(httpClient, options, TimeProvider.System);
+
+        var url = await adapter.GetInstructionsUrlAsync("pi_test_pix_123", "pix", Cancellation);
+        Assert.Equal("https://payments.stripe.com/pix/instructions/test_123", url);
+    }
+
+    [Fact(DisplayName = nameof(GetInstructionsUrlAsyncReturnsBoletoHostedVoucherUrl))]
+    public async Task GetInstructionsUrlAsyncReturnsBoletoHostedVoucherUrl()
+    {
+        var handler = new MockHttpMessageHandler((req, _) =>
+        {
+            Assert.Equal(HttpMethod.Get, req.Method);
+            Assert.Equal("/v1/payment_intents/pi_test_boleto_123", req.RequestUri?.AbsolutePath);
+            var responseJson = JsonSerializer.Serialize(new
+            {
+                id = "pi_test_boleto_123",
+                next_action = new
+                {
+                    type = "boleto_display_details",
+                    boleto_display_details = new
+                    {
+                        hosted_voucher_url = "https://payments.stripe.com/boleto/voucher/test_456"
+                    }
+                }
+            });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseJson, Encoding.UTF8, "application/json")
+            });
+        });
+
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5999/") };
+        var options = Options.Create(new StripeGatewayOptions { SecretKey = "sk_test_key" });
+        var adapter = new StripeGatewayAdapter(httpClient, options, TimeProvider.System);
+
+        var url = await adapter.GetInstructionsUrlAsync("pi_test_boleto_123", "boleto", Cancellation);
+        Assert.Equal("https://payments.stripe.com/boleto/voucher/test_456", url);
+    }
+
+    [Theory(DisplayName = nameof(GetPaymentMethodAsyncReadsTheMethodFromTheExpandedPaymentIntent))]
+    [InlineData("card")]
+    [InlineData("pix")]
+    [InlineData("boleto")]
+    public async Task GetPaymentMethodAsyncReadsTheMethodFromTheExpandedPaymentIntent(string type)
+    {
+        var handler = new MockHttpMessageHandler((req, _) =>
+        {
+            Assert.Equal("/v1/payment_intents/pi_method_1", req.RequestUri?.AbsolutePath);
+            Assert.Contains("expand[]=payment_method", Uri.UnescapeDataString(req.RequestUri!.Query));
+            var responseJson = JsonSerializer.Serialize(new
+            {
+                id = "pi_method_1",
+                payment_method_types = new[] { "card", "pix", "boleto" },
+                payment_method = new { id = "pm_1", type }
+            });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(responseJson, Encoding.UTF8, "application/json") });
+        });
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5999/") };
+        var adapter = new StripeGatewayAdapter(httpClient, Options.Create(new StripeGatewayOptions { SecretKey = "sk_test_key" }), TimeProvider.System);
+
+        Assert.Equal(type, await adapter.GetPaymentMethodAsync("pi_method_1", Cancellation));
+    }
+
+    [Fact(DisplayName = nameof(GetPaymentMethodAsyncRefusesAnIntentWithoutAKnownMethod))]
+    public async Task GetPaymentMethodAsyncRefusesAnIntentWithoutAKnownMethod()
+    {
+        var handler = new MockHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new { id = "pi_x", payment_method_types = new[] { "card", "pix", "boleto" }, payment_method = (object?)null }), Encoding.UTF8, "application/json")
+        }));
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5999/") };
+        var adapter = new StripeGatewayAdapter(httpClient, Options.Create(new StripeGatewayOptions { SecretKey = "sk_test_key" }), TimeProvider.System);
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.GetPaymentMethodAsync("pi_x", Cancellation));
     }
 
     private sealed class MockHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler

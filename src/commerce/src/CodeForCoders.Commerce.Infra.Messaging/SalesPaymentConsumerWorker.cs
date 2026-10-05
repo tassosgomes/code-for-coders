@@ -27,12 +27,22 @@ public sealed class SalesPaymentConsumerWorker(RabbitMqConnectionProvider connec
         {
             try
             {
-                var fact = JsonSerializer.Deserialize<PaymentConfirmedFact>(delivery.Body.Span, JsonOptions)
-           ?? throw new JsonException("Empty purchase flow fact.");
                 ActivityContext.TryParse(delivery.BasicProperties.CorrelationId, null, out var parent);
                 using var activity = CommerceTelemetry.ActivitySource.StartActivity("commerce.purchase.consume", ActivityKind.Consumer, parent);
                 await using var scope = scopes.CreateAsyncScope();
-                await scope.ServiceProvider.GetRequiredService<ISalesPaymentSink>().ApplyAsync(fact, stoppingToken);
+                var sink = scope.ServiceProvider.GetRequiredService<ISalesPaymentSink>();
+                if (delivery.RoutingKey == "cobranca.pagamento-aguardando.v1")
+                {
+                    var fact = JsonSerializer.Deserialize<PaymentAwaitingFact>(delivery.Body.Span, JsonOptions)
+                        ?? throw new JsonException("Empty purchase flow fact.");
+                    await sink.ApplyAwaitingAsync(fact, stoppingToken);
+                }
+                else
+                {
+                    var fact = JsonSerializer.Deserialize<PaymentConfirmedFact>(delivery.Body.Span, JsonOptions)
+                        ?? throw new JsonException("Empty purchase flow fact.");
+                    await sink.ApplyAsync(fact, stoppingToken);
+                }
                 await channel.BasicAckAsync(delivery.DeliveryTag, false, CancellationToken.None);
             }
             catch (Exception error) when (error is JsonException or OrderRuleException or EntitlementRuleException)
