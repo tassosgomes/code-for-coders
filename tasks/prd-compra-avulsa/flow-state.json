@@ -4,9 +4,9 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "target_ref": null,
-  "last_checkpoint": "16fafca6368a8c7a3469a8d2e16e30b855696e9b",
+  "last_checkpoint": "81a717afbccee97b887e290672bac3d89a95d706",
   "phase": "checkpoint",
-  "active_task": "3.0",
+  "active_task": "1.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -21,15 +21,15 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "3.0"
+    "task": "1.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "focused",
-    "task": "3.0",
-    "run_id": "run.sSNO346U",
+    "task": "1.0",
+    "run_id": "run.u6DqpFr7",
     "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/3.0_task_review.md"
+    "report": "tasks/prd-compra-avulsa/1.0_task_review.md"
   },
   "history": [
     {
@@ -60,6 +60,15 @@
       "ts": "2026-10-05",
       "event": "3.0 aprovada em focused (0 bloqueantes, 3 recomendações)",
       "run_id": "run.sSNO346U"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "3.0 checkpoint 81a717a"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "1.0 aprovada em focused (0 bloqueantes, 4 recomendações)",
+      "run_id": "run.u6DqpFr7"
     }
   ],
   "blocked_tasks": {
