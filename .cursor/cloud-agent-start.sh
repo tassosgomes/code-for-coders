@@ -127,6 +127,10 @@ if stack_is_ready; then
 fi
 
 bash "$repository_root/scripts/generate-local-env.sh"
+if ! grep -q '^MEDIA_PREPARATION_MASTER_KEY=' "$repository_root/.env"; then
+  umask 077
+  printf '\nMEDIA_PREPARATION_MASTER_KEY=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> "$repository_root/.env"
+fi
 prepare_local_databases
 apply_local_migrations
 
