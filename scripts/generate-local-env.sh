@@ -76,6 +76,40 @@ if [[ -e "$env_file" ]]; then
     changed=true
   fi
 
+  # Dedicated key pair for the commerce -> billing service assertion (ADR-0017).
+  if ! rg -q '^COMMERCE_BILLING_PRIVATE_KEY_B64=' "$env_file"; then
+    umask 077
+    commerce_billing_key_dir="$(mktemp -d)"
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$commerce_billing_key_dir/private.pem"
+    {
+      printf '\nCOMMERCE_BILLING_PUBLIC_KEY_B64=%s\n' "$(openssl pkey -in "$commerce_billing_key_dir/private.pem" -pubout -outform DER | base64 | tr -d '\n')"
+      printf 'COMMERCE_BILLING_PRIVATE_KEY_B64=%s\n' "$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$commerce_billing_key_dir/private.pem" | base64 | tr -d '\n')"
+    } >> "$env_file"
+    rm -rf -- "$commerce_billing_key_dir"
+    printf '[local-env] Added the development-only commerce billing key pair to %s.\n' "$env_file"
+    changed=true
+  fi
+
+  # Dedicated key pair for the notification -> identity service assertion (ADR-0018).
+  if ! rg -q '^NOTIFICATION_IDENTITY_PRIVATE_KEY_B64=' "$env_file"; then
+    umask 077
+    notification_identity_key_dir="$(mktemp -d)"
+    openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$notification_identity_key_dir/private.pem"
+    {
+      printf '\nNOTIFICATION_IDENTITY_PUBLIC_KEY_B64=%s\n' "$(openssl pkey -in "$notification_identity_key_dir/private.pem" -pubout -outform DER | base64 | tr -d '\n')"
+      printf 'NOTIFICATION_IDENTITY_PRIVATE_KEY_B64=%s\n' "$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$notification_identity_key_dir/private.pem" | base64 | tr -d '\n')"
+    } >> "$env_file"
+    rm -rf -- "$notification_identity_key_dir"
+    printf '[local-env] Added the development-only notification identity key pair to %s.\n' "$env_file"
+    changed=true
+  fi
+
+  if ! rg -q '^STRIPE_SECRET_KEY=' "$env_file"; then
+    printf '\n# Fill with a Stripe test key to run billing against the sandbox (never commit a real key).\n# STRIPE_SECRET_KEY=\n' >> "$env_file"
+    printf '# Fill with the signing secret of the Stripe webhook endpoint (never commit a real secret).\n# STRIPE_WEBHOOK_SECRET=\n' >> "$env_file"
+    changed=true
+  fi
+
   ensure_lesson_keys
   chmod 600 "$env_file"
   if [[ "$changed" == false ]]; then
@@ -108,6 +142,8 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/identity-staff-token-private.pem"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/bff-commerce-private.pem"
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/commerce-identity-private.pem"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/commerce-billing-private.pem"
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$key_material_dir/notification-identity-private.pem"
 commerce_identity_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt -in "$key_material_dir/commerce-identity-private.pem" | base64 | tr -d '\n')"
 commerce_identity_public_key_b64="$(openssl pkey -in "$key_material_dir/commerce-identity-private.pem" -pubout -outform DER | base64 | tr -d '\n')"
 
@@ -124,6 +160,14 @@ identity_staff_token_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outfor
 commerce_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
   -in "$key_material_dir/bff-commerce-private.pem" | base64 | tr -d '\n')"
 commerce_public_key_b64="$(openssl pkey -in "$key_material_dir/bff-commerce-private.pem" -pubout \
+  -outform DER | base64 | tr -d '\n')"
+commerce_billing_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+  -in "$key_material_dir/commerce-billing-private.pem" | base64 | tr -d '\n')"
+commerce_billing_public_key_b64="$(openssl pkey -in "$key_material_dir/commerce-billing-private.pem" -pubout \
+  -outform DER | base64 | tr -d '\n')"
+notification_identity_private_key_b64="$(openssl pkcs8 -topk8 -inform PEM -outform DER -nocrypt \
+  -in "$key_material_dir/notification-identity-private.pem" | base64 | tr -d '\n')"
+notification_identity_public_key_b64="$(openssl pkey -in "$key_material_dir/notification-identity-private.pem" -pubout \
   -outform DER | base64 | tr -d '\n')"
 idempotency_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
 outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
@@ -150,7 +194,15 @@ bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
   printf 'BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64=%s\n' "$admin_private_key_b64"
   printf 'BFF_COMMERCE_PUBLIC_KEY_B64=%s\n' "$commerce_public_key_b64"
   printf 'BFF_COMMERCE_PRIVATE_KEY_B64=%s\n' "$commerce_private_key_b64"
+  printf 'COMMERCE_BILLING_PUBLIC_KEY_B64=%s\n' "$commerce_billing_public_key_b64"
+  printf 'COMMERCE_BILLING_PRIVATE_KEY_B64=%s\n' "$commerce_billing_private_key_b64"
+  printf 'NOTIFICATION_IDENTITY_PUBLIC_KEY_B64=%s\n' "$notification_identity_public_key_b64"
+  printf 'NOTIFICATION_IDENTITY_PRIVATE_KEY_B64=%s\n' "$notification_identity_private_key_b64"
   printf 'IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64=%s\n' "$identity_staff_token_private_key_b64"
+  printf '# Fill with a Stripe test key to run billing against the sandbox (never commit a real key).\n'
+  printf '# STRIPE_SECRET_KEY=\n'
+  printf '# Fill with the signing secret of the Stripe webhook endpoint (never commit a real secret).\n'
+  printf '# STRIPE_WEBHOOK_SECRET=\n'
 } > "$env_temp_file"
 
 chmod 600 "$env_temp_file"

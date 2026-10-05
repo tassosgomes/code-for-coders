@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "branch": "feature/compra-avulsa",
+  "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
+  "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
+  "target_ref": null,
+  "last_checkpoint": "16fafca6368a8c7a3469a8d2e16e30b855696e9b",
+  "phase": "checkpoint",
+  "active_task": "3.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "transport": "herdr",
+  "validated_commit": null,
+  "validated_tree": null,
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "3.0"
+  },
+  "last_result": {
+    "role": "validator",
+    "mode": "focused",
+    "task": "3.0",
+    "run_id": "run.sSNO346U",
+    "outcome": "approved",
+    "report": "tasks/prd-compra-avulsa/3.0_task_review.md"
+  },
+  "history": [
+    {
+      "ts": "2026-10-05",
+      "event": "prepare-prd-branch",
+      "run_id": "run.ahwGdhpd",
+      "outcome": "branch_ready",
+      "branch": "feature/compra-avulsa"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "1.0 rascunho ASCII entregue; bloqueada aguardando aprovação",
+      "run_id": "run.pa7K3PCI"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "3.0 iniciada em paralelo ao design (lane prevista em tasks.md)"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "1.0 ASCII aprovado pelo responsável; aguarda validator focused após 3.0"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "3.0 timeout de transporte; worker continua; sem consumir tentativa"
+    },
+    {
+      "ts": "2026-10-05",
+      "event": "3.0 aprovada em focused (0 bloqueantes, 3 recomendações)",
+      "run_id": "run.sSNO346U"
+    }
+  ],
+  "blocked_tasks": {
+    "1.0": {
+      "reason": "aguardando aprovação humana do ASCII",
+      "run_id": "run.pa7K3PCI",
+      "report": ".tsg-flow/delegate-logs/run.pa7K3PCI/report.md",
+      "attempt_consumed": false,
+      "resolved": "aprovação humana recebida 2026-10-05 (\"Wireframe aprovado\"); status registrado pelo orquestrador"
+    }
+  }
+}

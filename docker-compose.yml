@@ -402,6 +402,32 @@ services:
         condition: service_started
     healthcheck: *api-healthcheck
 
+  billing:
+    image: code-for-coders-billing:local
+    build:
+      context: .
+      dockerfile: src/billing/Dockerfile
+    container_name: code-for-coders-billing
+    environment:
+      <<: *api-environment
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=code-for-coders-local
+      Billing__Namespace: ${BILLING_NAMESPACE:-default}
+      RabbitMq__Exchange: billing.events
+      RabbitMq__DeadLetterExchange: billing.events.dlx
+      RabbitMq__HeartbeatQueue: billing.platform-heartbeat
+      ServiceAssertions__Audience: billing
+      ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-billing-1: ${COMMERCE_BILLING_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__commerce__AllowedScopes__0: payment:request
+      ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      PaymentReturn__AllowedHosts__0: localhost
+    ports:
+      - "5110:8080"
+    depends_on:
+      <<: *api-dependencies
+    healthcheck: *api-healthcheck
+
   audit:
     image: code-for-coders-audit:local
     build:

@@ -8,7 +8,7 @@ readonly compose_file="$repository_root/docker-compose.yml"
 readonly remote_compose_file="$repository_root/docker-compose.remote.yml"
 readonly database_bootstrap="$script_directory/init-local-databases.sql"
 readonly infrastructure_services=(postgres rabbitmq valkey otel-collector)
-readonly api_services=(identity learning media commerce notification audit bff-admin bff-student)
+readonly api_services=(identity learning media commerce notification billing audit bff-admin bff-student)
 readonly spa_services=(admin-spa student-spa)
 readonly app_services=("${api_services[@]}" media-worker media-edge "${spa_services[@]}")
 readonly readiness_checks=(
@@ -18,6 +18,7 @@ readonly readiness_checks=(
   "media-edge=http://localhost:5109/healthz"
   "commerce=http://localhost:5104/health/ready"
   "notification=http://localhost:5105/health/ready"
+  "billing=http://localhost:5110/health/ready"
   "audit=http://localhost:5106/health/ready"
   "bff-admin=http://localhost:5107/health/ready"
   "bff-student=http://localhost:5108/health/ready"
@@ -155,7 +156,7 @@ start_stack() {
     fi
   fi
 
-  log "Building and starting the eight APIs and two SPAs..."
+  log "Building and starting the nine APIs and two SPAs..."
   if ! compose up --detach --build --wait --wait-timeout "$app_startup_timeout" "${app_services[@]}"; then
     compose logs --no-color --tail=100 "${app_services[@]}" >&2 || true
     compose stop --timeout 30 "${app_services[@]}" >/dev/null 2>&1 || true

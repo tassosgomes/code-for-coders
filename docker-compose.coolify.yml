@@ -323,6 +323,42 @@ services:
       retries: 12
       start_period: 30s
 
+  billing:
+    build:
+      context: .
+      dockerfile: src/billing/Dockerfile
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      Billing__Namespace: ${BILLING_NAMESPACE:-default}
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__Exchange: billing.events
+      RabbitMq__DeadLetterExchange: billing.events.dlx
+      RabbitMq__HeartbeatQueue: billing.platform-heartbeat
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      ServiceAssertions__Audience: billing
+      ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-billing-1: ${COMMERCE_BILLING_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__commerce__AllowedScopes__0: payment:request
+      ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:?set in Coolify}
+      Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:?set in Coolify}
+      PaymentReturn__AllowedHosts__0: ${BILLING_RETURN_HOST:-c4c-student.lab.tasso.dev.br}
+      # Domínio público do webhook (https://<domínio de billing>/webhooks/v1/stripe/events) a definir;
+      # o Coolify deve expor somente /webhooks/v1 deste serviço.
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
   audit:
     build:
       context: .

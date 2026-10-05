@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: []
 gate: 'dotnet build src/billing/CodeForCoders.Billing.slnx && dotnet test --project src/billing/tests/CodeForCoders.Billing.EndToEndTests/CodeForCoders.Billing.EndToEndTests.csproj -- --filter-class CodeForCoders.Billing.EndToEndTests.PlatformHeartbeatEndpointTests --minimum-expected-tests 1 && docker compose -f docker-compose.yml config -q && docker compose -f docker-compose.yml -f docker-compose.remote.yml config -q && docker compose -f docker-compose.coolify.yml config -q'

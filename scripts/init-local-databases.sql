@@ -16,6 +16,11 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'code_for_coders_bff_st
 \gexec
 ALTER ROLE code_for_coders_bff_student WITH LOGIN PASSWORD :'app_password';
 
+SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', 'code_for_coders_billing', :'app_password')
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'code_for_coders_billing')
+\gexec
+ALTER ROLE code_for_coders_billing WITH LOGIN PASSWORD :'app_password';
+
 SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', 'code_for_coders_commerce', :'app_password')
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'code_for_coders_commerce')
 \gexec
@@ -60,6 +65,7 @@ REVOKE CONNECT ON DATABASE code_for_coders_audit FROM PUBLIC;
 REVOKE CONNECT ON DATABASE code_for_coders_audit FROM
     code_for_coders_bff_admin,
     code_for_coders_bff_student,
+    code_for_coders_billing,
     code_for_coders_commerce,
     code_for_coders_identity,
     code_for_coders_learning,
@@ -78,6 +84,11 @@ SELECT format('CREATE DATABASE %I OWNER %I', 'code_for_coders_bff_student', 'cod
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'code_for_coders_bff_student')
 \gexec
 ALTER DATABASE code_for_coders_bff_student OWNER TO code_for_coders_bff_student;
+
+SELECT format('CREATE DATABASE %I OWNER %I', 'code_for_coders_billing', 'code_for_coders_billing')
+WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'code_for_coders_billing')
+\gexec
+ALTER DATABASE code_for_coders_billing OWNER TO code_for_coders_billing;
 
 SELECT format('CREATE DATABASE %I OWNER %I', 'code_for_coders_commerce', 'code_for_coders_commerce')
 WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'code_for_coders_commerce')
