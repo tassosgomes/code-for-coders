@@ -1,0 +1,572 @@
+openapi: 3.1.0
+info:
+  title: BFF do backoffice — pedidos
+  version: 1.0.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo** da fronteira `admin-spa` → `bff-admin` para a área financeira: a lista e o detalhe de pedidos (RF-11), **só leitura** (DP-09). A abertura da área (`getFinanceArea`, `bff-admin/openapi-acesso-interno.yaml`) não muda.
+
+    Exige `financeiro.ler` (DP-03 de `CAP-002`), verificada aqui e de novo em `commerce` pelas claims do JWT do ator (ADR-0005). O BFF compõe: pedidos vêm de `commerce` (`listFinanceOrdersInternal`, `getFinanceOrderInternal`), com o aluno por referência; **nome e e-mail** vêm de Identity (`resolveStudentAccountsInternal`, C-09) e só existem nesta resposta, nunca em URL, log ou cache.
+
+    O filtro por e-mail é feito em dois passos, sem e-mail em URL (G23): o cliente localiza a conta com `lookupStudentAccount` (`bff-admin/openapi-cortesias.yaml`, sem mudança) e filtra por `studentId`. O filtro por curso usa a lista de cursos do Catálogo, que o financeiro já lê.
+  contact:
+    name: Time de Commerce
+servers:
+- url: /api/v1
+  description: URL pública versionada do BFF do backoffice
+tags:
+- name: Pedidos
+  description: Pedidos da escola, na área financeira
+paths:
+  /finance/orders:
+    get:
+      tags:
+      - Pedidos
+      summary: Listar os pedidos da escola
+      description: Pedidos mais recentes primeiro, com filtros combináveis por situação, curso, aluno e período de
+        criação (datas inclusivas no fuso da escola). Cada item traz nome e e-mail do aluno, resolvidos em Identity
+        para a página inteira de uma vez; se Identity não responder, a lista não sai (502), em vez de sair sem aluno.
+      operationId: listFinanceOrders
+      security:
+      - StaffSessionCookie: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Situação do pedido. Ausente = todas.
+        schema:
+          $ref: '#/components/schemas/OrderStatus'
+      - name: courseId
+        in: query
+        required: false
+        description: Curso do pedido.
+        schema:
+          type: string
+          format: uuid
+      - name: studentId
+        in: query
+        required: false
+        description: Conta de aluno, obtida por `lookupStudentAccount`.
+        schema:
+          type: string
+          format: uuid
+      - name: createdFrom
+        in: query
+        required: false
+        description: Primeiro dia do período, inclusivo.
+        schema:
+          type: string
+          format: date
+        examples:
+          inicio:
+            value: '2026-10-01'
+      - name: createdTo
+        in: query
+        required: false
+        description: Último dia do período, inclusivo. Anterior a `createdFrom` → 400.
+        schema:
+          type: string
+          format: date
+        examples:
+          fim:
+            value: '2026-10-31'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de pedidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceOrderPage'
+              examples:
+                pendentesDoCurso:
+                  value:
+                    data:
+                    - orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+                      number: '000124'
+                      student:
+                        studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+                        name: Joana Ribeiro
+                        email: joana.ribeiro@example.com
+                      status: awaiting-payment
+                      courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      courseTitle: React na prática
+                      offerName: Acesso por 6 meses
+                      priceCents: 29700
+                      currency: BRL
+                      paymentMethod: boleto
+                      createdAt: '2026-10-06T10:00:00Z'
+                      paidAt: null
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 1
+                      totalPages: 1
+                vazia:
+                  value:
+                    data: []
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 0
+                      totalPages: 0
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /finance/orders/{orderId}:
+    parameters:
+    - name: orderId
+      in: path
+      required: true
+      description: Identificador do pedido.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        pedido:
+          value: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+    get:
+      tags:
+      - Pedidos
+      summary: Obter o detalhe de um pedido
+      description: O pedido com a vigência congelada, os momentos de criação, pagamento, expiração ou cancelamento,
+        a referência do pagamento no gateway (para localizar no painel dele) e a concessão correspondente, quando
+        existe (RF-11). Sem ações. Pedido de outra escola ou inexistente → 404.
+      operationId: getFinanceOrder
+      security:
+      - StaffSessionCookie: []
+      responses:
+        '200':
+          description: O pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceOrderDetail'
+              examples:
+                pago:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    number: '000123'
+                    student:
+                      studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                      name: Ana Souza
+                      email: ana.souza@example.com
+                    status: paid
+                    courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                    courseTitle: .NET do zero à API
+                    offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                    offerName: Acesso por 12 meses
+                    priceCents: 49700
+                    currency: BRL
+                    accessPeriod:
+                      type: months
+                      months: 12
+                    paymentMethod: card
+                    paymentReference: pi_3Q2w3E4r5T6y7U8i0
+                    paidAmountCents: 49700
+                    grantId: 4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+                    accessGrantedAt: '2026-10-05T14:21:04Z'
+                    createdAt: '2026-10-05T14:19:30Z'
+                    paymentPageExpiresAt: '2026-10-06T14:19:41Z'
+                    paidAt: '2026-10-05T14:21:02Z'
+                    expiredAt: null
+                    cancelledAt: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+components:
+  securitySchemes:
+    StaffSessionCookie:
+      type: apiKey
+      in: cookie
+      name: staff_session
+      description: Cookie opaco de sessão do backoffice, HttpOnly, Secure e SameSite, distinto do cookie do aluno.
+        Nenhum token é entregue ao navegador (BA06).
+  parameters:
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, a partir de 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+        instance:
+          type: string
+    OrderStatus:
+      type: string
+      enum:
+      - awaiting-payment
+      - paid
+      - expired
+      - cancelled
+      description: Situação do pedido (RN-V05). Clientes devem tolerar valor novo.
+    PaymentMethod:
+      type: string
+      enum:
+      - card
+      - pix
+      - boleto
+      description: Meio de pagamento. Clientes devem tolerar valor novo.
+    AccessPeriod:
+      description: Vigência congelada no pedido.
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        - months
+        properties:
+          type:
+            const: months
+          months:
+            type: integer
+            minimum: 1
+            maximum: 60
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        properties:
+          type:
+            const: lifetime
+    OrderStudent:
+      type: object
+      additionalProperties: false
+      required:
+      - studentId
+      - name
+      - email
+      description: Aluno do pedido, resolvido em Identity para esta resposta. Conta desativada continua identificada
+        (RN-23).
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    FinanceOrderSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - number
+      - student
+      - status
+      - courseId
+      - courseTitle
+      - offerName
+      - priceCents
+      - currency
+      - paymentMethod
+      - createdAt
+      - paidAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        number:
+          type: string
+          pattern: ^[0-9]{6,}$
+        student:
+          $ref: '#/components/schemas/OrderStudent'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        courseId:
+          type: string
+          format: uuid
+        courseTitle:
+          type: string
+        offerName:
+          type: string
+        priceCents:
+          type: integer
+          minimum: 1
+          description: Valor congelado no pedido, em centavos de real.
+        currency:
+          type: string
+          const: BRL
+        paymentMethod:
+          oneOf:
+          - $ref: '#/components/schemas/PaymentMethod'
+          - type: 'null'
+        createdAt:
+          type: string
+          format: date-time
+        paidAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    FinanceOrderPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceOrderSummary'
+        pagination:
+          type: object
+          additionalProperties: false
+          required:
+          - page
+          - size
+          - total
+          - totalPages
+          properties:
+            page:
+              type: integer
+            size:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+    FinanceOrderDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - number
+      - student
+      - status
+      - courseId
+      - courseTitle
+      - offerId
+      - offerName
+      - priceCents
+      - currency
+      - accessPeriod
+      - paymentMethod
+      - paymentReference
+      - paidAmountCents
+      - grantId
+      - accessGrantedAt
+      - createdAt
+      - paymentPageExpiresAt
+      - paidAt
+      - expiredAt
+      - cancelledAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        number:
+          type: string
+          pattern: ^[0-9]{6,}$
+        student:
+          $ref: '#/components/schemas/OrderStudent'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        courseId:
+          type: string
+          format: uuid
+        courseTitle:
+          type: string
+        offerId:
+          type: string
+          format: uuid
+        offerName:
+          type: string
+        priceCents:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+        paymentMethod:
+          oneOf:
+          - $ref: '#/components/schemas/PaymentMethod'
+          - type: 'null'
+        paymentReference:
+          type:
+          - string
+          - 'null'
+          maxLength: 255
+          description: Identificador do pagamento no gateway, para localizar no painel dele.
+        paidAmountCents:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+          description: Valor confirmado pelo gateway; divergência de `priceCents` fica visível aqui.
+        grantId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Concessão gerada por este pedido, quando existe.
+        accessGrantedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        paymentPageExpiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        paidAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        expiredAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        cancelledAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+  responses:
+    InvalidRequest:
+      description: Parâmetro inválido ou período invertido; code `VALIDATION_ERROR`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            periodo:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                detail: createdTo não pode ser anterior a createdFrom.
+                code: VALIDATION_ERROR
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    SessionRequired:
+      description: Sessão do backoffice ausente, expirada ou revogada; code `SESSION_REQUIRED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: Ator sem `financeiro.ler` (professor, suporte, administrador sem o papel financeiro); code `PERMISSION_DENIED`.
+        `commerce` recusa da mesma forma se chamado diretamente.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              value:
+                type: about:blank
+                title: Sem permissão para esta área.
+                status: 403
+                code: PERMISSION_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OrderNotFound:
+      description: Pedido inexistente ou de outra escola; code `ORDER_NOT_FOUND`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Pedido não encontrado.
+                status: 404
+                code: ORDER_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamUnavailable:
+      description: '`commerce` ou `identity` não respondeu; code `COMMERCE_UNAVAILABLE` ou `IDENTITY_UNAVAILABLE`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            identidade:
+              value:
+                type: about:blank
+                title: Serviço temporariamente indisponível.
+                status: 502
+                code: IDENTITY_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamTimeout:
+      description: O serviço não respondeu no tempo limite; code `UPSTREAM_TIMEOUT`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tempo:
+              value:
+                type: about:blank
+                title: O serviço demorou a responder.
+                status: 504
+                code: UPSTREAM_TIMEOUT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01

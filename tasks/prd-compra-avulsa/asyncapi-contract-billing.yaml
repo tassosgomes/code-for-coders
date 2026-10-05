@@ -1,0 +1,306 @@
+asyncapi: 3.0.0
+info:
+  title: Billing — fatos de pagamento
+  version: 1.0.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo**: aplicação `billing` (Cobrança e Assinatura em fatia mínima, C-01).
+
+    `billing` traduz os eventos do gateway (`webhook-contract-billing.yaml`) para três fatos no vocabulário da plataforma (RN-CB05) e recebe a desistência do pedido para cancelar o pagamento pendente no gateway. Nenhuma mensagem carrega e-mail, nome, CPF, dado de cartão ou endereço do gateway: o aluno vai por referência, e a referência do gateway é um identificador opaco.
+
+    Consumidor conhecido dos três fatos: `commerce` (módulo Vendas). Fiscal, Notificação e Inteligência de Negócio podem consumi-los depois sem mudança aqui.
+id: urn:code-4-coders:billing
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline (exchange `topic`, filas quorum, DLX/DLQ por fila e `x-delivery-limit`, G06);
+      topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  pagamentoAguardando:
+    address: cobranca.pagamento-aguardando.v1
+    description: Um PIX ou boleto foi gerado e ainda não foi pago.
+    messages:
+      pagamentoAguardando:
+        $ref: '#/components/messages/PagamentoAguardando'
+  pagamentoConfirmado:
+    address: cobranca.pagamento-confirmado.v1
+    description: O gateway confirmou o pagamento de um pedido.
+    messages:
+      pagamentoConfirmado:
+        $ref: '#/components/messages/PagamentoConfirmado'
+  pagamentoNaoConfirmado:
+    address: cobranca.pagamento-nao-confirmado.v1
+    description: O prazo do pagamento venceu sem confirmação, ou o pagamento foi cancelado.
+    messages:
+      pagamentoNaoConfirmado:
+        $ref: '#/components/messages/PagamentoNaoConfirmado'
+  pedidoCancelado:
+    address: vendas.pedido-cancelado.v1
+    description: Fato de `commerce` (`asyncapi-contract.yaml`); `billing` consome com fila própria.
+    messages:
+      pedidoCancelado:
+        $ref: asyncapi-contract.yaml#/components/messages/PedidoCancelado
+operations:
+  publicarPagamentoAguardando:
+    action: send
+    summary: Comunicar que um PIX ou boleto aguarda pagamento.
+    channel:
+      $ref: '#/channels/pagamentoAguardando'
+    messages:
+    - $ref: '#/channels/pagamentoAguardando/messages/pagamentoAguardando'
+    description: 'Pelo outbox, na mesma transação em que `billing` registra o evento do gateway (G06). Um fato por
+      pagamento pendente; ao menos uma vez, consumidores deduplicam por `eventId`. **Ordem não garantida**: pode
+      chegar depois de `pagamento-confirmado` do mesmo pedido, e o consumidor o ignora nesse caso.'
+  publicarPagamentoConfirmado:
+    action: send
+    summary: Comunicar que um pagamento foi confirmado.
+    channel:
+      $ref: '#/channels/pagamentoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoConfirmado/messages/pagamentoConfirmado'
+    description: 'Pelo outbox, só depois de a confirmação do gateway ter sido aceita como autêntica (RN-CB04). **Um
+      fato por pagamento**: eventos repetidos do gateway não geram outro (G09). Ao menos uma vez; consumidores deduplicam
+      por `eventId` e, para o efeito, por `orderId`. Publicado também quando a confirmação chega para pagamento
+      cujo pedido já expirou ou foi cancelado (RN-V08): `billing` não julga o pedido.'
+  publicarPagamentoNaoConfirmado:
+    action: send
+    summary: Comunicar que um pagamento não se confirmou.
+    channel:
+      $ref: '#/channels/pagamentoNaoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoNaoConfirmado/messages/pagamentoNaoConfirmado'
+    description: '`reason: expired` quando a página venceu sem meio escolhido ou o PIX/boleto venceu sem pagamento
+      (RN-CB03); `reason: cancelled` quando `billing` cancelou no gateway por `vendas.pedido-cancelado.v1`. Pelo outbox;
+      um fato por pagamento e motivo; ao menos uma vez. Não é definitivo diante do gateway: uma confirmação tardia
+      ainda produz `pagamento-confirmado` (RN-V08).'
+  receberPedidoCancelado:
+    action: receive
+    summary: Cancelar no gateway o pagamento de um pedido de que o aluno desistiu.
+    channel:
+      $ref: '#/channels/pedidoCancelado'
+    messages:
+    - $ref: '#/channels/pedidoCancelado/messages/pedidoCancelado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Encerra a página de pagamento aberta ou cancela o PIX/boleto pendente do pedido, e passa a recusar
+      `ensurePaymentSessionInternal` para ele (`PAYMENT_CANCELLED`). Deduplica por `eventId`; pedido sem pagamento
+      é confirmado sem efeito. Gateway indisponível: não confirma, e a mensagem volta para nova tentativa; esgotadas
+      as entregas, segue para a fila de erro e pode ser reprocessada sem efeito duplicado. Se o gateway confirmar
+      o pagamento mesmo assim, vale RN-V08.'
+components:
+  messages:
+    PagamentoAguardando:
+      name: PagamentoAguardando
+      title: Pagamento aguardando
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PagamentoAguardandoPayload'
+      examples:
+      - name: boleto
+        headers:
+          correlationId: 00-a1b2c3d4e5f60718293a4b5c6d7e8f90-a1b2c3d4e5f60718-01
+        payload:
+          eventId: 0a1b2c3d-4e5f-4607-8819-2a3b4c5d6e7f
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          paymentId: 3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          method: boleto
+          expiresAt: '2026-10-09T02:59:59Z'
+          gatewayReference: pi_3Q9z8Y7x6W5v4U3t2
+          occurredAt: '2026-10-06T10:01:12Z'
+    PagamentoConfirmado:
+      name: PagamentoConfirmado
+      title: Pagamento confirmado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PagamentoConfirmadoPayload'
+      examples:
+      - name: cartao
+        headers:
+          correlationId: 00-b2c3d4e5f60718293a4b5c6d7e8f9001-b2c3d4e5f6071829-01
+        payload:
+          eventId: 1b2c3d4e-5f60-4718-892a-3b4c5d6e7f80
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          paymentId: 4f5a6b7c-8d9e-4f0a-9b1c-2d3e4f5a6b7c
+          orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          method: card
+          amountCents: 49700
+          currency: BRL
+          gatewayReference: pi_3Q2w3E4r5T6y7U8i0
+          confirmedAt: '2026-10-05T14:21:02Z'
+          occurredAt: '2026-10-05T14:21:03Z'
+    PagamentoNaoConfirmado:
+      name: PagamentoNaoConfirmado
+      title: Pagamento não confirmado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PagamentoNaoConfirmadoPayload'
+      examples:
+      - name: boletoVencido
+        headers:
+          correlationId: 00-c3d4e5f60718293a4b5c6d7e8f900112-c3d4e5f60718293a-01
+        payload:
+          eventId: 2c3d4e5f-6071-4829-9a3b-4c5d6e7f8091
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          paymentId: 3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          reason: expired
+          occurredAt: '2026-10-09T03:12:40Z'
+  schemas:
+    Cabecalho:
+      type: object
+      additionalProperties: false
+      required:
+      - correlationId
+      properties:
+        correlationId:
+          type: string
+          description: traceparent da requisição ou do evento do gateway que originou o fato. Sem dado pessoal.
+    Meio:
+      type: string
+      enum:
+      - card
+      - pix
+      - boleto
+      description: Meio de pagamento (RN-CB02, RN-CB05). Consumidores devem tolerar valor novo.
+    PagamentoAguardandoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - paymentId
+      - orderId
+      - method
+      - expiresAt
+      - gatewayReference
+      - occurredAt
+      properties:
+        eventId:
+          $ref: '#/components/schemas/EventId'
+        tenantId:
+          type: string
+          format: uuid
+        paymentId:
+          $ref: '#/components/schemas/PaymentId'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        method:
+          type: string
+          enum:
+          - pix
+          - boleto
+        expiresAt:
+          type: string
+          format: date-time
+          description: Prazo do PIX (24 h) ou vencimento do boleto (3 dias corridos), RN-CB03.
+        gatewayReference:
+          $ref: '#/components/schemas/GatewayReference'
+        occurredAt:
+          type: string
+          format: date-time
+    PagamentoConfirmadoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - paymentId
+      - orderId
+      - method
+      - amountCents
+      - currency
+      - gatewayReference
+      - confirmedAt
+      - occurredAt
+      properties:
+        eventId:
+          $ref: '#/components/schemas/EventId'
+        tenantId:
+          type: string
+          format: uuid
+        paymentId:
+          $ref: '#/components/schemas/PaymentId'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        method:
+          $ref: '#/components/schemas/Meio'
+        amountCents:
+          type: integer
+          minimum: 1
+          description: Valor confirmado pelo gateway, em centavos.
+        currency:
+          type: string
+          const: BRL
+        gatewayReference:
+          $ref: '#/components/schemas/GatewayReference'
+        confirmedAt:
+          type: string
+          format: date-time
+          description: Momento da confirmação segundo o gateway.
+        occurredAt:
+          type: string
+          format: date-time
+    PagamentoNaoConfirmadoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - paymentId
+      - orderId
+      - reason
+      - occurredAt
+      properties:
+        eventId:
+          $ref: '#/components/schemas/EventId'
+        tenantId:
+          type: string
+          format: uuid
+        paymentId:
+          $ref: '#/components/schemas/PaymentId'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        reason:
+          type: string
+          enum:
+          - expired
+          - cancelled
+          description: Consumidores devem tolerar valor novo.
+        occurredAt:
+          type: string
+          format: date-time
+    EventId:
+      type: string
+      format: uuid
+      description: Um por fato; chave de deduplicação.
+    PaymentId:
+      type: string
+      format: uuid
+      description: Pagamento em `billing`.
+    OrderId:
+      type: string
+      format: uuid
+      description: Pedido em Vendas a que o pagamento se refere.
+    GatewayReference:
+      type: string
+      maxLength: 255
+      description: Identificador opaco do pagamento no gateway, para localizar no painel dele. Não é credencial.

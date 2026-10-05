@@ -1,0 +1,334 @@
+openapi: 3.1.0
+info:
+  title: Identity — API interna (recorte de CAP-011)
+  version: 1.5.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/identity/openapi-internal.yaml` 1.4.0 de forma **aditiva** com duas leituras de conta de aluno. As demais operações não mudam e não estão neste recorte.
+
+    1. `resolveStudentAccountsInternal` — `bff-admin` resolve nome e e-mail dos alunos de uma página de pedidos (RF-11, C-09). Exige `X-Staff-Session` de ator com `financeiro.ler`.
+    2. `getStudentContactInternal` — `notification` resolve o destinatário de um pedido de envio feito **pela conta**, sem que o e-mail passe pelo remetente (C-06, QA-01 do PRD). É o que mantém o e-mail fora de `commerce`, do outbox e do broker: ele só sai de Identity para Notificação, a exposição já declarada em RN-26.
+
+    Nenhuma das duas aceita e-mail como entrada, e nenhuma devolve conta de ator interno (RN-13).
+  contact:
+    name: Time de Identidade
+servers:
+- url: /internal/v1
+  description: Rota privada de Identity
+tags:
+- name: StudentAccounts
+  description: Leituras de conta de aluno por outros serviços
+paths:
+  /student-account-resolutions:
+    post:
+      tags:
+      - StudentAccounts
+      summary: Resolver nome e e-mail de várias contas de aluno
+      description: |
+        Para a lista e o detalhe de pedidos no backoffice (RF-11). Recebe até 50 `studentId` (o tamanho máximo de página) e devolve um item por conta de aluno encontrada no tenant; identificador inexistente, de outro tenant ou de conta interna é **omitido**, sem erro. Conta desativada é devolvida com `status: disabled` (RN-23). Leitura sem efeito; usa POST para não pôr identificadores em URL e permitir o lote.
+
+        Exige asserção do `bff-admin` com escopo `student-account:resolve` e `X-Staff-Session` de ator com `financeiro.ler` vigente: Identity valida a sessão (RN-17) e a permissão. A resposta não é guardada pelo BFF além da requisição.
+      operationId: resolveStudentAccountsInternal
+      security:
+      - BffAdminServiceAssertion: []
+      parameters:
+      - $ref: '#/components/parameters/StaffSession'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentAccountResolutionInput'
+            examples:
+              pagina:
+                value:
+                  studentIds:
+                  - 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                  - 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+      responses:
+        '200':
+          description: As contas de aluno encontradas.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples:
+                - no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAccountResolutionList'
+              examples:
+                duas:
+                  value:
+                    data:
+                    - studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                      name: Ana Souza
+                      email: ana.souza@example.com
+                      status: active
+                    - studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+                      name: Joana Ribeiro
+                      email: joana.ribeiro@example.com
+                      status: disabled
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /student-accounts/{studentId}/contact:
+    parameters:
+    - name: studentId
+      in: path
+      required: true
+      description: Conta de aluno, por referência.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        aluno:
+          value: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+    get:
+      tags:
+      - StudentAccounts
+      summary: Obter o contato de entrega de uma conta de aluno
+      description: |
+        Para Notificação entregar um pedido de envio endereçado **à conta** (C-06): e-mail e nome da conta, no tenant da asserção. Conta inexistente, de outro tenant ou interna → 404 indistinto. Conta desativada → 200 com `status: disabled`, e Notificação **não** entrega (registra a falha como destinatário indisponível).
+
+        Exige asserção de `notification` com escopo `student-contact:read`. Notificação não guarda a resposta além do Registro de Entrega que ela já mantém (RN-26); o e-mail nunca vai para log, URL, métrica ou chave de cache.
+      operationId: getStudentContactInternal
+      security:
+      - NotificationServiceAssertion: []
+      responses:
+        '200':
+          description: Contato da conta.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples:
+                - no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentContact'
+              examples:
+                ativa:
+                  value:
+                    studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    email: ana.souza@example.com
+                    name: Ana Souza
+                    status: active
+        '401':
+          $ref: '#/components/responses/ServiceUnauthorized'
+        '403':
+          $ref: '#/components/responses/ServiceForbidden'
+        '404':
+          $ref: '#/components/responses/StudentAccountNotFound'
+components:
+  securitySchemes:
+    BffAdminServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Asserção curta e assimétrica exclusiva de `bff-admin` (ADR-0005). Escopo novo nesta operação:
+        `student-account:resolve`. O ator vem da sessão validada por Identity.'
+    NotificationServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Asserção curta e assimétrica exclusiva de `notification`, no mecanismo da ADR-0004 (vários emissores,
+        cada um com chaves e escopos próprios; precedente da ADR-0010). `notification` ainda não é emissor em Identity:
+        ADR própria na TechSpec (C-06). Escopo: `student-contact:read`. Identity verifica assinatura, kid, issuer,
+        audience, tenant, scope e jti contra replay.'
+  parameters:
+    StaffSession:
+      name: X-Staff-Session
+      in: header
+      required: true
+      description: ID opaco da sessão interna; Identity valida vigência, tenant e a permissão `financeiro.ler`.
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    AccountStatus:
+      type: string
+      enum:
+      - active
+      - disabled
+      description: Situação da conta. Clientes devem tolerar valor novo.
+    StudentAccountResolutionInput:
+      type: object
+      additionalProperties: false
+      required:
+      - studentIds
+      properties:
+        studentIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    StudentAccountResolution:
+      type: object
+      additionalProperties: false
+      required:
+      - studentId
+      - name
+      - email
+      - status
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+    StudentAccountResolutionList:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/StudentAccountResolution'
+    StudentContact:
+      type: object
+      additionalProperties: false
+      required:
+      - studentId
+      - email
+      - name
+      - status
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          description: E-mail da conta. Exposição declarada de RN-26 (Notificação).
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+  responses:
+    BadRequest:
+      description: Pedido inválido (lista vazia, acima de 50 ou com repetidos); code VALIDATION_ERROR.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Pedido inválido.
+                status: 400
+                code: VALIDATION_ERROR
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    Unauthorized:
+      description: Asserção inválida, ou sessão interna ausente ou revogada; code SERVICE_UNAUTHORIZED ou SESSION_REQUIRED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ausente ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    Forbidden:
+      description: Asserção sem `student-account:resolve` ou ator sem `financeiro.ler`; code PERMISSION_DENIED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              value:
+                type: about:blank
+                title: Sem permissão.
+                status: 403
+                code: PERMISSION_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ServiceUnauthorized:
+      description: Asserção ausente, inválida, expirada ou repetida; code SERVICE_UNAUTHORIZED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            servico:
+              value:
+                type: about:blank
+                title: Serviço não autenticado.
+                status: 401
+                code: SERVICE_UNAUTHORIZED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ServiceForbidden:
+      description: Asserção sem `student-contact:read` ou de emissor sem permissão para o tenant; code PERMISSION_DENIED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            escopo:
+              value:
+                type: about:blank
+                title: Sem permissão.
+                status: 403
+                code: PERMISSION_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    StudentAccountNotFound:
+      description: Conta de aluno inexistente, de outro tenant ou interna — indistintas (G07); code STUDENT_ACCOUNT_NOT_FOUND.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrada:
+              value:
+                type: about:blank
+                title: Conta de aluno não encontrada.
+                status: 404
+                code: STUDENT_ACCOUNT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
