@@ -15,15 +15,21 @@ COPY . .
 RUN npm run build
 
 # ---- serve ----
-FROM nginx:alpine
+# Unprivileged nginx listens on 8080. Root is only used to install files.
+FROM nginxinc/nginx-unprivileged:alpine
+
+USER root
 
 ARG BASE_PATH=/student/
 ENV BASE_PATH=${BASE_PATH}
 
 COPY --from=build /app/dist /usr/share/nginx/html
-RUN mv /usr/share/nginx/html/runtime-env.template.js /etc/nginx/runtime-env.template.js
+RUN mv /usr/share/nginx/html/runtime-env.template.js /etc/nginx/runtime-env.template.js \
+ && chown -R nginx:nginx /usr/share/nginx/html /etc/nginx/runtime-env.template.js
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/40-runtime-env.sh /docker-entrypoint.d/40-runtime-env.sh
-RUN chmod +x /docker-entrypoint.d/40-runtime-env.sh
+RUN chmod 755 /docker-entrypoint.d/40-runtime-env.sh
 
-EXPOSE 80
+USER nginx
+
+EXPOSE 8080

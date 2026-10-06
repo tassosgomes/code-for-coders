@@ -451,14 +451,14 @@ services:
       context: ./src/admin-spa
       dockerfile: Dockerfile
     expose:
-      - "80"
+      - "8080"
     environment:
       API_URL: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}
     depends_on:
       bff-admin:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
       interval: 10s
       timeout: 3s
       retries: 6
@@ -469,7 +469,7 @@ services:
       context: ./src/student-spa
       dockerfile: Dockerfile
     expose:
-      - "80"
+      - "8080"
     environment:
       SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       API_URL: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
@@ -477,7 +477,7 @@ services:
       bff-student:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
       interval: 10s
       timeout: 3s
       retries: 6

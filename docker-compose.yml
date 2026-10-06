@@ -29,7 +29,7 @@ x-api-healthcheck: &api-healthcheck
   start_period: 30s
 
 x-spa-healthcheck: &spa-healthcheck
-  test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+  test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
   interval: 10s
   timeout: 3s
   retries: 6
@@ -510,7 +510,7 @@ services:
     environment:
       API_URL: http://localhost:8081
     ports:
-      - "8081:80"
+      - "8081:8080"
     depends_on:
       bff-admin:
         condition: service_healthy
@@ -526,7 +526,7 @@ services:
       SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       API_URL: http://localhost:8082
     ports:
-      - "8082:80"
+      - "8082:8080"
     depends_on:
       bff-student:
         condition: service_healthy

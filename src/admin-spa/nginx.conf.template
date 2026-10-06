@@ -9,7 +9,7 @@ log_format admin_spa_no_query '$remote_addr - $remote_user [$time_local] '
                               '$status $body_bytes_sent "$http_user_agent"';
 
 server {
-    listen      80;
+    listen      8080;
     server_name _;
 
     access_log /var/log/nginx/access.log admin_spa_no_query;

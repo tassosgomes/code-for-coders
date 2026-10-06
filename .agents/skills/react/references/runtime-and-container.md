@@ -170,13 +170,13 @@ location ${BASE_PATH} {
 `alias` **substitui** o prefixo; `root` **concatena**. Com `root` e `location /poc-01/`, o Nginx
 procura em `/usr/share/nginx/html/poc-01/`, que não existe. Este é o erro mais comum do subpath.
 
-A imagem `nginx` aplica `envsubst` sozinha no que estiver em `/etc/nginx/templates/*.template`.
+A imagem `nginxinc/nginx-unprivileged` aplica `envsubst` sozinha no que estiver em `/etc/nginx/templates/*.template`. Ela escuta em `8080` e o processo do container é o usuário `nginx`.
 
 ### Camada 4 — Dockerfile
 
 ```bash
 docker build --build-arg BASE_PATH=/poc-01/ -t meu-app:latest .
-docker run -d -p 8080:80 -e API_URL=https://api.example.com meu-app:latest
+docker run -d -p 8080:8080 -e API_URL=https://api.example.com meu-app:latest
 ```
 
 Subpath no build, config no run.
@@ -190,7 +190,7 @@ Nesta ordem — cada falha aponta para uma camada:
 3. `GET /poc-01/alguma/rota` (deep link, F5 na URL) carrega a SPA → `try_files` da camada 3.
 4. Navegar dentro do app mantém o prefixo → camada 2.
 5. `GET /poc-01/runtime-env.js` traz os valores substituídos, sem `${...}` → entrypoint.
-6. `GET /healthz` devolve 200 → probe do Kubernetes.
+6. `GET /healthz` na porta 8080 devolve 200 → probe do Kubernetes.
 
 ## Armadilhas
 
