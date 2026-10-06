@@ -20,6 +20,8 @@ public sealed class Order
     public DateTimeOffset? PaymentPageExpiresAt { get; private set; }
     public DateTimeOffset? PendingPaymentExpiresAt { get; private set; }
     public DateTimeOffset? PaidAt { get; private set; }
+    public DateTimeOffset? CancelledAt { get; private set; }
+    public DateTimeOffset? ExpiredAt { get; private set; }
     public string? PaymentMethod { get; private set; }
     public int? PaidAmountCents { get; private set; }
     public string? GatewayReference { get; private set; }
@@ -39,6 +41,23 @@ public sealed class Order
         GatewayReference = gatewayReference;
         PendingPaymentExpiresAt = expiresAt;
         PaymentPageExpiresAt = null;
+        return true;
+    }
+    public bool Cancel(DateTimeOffset now)
+    {
+        if (Status == "cancelled") return false;
+        if (Status == "paid" || Status == "expired")
+            throw new OrderRuleException("ORDER_NOT_CANCELLABLE", "Order is already paid or expired.");
+        Status = "cancelled";
+        CancelledAt = now;
+        return true;
+    }
+    public bool Expire(DateTimeOffset now)
+    {
+        if (Status == "expired") return false;
+        if (Status == "paid" || Status == "cancelled") return false;
+        Status = "expired";
+        ExpiredAt = now;
         return true;
     }
     public bool ConfirmPayment(OrderPaymentConfirmation confirmation)

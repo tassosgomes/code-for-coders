@@ -42,8 +42,10 @@ public sealed class PaymentStore(BillingDbContext db, ITenantContext tenant, IOu
          .ToListAsync(cancellationToken);
         foreach (var entry in entries)
         {
-            if (entry.Outcome != "confirmed" && entry.Outcome != "awaiting") { entry.MarkProcessed(clock.GetUtcNow()); continue; }
-            if (entry.TenantId is not { } school || entry.OrderId is not { } orderId || string.IsNullOrEmpty(entry.PaymentReference))
+            if (entry.Outcome != "confirmed" && entry.Outcome != "awaiting" && entry.Outcome != "not-confirmed") { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+            if (entry.TenantId is not { } school || entry.OrderId is not { } orderId)
+            { entry.MarkProcessed(clock.GetUtcNow()); continue; }
+            if (entry.Outcome != "not-confirmed" && string.IsNullOrEmpty(entry.PaymentReference))
             { entry.MarkProcessed(clock.GetUtcNow()); continue; }
             tenant.Set(school);
             var key = $"payment/{tenant.Namespace}/{school:D}/{orderId:D}";
@@ -61,10 +63,10 @@ public sealed class PaymentStore(BillingDbContext db, ITenantContext tenant, IOu
             {
                 if (entry.Method is not { } method) { entry.MarkProcessed(clock.GetUtcNow()); continue; }
                 var expiresAt = method == "pix" ? entry.OccurredAt.AddHours(24) : CalculateBoletoExpiration(entry.OccurredAt);
-                if (payment.MarkAwaiting(method, entry.PaymentReference, expiresAt))
+                if (payment.MarkAwaiting(method, entry.PaymentReference!, expiresAt))
                 {
                     var eventId = Guid.CreateVersion7(); var now = clock.GetUtcNow();
-                    var fact = new PaymentAwaitingV1(eventId, school, payment.Id, orderId, method, expiresAt, entry.PaymentReference, entry.OccurredAt);
+                    var fact = new PaymentAwaitingV1(eventId, school, payment.Id, orderId, method, expiresAt, entry.PaymentReference!, entry.OccurredAt);
                     await outbox.AppendAsync(new(eventId, school, "PagamentoAguardando", "cobranca.pagamento-aguardando.v1", fact,
                      now, Activity.Current?.Id, Activity.Current?.Id ?? eventId.ToString("D")), cancellationToken);
                 }
@@ -73,12 +75,23 @@ public sealed class PaymentStore(BillingDbContext db, ITenantContext tenant, IOu
             {
                 if (entry.AmountCents is not > 0 || entry.Currency != "BRL") { entry.MarkProcessed(clock.GetUtcNow()); continue; }
                 if ((payment.Method ?? entry.Method) is not { } method) { entry.MarkProcessed(clock.GetUtcNow()); continue; }
-                if (payment.Confirm(entry.PaymentReference, method, entry.OccurredAt))
+                if (payment.Confirm(entry.PaymentReference!, method, entry.OccurredAt))
                 {
                     var eventId = Guid.CreateVersion7(); var now = clock.GetUtcNow();
                     var fact = new PaymentConfirmedV1(eventId, school, payment.Id, orderId, method, entry.AmountCents.Value,
-                     entry.Currency, entry.PaymentReference, entry.OccurredAt, now);
+                     entry.Currency, entry.PaymentReference!, entry.OccurredAt, now);
                     await outbox.AppendAsync(new(eventId, school, "PagamentoConfirmado", "cobranca.pagamento-confirmado.v1", fact,
+                     now, Activity.Current?.Id, Activity.Current?.Id ?? eventId.ToString("D")), cancellationToken);
+                }
+            }
+            else if (entry.Outcome == "not-confirmed")
+            {
+                var reason = entry.Reason ?? "expired";
+                if (payment.MarkNotConfirmed(reason, entry.PaymentReference))
+                {
+                    var eventId = Guid.CreateVersion7(); var now = clock.GetUtcNow();
+                    var fact = new PaymentNotConfirmedV1(eventId, school, payment.Id, orderId, reason, entry.OccurredAt);
+                    await outbox.AppendAsync(new(eventId, school, "PagamentoNaoConfirmado", "cobranca.pagamento-nao-confirmado.v1", fact,
                      now, Activity.Current?.Id, Activity.Current?.Id ?? eventId.ToString("D")), cancellationToken);
                 }
             }

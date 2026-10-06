@@ -27,6 +27,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(item => item.PaymentPageExpiresAt).HasColumnName("payment_page_expires_at");
         builder.Property(item => item.PendingPaymentExpiresAt).HasColumnName("pending_payment_expires_at");
         builder.Property(item => item.PaidAt).HasColumnName("paid_at");
+        builder.Property(item => item.CancelledAt).HasColumnName("cancelled_at");
+        builder.Property(item => item.ExpiredAt).HasColumnName("expired_at");
         builder.Property(item => item.PaymentMethod).HasColumnName("payment_method").HasMaxLength(255);
         builder.Property(item => item.PaidAmountCents).HasColumnName("paid_amount_cents");
         builder.Property(item => item.GatewayReference).HasColumnName("gateway_reference").HasMaxLength(255);

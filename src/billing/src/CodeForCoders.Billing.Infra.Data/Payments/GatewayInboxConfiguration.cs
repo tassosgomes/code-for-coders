@@ -20,6 +20,7 @@ public sealed class GatewayInboxConfiguration : IEntityTypeConfiguration<Gateway
         b.Property(x => x.Method).HasColumnName("method").HasMaxLength(255);
         b.Property(x => x.AmountCents).HasColumnName("amount_cents");
         b.Property(x => x.Currency).HasColumnName("currency").HasMaxLength(255);
+        b.Property(x => x.Reason).HasColumnName("reason").HasMaxLength(255);
         b.Property(x => x.ProcessedAt).HasColumnName("processed_at");
         b.HasIndex(x => x.ProcessedAt).HasFilter("processed_at IS NULL");
     }

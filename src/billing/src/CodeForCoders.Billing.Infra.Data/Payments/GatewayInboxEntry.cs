@@ -17,6 +17,7 @@ public sealed class GatewayInboxEntry
     public string? Method { get; private set; }
     public int? AmountCents { get; private set; }
     public string? Currency { get; private set; }
+    public string? Reason { get; private set; }
     public DateTimeOffset? ProcessedAt { get; private set; }
     public static GatewayInboxEntry Create(GatewayEvent value, string processingNamespace) => new()
     {
@@ -32,7 +33,8 @@ public sealed class GatewayInboxEntry
         Outcome = value.Outcome,
         Method = value.Method,
         AmountCents = value.AmountCents,
-        Currency = value.Currency
+        Currency = value.Currency,
+        Reason = value.Reason
     };
     public void MarkProcessed(DateTimeOffset now) => ProcessedAt = now;
 }

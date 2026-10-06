@@ -4,6 +4,7 @@ using System.Text.Json;
 using CodeForCoders.Commerce.Api.Security;
 using CodeForCoders.Commerce.Application.Exceptions;
 using CodeForCoders.Commerce.Application.Interfaces;
+using CodeForCoders.Commerce.Domain.Entities;
 namespace CodeForCoders.Commerce.Api.Clients;
 
 public sealed class BillingPaymentClient(HttpClient client, BillingAssertionTokenFactory assertions) : IBillingPaymentClient
@@ -16,6 +17,20 @@ public sealed class BillingPaymentClient(HttpClient client, BillingAssertionToke
         try
         {
             using var response = await client.SendAsync(request, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.UnprocessableEntity)
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+                    var code = doc.RootElement.TryGetProperty("code", out var codeProp) ? codeProp.GetString() : null;
+                    if (code is "PAYMENT_EXPIRED" or "PAYMENT_CANCELLED")
+                    {
+                        var detail = doc.RootElement.TryGetProperty("detail", out var detailProp) ? detailProp.GetString() : null;
+                        throw new OrderRuleException("ORDER_NOT_PAYABLE", detail ?? "O prazo de pagamento venceu; o pedido não pode ser pago.");
+                    }
+                }
+                catch (JsonException) { }
+            }
             if (!response.IsSuccessStatusCode) throw new PaymentProviderUnavailableException();
             var result = await response.Content.ReadFromJsonAsync<BillingPaymentSession>(cancellationToken);
             if (result is null || result.OrderId != input.OrderId || result.Kind != "checkout" || result.Method is not null

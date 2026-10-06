@@ -27,6 +27,7 @@ public sealed class OrdersCommerceClient(HttpClient client) : IOrdersCommerceCli
                 (404, "OFFER_NOT_AVAILABLE" or "ORDER_NOT_FOUND") => new(404, code),
                 (503, "PAYMENT_PROVIDER_UNAVAILABLE") => new(503, code),
                 (422, "ORDER_NOT_PAYABLE") => new(422, code),
+                (422, "ORDER_NOT_CANCELLABLE") => new(422, code),
                 (422, "IDEMPOTENCY_KEY_REUSED") => new(422, code),
                 _ => new(502, "COMMERCE_UNAVAILABLE")
             };

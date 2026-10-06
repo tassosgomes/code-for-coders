@@ -17,6 +17,7 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         b.Property(x => x.CreatedAt).HasColumnName("created_at"); b.Property(x => x.ExpiresAt).HasColumnName("expires_at");
         b.Property(x => x.ConfirmedAt).HasColumnName("confirmed_at"); b.Property(x => x.GatewayReference).HasColumnName("gateway_reference").HasMaxLength(255);
         b.Property(x => x.Status).HasColumnName("status").HasMaxLength(30); b.Property(x => x.Method).HasColumnName("method").HasMaxLength(30);
+        b.Property(x => x.Reason).HasColumnName("reason").HasMaxLength(30);
         b.HasIndex("Namespace", nameof(Payment.TenantId), nameof(Payment.OrderId)).IsUnique();
     }
 }

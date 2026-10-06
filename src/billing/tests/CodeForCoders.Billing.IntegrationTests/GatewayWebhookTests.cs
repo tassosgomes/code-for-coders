@@ -490,7 +490,7 @@ public sealed class GatewayWebhookTests(BillingIntegrationFixture fixture) : IAs
         }
 
         Assert.Equal(HttpStatusCode.OK, await PostAsync("checkout.session.completed", "paid"));
-        Assert.Equal(HttpStatusCode.OK, await PostAsync("checkout.session.expired", "unpaid"));
+        Assert.Equal(HttpStatusCode.OK, await PostAsync("payment_intent.created", "unpaid"));
         Assert.Equal(HttpStatusCode.BadRequest, await PostAsync("checkout.session.completed", "paid", "t=1234567,v1=bad"));
         listener.RecordObservableInstruments();
 

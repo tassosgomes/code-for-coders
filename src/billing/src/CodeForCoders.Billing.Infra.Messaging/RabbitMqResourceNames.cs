@@ -17,6 +17,12 @@ public sealed class RabbitMqResourceNames(
     public string HeartbeatQueue
         => Compose(rabbitOptions.Value.HeartbeatQueue, processingOptions.Value.Namespace);
 
+    public string CommerceExchange
+        => Compose(rabbitOptions.Value.CommerceExchange, processingOptions.Value.Namespace);
+
+    public string OrderCancellationsQueue
+        => Compose(rabbitOptions.Value.OrderCancellationsQueue, processingOptions.Value.Namespace);
+
     public int DeliveryLimit => rabbitOptions.Value.DeliveryLimit;
 
     public static string Compose(string baseName, string processingNamespace)

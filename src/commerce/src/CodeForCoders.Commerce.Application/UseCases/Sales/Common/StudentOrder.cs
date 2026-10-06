@@ -11,5 +11,5 @@ public sealed record StudentOrder(Guid OrderId, string Number, string Status, Or
         order.Status == "awaiting-payment" && order.PendingPaymentExpiresAt.HasValue && !string.IsNullOrEmpty(order.PaymentMethod)
             ? new PendingPayment(order.PaymentMethod, order.PendingPaymentExpiresAt.Value)
             : null,
-        order.PaymentPageExpiresAt, order.AccessGrantedAt, order.CreatedAt, order.PaidAt, null, null);
+        order.PaymentPageExpiresAt, order.AccessGrantedAt, order.CreatedAt, order.PaidAt, order.ExpiredAt, order.CancelledAt);
 }

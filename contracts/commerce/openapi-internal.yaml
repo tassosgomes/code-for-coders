@@ -1332,6 +1332,41 @@ paths:
           $ref: '#/components/responses/OrderNotPayable'
         '503':
           $ref: '#/components/responses/PaymentProviderUnavailable'
+  /orders/{orderId}/cancellation:
+    parameters:
+    - $ref: '#/components/parameters/OrderId'
+    post:
+      tags:
+      - Compra
+      summary: Desistir de um pedido aguardando pagamento
+      description: |
+        Torna o pedido `cancelled` (RF-06, RN-V07). Publica `vendas.pedido-cancelado.v1` pelo outbox, na mesma transação; `billing` o recebe e cancela no gateway a página ou o pagamento pendente. Se, mesmo assim, o gateway confirmar o pagamento, o pedido vira `paid` e concede (RN-V08).
+
+        - Pedido já `cancelled` → 200 com ele, sem novo fato (repetição segura).
+        - Pedido `paid` ou `expired` → 422 `ORDER_NOT_CANCELLABLE`, nada muda.
+
+        Depois de desistir, `createOrderInternal` na mesma oferta cria um pedido **novo**, pelas condições vigentes da oferta.
+      operationId: cancelOrderInternal
+      security:
+      - StudentUserToken: []
+      responses:
+        '200':
+          description: Pedido cancelado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentOrder'
+              examples:
+                cancelado:
+                  $ref: '#/components/examples/OrderCancelled'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/StudentScopeDenied'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
+        '422':
+          $ref: '#/components/responses/OrderNotCancellable'
 components:
   securitySchemes:
     StudentUserToken:
@@ -2903,6 +2938,20 @@ components:
                 detail: O prazo de pagamento venceu; o pedido está expirado.
                 code: ORDER_NOT_PAYABLE
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    OrderNotCancellable:
+      description: Pedido `paid` ou `expired`; code `ORDER_NOT_CANCELLABLE`. Nada muda.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            pago:
+              value:
+                type: about:blank
+                title: Este pedido não pode ser cancelado.
+                status: 422
+                code: ORDER_NOT_CANCELLABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   examples:
     OfferDraft:
       value:
@@ -3088,6 +3137,31 @@ components:
         paidAt: '2026-10-05T14:21:02Z'
         expiredAt: null
         cancelledAt: null
+    OrderCancelled:
+      summary: Aluno desistiu do boleto
+      value:
+        orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+        number: '000124'
+        status: cancelled
+        course:
+          courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+          title: React na prática
+        offer:
+          offerId: 5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d
+          name: Acesso por 6 meses
+        priceCents: 29700
+        currency: BRL
+        accessPeriod:
+          type: months
+          months: 6
+        paymentMethod: boleto
+        pendingPayment: null
+        paymentPageExpiresAt: null
+        accessGrantedAt: null
+        createdAt: '2026-10-06T10:00:00Z'
+        paidAt: null
+        expiredAt: null
+        cancelledAt: '2026-10-06T18:42:10Z'
   headers:
     NoStore:
       description: '`private, no-store`: a situação do pedido muda com o tempo e não é guardada pelo consumidor.'

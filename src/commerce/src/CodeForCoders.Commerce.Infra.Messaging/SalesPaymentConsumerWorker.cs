@@ -37,6 +37,12 @@ public sealed class SalesPaymentConsumerWorker(RabbitMqConnectionProvider connec
                         ?? throw new JsonException("Empty purchase flow fact.");
                     await sink.ApplyAwaitingAsync(fact, stoppingToken);
                 }
+                else if (delivery.RoutingKey == "cobranca.pagamento-nao-confirmado.v1")
+                {
+                    var fact = JsonSerializer.Deserialize<PaymentNotConfirmedFact>(delivery.Body.Span, JsonOptions)
+                        ?? throw new JsonException("Empty purchase flow fact.");
+                    await sink.ApplyNotConfirmedAsync(fact, stoppingToken);
+                }
                 else
                 {
                     var fact = JsonSerializer.Deserialize<PaymentConfirmedFact>(delivery.Body.Span, JsonOptions)

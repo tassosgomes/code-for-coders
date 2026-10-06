@@ -30,6 +30,12 @@ public sealed class RabbitMqOptions
     [Required]
     public string HeartbeatQueue { get; set; } = "billing.platform-heartbeat";
 
+    [Required]
+    public string CommerceExchange { get; set; } = "commerce.events";
+
+    [Required]
+    public string OrderCancellationsQueue { get; set; } = "billing.order-cancellations";
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 

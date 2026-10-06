@@ -76,7 +76,7 @@ Não há outro habilitador técnico: o schema e as filas de Vendas nascem em 4.0
 - [x] 4.0 O aluno escolhe uma opção e ganha um pedido com preço e vigência congelados
 - [x] 5.0 O aluno paga com cartão e o acesso ao curso é liberado sozinho
 - [x] 6.0 O aluno gera PIX ou boleto, volta depois e o acesso sai quando o pagamento compensa
-- [ ] 7.0 O pedido não pago expira, o aluno pode desistir, e o pagamento tardio ainda concede
+- [x] 7.0 O pedido não pago expira, o aluno pode desistir, e o pagamento tardio ainda concede
 - [ ] 8.0 O aluno recebe o comprovante por e-mail, endereçado à conta
 - [ ] 9.0 O aluno vê os próprios pedidos
 - [ ] 10.0 O financeiro consulta os pedidos da escola no backoffice

@@ -4,10 +4,10 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "target_ref": null,
-  "last_checkpoint": "d77542b",
+  "last_checkpoint": "f4c9e8f",
   "phase": "checkpoint",
-  "active_task": "6.0",
-  "attempt": 2,
+  "active_task": "7.0",
+  "attempt": 3,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 1,
@@ -21,16 +21,16 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "6.0"
+    "task": "7.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "revalidation",
-    "task": "6.0",
-    "run_id": "run.VnjZ45p8",
-    "kind": "cursor",
+    "task": "7.0",
+    "run_id": "run.cL5oYJ8i",
+    "kind": "codex",
     "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/6.0_task_review.md"
+    "report": "tasks/prd-compra-avulsa/7.0_task_review.md"
   },
   "history": [
     {
@@ -149,6 +149,25 @@
       "ts": "2026-10-05T18:56",
       "event": "6.0 aprovada em revalidation (cursor grok-4.7-high)",
       "run_id": "run.VnjZ45p8"
+    },
+    {
+      "ts": "2026-10-05T19:01",
+      "event": "6.0 checkpoint f4c9e8f (envelope inválido, commit reconciliado)"
+    },
+    {
+      "ts": "2026-10-05T20:02",
+      "event": "7.0 reprovada em focused (B1–B3); tentativa 1 consumida",
+      "run_id": "run.8cso7cRX"
+    },
+    {
+      "ts": "2026-10-05T20:39",
+      "event": "7.0 reprovada em revalidation (B2 variante); tentativa 2 consumida; tentativa 3/3",
+      "run_id": "run.lifpOKPW"
+    },
+    {
+      "ts": "2026-10-05T20:57",
+      "event": "7.0 aprovada em revalidation na tentativa 3/3 (codex)",
+      "run_id": "run.cL5oYJ8i"
     }
   ],
   "blocked_tasks": {},
@@ -195,6 +214,7 @@
     "file": ".tsg-flow/routing.agy-fallback.json",
     "reason": "limite do codex esgotado até 2026-10-05 19:29; responsável pediu agy no lugar do codex",
     "active_from": "2026-10-05T16:28-03:00",
-    "until": "2026-10-05T19:29-03:00"
+    "until": "2026-10-05T19:29-03:00",
+    "ended": "2026-10-05T19:29-03:00 (volta à política padrão a partir da validação da 7.0)"
   }
 }

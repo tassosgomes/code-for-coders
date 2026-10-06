@@ -5,6 +5,7 @@ using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Application.UseCases.Sales.CreateOrder;
 using CodeForCoders.Commerce.Application.UseCases.Sales.GetPurchaseSummary;
 using CodeForCoders.Commerce.Application.UseCases.Sales.GetStudentOrder;
+using CodeForCoders.Commerce.Application.UseCases.Sales.CancelOrder;
 namespace CodeForCoders.Commerce.Api.Endpoints;
 
 public static class StudentOrderEndpoints
@@ -15,6 +16,7 @@ public static class StudentOrderEndpoints
         group.MapGet("/offers/{offerId:guid}/purchase-summary", SummaryAsync).WithName("getPurchaseSummaryInternal");
         group.MapPost("/orders", CreateAsync).WithName("createOrderInternal");
         group.MapPost("/orders/{orderId:guid}/payment-session", PaymentAsync).WithName("startOrderPaymentInternal");
+        group.MapPost("/orders/{orderId:guid}/cancellation", CancelAsync).WithName("cancelOrderInternal");
         group.MapGet("/orders/{orderId:guid}", GetAsync).WithName("getStudentOrderInternal");
     }
     private static async Task<IResult> SummaryAsync(Guid offerId, HttpContext context, ITenantContext tenant,
@@ -54,6 +56,14 @@ public static class StudentOrderEndpoints
             paymentUrl = session.PaymentUrl,
             expiresAt = session.ExpiresAt
         });
+    }
+    private static async Task<IResult> CancelAsync(Guid orderId, HttpContext context, ITenantContext tenant,
+        ICancelOrder useCase, CancellationToken cancellationToken)
+    {
+        if (!SetBuyer(context, tenant, out var student)) return Problem(401, "TOKEN_INVALID");
+        context.Response.Headers.CacheControl = "private, no-store";
+        var result = await useCase.ExecuteAsync(new(orderId, student, System.Diagnostics.Activity.Current?.Id), cancellationToken);
+        return Results.Ok(result);
     }
     private static bool SetBuyer(HttpContext context, ITenantContext tenant, out Guid student)
     {

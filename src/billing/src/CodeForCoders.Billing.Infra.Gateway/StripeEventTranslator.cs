@@ -30,6 +30,7 @@ public static class StripeEventTranslator
             var payment = Text(item, "payment_intent") ?? (item.TryGetProperty("payment_intent", out var piObj) && piObj.ValueKind == JsonValueKind.Object ? Text(piObj, "id") : null);
             string? outcome = null;
             string? method = null;
+            string? reason = null;
 
             // The session only echoes the allowed types; the chosen method lives on the PaymentIntent and is resolved by the
             // use case. Among card/pix/boleto only card settles synchronously, so a session completed as paid was paid by card.
@@ -39,10 +40,16 @@ public static class StripeEventTranslator
                 else outcome = "awaiting";
             }
             else if (type == "checkout.session.async_payment_succeeded") outcome = "confirmed";
+            // A PIX/boleto that fails asynchronously is one that was never paid within its window, so it ends as expired.
+            else if (type == "checkout.session.async_payment_failed" || type == "checkout.session.expired")
+            {
+                outcome = "not-confirmed";
+                reason = "expired";
+            }
 
             int? amount = item.TryGetProperty("amount_total", out var amountValue) && amountValue.TryGetInt32(out var cents) ? cents : null;
             return new(id, type, occurred, objectReference, isSession ? objectReference : null, payment, tenant, order,
-             outcome, method, amount, Text(item, "currency")?.ToUpperInvariant());
+             outcome, method, amount, Text(item, "currency")?.ToUpperInvariant(), reason);
         }
         catch (JsonException) { throw new GatewaySignatureException(); }
         catch (ArgumentOutOfRangeException) { throw new GatewaySignatureException(); }

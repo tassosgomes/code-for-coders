@@ -49,6 +49,33 @@ operations:
       fato por pagamento**: eventos repetidos do gateway não geram outro (G09). Ao menos uma vez; consumidores deduplicam
       por `eventId` e, para o efeito, por `orderId`. Publicado também quando a confirmação chega para pagamento
       cujo pedido já expirou ou foi cancelado (RN-V08): `billing` não julga o pedido.'
+  publicarPagamentoNaoConfirmado:
+    action: send
+    summary: Comunicar que um pagamento não se confirmou.
+    channel:
+      $ref: '#/channels/pagamentoNaoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoNaoConfirmado/messages/pagamentoNaoConfirmado'
+    description: '`reason: expired` quando a página venceu sem meio escolhido ou o PIX/boleto venceu sem pagamento
+      (RN-CB03); `reason: cancelled` quando `billing` cancelou no gateway por `vendas.pedido-cancelado.v1`. Pelo outbox;
+      um fato por pagamento e motivo; ao menos uma vez. Não é definitivo diante do gateway: uma confirmação tardia
+      ainda produz `pagamento-confirmado` (RN-V08).'
+  receberPedidoCancelado:
+    action: receive
+    summary: Cancelar no gateway o pagamento de um pedido de que o aluno desistiu.
+    channel:
+      $ref: '#/channels/pedidoCancelado'
+    messages:
+    - $ref: '#/channels/pedidoCancelado/messages/pedidoCancelado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Encerra a página de pagamento aberta ou cancela o PIX/boleto pendente do pedido, e passa a recusar
+      `ensurePaymentSessionInternal` para ele (`PAYMENT_CANCELLED`). Deduplica por `eventId`; pedido sem pagamento
+      é confirmado sem efeito. Gateway indisponível: não confirma, e a mensagem volta para nova tentativa; esgotadas
+      as entregas, segue para a fila de erro e pode ser reprocessada sem efeito duplicado. Se o gateway confirmar
+      o pagamento mesmo assim, vale RN-V08.'
 channels:
   pagamentoAguardando:
     address: cobranca.pagamento-aguardando.v1
@@ -62,6 +89,18 @@ channels:
     messages:
       pagamentoConfirmado:
         $ref: '#/components/messages/PagamentoConfirmado'
+  pagamentoNaoConfirmado:
+    address: cobranca.pagamento-nao-confirmado.v1
+    description: O prazo do pagamento venceu sem confirmação, ou o pagamento foi cancelado.
+    messages:
+      pagamentoNaoConfirmado:
+        $ref: '#/components/messages/PagamentoNaoConfirmado'
+  pedidoCancelado:
+    address: vendas.pedido-cancelado.v1
+    description: Fato de `commerce` (`../commerce/asyncapi.yaml`); `billing` consome com fila própria.
+    messages:
+      pedidoCancelado:
+        $ref: ../commerce/asyncapi.yaml#/components/messages/PedidoCancelado
 components:
   messages:
     PagamentoAguardando:
@@ -112,6 +151,27 @@ components:
           gatewayReference: pi_3Q2w3E4r5T6y7U8i0
           confirmedAt: '2026-10-05T14:21:02Z'
           occurredAt: '2026-10-05T14:21:03Z'
+    PagamentoNaoConfirmado:
+      name: PagamentoNaoConfirmado
+      title: Pagamento não confirmado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PagamentoNaoConfirmadoPayload'
+      examples:
+      - name: boletoVencido
+        headers:
+          correlationId: 00-c3d4e5f60718293a4b5c6d7e8f900112-c3d4e5f60718293a-01
+        payload:
+          eventId: 2c3d4e5f-6071-4829-9a3b-4c5d6e7f8091
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          paymentId: 3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          reason: expired
+          occurredAt: '2026-10-09T03:12:40Z'
   schemas:
     PagamentoAguardandoPayload:
       type: object
@@ -188,6 +248,35 @@ components:
           type: string
           format: date-time
           description: Momento da confirmação segundo o gateway.
+        occurredAt:
+          type: string
+          format: date-time
+    PagamentoNaoConfirmadoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - paymentId
+      - orderId
+      - reason
+      - occurredAt
+      properties:
+        eventId:
+          $ref: '#/components/schemas/EventId'
+        tenantId:
+          type: string
+          format: uuid
+        paymentId:
+          $ref: '#/components/schemas/PaymentId'
+        orderId:
+          $ref: '#/components/schemas/OrderId'
+        reason:
+          type: string
+          enum:
+          - expired
+          - cancelled
+          description: Consumidores devem tolerar valor novo.
         occurredAt:
           type: string
           format: date-time

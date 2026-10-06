@@ -109,6 +109,24 @@ channels:
     messages:
       pagamentoConfirmado:
         $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoConfirmado
+  pagamentoNaoConfirmado:
+    address: cobranca.pagamento-nao-confirmado.v1
+    description: Fato de `billing` (`../billing/asyncapi.yaml`).
+    messages:
+      pagamentoNaoConfirmado:
+        $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoNaoConfirmado
+  pedidoCancelado:
+    address: vendas.pedido-cancelado.v1
+    description: O aluno desistiu de um pedido aguardando pagamento (RF-06).
+    messages:
+      pedidoCancelado:
+        $ref: '#/components/messages/PedidoCancelado'
+  pedidoExpirado:
+    address: vendas.pedido-expirado.v1
+    description: Um pedido venceu sem pagamento confirmado (RF-08).
+    messages:
+      pedidoExpirado:
+        $ref: '#/components/messages/PedidoExpirado'
 operations:
   receberVersaoPublicada:
     action: receive
@@ -234,6 +252,26 @@ operations:
     description: 'Pelo outbox, na mesma transação da criação (G06). Ao menos uma vez; consumidores deduplicam por
       `eventId`. Repetição idempotente da criação (mesma `Idempotency-Key`) e retorno do pedido pendente existente
       (RN-V06) não geram outro fato. Consumidores conhecidos: nenhum nesta entrega (Inteligência de Negócio, depois).'
+  publicarPedidoCancelado:
+    action: send
+    summary: Comunicar que o aluno desistiu de um pedido.
+    channel:
+      $ref: '#/channels/pedidoCancelado'
+    messages:
+    - $ref: '#/channels/pedidoCancelado/messages/pedidoCancelado'
+    description: 'Pelo outbox, na mesma transação da desistência. Um fato por pedido; repetir a desistência não
+      gera outro. Consumidor: `billing`, que cancela o pagamento pendente no gateway.'
+  publicarPedidoExpirado:
+    action: send
+    summary: Comunicar que um pedido venceu sem pagamento.
+    channel:
+      $ref: '#/channels/pedidoExpirado'
+    messages:
+    - $ref: '#/channels/pedidoExpirado/messages/pedidoExpirado'
+    description: 'Pelo outbox, na transação que marca o pedido `expired` — ao receber `cobranca.pagamento-nao-confirmado.v1`
+      com `reason expired`, ou pela rotina de Vendas que expira pedido sem página de pagamento aberta 24 h depois
+      de criado, ou com prazo conhecido vencido há mais de 24 h sem fato de `billing` (C-10). Um fato por pedido.
+      Consumidores conhecidos: nenhum nesta entrega.'
   publicarCompraConcluida:
     action: send
     summary: Ordenar a concessão do pedido pago.
@@ -261,6 +299,19 @@ operations:
       do gateway. Pedido já `paid`, `expired` ou `cancelled` → confirmado sem efeito (ordem não garantida). Deduplica
       por `eventId`. Falha transitória não confirma; esgotadas as entregas, fila de erro, reprocessável sem efeito
       duplicado (mesmo padrão para as operações de recebimento abaixo).'
+  receberPagamentoNaoConfirmado:
+    action: receive
+    summary: Expirar o pedido cujo pagamento venceu.
+    channel:
+      $ref: '#/channels/pagamentoNaoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoNaoConfirmado/messages/pagamentoNaoConfirmado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: '`reason expired` em pedido `awaiting-payment` → `expired` e `vendas.pedido-expirado.v1`. `reason
+      cancelled` → sem efeito (o pedido já está `cancelled`). Pedido `paid` → sem efeito: a confirmação prevalece.'
   receberPagamentoConfirmado:
     action: receive
     summary: Concluir o pedido pago.
@@ -493,6 +544,46 @@ components:
             type: months
             months: 12
           occurredAt: '2026-10-05T14:19:30Z'
+    PedidoCancelado:
+      name: PedidoCancelado
+      title: Pedido cancelado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PedidoEncerradoPayload'
+      examples:
+      - name: desistiuDoBoleto
+        headers:
+          correlationId: 00-f60718293a4b5c6d7e8f900112233445-f60718293a4b5c6d-01
+        payload:
+          eventId: 708192a3-b4c5-4d6e-9f70-8192a3b4c5d6
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          occurredAt: '2026-10-06T18:42:10Z'
+    PedidoExpirado:
+      name: PedidoExpirado
+      title: Pedido expirado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PedidoEncerradoPayload'
+      examples:
+      - name: boletoVencido
+        headers:
+          correlationId: 00-0718293a4b5c6d7e8f90011223344556-0718293a4b5c6d7e-01
+        payload:
+          eventId: 8192a3b4-c5d6-4e7f-8081-92a3b4c5d6e7
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          occurredAt: '2026-10-09T03:12:41Z'
     CompraConcluida:
       name: CompraConcluida
       title: Compra concluída
@@ -850,6 +941,31 @@ components:
           const: BRL
         accessPeriod:
           $ref: '#/components/schemas/Vigencia'
+        occurredAt:
+          type: string
+          format: date-time
+    PedidoEncerradoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - orderId
+      - studentId
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
         occurredAt:
           type: string
           format: date-time

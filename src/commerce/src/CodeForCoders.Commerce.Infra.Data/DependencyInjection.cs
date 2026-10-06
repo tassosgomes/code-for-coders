@@ -48,6 +48,13 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddScoped<Entitlement.AccessExpirationCycle>();
         services.AddHostedService<Entitlement.AccessExpirationWorker>();
+        services.AddOptions<OrderExpirationOptions>()
+            .Bind(configuration.GetSection(OrderExpirationOptions.SectionName))
+            .Validate(options => options.PollingIntervalSeconds is > 0 and <= 1800, "Order expiration polling must be between 1 and 1800 seconds.")
+            .Validate(options => options.BatchSize is > 0 and <= 1000, "Order expiration batch size must be between 1 and 1000.")
+            .ValidateOnStart();
+        services.AddScoped<Sales.OrderExpirationCycle>();
+        services.AddHostedService<Sales.OrderExpirationWorker>();
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
         services.AddScoped<IStudentAccessGrantQueries, Queries.StudentAccessGrantQueries>();

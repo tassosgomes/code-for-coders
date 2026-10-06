@@ -240,6 +240,185 @@ public sealed class StripeGatewayAdapterTests
         await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.GetPaymentMethodAsync("pi_x", Cancellation));
     }
 
+    [Fact(DisplayName = nameof(ExpireSessionAsyncPostsToTheExpireEndpointWithBearerAuthorization))]
+    public async Task ExpireSessionAsyncPostsToTheExpireEndpointWithBearerAuthorization()
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests, [(HttpStatusCode.OK, new { id = "cs_exp_1", status = "expired" })]));
+
+        await adapter.ExpireSessionAsync("cs_exp_1", Cancellation);
+
+        var request = Assert.Single(requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal("/v1/checkout/sessions/cs_exp_1/expire", request.Path);
+        Assert.Equal("sk_test_key", request.Token);
+    }
+
+    [Theory(DisplayName = nameof(ExpireSessionAsyncAcceptsASessionThatStripeRefusesToExpireBecauseItIsAlreadyClosed))]
+    [InlineData("expired")]
+    [InlineData("complete")]
+    public async Task ExpireSessionAsyncAcceptsASessionThatStripeRefusesToExpireBecauseItIsAlreadyClosed(string status)
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests,
+        [
+            (HttpStatusCode.BadRequest, new { error = new { type = "invalid_request_error", message = "Only Checkout Sessions with a status in ['open'] can be expired." } }),
+            (HttpStatusCode.OK, new { id = "cs_closed_1", status })
+        ]));
+
+        await adapter.ExpireSessionAsync("cs_closed_1", Cancellation);
+
+        Assert.Equal(2, requests.Count);
+        Assert.Equal(HttpMethod.Get, requests[1].Method);
+        Assert.Equal("/v1/checkout/sessions/cs_closed_1", requests[1].Path);
+    }
+
+    [Fact(DisplayName = nameof(ExpireSessionAsyncTreatsAMissingSessionAsAlreadyGone))]
+    public async Task ExpireSessionAsyncTreatsAMissingSessionAsAlreadyGone()
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests, [(HttpStatusCode.NotFound, new { error = new { code = "resource_missing" } })]));
+
+        await adapter.ExpireSessionAsync("cs_gone_1", Cancellation);
+
+        Assert.Single(requests);
+    }
+
+    [Fact(DisplayName = nameof(ExpireSessionAsyncFailsWhenTheRefusedSessionIsStillOpen))]
+    public async Task ExpireSessionAsyncFailsWhenTheRefusedSessionIsStillOpen()
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests,
+        [
+            (HttpStatusCode.BadRequest, new { error = new { type = "invalid_request_error" } }),
+            (HttpStatusCode.OK, new { id = "cs_open_1", status = "open" })
+        ]));
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.ExpireSessionAsync("cs_open_1", Cancellation));
+    }
+
+    [Theory(DisplayName = nameof(ExpireSessionAsyncFailsWhenTheGatewayIsUnavailable))]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    public async Task ExpireSessionAsyncFailsWhenTheGatewayIsUnavailable(HttpStatusCode status)
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests, [(status, new { error = new { message = "already_expired canceled" } })]));
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.ExpireSessionAsync("cs_down_1", Cancellation));
+        Assert.Single(requests);
+    }
+
+    [Fact(DisplayName = nameof(ExpireSessionAsyncFailsOnNetworkError))]
+    public async Task ExpireSessionAsyncFailsOnNetworkError()
+    {
+        var adapter = Adapter(new MockHttpMessageHandler((_, _) => throw new HttpRequestException("connection refused")));
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.ExpireSessionAsync("cs_net_1", Cancellation));
+    }
+
+    [Fact(DisplayName = nameof(CancelPaymentIntentAsyncPostsToTheCancelEndpointWithBearerAuthorization))]
+    public async Task CancelPaymentIntentAsyncPostsToTheCancelEndpointWithBearerAuthorization()
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests, [(HttpStatusCode.OK, new { id = "pi_1", status = "canceled" })]));
+
+        await adapter.CancelPaymentIntentAsync("pi_1", Cancellation);
+
+        var request = Assert.Single(requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal("/v1/payment_intents/pi_1/cancel", request.Path);
+        Assert.Equal("sk_test_key", request.Token);
+    }
+
+    [Theory(DisplayName = nameof(CancelPaymentIntentAsyncAcceptsAnIntentThatStripeRefusesToCancel))]
+    [InlineData("canceled")]
+    [InlineData("succeeded")]
+    [InlineData("requires_action")]
+    [InlineData("processing")]
+    public async Task CancelPaymentIntentAsyncAcceptsAnIntentThatStripeRefusesToCancel(string status)
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests,
+        [
+            (HttpStatusCode.BadRequest, new { error = new { type = "invalid_request_error", code = "payment_intent_unexpected_state" } }),
+            (HttpStatusCode.OK, new { id = "pi_refused_1", status })
+        ]));
+
+        await adapter.CancelPaymentIntentAsync("pi_refused_1", Cancellation);
+
+        Assert.Equal(2, requests.Count);
+        Assert.Equal(HttpMethod.Get, requests[1].Method);
+        Assert.Equal("/v1/payment_intents/pi_refused_1", requests[1].Path);
+    }
+
+    [Fact(DisplayName = nameof(CancelPaymentIntentAsyncFailsWhenTheRefusedIntentStillReportsAnUnknownStatus))]
+    public async Task CancelPaymentIntentAsyncFailsWhenTheRefusedIntentStillReportsAnUnknownStatus()
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests,
+        [
+            (HttpStatusCode.BadRequest, new { error = new { type = "invalid_request_error" } }),
+            (HttpStatusCode.OK, new { id = "pi_unknown_1", status = "requires_capture" })
+        ]));
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.CancelPaymentIntentAsync("pi_unknown_1", Cancellation));
+    }
+
+    [Fact(DisplayName = nameof(CancelPaymentIntentAsyncTreatsAMissingIntentAsAlreadyGone))]
+    public async Task CancelPaymentIntentAsyncTreatsAMissingIntentAsAlreadyGone()
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests, [(HttpStatusCode.NotFound, new { error = new { code = "resource_missing" } })]));
+
+        await adapter.CancelPaymentIntentAsync("pi_gone_1", Cancellation);
+
+        Assert.Single(requests);
+    }
+
+    [Theory(DisplayName = nameof(CancelPaymentIntentAsyncFailsWhenTheGatewayIsUnavailable))]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    [InlineData(HttpStatusCode.BadGateway)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    public async Task CancelPaymentIntentAsyncFailsWhenTheGatewayIsUnavailable(HttpStatusCode status)
+    {
+        var requests = new List<(HttpMethod Method, string Path, string? Token)>();
+        var adapter = Adapter(Respond(requests, [(status, new { error = new { message = "canceled" } })]));
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.CancelPaymentIntentAsync("pi_down_1", Cancellation));
+        Assert.Single(requests);
+    }
+
+    [Fact(DisplayName = nameof(CancelPaymentIntentAsyncFailsOnNetworkError))]
+    public async Task CancelPaymentIntentAsyncFailsOnNetworkError()
+    {
+        var adapter = Adapter(new MockHttpMessageHandler((_, _) => throw new HttpRequestException("connection refused")));
+
+        await Assert.ThrowsAsync<GatewayUnavailableException>(() => adapter.CancelPaymentIntentAsync("pi_net_1", Cancellation));
+    }
+
+    private static StripeGatewayAdapter Adapter(HttpMessageHandler handler)
+        => new(new HttpClient(handler) { BaseAddress = new Uri("http://localhost:5999/") },
+            Options.Create(new StripeGatewayOptions { SecretKey = "sk_test_key" }), TimeProvider.System);
+
+    // Replies with the scripted responses in order and records what the adapter sent.
+    private static MockHttpMessageHandler Respond(List<(HttpMethod Method, string Path, string? Token)> requests, (HttpStatusCode Status, object Body)[] script)
+    {
+        var index = 0;
+        return new MockHttpMessageHandler((req, _) =>
+        {
+            requests.Add((req.Method, req.RequestUri!.AbsolutePath, req.Headers.Authorization?.Parameter));
+            var (status, body) = script[Math.Min(index++, script.Length - 1)];
+            return Task.FromResult(new HttpResponseMessage(status)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
+            });
+        });
+    }
+
     private sealed class MockHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

@@ -6,5 +6,7 @@ public interface IPaymentGateway
     Task<GatewaySession> GetAsync(string reference, CancellationToken cancellationToken);
     Task<string> GetInstructionsUrlAsync(string paymentReference, string method, CancellationToken cancellationToken);
     Task<string> GetPaymentMethodAsync(string paymentReference, CancellationToken cancellationToken);
+    Task ExpireSessionAsync(string sessionReference, CancellationToken cancellationToken);
+    Task CancelPaymentIntentAsync(string paymentReference, CancellationToken cancellationToken);
     GatewayEvent VerifyEvent(string body, string? signature);
 }

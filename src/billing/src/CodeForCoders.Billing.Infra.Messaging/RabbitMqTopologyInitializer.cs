@@ -25,12 +25,28 @@ public sealed class RabbitMqTopologyInitializer(
             autoDelete: false,
             arguments: null,
             cancellationToken: cancellationToken);
+        await channel.ExchangeDeclareAsync(
+            resourceNames.CommerceExchange,
+            ExchangeType.Topic,
+            durable: true,
+            autoDelete: false,
+            arguments: null,
+            cancellationToken: cancellationToken);
 
         await DeclareQueueAsync(
             channel,
             resourceNames,
             resourceNames.HeartbeatQueue,
+            resourceNames.Exchange,
             "billing.platform.heartbeat.v1",
+            cancellationToken);
+
+        await DeclareQueueAsync(
+            channel,
+            resourceNames,
+            resourceNames.OrderCancellationsQueue,
+            resourceNames.CommerceExchange,
+            "vendas.pedido-cancelado.v1",
             cancellationToken);
     }
 
@@ -40,6 +56,7 @@ public sealed class RabbitMqTopologyInitializer(
         IChannel channel,
         RabbitMqResourceNames resourceNames,
         string queue,
+        string exchange,
         string routingKey,
         CancellationToken cancellationToken)
     {
@@ -76,7 +93,7 @@ public sealed class RabbitMqTopologyInitializer(
             cancellationToken: cancellationToken);
         await channel.QueueBindAsync(
             queue,
-            resourceNames.Exchange,
+            exchange,
             routingKey,
             arguments: null,
             cancellationToken: cancellationToken);

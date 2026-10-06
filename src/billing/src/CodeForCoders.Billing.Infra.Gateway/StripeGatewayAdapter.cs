@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using CodeForCoders.Billing.Application.Exceptions;
@@ -93,6 +94,53 @@ public sealed class StripeGatewayAdapter(HttpClient client, IOptions<StripeGatew
         catch (HttpRequestException) { throw new GatewayUnavailableException(); }
         catch (JsonException) { throw new GatewayUnavailableException(); }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new GatewayUnavailableException(); }
+    }
+    // Stripe only expires sessions that are "open". A session that is already "expired" or "complete" (PIX/boleto issued,
+    // payment pending) refuses the call with a 400; the session status decides whether that is a no-op or a real failure.
+    public async Task ExpireSessionAsync(string sessionReference, CancellationToken cancellationToken)
+    {
+        var path = $"v1/checkout/sessions/{Uri.EscapeDataString(sessionReference)}";
+        try
+        {
+            using var request = Request(HttpMethod.Post, $"{path}/expire");
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound) return;
+            if (response.StatusCode != HttpStatusCode.BadRequest) throw new GatewayUnavailableException();
+            if (await ReadStatusAsync(path, cancellationToken) is "expired" or "complete") return;
+            throw new GatewayUnavailableException();
+        }
+        catch (HttpRequestException) { throw new GatewayUnavailableException(); }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new GatewayUnavailableException(); }
+    }
+    // A PaymentIntent that is already "canceled" or "succeeded" has nothing left to cancel (a late confirmation prevails, RN-V08).
+    // One that belongs to a Checkout Session and is still pending cannot be canceled directly; it lapses on its own and a
+    // payment confirmed afterwards is still honoured.
+    public async Task CancelPaymentIntentAsync(string paymentReference, CancellationToken cancellationToken)
+    {
+        var path = $"v1/payment_intents/{Uri.EscapeDataString(paymentReference)}";
+        try
+        {
+            using var request = Request(HttpMethod.Post, $"{path}/cancel");
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.NotFound) return;
+            if (response.StatusCode != HttpStatusCode.BadRequest) throw new GatewayUnavailableException();
+            if (await ReadStatusAsync(path, cancellationToken) is "canceled" or "succeeded" or "requires_action" or "processing") return;
+            throw new GatewayUnavailableException();
+        }
+        catch (HttpRequestException) { throw new GatewayUnavailableException(); }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { throw new GatewayUnavailableException(); }
+    }
+    private async Task<string?> ReadStatusAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var request = Request(HttpMethod.Get, path);
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode) throw new GatewayUnavailableException();
+            using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            return json.RootElement.TryGetProperty("status", out var status) && status.ValueKind == JsonValueKind.String ? status.GetString() : null;
+        }
+        catch (JsonException) { throw new GatewayUnavailableException(); }
     }
     public GatewayEvent VerifyEvent(string body, string? signature)
      => StripeEventTranslator.Verify(body, signature, options.Value.WebhookSigningSecret, clock.GetUtcNow());

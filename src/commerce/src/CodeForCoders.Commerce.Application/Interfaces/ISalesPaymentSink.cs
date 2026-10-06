@@ -4,4 +4,5 @@ public interface ISalesPaymentSink
 {
     Task ApplyAsync(PaymentConfirmedFact fact, CancellationToken cancellationToken);
     Task ApplyAwaitingAsync(PaymentAwaitingFact fact, CancellationToken cancellationToken);
+    Task ApplyNotConfirmedAsync(PaymentNotConfirmedFact fact, CancellationToken cancellationToken);
 }
