@@ -79,7 +79,7 @@ Não há outro habilitador técnico: o schema e as filas de Vendas nascem em 4.0
 - [x] 7.0 O pedido não pago expira, o aluno pode desistir, e o pagamento tardio ainda concede
 - [x] 8.0 O aluno recebe o comprovante por e-mail, endereçado à conta
 - [x] 9.0 O aluno vê os próprios pedidos
-- [ ] 10.0 O financeiro consulta os pedidos da escola no backoffice
+- [x] 10.0 O financeiro consulta os pedidos da escola no backoffice
 
 ## Caminho crítico e lanes
 

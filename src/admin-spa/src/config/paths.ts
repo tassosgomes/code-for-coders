@@ -16,8 +16,9 @@ export const paths = {
   courtesies: { path: '/cortesias', getHref: () => '/cortesias' },
   staffFinance: {
     path: '/financeiro',
-    getHref: () => '/financeiro',
+    getHref: (search = '') => `/financeiro${search}`,
   },
+  staffFinanceOrder: { path: '/financeiro/pedidos/:orderId', getHref: (orderId: string) => `/financeiro/pedidos/${orderId}` },
   auditTrail: {
     path: '/auditoria',
     getHref: () => '/auditoria',

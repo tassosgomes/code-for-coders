@@ -661,6 +661,70 @@ paths:
           $ref: '#/components/responses/ServiceForbidden'
         '404':
           $ref: '#/components/responses/StudentAccountNotFound'
+  /student-account-resolutions:
+    post:
+      tags:
+      - StudentAccounts
+      summary: Resolver nome e e-mail de várias contas de aluno
+      description: 'Para a lista e o detalhe de pedidos no backoffice (RF-11). Recebe até 50 `studentId` (o tamanho
+        máximo de página) e devolve um item por conta de aluno encontrada no tenant; identificador inexistente, de
+        outro tenant ou de conta interna é **omitido**, sem erro. Conta desativada é devolvida com `status: disabled`
+        (RN-23). Leitura sem efeito; usa POST para não pôr identificadores em URL e permitir o lote.
+  
+  
+        Exige asserção do `bff-admin` com escopo `student-account:resolve` e `X-Staff-Session` de ator com `financeiro.ler`
+        vigente: Identity valida a sessão (RN-17) e a permissão. A resposta não é guardada pelo BFF além da requisição.
+  
+        '
+      operationId: resolveStudentAccountsInternal
+      security:
+      - BffAdminServiceAssertion: []
+      parameters:
+      - $ref: '#/components/parameters/StaffSession'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentAccountResolutionInput'
+            examples:
+              pagina:
+                value:
+                  studentIds:
+                  - 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                  - 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+      responses:
+        '200':
+          description: As contas de aluno encontradas.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples:
+                - no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentAccountResolutionList'
+              examples:
+                duas:
+                  value:
+                    data:
+                    - studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                      name: Ana Souza
+                      email: ana.souza@example.com
+                      status: active
+                    - studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+                      name: Joana Ribeiro
+                      email: joana.ribeiro@example.com
+                      status: disabled
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 components:
   securitySchemes:
     BffAdminServiceAssertion:
@@ -1417,3 +1481,47 @@ components:
         - active
         - disabled
       description: Situação da conta. Clientes devem tolerar valor novo.
+    StudentAccountResolutionList:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/StudentAccountResolution'
+    StudentAccountResolution:
+      type: object
+      additionalProperties: false
+      required:
+      - studentId
+      - name
+      - email
+      - status
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+    StudentAccountResolutionInput:
+      type: object
+      additionalProperties: false
+      required:
+      - studentIds
+      properties:
+        studentIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid

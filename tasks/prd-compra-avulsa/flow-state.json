@@ -4,9 +4,9 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "target_ref": null,
-  "last_checkpoint": "04bdd4c",
+  "last_checkpoint": "ed6fe7e",
   "phase": "checkpoint",
-  "active_task": "9.0",
+  "active_task": "10.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -21,15 +21,15 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "9.0"
+    "task": "10.0"
   },
   "last_result": {
     "role": "validator",
     "mode": "focused",
-    "task": "9.0",
-    "run_id": "run.UYft7mkL",
+    "task": "10.0",
+    "run_id": "run.bUmEzxhN",
     "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/9.0_task_review.md"
+    "report": "tasks/prd-compra-avulsa/10.0_task_review.md"
   },
   "history": [
     {
@@ -185,6 +185,19 @@
       "ts": "2026-10-05T22:01",
       "event": "9.0 aprovada em focused (0 bloqueantes, 3 recomendações)",
       "run_id": "run.UYft7mkL"
+    },
+    {
+      "ts": "2026-10-05T22:08",
+      "event": "9.0 checkpoint ed6fe7e"
+    },
+    {
+      "ts": "2026-10-05T23:31",
+      "event": "10.0 interrompida por limite do codex; retomada com agy (fallback até 01:29)"
+    },
+    {
+      "ts": "2026-10-05T23:51",
+      "event": "10.0 aprovada em focused (0 bloqueantes, 3 recomendações)",
+      "run_id": "run.bUmEzxhN"
     }
   ],
   "blocked_tasks": {},
@@ -233,13 +246,16 @@
     {
       "task": "9.0",
       "note": "3 recomendações em 9.0_task_review.md"
+    },
+    {
+      "task": "10.0",
+      "note": "3 recomendações em 10.0_task_review.md"
     }
   ],
   "routing_override": {
     "file": ".tsg-flow/routing.agy-fallback.json",
-    "reason": "limite do codex esgotado até 2026-10-05 19:29; responsável pediu agy no lugar do codex",
-    "active_from": "2026-10-05T16:28-03:00",
-    "until": "2026-10-05T19:29-03:00",
-    "ended": "2026-10-05T19:29-03:00 (volta à política padrão a partir da validação da 7.0)"
+    "reason": "limite do codex de novo até 2026-10-06 01:29 (instrução anterior do responsável: agy no lugar do codex)",
+    "active_from": "2026-10-05T23:30-03:00",
+    "until": "2026-10-06T01:29-03:00"
   }
 }

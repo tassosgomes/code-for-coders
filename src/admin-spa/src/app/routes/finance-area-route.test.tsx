@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { AdminLayoutRoute } from '@/app/routes/admin-layout-route';
 import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
+import { financeOrdersHandlers } from '@/testing/finance-orders-handlers';
 import { env } from '@/config/env';
 import { useShellStore } from '@/stores/use-shell-store';
 import { server } from '@/testing/server';
@@ -21,10 +22,11 @@ const renderFinanceArea = (permissions: string[], onFinanceRequest: () => void) 
       permissions,
       csrfToken: 'staff-session-csrf',
     })),
-    http.get(`${env.API_URL}/api/v1/finance-area`, () => {
+    http.get(`${env.API_URL}/api/v1/finance/orders`, () => {
       onFinanceRequest();
-      return HttpResponse.json({ status: 'reserved' });
+      return HttpResponse.json({ data: [], pagination: { page: 1, size: 20, total: 0, totalPages: 0 } });
     }),
+    ...financeOrdersHandlers,
   );
 
   const router = createMemoryRouter([{
@@ -53,12 +55,13 @@ describe('FinanceArea', () => {
     expect(financeRequests).toBe(0);
   });
 
-  it('shows the reserved area and links it from navigation for a finance actor', async () => {
+  it('shows the orders area and links it from navigation for a finance actor', async () => {
     const user = userEvent.setup();
     renderFinanceArea(['financeiro.ler'], () => undefined);
 
-    expect(await screen.findByRole('heading', { name: 'Financeiro' })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Área reservada' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Pedidos' })).toBeInTheDocument();
+    expect(await screen.findByText(/Ainda não há pedidos/)).toBeInTheDocument();
+    expect(screen.queryByText('Área reservada')).not.toBeInTheDocument();
     await openNavigation(user);
     expect(screen.getByRole('link', { name: 'Financeiro' })).toHaveAttribute('href', '/financeiro');
   });

@@ -74,6 +74,8 @@ tags:
   description: Resumo da compra, pedido, pagamento e desistência, pelo BFF do aluno
 - name: Meus pedidos
   description: Pedidos do próprio aluno
+- name: FinanceOrders
+  description: Consulta de pedidos pelo financeiro
 paths:
   /finance-area:
     get:
@@ -1459,6 +1461,149 @@ paths:
           $ref: '#/components/responses/OrderNotFound'
         '422':
           $ref: '#/components/responses/OrderNotCancellable'
+  /finance/orders:
+    get:
+      tags:
+      - Pedidos no backoffice
+      summary: Listar os pedidos da escola
+      description: 'Pedidos da escola do token, mais recentes primeiro (RF-11). Exige `financeiro.ler` (DP-09); só
+        leitura. Filtros combináveis: `status`, `courseId`, `studentId` e período de **criação** do pedido (`createdFrom`
+        e `createdTo`, datas inclusivas no fuso da escola). O aluno vai por referência (`studentId`): nome e e-mail
+        são resolvidos pelo `bff-admin` em Identity, nunca guardados aqui.
+  
+        '
+      operationId: listFinanceOrdersInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        description: Situação do pedido. Ausente = todas.
+        schema:
+          $ref: '#/components/schemas/OrderStatus'
+      - name: courseId
+        in: query
+        required: false
+        description: Curso do pedido.
+        schema:
+          type: string
+          format: uuid
+      - name: studentId
+        in: query
+        required: false
+        description: Conta de aluno em Identidade e Acesso.
+        schema:
+          type: string
+          format: uuid
+      - name: createdFrom
+        in: query
+        required: false
+        description: Primeiro dia do período, inclusivo, no fuso da escola.
+        schema:
+          type: string
+          format: date
+        examples:
+          inicio:
+            value: '2026-10-01'
+      - name: createdTo
+        in: query
+        required: false
+        description: Último dia do período, inclusivo, no fuso da escola. Anterior a `createdFrom` → 400.
+        schema:
+          type: string
+          format: date
+        examples:
+          fim:
+            value: '2026-10-31'
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de pedidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceOrderPage'
+              examples:
+                pendentes:
+                  value:
+                    data:
+                    - orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+                      number: '000124'
+                      studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+                      status: awaiting-payment
+                      courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                      courseTitle: React na prática
+                      offerName: Acesso por 6 meses
+                      priceCents: 29700
+                      currency: BRL
+                      paymentMethod: boleto
+                      createdAt: '2026-10-06T10:00:00Z'
+                      paidAt: null
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 1
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/FinancePermissionDenied'
+  /finance/orders/{orderId}:
+    parameters:
+    - $ref: '#/components/parameters/OrderId'
+    get:
+      tags:
+      - Pedidos no backoffice
+      summary: Obter o detalhe de um pedido
+      description: Tudo o que a lista mostra, mais a vigência congelada, os momentos de cada mudança, a referência
+        do pagamento no gateway (para localizar no painel dele) e a concessão correspondente, quando existe (RF-11).
+        Exige `financeiro.ler`. Pedido de outra escola ou inexistente → 404 indistinto.
+      operationId: getFinanceOrderInternal
+      security:
+      - StaffUserToken: []
+      responses:
+        '200':
+          description: O pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceOrderDetail'
+              examples:
+                pago:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    number: '000123'
+                    studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    status: paid
+                    courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                    courseTitle: .NET do zero à API
+                    offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                    offerName: Acesso por 12 meses
+                    priceCents: 49700
+                    currency: BRL
+                    accessPeriod:
+                      type: months
+                      months: 12
+                    paymentMethod: card
+                    paymentReference: pi_3Q2w3E4r5T6y7U8i0
+                    paidAmountCents: 49700
+                    grantId: 4c5d6e7f-8091-4a2b-9c3d-4e5f6a7b8c9d
+                    accessGrantedAt: '2026-10-05T14:21:04Z'
+                    createdAt: '2026-10-05T14:19:30Z'
+                    paymentPageExpiresAt: '2026-10-06T14:19:41Z'
+                    paidAt: '2026-10-05T14:21:02Z'
+                    expiredAt: null
+                    cancelledAt: null
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/FinancePermissionDenied'
+        '404':
+          $ref: '#/components/responses/OrderNotFound'
 components:
   securitySchemes:
     StudentUserToken:
@@ -2621,6 +2766,177 @@ components:
         expiresAt:
           type: string
           format: date-time
+    FinanceOrderDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - number
+      - studentId
+      - status
+      - courseId
+      - courseTitle
+      - offerId
+      - offerName
+      - priceCents
+      - currency
+      - accessPeriod
+      - paymentMethod
+      - paymentReference
+      - paidAmountCents
+      - grantId
+      - accessGrantedAt
+      - createdAt
+      - paymentPageExpiresAt
+      - paidAt
+      - expiredAt
+      - cancelledAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        number:
+          type: string
+          pattern: ^[0-9]{6,}$
+        studentId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        courseId:
+          type: string
+          format: uuid
+        courseTitle:
+          type: string
+        offerId:
+          type: string
+          format: uuid
+        offerName:
+          type: string
+        priceCents:
+          $ref: '#/components/schemas/PriceCents'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        accessPeriod:
+          $ref: '#/components/schemas/AccessPeriod'
+        paymentMethod:
+          oneOf:
+          - $ref: '#/components/schemas/PaymentMethod'
+          - type: 'null'
+        paymentReference:
+          type:
+          - string
+          - 'null'
+          maxLength: 255
+          description: Identificador opaco do pagamento no gateway, só para localizar no painel dele (RF-11). Nulo antes
+            de haver pagamento.
+        paidAmountCents:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+          description: Valor que o gateway confirmou. Igual a `priceCents` no caso normal; diferente, o pedido é pago
+            assim mesmo (RN-V08) e a divergência fica visível aqui.
+        grantId:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Concessão de Matrícula originada por este pedido, quando já existe.
+        accessGrantedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        paymentPageExpiresAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Prazo da última página de pagamento aberta.
+        paidAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        expiredAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        cancelledAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+    FinanceOrderPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceOrderSummary'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+    FinanceOrderSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - number
+      - studentId
+      - status
+      - courseId
+      - courseTitle
+      - offerName
+      - priceCents
+      - currency
+      - paymentMethod
+      - createdAt
+      - paidAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        number:
+          type: string
+          pattern: ^[0-9]{6,}$
+        studentId:
+          type: string
+          format: uuid
+          description: Conta de aluno, por referência. Nome e e-mail são resolvidos pelo `bff-admin`.
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        courseId:
+          type: string
+          format: uuid
+        courseTitle:
+          type: string
+        offerName:
+          type: string
+        priceCents:
+          $ref: '#/components/schemas/PriceCents'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        paymentMethod:
+          oneOf:
+          - $ref: '#/components/schemas/PaymentMethod'
+          - type: 'null'
+        createdAt:
+          type: string
+          format: date-time
+        paidAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -3056,6 +3372,20 @@ components:
                 title: Este pedido não pode ser cancelado.
                 status: 422
                 code: ORDER_NOT_CANCELLABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    FinancePermissionDenied:
+      description: Token de ator sem `financeiro.ler`, ou token de aluno; code `PERMISSION_DENIED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              value:
+                type: about:blank
+                title: Sem permissão para esta área.
+                status: 403
+                code: PERMISSION_DENIED
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   examples:
     OfferDraft:
