@@ -11,6 +11,9 @@ ensure_lesson_keys() {
   if ! rg -q "^MEDIA_EDGE_SHARED_SECRET=" "$env_file"; then
     printf '\nMEDIA_EDGE_SHARED_SECRET=%s\n' "$(openssl rand -hex 32)" >> "$env_file"
   fi
+  if ! rg -q "^MEDIA_PREPARATION_MASTER_KEY=" "$env_file"; then
+    printf '\nMEDIA_PREPARATION_MASTER_KEY=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> "$env_file"
+  fi
   local lesson_key_dir
   lesson_key_dir="$(mktemp -d)"
   for lesson_key_prefix in IDENTITY_STUDENT_TOKEN LEARNING_COMMERCE MEDIA_COMMERCE; do

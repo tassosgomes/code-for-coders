@@ -12,6 +12,13 @@
 * Apenas os containers de aplicação (APIs e SPAs, mais leves) sobem na máquina local, apontando para o servidor: `scripts/remote-infra.sh provision && scripts/remote-infra.sh migrate` (idempotentes, rode `migrate` quando houver novas migrations) e `scripts/apps.sh start --remote`. Use `scripts/remote-infra.sh check` para validar a conectividade.
 * Ao criar uma nova dependência de infraestrutura em `docker-compose.yml`, replique o override em `docker-compose.remote.yml` para o modo `--remote` não depender de hostnames locais (`valkey`, `rabbitmq`, `minio`, etc.).
 
+## Cursor Cloud specific instructions
+
+* Cloud Agents sobem a stack local completa com `scripts/apps.sh start` (PostgreSQL, RabbitMQ, Valkey, MinIO, smtp4dev, OTel, as oito APIs e os dois SPAs). O endereço do servidor compartilhado fica fora desta VM.
+* `.cursor/cloud-agent-install.sh` instala Docker Engine, o SDK .NET 10 e Node 24, e restaura NuGet e `npm ci` dos SPAs. `.cursor/cloud-agent-start.sh` sobe o `dockerd` com `fuse-overlayfs` (não há systemd), descarta regras órfãs do `iptables-legacy` (senão o bridge não entrega tráfego entre containers), gera `.env` com `scripts/generate-local-env.sh`, aplica `dotnet ef database update` em `localhost` e só então chama `apps.sh start`.
+* `/health/ready` lê as tabelas de outbox. Aplique as migrations antes de esperar os health checks.
+* O install coloca Node 24 em `/usr/local/lib/nodejs` e o antepõe no PATH via `/etc/profile.d/nodejs.sh` (login shells). O `node` de `/exec-daemon` é mais antigo que o exigido pelo `react-router`.
+
 ## PRDs arquivados e fonte da verdade
 
 * `tasks/archive/prd-*/` guarda PRDs **concluídos** (PRD, TechSpec, tasks, reviews e os contratos de recorte da época). É só histórico: **não use como fonte da verdade** do comportamento, das regras ou das interfaces do sistema. Eles podem estar superados por PRDs posteriores e pelo código.
