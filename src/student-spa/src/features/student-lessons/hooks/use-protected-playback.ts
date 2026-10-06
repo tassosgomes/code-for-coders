@@ -24,7 +24,7 @@ const errorMessage = (error: unknown) => {
   const problem = axios.isAxiosError(error) ? error.response?.data : undefined;
   if (problem?.code === 'ACCESS_DENIED') {
     if (problem.reason !== 'grant-ended') return 'Você não tem acesso a esta aula.';
-    const end = typeof problem.accessEndedAt === 'string' ? Date.parse(problem.accessEndedAt) : NaN;
+    const end = typeof problem.accessEndedAt === 'string' ? Date.parse(problem.accessEndedAt) : Number.NaN;
     if (!Number.isFinite(end)) return 'Seu acesso a este curso terminou.';
     const date = new Intl.DateTimeFormat('pt-BR', { timeZone: env.SCHOOL_TIME_ZONE }).format(new Date(end - 1));
     return `Seu acesso a este curso terminou em ${date}.`;
@@ -222,7 +222,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
       if (!hasLeftRef.current && sessionRef.current) {
         hasLeftRef.current = true;
         clearInterval(progressInterval); clearInterval(progressRefreshInterval);
-        reportProgress('left', true);
+        void reportProgress('left', true);
       }
     };
     window.addEventListener('pagehide', onPageHide);
@@ -270,7 +270,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
       if (!hasLeftRef.current && sessionRef.current) {
         hasLeftRef.current = true;
         clearInterval(progressInterval); clearInterval(progressRefreshInterval);
-        reportProgress('left', true);
+        void reportProgress('left', true);
       }
       controller.abort(); renewalController?.abort(); hls?.destroy();
       clearInterval(reposition); clearInterval(progressInterval); clearInterval(progressRefreshInterval); clearTimeout(expiration); clearTimeout(renewal);

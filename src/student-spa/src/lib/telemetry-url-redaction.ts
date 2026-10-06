@@ -14,13 +14,46 @@ export const registerTelemetrySecret = (query: string, expiresAt: number) => {
 
 export const REDACTED_VALUE = 'REDACTED';
 
+const isEmailLocal = (code: number) => (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122)
+  || code === 46 || code === 95 || code === 37 || code === 43 || code === 45;
+const isDomainLabel = (code: number) => (code >= 48 && code <= 57) || (code >= 65 && code <= 90) || (code >= 97 && code <= 122) || code === 45;
+const isLetter = (code: number) => (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
+
+const redactEmails = (value: string) => {
+  let result = '';
+  let index = 0;
+  while (index < value.length) {
+    const at = value.indexOf('@', index);
+    if (at === -1) { result += value.slice(index); break; }
+    if (at === index) { result += value[index]; index += 1; continue; }
+    let start = at;
+    while (start > index && isEmailLocal(value.charCodeAt(start - 1))) start -= 1;
+    if (start === at) { result += value.slice(index, at + 1); index = at + 1; continue; }
+    let cursor = at + 1;
+    let lastDot = -1;
+    let labelLength = 0;
+    while (cursor < value.length) {
+      const code = value.charCodeAt(cursor);
+      if (isDomainLabel(code)) { labelLength += 1; cursor += 1; continue; }
+      if (code === 46 && labelLength > 0) { lastDot = cursor; labelLength = 0; cursor += 1; continue; }
+      break;
+    }
+    const tldStart = lastDot + 1;
+    let tldLetters = lastDot > at && cursor - tldStart >= 2;
+    for (let tld = tldStart; tldLetters && tld < cursor; tld += 1) tldLetters = isLetter(value.charCodeAt(tld));
+    if (!tldLetters) { result += value.slice(index, at + 1); index = at + 1; continue; }
+    result += value.slice(index, start) + REDACTED_VALUE;
+    index = cursor;
+  }
+  return result;
+};
+
 export const redactSensitiveUrl = (value: string) => {
   let safe = value;
   for (const secret of secrets) {
     safe = safe.replaceAll(secret, REDACTED_VALUE);
   }
-  return safe.replace(SENSITIVE_QUERY_PARAMETER, (_match, prefix: string, name: string) => prefix + name + '=' + REDACTED_VALUE)
-    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_VALUE);
+  return redactEmails(safe.replace(SENSITIVE_QUERY_PARAMETER, (_match, prefix: string, name: string) => prefix + name + '=' + REDACTED_VALUE));
 };
 
 const redactAttributes = (attributes: Attributes | undefined) => {

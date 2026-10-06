@@ -77,6 +77,12 @@ export const startPlaybackTiming = (): PlaybackTimingHandle => {
   };
 };
 
+const withoutTrailingSlashes = (value: string) => {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end -= 1;
+  return value.slice(0, end);
+};
+
 export const initTelemetry = () => {
   if (initialized || !env.OTEL_ENDPOINT) return;
 
@@ -103,7 +109,7 @@ export const initTelemetry = () => {
 
   const metricsUrl = env.OTEL_ENDPOINT.endsWith('/v1/traces')
     ? env.OTEL_ENDPOINT.replace(/\/v1\/traces$/, '/v1/metrics')
-    : env.OTEL_ENDPOINT.replace(/\/+$/, '') + '/v1/metrics';
+    : `${withoutTrailingSlashes(env.OTEL_ENDPOINT)}/v1/metrics`;
 
   const meterProvider = new MeterProvider({
     resource,
