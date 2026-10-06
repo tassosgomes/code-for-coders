@@ -2,21 +2,18 @@ openapi: 3.1.0
 info:
   title: Billing — webhook do gateway de pagamento
   version: 1.0.0
-  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
-    novo** (C-01, C-05).
+  description: |
+    Contrato **vigente** consolidado. Fronteira: gateway de pagamento (Stripe) → `billing`: confirmação do gateway por webhook.
 
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
-    Fronteira: gateway de pagamento (Stripe, OD5) → `billing`. É o **único** ponto público de `billing`, dedicado
-    à confirmação do gateway (baseline, *Camadas anticorrupção obrigatórias*: "webhook entra por endpoint dedicado,
-    validado por assinatura e idempotente"). Não passa por BFF: não há sessão de usuário, e o chamador é o gateway.
+    - `tasks/archive/prd-compra-avulsa/webhook-contract-billing.yaml` 1.0.0
 
+    **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo** (C-01, C-05).
 
-    O corpo é o evento do gateway, no formato **dele**; este contrato não o redefine, só fixa o que `billing` exige
-    (identificador e tipo) e como responde. A tradução para o vocabulário da plataforma acontece aqui dentro e sai
-    pelos fatos `cobranca.pagamento-*` (RN-CB05). Só a confirmação aceita por este ponto confirma um pagamento (RN-CB04);
-    o retorno do aluno à plataforma não confirma nada.
+    Fronteira: gateway de pagamento (Stripe, OD5) → `billing`. É o **único** ponto público de `billing`, dedicado à confirmação do gateway (baseline, *Camadas anticorrupção obrigatórias*: "webhook entra por endpoint dedicado, validado por assinatura e idempotente"). Não passa por BFF: não há sessão de usuário, e o chamador é o gateway.
 
-    '
+    O corpo é o evento do gateway, no formato **dele**; este contrato não o redefine, só fixa o que `billing` exige (identificador e tipo) e como responde. A tradução para o vocabulário da plataforma acontece aqui dentro e sai pelos fatos `cobranca.pagamento-*` (RN-CB05). Só a confirmação aceita por este ponto confirma um pagamento (RN-CB04); o retorno do aluno à plataforma não confirma nada.
   contact:
     name: Time de Cobrança
 servers:
@@ -94,6 +91,13 @@ paths:
         '503':
           $ref: '#/components/responses/TemporarilyUnavailable'
 components:
+  securitySchemes:
+    GatewaySignature:
+      type: apiKey
+      in: header
+      name: Stripe-Signature
+      description: Assinatura do gateway sobre o corpo bruto e o horário de envio, com o segredo exclusivo deste endpoint, por
+        escola. O segredo é configuração de implantação, nunca de código, e nunca vai para log.
   responses:
     TemporarilyUnavailable:
       description: Falha transitória de `billing` antes de gravar o evento; o gateway reenvia. code `TEMPORARILY_UNAVAILABLE`.

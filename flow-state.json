@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-10-05",
+  "updated": "2026-10-06",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/archive/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/archive/prd-ingestao-midia, fora do indice por colisao de chave unica. PRDs concluidos ficam arquivados em tasks/archive/ (so historico, nao sao fonte da verdade). O contrato vigente de cada fronteira vive em contracts/ (artifacts.contracts); novos PRDs continuam em tasks/prd-[slug]/ e promovem o recorte para contracts/ ao concluir.",
   "artifacts": {
     "vision": "vision.md",
@@ -137,14 +137,17 @@
     },
     {
       "id": "CAP-011",
-      "stage": "tasks",
+      "stage": "done",
       "artifacts": {
-        "prd": "tasks/prd-compra-avulsa/prd.md",
-        "contract": "tasks/prd-compra-avulsa/contracts.md",
-        "techspec": "tasks/prd-compra-avulsa/techspec.md",
-        "tasks": "tasks/prd-compra-avulsa/tasks.md"
+        "prd": "tasks/archive/prd-compra-avulsa/prd.md",
+        "contract": "tasks/archive/prd-compra-avulsa/contracts.md",
+        "techspec": "tasks/archive/prd-compra-avulsa/techspec.md",
+        "tasks": "tasks/archive/prd-compra-avulsa/tasks.md"
       },
-      "mvp_order": 8
+      "mvp_order": 8,
+      "delivered": [
+        "tasks/archive/prd-compra-avulsa (1o PRD, done, PR #174; contratos consolidados em contracts/ em 2026-10-06)"
+      ]
     },
     {
       "id": "CAP-012",
@@ -267,9 +270,9 @@
   ],
   "next_actions": [
     {
-      "id": "NA23",
-      "what": "CAP-011: plano aprovado (OD85), orquestracao NAO iniciada por decisao do responsavel. Quando autorizado: tsg-flow-orchestrator, comecando por 1.0 (ASCII) e 3.0 (billing) em paralelo. Pendencias nao bloqueantes: OD80 (boleto), dominio publico de billing em homologacao, prazos PIX/boleto no Checkout. Ao entrar CAP-009 (revogacao): o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-orchestrator",
+      "id": "NA24",
+      "what": "MVP (Fase 1): as 11 capacidades estao done com CAP-011. Falta o criterio de conclusao do MVP (backlog/capabilities.md): uma compra real percorrer CAP-011 -> CAP-008 sem intervencao manual, o que depende de OD87 (checkpoint no sandbox do Stripe) e de OD80 (boleto). O flow-state nao indica a proxima capacidade: escolher com o responsavel. Ao entrar CAP-009 (revogacao): o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-next",
       "blocked_by": []
     }
   ],
@@ -309,12 +312,35 @@
     },
     {
       "id": "OD80",
-      "ref": "tasks/prd-compra-avulsa/prd.md QA-02",
+      "ref": "tasks/archive/prd-compra-avulsa/prd.md QA-02",
       "what": "PIX confirmado no Stripe em 2026-10-05. Falta confirmar boleto habilitado na conta (e no sandbox); meio indisponivel sai do recorte por decisao explicita, sem mudar contrato",
       "owner": "tasso",
       "blocks": [
-        "implementacao de CAP-011 (boleto)"
+        "OD87 (checkpoint de CAP-011 no sandbox do Stripe, boleto)"
       ]
+    },
+    {
+      "id": "OD86",
+      "ref": "tasks/archive/prd-compra-avulsa/prd_review.md Recomendacoes",
+      "what": "Recomendacoes nao bloqueantes da full validation de CAP-011 (run.MtgqxZVz): (1) CreateOrder consulta o catalogo antes de FindPendingAsync e devolve 404 para pedido pendente de oferta despublicada (RN-V06), inverter a ordem; (2) inbox de billing: ProcessPendingAsync faz continue sem Payment em lote LIMIT 50, falta teste da janela de graca e do descarte por tempo; (3) paymentUrl aceita http alem de https (PaymentResponseValidation, adaptador, start-order-payment.ts), restringir a https fora de desenvolvimento; (4) fallback de GetPaymentMethodAsync por next_action sem teste; (5) comentario de OrderCancellationConsumerWorker promete nao gravar cancelamento com PIX vivo, RN-V08 admite a coexistencia; (6) contratos de notification/identity: resolvido na consolidacao de 2026-10-06; (7) Meus pedidos so com smoke de HTTP controlado, repetir contra commerce real no checkpoint de integracao; (8) tag FinanceOrders resolvida na consolidacao; restam linhas longas em finance-orders-screen.tsx e o filtro de cursos que percorre o catalogo de 50 em 50. Tambem: vendas.pedido-cancelado e vendas.pedido-expirado sem AssertSends nos testes de commerce",
+      "owner": "tasso",
+      "blocks": []
+    },
+    {
+      "id": "OD87",
+      "ref": "tasks/archive/prd-compra-avulsa/prd_review.md Limitacoes",
+      "what": "Checkpoint manual de CAP-011 no sandbox do Stripe nunca executado (sem STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET de teste): compra com cartao, PIX e boleto ate a concessao, comprovante no smtp4dev, link /student/pedidos/{orderId} e varredura do e-mail em commerce e billing. Junto: dominio publico de billing em homologacao e cadastro do webhook no painel do Stripe por ambiente",
+      "owner": "tasso",
+      "blocks": [
+        "criterio de conclusao do MVP (compra real CAP-011 -> CAP-008)"
+      ]
+    },
+    {
+      "id": "OD88",
+      "ref": "tasks/archive/prd-compra-avulsa/prd_review.md Limitacoes",
+      "what": "Ambiente: em scripts/apps.sh start --remote o bridge Docker local nao alcanca o RabbitMQ remoto, e a stack completa nao sobe apontando para o servidor; investigar rede do Docker local (WSL) ou override em docker-compose.remote.yml",
+      "owner": "tasso",
+      "blocks": []
     }
   ],
   "foundation": {
@@ -976,7 +1002,7 @@
     },
     {
       "id": "OD79",
-      "ref": "tasks/prd-compra-avulsa/prd.md",
+      "ref": "tasks/archive/prd-compra-avulsa/prd.md",
       "what": "PRD de CAP-011",
       "owner": "tasso",
       "decided_at": "2026-10-05",
@@ -984,7 +1010,7 @@
     },
     {
       "id": "OD81",
-      "ref": "tasks/prd-compra-avulsa/contracts.md C-01",
+      "ref": "tasks/archive/prd-compra-avulsa/contracts.md C-01",
       "what": "Onde mora Cobranca (Stripe, ACL, webhook) em CAP-011",
       "owner": "tasso",
       "decided_at": "2026-10-05",
@@ -992,7 +1018,7 @@
     },
     {
       "id": "OD82",
-      "ref": "tasks/prd-compra-avulsa/contracts.md C-06; prd QA-01",
+      "ref": "tasks/archive/prd-compra-avulsa/contracts.md C-06; prd QA-01",
       "what": "Destinatario do comprovante (QA-01 x RN-26)",
       "owner": "tasso",
       "decided_at": "2026-10-05",
@@ -1000,7 +1026,7 @@
     },
     {
       "id": "OD83",
-      "ref": "tasks/prd-compra-avulsa/contracts.md",
+      "ref": "tasks/archive/prd-compra-avulsa/contracts.md",
       "what": "Contratos de CAP-011",
       "owner": "tasso",
       "decided_at": "2026-10-05",
@@ -1008,7 +1034,7 @@
     },
     {
       "id": "OD84",
-      "ref": "tasks/prd-compra-avulsa/techspec.md; ADR-0016, ADR-0017, ADR-0018",
+      "ref": "tasks/archive/prd-compra-avulsa/techspec.md; ADR-0016, ADR-0017, ADR-0018",
       "what": "TechSpec de CAP-011",
       "owner": "tasso",
       "decided_at": "2026-10-05",
@@ -1016,7 +1042,7 @@
     },
     {
       "id": "OD85",
-      "ref": "tasks/prd-compra-avulsa/tasks.md",
+      "ref": "tasks/archive/prd-compra-avulsa/tasks.md",
       "what": "Plano de tasks de CAP-011",
       "owner": "tasso",
       "decided_at": "2026-10-05",

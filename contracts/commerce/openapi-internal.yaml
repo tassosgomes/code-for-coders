@@ -1,57 +1,34 @@
 openapi: 3.1.0
 info:
   title: Commerce — API interna
-  version: 1.3.0
-  description: 'Contrato **vigente** consolidado. Fronteira: `bff-admin` → `commerce` (área financeira, Catálogo,
-    cortesias), `bff-student` → `commerce` (vitrine) e serviços → `commerce` (decisão de acesso).
+  version: 1.4.0
+  description: |
+    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `commerce` (área financeira e pedidos, Catálogo, cortesias), `bff-student` → `commerce` (vitrine, compra e pedidos do aluno) e serviços → `commerce` (decisão de acesso e cursos do aluno).
 
-
-    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte
-    do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
-
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml` 1.0.0
-
     - `tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml` 1.1.0
-
     - `tasks/archive/prd-concessao-acesso/internal-api-contract-commerce.yaml` 1.2.0
-
     - `tasks/archive/prd-progresso-aluno/internal-api-contract-commerce.yaml` 1.3.0
+    - `tasks/archive/prd-compra-avulsa/internal-api-contract-commerce.yaml` 1.4.0
 
+    **Notas de prd-acesso-interno (1.0.0):** Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, V-07; ADR-0005). Consumidor único conhecido: `bff-admin`. `commerce` valida localmente o JWT de usuário emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `commerce`, validade) e decide pela permissão do claim `permissions`, sem consultar Identity e sem confiar no BFF. A área não tem dado até CAP-011.
 
-    **Notas de prd-acesso-interno (1.0.0):** Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, V-07;
-    ADR-0005). Consumidor único conhecido: `bff-admin`. `commerce` valida localmente o JWT de usuário emitido por
-    Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `commerce`, validade) e decide pela
-    permissão do claim `permissions`, sem consultar Identity e sem confiar no BFF. A área não tem dado até CAP-011.
+    **Notas de prd-vitrine-oferta (1.1.0):** Recorte interno do primeiro PRD de CAP-003 (`tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30). Evolui `commerce` 1.0.0 (`tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml`, área financeira reservada, sem mudança) com o módulo Catálogo. Três consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de ficha e oferta, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF), e `resolveOfferReferencesInternal` para a consulta da trilha; (2) `bff-student`, com asserção de serviço própria (C-04) — vitrine, página e clique, derivadas de `api-contract-student.yaml` 1.0.0. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da asserção (G07).
 
+    **Notas de prd-concessao-acesso (1.2.0):** Recorte interno do primeiro PRD de CAP-008 (`tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01). Evolui `commerce` 1.1.0 (`tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml`, Catálogo e vitrine, sem mudança) com o módulo Matrícula. Dois consumidores e dois esquemas de segurança: (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de cortesia, derivadas mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF); (2) `media` e `learning`, com asserção de serviço própria (C-04) — a decisão "pode acessar agora?", fonte única do direito (RN-D01), sem consumidor nesta entrega. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da asserção (G07). A localização do aluno por e-mail não passa por aqui: é de Identity (`internal-api-contract-identity.yaml`).
 
-    **Notas de prd-vitrine-oferta (1.1.0):** Recorte interno do primeiro PRD de CAP-003 (`tasks/archive/prd-vitrine-oferta/prd.md`
-    v1.0, aprovado em 2026-09-30). Evolui `commerce` 1.0.0 (`tasks/archive/prd-acesso-interno/internal-api-contract-commerce.yaml`,
-    área financeira reservada, sem mudança) com o módulo Catálogo. Três consumidores e dois esquemas de segurança:
-    (1) `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de ficha e oferta, derivadas
-    mecanicamente de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF), e `resolveOfferReferencesInternal`
-    para a consulta da trilha; (2) `bff-student`, com asserção de serviço própria (C-04) — vitrine, página e clique,
-    derivadas de `api-contract-student.yaml` 1.0.0. `commerce` decide pelas claims, sem confiar no BFF. A escola
-    vem do `tenantId` do token ou da asserção (G07).
+    **Notas de prd-progresso-aluno (1.3.0):** Recorte interno de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Evolui `contracts/commerce/openapi-internal.yaml` 1.2.0 de forma aditiva com uma leitura de Matrícula: os cursos sobre os quais um aluno tem ou teve concessão, com a situação **agregada por curso** (RN-D07). As demais operações não mudam; `decideAccessInternal` continua a fonte única de "pode acessar agora?" e não muda.
 
+    **Notas de prd-compra-avulsa (1.4.0):** Recorte interno de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/commerce/openapi-internal.yaml` 1.3.0 de forma **aditiva** com o módulo Vendas (pedido) e **deprecia** o clique anônimo de intenção de compra (DP-06). Catálogo, cortesias, decisão de acesso e cursos do aluno não mudam.
 
-    **Notas de prd-concessao-acesso (1.2.0):** Recorte interno do primeiro PRD de CAP-008 (`tasks/archive/prd-concessao-acesso/prd.md`
-    v1.0, aprovado em 2026-10-01). Evolui `commerce` 1.1.0 (`tasks/archive/prd-vitrine-oferta/internal-api-contract-commerce.yaml`,
-    Catálogo e vitrine, sem mudança) com o módulo Matrícula. Dois consumidores e dois esquemas de segurança: (1)
-    `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) — operações de cortesia, derivadas mecanicamente
-    de `api-contract.yaml` 1.0.0 (sem cookie nem CSRF; sem 502/504, que são do BFF); (2) `media` e `learning`, com
-    asserção de serviço própria (C-04) — a decisão "pode acessar agora?", fonte única do direito (RN-D01), sem consumidor
-    nesta entrega. `commerce` decide pelas claims, sem confiar no BFF. A escola vem do `tenantId` do token ou da
-    asserção (G07). A localização do aluno por e-mail não passa por aqui: é de Identity (`internal-api-contract-identity.yaml`).
+    Dois consumidores e dois esquemas de segurança:
 
+    1. `bff-student`, com o **JWT de aluno** de audiência `commerce` (ADR-0013 estendida, C-03): resumo da compra, pedido, página de pagamento, desistência e *Meus pedidos*. O aluno é **sempre** o `sub` do token; nenhuma rota aceita identificador de aluno por parâmetro, corpo ou cabeçalho. Pedido de outro aluno é indistinguível de inexistente (404).
+    2. `bff-admin`, com o JWT do ator de audiência `commerce` (ADR-0005) e `financeiro.ler`: consulta de pedidos, só leitura (RF-11, DP-09).
 
-    **Notas de prd-progresso-aluno (1.3.0):** Recorte interno de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md`
-    v1.0 de 2026-10-04. Evolui `contracts/commerce/openapi-internal.yaml` 1.2.0 de forma aditiva com uma leitura
-    de Matrícula: os cursos sobre os quais um aluno tem ou teve concessão, com a situação **agregada por curso**
-    (RN-D07). As demais operações não mudam; `decideAccessInternal` continua a fonte única de "pode acessar agora?"
-    e não muda.
-
-    '
+    O pedido **não** decide acesso (RN-V10): nenhuma resposta daqui é consultada por player, aula ou progresso. `accessGrantedAt` é informação de exibição, preenchida quando Vendas recebe `matricula.acesso-concedido.v1` da concessão daquele pedido (C-07).
   contact:
     name: Time de Commerce
 servers:
@@ -74,7 +51,7 @@ tags:
   description: Resumo da compra, pedido, pagamento e desistência, pelo BFF do aluno
 - name: Meus pedidos
   description: Pedidos do próprio aluno
-- name: FinanceOrders
+- name: Pedidos no backoffice
   description: Consulta de pedidos pelo financeiro
 paths:
   /finance-area:
@@ -1612,7 +1589,7 @@ components:
       bearerFormat: JWT
       description: 'JWT RS256 de aluno emitido por Identity (`validateStudentSessionInternal` com `audience: commerce`),
         vida de 5 minutos, validado localmente pelo JWKS de Identity (ADR-0013, estendida a `commerce` por C-03;
-        ADR própria na TechSpec). Política de aluno: `scope` igual a `orders:use` **e ausência da claim `permissions`**.
+        ADR-0016). Política de aluno: `scope` igual a `orders:use` **e ausência da claim `permissions`**.
         Claims `iss`, `aud`, `sub` (= `studentId`), `tenantId`, `sessionId`, `scope`, `exp`, `jti`. **Sem `email`**:
         a claim só existe na audiência `media`.'
     StaffUserToken:
@@ -1621,7 +1598,8 @@ components:
       bearerFormat: JWT
       description: 'JWT RS256 de ator interno emitido por Identity (`validateStaffSessionInternal` com `audience:
         commerce`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions, exp, jti.
-        Chave pública por `kid` no JWKS de Identity. As operações de Cortesias exigem `cortesia.conceder`.'
+        Chave pública por `kid` no JWKS de Identity. As operações de Cortesias exigem `cortesia.conceder`;
+        as de pedidos no backoffice, `financeiro.ler`.'
     StudentBffServiceAssertion:
       type: http
       scheme: bearer
@@ -3124,7 +3102,8 @@ components:
                 code: SHOWCASE_COURSE_NOT_FOUND
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     OfferNotAvailable:
-      description: Oferta não publicada, inexistente ou de outra escola — indistintas. O clique não é contado.
+      description: Oferta não publicada, inexistente ou de outra escola — indistintas; code `OFFER_NOT_AVAILABLE`. Nada
+        é criado, e o clique não é contado.
       content:
         application/problem+json:
           schema:
@@ -3138,7 +3117,7 @@ components:
                 code: OFFER_NOT_AVAILABLE
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     TokenInvalid:
-      description: JWT ausente, expirado, de audiência errada ou com assinatura inválida; code `TOKEN_INVALID`.
+      description: JWT ausente, expirado, de audiência ou emissor errados, ou com assinatura inválida; code `TOKEN_INVALID`.
       content:
         application/problem+json:
           schema:
@@ -3195,8 +3174,7 @@ components:
                 code: SERVICE_ASSERTION_INVALID
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     ScopeDenied:
-      description: Asserção sem o escopo `access-decision:read` ou de emissor sem permissão para o `tenantId`; code
-        `SCOPE_DENIED`.
+      description: Asserção sem o escopo da operação ou de emissor sem permissão para o `tenantId`; code `SCOPE_DENIED`.
       content:
         application/problem+json:
           schema:

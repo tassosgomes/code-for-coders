@@ -3,7 +3,13 @@ info:
   title: BFF do backoffice — pedidos
   version: 1.0.0
   description: |
-    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo** da fronteira `admin-spa` → `bff-admin` para a área financeira: a lista e o detalhe de pedidos (RF-11), **só leitura** (DP-09). A abertura da área (`getFinanceArea`, `bff-admin/openapi-acesso-interno.yaml`) não muda.
+    Contrato **vigente** consolidado. Fronteira: `admin-spa` → `bff-admin`: pedidos na área financeira (lista e detalhe, só leitura).
+
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
+
+    - `tasks/archive/prd-compra-avulsa/api-contract-admin.yaml` 1.0.0
+
+    **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo** da fronteira `admin-spa` → `bff-admin` para a área financeira: a lista e o detalhe de pedidos (RF-11), **só leitura** (DP-09). A abertura da área (`getFinanceArea`, `bff-admin/openapi-acesso-interno.yaml`) não muda.
 
     Exige `financeiro.ler` (DP-03 de `CAP-002`), verificada aqui e de novo em `commerce` pelas claims do JWT do ator (ADR-0005). O BFF compõe: pedidos vêm de `commerce` (`listFinanceOrdersInternal`, `getFinanceOrderInternal`), com o aluno por referência; **nome e e-mail** vêm de Identity (`resolveStudentAccountsInternal`, C-09) e só existem nesta resposta, nunca em URL, log ou cache.
 

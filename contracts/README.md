@@ -32,27 +32,42 @@ Testes de contrato leem os arquivos daqui, nunca de `tasks/` (ver "Conformidade 
 | `bff-admin/openapi-autoria.yaml` | 1.1.0 | `admin-spa` → `bff-admin`: autoria, nível e pré-requisito | `prd-autoria-curso/api-contract.yaml` 1.0.0 + `prd-nivel-prerequisito-curso/api-contract.yaml` 1.1.0 |
 | `bff-admin/openapi-catalogo.yaml` | 1.0.0 | `admin-spa` → `bff-admin`: fichas e ofertas | `prd-vitrine-oferta/api-contract.yaml` 1.0.0 |
 | `bff-admin/openapi-cortesias.yaml` | 1.0.0 | `admin-spa` → `bff-admin`: cortesias | `prd-concessao-acesso/api-contract.yaml` 1.0.0 |
+| `bff-admin/openapi-financeiro.yaml` | 1.0.0 | `admin-spa` → `bff-admin`: pedidos na área financeira | `prd-compra-avulsa/api-contract-admin.yaml` 1.0.0 |
 | `bff-student/openapi-conta.yaml` | 1.0.0 | `student-spa` → `bff-student`: conta e sessão | `prd-conta-aluno/api-contract.yaml` 1.0.0 |
-| `bff-student/openapi-vitrine.yaml` | 1.0.0 | `student-spa` → `bff-student`: vitrine | `prd-vitrine-oferta/api-contract-student.yaml` 1.0.0 |
+| `bff-student/openapi-vitrine.yaml` | 1.1.0 | `student-spa` → `bff-student`: vitrine | `prd-vitrine-oferta/api-contract-student.yaml` 1.0.0 + `prd-compra-avulsa/api-contract-vitrine.yaml` 1.1.0 |
+| `bff-student/openapi-compra.yaml` | 1.0.0 | `student-spa` → `bff-student`: compra e pedidos do aluno | `prd-compra-avulsa/api-contract.yaml` 1.0.0 |
 | `bff-student/openapi-aula.yaml` | 1.1.0 | `student-spa` → `bff-student`: tela da aula, reprodução protegida, progresso e meus cursos | `prd-reproducao-protegida/api-contract.yaml` 1.0.0 + `prd-progresso-aluno/api-contract.yaml` 1.1.0 |
-| `identity/openapi-internal.yaml` | 1.4.0 | `bff-admin`/`commerce` → `identity` | `prd-acesso-interno/internal-api-contract.yaml` 1.4.0 + `prd-consulta-trilha-auditoria/internal-api-contract-identity.yaml` 1.1.0 + `prd-concessao-acesso/internal-api-contract-identity.yaml` 1.4.0 |
-| `identity/openapi-internal-student.yaml` | 1.1.0 | `bff-student` → `identity` | `prd-conta-aluno/internal-api-contract.yaml` 1.0.0 + `prd-reproducao-protegida/internal-api-contract-identity.yaml` 1.1.0 |
-| `commerce/openapi-internal.yaml` | 1.3.0 | `bff-admin`/`bff-student`/serviços → `commerce` | `prd-acesso-interno/internal-api-contract-commerce.yaml` 1.0.0 + `prd-vitrine-oferta/internal-api-contract-commerce.yaml` 1.1.0 + `prd-concessao-acesso/internal-api-contract-commerce.yaml` 1.2.0 + `prd-progresso-aluno/internal-api-contract-commerce.yaml` 1.3.0 |
+| `identity/openapi-internal.yaml` | 1.5.0 | `bff-admin`/`commerce`/`notification` → `identity` | `prd-acesso-interno/internal-api-contract.yaml` 1.4.0 + `prd-consulta-trilha-auditoria/internal-api-contract-identity.yaml` 1.1.0 + `prd-concessao-acesso/internal-api-contract-identity.yaml` 1.4.0 + `prd-compra-avulsa/internal-api-contract-identity.yaml` 1.5.0 |
+| `identity/openapi-internal-student.yaml` | 1.2.0 | `bff-student` → `identity` | `prd-conta-aluno/internal-api-contract.yaml` 1.0.0 + `prd-reproducao-protegida/internal-api-contract-identity.yaml` 1.1.0 + `prd-compra-avulsa/internal-api-contract-identity-student.yaml` 1.2.0 |
+| `commerce/openapi-internal.yaml` | 1.4.0 | `bff-admin`/`bff-student`/serviços → `commerce` | `prd-acesso-interno/internal-api-contract-commerce.yaml` 1.0.0 + `prd-vitrine-oferta/internal-api-contract-commerce.yaml` 1.1.0 + `prd-concessao-acesso/internal-api-contract-commerce.yaml` 1.2.0 + `prd-progresso-aluno/internal-api-contract-commerce.yaml` 1.3.0 + `prd-compra-avulsa/internal-api-contract-commerce.yaml` 1.4.0 |
+| `billing/openapi-internal.yaml` | 1.0.0 | `commerce` → `billing` | `prd-compra-avulsa/internal-api-contract-billing.yaml` 1.0.0 |
+| `billing/openapi-webhook.yaml` | 1.0.0 | gateway de pagamento (Stripe) → `billing` | `prd-compra-avulsa/webhook-contract-billing.yaml` 1.0.0 |
 | `learning/openapi-internal.yaml` | 1.3.0 | `bff-admin`/`bff-student`/serviços → `learning` | `prd-autoria-curso/internal-api-contract-learning.yaml` 1.0.0 + `prd-nivel-prerequisito-curso/internal-api-contract-learning.yaml` 1.1.0 + `prd-reproducao-protegida/internal-api-contract-learning.yaml` 1.1.0 + `prd-progresso-aluno/internal-api-contract-learning.yaml` 1.3.0 |
 | `media/openapi-internal.yaml` | 1.1.0 | `bff-admin`/`bff-student` → `media` | `prd-ingestao-midia/internal-api-contract.yaml` 1.0.1 + `prd-reproducao-protegida/internal-api-contract-media.yaml` 1.1.0 |
 | `audit/openapi-internal.yaml` | 1.2.0 | `bff-admin` → `audit` | `prd-consulta-trilha-auditoria/internal-api-contract-audit.yaml` 1.2.0 |
 | `identity/asyncapi.yaml` | 1.1.0 | aplicação `identity` | `prd-conta-aluno/asyncapi-contract.yaml` 1.0.0 + `prd-acesso-interno/asyncapi-contract.yaml` 1.1.0 |
-| `notification/asyncapi.yaml` | 1.1.0 | aplicação `notification` | `prd-notificacao-transacional/asyncapi-contract.yaml` 1.0.0 + `prd-acesso-interno/asyncapi-contract-notification.yaml` 1.1.0 |
+| `notification/asyncapi.yaml` | 1.2.0 | aplicação `notification` | `prd-notificacao-transacional/asyncapi-contract.yaml` 1.0.0 + `prd-acesso-interno/asyncapi-contract-notification.yaml` 1.1.0 + `prd-compra-avulsa/asyncapi-contract-notification.yaml` 1.2.0 |
 | `audit/asyncapi.yaml` | 1.4.0 | aplicação `audit` | `prd-trilha-auditoria` 1.0.1 + `prd-consulta-trilha-auditoria` 1.1.0 + `prd-autoria-curso` (audit) 1.2.0 + `prd-vitrine-oferta` (audit) 1.3.0 + `prd-concessao-acesso` (audit) 1.4.0 |
 | `media/asyncapi.yaml` | 1.3.0 | aplicação `media` | `prd-ingestao-midia/asyncapi-contract.yaml` 1.0.0 + `prd-autoria-curso/asyncapi-contract-media.yaml` 1.1.0 + `prd-reproducao-protegida/asyncapi-contract.yaml` 1.2.0 + `prd-progresso-aluno/asyncapi-contract-media.yaml` 1.3.0 |
 | `learning/asyncapi.yaml` | 1.2.0 | aplicação `learning` | `prd-autoria-curso/asyncapi-contract.yaml` 1.0.0 + `prd-nivel-prerequisito-curso/asyncapi-contract.yaml` 1.1.0 + `prd-progresso-aluno/asyncapi-contract.yaml` 1.2.0 |
-| `commerce/asyncapi.yaml` | 1.1.0 | aplicação `commerce` | `prd-vitrine-oferta/asyncapi-contract.yaml` 1.0.0 + `prd-concessao-acesso/asyncapi-contract.yaml` 1.1.0 |
+| `commerce/asyncapi.yaml` | 1.2.0 | aplicação `commerce` | `prd-vitrine-oferta/asyncapi-contract.yaml` 1.0.0 + `prd-concessao-acesso/asyncapi-contract.yaml` 1.1.0 + `prd-compra-avulsa/asyncapi-contract.yaml` 1.2.0 |
+| `billing/asyncapi.yaml` | 1.0.0 | aplicação `billing` | `prd-compra-avulsa/asyncapi-contract-billing.yaml` 1.0.0 |
 
 Sem contrato por decisão de desenho: `prd-observabilidade-midia` (Kibana e alertas, nenhuma
 interface nova).
 
 Um AsyncAPI referencia a mensagem de outra aplicação pelo arquivo dela aqui (por exemplo,
 `commerce/asyncapi.yaml` → `../learning/asyncapi.yaml#/components/messages/VersaoPublicada`).
+
+## Consolidação de 2026-10-06 (CAP-011)
+
+- Primeiro PRD na regra 2 revisada: cada task acrescentou a `contracts/` as operações, canais e schemas que implementou (PR #174); o encerramento conferiu o conteúdo contra os recortes de `tasks/archive/prd-compra-avulsa`, subiu as versões e registrou as origens.
+- Novos: `bff-student/openapi-compra.yaml` 1.0.0 (resumo da compra, pedido, ida ao pagamento, desistência, *Meus pedidos*); `bff-admin/openapi-financeiro.yaml` 1.0.0 (lista e detalhe de pedidos); `billing/openapi-internal.yaml` 1.0.0 (`ensurePaymentSessionInternal`); `billing/openapi-webhook.yaml` 1.0.0 (`receiveGatewayEvent`); `billing/asyncapi.yaml` 1.0.0 (`cobranca.pagamento-aguardando/confirmado/nao-confirmado.v1`; recebe `vendas.pedido-cancelado.v1`).
+- Evoluídos de forma aditiva: `commerce/openapi-internal.yaml` 1.4.0 (oito operações de Vendas; `registerPurchaseIntentInternal` depreciada); `bff-student/openapi-vitrine.yaml` 1.1.0 (`registerPurchaseIntent` depreciada); `identity/openapi-internal.yaml` 1.5.0 (`resolveStudentAccountsInternal`, `getStudentContactInternal`); `identity/openapi-internal-student.yaml` 1.2.0 (audiência `commerce`, `scope: orders:use`); `commerce/asyncapi.yaml` 1.2.0 (fatos de Vendas; Vendas e Matrícula recebendo; pedido de envio do comprovante); `notification/asyncapi.yaml` 1.2.0 (`destinatarioConta`, modelo `comprovante-de-compra`).
+- Erratas do recorte 1.0.0 já refletidas: `PaymentSessionInput.description` com `maxLength: 263` e URLs de volta `http` só em host local de desenvolvimento autorizado (`billing/openapi-internal.yaml`).
+- Onde o recorte repetia um componente compartilhado (`Problem`, respostas de erro, esquemas de segurança, `PriceCents`, `AccessPeriod`), prevaleceu o vigente; as descrições compartilhadas foram generalizadas para cobrir as operações novas (`StaffUserToken`, `TokenInvalid`, `OfferNotAvailable`, `ScopeDenied` em `commerce`; `BffAdminServiceAssertion`, `StaffSession`, `Unauthorized`, `Forbidden`, `StudentAccountNotFound` em Identity; `Cabecalho.correlationId` e `Vigencia` em `commerce/asyncapi.yaml`). A tag `FinanceOrders` de `commerce` passou ao nome do recorte, `Pedidos no backoffice`; os esquemas de segurança `CommerceServiceAssertion` e `GatewaySignature`, que faltavam nos arquivos de `billing`, foram trazidos do recorte.
+- Os `$ref` entre recortes (`asyncapi-contract-billing.yaml#...`) apontam aqui para os arquivos vigentes (`../billing/asyncapi.yaml#...`).
+- Ajustes pedidos pelas revisões das tasks: o `link` do comprovante em `notification/asyncapi.yaml` é a página do pedido (`/student/pedidos/{orderId}`), como a implementação e os testes usam, e não o curso, como o recorte dizia (só descrição e exemplo; o campo continua `uri`); as descrições de `NotificationServiceAssertion` (Identity), `CommerceServiceAssertion` (`billing`) e `StudentUserToken` (`commerce`) citam as ADR-0018, 0017 e 0016 aceitas, em vez de "ADR própria na TechSpec".
 
 ## Consolidação de 2026-10-04 (CAP-017)
 
@@ -97,16 +112,17 @@ com JSON Schema.
 | Aplicação | Mensagens cobertas |
 |---|---|
 | `identity` | `identidade.conta-criada`, `identidade.conta-confirmada`, `identidade.senha-redefinida`, `notificacao.envio-solicitado` (aluno e equipe), `auditoria.ato-praticado` |
-| `notification` | `notificacao.mensagem-entregue`, `notificacao.entrega-falhou` |
+| `notification` | `notificacao.mensagem-entregue`, `notificacao.entrega-falhou` (inclusive comprovante de compra e `destinatario-indisponivel`) |
 | `media` | `midia.ativo-pronto`, `midia.preparacao-falhou`, `midia.reproducao-avancou` |
 | `learning` | `conteudo.versao-publicada`, `auditoria.ato-praticado` |
-| `commerce` | `catalogo.oferta-*`, `matricula.acesso-*`, `auditoria.ato-praticado` |
+| `commerce` | `catalogo.oferta-*`, `matricula.acesso-*` (inclusive concessão `purchase`), `vendas.pedido-criado`, `vendas.compra-concluida`, `notificacao.envio-solicitado` (comprovante pela conta), `auditoria.ato-praticado` |
+| `billing` | `cobranca.pagamento-aguardando`, `cobranca.pagamento-confirmado`, `cobranca.pagamento-nao-confirmado` |
 
-`audit` só consome. Mudança em `contracts/` dispara o CI desses serviços.
+`vendas.pedido-cancelado` e `vendas.pedido-expirado` ainda não têm `AssertSends` em `commerce` (os testes conferem a linha do outbox, não o schema). `audit` só consome. Mudança em `contracts/` dispara o CI desses serviços.
 
 O HTTP não tem comparação automática com o OpenAPI gerado pelo código; alguns testes
 validam respostas pontuais contra o schema daqui (`AccessDecisionContract`,
-`StudentAccountLookupContract`, testes da `admin-spa`).
+`StudentAccountLookupContract`, `OrderHttpContract` de `commerce`, testes da `admin-spa`).
 
 ## Validação
 
@@ -116,5 +132,5 @@ npx --yes @stoplight/spectral-cli lint "contracts/**/openapi*.yaml" \
 npx --yes @asyncapi/cli validate contracts/<app>/asyncapi.yaml
 ```
 
-Resultado em 2026-10-04 (CAP-017): Spectral 6.17.0 com `contracts/.spectral-exception.yaml`, 15 documentos OpenAPI sem erros (3 avisos de paginação da exceção C-05);
-`@asyncapi/cli` 6.1.0, 6 documentos AsyncAPI sem erros.
+Resultado em 2026-10-06 (CAP-011): Spectral 6.17.0 com `contracts/.spectral-exception.yaml`, 19 documentos OpenAPI sem erros (os 3 avisos de paginação da exceção C-05 de CAP-017);
+`@asyncapi/cli` 6.2.0, 7 documentos AsyncAPI válidos (só a informação que recomenda AsyncAPI 3.1.0).

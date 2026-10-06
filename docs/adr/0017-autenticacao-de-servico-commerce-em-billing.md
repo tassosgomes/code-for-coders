@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0017-autenticacao-de-servico-commerce-em-billing.md`
 - Domínios/componentes afetados: `commerce` (módulo Vendas, como chamador), `billing` (Cobrança e Assinatura, como destino)
-- Origem histórica: `tasks/prd-compra-avulsa`, `CAP-011` (decisões C-01, C-02 e C-04 do conjunto de contratos)
+- Origem histórica: `tasks/archive/prd-compra-avulsa`, `CAP-011` (decisões C-01, C-02 e C-04 do conjunto de contratos)
 - Substitui: Nenhuma. Estende a [ADR-0004](0004-autenticacao-de-servico-bff-identity.md) a um destino novo, no precedente da [ADR-0010](0010-autenticacao-de-servico-commerce-em-identity.md)
 
 ## Data
@@ -62,10 +62,10 @@ Quem pode pedir pagamento a `billing` precisa ser autenticado e limitado: um cha
 ## Notas de Implementação
 
 - Chaves geradas por `scripts/generate-local-env.sh` (`COMMERCE_BILLING_PUBLIC_KEY_B64`/`COMMERCE_BILLING_PRIVATE_KEY_B64`) e registradas em `billing` como `ServiceAssertions:Issuers:commerce`.
-- Contrato: `tasks/prd-compra-avulsa/internal-api-contract-billing.yaml` (`ensurePaymentSessionInternal`).
+- O contrato vigente está em `contracts/billing/openapi-internal.yaml` (`billing` 1.0.0, `ensurePaymentSessionInternal`), promovido em 2026-10-06 a partir do recorte histórico `tasks/archive/prd-compra-avulsa/internal-api-contract-billing.yaml`.
 
 ## Referências
 
 - [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0010](0010-autenticacao-de-servico-commerce-em-identity.md)
 - Baseline: BA08 (um salto), camada anticorrupção sobre o gateway
-- Origem histórica: `tasks/prd-compra-avulsa/contracts.md` (C-01, C-02, C-04)
+- Origem histórica: `tasks/archive/prd-compra-avulsa/contracts.md` (C-01, C-02, C-04)

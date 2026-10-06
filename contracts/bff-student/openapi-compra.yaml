@@ -2,23 +2,18 @@ openapi: 3.1.0
 info:
   title: BFF do aluno — compra e pedidos
   version: 1.0.0
-  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
-    novo** da fronteira `student-spa` → `bff-student` para a compra: resumo, pedido, ida ao pagamento, desistência
-    e *Meus pedidos* (RF-01 a RF-06, RF-10).
+  description: |
+    Contrato **vigente** consolidado. Fronteira: `student-spa` → `bff-student`: compra e pedidos do aluno (resumo, pedido, ida ao pagamento, desistência e *Meus pedidos*).
 
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
-    O BFF não decide nada: valida a sessão do aluno em Identity (ADR-0003), obtém o JWT de aluno com audiência `commerce`
-    (C-03) e repassa a `commerce`, que é o dono do pedido. Toda operação exige a sessão do aluno: um visitante recebe
-    401 e o cliente o leva a entrar ou criar conta, voltando depois à mesma opção de compra (RF-01). Escritas exigem
-    `X-CSRF-Token` (G18). As operações de vitrine, conta, aula e progresso não mudam; o clique anônimo de intenção
-    de compra é depreciado em `api-contract-vitrine.yaml`.
+    - `tasks/archive/prd-compra-avulsa/api-contract.yaml` 1.0.0
 
+    **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo** da fronteira `student-spa` → `bff-student` para a compra: resumo, pedido, ida ao pagamento, desistência e *Meus pedidos* (RF-01 a RF-06, RF-10).
 
-    O pagamento acontece fora da plataforma, na página do gateway (DP-01): o BFF devolve o endereço, o cliente navega
-    para ele, e o aluno volta para a página de retorno do pedido. Nenhum dado de cartão, CPF ou nome do pagador
-    passa por aqui (RN-CB01).
+    O BFF não decide nada: valida a sessão do aluno em Identity (ADR-0003), obtém o JWT de aluno com audiência `commerce` (C-03) e repassa a `commerce`, que é o dono do pedido. Toda operação exige a sessão do aluno: um visitante recebe 401 e o cliente o leva a entrar ou criar conta, voltando depois à mesma opção de compra (RF-01). Escritas exigem `X-CSRF-Token` (G18). As operações de vitrine, conta, aula e progresso não mudam; o clique anônimo de intenção de compra é depreciado em `api-contract-vitrine.yaml`.
 
-    '
+    O pagamento acontece fora da plataforma, na página do gateway (DP-01): o BFF devolve o endereço, o cliente navega para ele, e o aluno volta para a página de retorno do pedido. Nenhum dado de cartão, CPF ou nome do pagador passa por aqui (RN-CB01).
   contact:
     name: Time de Commerce
 servers:

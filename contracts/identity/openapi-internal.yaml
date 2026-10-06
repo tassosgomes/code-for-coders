@@ -1,21 +1,24 @@
 openapi: 3.1.0
 info:
   title: Identity — API interna do backoffice e de serviços
-  version: 1.4.0
+  version: 1.5.0
   description: |
-    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `identity` (sessão, convite, papéis, resolução de referências de auditoria, conta de aluno para cortesia) e `commerce` → `identity` (confirmação da conta de aluno).
+    Contrato **vigente** consolidado. Fronteira: `bff-admin` → `identity` (sessão, convite, papéis, resolução de referências de auditoria, conta de aluno para cortesia, nome e e-mail dos alunos dos pedidos), `commerce` → `identity` (confirmação da conta de aluno) e `notification` → `identity` (contato do aluno para o pedido de envio pela conta).
 
     Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-acesso-interno/internal-api-contract.yaml` 1.4.0
     - `tasks/archive/prd-consulta-trilha-auditoria/internal-api-contract-identity.yaml` 1.1.0
     - `tasks/archive/prd-concessao-acesso/internal-api-contract-identity.yaml` 1.4.0
+    - `tasks/archive/prd-compra-avulsa/internal-api-contract-identity.yaml` 1.5.0
 
     **Notas de prd-acesso-interno (1.4.0):** Recorte interno de CAP-002 (TechSpec aprovada em 2026-09-25, EN-01; ADR-0004 e ADR-0005). Consumidor único conhecido: `bff-admin`. A asserção de serviço do emissor `bff-admin` autentica o BFF inclusive antes da entrada; nunca representa um ator interno. Nas operações de gestão, o ator é resolvido por Identity a partir do identificador opaco da sessão interna informado em `X-Staff-Session` — Identity verifica que a sessão está ativa, é do tenant da asserção e tem a permissão exigida; o BFF não informa conta, papel nem permissão. Toda chamada usa TLS. O tenant é claim da asserção. Idempotência e códigos de CAP-001 se aplicam; o BFF traduz `IDEMPOTENCY_CONFLICT` para `IDEMPOTENCY_KEY_REUSED` no contrato público.
 
     **Notas de prd-consulta-trilha-auditoria (1.1.0):** Recorte de CAP-030 para bff-admin → identity. Resolve por tenant referências de conta interna, convite interno e (desde 1.1.0, aditivo, C-07 de tasks/archive/prd-concessao-acesso) conta de aluno, no momento da consulta; o rótulo da conta de aluno é o nome, nunca o e-mail. Não altera nem copia dados na Auditoria. Identity valida a asserção do BFF, a sessão interna vigente e o papel administrador; referências de outro tenant e ausentes são indistintas.
 
     **Notas de prd-concessao-acesso (1.4.0):** Recorte do primeiro PRD de CAP-008, `tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01. Evolui Identity 1.3.0 com duas operações internas, ambas sobre a conta de **aluno** e ambas devolvendo só o mínimo (RN-16 de Identidade): (1) `bff-admin` localiza a conta pelo e-mail para o financeiro conferir o beneficiário (RF-02); (2) `commerce` reconfirma, no momento de conceder, que o beneficiário é conta de aluno ativa (RN-D09, C-03). Identity valida a asserção do chamador e, na localização, a sessão interna vigente e a permissão `cortesia.conceder`. O e-mail trafega no corpo, nunca em URL, log, métrica ou chave de cache (RN-21, G23). Conta de outro tenant, de ator interno e inexistente são indistintas (G07).
+
+    **Notas de prd-compra-avulsa (1.5.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/identity/openapi-internal.yaml` 1.4.0 de forma **aditiva** com duas leituras de conta de aluno. As demais operações não mudam. (1) `resolveStudentAccountsInternal` — `bff-admin` resolve nome e e-mail dos alunos de uma página de pedidos (RF-11, C-09); exige `X-Staff-Session` de ator com `financeiro.ler`. (2) `getStudentContactInternal` — `notification` resolve o destinatário de um pedido de envio feito **pela conta**, sem que o e-mail passe pelo remetente (C-06, QA-01 do PRD); é o que mantém o e-mail fora de `commerce`, do outbox e do broker: ele só sai de Identity para Notificação, a exposição já declarada em RN-26. Nenhuma das duas aceita e-mail como entrada, e nenhuma devolve conta de ator interno (RN-13).
   contact:
     name: Time de Identidade e Acesso
 servers:
@@ -35,7 +38,7 @@ tags:
 - name: AuditIdentityReferences
   description: Resolução de referências de Auditoria
 - name: StudentAccounts
-  description: Conta de aluno como beneficiário de acesso
+  description: Conta de aluno como beneficiário de acesso e leituras de conta de aluno por outros serviços
 paths:
   /staff-sessions:
     post:
@@ -733,7 +736,8 @@ components:
       bearerFormat: JWT
       description: 'Asserção curta e assimétrica exclusiva de `bff-admin` (ADR-0005). Identity verifica assinatura,
         kid, issuer, audience, tenant, scope e jti contra replay. Não é token do usuário; o ator vem da sessão validada
-        por Identity. Escopo desta operação: `student-account:lookup`, novo no emissor `bff-admin`.'
+        por Identity. Escopos de conta de aluno: `student-account:lookup` (localização) e `student-account:resolve` (resolução
+        em lote para os pedidos).'
     CommerceServiceAssertion:
       type: http
       scheme: bearer
@@ -747,7 +751,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'Asserção curta e assimétrica exclusiva de `notification`, no mecanismo da ADR-0004 (vários emissores, cada um com chaves e escopos próprios; precedente da ADR-0010). `notification` ainda não é emissor em Identity: ADR própria na TechSpec (C-06). Escopo: `student-contact:read`. Identity verifica assinatura, kid, issuer, audience, tenant, scope e jti contra replay.'
+      description: 'Asserção curta e assimétrica exclusiva de `notification`, no mecanismo da ADR-0004 (vários emissores, cada um com chaves e escopos próprios; precedente da ADR-0010). `notification` é emissor em Identity pela ADR-0018 (C-06). Escopo: `student-contact:read`. Identity verifica assinatura, kid, issuer, audience, tenant, scope e jti contra replay.'
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -763,7 +767,8 @@ components:
       name: X-Staff-Session
       in: header
       required: true
-      description: ID opaco da sessão interna; Identity valida vigência, tenant e a permissão `cortesia.conceder`.
+      description: ID opaco da sessão interna; Identity valida vigência, tenant e a permissão exigida pela operação
+        (`cortesia.conceder` na localização, `financeiro.ler` na resolução de contas de aluno).
       schema:
         type: string
         format: uuid
@@ -816,7 +821,8 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     Unauthorized:
-      description: Asserção inválida ou, na localização, sessão ausente/revogada; code SERVICE_UNAUTHORIZED ou SESSION_REQUIRED.
+      description: Asserção inválida ou, nas operações com sessão interna, sessão ausente/revogada; code SERVICE_UNAUTHORIZED
+        ou SESSION_REQUIRED.
       content:
         application/problem+json:
           schema:
@@ -829,8 +835,16 @@ components:
                 status: 401
                 code: SERVICE_UNAUTHORIZED
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ausente ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
     Forbidden:
-      description: Asserção sem o escopo da operação ou, na localização, ator sem `cortesia.conceder`; code PERMISSION_DENIED.
+      description: Asserção sem o escopo da operação ou ator sem a permissão exigida (`cortesia.conceder` na localização,
+        `financeiro.ler` na resolução de contas de aluno); code PERMISSION_DENIED.
       content:
         application/problem+json:
           schema:
@@ -858,7 +872,8 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     StudentAccountNotFound:
-      description: Não há conta de aluno com esse e-mail — inexistente, de ator interno ou de outro tenant, indistintos (G07).
+      description: Não há conta de aluno com esse e-mail ou identificador — inexistente, de ator interno ou de outro tenant,
+        indistintos (G07); code STUDENT_ACCOUNT_NOT_FOUND.
       content:
         application/problem+json:
           schema:

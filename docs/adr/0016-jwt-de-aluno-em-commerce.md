@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0016-jwt-de-aluno-em-commerce.md`
 - Domínios/componentes afetados: `identity` (audiência e escopo novos do JWT de aluno), `commerce` (módulo Vendas, validação), `bff-student` (rota → audiência)
-- Origem histórica: `tasks/prd-compra-avulsa`, `CAP-011` (decisão C-03 do conjunto de contratos)
+- Origem histórica: `tasks/archive/prd-compra-avulsa`, `CAP-011` (decisão C-03 do conjunto de contratos)
 - Substitui: Nenhuma. Estende a [ADR-0013](0013-jwt-de-aluno-validado-por-servicos-de-dominio.md), que fixou o JWT de aluno por audiência para `media` e `learning`
 
 ## Data
@@ -66,9 +66,9 @@ Até aqui, o aluno só chegava a `commerce` de forma anônima: a vitrine e o cli
 
 - Configuração em Identity: `StudentSessionTokens__AudienceScopes__commerce: orders:use`, nos três arquivos de compose.
 - Configuração no `bff-student`: `BffSecurity:RouteAudiences` ganha `/api/v1/orders` e `/api/v1/offers` → `commerce`.
-- Contrato: `tasks/prd-compra-avulsa/internal-api-contract-identity-student.yaml` (Identity 1.2.0) e `internal-api-contract-commerce.yaml` (`StudentUserToken`).
+- O contrato vigente está em `contracts/identity/openapi-internal-student.yaml` (Identity 1.2.0) e `contracts/commerce/openapi-internal.yaml` (`commerce` 1.4.0, `StudentUserToken`), promovidos em 2026-10-06 a partir dos recortes históricos `tasks/archive/prd-compra-avulsa/internal-api-contract-identity-student.yaml` e `internal-api-contract-commerce.yaml`.
 
 ## Referências
 
 - [ADR-0003](0003-verificacao-de-sessao-do-aluno.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md), [ADR-0009](0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md), [ADR-0013](0013-jwt-de-aluno-validado-por-servicos-de-dominio.md)
-- Origem histórica: `tasks/prd-compra-avulsa/contracts.md` (C-03)
+- Origem histórica: `tasks/archive/prd-compra-avulsa/contracts.md` (C-03)

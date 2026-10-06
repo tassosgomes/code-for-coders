@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
   title: BFF do aluno — vitrine pública
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `student-spa` → `bff-student`: vitrine de cursos e intenção de compra.
 
     Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-vitrine-oferta/api-contract-student.yaml` 1.0.0
+    - `tasks/archive/prd-compra-avulsa/api-contract-vitrine.yaml` 1.1.0
 
     **Notas de prd-vitrine-oferta (1.0.0):** Recorte do primeiro PRD de CAP-003, `tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30. Interface `student-spa` → `bff-student`, **pública**: nenhuma operação exige sessão, e a presença do cookie de sessão do aluno não muda nada (RN-O13). As operações de conta de CAP-001 não mudam. A escola é a do BFF (MVP mono-tenant, BA10). Nenhuma resposta carrega autor, e-mail ou identificador de pessoa. Preço sempre em centavos de real, inteiro (C-05).
+
+    **Notas de prd-compra-avulsa (1.1.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/bff-student/openapi-vitrine.yaml` 1.0.0 com **uma** mudança: o clique anônimo em *Comprar* é **depreciado** e deixa de contar (DP-06, C-08). O botão passa a levar à compra (`api-contract.yaml`). As leituras da vitrine e da página do curso não mudam e não estão neste recorte.
   contact:
     name: Time de Commerce
 servers:
