@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
 import { Dialog } from '@/components/ui/dialog';
@@ -11,6 +11,20 @@ export const CourseDelete = ({ course, onDeleted, onReload, onNotice, presentati
   const [key, setKey] = useState<string>();
   const [error, setError] = useState<string>();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuDismiss = presentation === 'menu' && course.status === 'draft' && course.currentVersion === null;
+  useEffect(() => {
+    const node = menuRef.current;
+    if (!menuDismiss || !node) return;
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      if (!(next instanceof Node) || !node.contains(next)) setMenuOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') setMenuOpen(false); };
+    node.addEventListener('focusout', onFocusOut);
+    node.addEventListener('keydown', onKeyDown);
+    return () => { node.removeEventListener('focusout', onFocusOut); node.removeEventListener('keydown', onKeyDown); };
+  }, [menuDismiss]);
   const confirm = () => { setMenuOpen(false); setKey(crypto.randomUUID()); setError(undefined); };
   const submit = async () => {
     if (!key) return;
@@ -24,7 +38,7 @@ export const CourseDelete = ({ course, onDeleted, onReload, onNotice, presentati
   };
   if (course.status !== 'draft' || course.currentVersion !== null) return null;
   return <>
-    {presentation === 'menu' ? <div className="course-item-actions" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false); }} onKeyDown={(event) => { if (event.key === 'Escape') setMenuOpen(false); }}>
+    {presentation === 'menu' ? <div ref={menuRef} className="course-item-actions">
       <button type="button" className="course-action-trigger" aria-label={`Ações de ${course.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
       {menuOpen ? <div className="course-action-menu"><button type="button" onClick={confirm}>Excluir curso</button></div> : null}
     </div> : <button type="button" className="outline-button" onClick={confirm}>Excluir curso</button>}

@@ -11,11 +11,23 @@ export const CourseItemActions = ({ title, disabled, children }: CourseItemActio
     document.addEventListener('pointerdown', closeOutside);
     return () => document.removeEventListener('pointerdown', closeOutside);
   }, [open]);
-  return <div ref={container} className="course-item-actions" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }} onKeyDown={(event) => {
-    if (event.key === 'Escape') { setOpen(false); trigger.current?.focus(); }
-  }} onClick={(event) => {
-    if (event.target instanceof HTMLElement && event.target.closest('button') !== trigger.current) { setOpen(false); trigger.current?.focus(); }
-  }}>
+  useEffect(() => {
+    const node = container.current;
+    if (!node) return;
+    const onFocusOut = (event: FocusEvent) => {
+      const next = event.relatedTarget;
+      if (!(next instanceof Node) || !node.contains(next)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
+    const onClick = (event: MouseEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest('button') !== trigger.current) { setOpen(false); trigger.current?.focus(); }
+    };
+    node.addEventListener('focusout', onFocusOut);
+    node.addEventListener('keydown', onKeyDown);
+    node.addEventListener('click', onClick);
+    return () => { node.removeEventListener('focusout', onFocusOut); node.removeEventListener('keydown', onKeyDown); node.removeEventListener('click', onClick); };
+  }, []);
+  return <div ref={container} className="course-item-actions">
     <button ref={trigger} type="button" className="course-action-trigger" aria-label={`Ações de ${title}`} aria-expanded={open} disabled={disabled} onClick={() => setOpen(!open)}>⋯</button>
     {open ? <div className="course-action-menu">{children}</div> : null}
   </div>;
