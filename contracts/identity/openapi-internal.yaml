@@ -611,6 +611,56 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+  /student-accounts/{studentId}/contact:
+    parameters:
+      - name: studentId
+        in: path
+        required: true
+        description: Conta de aluno, por referência.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          aluno:
+            value: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+    get:
+      tags:
+        - StudentAccounts
+      summary: Obter o contato de entrega de uma conta de aluno
+      description: |
+        Para Notificação entregar um pedido de envio endereçado **à conta** (C-06): e-mail e nome da conta, no tenant da asserção. Conta inexistente, de outro tenant ou interna → 404 indistinto. Conta desativada → 200 com `status: disabled`, e Notificação **não** entrega (registra a falha como destinatário indisponível).
+
+        Exige asserção de `notification` com escopo `student-contact:read`. Notificação não guarda a resposta além do Registro de Entrega que ela já mantém (RN-26); o e-mail nunca vai para log, URL, métrica ou chave de cache.
+      operationId: getStudentContactInternal
+      security:
+        - NotificationServiceAssertion: []
+      responses:
+        '200':
+          description: Contato da conta.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples:
+                  - no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentContact'
+              examples:
+                ativa:
+                  value:
+                    studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    email: ana.souza@example.com
+                    name: Ana Souza
+                    status: active
+        '401':
+          $ref: '#/components/responses/ServiceUnauthorized'
+        '403':
+          $ref: '#/components/responses/ServiceForbidden'
+        '404':
+          $ref: '#/components/responses/StudentAccountNotFound'
 components:
   securitySchemes:
     BffAdminServiceAssertion:
@@ -629,6 +679,11 @@ components:
         em Identity: a extensão é registrada em ADR própria pela TechSpec (C-03), como a ADR-0009 fez para o `bff-student`
         em `commerce`. Escopo: `student-account:confirm`. Identity verifica assinatura, kid, issuer, audience, tenant,
         scope e jti contra replay.'
+    NotificationServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Asserção curta e assimétrica exclusiva de `notification`, no mecanismo da ADR-0004 (vários emissores, cada um com chaves e escopos próprios; precedente da ADR-0010). `notification` ainda não é emissor em Identity: ADR própria na TechSpec (C-06). Escopo: `student-contact:read`. Identity verifica assinatura, kid, issuer, audience, tenant, scope e jti contra replay.'
   parameters:
     IdempotencyKey:
       name: Idempotency-Key
@@ -739,8 +794,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     StudentAccountNotFound:
-      description: Não há conta de aluno com esse e-mail — inexistente, de ator interno ou de outro tenant, indistintos
-        (G07).
+      description: Não há conta de aluno com esse e-mail — inexistente, de ator interno ou de outro tenant, indistintos (G07).
       content:
         application/problem+json:
           schema:
@@ -752,6 +806,27 @@ components:
                 title: Não há conta de aluno com este e-mail.
                 status: 404
                 code: STUDENT_ACCOUNT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+            contato:
+              value:
+                type: about:blank
+                title: Conta de aluno não encontrada.
+                status: 404
+                code: STUDENT_ACCOUNT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ServiceForbidden:
+      description: Asserção sem `student-contact:read` ou de emissor sem permissão para o tenant; code PERMISSION_DENIED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            escopo:
+              value:
+                type: about:blank
+                title: Sem permissão.
+                status: 403
+                code: PERMISSION_DENIED
                 traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   schemas:
     Problem:
@@ -1316,3 +1391,29 @@ components:
           type: boolean
           description: Verdadeiro só para conta de aluno ativa do tenant da asserção. Não distingue os motivos do
             falso.
+    StudentContact:
+      type: object
+      additionalProperties: false
+      required:
+        - studentId
+        - email
+        - name
+        - status
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+          description: E-mail da conta. Exposição declarada de RN-26 (Notificação).
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+    AccountStatus:
+      type: string
+      enum:
+        - active
+        - disabled
+      description: Situação da conta. Clientes devem tolerar valor novo.

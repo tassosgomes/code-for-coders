@@ -127,6 +127,12 @@ channels:
     messages:
       pedidoExpirado:
         $ref: '#/components/messages/PedidoExpirado'
+  pedidoDeEnvio:
+    address: notificacao.envio-solicitado.v1
+    description: Canal de Notificação, na forma 1.2.0 (`asyncapi-contract-notification.yaml`).
+    messages:
+      pedidoDeEnvio:
+        $ref: ../notification/asyncapi.yaml#/components/messages/PedidoDeEnvioSolicitado
 operations:
   receberVersaoPublicada:
     action: receive
@@ -359,6 +365,14 @@ operations:
     description: 'Vendas, em fila própria, só para `origin purchase`: preenche `grantId` e `accessGrantedAt` do
       pedido `originRef` (C-07). Outras origens → confirmado sem efeito. **Exibição**: nada decide acesso a partir
       disso (RN-V10).'
+  publicarPedidoDeEnvioDoComprovante:
+    action: send
+    summary: Pedir a Notificação o comprovante de compra.
+    channel:
+      $ref: '#/channels/pedidoDeEnvio'
+    messages:
+      - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvio'
+    description: 'Pelo outbox, na mesma transação da compra concluída (RF-09). Conteúdo fixo: `destinatarioConta` `{tipo: conta-aluno, id: studentId}` (**nunca** `destinatario`, C-06); `finalidade` e `modelo` `comprovante-de-compra`; `dados` com número do pedido, curso e opção congelados, valor confirmado, meio, momento do pagamento, vigência congelada e o link do curso; `pedidoId` derivado do `orderId` (o mesmo em toda republicação, RN-V09). O pedido e a concessão não esperam a entrega (RF-09, terceiro critério).'
 components:
   messages:
     OfertaPublicada:

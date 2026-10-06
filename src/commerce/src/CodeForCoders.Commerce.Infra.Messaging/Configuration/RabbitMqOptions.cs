@@ -27,6 +27,14 @@ public sealed class RabbitMqOptions
     [Required]
     public string AuditExchange { get; set; } = "audit.events";
 
+    public Dictionary<string, string> RoutingExchanges { get; set; } = new()
+    {
+        ["notificacao.envio-solicitado.v1"] = "notification.events.default",
+    };
+
+    public string ExchangeFor(string routingKey) => RoutingExchanges.TryGetValue(routingKey, out var exchange)
+        ? exchange : Exchange;
+
     [Required]
     public string EntitlementFactRetentionQueue { get; set; } = "commerce.entitlement-fact-retention";
     [Range(1, int.MaxValue)]

@@ -15,6 +15,8 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.PostConfigure<RabbitMqOptions>(options =>
+            options.RoutingExchanges.TryAdd("auditoria.ato-praticado.v1", options.AuditExchange));
         services.AddOptions<OutboxOptions>()
             .Bind(configuration.GetSection(OutboxOptions.SectionName))
             .ValidateDataAnnotations()

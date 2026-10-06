@@ -124,8 +124,7 @@ public sealed class NotificationSendRequestConsumerWorker(
             if (request is null
                 || request.PedidoId == Guid.Empty
                 || request.TenantId == Guid.Empty
-                || string.IsNullOrWhiteSpace(request.Destinatario)
-                || request.Destinatario.Length > DeliveryRecord.RecipientMaxLength)
+                || request.Destinatario?.Length > DeliveryRecord.RecipientMaxLength)
             {
                 throw new JsonException("The notification send request payload is invalid.");
             }

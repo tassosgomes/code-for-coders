@@ -4,10 +4,10 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "target_ref": null,
-  "last_checkpoint": "f4c9e8f",
+  "last_checkpoint": "28820d1",
   "phase": "checkpoint",
-  "active_task": "7.0",
-  "attempt": 3,
+  "active_task": "8.0",
+  "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
   "transport_retries": 1,
@@ -21,16 +21,15 @@
   "pending_delegation": {
     "role": "integrator",
     "mode": "checkpoint-task",
-    "task": "7.0"
+    "task": "8.0"
   },
   "last_result": {
     "role": "validator",
-    "mode": "revalidation",
-    "task": "7.0",
-    "run_id": "run.cL5oYJ8i",
-    "kind": "codex",
+    "mode": "focused",
+    "task": "8.0",
+    "run_id": "run.gSFCB4Mc",
     "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/7.0_task_review.md"
+    "report": "tasks/prd-compra-avulsa/8.0_task_review.md"
   },
   "history": [
     {
@@ -168,6 +167,15 @@
       "ts": "2026-10-05T20:57",
       "event": "7.0 aprovada em revalidation na tentativa 3/3 (codex)",
       "run_id": "run.cL5oYJ8i"
+    },
+    {
+      "ts": "2026-10-05T21:04",
+      "event": "7.0 checkpoint 28820d1; alteração do responsável em routing.default.json (cursor extra_args --force) foi descartada da working tree às 20:58 durante o checkpoint (não commitada); reportado ao responsável"
+    },
+    {
+      "ts": "2026-10-05T21:40",
+      "event": "8.0 aprovada em focused (0 bloqueantes, 4 recomendações)",
+      "run_id": "run.gSFCB4Mc"
     }
   ],
   "blocked_tasks": {},
@@ -208,6 +216,10 @@
     {
       "task": "6.0",
       "note": "2 recomendações em 6.0_task_review.md"
+    },
+    {
+      "task": "8.0",
+      "note": "4 recomendações em 8.0_task_review.md"
     }
   ],
   "routing_override": {

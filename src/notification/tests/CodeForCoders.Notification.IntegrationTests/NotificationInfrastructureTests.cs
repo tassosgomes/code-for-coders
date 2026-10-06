@@ -42,7 +42,7 @@ public sealed class NotificationInfrastructureTests(NotificationIntegrationFixtu
                 configuration.AddInMemoryCollection(configurationValues))
             .ConfigureServices((context, services) =>
             {
-                services.AddApplicationConfiguration();
+                services.AddNotificationTestApplication();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
                 services.AddNotificationMessageHandlers();

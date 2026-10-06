@@ -21,6 +21,7 @@ public sealed class RabbitMqPublisher(
                 ContentType = "application/json",
                 DeliveryMode = DeliveryModes.Persistent,
                 MessageId = message.Id.ToString(),
+                CorrelationId = message.TraceParent ?? message.Id.ToString(),
                 Type = message.Type,
                 Headers = string.IsNullOrWhiteSpace(message.TraceParent)
                     ? null
@@ -31,7 +32,7 @@ public sealed class RabbitMqPublisher(
                     },
             };
             await channel.BasicPublishAsync(
-                exchange: message.RoutingKey == "auditoria.ato-praticado.v1" ? options.Value.AuditExchange : options.Value.Exchange,
+                exchange: options.Value.ExchangeFor(message.RoutingKey),
                 routingKey: message.RoutingKey,
                 mandatory: true,
                 basicProperties: properties,

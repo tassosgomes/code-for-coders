@@ -38,7 +38,7 @@ public sealed class AcceptNotificationSendRequest(
                 tenantContext.Namespace,
                 input.Request.TenantId,
                 input.Request.PedidoId,
-                input.Request.Destinatario!,
+                OptionalText(input.Request.Destinatario, DeliveryRecord.RecipientMaxLength),
                 OptionalText(input.Request.Dados?.Nome, DeliveryRecord.RecipientNameMaxLength),
                 OptionalText(input.Request.Dados?.Link, DeliveryRecord.LinkMaxLength),
                 OptionalText(input.Request.Finalidade, DeliveryRecord.PurposeMaxLength),
@@ -47,7 +47,7 @@ public sealed class AcceptNotificationSendRequest(
                 input.Request.SolicitadoEm,
                 transitionOn,
                 OptionalText(input.CorrelationId, DeliveryRecord.CorrelationIdMaxLength),
-                OptionalText(input.Request.Dados?.Papel, 32));
+                OptionalText(input.Request.Dados?.Papel, 32), input.Request.DestinatarioConta?.Id);
 
             await deliveryRecordRepository.AddAsync(refusedRecord, cancellationToken);
             await deliveryOutcomeCounterRepository.IncrementAsync(
@@ -74,7 +74,11 @@ public sealed class AcceptNotificationSendRequest(
             input.Request.SolicitadoEm,
             acceptedOn,
             input.CorrelationId,
-            data.Papel);
+            data.Papel,
+            input.Request.DestinatarioConta?.Id,
+            input.Request.Modelo == NotificationPurposes.PurchaseReceipt
+                ? new PurchaseReceiptData(data.NumeroPedido!, data.Curso!, data.Opcao!, data.ValorCentavos!.Value,
+                    data.Meio!, data.PagoEm!.Value, data.Vigencia!.Type, data.Vigencia.Months) : null);
 
         await deliveryRecordRepository.AddAsync(record, cancellationToken);
         await unitOfWork.CommitAsync(cancellationToken);

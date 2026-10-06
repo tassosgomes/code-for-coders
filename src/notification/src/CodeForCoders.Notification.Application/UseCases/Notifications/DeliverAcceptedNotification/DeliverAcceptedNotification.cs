@@ -16,7 +16,8 @@ public sealed class DeliverAcceptedNotification(
     IOutboxMessageWriter outboxMessageWriter,
     IDeliveryOutcomeCounterRepository deliveryOutcomeCounterRepository,
     IUnitOfWork unitOfWork,
-    ITransactionalEmailRetryPolicy retryPolicy) : IDeliverAcceptedNotification
+    ITransactionalEmailRetryPolicy retryPolicy,
+    IStudentContactClient studentContacts) : IDeliverAcceptedNotification
 {
     public async Task<DeliverAcceptedNotificationOutput> ExecuteAsync(
         DeliverAcceptedNotificationInput input,
@@ -25,10 +26,6 @@ public sealed class DeliverAcceptedNotification(
         var record = await deliveryRecordRepository.GetAsync(input.DeliveryRecordId, cancellationToken);
         if (record is null
             || record.Status != DeliveryStatus.Accepted
-            || record.Recipient is null
-            || (record.Model == NotificationPurposes.StaffInvitation
-                ? record.RecipientRole is null
-                : record.RecipientName is null)
             || record.Link is null
             || record.Purpose is null
             || record.Model is null)
@@ -36,38 +33,33 @@ public sealed class DeliverAcceptedNotification(
             return new DeliverAcceptedNotificationOutput(false, null, null);
         }
 
-        var recipient = record.Recipient;
-
-        var allowed = await consentService.AllowsAsync(
-            recipient,
-            record.Purpose,
-            cancellationToken);
-        if (!allowed)
-        {
-            return new DeliverAcceptedNotificationOutput(false, null, null);
-        }
-
-        var email = messageTemplateRenderer.Render(
-            record.Model,
-            recipient,
-            record.RecipientName,
-            record.Link,
-            record.RecipientRole);
         var attemptedOn = DateTimeOffset.UtcNow;
-        record.RegisterProviderAttempt(attemptedOn);
         try
         {
+            if (record.RecipientAccountId is { } studentId)
+            {
+                // Re-resolve on every attempt, including retries after provider failures.
+                record.RegisterProviderAttempt(attemptedOn);
+                var contact = await studentContacts.GetAsync(record.TenantId, studentId, cancellationToken);
+                if (contact is null || contact.Status != "active")
+                    throw new TransactionalEmailSendException(NotificationFailureReasons.RecipientUnavailable, false);
+                record.ResolveContact(contact.Email, contact.Name);
+            }
+            if (record.Recipient is null || (record.RecipientName is null && record.RecipientRole is null))
+                return new DeliverAcceptedNotificationOutput(false, null, null);
+            if (!await consentService.AllowsAsync(record.Recipient, record.Purpose, cancellationToken))
+                return new DeliverAcceptedNotificationOutput(false, null, null);
+            var email = messageTemplateRenderer.Render(record.Model, record.Recipient, record.RecipientName,
+                record.Link, record.RecipientRole, record.ReceiptData);
+            if (record.RecipientAccountId is null) record.RegisterProviderAttempt(attemptedOn);
             await emailSender.SendAsync(email, cancellationToken);
         }
         catch (TransactionalEmailSendException exception)
         {
-            return await HandleProviderFailureAsync(
-                record,
-                exception,
-                attemptedOn,
-                cancellationToken);
+            return await HandleProviderFailureAsync(record, exception, attemptedOn, cancellationToken);
         }
 
+        var recipient = record.Recipient!;
         var deliveredOn = DateTimeOffset.UtcNow;
         record.MarkDelivered(deliveredOn);
         await deliveryOutcomeCounterRepository.IncrementAsync(

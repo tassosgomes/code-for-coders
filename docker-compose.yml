@@ -131,6 +131,9 @@ services:
       dockerfile: src/identity/Dockerfile
     container_name: code-for-coders-identity
     environment:
+      ServiceAssertions__Issuers__notification__PublicKeys__local-notification-identity-1: ${NOTIFICATION_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__notification__AllowedScopes__0: student-contact:read
+      ServiceAssertions__Issuers__notification__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       StudentSessionTokens__Issuer: identity
       StudentSessionTokens__SigningKeyId: local-student-1
       StudentSessionTokens__SigningKeyBase64: ${IDENTITY_STUDENT_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
@@ -333,6 +336,8 @@ services:
       dockerfile: src/commerce/Dockerfile
     container_name: code-for-coders-commerce
     environment:
+      RabbitMq__RoutingExchanges__notificacao.envio-solicitado.v1: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      RabbitMq__RoutingExchanges__auditoria.ato-praticado.v1: audit.events
       BillingClient__BaseUrl: http://billing:8080/
       BillingClient__Issuer: commerce
       BillingClient__Audience: billing
@@ -393,6 +398,12 @@ services:
       dockerfile: src/notification/Dockerfile
     container_name: code-for-coders-notification
     environment:
+      StudentContactIdentity__BaseUrl: http://identity:8080/
+      StudentContactIdentity__Issuer: notification
+      StudentContactIdentity__Audience: identity-internal
+      StudentContactIdentity__SigningKeyId: local-notification-identity-1
+      StudentContactIdentity__SigningKeyBase64: ${NOTIFICATION_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      Email__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=code-for-coders-local
       Email__Transport: smtp

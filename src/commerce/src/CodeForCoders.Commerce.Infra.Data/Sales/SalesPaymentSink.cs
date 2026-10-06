@@ -4,10 +4,11 @@ using CodeForCoders.Commerce.Application.Interfaces;
 using CodeForCoders.Commerce.Domain.Entities;
 using CodeForCoders.Commerce.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 namespace CodeForCoders.Commerce.Infra.Data.Sales;
 
 public sealed class SalesPaymentSink(IOrderPaymentStore store, ITenantContext tenant, IOutboxMessageWriter outbox,
- IUnitOfWork unitOfWork, ILogger<SalesPaymentSink> logger, TimeProvider clock) : ISalesPaymentSink
+ IUnitOfWork unitOfWork, ILogger<SalesPaymentSink> logger, TimeProvider clock, IOptions<StudentAppOptions> app) : ISalesPaymentSink
 {
     public async Task ApplyAsync(PaymentConfirmedFact fact, CancellationToken cancellationToken)
     {
@@ -27,6 +28,30 @@ public sealed class SalesPaymentSink(IOrderPaymentStore store, ITenantContext te
              AccessPeriod.Create(order.PeriodType, order.PeriodMonths), fact.Method, fact.ConfirmedAt, now);
             await outbox.AppendAsync(new(eventId, fact.TenantId, "CompraConcluida", "vendas.compra-concluida.v1",
              purchase, now, Activity.Current?.Id), cancellationToken);
+            var receipt = new
+            {
+                pedidoId = order.Id,
+                tenantId = order.TenantId,
+                destinatarioConta = new { tipo = "conta-aluno", id = order.StudentId },
+                finalidade = "comprovante-de-compra",
+                modelo = "comprovante-de-compra",
+                dados = new
+                {
+                    numeroPedido = order.Number,
+                    curso = order.CourseTitle,
+                    opcao = order.OfferName,
+                    valorCentavos = fact.AmountCents,
+                    meio = fact.Method,
+                    pagoEm = fact.ConfirmedAt,
+                    vigencia = order.PeriodType == "months"
+                        ? (object)new { type = "months", months = order.PeriodMonths!.Value }
+                        : new { type = "lifetime" },
+                    link = $"{app.Value.PublicBaseUrl.TrimEnd('/')}/student/pedidos/{order.Id:D}"
+                },
+                solicitadoEm = now
+            };
+            await outbox.AppendAsync(new(Guid.CreateVersion7(), fact.TenantId, "NotificationSendRequestedV1",
+                "notificacao.envio-solicitado.v1", receipt, now, Activity.Current?.Id), cancellationToken);
             await unitOfWork.CommitAsync(cancellationToken);
         }
         await transaction.CompleteAsync(cancellationToken);

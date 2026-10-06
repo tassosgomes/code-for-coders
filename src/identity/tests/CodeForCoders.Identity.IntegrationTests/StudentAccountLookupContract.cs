@@ -23,6 +23,14 @@ internal static class StudentAccountLookupContract
         Assert.False(string.IsNullOrWhiteSpace(payload["traceId"]!.GetValue<string>()));
     }
 
+    public static void AssertContact(JsonElement payload)
+    {
+        var schema = Contract["components"]!["schemas"]!["StudentContact"]!.DeepClone();
+        schema["properties"]!["status"] = Contract["components"]!["schemas"]!["AccountStatus"]!.DeepClone();
+        Assert.True(JsonSchema.FromText(schema.ToJsonString()).Evaluate(payload,
+            new EvaluationOptions { RequireFormatValidation = true }).IsValid);
+    }
+
     public static bool IsValidProblem(JsonNode payload)
     {
         using var response = JsonDocument.Parse(payload.ToJsonString());

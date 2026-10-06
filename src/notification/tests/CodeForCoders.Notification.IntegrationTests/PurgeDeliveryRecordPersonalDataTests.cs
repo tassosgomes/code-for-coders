@@ -304,6 +304,52 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
         }
     }
 
+    [Fact(DisplayName = nameof(PurgeRemovesReceiptAccountAndModelDataIncludingUnresolvedContact))]
+    public async Task PurgeRemovesReceiptAccountAndModelDataIncludingUnresolvedContact()
+    {
+        var cancellation = TestContext.Current.CancellationToken;
+        using var host = CreateHost();
+        await host.StartAsync(cancellation);
+        try
+        {
+            foreach (var status in new[] { DeliveryStatus.Delivered, DeliveryStatus.Failed })
+            {
+                var tenantId = Guid.CreateVersion7();
+                var now = DateTimeOffset.UtcNow;
+                var record = DeliveryRecord.Create(processingNamespace, tenantId, Guid.CreateVersion7(), null, null,
+                    "http://localhost:8082/student/pedidos/receipt", NotificationPurposes.PurchaseReceipt,
+                    NotificationPurposes.PurchaseReceipt, now, now, "purge-receipt",
+                    recipientAccountId: Guid.CreateVersion7(),
+                    receiptData: new("000123", "Course", "Lifetime", 49700, "pix", now, "lifetime", null));
+                if (status == DeliveryStatus.Delivered)
+                {
+                    record.ResolveContact("purge-receipt@example.com", "Receipt Student");
+                    record.MarkDelivered(now);
+                }
+                else record.MarkFailed(NotificationFailureReasons.RecipientUnavailable, false, now);
+                await using (var scope = host.Services.CreateAsyncScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
+                    db.DeliveryRecords.Add(record);
+                    await scope.ServiceProvider.GetRequiredService<CodeForCoders.Notification.Domain.Repositories.IDeliveryOutcomeCounterRepository>()
+                        .IncrementAsync(record, now, cancellation);
+                    await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().CommitAsync(cancellation);
+                }
+                var counter = await ReadCounterAsync(tenantId, NotificationPurposes.PurchaseReceipt, status,
+                    DateOnly.FromDateTime(now.UtcDateTime), cancellation);
+                await MoveFinalOutcomeBeforeCutoffAsync(record.Id, status, now.AddDays(-2), cancellation);
+                var purged = await WaitForPurgedRecordAsync(tenantId, record.Id, cancellation);
+                Assert.Null(purged.RecipientAccountId);
+                Assert.Null(purged.ReceiptData);
+                Assert.Null(purged.Recipient);
+                var after = await ReadCounterAsync(tenantId, NotificationPurposes.PurchaseReceipt, status,
+                    DateOnly.FromDateTime(now.UtcDateTime), cancellation);
+                Assert.Equal(counter.Count, after.Count);
+            }
+        }
+        finally { await host.StopAsync(CancellationToken.None); }
+    }
+
     private IHost CreateHost(ITransactionalEmailSender? emailSender = null)
     {
         var configurationValues = new Dictionary<string, string?>
@@ -334,7 +380,7 @@ public sealed class PurgeDeliveryRecordPersonalDataTests(NotificationIntegration
                 configuration.AddInMemoryCollection(configurationValues))
             .ConfigureServices((context, services) =>
             {
-                services.AddApplicationConfiguration();
+                services.AddNotificationTestApplication();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddOptions<RabbitMqOptions>()
                     .Bind(context.Configuration.GetSection(RabbitMqOptions.SectionName))
