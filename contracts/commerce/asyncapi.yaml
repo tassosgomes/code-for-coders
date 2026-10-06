@@ -91,13 +91,13 @@ channels:
         $ref: '#/components/messages/CompraConcluida'
   pagamentoAguardando:
     address: cobranca.pagamento-aguardando.v1
-    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    description: Fato de `billing` (`../billing/asyncapi.yaml`).
     messages:
       pagamentoAguardando:
         $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoAguardando
   pagamentoConfirmado:
     address: cobranca.pagamento-confirmado.v1
-    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    description: Fato de `billing` (`../billing/asyncapi.yaml`).
     messages:
       pagamentoConfirmado:
         $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoConfirmado
@@ -121,7 +121,7 @@ channels:
         $ref: '#/components/messages/PedidoExpirado'
   pedidoDeEnvio:
     address: notificacao.envio-solicitado.v1
-    description: Canal de Notificação, na forma 1.2.0 (`asyncapi-contract-notification.yaml`).
+    description: Canal de Notificação, na forma 1.2.0 (`../notification/asyncapi.yaml`).
     messages:
       pedidoDeEnvio:
         $ref: ../notification/asyncapi.yaml#/components/messages/PedidoDeEnvioSolicitado

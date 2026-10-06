@@ -11,7 +11,7 @@ info:
 
     **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo**: aplicação `billing` (Cobrança e Assinatura em fatia mínima, C-01).
 
-    `billing` traduz os eventos do gateway (`webhook-contract-billing.yaml`) para três fatos no vocabulário da plataforma (RN-CB05) e recebe a desistência do pedido para cancelar o pagamento pendente no gateway. Nenhuma mensagem carrega e-mail, nome, CPF, dado de cartão ou endereço do gateway: o aluno vai por referência, e a referência do gateway é um identificador opaco.
+    `billing` traduz os eventos do gateway (`openapi-webhook.yaml`) para três fatos no vocabulário da plataforma (RN-CB05) e recebe a desistência do pedido para cancelar o pagamento pendente no gateway. Nenhuma mensagem carrega e-mail, nome, CPF, dado de cartão ou endereço do gateway: o aluno vai por referência, e a referência do gateway é um identificador opaco.
 
     Consumidor conhecido dos três fatos: `commerce` (módulo Vendas). Fiscal, Notificação e Inteligência de Negócio podem consumi-los depois sem mudança aqui.
 id: urn:code-4-coders:billing

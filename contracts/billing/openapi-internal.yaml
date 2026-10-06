@@ -11,7 +11,7 @@ info:
 
     **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo**: `billing` nasce nesta entrega (C-01), com Cobrança e Assinatura em fatia mínima — recebimento único à vista, sem recorrência.
 
-    Fronteira: `commerce` (módulo Vendas) → `billing`. Vendas pede o recebimento do valor de um pedido (Domain Map: "Vendas aciona Cobrança para receber o pagamento"); `billing` conduz o pagamento no gateway, atrás de camada anticorrupção (baseline, *Camadas anticorrupção obrigatórias*), e devolve o endereço da página de pagamento. O resultado do pagamento **não** volta por aqui: volta pelos fatos `cobranca.pagamento-*` (`asyncapi-contract-billing.yaml`).
+    Fronteira: `commerce` (módulo Vendas) → `billing`. Vendas pede o recebimento do valor de um pedido (Domain Map: "Vendas aciona Cobrança para receber o pagamento"); `billing` conduz o pagamento no gateway, atrás de camada anticorrupção (baseline, *Camadas anticorrupção obrigatórias*), e devolve o endereço da página de pagamento. O resultado do pagamento **não** volta por aqui: volta pelos fatos `cobranca.pagamento-*` (`asyncapi.yaml`).
 
     Nenhuma resposta carrega vocabulário do gateway (RN-CB05): o meio é `card`, `pix` ou `boleto`, e o endereço devolvido é opaco. Dado de cartão nunca passa por `billing` (RN-CB01): é digitado na página do gateway.
   contact:
