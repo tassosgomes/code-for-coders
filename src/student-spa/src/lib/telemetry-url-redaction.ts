@@ -3,6 +3,7 @@ import type { ReadableSpan, SpanProcessor } from '@opentelemetry/sdk-trace-base'
 
 // Confirmation and password reset links carry a one-time secret in the `token` query parameter.
 const SENSITIVE_QUERY_PARAMETER = /(^|[?&#])(token|st|Policy|Signature|Key-Pair-Id)=[^&#\s]*/gi;
+const EMAIL_ADDRESS = /[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+[A-Z]{2,}/gi;
 const secrets = new Set<string>();
 
 export const registerTelemetrySecret = (query: string, expiresAt: number) => {
@@ -20,7 +21,7 @@ export const redactSensitiveUrl = (value: string) => {
     safe = safe.replaceAll(secret, REDACTED_VALUE);
   }
   return safe.replace(SENSITIVE_QUERY_PARAMETER, (_match, prefix: string, name: string) => prefix + name + '=' + REDACTED_VALUE)
-    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, REDACTED_VALUE);
+    .replace(EMAIL_ADDRESS, REDACTED_VALUE);
 };
 
 const redactAttributes = (attributes: Attributes | undefined) => {
