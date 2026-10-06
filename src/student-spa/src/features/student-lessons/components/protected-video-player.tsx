@@ -42,7 +42,7 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, wai
   };
 
   return <div>
-    <div ref={containerRef} role="application" className="protected-video-player relative overflow-hidden rounded-lg bg-black text-white focus-visible:outline focus-visible:outline-ring"
+    <div ref={containerRef} role="toolbar" className="protected-video-player relative overflow-hidden rounded-lg bg-black text-white focus-visible:outline focus-visible:outline-ring"
       tabIndex={0} aria-label="Player da aula" onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
         if (event.key === ' ') { event.preventDefault(); togglePlayback(); }
