@@ -1,0 +1,143 @@
+# Frontend stack deployed by Coolify (project code4coders, resource code4coders-web,
+# environment development) on 192.168.0.11. Split of the former docker-compose.coolify.yml
+# (see docker-compose.coolify.apis.yml for the backend resource) to keep each rendered
+# compose below the kernel MAX_ARG_STR_SZ limit hit by Coolify issue #11737.
+# The bff-* services reach the backend APIs (identity, learning, media, commerce, audit)
+# through the external c4c-shared network, so cross-resource depends_on is intentionally
+# absent: deploy code4coders-apis before this resource.
+
+services:
+
+  bff-admin:
+    build:
+      context: .
+      dockerfile: src/bff-admin/Dockerfile
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_admin;Username=code_for_coders_bff_admin;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      StaffIdentity__BaseAddress: http://identity:8080/
+      StaffIdentity__Issuer: bff-admin
+      StaffIdentity__Audience: identity-internal
+      StaffIdentity__SigningKeyId: local-dev-1
+      StaffIdentity__SigningKeyBase64: ${BFF_ADMIN_IDENTITY_PRIVATE_KEY_B64:?set in Coolify}
+      StaffIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      BffSecurity__AllowedOrigins__0: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}
+      OutboxProtection__KeyBase64: ${BFF_ADMIN_OUTBOX_KEY_B64:?set in Coolify}
+      OutboxProtection__KeyVersion: ${BFF_ADMIN_OUTBOX_KEY_VERSION:-v1}
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders_bff_admin
+      RabbitMq__Password: ${BFF_ADMIN_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
+      Media__BaseAddress: http://media:8080/
+      Learning__BaseAddress: http://learning:8080/
+      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-false}
+      Audit__BaseAddress: http://audit:8080/
+      Commerce__BaseAddress: http://commerce:8080/
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+    networks:
+      - c4c-shared
+
+  bff-student:
+    build:
+      context: .
+      dockerfile: src/bff-student/Dockerfile
+    expose:
+      - "8080"
+    environment:
+      Media__BaseAddress: http://media:8080/
+      Media__TimeoutSeconds: "5"
+      Learning__BaseAddress: http://learning:8080/
+      Learning__TimeoutSeconds: "5"
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_bff_student;Username=code_for_coders_bff_student;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      ReverseProxy__Clusters__student-backend__Destinations__destination__Address: http://identity:8080/
+      StudentIdentity__BaseAddress: http://identity:8080/
+      StudentIdentity__Issuer: bff-student
+      StudentIdentity__Audience: identity-internal
+      StudentIdentity__Scope: student-accounts:create student-accounts:confirm student-accounts:request-confirmation student-sessions:create student-sessions:validate student-sessions:revoke student-password-resets:request student-password-resets:execute student-password-changes:execute
+      StudentIdentity__SigningKeyId: local-dev-1
+      StudentIdentity__SigningKeyBase64: ${BFF_IDENTITY_PRIVATE_KEY_B64:?set in Coolify}
+      StudentIdentity__TenantId: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Commerce__BaseAddress: http://commerce:8080/
+      Commerce__Issuer: bff-student
+      Commerce__Audience: commerce
+      Commerce__Scope: showcase:read purchase-intent:write
+      Commerce__SigningKeyId: local-commerce-1
+      Commerce__SigningKeyBase64: ${BFF_COMMERCE_PRIVATE_KEY_B64:?set in Coolify}
+      Cors__AllowedOrigins__0: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+    networks:
+      - c4c-shared
+
+  admin-spa:
+    build:
+      context: ./src/admin-spa
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      API_URL: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}
+    depends_on:
+      bff-admin:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+
+    networks:
+      - c4c-shared
+
+  student-spa:
+    build:
+      context: ./src/student-spa
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
+      API_URL: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
+    depends_on:
+      bff-student:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+
+    networks:
+      - c4c-shared
+
+networks:
+  c4c-shared:
+    name: c4c-shared
+    external: true
