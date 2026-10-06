@@ -32,8 +32,16 @@ export const StaffAccessScreen = () => {
   const [menuMember, setMenuMember] = useState<string | null>(null);
   const [inviteSent, setInviteSent] = useState(false);
   const dialogRef = useRef<HTMLElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (dialog) dialogRef.current?.querySelector('button')?.focus();
+  }, [dialog]);
+  useEffect(() => {
+    const node = backdropRef.current;
+    if (!dialog || !node) return;
+    const onMouseDown = (event: MouseEvent) => { if (event.target === node) setDialog(null); };
+    node.addEventListener('mousedown', onMouseDown);
+    return () => node.removeEventListener('mousedown', onMouseDown);
   }, [dialog]);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [roleActionError, setRoleActionError] = useState<string | null>(null);
@@ -150,7 +158,7 @@ export const StaffAccessScreen = () => {
         {invitations.data?.data.length === 0 ? <p className="table-message">Nenhum convite pendente.</p> : null}
         {invitations.data?.data.map((invitation) => <div className="access-row invite-grid" key={invitation.invitationId}><strong>{invitation.email}</strong><span className="role-badge">{invitation.offeredRole}</span><time className="row-muted" dateTime={invitation.expiresAt}>{new Date(invitation.expiresAt).toLocaleString('pt-BR')}</time><button aria-label={`Enviar novo convite para ${invitation.email}`} className="icon-button" onClick={() => { form.reset({ email: invitation.email, role: invitation.offeredRole, reason: '' }); setInviteSent(false); setDialog('invite'); }} type="button"><Ellipsis size={18} /></button></div>)}
       </section>}
-      {dialog ? <div className="dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setDialog(null); }}><section aria-labelledby="dialog-title" aria-modal="true" className="dialog-card" onKeyDown={(event) => { if (event.key === 'Escape') setDialog(null); }} ref={dialogRef} role="dialog"><button aria-label="Fechar" className="dialog-close" onClick={() => setDialog(null)} type="button"><X size={18} /></button>
+      {dialog ? <div className="dialog-backdrop" ref={backdropRef}><section aria-labelledby="dialog-title" aria-modal="true" className="dialog-card" onKeyDown={(event) => { if (event.key === 'Escape') setDialog(null); }} ref={dialogRef} role="dialog"><button aria-label="Fechar" className="dialog-close" onClick={() => setDialog(null)} type="button"><X size={18} /></button>
         {dialog === 'invite' ? <><h2 id="dialog-title">{inviteSent ? 'Convite enviado' : 'Convidar para a equipe'}</h2>{inviteSent ? <><p>O convite foi enviado para {createInvitation.data?.email}. O link vale por 7 dias.</p>{createInvitation.data?.supersededInvitationId ? <p>O convite anterior para este e-mail deixou de valer.</p> : null}<div className="dialog-actions"><button className="primary-button" onClick={() => setDialog(null)} type="button">Concluir</button></div></> : <><p>A pessoa recebe um link por e-mail e define a própria senha. O convite vale 7 dias.</p>
           {requestError ? <p className="inline-alert" role="alert">{requestError}</p> : null}
           <form noValidate onSubmit={(event) => void form.handleSubmit(submitInvitation)(event)}><label htmlFor="invitation-email">E-mail</label><input autoComplete="email" id="invitation-email" type="email" {...form.register('email')} aria-invalid={Boolean(form.formState.errors.email)} />{form.formState.errors.email ? <p role="alert">{form.formState.errors.email.message}</p> : null}
