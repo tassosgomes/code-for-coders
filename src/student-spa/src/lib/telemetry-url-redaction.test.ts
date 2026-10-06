@@ -82,6 +82,7 @@ describe('Playback secret redaction', () => {
   });
   it('removes student email from telemetry attributes', () => {
     expect(redactSensitiveUrl('student@example.com')).toBe('REDACTED');
+    expect(redactSensitiveUrl('aluno@escola.com.br')).toBe('REDACTED');
   });
   it('removes opaque credentials from exported span events links and arrays', async () => {
     const query = 'opaque=export-signature-secret&expires=1999999999';
