@@ -105,6 +105,25 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
     ? 'Desistir e pagar de outra forma'
     : 'Desistir do pedido';
 
+  const paymentActions = (
+    <>
+      {payment.isError && <p role="alert">Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.</p>}
+      {cancel.isError && <p role="alert">Não foi possível cancelar o pedido agora.</p>}
+      <div className="flex flex-wrap gap-3">
+        <Button disabled={payment.isPending || !csrfToken} onClick={() => payment.mutate({ orderId, csrfToken })}>
+          {actionButtonText}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={cancel.isPending || !csrfToken}
+          onClick={() => setCancelDialogOpen(true)}
+        >
+          {cancelLabel}
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <div className="grid max-w-[640px] gap-6">
       <p className="text-sm text-muted-foreground">PEDIDO #{data.number}</p>
@@ -173,39 +192,13 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
               Pague o boleto até {formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso a {data.course.title} será liberado sozinho quando o pagamento for compensado, o que pode levar até 3 dias úteis. O curso ainda não está liberado.
             </p>
           )}
-          {payment.isError && <p role="alert">Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.</p>}
-          {cancel.isError && <p role="alert">Não foi possível cancelar o pedido agora.</p>}
-          <div className="flex flex-wrap gap-3">
-            <Button disabled={payment.isPending || !csrfToken} onClick={() => payment.mutate({ orderId, csrfToken })}>
-              {actionButtonText}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={cancel.isPending || !csrfToken}
-              onClick={() => setCancelDialogOpen(true)}
-            >
-              {cancelLabel}
-            </Button>
-          </div>
+          {paymentActions}
         </div>
       )}
 
       {!isCancelled && !isExpired && data.status === 'awaiting-payment' && !pendingPayment && !following && (
         <div className="grid gap-3">
-          {payment.isError && <p role="alert">Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.</p>}
-          {cancel.isError && <p role="alert">Não foi possível cancelar o pedido agora.</p>}
-          <div className="flex flex-wrap gap-3">
-            <Button disabled={payment.isPending || !csrfToken} onClick={() => payment.mutate({ orderId, csrfToken })}>
-              {actionButtonText}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={cancel.isPending || !csrfToken}
-              onClick={() => setCancelDialogOpen(true)}
-            >
-              {cancelLabel}
-            </Button>
-          </div>
+          {paymentActions}
         </div>
       )}
 

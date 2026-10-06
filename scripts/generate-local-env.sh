@@ -6,6 +6,16 @@ readonly script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
 readonly env_file="$repository_root/.env"
 
+read_local_database_password() {
+  local password
+  password="$(awk -F= '/^readonly local_database_password=/ { print $2; exit }' "$script_directory/apps.sh")"
+  if [[ -z "$password" ]]; then
+    printf '[local-env] Could not read local_database_password from apps.sh.\n' >&2
+    exit 1
+  fi
+  printf '%s' "$password"
+}
+
 ensure_lesson_keys() {
   umask 077
   if ! rg -q "^MEDIA_EDGE_SHARED_SECRET=" "$env_file"; then
@@ -104,6 +114,11 @@ if [[ -e "$env_file" ]]; then
     changed=true
   fi
 
+  if ! rg -q '^LOCAL_DB_PASSWORD=' "$env_file"; then
+    printf '\nLOCAL_DB_PASSWORD=%s\n' "$(read_local_database_password)" >> "$env_file"
+    changed=true
+  fi
+
   if ! rg -q '^STRIPE_SECRET_KEY=' "$env_file"; then
     printf '\n# Fill with a Stripe test key to run billing against the sandbox (never commit a real key).\n# STRIPE_SECRET_KEY=\n' >> "$env_file"
     printf '# Fill with the signing secret of the Stripe webhook endpoint (never commit a real secret).\n# STRIPE_WEBHOOK_SECRET=\n' >> "$env_file"
@@ -199,6 +214,7 @@ bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
   printf 'NOTIFICATION_IDENTITY_PUBLIC_KEY_B64=%s\n' "$notification_identity_public_key_b64"
   printf 'NOTIFICATION_IDENTITY_PRIVATE_KEY_B64=%s\n' "$notification_identity_private_key_b64"
   printf 'IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64=%s\n' "$identity_staff_token_private_key_b64"
+  printf 'LOCAL_DB_PASSWORD=%s\n' "$(read_local_database_password)"
   printf '# Fill with a Stripe test key to run billing against the sandbox (never commit a real key).\n'
   printf '# STRIPE_SECRET_KEY=\n'
   printf '# Fill with the signing secret of the Stripe webhook endpoint (never commit a real secret).\n'

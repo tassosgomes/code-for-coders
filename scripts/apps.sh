@@ -38,7 +38,7 @@ compose() {
   if [[ "$infrastructure_mode" == remote ]]; then
     files+=(--file "$remote_compose_file")
   fi
-  docker compose --project-directory "$repository_root" "${files[@]}" "$@"
+  LOCAL_DB_PASSWORD="$local_database_password" docker compose --project-directory "$repository_root" "${files[@]}" "$@"
 }
 
 log() {

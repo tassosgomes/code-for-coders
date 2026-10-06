@@ -1,50 +1,19 @@
 import { act, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { requireStudentSession } from '@/app/routes/dashboard-route';
-import { StudentOrderRoute } from '@/app/routes/student-order-route';
+import { installStudentOrderRoute, renderStudentOrderRoute, studentOrderLessonId } from './student-order-route.test-utils';
 import { env } from '@/config/env';
 import { paths } from '@/config/paths';
 import { useOrderReturnDelay } from '@/features/student-purchase/hooks/use-order-return-delay';
 import { server } from '@/testing/server';
-import { purchaseCourseId, purchaseOrder, purchaseOrderId } from '@/testing/student-purchase-data';
-import { renderWithProviders } from '@/testing/test-utils';
-
-const session = { accountId: '00000000-0000-7000-8000-000000000001', name: 'Ana', csrfToken: 'csrf' };
-const lessonId = '00000000-0000-7000-8000-000000000099';
-
-const renderRoute = (entry = `${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`) => {
-  const router = createMemoryRouter([
-    { path: paths.studentOrder.path, loader: requireStudentSession, element: <StudentOrderRoute /> },
-    { path: paths.studentLesson.path, element: <h1>Aula aberta</h1> },
-    { path: '/', element: <h1>Início</h1> },
-  ], { initialEntries: [entry] });
-  renderWithProviders(<RouterProvider router={router} />);
-  return router;
-};
+import { purchaseOrder, purchaseOrderId } from '@/testing/student-purchase-data';
 
 describe('order-return', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    server.use(
-      http.get(`${env.API_URL}/api/v1/student-sessions/current`, () => HttpResponse.json(session)),
-      http.get(`${env.API_URL}/api/v1/orders/:orderId`, () => HttpResponse.json(purchaseOrder)),
-      http.get(`${env.API_URL}/api/v1/my-courses`, () => HttpResponse.json({
-        progressAvailable: true,
-        active: [{
-          courseId: purchaseCourseId,
-          title: '.NET do zero à API',
-          started: false,
-          lastActivityAt: null,
-          continueLessonId: lessonId,
-          progress: null,
-        }],
-        ended: [],
-      })),
-    );
+    installStudentOrderRoute();
   });
 
   afterEach(() => {
@@ -59,7 +28,7 @@ describe('order-return', () => {
       })),
     );
 
-    renderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`);
+    renderStudentOrderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`);
     expect(await screen.findByText('Confirmando pagamento')).toBeInTheDocument();
   });
 
@@ -72,7 +41,7 @@ describe('order-return', () => {
       })),
     );
 
-    renderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`);
+    renderStudentOrderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`);
     expect(await screen.findByText('Liberando seu acesso')).toBeInTheDocument();
   });
 
@@ -86,7 +55,7 @@ describe('order-return', () => {
       })),
     );
 
-    const router = renderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`);
+    const router = renderStudentOrderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=concluido`);
 
     expect(await screen.findByText('Compra confirmada')).toBeInTheDocument();
     expect(screen.getByText('Você receberá o comprovante por e-mail.')).toBeInTheDocument();
@@ -94,7 +63,7 @@ describe('order-return', () => {
     const courseLink = screen.getByRole('link', { name: 'Ir para o curso' });
     expect(courseLink).toBeInTheDocument();
     await userEvent.click(courseLink);
-    expect(router.state.location.pathname).toBe(paths.studentLesson.getHref(lessonId));
+    expect(router.state.location.pathname).toBe(paths.studentLesson.getHref(studentOrderLessonId));
     expect(await screen.findByText('Aula aberta')).toBeInTheDocument();
   });
 
@@ -123,17 +92,17 @@ describe('order-return', () => {
       }),
     );
 
-    const assignMock = vi.fn();
+    const assign = vi.fn();
     Object.defineProperty(window, 'location', {
       configurable: true,
       writable: true,
       value: {
         ...window.location,
-        assign: assignMock,
+        assign,
       },
     });
 
-    renderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=saiu`);
+    renderStudentOrderRoute(`${paths.studentOrder.getHref(purchaseOrderId)}?resultado=saiu`);
 
     const continueButton = await screen.findByRole('button', { name: 'Continuar pagamento' });
     expect(continueButton).toBeInTheDocument();
@@ -150,7 +119,7 @@ describe('order-return', () => {
       )),
     );
 
-    renderRoute(paths.studentOrder.getHref(purchaseOrderId));
+    renderStudentOrderRoute(paths.studentOrder.getHref(purchaseOrderId));
 
     const payButton = await screen.findByRole('button', { name: 'Ir para o pagamento' });
     await userEvent.click(payButton);

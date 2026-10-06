@@ -23,7 +23,7 @@ public sealed class BillingTestApp : WebApplicationFactory<Program>
     private readonly RSA commerceRsa = RSA.Create(2048);
     public const string CommerceKeyId = "local-commerce-billing-1";
     public const string WebhookSecret = "whsec_test_stripe_secret_12345";
-    public const string StripeSecretKey = "sk_test_dummy_key_12345";
+    public const string StripeSecretKey = "sk_test_local";
     public Guid AllowedTenantId { get; } = Guid.CreateVersion7();
     public string ProcessingNamespace { get; } = $"it-billing-{Guid.CreateVersion7():N}";
     public Mock<IPaymentGateway> GatewayMock { get; } = new();

@@ -433,7 +433,7 @@ services:
     container_name: code-for-coders-billing
     environment:
       <<: *api-environment
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=code-for-coders-local
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${LOCAL_DB_PASSWORD:-}
       Billing__Namespace: ${BILLING_NAMESPACE:-default}
       RabbitMq__Exchange: billing.events
       RabbitMq__DeadLetterExchange: billing.events.dlx
