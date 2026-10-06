@@ -1,0 +1,183 @@
+openapi: 3.1.0
+info:
+  title: Billing — webhook do gateway de pagamento
+  version: 1.0.0
+  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
+    novo** (C-01, C-05).
+
+
+    Fronteira: gateway de pagamento (Stripe, OD5) → `billing`. É o **único** ponto público de `billing`, dedicado
+    à confirmação do gateway (baseline, *Camadas anticorrupção obrigatórias*: "webhook entra por endpoint dedicado,
+    validado por assinatura e idempotente"). Não passa por BFF: não há sessão de usuário, e o chamador é o gateway.
+
+
+    O corpo é o evento do gateway, no formato **dele**; este contrato não o redefine, só fixa o que `billing` exige
+    (identificador e tipo) e como responde. A tradução para o vocabulário da plataforma acontece aqui dentro e sai
+    pelos fatos `cobranca.pagamento-*` (RN-CB05). Só a confirmação aceita por este ponto confirma um pagamento (RN-CB04);
+    o retorno do aluno à plataforma não confirma nada.
+
+    '
+  contact:
+    name: Time de Cobrança
+servers:
+- url: /webhooks/v1
+  description: Rota pública de Billing, exposta só para o gateway; o endereço completo é configurado no painel do
+    gateway
+tags:
+- name: Gateway
+  description: Eventos do gateway de pagamento
+paths:
+  /stripe/events:
+    post:
+      tags:
+      - Gateway
+      summary: Receber um evento do gateway
+      description: 'Garantias observáveis (mecanismo na TechSpec):
+
+
+        - **Autenticidade**: a assinatura do cabeçalho `Stripe-Signature` é verificada com o segredo do endpoint
+        e com tolerância de horário; assinatura ausente, inválida ou fora da tolerância → 400, nada muda (RF-07,
+        critério de notificação forjada).
+
+        - **Idempotência**: o mesmo evento (mesmo `id`) recebido de novo responde 200 sem segundo efeito; nenhum
+        fato `cobranca.*` é publicado duas vezes para o mesmo pagamento e o mesmo desfecho (RN-V09, G09).
+
+        - **Registro antes de responder**: 200 só depois de o evento estar gravado; o efeito (tradução e fato) pode
+        ocorrer depois, sem depender de nova entrega do gateway.
+
+        - **Tipos não tratados** respondem 200 e são ignorados, para o gateway não insistir.
+
+        - **Falha transitória** de `billing` responde 503, e o gateway reenvia pela política dele.
+
+
+        Eventos traduzidos nesta entrega (C-05): página concluída com pagamento confirmado → `cobranca.pagamento-confirmado.v1`;
+        página concluída com PIX ou boleto pendente → `cobranca.pagamento-aguardando.v1`; pagamento assíncrono confirmado
+        → `cobranca.pagamento-confirmado.v1`; pagamento assíncrono vencido e página vencida sem meio escolhido →
+        `cobranca.pagamento-nao-confirmado.v1`. Reembolso e contestação **não** são traduzidos nesta entrega (DP-07):
+        são registrados e ignorados.
+
+        '
+      operationId: receiveGatewayEvent
+      security:
+      - GatewaySignature: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayEvent'
+            examples:
+              pagamentoConcluido:
+                value:
+                  id: evt_1Q2w3E4r5T6y7U8i
+                  type: checkout.session.completed
+                  created: 1791295200
+                  livemode: false
+                  data:
+                    object:
+                      id: cs_test_a1B2c3D4e5F6g7H8
+                      payment_status: paid
+                      client_reference_id: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+      responses:
+        '200':
+          description: Evento aceito (novo, repetido ou de tipo não tratado).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayEventAccepted'
+              examples:
+                aceito:
+                  value:
+                    received: true
+        '400':
+          $ref: '#/components/responses/SignatureInvalid'
+        '503':
+          $ref: '#/components/responses/TemporarilyUnavailable'
+components:
+  responses:
+    TemporarilyUnavailable:
+      description: Falha transitória de `billing` antes de gravar o evento; o gateway reenvia. code `TEMPORARILY_UNAVAILABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Indisponível no momento.
+                status: 503
+                code: TEMPORARILY_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    SignatureInvalid:
+      description: Assinatura ausente, inválida ou fora da tolerância de horário, ou corpo sem `id`/`type`; nada
+        muda. code `SIGNATURE_INVALID`. O corpo de erro não ecoa o evento.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            assinatura:
+              value:
+                type: about:blank
+                title: Assinatura inválida.
+                status: 400
+                code: SIGNATURE_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          description: Código estável.
+        traceId:
+          type: string
+        instance:
+          type: string
+    GatewayEventAccepted:
+      type: object
+      additionalProperties: false
+      required:
+      - received
+      properties:
+        received:
+          type: boolean
+          const: true
+    GatewayEvent:
+      type: object
+      required:
+      - id
+      - type
+      - data
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: Identificador do evento no gateway. Chave de idempotência.
+        type:
+          type: string
+          minLength: 1
+          description: Tipo do evento no vocabulário do gateway. Não sai de `billing`.
+        data:
+          type: object
+          description: Objeto do gateway a que o evento se refere, no formato dele.
+      additionalProperties: true
+      description: Evento do gateway no formato publicado por ele. Campos além de `id`, `type` e `data` são aceitos
+        sem validação por este contrato.

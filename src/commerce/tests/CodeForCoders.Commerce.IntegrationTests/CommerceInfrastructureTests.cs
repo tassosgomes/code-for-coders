@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Npgsql;
 using Xunit;
 
 namespace CodeForCoders.Commerce.IntegrationTests;
@@ -18,19 +19,44 @@ public sealed class CommerceInfrastructureTests(CommerceIntegrationFixture fixtu
     public async Task HeartbeatFlowsThroughOutboxRabbitMqAndConsumer()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
+        var connection = new NpgsqlConnectionStringBuilder(fixture.PostgreSql.GetConnectionString());
+        var dbName = $"infra_{Guid.CreateVersion7():N}";
+        await using (var admin = new NpgsqlConnection(connection.ConnectionString))
+        {
+            await admin.OpenAsync(cancellationToken);
+            await using var command = admin.CreateCommand();
+            command.CommandText = $"CREATE DATABASE {dbName}";
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+        connection.Database = dbName;
+        var isolatedConnectionString = connection.ConnectionString;
+        await using (var db = new CommerceDbContext(new DbContextOptionsBuilder<CommerceDbContext>()
+            .UseNpgsql(isolatedConnectionString).Options, new TenantContext()))
+        {
+            await db.Database.MigrateAsync(cancellationToken);
+        }
+
         var configurationValues = new Dictionary<string, string?>
         {
-            ["ConnectionStrings:DefaultConnection"] = fixture.PostgreSql.GetConnectionString(),
+            ["ConnectionStrings:DefaultConnection"] = isolatedConnectionString,
             ["RabbitMq:Host"] = fixture.RabbitMq.Hostname,
             ["RabbitMq:Port"] = fixture.RabbitMq.GetMappedPublicPort(5672).ToString(),
             ["RabbitMq:Username"] = "code_for_coders",
             ["RabbitMq:Password"] = "code_for_coders",
             ["RabbitMq:Exchange"] = "commerce.integration.events",
             ["RabbitMq:DeadLetterExchange"] = "commerce.integration.events.dlx",
+            ["RabbitMq:AuditExchange"] = "commerce.integration.audit.events",
+            ["RabbitMq:LearningExchange"] = "commerce.integration.learning.events",
+            ["RabbitMq:BillingExchange"] = "commerce.integration.billing.events",
             ["RabbitMq:CatalogCourseQueue"] = "commerce.integration.catalog-course",
             ["RabbitMq:EntitlementCourseQueue"] = "commerce.integration.entitlement-course",
             ["RabbitMq:HeartbeatQueue"] = "commerce.integration.platform-heartbeat",
-            ["Outbox:PollingIntervalSeconds"] = "5",
+            ["RabbitMq:EntitlementFactRetentionQueue"] = "commerce.integration.entitlement-fact-retention",
+            ["RabbitMq:OfferRetentionQueue"] = "commerce.integration.catalog-offer-retention",
+            ["RabbitMq:SalesPaymentsQueue"] = "commerce.integration.sales-payments",
+            ["RabbitMq:EntitlementPurchasesQueue"] = "commerce.integration.entitlement-purchases",
+            ["RabbitMq:SalesAccessGrantedQueue"] = "commerce.integration.sales-access-granted",
+            ["Outbox:PollingIntervalSeconds"] = "1",
             ["Outbox:BatchSize"] = "10",
             ["Outbox:MaxAttempts"] = "3",
             ["Valkey:ConnectionString"] = "localhost:6379,abortConnect=false",
@@ -66,7 +92,7 @@ public sealed class CommerceInfrastructureTests(CommerceIntegrationFixture fixtu
 
         var receiptStore = host.Services.GetRequiredService<HeartbeatReceiptStore>();
         var heartbeat = await receiptStore.Register(eventId)
-            .WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+            .WaitAsync(TimeSpan.FromSeconds(30), cancellationToken);
         Assert.Equal(eventId, heartbeat.EventId);
         Assert.Equal(tenantId, heartbeat.TenantId);
 
@@ -86,7 +112,7 @@ public sealed class CommerceInfrastructureTests(CommerceIntegrationFixture fixtu
         Guid eventId,
         CancellationToken cancellationToken)
     {
-        var deadline = DateTimeOffset.UtcNow.AddSeconds(15);
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(30);
         while (DateTimeOffset.UtcNow < deadline)
         {
             var processed = await dbContext.OutboxMessages

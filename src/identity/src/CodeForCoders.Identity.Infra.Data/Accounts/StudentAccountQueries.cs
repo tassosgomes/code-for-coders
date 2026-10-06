@@ -6,6 +6,19 @@ namespace CodeForCoders.Identity.Infra.Data.Accounts;
 
 public sealed class StudentAccountQueries(IdentityDbContext dbContext) : IStudentAccountQueries
 {
+    public async Task<IReadOnlyList<StudentAccountResolution>> ResolveAsync(Guid tenantId, IReadOnlyList<Guid> studentIds, CancellationToken cancellationToken)
+        => await dbContext.Accounts.AsNoTracking().IgnoreQueryFilters()
+            .Where(account => account.TenantId == tenantId && account.Type == AccountType.Student && studentIds.Contains(account.Id))
+            .OrderBy(account => account.Id)
+            .Select(account => new StudentAccountResolution(account.Id, account.Name, account.Email,
+                account.DeactivatedOn == null ? "active" : "disabled")).ToListAsync(cancellationToken);
+    public Task<StudentContact?> FindContactAsync(Guid tenantId, Guid studentId, CancellationToken cancellationToken)
+        => dbContext.Accounts.AsNoTracking().IgnoreQueryFilters()
+            .Where(account => account.TenantId == tenantId && account.Id == studentId && account.Type == AccountType.Student)
+            .Select(account => new StudentContact(account.Id, account.Email, account.Name,
+                account.DeactivatedOn == null ? "active" : "disabled"))
+            .SingleOrDefaultAsync(cancellationToken);
+
     public Task<bool> IsEligibleAsync(Guid tenantId, Guid studentId, CancellationToken cancellationToken)
         => dbContext.Accounts.AsNoTracking().IgnoreQueryFilters().AnyAsync(account => account.TenantId == tenantId
             && account.Id == studentId && account.Type == AccountType.Student && account.DeactivatedOn == null, cancellationToken);

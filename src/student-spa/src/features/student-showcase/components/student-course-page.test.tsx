@@ -65,8 +65,8 @@ describe('student course page', () => {
     );
     expect(within(section).getByText('Introdução a APIs')).toBeInTheDocument();
     expect(within(section).queryByRole('link', { name: 'Introdução a APIs' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^Comprar/ })).toHaveLength(2);
-    screen.getAllByRole('button', { name: /^Comprar/ }).forEach((button) => expect(button).toBeEnabled());
+    expect(screen.getAllByRole('link', { name: /^Comprar/ })).toHaveLength(2);
+    screen.getAllByRole('link', { name: /^Comprar/ }).forEach((button) => expect(button).toBeEnabled());
   });
 
   it('shows one purchase option per offer with the period and the price in text, cheapest first as sent', () => {

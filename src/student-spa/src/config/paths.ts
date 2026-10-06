@@ -31,6 +31,18 @@ export const paths = {
     path: '/cursos/:courseId',
     getHref: (courseId: string) => `/cursos/${encodeURIComponent(courseId)}`,
   },
+  studentPurchase: {
+    path: '/comprar/:offerId',
+    getHref: (offerId: string, courseId?: string) => `/comprar/${encodeURIComponent(offerId)}${courseId ? `?courseId=${encodeURIComponent(courseId)}` : ''}`,
+  },
+  studentOrder: {
+    path: '/pedidos/:orderId',
+    getHref: (orderId: string) => `/pedidos/${encodeURIComponent(orderId)}`,
+  },
+  studentMyOrders: {
+    path: '/pedidos',
+    getHref: () => '/pedidos',
+  },
   studentLesson: {
     path: '/aulas/:lessonId',
     getHref: (lessonId: string) => `/aulas/${encodeURIComponent(lessonId)}`,

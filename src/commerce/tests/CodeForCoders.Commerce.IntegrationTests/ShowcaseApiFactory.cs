@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using CodeForCoders.BffStudent.Api.Security;
 using CodeForCoders.Commerce.Api.Security;
+using CodeForCoders.Commerce.Application.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -14,13 +15,21 @@ namespace CodeForCoders.Commerce.IntegrationTests;
 /// Real <c>commerce</c> host with both authentication schemes and the real verifier. Assertions are signed by the
 /// real <c>bff-student</c> factory (linked source), so the BFF and the verifier are checked against each other.
 /// </summary>
-public sealed class ShowcaseApiFactory(CommerceIntegrationFixture fixture, params Guid[] allowedTenants) : WebApplicationFactory<Program>
+public sealed class ShowcaseApiFactory : WebApplicationFactory<Program>
 {
     public const string KeyId = "local-commerce-1";
-
+    private readonly CommerceIntegrationFixture fixture;
+    private readonly Guid[] allowedTenants;
     private readonly RSA bffKey = RSA.Create(2048);
 
     public IdentityJwksMessageHandler JwksHandler { get; } = new();
+    public TestBillingPaymentClient BillingClient { get; } = new();
+
+    public ShowcaseApiFactory(CommerceIntegrationFixture fixture, params Guid[] allowedTenants)
+    {
+        this.fixture = fixture;
+        this.allowedTenants = allowedTenants;
+    }
 
     public string CreateAssertion(Guid tenant, string scope = ServiceAssertionScopes.ShowcaseRead)
         => new ServiceAssertionTokenFactory(
@@ -69,6 +78,7 @@ public sealed class ShowcaseApiFactory(CommerceIntegrationFixture fixture, param
             }
 
             CommerceTestHost.UseHandler(services.AddHttpClient(FinanceAreaJwksConfigurationManager.HttpClientName), JwksHandler);
+            services.AddSingleton<IBillingPaymentClient>(BillingClient);
         });
     }
 
@@ -82,4 +92,22 @@ public sealed class ShowcaseApiFactory(CommerceIntegrationFixture fixture, param
 
         base.Dispose(disposing);
     }
+}
+
+public sealed class TestBillingPaymentClient : IBillingPaymentClient
+{
+    public Func<BillingPaymentRequest, CancellationToken, Task<BillingPaymentSession>>? Handler { get; set; }
+
+    public Task<BillingPaymentSession> EnsureAsync(BillingPaymentRequest input, CancellationToken cancellationToken)
+    {
+        if (Handler != null) return Handler(input, cancellationToken);
+        return Task.FromResult(new BillingPaymentSession(
+            input.OrderId,
+            "checkout",
+            $"https://checkout.stripe.com/pay/mock-{input.OrderId:N}",
+            null,
+            DateTimeOffset.UtcNow.AddHours(24)));
+    }
+
+    public void Reset() => Handler = null;
 }

@@ -1,5 +1,9 @@
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
+import { StudentPurchaseRoute } from '@/app/routes/student-purchase-route';
+import { StudentOrderRoute } from '@/app/routes/student-order-route';
+import { StudentMyOrdersRoute } from '@/app/routes/student-my-orders-route';
+
 import { StudentLessonRoute } from '@/app/routes/student-lesson-route';
 
 import { paths } from '@/config/paths';
@@ -50,6 +54,9 @@ const routes: RouteObject[] = [
         errorElement: <RouteError layout="app" />,
         children: [
           { index: true, element: <DashboardRoute /> },
+          { path: paths.studentPurchase.path.slice(1), element: <StudentPurchaseRoute /> },
+          { path: paths.studentOrder.path.slice(1), element: <StudentOrderRoute /> },
+          { path: paths.studentMyOrders.path.slice(1), element: <StudentMyOrdersRoute /> },
           { path: paths.studentLesson.path.slice(1), element: <StudentLessonRoute /> },
           { path: paths.studentPasswordChange.path.slice(1), element: <StudentPasswordChangeRoute /> },
         ],

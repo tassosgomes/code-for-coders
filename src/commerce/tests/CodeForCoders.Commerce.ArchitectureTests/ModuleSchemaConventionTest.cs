@@ -51,6 +51,22 @@ public sealed class ModuleSchemaConventionTest
         Assert.Equal("outbox_messages", sales.GetTableName());
     }
 
+    [Fact(DisplayName = nameof(SalesReadsOtherModulesOnlyThroughApplicationPorts))]
+    [Obsolete]
+    public void SalesReadsOtherModulesOnlyThroughApplicationPorts()
+    {
+        Types().That().HaveFullNameContaining(".Sales.")
+            .Should().NotDependOnAny(Types().That().Are(typeof(CodeForCoders.Commerce.Domain.Entities.CatalogOffer))
+                .Or().Are(typeof(CodeForCoders.Commerce.Domain.Entities.CatalogCourseView))
+                .Or().Are(typeof(CodeForCoders.Commerce.Domain.Entities.AccessGrant))
+                .Or().Are(typeof(CodeForCoders.Commerce.Domain.Entities.Enrollment)))
+            .Check(Architecture);
+        using var db = new CommerceDbContext(new DbContextOptionsBuilder<CommerceDbContext>()
+            .UseNpgsql("Host=localhost;Database=architecture").Options, new TenantContext());
+        foreach (var type in db.Model.GetEntityTypes().Where(type => type.GetSchema() == CommerceSchemas.Sales))
+            Assert.NotNull(type.GetQueryFilter());
+    }
+
     [Fact(DisplayName = nameof(CommerceDeclaresItsModulesAndSchemas))]
     [Trait("Architecture", "Modules and schemas")]
     public void CommerceDeclaresItsModulesAndSchemas()

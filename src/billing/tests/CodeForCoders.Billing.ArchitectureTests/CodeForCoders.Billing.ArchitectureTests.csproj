@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Api/CodeForCoders.Billing.Api.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Application/CodeForCoders.Billing.Application.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Contracts/CodeForCoders.Billing.Contracts.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Domain/CodeForCoders.Billing.Domain.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Infra.Data/CodeForCoders.Billing.Infra.Data.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Infra.Messaging/CodeForCoders.Billing.Infra.Messaging.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="TngTech.ArchUnitNET.xUnitV3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+</Project>

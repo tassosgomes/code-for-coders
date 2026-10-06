@@ -57,7 +57,7 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("granted_at");
 
-                    b.Property<Guid>("GrantedBy")
+                    b.Property<Guid?>("GrantedBy")
                         .HasColumnType("uuid")
                         .HasColumnName("granted_by");
 
@@ -82,7 +82,6 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .HasColumnName("period_type");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("reason");
@@ -107,6 +106,10 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
 
                     b.HasIndex("ExpiresAt")
                         .HasFilter("expiry_published_at IS NULL AND expires_at IS NOT NULL");
+
+                    b.HasIndex("TenantId", "Origin", "OriginRef")
+                        .IsUnique()
+                        .HasFilter("origin_ref IS NOT NULL");
 
                     b.HasIndex("TenantId", "StudentId", "CourseId");
 
@@ -399,6 +402,187 @@ namespace CodeForCoders.Commerce.Infra.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("grant_receipts", "entitlement");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AccessGrantedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("access_granted_at");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<string>("CourseTitle")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("course_title");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateTimeOffset?>("ExpiredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expired_at");
+
+                    b.Property<string>("GatewayReference")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("gateway_reference");
+
+                    b.Property<Guid?>("GrantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("number");
+
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("offer_id");
+
+                    b.Property<string>("OfferName")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("offer_name");
+
+                    b.Property<int?>("PaidAmountCents")
+                        .HasColumnType("integer")
+                        .HasColumnName("paid_amount_cents");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("payment_method");
+
+                    b.Property<DateTimeOffset?>("PaymentPageExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("payment_page_expires_at");
+
+                    b.Property<DateTimeOffset?>("PendingPaymentExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("pending_payment_expires_at");
+
+                    b.Property<int?>("PeriodMonths")
+                        .HasColumnType("integer")
+                        .HasColumnName("period_months");
+
+                    b.Property<string>("PeriodType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("period_type");
+
+                    b.Property<int>("PriceCents")
+                        .HasColumnType("integer")
+                        .HasColumnName("price_cents");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "StudentId", "OfferId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_orders_pending")
+                        .HasFilter("status = 'awaiting-payment'");
+
+                    b.ToTable("orders", "sales");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.OrderReceipt", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.Property<string>("KeyHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("key_hash");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_json");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_code");
+
+                    b.HasKey("TenantId", "StudentId", "KeyHash");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.ToTable("order_receipts", "sales");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.OrderSequence", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<long>("Value")
+                        .HasColumnType("bigint")
+                        .HasColumnName("value");
+
+                    b.HasKey("TenantId");
+
+                    b.ToTable("order_sequences", "sales");
                 });
 
             modelBuilder.Entity("CodeForCoders.Commerce.Domain.Entities.PurchaseIntentDailyCount", b =>

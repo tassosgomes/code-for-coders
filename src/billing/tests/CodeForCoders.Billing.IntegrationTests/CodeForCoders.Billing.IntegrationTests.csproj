@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Api/CodeForCoders.Billing.Api.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Application/CodeForCoders.Billing.Application.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Contracts/CodeForCoders.Billing.Contracts.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Infra.Data/CodeForCoders.Billing.Infra.Data.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Infra.Gateway/CodeForCoders.Billing.Infra.Gateway.csproj" />
+    <ProjectReference Include="../../src/CodeForCoders.Billing.Infra.Messaging/CodeForCoders.Billing.Infra.Messaging.csproj" />
+    <ProjectReference Include="../CodeForCoders.Billing.Tests.Common/CodeForCoders.Billing.Tests.Common.csproj" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+  <Import Project="../../../contract-testing/ContractTesting.props" />
+</Project>

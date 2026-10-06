@@ -15,7 +15,8 @@ public sealed class BffSecurityMiddleware(
     public async Task InvokeAsync(HttpContext context)
     {
         var settings = securityOptions.Value;
-        if (context.Request.Path.StartsWithSegments("/api/v1/student-account-lookups")) context.Response.Headers.CacheControl = "no-store";
+        if (context.Request.Path.StartsWithSegments("/api/v1/student-account-lookups")
+            || context.Request.Path.StartsWithSegments("/api/v1/finance/orders")) context.Response.Headers.CacheControl = "no-store";
         var isLogout = HttpMethods.IsDelete(context.Request.Method)
             && context.Request.Path.Equals("/api/v1/staff-sessions/current", StringComparison.OrdinalIgnoreCase);
         var requiresSession = IsProtectedRequest(context.Request);

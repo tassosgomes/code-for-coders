@@ -8,24 +8,24 @@ src/identity/src/CodeForCoders.Identity.Application/Services/StudentConfirmation
 src/identity/src/CodeForCoders.Identity.Application/Services/StudentPasswordRecoveryMessageWriter.cs:generic-api-key:18
 src/identity/src/CodeForCoders.Identity.Application/Services/StudentRegistrationMessageWriter.cs:generic-api-key:16
 src/identity/src/CodeForCoders.Identity.Application/Services/StudentRegistrationMessageWriter.cs:generic-api-key:18
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentConfirmationTests.cs:generic-api-key:156
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentConfirmationTests.cs:generic-api-key:183
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecoveryTests.cs:generic-api-key:343
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecoveryTests.cs:generic-api-key:374
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:52
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:57
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentConfirmationTests.cs:generic-api-key:157
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentConfirmationTests.cs:generic-api-key:184
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecoveryTests.cs:generic-api-key:344
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentPasswordRecoveryTests.cs:generic-api-key:375
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:53
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StudentRegistrationTests.cs:generic-api-key:58
 src/notification/src/CodeForCoders.Notification.Api/appsettings.json:generic-api-key:19
-src/notification/tests/CodeForCoders.Notification.IntegrationTests/AcceptAndDeliverAccountConfirmationTests.cs:generic-api-key:194
-src/notification/tests/CodeForCoders.Notification.IntegrationTests/DeliverPasswordRecoveryEmailTests.cs:generic-api-key:204
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/AcceptAndDeliverAccountConfirmationTests.cs:generic-api-key:195
+src/notification/tests/CodeForCoders.Notification.IntegrationTests/DeliverPasswordRecoveryEmailTests.cs:generic-api-key:205
 src/notification/tests/CodeForCoders.Notification.IntegrationTests/RejectInvalidSendRequestTests.cs:generic-api-key:193
 src/notification/tests/CodeForCoders.Notification.IntegrationTests/SendRequestIdempotencyTests.cs:generic-api-key:236
 src/notification/tests/CodeForCoders.Notification.IntegrationTests/StaffInvitationEmailTests.cs:generic-api-key:184
 src/identity/src/CodeForCoders.Identity.Application/Services/StaffInvitationMessageWriter.cs:generic-api-key:19
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:125
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:126
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:46
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:133
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:135
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffPasswordResetTests.cs:generic-api-key:68
-src/media/tests/CodeForCoders.Media.IntegrationTests/VideoPreparationTests.cs:generic-api-key:484
+src/media/tests/CodeForCoders.Media.IntegrationTests/VideoPreparationTests.cs:generic-api-key:485
 # Falso positivo: routing key do RabbitMQ ("midia.ativo-pronto.v1") no teste de outbox,
 # nao credencial. Mesma heuristica generic-api-key das entradas acima.
 src/media/tests/CodeForCoders.Media.IntegrationTests/MediaOutboxMetricsTests.cs:generic-api-key:23
@@ -37,3 +37,28 @@ src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/StaffInvitationAcceptan
 src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OfferChangeTests.cs:generic-api-key:191
 # Falso positivo confirmado: routing key publica do evento de concessao de acesso.
 src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/CourtesyGrantTests.cs:generic-api-key:32
+# Falsos positivos da compra avulsa: routing keys públicas (vendas.*, notificacao.*, matricula.*)
+# e o evento de progresso de mídia. Não são segredos.
+src/billing/tests/CodeForCoders.Billing.IntegrationTests/PaymentCancellationTests.cs:generic-api-key:674
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderCreationTests.cs:generic-api-key:27
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderCreationTests.cs:generic-api-key:65
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderCreationTests.cs:generic-api-key:81
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderExpirationTests.cs:generic-api-key:60
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderExpirationTests.cs:generic-api-key:101
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderExpirationTests.cs:generic-api-key:193
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderExpirationTests.cs:generic-api-key:288
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderExpirationTests.cs:generic-api-key:417
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PendingPaymentOrderTests.cs:generic-api-key:245
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseReceiptRequestTests.cs:generic-api-key:35
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseReceiptRequestTests.cs:generic-api-key:49
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseReceiptRequestTests.cs:generic-api-key:65
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseReceiptRequestTests.cs:generic-api-key:81
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseReceiptRequestTests.cs:generic-api-key:100
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderCancellationTests.cs:generic-api-key:46
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderCancellationTests.cs:generic-api-key:75
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderCancellationTests.cs:generic-api-key:206
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderPaymentTests.cs:generic-api-key:144
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderPaymentTests.cs:generic-api-key:192
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseGrantTests.cs:generic-api-key:111
+src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseGrantTests.cs:generic-api-key:164
+src/media/tests/CodeForCoders.Media.IntegrationTests/PlaybackProgressTests.cs:generic-api-key:327

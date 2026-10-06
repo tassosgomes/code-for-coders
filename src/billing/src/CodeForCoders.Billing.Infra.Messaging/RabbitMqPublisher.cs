@@ -1,0 +1,48 @@
+using System.Text;
+using CodeForCoders.Billing.Infra.Data.Outbox;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
+
+namespace CodeForCoders.Billing.Infra.Messaging;
+
+public sealed class RabbitMqPublisher(
+    RabbitMqConnectionProvider connectionProvider,
+    RabbitMqResourceNames resourceNames)
+{
+    public async Task PublishAsync(OutboxMessage message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var channel = await connectionProvider.CreatePublisherChannelAsync(cancellationToken);
+            var properties = new BasicProperties
+            {
+                ContentType = "application/json",
+                DeliveryMode = DeliveryModes.Persistent,
+                MessageId = message.Id.ToString(),
+                Type = message.Type,
+                CorrelationId = message.CorrelationId,
+                Headers = string.IsNullOrWhiteSpace(message.TraceParent)
+                    ? null
+                    : new Dictionary<string, object?>
+                    {
+                        ["traceparent"] = message.TraceParent,
+                    },
+            };
+            await channel.BasicPublishAsync(
+                exchange: resourceNames.Exchange,
+                routingKey: message.RoutingKey,
+                mandatory: true,
+                basicProperties: properties,
+                body: Encoding.UTF8.GetBytes(message.Payload),
+                cancellationToken);
+        }
+        catch (PublishException exception)
+        {
+            throw new OutboxPublishException("RabbitMQ rejected the outbox message.", exception);
+        }
+        catch (AlreadyClosedException exception)
+        {
+            throw new OutboxPublishException("RabbitMQ channel closed while publishing the outbox message.", exception);
+        }
+    }
+}

@@ -4252,3 +4252,49 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .courtesy-access-grant-row > span:nth-child(4) { font-size: 12px; line-height: 16px; }
 }
 @media (max-width: 600px) { .courtesy-actions { flex-wrap: wrap; } }
+
+/* Finance orders: one accessible table becomes cards on small screens. */
+.finance-filter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: end; }
+.finance-filter-fields label { display: grid; gap: 8px; font-weight: 600; }
+.finance-filter-fields input, .finance-filter-fields select { width: 100%; min-height: 42px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: inherit; font: inherit; }
+.finance-filter-actions, .finance-pagination, .finance-course-pages { display: flex; gap: 12px; align-items: center; justify-content: flex-end; flex-wrap: wrap; margin-top: 20px; }
+.finance-orders-table { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.finance-orders-table table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.finance-orders-table th { text-align: left; color: var(--muted); font-weight: 600; white-space: nowrap; }
+.finance-orders-table th, .finance-orders-table td { padding: 16px 12px; border-bottom: 1px solid var(--border); }
+.finance-orders-table tbody tr { cursor: pointer; }
+.finance-orders-table tbody tr:hover { background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+.finance-page small { display: block; margin-top: 4px; color: var(--muted); overflow-wrap: anywhere; }
+.finance-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 16px; white-space: nowrap; font-size: 13px; }
+.finance-status-paid { color: var(--success-soft-foreground, #047857); background: var(--success-soft, #ecfdf5); }
+.finance-status-awaiting-payment { color: var(--warning-soft-foreground, #92400e); background: var(--warning-soft, #fffbeb); }
+.finance-status-expired { color: var(--destructive-soft-foreground, #b91c1c); background: var(--destructive-soft, #fef2f2); }
+.finance-status-cancelled { color: var(--muted); background: color-mix(in srgb, var(--muted) 12%, var(--surface)); }
+.finance-detail-heading { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+.finance-detail-cards { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 760px; gap: 20px; margin-bottom: 24px; }
+.finance-detail-cards .catalog-record-card { margin-top: 0; }
+.finance-detail-cards h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.finance-detail-cards dl > div { display: contents; }
+.finance-detail-cards dd { overflow-wrap: anywhere; }
+.finance-detail-cards dd button { margin-left: 12px; }
+.finance-skeleton > div { height: 56px; margin: 12px 0; border-radius: 10px; background: color-mix(in srgb, var(--muted) 10%, var(--surface)); }
+.finance-student-chip { padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; }
+.finance-mobile-filter-button { display: none; }
+.finance-filter-sheet { border: 1px solid var(--border); background: var(--surface); color: inherit; padding: 24px; border-radius: 18px 18px 0 0; }
+.finance-filter-sheet::backdrop { background: #0006; }
+@media (max-width: 767px) {
+  .finance-desktop-filters { display: none; }
+  .finance-mobile-filter-button { display: inline-flex; }
+  .finance-filter-sheet { margin: auto 0 0; width: 100%; max-width: none; max-height: 90dvh; box-sizing: border-box; }
+  .finance-filter-fields, .finance-detail-cards { grid-template-columns: 1fr; }
+  .finance-detail-heading { align-items: flex-start; flex-direction: column; margin-bottom: 20px; }
+  .finance-orders-table { border: 0; background: transparent; overflow: visible; }
+  .finance-orders-table table, .finance-orders-table tbody { display: block; }
+  .finance-orders-table thead { display: none; }
+  .finance-orders-table tr { display: grid; grid-template-columns: auto 1fr; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin: 16px 0; background: var(--surface); gap: 10px; }
+  .finance-orders-table td { display: block; padding: 0; border: 0; grid-column: 1 / -1; }
+  .finance-orders-table td:first-child { grid-column: 1; }
+  .finance-orders-table td:nth-child(2) { grid-column: 2; text-align: right; }
+  .finance-orders-table td:nth-child(5) { grid-column: 1; }
+  .finance-orders-table td:nth-child(6) { grid-column: 2; }
+}

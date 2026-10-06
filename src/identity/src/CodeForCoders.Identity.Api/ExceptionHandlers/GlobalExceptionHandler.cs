@@ -17,6 +17,12 @@ public sealed class GlobalExceptionHandler(
     {
         var (status, type, title, detail, code) = exception switch
         {
+            StudentContactNotFoundException => (
+                StatusCodes.Status404NotFound,
+                "about:blank",
+                "Conta de aluno não encontrada.",
+                null,
+                "STUDENT_ACCOUNT_NOT_FOUND"),
             StudentAccountLookupException { StatusCode: StatusCodes.Status404NotFound } lookupException => (
                 lookupException.StatusCode,
                 "about:blank",
@@ -112,7 +118,7 @@ public sealed class GlobalExceptionHandler(
             Type = type,
             Title = title,
             Detail = detail,
-            Instance = exception is StudentAccountLookupException { StatusCode: StatusCodes.Status404NotFound }
+            Instance = exception is StudentContactNotFoundException or StudentAccountLookupException { StatusCode: StatusCodes.Status404NotFound }
                 ? null : httpContext.Request.Path.Value,
         };
         problemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()

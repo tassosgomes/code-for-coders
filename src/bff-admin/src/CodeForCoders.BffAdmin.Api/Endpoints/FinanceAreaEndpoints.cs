@@ -10,6 +10,7 @@ public static class FinanceAreaEndpoints
 
     public static void MapFinanceAreaEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapFinanceOrderEndpoints();
         endpoints.MapGet("/api/v1/finance-area", GetFinanceAreaAsync)
             .WithName("GetFinanceArea")
             .WithTags("FinanceArea")

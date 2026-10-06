@@ -46,6 +46,7 @@ public static class DependencyInjection
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName))
             .ValidateDataAnnotations()
+            .Validate(options => TimeZoneInfo.TryFindSystemTimeZoneById(options.SchoolTimeZone, out _), "School time zone is invalid.")
             .Validate(options => options.Transport is "http" or "smtp", "Email transport must be http or smtp.")
             .Validate(options => options.Transport != "smtp" || environment.IsDevelopment(), "SMTP transport is only available in Development.")
             .Validate(options => options.Transport != "smtp" || !string.IsNullOrWhiteSpace(options.SmtpHost), "SMTP host is required.")

@@ -15,6 +15,8 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+        services.PostConfigure<RabbitMqOptions>(options =>
+            options.RoutingExchanges.TryAdd("auditoria.ato-praticado.v1", options.AuditExchange));
         services.AddOptions<OutboxOptions>()
             .Bind(configuration.GetSection(OutboxOptions.SectionName))
             .ValidateDataAnnotations()
@@ -27,6 +29,9 @@ public static class DependencyInjection
         services.AddHostedService<HeartbeatConsumerWorker>();
         services.AddHostedService<CatalogCourseConsumerWorker>();
         services.AddHostedService<EntitlementCourseConsumerWorker>();
+        services.AddHostedService<SalesPaymentConsumerWorker>();
+        services.AddHostedService<PurchaseGrantConsumerWorker>();
+        services.AddHostedService<SalesAccessConsumerWorker>();
 
         return services;
     }

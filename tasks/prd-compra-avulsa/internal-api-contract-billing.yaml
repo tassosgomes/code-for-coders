@@ -1,0 +1,302 @@
+openapi: 3.1.0
+info:
+  title: Billing — API interna
+  version: 1.0.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo**: `billing` nasce nesta entrega (C-01), com Cobrança e Assinatura em fatia mínima — recebimento único à vista, sem recorrência.
+
+    Fronteira: `commerce` (módulo Vendas) → `billing`. Vendas pede o recebimento do valor de um pedido (Domain Map: "Vendas aciona Cobrança para receber o pagamento"); `billing` conduz o pagamento no gateway, atrás de camada anticorrupção (baseline, *Camadas anticorrupção obrigatórias*), e devolve o endereço da página de pagamento. O resultado do pagamento **não** volta por aqui: volta pelos fatos `cobranca.pagamento-*` (`asyncapi-contract-billing.yaml`).
+
+    Nenhuma resposta carrega vocabulário do gateway (RN-CB05): o meio é `card`, `pix` ou `boleto`, e o endereço devolvido é opaco. Dado de cartão nunca passa por `billing` (RN-CB01): é digitado na página do gateway.
+  contact:
+    name: Time de Cobrança
+servers:
+- url: /internal/v1
+  description: Rota privada de Billing, inacessível ao navegador
+tags:
+- name: Pagamento
+  description: Página de pagamento de um pedido
+paths:
+  /payment-sessions/{orderId}:
+    parameters:
+    - $ref: '#/components/parameters/OrderId'
+    put:
+      tags:
+      - Pagamento
+      summary: Garantir a página de pagamento de um pedido
+      description: |
+        Garante que o pedido tenha um caminho de pagamento e devolve o endereço para onde o aluno deve ir (RF-04, RF-06). **Idempotente por `orderId`** (G09): a mesma chamada repetida não cria um segundo pagamento.
+
+        - Sem pagamento ainda, ou com a página anterior ainda válida e nenhum meio escolhido → devolve a página de pagamento (`kind: checkout`), criada uma vez e reaproveitada até vencer (24 h, RN-CB03).
+        - Com PIX ou boleto gerado e ainda não pago → devolve as instruções desse pagamento (`kind: pix-instructions` ou `boleto-instructions`), para o aluno ver de novo o código ou o boleto. Não abre outro pagamento.
+        - Página vencida sem meio escolhido → **não** cria outra: responde `PAYMENT_EXPIRED`. O pedido expira por `cobranca.pagamento-nao-confirmado.v1` (RF-08).
+
+        `amountCents`, `currency` e `description` precisam ser iguais aos de um pagamento já aberto para o mesmo pedido; divergência é recusada (`PAYMENT_TERMS_CONFLICT`), porque o pedido congela a condição (RN-V03). Os meios oferecidos são cartão, PIX e boleto (RN-CB02); um meio que o gateway não aceite para o valor (mínimo por meio) simplesmente não aparece na página. `successUrl` e `cancelUrl` precisam ser `https` num host autorizado para a escola, ou `http` apenas em host local de desenvolvimento autorizado (errata 1.0.0, D-11 da TechSpec); fora disso, 400.
+      operationId: ensurePaymentSessionInternal
+      security:
+      - CommerceServiceAssertion: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentSessionInput'
+            examples:
+              dozeMeses:
+                value:
+                  studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                  amountCents: 49700
+                  currency: BRL
+                  description: .NET do zero à API — Acesso por 12 meses
+                  successUrl: https://app.code4coders.com.br/pedidos/1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81?resultado=concluido
+                  cancelUrl: https://app.code4coders.com.br/pedidos/1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81?resultado=saiu
+      responses:
+        '200':
+          description: Caminho de pagamento do pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentSession'
+              examples:
+                pagina:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    kind: checkout
+                    paymentUrl: https://checkout.stripe.com/c/pay/cs_test_a1B2c3D4e5F6g7H8
+                    method: null
+                    expiresAt: '2026-10-06T14:20:00Z'
+                boletoGerado:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    kind: boleto-instructions
+                    paymentUrl: https://payments.stripe.com/boleto/voucher/test_YWNjdF8xUDJ
+                    method: boleto
+                    expiresAt: '2026-10-08T23:59:59-03:00'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/AssertionInvalid'
+        '403':
+          $ref: '#/components/responses/ScopeDenied'
+        '422':
+          $ref: '#/components/responses/PaymentNotAvailable'
+        '503':
+          $ref: '#/components/responses/GatewayUnavailable'
+components:
+  securitySchemes:
+    CommerceServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Asserção de serviço assimétrica e curta assinada pela chave exclusiva de `commerce`, no mecanismo
+        da ADR-0004 (vários emissores, cada um com chaves e escopos próprios; precedente da ADR-0010). `billing`
+        valida assinatura, `kid`, emissor `commerce`, audiência `billing`, escopo `payment:request`, `tenantId`
+        e `jti` contra replay. A escola do pagamento é o `tenantId` da asserção (G07). Emissor e audiência novos:
+        ADR própria na TechSpec (C-04).'
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Pedido em Vendas e Checkout. É a referência do pagamento em `billing`; um pedido tem no máximo
+        um pagamento aberto.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        pedido:
+          value: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+        instance:
+          type: string
+    PaymentMethod:
+      type: string
+      enum:
+      - card
+      - pix
+      - boleto
+      description: Meio de pagamento, no vocabulário desta plataforma (RN-CB05). Cartão de crédito à vista; sem
+        parcelamento (RN-CB02). Clientes devem tolerar valor novo.
+    PaymentSessionInput:
+      type: object
+      additionalProperties: false
+      required:
+      - studentId
+      - amountCents
+      - currency
+      - description
+      - successUrl
+      - cancelUrl
+      properties:
+        studentId:
+          type: string
+          format: uuid
+          description: Conta de aluno em Identidade e Acesso, por referência. `billing` não recebe e-mail, nome
+            nem CPF; o que o meio exigir é coletado pela página do gateway (RN-CB01).
+        amountCents:
+          type: integer
+          minimum: 1
+          maximum: 9999999
+          description: Valor congelado no pedido, em centavos de real (RN-V03).
+          examples:
+          - 49700
+        currency:
+          type: string
+          const: BRL
+        description:
+          type: string
+          minLength: 1
+          maxLength: 263
+          description: Texto exibido na página de pagamento e no extrato do gateway — título do curso e nome da opção
+            congelados no pedido. Sem dado pessoal.
+        successUrl:
+          type: string
+          format: uri
+          description: Para onde o aluno volta depois de concluir na página (inclusive ao gerar PIX ou boleto). `https`,
+            host autorizado (`http` só em host local de desenvolvimento).
+        cancelUrl:
+          type: string
+          format: uri
+          description: Para onde o aluno volta ao sair da página sem concluir. `https`, host autorizado (`http` só em host local de
+            desenvolvimento).
+    PaymentSession:
+      type: object
+      additionalProperties: false
+      required:
+      - orderId
+      - kind
+      - paymentUrl
+      - method
+      - expiresAt
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - checkout
+          - pix-instructions
+          - boleto-instructions
+          description: '`checkout`: página onde o aluno escolhe o meio e paga. `pix-instructions` e `boleto-instructions`:
+            página com o código PIX ou o boleto já gerados, ainda não pagos.'
+        paymentUrl:
+          type: string
+          format: uri
+          description: |
+            Endereço opaco do gateway para o navegador do aluno. É credencial de acesso ao pagamento daquele pedido: **nunca** vai para log, métrica, span, fato ou armazenamento fora de `billing`.
+        method:
+          oneOf:
+          - $ref: '#/components/schemas/PaymentMethod'
+          - type: 'null'
+          description: Meio do pagamento pendente; nulo em `checkout`.
+        expiresAt:
+          type: string
+          format: date-time
+          description: Até quando este caminho vale (RN-CB03) — a página, o PIX ou o vencimento do boleto.
+  responses:
+    InvalidRequest:
+      description: Corpo malformado, valor fora dos limites ou `successUrl`/`cancelUrl` fora dos hosts autorizados;
+        code `INVALID_REQUEST`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            urlNaoAutorizada:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                detail: successUrl deve ser https num host autorizado para a escola.
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AssertionInvalid:
+      description: Asserção ausente, inválida, expirada, repetida (`jti`) ou de outro emissor; code `SERVICE_ASSERTION_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalida:
+              value:
+                type: about:blank
+                title: Credencial de serviço inválida.
+                status: 401
+                code: SERVICE_ASSERTION_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ScopeDenied:
+      description: Asserção sem `payment:request` ou de emissor sem permissão para o `tenantId`; code `SCOPE_DENIED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            escopo:
+              value:
+                type: about:blank
+                title: Escopo insuficiente.
+                status: 403
+                code: SCOPE_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PaymentNotAvailable:
+      description: |
+        Não há caminho de pagamento para devolver: `PAYMENT_ALREADY_CONFIRMED` (o pedido já foi pago), `PAYMENT_CANCELLED` (o pedido foi cancelado — `vendas.pedido-cancelado.v1` recebido), `PAYMENT_EXPIRED` (página, PIX ou boleto vencidos sem confirmação) ou `PAYMENT_TERMS_CONFLICT` (valor, moeda ou descrição diferentes dos do pagamento já aberto).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            pago:
+              value:
+                type: about:blank
+                title: O pagamento deste pedido já foi confirmado.
+                status: 422
+                code: PAYMENT_ALREADY_CONFIRMED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+            vencido:
+              value:
+                type: about:blank
+                title: O prazo de pagamento deste pedido venceu.
+                status: 422
+                code: PAYMENT_EXPIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    GatewayUnavailable:
+      description: O gateway não respondeu ou recusou a operação por falha dele; nada foi criado. Repetir é seguro
+        (idempotente por `orderId`); code `GATEWAY_UNAVAILABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Pagamento temporariamente indisponível.
+                status: 503
+                code: GATEWAY_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01

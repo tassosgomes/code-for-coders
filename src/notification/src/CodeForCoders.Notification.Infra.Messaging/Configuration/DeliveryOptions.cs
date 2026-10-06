@@ -24,11 +24,11 @@ public sealed class DeliveryOptions
     /// <summary>
     /// How long a claimed record stays invisible to other pollers while it is being delivered
     /// outside of any transaction. Must comfortably exceed the provider's total request timeout
-    /// (20s, see <c>ServiceConfigurationExtensions.AddNotificationConfiguration</c>) so a slow
+    /// (40s for contact lookup plus email, see <c>ServiceConfigurationExtensions.AddNotificationConfiguration</c>) so a slow
     /// but in-flight attempt is never reclaimed by a concurrent worker instance.
     /// </summary>
     [Range(1, 3600)]
-    public int ClaimLeaseSeconds { get; set; } = 30;
+    public int ClaimLeaseSeconds { get; set; } = 60;
 
     public TimeSpan GetPollingInterval()
         => PollingIntervalMilliseconds > 0

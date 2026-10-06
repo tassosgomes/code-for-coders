@@ -28,6 +28,7 @@ public sealed class AccessGrantConfiguration : IEntityTypeConfiguration<AccessGr
         builder.Property(item => item.GrantedBy).HasColumnName("granted_by");
         builder.Property(item => item.ExpiryEventId).HasColumnName("expiry_event_id");
         builder.Property(item => item.ExpiryPublishedAt).HasColumnName("expiry_published_at");
+        builder.HasIndex(item => new { item.TenantId, item.Origin, item.OriginRef }).IsUnique().HasFilter("origin_ref IS NOT NULL");
         builder.HasOne<Enrollment>().WithMany().HasForeignKey(item => item.EnrollmentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(item => new { item.TenantId, item.StudentId, item.CourseId });
         builder.HasIndex(item => new { item.TenantId, item.StudentId, item.GrantedAt }).IsDescending(false, false, true);

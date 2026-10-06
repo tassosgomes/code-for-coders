@@ -1,0 +1,132 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — vitrine pública (recorte de CAP-011)
+  version: 1.1.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/bff-student/openapi-vitrine.yaml` 1.0.0 com **uma** mudança: o clique anônimo em *Comprar* é **depreciado** e deixa de contar (DP-06, C-08). O botão passa a levar à compra (`api-contract.yaml`). As leituras da vitrine e da página do curso não mudam e não estão neste recorte.
+  contact:
+    name: Time de Commerce
+servers:
+- url: /api/v1
+  description: URL pública versionada do BFF do aluno
+tags:
+- name: Vitrine
+  description: Cursos à venda, página do curso e intenção de compra
+paths:
+  /showcase/offers/{offerId}/purchase-intents:
+    parameters:
+    - name: offerId
+      in: path
+      required: true
+      description: Oferta publicada.
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - Vitrine
+      summary: Registrar um clique em Comprar (depreciada)
+      description: |
+        **Depreciada em 1.1.0 (DP-06).** O `student-spa` deixa de chamá-la: *Comprar* leva a `getPurchaseSummary`. Quem ainda chamar recebe 202 com `purchaseAvailability: available` e **nada é contado**; a contagem histórica fica como estava na oferta. Oferta não publicada → 404. Remoção em versão futura.
+      operationId: registerPurchaseIntent
+      deprecated: true
+      security: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Mantida por compatibilidade; sem efeito.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+      responses:
+        '202':
+          description: Nada contado; a compra está disponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseIntentAccepted'
+              examples:
+                disponivel:
+                  value:
+                    purchaseAvailability: available
+        '404':
+          $ref: '#/components/responses/OfferNotAvailable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    PurchaseIntentAccepted:
+      type: object
+      additionalProperties: false
+      required:
+      - purchaseAvailability
+      properties:
+        purchaseAvailability:
+          type: string
+          enum:
+          - coming-soon
+          - available
+          description: '`available` a partir de 1.1.0: a compra existe e o clique não é contado. `coming-soon` não
+            volta a ocorrer.'
+  responses:
+    OfferNotAvailable:
+      description: Oferta não publicada, inexistente ou de outra escola — indistintas.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Oferta não disponível.
+                status: 404
+                code: OFFER_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TooManyRequests:
+      description: Limite de requisições da borda excedido.
+      headers:
+        Retry-After:
+          description: Segundos até poder repetir.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            limite:
+              value:
+                type: about:blank
+                title: Muitas requisições.
+                status: 429
+                code: RATE_LIMITED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01

@@ -39,6 +39,15 @@ public static class CommerceClientExtensions
             options.Retry.DisableForUnsafeHttpMethods();
         });
         client.AddHttpMessageHandler<ServiceAssertionHandler>();
+        services.AddHttpClient<IOrdersCommerceClient, OrdersCommerceClient>((provider, httpClient) =>
+            httpClient.BaseAddress = new Uri(provider.GetRequiredService<IOptions<CommerceServiceOptions>>().Value.BaseAddress))
+            .AddStandardResilienceHandler(options =>
+            {
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(3);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(8);
+                options.Retry.MaxRetryAttempts = 1;
+                options.Retry.DisableForUnsafeHttpMethods();
+            });
         return services;
     }
 }

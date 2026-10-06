@@ -1,0 +1,509 @@
+asyncapi: 3.0.0
+info:
+  title: Commerce — fatos de Vendas e concessão por compra
+  version: 1.2.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/commerce/asyncapi.yaml` 1.1.0 de forma **aditiva**: nasce o módulo Vendas, e Matrícula passa a conceder por compra. Catálogo e cortesia não mudam e não estão neste recorte.
+
+    Fluxo do pagamento confirmado (RF-07), sempre por fato, com Vendas e Matrícula falando "como se já fossem serviços distintos" (baseline, ressalva de `Entitlement`):
+
+    `cobranca.pagamento-confirmado.v1` (de `billing`) → Vendas: pedido `paid` → `vendas.compra-concluida.v1` + pedido de envio do comprovante → Matrícula: concessão `purchase` → `matricula.acesso-concedido.v1` → Vendas: registra a concessão no pedido (exibição, C-07).
+
+    Nenhuma mensagem carrega e-mail, nome, CPF ou dado de cartão: o aluno vai por referência (RN-21, G23), inclusive no pedido de envio, que vai **pela conta** (C-06).
+id: urn:code-4-coders:commerce
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline; topologia física e credenciais são configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  pedidoCriado:
+    address: vendas.pedido-criado.v1
+    description: Um pedido nasceu, com a condição congelada.
+    messages:
+      pedidoCriado:
+        $ref: '#/components/messages/PedidoCriado'
+  pedidoCancelado:
+    address: vendas.pedido-cancelado.v1
+    description: O aluno desistiu de um pedido aguardando pagamento (RN-V07).
+    messages:
+      pedidoCancelado:
+        $ref: '#/components/messages/PedidoCancelado'
+  pedidoExpirado:
+    address: vendas.pedido-expirado.v1
+    description: Um pedido venceu sem pagamento confirmado (RF-08).
+    messages:
+      pedidoExpirado:
+        $ref: '#/components/messages/PedidoExpirado'
+  compraConcluida:
+    address: vendas.compra-concluida.v1
+    description: Um pedido foi pago. É a ordem de concessão que Matrícula consome (domain doc de Matrícula §7).
+    messages:
+      compraConcluida:
+        $ref: '#/components/messages/CompraConcluida'
+  pagamentoAguardando:
+    address: cobranca.pagamento-aguardando.v1
+    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    messages:
+      pagamentoAguardando:
+        $ref: asyncapi-contract-billing.yaml#/components/messages/PagamentoAguardando
+  pagamentoConfirmado:
+    address: cobranca.pagamento-confirmado.v1
+    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    messages:
+      pagamentoConfirmado:
+        $ref: asyncapi-contract-billing.yaml#/components/messages/PagamentoConfirmado
+  pagamentoNaoConfirmado:
+    address: cobranca.pagamento-nao-confirmado.v1
+    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    messages:
+      pagamentoNaoConfirmado:
+        $ref: asyncapi-contract-billing.yaml#/components/messages/PagamentoNaoConfirmado
+  acessoConcedido:
+    address: matricula.acesso-concedido.v1
+    description: Fato de Matrícula, vigente em `contracts/commerce/asyncapi.yaml` 1.1.0, sem mudança de forma. Nesta
+      entrega passa a ocorrer com `origin purchase`.
+    messages:
+      acessoConcedido:
+        $ref: ../../contracts/commerce/asyncapi.yaml#/components/messages/AcessoConcedido
+  pedidoDeEnvio:
+    address: notificacao.envio-solicitado.v1
+    description: Canal de Notificação, na forma 1.2.0 (`asyncapi-contract-notification.yaml`).
+    messages:
+      pedidoDeEnvio:
+        $ref: asyncapi-contract-notification.yaml#/components/messages/PedidoDeEnvioSolicitado
+operations:
+  publicarPedidoCriado:
+    action: send
+    summary: Comunicar que um pedido nasceu.
+    channel:
+      $ref: '#/channels/pedidoCriado'
+    messages:
+    - $ref: '#/channels/pedidoCriado/messages/pedidoCriado'
+    description: 'Pelo outbox, na mesma transação da criação (G06). Ao menos uma vez; consumidores deduplicam por
+      `eventId`. Repetição idempotente da criação (mesma `Idempotency-Key`) e retorno do pedido pendente existente
+      (RN-V06) não geram outro fato. Consumidores conhecidos: nenhum nesta entrega (Inteligência de Negócio, depois).'
+  publicarPedidoCancelado:
+    action: send
+    summary: Comunicar que o aluno desistiu de um pedido.
+    channel:
+      $ref: '#/channels/pedidoCancelado'
+    messages:
+    - $ref: '#/channels/pedidoCancelado/messages/pedidoCancelado'
+    description: 'Pelo outbox, na mesma transação da desistência. Um fato por pedido; repetir a desistência não
+      gera outro. Consumidor: `billing`, que cancela o pagamento pendente no gateway.'
+  publicarPedidoExpirado:
+    action: send
+    summary: Comunicar que um pedido venceu sem pagamento.
+    channel:
+      $ref: '#/channels/pedidoExpirado'
+    messages:
+    - $ref: '#/channels/pedidoExpirado/messages/pedidoExpirado'
+    description: 'Pelo outbox, na transação que marca o pedido `expired` — ao receber `cobranca.pagamento-nao-confirmado.v1`
+      com `reason expired`, ou pela rotina de Vendas que expira pedido sem página de pagamento aberta 24 h depois
+      de criado, ou com prazo conhecido vencido há mais de 24 h sem fato de `billing` (C-10). Um fato por pedido.
+      Consumidores conhecidos: nenhum nesta entrega.'
+  publicarCompraConcluida:
+    action: send
+    summary: Ordenar a concessão do pedido pago.
+    channel:
+      $ref: '#/channels/compraConcluida'
+    messages:
+    - $ref: '#/channels/compraConcluida/messages/compraConcluida'
+    description: 'Pelo outbox, na mesma transação que marca o pedido `paid` e que registra o pedido de envio do
+      comprovante (G06): **não existe pedido pago sem a ordem de concessão**. **Um único fato por pedido** (RN-V09):
+      confirmações repetidas, ou confirmação de pedido já pago, não geram outro. Ao menos uma vez; consumidores
+      deduplicam por `eventId` e, para o efeito, por `orderId`. Consumidor: Matrícula (`commerce`); depois, Fiscal
+      (`CAP-016`) e Inteligência de Negócio.'
+  publicarPedidoDeEnvioDoComprovante:
+    action: send
+    summary: Pedir a Notificação o comprovante de compra.
+    channel:
+      $ref: '#/channels/pedidoDeEnvio'
+    messages:
+    - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvio'
+    description: 'Pelo outbox, na mesma transação da compra concluída (RF-09). Conteúdo fixo: `destinatarioConta`
+      `{tipo: conta-aluno, id: studentId}` (**nunca** `destinatario`, C-06); `finalidade` e `modelo` `comprovante-de-compra`;
+      `dados` com número do pedido, curso e opção congelados, valor confirmado, meio, momento do pagamento, vigência
+      congelada e o link do curso; `pedidoId` derivado do `orderId` (o mesmo em toda republicação, RN-V09). O pedido
+      e a concessão não esperam a entrega (RF-09, terceiro critério).'
+  receberPagamentoAguardando:
+    action: receive
+    summary: Registrar no pedido o PIX ou boleto pendente.
+    channel:
+      $ref: '#/channels/pagamentoAguardando'
+    messages:
+    - $ref: '#/channels/pagamentoAguardando/messages/pagamentoAguardando'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Pedido `awaiting-payment` passa a ter `paymentMethod`, `pendingPayment` (meio e prazo) e a referência
+      do gateway. Pedido já `paid`, `expired` ou `cancelled` → confirmado sem efeito (ordem não garantida). Deduplica
+      por `eventId`. Falha transitória não confirma; esgotadas as entregas, fila de erro, reprocessável sem efeito
+      duplicado (mesmo padrão para as operações de recebimento abaixo).'
+  receberPagamentoConfirmado:
+    action: receive
+    summary: Concluir o pedido pago.
+    channel:
+      $ref: '#/channels/pagamentoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoConfirmado/messages/pagamentoConfirmado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Pedido `awaiting-payment`, `expired` ou `cancelled` → `paid` (RN-V08), com `paidAt` = `confirmedAt`,
+      meio, valor confirmado e referência do gateway; publica a compra concluída e o pedido de envio. Pedido já
+      `paid` → confirmado sem efeito. Valor confirmado diferente do congelado **não impede** a conclusão: fica visível
+      no detalhe do backoffice (`paidAmountCents`). Pedido desconhecido (de outra escola ou inexistente) → fila
+      de erro e alerta: não há pedido a concluir, e não se inventa um.'
+  receberPagamentoNaoConfirmado:
+    action: receive
+    summary: Expirar o pedido cujo pagamento venceu.
+    channel:
+      $ref: '#/channels/pagamentoNaoConfirmado'
+    messages:
+    - $ref: '#/channels/pagamentoNaoConfirmado/messages/pagamentoNaoConfirmado'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: '`reason expired` em pedido `awaiting-payment` → `expired` e `vendas.pedido-expirado.v1`. `reason
+      cancelled` → sem efeito (o pedido já está `cancelled`). Pedido `paid` → sem efeito: a confirmação prevalece.'
+  receberCompraConcluidaEmMatricula:
+    action: receive
+    summary: Conceder o acesso comprado.
+    channel:
+      $ref: '#/channels/compraConcluida'
+    messages:
+    - $ref: '#/channels/compraConcluida/messages/compraConcluida'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Matrícula, em **fila própria**, cria a concessão `origin purchase`, `originRef` = `orderId`, com
+      a vigência **da mensagem** (RN-D03 — nunca consulta o Catálogo), contada do momento da concessão (RN-D04),
+      e publica `matricula.acesso-concedido.v1` na mesma transação. **A mesma origem não gera duas concessões**
+      (RN-D10): mensagem repetida para o mesmo pedido é confirmada sem efeito, sem novo fato. Curso que Matrícula
+      não conhece → fila de erro e alerta, sem conceder. Indisponibilidade de Matrícula não perde a ordem: a mensagem
+      fica na fila e a concessão nasce quando ela voltar (RF-07, último critério).'
+  receberAcessoConcedidoEmVendas:
+    action: receive
+    summary: Registrar no pedido que o acesso foi liberado.
+    channel:
+      $ref: '#/channels/acessoConcedido'
+    messages:
+    - $ref: '#/channels/acessoConcedido/messages/acessoConcedido'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: 'Vendas, em fila própria, só para `origin purchase`: preenche `grantId` e `accessGrantedAt` do pedido
+      `originRef` (C-07). Outras origens → confirmado sem efeito. **Exibição**: nada decide acesso a partir disso
+      (RN-V10).'
+components:
+  messages:
+    PedidoCriado:
+      name: PedidoCriado
+      title: Pedido criado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PedidoCriadoPayload'
+      examples:
+      - name: dozeMeses
+        headers:
+          correlationId: 00-e5f60718293a4b5c6d7e8f9001122334-e5f60718293a4b5c-01
+        payload:
+          eventId: 6f708192-a3b4-4c5d-8e6f-708192a3b4c5
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          orderNumber: '000123'
+          studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          priceCents: 49700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+          occurredAt: '2026-10-05T14:19:30Z'
+    PedidoCancelado:
+      name: PedidoCancelado
+      title: Pedido cancelado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PedidoEncerradoPayload'
+      examples:
+      - name: desistiuDoBoleto
+        headers:
+          correlationId: 00-f60718293a4b5c6d7e8f900112233445-f60718293a4b5c6d-01
+        payload:
+          eventId: 708192a3-b4c5-4d6e-9f70-8192a3b4c5d6
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          occurredAt: '2026-10-06T18:42:10Z'
+    PedidoExpirado:
+      name: PedidoExpirado
+      title: Pedido expirado
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/PedidoEncerradoPayload'
+      examples:
+      - name: boletoVencido
+        headers:
+          correlationId: 00-0718293a4b5c6d7e8f90011223344556-0718293a4b5c6d7e-01
+        payload:
+          eventId: 8192a3b4-c5d6-4e7f-8081-92a3b4c5d6e7
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          occurredAt: '2026-10-09T03:12:41Z'
+    CompraConcluida:
+      name: CompraConcluida
+      title: Compra concluída
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/CompraConcluidaPayload'
+      examples:
+      - name: cartaoDozeMeses
+        headers:
+          correlationId: 00-b2c3d4e5f60718293a4b5c6d7e8f9001-b2c3d4e5f6071829-01
+        payload:
+          eventId: 92a3b4c5-d6e7-4f80-9192-a3b4c5d6e7f8
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          orderNumber: '000123'
+          studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+          priceCents: 49700
+          paidAmountCents: 49700
+          currency: BRL
+          accessPeriod:
+            type: months
+            months: 12
+          paymentMethod: card
+          paidAt: '2026-10-05T14:21:02Z'
+          occurredAt: '2026-10-05T14:21:03Z'
+      - name: boletoVitalicioTardio
+        headers:
+          correlationId: 00-a3b4c5d6e7f8091a2b3c4d5e6f708192-a3b4c5d6e7f8091a-01
+        payload:
+          eventId: a3b4c5d6-e7f8-4091-82a3-b4c5d6e7f809
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          orderId: 3d4e5f60-7182-4a93-8ba4-b5c6d7e8f9a0
+          orderNumber: '000131'
+          studentId: 2b3c4d5e-6f70-4a81-9b92-a3b4c5d6e7f8
+          courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          offerId: 8d9e0f1a-2b3c-4d4e-9f5a-6b7c8d9e0f1a
+          priceCents: 89700
+          paidAmountCents: 89700
+          currency: BRL
+          accessPeriod:
+            type: lifetime
+          paymentMethod: boleto
+          paidAt: '2026-10-12T11:05:00Z'
+          occurredAt: '2026-10-12T11:05:02Z'
+  schemas:
+    Cabecalho:
+      type: object
+      additionalProperties: false
+      required:
+      - correlationId
+      properties:
+        correlationId:
+          type: string
+          description: traceparent da requisição do aluno, do fato de `billing` que originou a mudança ou da execução
+            da rotina de expiração. Sem dado pessoal.
+    Vigencia:
+      description: Vigência congelada no pedido. Mesmo formato de `AccessPeriod` nas APIs e no fato de oferta.
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        - months
+        properties:
+          type:
+            const: months
+          months:
+            type: integer
+            minimum: 1
+            maximum: 60
+      - type: object
+        additionalProperties: false
+        required:
+        - type
+        properties:
+          type:
+            const: lifetime
+    PedidoCriadoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - orderId
+      - orderNumber
+      - studentId
+      - courseId
+      - offerId
+      - priceCents
+      - currency
+      - accessPeriod
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por fato; chave de deduplicação.
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          pattern: ^[0-9]{6,}$
+        studentId:
+          type: string
+          format: uuid
+          description: Conta de aluno, por referência. Nunca e-mail nem nome.
+        courseId:
+          type: string
+          format: uuid
+        offerId:
+          type: string
+          format: uuid
+        priceCents:
+          type: integer
+          minimum: 1
+          description: Preço congelado, em centavos de real.
+        currency:
+          type: string
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        occurredAt:
+          type: string
+          format: date-time
+    PedidoEncerradoPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - orderId
+      - studentId
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        studentId:
+          type: string
+          format: uuid
+        occurredAt:
+          type: string
+          format: date-time
+    CompraConcluidaPayload:
+      type: object
+      additionalProperties: false
+      required:
+      - eventId
+      - tenantId
+      - orderId
+      - orderNumber
+      - studentId
+      - courseId
+      - offerId
+      - priceCents
+      - paidAmountCents
+      - currency
+      - accessPeriod
+      - paymentMethod
+      - paidAt
+      - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Um por pedido; chave de deduplicação.
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+          description: O pedido pago. É o `originRef` da concessão (RN-D02) e a chave que impede segunda concessão
+            (RN-D10).
+        orderNumber:
+          type: string
+          pattern: ^[0-9]{6,}$
+        studentId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+          description: O direito é sobre o curso, não sobre uma versão (RN-D08).
+        offerId:
+          type: string
+          format: uuid
+          description: A oferta comprada, para rastreabilidade (RN-O11). Matrícula não a consulta.
+        priceCents:
+          type: integer
+          minimum: 1
+          description: Preço congelado no pedido.
+        paidAmountCents:
+          type: integer
+          minimum: 1
+          description: Valor confirmado pelo gateway.
+        currency:
+          type: string
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        paymentMethod:
+          type: string
+          enum:
+          - card
+          - pix
+          - boleto
+          description: Consumidores devem tolerar valor novo.
+        paidAt:
+          type: string
+          format: date-time
+          description: Momento da confirmação do pagamento. A vigência **não** conta daqui, e sim da concessão (RN-D04).
+        occurredAt:
+          type: string
+          format: date-time

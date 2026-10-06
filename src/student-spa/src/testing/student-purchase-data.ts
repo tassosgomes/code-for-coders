@@ -1,0 +1,6 @@
+export const purchaseCourseId = '0198dfac-674a-7000-8000-000000000041';
+export const purchaseOfferId = '0198dfac-674a-7000-8000-000000000042';
+export const purchaseOrderId = '0198dfac-674a-7000-8000-000000000043';
+export const purchaseSummary = { course: { courseId: purchaseCourseId, title: '.NET do zero à API' }, offer: { offerId: purchaseOfferId, name: 'Acesso por 12 meses', priceCents: 49700, currency: 'BRL', accessPeriod: { type: 'months', months: 12 } }, pendingOrderId: null, existingAccessChecked: true, existingAccess: null };
+export const purchaseOrder = { orderId: purchaseOrderId, number: '000123', status: 'awaiting-payment', course: purchaseSummary.course, offer: { offerId: purchaseOfferId, name: purchaseSummary.offer.name }, priceCents: 49700, currency: 'BRL', accessPeriod: purchaseSummary.offer.accessPeriod, paymentMethod: null, pendingPayment: null, paymentPageExpiresAt: null, accessGrantedAt: null, createdAt: '2026-10-05T14:19:30.1234567+00:00', paidAt: null, expiredAt: null, cancelledAt: null };
+export const purchaseShowcaseCourse = { courseId: purchaseCourseId, title: '.NET do zero à API', level: 'beginner', description: 'Aprenda C#', prerequisite: { text: null, recommendedCourses: [] }, modules: [], offers: [purchaseSummary.offer] };

@@ -29,6 +29,10 @@ public sealed class DeliveryRecord
 
     public string? RecipientName { get; private set; }
 
+    public Guid? RecipientAccountId { get; private set; }
+
+    public PurchaseReceiptData? ReceiptData { get; private set; }
+
     public string? RecipientRole { get; private set; }
 
     public string? Link { get; private set; }
@@ -65,7 +69,7 @@ public sealed class DeliveryRecord
         string processingNamespace,
         Guid tenantId,
         Guid requestId,
-        string recipient,
+        string? recipient,
         string? recipientName,
         string link,
         string purpose,
@@ -73,14 +77,18 @@ public sealed class DeliveryRecord
         DateTimeOffset requestedOn,
         DateTimeOffset acceptedOn,
         string? correlationId,
-        string? recipientRole = null)
+        string? recipientRole = null,
+        Guid? recipientAccountId = null,
+        PurchaseReceiptData? receiptData = null)
     {
         var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         ValidateIdentity(tenantId, requestId);
-        ValidateRecipient(recipient);
+        if (recipientAccountId is null) ValidateRecipient(recipient!);
+        else if (recipientAccountId == Guid.Empty || recipient is not null)
+            throw new EntityValidationException("Exactly one valid recipient is required.");
         ValidateOptionalText(recipientName, RecipientNameMaxLength, "Recipient name");
         ValidateOptionalText(recipientRole, 32, "Recipient role");
-        if (string.IsNullOrWhiteSpace(recipientName) && string.IsNullOrWhiteSpace(recipientRole))
+        if (recipientAccountId is null && string.IsNullOrWhiteSpace(recipientName) && string.IsNullOrWhiteSpace(recipientRole))
         {
             throw new EntityValidationException("A recipient name or role is required.");
         }
@@ -96,6 +104,8 @@ public sealed class DeliveryRecord
             TenantId = tenantId,
             RequestId = requestId,
             Recipient = recipient,
+            RecipientAccountId = recipientAccountId,
+            ReceiptData = receiptData,
             RecipientName = NullIfWhiteSpace(recipientName),
             RecipientRole = NullIfWhiteSpace(recipientRole),
             Link = link,
@@ -113,7 +123,7 @@ public sealed class DeliveryRecord
         string processingNamespace,
         Guid tenantId,
         Guid requestId,
-        string recipient,
+        string? recipient,
         string? recipientName,
         string? link,
         string? purpose,
@@ -122,11 +132,12 @@ public sealed class DeliveryRecord
         DateTimeOffset requestedOn,
         DateTimeOffset refusedOn,
         string? correlationId,
-        string? recipientRole = null)
+        string? recipientRole = null,
+        Guid? recipientAccountId = null)
     {
         var normalizedNamespace = NotificationNamespace.Validate(processingNamespace);
         ValidateIdentity(tenantId, requestId);
-        ValidateRecipient(recipient);
+        ValidateOptionalText(recipient, RecipientMaxLength, "Recipient");
         ValidateOptionalText(recipientName, RecipientNameMaxLength, "Recipient name");
         ValidateOptionalText(recipientRole, 32, "Recipient role");
         ValidateOptionalText(link, LinkMaxLength, "Link");
@@ -142,6 +153,7 @@ public sealed class DeliveryRecord
             TenantId = tenantId,
             RequestId = requestId,
             Recipient = recipient,
+            RecipientAccountId = recipientAccountId,
             RecipientName = NullIfWhiteSpace(recipientName),
             RecipientRole = NullIfWhiteSpace(recipientRole),
             Link = null,
@@ -153,6 +165,15 @@ public sealed class DeliveryRecord
             RequestedOn = requestedOn,
             RefusedOn = refusedOn,
         };
+    }
+
+    public void ResolveContact(string recipient, string name)
+    {
+        EnsureAccepted();
+        ValidateRecipient(recipient);
+        ValidateRequiredText(name, RecipientNameMaxLength, "Recipient name");
+        Recipient = recipient;
+        RecipientName = name;
     }
 
     public void MarkDelivered(DateTimeOffset deliveredOn)
@@ -209,6 +230,8 @@ public sealed class DeliveryRecord
         }
 
         Recipient = null;
+        RecipientAccountId = null;
+        ReceiptData = null;
         RecipientName = null;
         RecipientRole = null;
         Link = null;

@@ -141,7 +141,7 @@ const CourseContent = ({ course }: { course: ShowcaseCourseDetail }) => {
           <ul className="flex flex-col gap-4">
             {course.offers.map((offer) => (
               <li key={offer.offerId}>
-                <OfferOption offer={offer} />
+                <OfferOption courseId={course.courseId} offer={offer} />
               </li>
             ))}
           </ul>

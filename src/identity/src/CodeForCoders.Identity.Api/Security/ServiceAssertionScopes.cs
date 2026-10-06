@@ -29,5 +29,6 @@ public static class ServiceAssertionScopes
         "staff-members:write",
         "audit-references:read",
         "student-account:lookup",
+        "student-account:resolve",
     ];
 }

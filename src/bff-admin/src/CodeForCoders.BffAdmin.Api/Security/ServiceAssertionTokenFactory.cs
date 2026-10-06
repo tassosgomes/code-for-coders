@@ -22,6 +22,7 @@ public sealed class ServiceAssertionTokenFactory(
         "staff-members:write",
         "audit-references:read",
         "student-account:lookup",
+        "student-account:resolve",
     ];
 
     public string Create(string requiredScope)

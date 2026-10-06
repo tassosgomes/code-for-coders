@@ -7,7 +7,9 @@ public static class EndpointExtensions
     public static void MapApiEndpoints(this WebApplication app)
     {
         app.MapPlatformEndpoints();
+        app.MapStudentOrderEndpoints();
         app.MapFinanceAreaEndpoints();
+        app.MapFinanceOrderEndpoints();
         app.MapCatalogCourseEndpoints();
         app.MapCourtesyCourseEndpoints();
         app.MapCourtesyGrantEndpoints();

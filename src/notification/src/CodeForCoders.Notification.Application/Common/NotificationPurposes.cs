@@ -6,6 +6,8 @@ public static class NotificationPurposes
 
     public const string PasswordRecovery = "recuperacao-de-senha";
 
+    public const string PurchaseReceipt = "comprovante-de-compra";
+
     public const string StaffInvitation = "convite-interno";
 }
 
@@ -24,6 +26,10 @@ public static class NotificationRefusalReasons
 
 public static class NotificationFailureReasons
 {
+    public const string RecipientUnavailable = "destinatario-indisponivel";
+
+    public const string IdentityUnavailable = "identity-indisponivel";
+
     public const string ProviderUnavailable = "provedor-indisponivel";
 
     public const string ProviderTimeout = "timeout-do-provedor";

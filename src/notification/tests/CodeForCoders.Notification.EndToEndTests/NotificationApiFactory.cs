@@ -32,6 +32,9 @@ public sealed class NotificationApiFactory : WebApplicationFactory<Program>, IAs
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        using var identityKey = System.Security.Cryptography.RSA.Create(2048);
+        builder.UseSetting("StudentContactIdentity:SigningKeyBase64", Convert.ToBase64String(identityKey.ExportPkcs8PrivateKey()));
+        builder.UseSetting("OpenTelemetry:ExportEnabled", "false");
         builder.UseEnvironment("EndToEndTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", PostgreSql.GetConnectionString());
         builder.UseSetting("RabbitMq:Username", "code_for_coders");

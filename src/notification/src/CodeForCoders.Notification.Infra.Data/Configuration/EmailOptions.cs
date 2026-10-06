@@ -4,6 +4,7 @@ namespace CodeForCoders.Notification.Infra.Data.Configuration;
 
 public sealed class EmailOptions
 {
+    public string SchoolTimeZone { get; set; } = "America/Sao_Paulo";
     public const string SectionName = "Email";
 
     [Required]

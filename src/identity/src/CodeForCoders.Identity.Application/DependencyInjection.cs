@@ -39,6 +39,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
         services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<IValidator<UseCases.Accounts.ResolveStudentAccounts.ResolveStudentAccountsInput>, UseCases.Accounts.ResolveStudentAccounts.ResolveStudentAccountsInputValidator>();
         services.AddScoped<IValidator<LookupStudentAccountInput>, LookupStudentAccountInputValidator>();
         services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
         services.AddScoped<IValidator<RegisterStudentAccountInput>, RegisterStudentAccountInputValidator>();

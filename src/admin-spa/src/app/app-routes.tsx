@@ -14,6 +14,7 @@ import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { StaffLoginRoute } from '@/app/routes/staff-login-route';
 import { StaffAccessRoute } from '@/app/routes/staff-access-route';
 import { CourtesiesRoute } from '@/app/routes/courtesies-route';
+import { FinanceOrderDetailRoute } from '@/app/routes/finance-order-detail-route';
 import { FinanceAreaRoute } from '@/app/routes/finance-area-route';
 import { VideosAreaRoute } from '@/app/routes/videos-area-route';
 import { AuditTrailRoute } from '@/app/routes/audit-trail-route';
@@ -37,7 +38,8 @@ export const routes: RouteObject[] = [
       { path: paths.catalog.path.slice(1), element: <CatalogCoursesRoute /> },
       { path: paths.catalogCourse.path.slice(1), element: <CatalogCourseRecordRoute /> },
       { path: paths.courtesies.path.slice(1), element: <CourtesiesRoute />, errorElement: <RouteError /> },
-      { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute /> },
+      { path: paths.staffFinance.path.slice(1), element: <FinanceAreaRoute />, errorElement: <RouteError /> },
+      { path: paths.staffFinanceOrder.path.slice(1), element: <FinanceOrderDetailRoute />, errorElement: <RouteError /> },
       { path: paths.authoring.path.slice(1), element: <AuthoringCoursesRoute /> },
       { path: paths.authoringCourse.path.slice(1), element: <AuthoringCourseRoute /> },
       { path: paths.authoringVersion.path.slice(1), element: <AuthoringVersionRoute /> },

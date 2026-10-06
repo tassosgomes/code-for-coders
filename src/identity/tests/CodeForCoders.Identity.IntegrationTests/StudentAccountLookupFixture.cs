@@ -55,6 +55,7 @@ public sealed class StudentAccountLookupFixture : IAsyncLifetime
         builder.WebHost.UseTestServer();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
+            ["OpenTelemetry:ExportEnabled"] = "false",
             ["ConnectionStrings:DefaultConnection"] = postgres.GetConnectionString(),
             ["Valkey:ConnectionString"] = $"{valkey.Hostname}:{valkey.GetMappedPublicPort(6379)},abortConnect=false",
             ["RabbitMq:Username"] = "test",
@@ -69,6 +70,9 @@ public sealed class StudentAccountLookupFixture : IAsyncLifetime
             ["ServiceAssertions:Issuers:commerce:PublicKeys:test"] = Convert.ToBase64String(signingKey.ExportSubjectPublicKeyInfo()),
             ["ServiceAssertions:Issuers:commerce:AllowedScopes:0"] = "student-account:confirm",
             ["ServiceAssertions:Issuers:commerce:AllowedTenantIds:0"] = TenantId.ToString(),
+            ["ServiceAssertions:Issuers:notification:PublicKeys:test"] = Convert.ToBase64String(signingKey.ExportSubjectPublicKeyInfo()),
+            ["ServiceAssertions:Issuers:notification:AllowedScopes:0"] = "student-contact:read",
+            ["ServiceAssertions:Issuers:notification:AllowedTenantIds:0"] = TenantId.ToString(),
             ["Logging:LogLevel:Microsoft.EntityFrameworkCore"] = "Information",
             ["StaffSessionTokens:SigningKeyId"] = "test",
             ["StaffSessionTokens:SigningKeyBase64"] = Convert.ToBase64String(signingKey.ExportPkcs8PrivateKey()),

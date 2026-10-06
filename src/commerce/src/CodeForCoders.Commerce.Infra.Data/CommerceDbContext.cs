@@ -28,8 +28,15 @@ public sealed class CommerceDbContext(
     public DbSet<PurchaseIntentDailyCount> PurchaseIntentDailyCounts => Set<PurchaseIntentDailyCount>();
     public DbSet<PurchaseIntentReceipt> PurchaseIntentReceipts => Set<PurchaseIntentReceipt>();
 
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderReceipt> OrderReceipts => Set<OrderReceipt>();
+    public DbSet<OrderSequence> OrderSequences => Set<OrderSequence>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Order>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<OrderReceipt>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<OrderSequence>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<Enrollment>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<AccessGrant>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<GrantReceipt>().HasQueryFilter(item => tenantContext.TenantId.HasValue && item.TenantId == tenantContext.TenantId.Value);

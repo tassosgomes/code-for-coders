@@ -12,12 +12,13 @@ golden path dos serviços e a decisão de runtime; os detalhes de arquitetura co
   [ADR-0001](adr/0001-monorepo-de-codigo.md).
 - Defaults de .NET 10, análise, pacotes, símbolos proibidos e build na raiz (`global.json`,
   `Directory.*`, `BannedSymbols.txt`, `.editorconfig`, `.dockerignore` e `nuget.config`).
-- Dez unidades da Fase 1, cada uma com caminho próprio, imagem e workflow chamador próprio:
+- Onze unidades, cada uma com caminho próprio, imagem e workflow chamador próprio:
 
 | Unidade | Stack | Solução/pacote | Workflow |
 |---|---|---|---|
 | `identity` | .NET | `src/identity/CodeForCoders.Identity.slnx` | `.github/workflows/identity.yml` |
 | `commerce` | .NET | `src/commerce/CodeForCoders.Commerce.slnx` | `.github/workflows/commerce.yml` |
+| `billing` | .NET | `src/billing/CodeForCoders.Billing.slnx` | `.github/workflows/billing.yml` |
 | `learning` | .NET | `src/learning/CodeForCoders.Learning.slnx` | `.github/workflows/learning.yml` |
 | `media` | .NET | `src/media/CodeForCoders.Media.slnx` | `.github/workflows/media.yml` |
 | `audit` | .NET | `src/audit/CodeForCoders.Audit.slnx` | `.github/workflows/audit.yml` |
@@ -83,7 +84,7 @@ curl -s http://localhost:8080/health/ready | jq
 
 O endpoint técnico de heartbeat exercita o caminho HTTP → outbox → RabbitMQ → consumidor e deve
 produzir um único trace correlacionado. A URL e as portas da aplicação são definidas pelo perfil de
-execução do serviço; o compose fornece as dependências, não inicia automaticamente todos os dez
+execução do serviço; o compose fornece as dependências, não inicia automaticamente todos os onze
 processos.
 
 ## Como nasce um serviço novo

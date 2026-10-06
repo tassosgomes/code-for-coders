@@ -19,6 +19,7 @@ readonly migration_targets=(
   "learning|src/learning/src/CodeForCoders.Learning.Infra.Data|code_for_coders_learning|code_for_coders_learning|ConnectionStrings__DefaultConnection"
   "media|src/media/src/CodeForCoders.Media.Infra.Data|code_for_coders_media|code_for_coders_media|ConnectionStrings__DefaultConnection"
   "commerce|src/commerce/src/CodeForCoders.Commerce.Infra.Data|code_for_coders_commerce|code_for_coders_commerce|ConnectionStrings__DefaultConnection"
+  "billing|src/billing/src/CodeForCoders.Billing.Infra.Data|code_for_coders_billing|code_for_coders_billing|ConnectionStrings__DefaultConnection"
   "notification|src/notification/src/CodeForCoders.Notification.Infra.Data|code_for_coders_notification|code_for_coders_notification|ConnectionStrings__DefaultConnection"
   "audit|src/audit/src/CodeForCoders.Audit.Infra.Data|code_for_coders_audit|code_for_coders_audit|ConnectionStrings__MigrationConnection"
   "bff-admin|src/bff-admin/src/CodeForCoders.BffAdmin.Infra.Data|code_for_coders_bff_admin|code_for_coders_bff_admin|ConnectionStrings__DefaultConnection"

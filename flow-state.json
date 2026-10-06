@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-10-04",
+  "updated": "2026-10-05",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/archive/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/archive/prd-ingestao-midia, fora do indice por colisao de chave unica. PRDs concluidos ficam arquivados em tasks/archive/ (so historico, nao sao fonte da verdade). O contrato vigente de cada fronteira vive em contracts/ (artifacts.contracts); novos PRDs continuam em tasks/prd-[slug]/ e promovem o recorte para contracts/ ao concluir.",
   "artifacts": {
     "vision": "vision.md",
@@ -137,8 +137,13 @@
     },
     {
       "id": "CAP-011",
-      "stage": "backlog",
-      "artifacts": {},
+      "stage": "tasks",
+      "artifacts": {
+        "prd": "tasks/prd-compra-avulsa/prd.md",
+        "contract": "tasks/prd-compra-avulsa/contracts.md",
+        "techspec": "tasks/prd-compra-avulsa/techspec.md",
+        "tasks": "tasks/prd-compra-avulsa/tasks.md"
+      },
       "mvp_order": 8
     },
     {
@@ -263,11 +268,9 @@
   "next_actions": [
     {
       "id": "NA23",
-      "what": "Próxima da fila MVP: CAP-011 (compra avulsa, ordem 8), bloqueada por OD5 (contratar gateway de pagamento). Ao entrar CAP-009 (revogação): o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-next",
-      "blocked_by": [
-        "OD5"
-      ]
+      "what": "CAP-011: plano aprovado (OD85), orquestracao NAO iniciada por decisao do responsavel. Quando autorizado: tsg-flow-orchestrator, comecando por 1.0 (ASCII) e 3.0 (billing) em paralelo. Pendencias nao bloqueantes: OD80 (boleto), dominio publico de billing em homologacao, prazos PIX/boleto no Checkout. Ao entrar CAP-009 (revogacao): o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-orchestrator",
+      "blocked_by": []
     }
   ],
   "open_decisions": [
@@ -279,15 +282,6 @@
       "blocks": [
         "fim da Fase 1",
         "CAP-028"
-      ]
-    },
-    {
-      "id": "OD5",
-      "ref": "capabilities.md R3",
-      "what": "Contratar gateway de pagamento",
-      "owner": "negocio",
-      "blocks": [
-        "CAP-011"
       ]
     },
     {
@@ -312,6 +306,15 @@
       "what": "Registrar no Domain Map a duração do vídeo como parte da junta Mídia → Aprendizagem (hoje só no PRD e na TechSpec de CAP-017); junto de QC-05",
       "owner": "tasso",
       "blocks": []
+    },
+    {
+      "id": "OD80",
+      "ref": "tasks/prd-compra-avulsa/prd.md QA-02",
+      "what": "PIX confirmado no Stripe em 2026-10-05. Falta confirmar boleto habilitado na conta (e no sandbox); meio indisponivel sai do recorte por decisao explicita, sem mudar contrato",
+      "owner": "tasso",
+      "blocks": [
+        "implementacao de CAP-011 (boleto)"
+      ]
     }
   ],
   "foundation": {
@@ -368,6 +371,12 @@
         "name": "admin-spa",
         "path": "src/admin-spa",
         "phase": 1
+      },
+      {
+        "name": "billing",
+        "path": null,
+        "phase": 1,
+        "nota": "Nasce com CAP-011 (OD81). Fase 0 (servico, banco, esteira, compose + override remoto, Coolify, endereco publico do webhook) entra como habilitador EN-01 do plano de CAP-011 (D-09 da TechSpec, OD84), em vez de fora do fluxo"
       }
     ],
     "platform_ready": true
@@ -948,6 +957,70 @@
       "owner": "tasso",
       "decided_at": "2026-10-04",
       "decision": "Aprovada: modulo Progress de learning com avanco bruto (recibo e insumo de CAP-029), progresso por aula e duracao no schema progress; percentual, retomada e Continuar calculados na leitura sobre a versao vigente; duracao gravada fora do recibo de Content (reenvio de fatos de video preenche videos antigos); media so configuracao: fila learning.playback-progress antes, retencao desligada depois, reenvio existente uma vez; meus cursos no Inicio (/); player espera o progresso ate 2 s sem salto tardio; ADR-0015 aceita (um escopo por rota, course-access:read so para learning) e ADR-0012 superada. Descartado: percentual materializado, recibo separado do avanco bruto, fila propria para duracao, comecar e saltar depois."
+    },
+    {
+      "id": "OD5",
+      "ref": "capabilities.md R3",
+      "what": "Contratar gateway de pagamento",
+      "owner": "negocio",
+      "decided_at": "2026-10-05",
+      "decision": "Stripe. Sandbox ja disponivel para o time; destrava CAP-011. A camada anticorrupcao sobre o gateway continua obrigatoria (restricao herdada de CAP-011/CAP-013), entao Stripe nao vaza para o modelo de pedido."
+    },
+    {
+      "id": "OD78",
+      "ref": "backlog/capabilities.md CAP-011",
+      "what": "Fatia do primeiro PRD de CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "Entra: botao Comprar da vitrine leva ao checkout (intencao de compra coming-soon aposentada); aluno autenticado (visitante vai ao login e volta); pedido congela preco e vigencia da oferta (RN-O09/RN-O10); pagamento no checkout hospedado do Stripe atras de camada anticorrupcao, cartao + PIX + boleto; webhook assinado e idempotente (G09); pedido pago gera ordem de concessao origem purchase (vigencia conta da concessao, RN-D04); pedido pendente nao concede e expira; pagina de retorno com situacao; comprovante por e-mail (CAP-026); Meus pedidos do aluno com retomada do PIX/boleto pendente; lista de pedidos no backoffice; aviso voce ja tem acesso antes de comprar, sem bloquear (RN-D07, ponta de OD60). Fora: cupom e campanha (CAP-004, Fase 2); recorrencia (CAP-013); reembolso e chargeback como fato (CAP-015) - reembolso feito no painel do Stripe nao revoga acesso ate la, limitacao declarada no PRD; nota fiscal (CAP-016); parcelamento. Descartado: so cartao ou cartao+PIX (o card promete os tres e o checkout hospedado ja trata pagamento assincrono); checkout embutido na SPA (mais front e estados de erro, PCI maior). Sem domain doc: Vendas e Checkout tem so CAP-011 no horizonte, regras vao no PRD."
+    },
+    {
+      "id": "OD79",
+      "ref": "tasks/prd-compra-avulsa/prd.md",
+      "what": "PRD de CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "Aprovado com DP-03 (pagina e PIX 24 h, boleto 3 dias corridos), DP-04 (desistir de pedido pendente e comprar de novo pelas condicoes vigentes), DP-05 (pagamento confirmado sempre conclui o pedido, mesmo expirado ou cancelado), DP-06 (contagem de cliques em Comprar congela como historico) e DP-09 (pedidos no backoffice sob financeiro.ler, so leitura). Descartado: PIX de 30-60 min, boleto 5+ dias, sem desistencia, recusar pagamento tardio, permissao pedido.ler nova. Pendentes no PRD: QA-01 (destinatario do comprovante x RN-26, na TechSpec), QA-02 (PIX e boleto habilitados na conta Stripe BR), QA-03 (Domain Map, junto de OD77)."
+    },
+    {
+      "id": "OD81",
+      "ref": "tasks/prd-compra-avulsa/contracts.md C-01",
+      "what": "Onde mora Cobranca (Stripe, ACL, webhook) em CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "billing nasce agora, como o baseline agrupa (Cobranca e Assinatura; Fiscal entra como modulo em CAP-016), em fatia minima. Descartado: modulo Billing em commerce (contraria o baseline e moveria webhook e dados ja em producao na extracao de CAP-013)."
+    },
+    {
+      "id": "OD82",
+      "ref": "tasks/prd-compra-avulsa/contracts.md C-06; prd QA-01",
+      "what": "Destinatario do comprovante (QA-01 x RN-26)",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "Pedido de envio pela conta: commerce publica destinatarioConta (studentId) e notification resolve e-mail e nome em identity (getStudentContactInternal, notification como emissor). E-mail nunca entra em commerce, outbox nem broker. Descartado: commerce buscar e-mail e nome em identity (terceira excecao a RN-21)."
+    },
+    {
+      "id": "OD83",
+      "ref": "tasks/prd-compra-avulsa/contracts.md",
+      "what": "Contratos de CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "Aprovados C-01 a C-12: billing novo (HTTP interno, webhook, fatos); commerce 1.4.0/1.2.0 com Vendas; bff-student compra 1.0.0 e vitrine 1.1.0 (clique depreciado); bff-admin pedidos 1.0.0; identity 1.5.0/1.2.0; notification 1.2.0 (envio pela conta, comprovante). Pedido de pagamento sincrono commerce->billing, resultado por fato; link do gateway nunca fora de billing; expiracao por billing + rotina de Vendas; numero do pedido sequencial por escola."
+    },
+    {
+      "id": "OD84",
+      "ref": "tasks/prd-compra-avulsa/techspec.md; ADR-0016, ADR-0017, ADR-0018",
+      "what": "TechSpec de CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "Aprovada: 7 fatias (V-01 resumo e pedido; V-02 cartao ate acesso; V-03 PIX/boleto e retomada; V-04 expiracao e desistencia; V-05 comprovante pela conta; V-06 Meus pedidos; V-07 backoffice) e 2 habilitadores (EN-01 unidade billing no golden path, D-09; EN-02 design ASCII+Figma). Link de pagamento do Stripe nunca persistido; corpo do webhook nunca persistido (inbox minima); unicidade por (aluno, oferta) pendente e por (origem, referencia) na concessao; publicador de commerce com tabela chave->exchange; compra pendente de login em localStorage 24 h; errata D-11 (http so em localhost) aplicada ao contrato de billing. ADR-0016/0017/0018 aceitas. Descartado: Fase 0 de billing fora do fluxo; guardar URL de pagamento ou evento bruto; inbox generica em todos os consumidores."
+    },
+    {
+      "id": "OD85",
+      "ref": "tasks/prd-compra-avulsa/tasks.md",
+      "what": "Plano de tasks de CAP-011",
+      "owner": "tasso",
+      "decided_at": "2026-10-05",
+      "decision": "Aprovado: 10 tasks (1.0 ASCII, 2.0 Figma, 3.0 unidade billing, 4.0 a 10.0 fatias V-01 a V-07), sequencia linear a partir de 4.0, 3.0 paralela ao design. Orquestracao nao iniciada por decisao do responsavel."
     }
   ]
 }

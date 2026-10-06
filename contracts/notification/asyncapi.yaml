@@ -53,13 +53,19 @@ operations:
     channel:
       $ref: '#/channels/pedidoDeEnvio'
     messages:
-    - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvioSolicitado'
+      - $ref: '#/channels/pedidoDeEnvio/messages/pedidoDeEnvioSolicitado'
     bindings:
       amqp:
         ack: false
         bindingVersion: 0.3.0
     description: |
-      Garantias observáveis (mecanismo de implementação fica na TechSpec): idempotente por `pedidoId` — reentrega do broker não produz segunda mensagem (RN-N09); pedido sem finalidade, com modelo desconhecido ou com dado faltante é recusado e registrado, nunca enviado parcialmente (RF-01); indisponibilidade do provedor de e-mail não recusa o pedido — ele é aceito e retido (RN-N11).
+      Garantias da 1.1.0 mantidas (RF-01 de `CAP-026`): idempotente por `pedidoId` (RN-N09); pedido sem finalidade, com modelo desconhecido, com dado faltante ou com **os dois ou nenhum** destinatário é recusado e registrado, nunca enviado parcialmente; provedor de e-mail indisponível não recusa — retém (RN-N11).
+
+      Novas na 1.2.0, para `destinatarioConta`:
+
+      - Notificação consulta Identity no momento da entrega e usa o e-mail e o nome **atuais** da conta. Identity indisponível → o pedido é aceito e retido, como na indisponibilidade do provedor (RN-N11); nunca é descartado por isso.
+      - Conta inexistente, de outra escola ou desativada → não entrega; publica `notificacao.entrega-falhou.v1` com `motivo: destinatario-indisponivel` e `esgotouTentativas: false`.
+      - O e-mail resolvido fica só onde a 1.1.0 já o guardava (Registro de Entrega e fato de entrega, RN-26); nunca em log, span, métrica ou chave de cache.
   publicarMensagemEntregue:
     action: send
     summary: Publicar o desfecho de uma entrega confirmada.
@@ -123,6 +129,29 @@ components:
             papel: professor
             link: https://backoffice.code4coders.com.br/convite?token=inv_Qm4Zt8Lw2Rp6Xa0c
           solicitadoEm: '2026-10-02T14:05:11Z'
+      - name: comprovanteDeCompra
+        headers:
+          correlationId: 00-d4e5f60718293a4b5c6d7e8f90011223-d4e5f60718293a4b-01
+        payload:
+          pedidoId: 5e6f7081-9203-5a4b-8c5d-6e7f8091a2b3
+          tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+          destinatarioConta:
+            tipo: conta-aluno
+            id: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          finalidade: comprovante-de-compra
+          modelo: comprovante-de-compra
+          dados:
+            numeroPedido: '000123'
+            curso: .NET do zero à API
+            opcao: Acesso por 12 meses
+            valorCentavos: 49700
+            meio: card
+            pagoEm: '2026-10-05T14:21:02Z'
+            vigencia:
+              type: months
+              months: 12
+            link: https://app.code4coders.com.br/cursos/6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+          solicitadoEm: '2026-10-05T14:21:03Z'
     MensagemEntregue:
       name: MensagemEntregue
       title: Mensagem entregue
@@ -183,28 +212,28 @@ components:
     PedidoDeEnvioSolicitadoPayload:
       type: object
       required:
-      - pedidoId
-      - tenantId
-      - destinatario
-      - finalidade
-      - modelo
-      - dados
-      - solicitadoEm
+        - pedidoId
+        - tenantId
+        - finalidade
+        - modelo
+        - dados
+        - solicitadoEm
       properties:
         pedidoId:
           type: string
           format: uuid
           description: |
-            Identidade estável do pedido de envio, atribuída pela origem. Chave de idempotência (RN-N09): reentrega do mesmo pedidoId pelo broker não produz segunda mensagem. Um reenvio deliberado (ex.: aluno pede novo link) é um pedidoId novo, não uma correção do anterior (RF-02, terceiro critério).
+            Identidade estável do pedido de envio, atribuída pela origem. Chave de idempotência (RN-N09). No comprovante, `commerce` a deriva do pedido de compra, de modo que a republicação do mesmo comprovante tem o mesmo `pedidoId` (RN-V09).
         tenantId:
           type: string
-          description: Convenção de baseline (BA10 · G07) — toda entidade e todo pedido carrega tenant_id desde
-            a Fase 1.
+          description: Convenção de baseline (BA10 · G07).
         destinatario:
           type: string
           format: email
           description: |
-            E-mail do aluno. Exceção declarada ao mascaramento de RN-N07/RN-21: é o destinatário, e não há entrega sem ele (RN-26 do domain doc de Identidade e Acesso). Em claro apenas aqui e no Registro de Entrega; nunca em log, span, métrica ou payload de erro.
+            E-mail do destinatário, como na 1.1.0. Exceção declarada ao mascaramento (RN-26). Ausente quando o pedido traz `destinatarioConta`.
+        destinatarioConta:
+          $ref: '#/components/schemas/DestinatarioConta'
         finalidade:
           $ref: '#/components/schemas/Finalidade'
         modelo:
@@ -214,26 +243,64 @@ components:
         solicitadoEm:
           type: string
           format: date-time
-          description: Instante em que a origem emitiu o pedido.
+      oneOf:
+        - required:
+            - destinatario
+          not:
+            required:
+              - destinatarioConta
+        - required:
+            - destinatarioConta
+          not:
+            required:
+              - destinatario
       allOf:
-      - if:
-          properties:
-            modelo:
-              const: convite-interno
-          required:
-          - modelo
-        then:
-          properties:
-            dados:
-              required:
-              - papel
-              - link
-        else:
-          properties:
-            dados:
-              required:
-              - nome
-              - link
+        - if:
+            properties:
+              modelo:
+                const: convite-interno
+            required:
+              - modelo
+          then:
+            properties:
+              dados:
+                required:
+                  - papel
+                  - link
+        - if:
+            properties:
+              modelo:
+                const: comprovante-de-compra
+            required:
+              - modelo
+          then:
+            required:
+              - destinatarioConta
+            properties:
+              dados:
+                required:
+                  - numeroPedido
+                  - curso
+                  - opcao
+                  - valorCentavos
+                  - meio
+                  - pagoEm
+                  - vigencia
+                  - link
+        - if:
+            properties:
+              modelo:
+                enum:
+                  - confirmacao-de-conta
+                  - recuperacao-de-senha
+            required:
+              - modelo
+          then:
+            properties:
+              dados:
+                required:
+                  - nome
+                  - link
     MensagemEntreguePayload:
       type: object
       required:
@@ -297,32 +364,95 @@ components:
     Finalidade:
       type: string
       enum:
-      - confirmacao-de-conta
-      - recuperacao-de-senha
-      - convite-interno
+        - confirmacao-de-conta
+        - recuperacao-de-senha
+        - convite-interno
+        - comprovante-de-compra
       description: |
-        `convite-interno` acrescentado na 1.1.0 (CAP-002): mensagem transacional ao convidado, que ainda não tem conta nem consentimento registrado — como toda transacional, não depende de consentimento de marketing (RN-N05). Nesta fatia, `modelo` e `finalidade` compartilham o mesmo vocabulário porque há exatamente um Modelo de Mensagem por finalidade (decisão registrada em contracts.md). Os dois campos permanecem distintos no payload porque RF-01 os recusa por motivos diferentes — finalidade não declarada vs. modelo desconhecido — e porque o segundo PRD de `CAP-026` (passo 8) deve poder acrescentar modelo sem reabrir este schema.
+        `comprovante-de-compra` acrescentado na 1.2.0 (CAP-011): mensagem transacional ao aluno cujo pedido foi pago (RF-09). Há exatamente um Modelo de Mensagem por finalidade, como na 1.0.0.
     DadosDoModelo:
       type: object
-      required:
-      - link
       properties:
         nome:
           type: string
-          description: |
-            Nome do destinatário, para personalizar a mensagem. Obrigatório em `confirmacao-de-conta` e `recuperacao-de-senha` (a recuperação serve também ao ator interno, com link do backoffice). Ausente em `convite-interno`: o convidado ainda não informou nome.
+          description: Nome do destinatário, em `confirmacao-de-conta` e `recuperacao-de-senha`. No comprovante, vem da conta, resolvido por Notificação.
         link:
           type: string
           format: uri
-          description: |
-            Link completo com o token de verificação embutido. A validade exibida no texto da mensagem NÃO viaja aqui: é renderizada pelo Modelo de Mensagem a partir do parâmetro de validade vigente por finalidade, de Notificação (RN-N13, RN-N14, RN-N15; QP-02 resolvida em 2026-09-20). Ver nota de risco operacional em contracts.md.
+          description: Link da mensagem. No comprovante, o curso no app do aluno.
         papel:
           type: string
           enum:
-          - professor
-          - suporte
-          - financeiro
-          - administrador
-          description: Papel ofertado no convite, pelo nome canônico de Identidade. Só em `convite-interno` (1.1.0).
+            - professor
+            - suporte
+            - financeiro
+            - administrador
+          description: Só em `convite-interno`.
+        numeroPedido:
+          type: string
+          pattern: ^[0-9]{6,}$
+          description: Só no comprovante. Número do pedido mostrado ao aluno.
+        curso:
+          type: string
+          minLength: 1
+          description: Só no comprovante. Título do curso congelado no pedido.
+        opcao:
+          type: string
+          minLength: 1
+          description: Só no comprovante. Nome da opção de compra congelado no pedido.
+        valorCentavos:
+          type: integer
+          minimum: 1
+          description: Só no comprovante. Valor pago, em centavos de real.
+        meio:
+          type: string
+          enum:
+            - card
+            - pix
+            - boleto
+          description: Só no comprovante. O modelo o escreve como "cartão de crédito", "PIX" ou "boleto"; nenhum dado do cartão.
+        pagoEm:
+          type: string
+          format: date-time
+          description: Só no comprovante. Momento do pagamento; o modelo o exibe no fuso da escola.
+        vigencia:
+          description: Só no comprovante. Vigência comprada; o modelo a escreve como "acesso por N meses a partir da liberação" ou "acesso vitalício" (RN-D04). O término exato não vai aqui — é calculado por Matrícula.
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required:
+                - type
+                - months
+              properties:
+                type:
+                  const: months
+                months:
+                  type: integer
+                  minimum: 1
+                  maximum: 60
+            - type: object
+              additionalProperties: false
+              required:
+                - type
+              properties:
+                type:
+                  const: lifetime
       description: |
-        Na 1.0.0, forma única para as duas finalidades (nome e link). Na 1.1.0 a obrigatoriedade passa a depender do modelo — ver `PedidoDeEnvioSolicitadoPayload.allOf`: `convite-interno` exige `papel` e `link`; os demais continuam exigindo `nome` e `link`. Forma única original: O segundo PRD pode precisar de forma distinta por modelo; quando isso ocorrer, este schema evolui para um `oneOf` por modelo sem quebrar o consumidor desta fatia (campos aditivos).
+        A obrigatoriedade depende do modelo — ver `PedidoDeEnvioSolicitadoPayload.allOf`. O comprovante declara que não é documento fiscal no próprio Modelo de Mensagem, que é de Notificação (RN-28).
+    DestinatarioConta:
+      type: object
+      additionalProperties: false
+      required:
+        - tipo
+        - id
+      description: Conta a quem entregar; e-mail e nome são resolvidos por Notificação em Identity (C-06).
+      properties:
+        tipo:
+          type: string
+          enum:
+            - conta-aluno
+          description: Só conta de aluno nesta versão. Consumidores devem tolerar valor novo.
+        id:
+          type: string
+          format: uuid
+          description: Conta em Identidade e Acesso.

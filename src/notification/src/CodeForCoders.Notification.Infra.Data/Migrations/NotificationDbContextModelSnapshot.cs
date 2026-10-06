@@ -123,10 +123,18 @@ namespace CodeForCoders.Notification.Infra.Data.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("reason");
 
+                    b.Property<string>("ReceiptData")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("receipt_data");
+
                     b.Property<string>("Recipient")
                         .HasMaxLength(320)
                         .HasColumnType("character varying(320)")
                         .HasColumnName("recipient");
+
+                    b.Property<Guid?>("RecipientAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recipient_account_id");
 
                     b.Property<string>("RecipientName")
                         .HasMaxLength(255)

@@ -31,6 +31,15 @@ public static class DependencyInjection
                 // Reasons are confidential even in development: never log SQL parameter values.
             }
         });
+        services.AddScoped<ISalesPaymentSink, Sales.SalesPaymentSink>();
+        services.AddScoped<IPurchaseGrantSink, Entitlement.PurchaseGrantSink>();
+        services.AddScoped<ISalesAccessSink, Sales.SalesAccessSink>();
+        services.AddScoped<IOrderPaymentStore, Sales.OrderPaymentStore>();
+        services.AddScoped<IOrderStore, Sales.OrderStore>();
+        services.AddScoped<IFinanceOrderQueries, Queries.FinanceOrderQueries>();
+        services.AddScoped<IStudentOrderQueries, Queries.StudentOrderQueries>();
+        services.AddScoped<ICatalogPurchaseOfferQueries, Catalog.PurchaseOfferReader>();
+        services.AddScoped<IExistingCourseAccessQueries, Entitlement.ExistingCourseAccessReader>();
         services.AddScoped<ICourtesyGrantStore, Entitlement.CourtesyGrantStore>();
         services.AddScoped<IEntitlementOutboxMessageWriter, EntitlementOutboxMessageWriter>();
         services.AddHostedService<Entitlement.GrantReceiptCleanupWorker>();
@@ -41,6 +50,13 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddScoped<Entitlement.AccessExpirationCycle>();
         services.AddHostedService<Entitlement.AccessExpirationWorker>();
+        services.AddOptions<OrderExpirationOptions>()
+            .Bind(configuration.GetSection(OrderExpirationOptions.SectionName))
+            .Validate(options => options.PollingIntervalSeconds is > 0 and <= 1800, "Order expiration polling must be between 1 and 1800 seconds.")
+            .Validate(options => options.BatchSize is > 0 and <= 1000, "Order expiration batch size must be between 1 and 1000.")
+            .ValidateOnStart();
+        services.AddScoped<Sales.OrderExpirationCycle>();
+        services.AddHostedService<Sales.OrderExpirationWorker>();
         services.AddScoped<ICatalogCourseQueries, Queries.CatalogCourseQueries>();
         services.AddScoped<ICourtesyCourseQueries, Queries.CourtesyCourseQueries>();
         services.AddScoped<IStudentAccessGrantQueries, Queries.StudentAccessGrantQueries>();

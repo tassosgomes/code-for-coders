@@ -1,7 +1,10 @@
 using System.Net;
+using System.Globalization;
 using CodeForCoders.Notification.Application.Common;
 using CodeForCoders.Notification.Application.Interfaces;
 using CodeForCoders.Notification.Domain.SeedWork;
+
+using CodeForCoders.Notification.Domain.DeliveryRecords;
 
 namespace CodeForCoders.Notification.Application.Services;
 
@@ -14,10 +17,12 @@ public sealed class MessageTemplateRenderer(IEmailTemplateSettings settings) : I
         string recipient,
         string? recipientName,
         string link,
-        string? recipientRole = null)
+        string? recipientRole = null,
+        PurchaseReceiptData? receiptData = null)
     {
         return model switch
         {
+            NotificationPurposes.PurchaseReceipt => RenderPurchaseReceipt(recipient, recipientName, link, receiptData),
             NotificationPurposes.AccountConfirmation => RenderAccountConfirmation(
                 recipient,
                 recipientName ?? string.Empty,
@@ -33,6 +38,29 @@ public sealed class MessageTemplateRenderer(IEmailTemplateSettings settings) : I
             _ => throw new EntityValidationException(
                 "The notification model is not supported by this slice."),
         };
+    }
+
+    private TransactionalEmail RenderPurchaseReceipt(string recipient, string? name, string link, PurchaseReceiptData? data)
+    {
+        if (data is null) throw new EntityValidationException("Purchase receipt data is required.");
+        var culture = CultureInfo.GetCultureInfo("pt-BR");
+        var payment = TimeZoneInfo.ConvertTime(data.PaidAt, settings.SchoolTimeZone);
+        var method = data.PaymentMethod switch { "card" => "cartão de crédito", "pix" => "PIX", "boleto" => "boleto", _ => "" };
+        var period = data.PeriodType == "months"
+            ? $"acesso por {data.PeriodMonths} meses a partir da liberação" : "acesso vitalício";
+        var details = $"Pedido {data.OrderNumber}\nCurso: {data.Course}\nOpção: {data.Offer}\n"
+            + $"Valor pago: {(data.AmountCents / 100m).ToString("C", culture)}\nMeio: {method}\n"
+            + $"Pagamento: {payment.ToString("dd/MM/yyyy HH:mm", culture)}\nVigência: {period}";
+        const string notice = "Este comprovante não é documento fiscal.";
+        var greeting = GetGreeting(name);
+        var text = $"{greeting}\n\nCompra confirmada!\n\n{details}\n\nVer meu pedido:\n{link}\n\n{notice}\n\n{Footer}";
+        var html = "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\"></head><body>"
+            + $"<h1>{WebUtility.HtmlEncode(greeting)}</h1><p>Compra confirmada!</p>"
+            + $"<p>{WebUtility.HtmlEncode(details).Replace("\n", "<br>", StringComparison.Ordinal)}</p>"
+            + $"<a href=\"{WebUtility.HtmlEncode(link)}\" style=\"display:inline-block;padding:12px 20px;"
+            + "background-color:#5b5bd6;border-radius:6px;color:#ffffff;text-decoration:none;font-weight:700;\">Ver meu pedido</a>"
+            + $"<p>{notice}</p><footer>{Footer}</footer></body></html>";
+        return new TransactionalEmail(recipient, "Comprovante de compra na Code4Coders", text, html);
     }
 
     private TransactionalEmail RenderAccountConfirmation(

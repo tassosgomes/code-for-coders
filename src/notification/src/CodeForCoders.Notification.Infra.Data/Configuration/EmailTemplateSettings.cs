@@ -5,6 +5,7 @@ namespace CodeForCoders.Notification.Infra.Data.Configuration;
 
 public sealed class EmailTemplateSettings(IOptions<EmailOptions> options) : IEmailTemplateSettings
 {
+    public TimeZoneInfo SchoolTimeZone => TimeZoneInfo.FindSystemTimeZoneById(options.Value.SchoolTimeZone);
     public int GetLinkValidityHours(string purpose)
     {
         if (options.Value.ValidityHoursByPurpose.TryGetValue(purpose, out var validityHours)

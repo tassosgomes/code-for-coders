@@ -14,7 +14,8 @@ public sealed class AcceptNotificationSendRequestInputValidator
         RuleFor(input => input.Request.Destinatario)
             .NotEmpty()
             .EmailAddress()
-            .MaximumLength(320);
+            .MaximumLength(320)
+            .When(input => input.Request.Destinatario is not null);
 
         When(
             input => input.Request.Dados is not null,

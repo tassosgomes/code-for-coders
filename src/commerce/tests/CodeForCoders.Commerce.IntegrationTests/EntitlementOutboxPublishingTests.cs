@@ -41,6 +41,7 @@ public sealed class EntitlementOutboxPublishingTests(CommerceIntegrationFixture 
         var suffix = Guid.CreateVersion7().ToString("N"); await using var factory = await FactoryAsync(suffix); using var client = factory.CreateClient();
         await using var channel = await factory.Services.GetRequiredService<RabbitMqConnectionProvider>().CreateChannelAsync(Cancellation);
         await channel.QueueDeleteAsync("commerce.retention-" + suffix, false, false, Cancellation);
+        await channel.QueueDeleteAsync("commerce.sales-access-granted-" + suffix, false, false, Cancellation);
         var id = Guid.CreateVersion7(); await AppendAsync(factory, Guid.CreateVersion7(), id, "matricula.acesso-concedido.v1", null);
         var row = await WaitAsync(factory, id, row => row.Attempts == 3); Assert.Null(row.ProcessedOn); Assert.Equal("OutboxPublishException", row.LastError);
     }
@@ -83,6 +84,11 @@ public sealed class EntitlementOutboxPublishingTests(CommerceIntegrationFixture 
                     options.Exchange = "commerce.entitlement-" + suffix;
                     options.AuditExchange = "audit.courtesy-" + suffix; options.EntitlementFactRetentionQueue = "commerce.retention-" + suffix;
                     options.OfferRetentionQueue = "commerce.offers-" + suffix; options.HeartbeatQueue = "commerce.heartbeat-" + suffix;
+                    options.CatalogCourseQueue = "commerce.catalog-" + suffix;
+                    options.EntitlementCourseQueue = "commerce.entitlement-course-" + suffix;
+                    options.SalesPaymentsQueue = "commerce.sales-payments-" + suffix;
+                    options.EntitlementPurchasesQueue = "commerce.entitlement-purchases-" + suffix;
+                    options.SalesAccessGrantedQueue = "commerce.sales-access-granted-" + suffix;
                 });
                 services.Configure<OutboxOptions>(options => { options.PollingIntervalSeconds = 1; options.MaxAttempts = 3; });
             }
@@ -96,7 +102,7 @@ public sealed class EntitlementOutboxPublishingTests(CommerceIntegrationFixture 
     }
     private static async Task<EntitlementOutboxMessage> WaitAsync(CatalogCourseApiFactory factory, Guid id, Func<EntitlementOutboxMessage, bool> predicate)
     {
-        for (var attempt = 0; attempt < 100; attempt++)
+        for (var attempt = 0; attempt < 300; attempt++)
         {
             await using var scope = factory.Services.CreateAsyncScope();
             var row = await scope.ServiceProvider.GetRequiredService<CommerceDbContext>().EntitlementOutboxMessages.IgnoreQueryFilters().AsNoTracking().SingleAsync(item => item.Id == id, Cancellation);

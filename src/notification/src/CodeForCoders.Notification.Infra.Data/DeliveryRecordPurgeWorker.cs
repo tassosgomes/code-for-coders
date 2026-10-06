@@ -68,7 +68,9 @@ public sealed class DeliveryRecordPurgeWorker(
                     || (record.Status == DeliveryStatus.Delivered && record.DeliveredOn <= cutoff)
                     || (record.Status == DeliveryStatus.Failed && record.FailedOn <= cutoff)))
             .Where(record =>
-                record.Recipient != null
+                record.RecipientAccountId != null
+                || record.ReceiptData != null
+                || record.Recipient != null
                 || record.RecipientName != null
                 || record.RecipientRole != null
                 || record.Link != null

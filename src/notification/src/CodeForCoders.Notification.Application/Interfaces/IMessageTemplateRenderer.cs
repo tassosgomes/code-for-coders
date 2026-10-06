@@ -1,3 +1,5 @@
+using CodeForCoders.Notification.Domain.DeliveryRecords;
+
 namespace CodeForCoders.Notification.Application.Interfaces;
 
 public interface IMessageTemplateRenderer
@@ -7,5 +9,6 @@ public interface IMessageTemplateRenderer
         string recipient,
         string? recipientName,
         string link,
-        string? recipientRole = null);
+        string? recipientRole = null,
+        PurchaseReceiptData? receiptData = null);
 }

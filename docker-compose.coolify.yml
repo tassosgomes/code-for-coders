@@ -34,11 +34,15 @@ services:
     expose:
       - "8080"
     environment:
+      ServiceAssertions__Issuers__notification__PublicKeys__local-notification-identity-1: ${NOTIFICATION_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__notification__AllowedScopes__0: student-contact:read
+      ServiceAssertions__Issuers__notification__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       StudentSessionTokens__Issuer: identity
       StudentSessionTokens__SigningKeyId: local-student-1
       StudentSessionTokens__SigningKeyBase64: ${IDENTITY_STUDENT_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StudentSessionTokens__LifetimeMinutes: "5"
       StudentSessionTokens__AudienceScopes__learning: lessons:read
+      StudentSessionTokens__AudienceScopes__commerce: orders:use
       StudentSessionTokens__AudienceScopes__media: playback:use
       StudentSessionTokens__EmailAudiences__0: media
       ASPNETCORE_ENVIRONMENT: Development
@@ -96,6 +100,7 @@ services:
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__7: staff-members:write
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__8: audit-references:read
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__9: ${BFF_ADMIN_STUDENT_LOOKUP_SCOPE:-student-account:lookup}
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__10: ${BFF_ADMIN_STUDENT_RESOLVE_SCOPE:-student-account:resolve}
       ServiceAssertions__Issuers__bff-admin__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-identity-1: ${COMMERCE_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__commerce__AllowedScopes__0: student-account:confirm
@@ -244,6 +249,18 @@ services:
     expose:
       - "8080"
     environment:
+      RabbitMq__RoutingExchanges__notificacao.envio-solicitado.v1: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      RabbitMq__RoutingExchanges__auditoria.ato-praticado.v1: audit.events
+      BillingClient__BaseUrl: http://billing:8080/
+      BillingClient__Issuer: commerce
+      BillingClient__Audience: billing
+      BillingClient__SigningKeyId: local-commerce-billing-1
+      BillingClient__SigningKeyBase64: ${COMMERCE_BILLING_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StudentApp__PublicBaseUrl: ${STUDENT_APP_PUBLIC_BASE_URL:-http://localhost:8082}
+      RabbitMq__BillingExchange: billing.events
+      RabbitMq__SalesPaymentsQueue: commerce.sales-payments
+      RabbitMq__EntitlementPurchasesQueue: commerce.entitlement-purchases
+      RabbitMq__SalesAccessGrantedQueue: commerce.sales-access-granted
       ServiceAssertions__Issuers__learning__PublicKeys__local-learning-commerce-1: ${LEARNING_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__media__PublicKeys__local-media-commerce-1: ${MEDIA_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__media__AllowedScopes__0: access-decision:read
@@ -297,6 +314,12 @@ services:
     expose:
       - "8080"
     environment:
+      StudentContactIdentity__BaseUrl: http://identity:8080/
+      StudentContactIdentity__Issuer: notification
+      StudentContactIdentity__Audience: identity-internal
+      StudentContactIdentity__SigningKeyId: local-notification-identity-1
+      StudentContactIdentity__SigningKeyBase64: ${NOTIFICATION_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      Email__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
@@ -316,6 +339,42 @@ services:
       Email__ValidityHoursByPurpose__recuperacao-de-senha: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
       Email__ValidityHoursByPurpose__convite-interno: ${STAFF_INVITATION_VALIDITY_HOURS:-168}
       Notification__Namespace: ${NOTIFICATION_NAMESPACE:-default}
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  billing:
+    build:
+      context: .
+      dockerfile: src/billing/Dockerfile
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      Billing__Namespace: ${BILLING_NAMESPACE:-default}
+      RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
+      RabbitMq__Username: code_for_coders
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__VirtualHost: code-for-coders
+      RabbitMq__Exchange: billing.events
+      RabbitMq__DeadLetterExchange: billing.events.dlx
+      RabbitMq__HeartbeatQueue: billing.platform-heartbeat
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
+      ServiceAssertions__Audience: billing
+      ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-billing-1: ${COMMERCE_BILLING_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__commerce__AllowedScopes__0: payment:request
+      ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:?set in Coolify}
+      Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:?set in Coolify}
+      PaymentReturn__AllowedHosts__0: ${BILLING_RETURN_HOST:-c4c-student.lab.tasso.dev.br}
+      # Domínio público do webhook (https://<domínio de billing>/webhooks/v1/stripe/events) a definir;
+      # o Coolify deve expor somente /webhooks/v1 deste serviço.
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s

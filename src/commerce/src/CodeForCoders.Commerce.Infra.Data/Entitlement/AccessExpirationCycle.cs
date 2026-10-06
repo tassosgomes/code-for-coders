@@ -12,11 +12,13 @@ public sealed class AccessExpirationCycle(CommerceDbContext db, IEntitlementOutb
 {
     public static readonly EventId LagAlert = new(1800, "AccessExpirationLag");
     private static readonly TimeSpan LagAlertThreshold = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan PaidWithoutAccessThreshold = TimeSpan.FromMinutes(10);
 
     public async Task<int> RunAsync(CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
         await RecordLagAsync(now, cancellationToken);
+        await RecordPaidOrdersWithoutAccessAsync(now, cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         // This maintenance job spans tenants; every fact retains its grant's tenant.
         var grants = await db.AccessGrants.FromSql($"""
@@ -59,5 +61,13 @@ public sealed class AccessExpirationCycle(CommerceDbContext db, IEntitlementOutb
         CommerceTelemetry.AccessExpirationLag.Record(lag.TotalSeconds);
         if (lag > LagAlertThreshold)
             logger.LogWarning(LagAlert, "Access expiration facts are overdue. Oldest pending lag is {LagSeconds} seconds.", lag.TotalSeconds);
+    }
+
+    private async Task RecordPaidOrdersWithoutAccessAsync(DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var limit = now - PaidWithoutAccessThreshold;
+        var overdue = await db.Orders.IgnoreQueryFilters()
+            .CountAsync(order => order.Status == "paid" && order.AccessGrantedAt == null && order.PaidAt <= limit, cancellationToken);
+        CommerceTelemetry.PaidOrdersWithoutAccess.Record(overdue);
     }
 }

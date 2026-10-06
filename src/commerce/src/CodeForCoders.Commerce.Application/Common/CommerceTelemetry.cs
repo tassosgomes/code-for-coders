@@ -11,6 +11,10 @@ public static class CommerceTelemetry
 
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
+    public static readonly System.Diagnostics.Metrics.Counter<long> PaymentAmountMismatches = Meter.CreateCounter<long>("commerce.sales.payment.amount-mismatches", "{payment}");
+    public static readonly System.Diagnostics.Metrics.Histogram<double> PaymentAccessLag = Meter.CreateHistogram<double>("commerce.entitlement.payment-access-lag", "s");
+    public static readonly Gauge<long> PaidOrdersWithoutAccess = Meter.CreateGauge<long>("commerce.sales.payment.access-overdue", "{order}");
+    public static readonly System.Diagnostics.Metrics.Counter<long> PurchaseDeadLetters = Meter.CreateCounter<long>("commerce.purchase.dead-letters", "{delivery}");
     public static readonly Gauge<double> AccessExpirationLag = Meter.CreateGauge<double>("commerce.entitlement.expiration.lag", "s");
     public static readonly Counter<long> CourseFactsApplied = Meter.CreateCounter<long>("commerce.catalog.course.applied", "{fact}");
     public static readonly Counter<long> CourseFactsIgnored = Meter.CreateCounter<long>("commerce.catalog.course.ignored", "{fact}");

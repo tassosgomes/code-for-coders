@@ -1,0 +1,176 @@
+openapi: 3.1.0
+info:
+  title: Identity — integração com o BFF do aluno (recorte de CAP-011)
+  version: 1.2.0
+  description: |
+    Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/identity/openapi-internal-student.yaml` 1.1.0 de forma **aditiva**: `commerce` passa a ser audiência autorizada do JWT de aluno (C-03), para o `bff-student` repassar ao dono do pedido. Só `validateStudentSessionInternal` muda, e só na lista de audiências; as demais operações não estão neste recorte.
+
+    O JWT de `commerce` tem `scope: orders:use` e **não** carrega `email` (a claim continua exclusiva da audiência `media`, ADR-0013): `commerce` não precisa do e-mail do aluno para nada nesta entrega (C-06).
+  contact:
+    name: Time de Identidade e Acesso
+servers:
+- url: /internal/v1
+  description: Rota privada de Identity, inacessível ao navegador
+tags:
+- name: StudentIdentity
+  description: Conta, credencial e sessão do aluno na fronteira interna
+paths:
+  /student-session-validations:
+    post:
+      tags:
+      - StudentIdentity
+      summary: Validar e renovar sessão
+      description: 'Comportamento inalterado: valida sessão, tenant, situação da Conta e expiração; renova a inatividade
+        atomicamente; com `audience`, emite JWT de aluno curto só para aquela audiência autorizada. Mudança aditiva
+        deste recorte (C-03): `commerce` passa a ser audiência autorizada, com `scope: orders:use` e sem `email`.
+        Falha fecha acesso.'
+      operationId: validateStudentSessionInternal
+      security:
+      - BffServiceAssertion: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionValidationInput'
+            examples:
+              paraCommerce:
+                value:
+                  sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+                  audience: commerce
+      responses:
+        '200':
+          description: Sessão ativa com expiração renovada e JWT opcional.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionValidated'
+              examples:
+                comToken:
+                  value:
+                    accountId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    name: Ana Souza
+                    expiresAt: '2026-10-05T16:19:30Z'
+                    accessToken: eyJhbGciOiJSUzI1NiIsImtpZCI6InN0dWRlbnQtMjAyNi0xMCJ9.eyJhdWQiOiJjb21tZXJjZSJ9.c2lnbmF0dXJl
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    BffServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT de serviço assimétrico curto emitido pelo BFF do aluno. Identity valida assinatura, kid, emissor,
+        audiência, escopo, tenant, validade e jti contra replay. Não é JWT de aluno.
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    SessionValidationInput:
+      type: object
+      additionalProperties: false
+      required:
+      - sessionId
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        audience:
+          type: string
+          minLength: 1
+          description: 'Omitido quando o BFF só precisa consultar a sessão; obrigatório para obter JWT de destino.
+            Audiências de aluno autorizadas para o BFF do aluno: `media`, `learning` e, a partir de 1.2.0, `commerce`
+            (C-03). Audiência não autorizada → 403.'
+          examples:
+          - commerce
+    SessionValidated:
+      type: object
+      additionalProperties: false
+      required:
+      - accountId
+      - name
+      - expiresAt
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        accessToken:
+          type: string
+          description: 'JWT interno de aluno; presente somente quando `audience` foi solicitada. Vida curta, RS256,
+            claims `iss`, `aud`, `sub`, `tenantId`, `sessionId`, `scope`, `exp`, `jti`. `scope` por audiência: `media`
+            → `playback:use`, `learning` → `lessons:read`, `commerce` → `orders:use`. **Só com `audience: media`
+            há a claim `email`.**'
+  responses:
+    BadRequest:
+      description: JSON ou campo obrigatório inválido.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Pedido inválido.
+                status: 400
+                code: VALIDATION_ERROR
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    Unauthorized:
+      description: Asserção inválida ou sessão ausente, expirada ou revogada; distinguir por code.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    Forbidden:
+      description: Audiência de JWT não autorizada para o BFF.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            audiencia:
+              value:
+                type: about:blank
+                title: Audiência não autorizada.
+                status: 403
+                code: AUDIENCE_NOT_ALLOWED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01

@@ -155,7 +155,7 @@ public sealed class ConcurrentNamespaceIsolationTests(NotificationIntegrationFix
                 configuration.AddInMemoryCollection(configurationValues))
             .ConfigureServices((context, services) =>
             {
-                services.AddApplicationConfiguration();
+                services.AddNotificationTestApplication();
                 services.AddDataConfiguration(context.Configuration, context.HostingEnvironment);
                 services.AddMessagingConfiguration(context.Configuration);
                 services.AddNotificationMessageHandlers();

@@ -12,7 +12,7 @@ public static class CommerceTestHost
     /// the default OTLP timeout every host shutdown waited 5–10 s for the final flush to an absent collector.
     /// </summary>
     public static void UseShortTelemetryExportTimeout(IWebHostBuilder builder)
-        => builder.UseSetting("OTEL_EXPORTER_OTLP_TIMEOUT", "100");
+        => builder.UseSetting("OpenTelemetry:ExportEnabled", "false");
 
     /// <summary>
     /// Points a named or typed client at a test double owned by the test. The handler never expires, so

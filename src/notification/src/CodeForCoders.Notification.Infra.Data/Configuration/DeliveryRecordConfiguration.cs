@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CodeForCoders.Notification.Domain.DeliveryRecords;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -32,6 +33,10 @@ public sealed class DeliveryRecordConfiguration : IEntityTypeConfiguration<Deliv
         builder.Property(record => record.RecipientName)
             .HasColumnName("recipient_name")
             .HasMaxLength(DeliveryRecord.RecipientNameMaxLength);
+        builder.Property(record => record.RecipientAccountId).HasColumnName("recipient_account_id");
+        builder.Property(record => record.ReceiptData).HasColumnName("receipt_data").HasColumnType("jsonb")
+            .HasConversion(data => JsonSerializer.Serialize(data, (JsonSerializerOptions?)null),
+                json => JsonSerializer.Deserialize<PurchaseReceiptData>(json, (JsonSerializerOptions?)null));
         builder.Property(record => record.RecipientRole)
             .HasColumnName("recipient_role")
             .HasMaxLength(32);

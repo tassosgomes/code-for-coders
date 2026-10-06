@@ -29,11 +29,15 @@ services:
 
   identity:
     environment:
+      ServiceAssertions__Issuers__notification__PublicKeys__local-notification-identity-1: ${NOTIFICATION_IDENTITY_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__notification__AllowedScopes__0: student-contact:read
+      ServiceAssertions__Issuers__notification__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       StudentSessionTokens__Issuer: identity
       StudentSessionTokens__SigningKeyId: local-student-1
       StudentSessionTokens__SigningKeyBase64: ${IDENTITY_STUDENT_TOKEN_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StudentSessionTokens__LifetimeMinutes: "5"
       StudentSessionTokens__AudienceScopes__learning: lessons:read
+      StudentSessionTokens__AudienceScopes__commerce: orders:use
       StudentSessionTokens__AudienceScopes__media: playback:use
       StudentSessionTokens__EmailAudiences__0: media
       <<: *remote-environment
@@ -41,6 +45,7 @@ services:
       ServiceAssertions__Issuers__commerce__AllowedScopes__0: student-account:confirm
       ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__9: ${BFF_ADMIN_STUDENT_LOOKUP_SCOPE:-student-account:lookup}
+      ServiceAssertions__Issuers__bff-admin__AllowedScopes__10: ${BFF_ADMIN_STUDENT_RESOLVE_SCOPE:-student-account:resolve}
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
     depends_on: !reset {}
 
@@ -79,6 +84,18 @@ services:
 
   commerce:
     environment:
+      RabbitMq__RoutingExchanges__notificacao.envio-solicitado.v1: notification.events.${NOTIFICATION_NAMESPACE:-default}
+      RabbitMq__RoutingExchanges__auditoria.ato-praticado.v1: audit.events
+      BillingClient__BaseUrl: http://billing:8080/
+      BillingClient__Issuer: commerce
+      BillingClient__Audience: billing
+      BillingClient__SigningKeyId: local-commerce-billing-1
+      BillingClient__SigningKeyBase64: ${COMMERCE_BILLING_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      StudentApp__PublicBaseUrl: ${STUDENT_APP_PUBLIC_BASE_URL:-http://localhost:8082}
+      RabbitMq__BillingExchange: billing.events
+      RabbitMq__SalesPaymentsQueue: commerce.sales-payments
+      RabbitMq__EntitlementPurchasesQueue: commerce.entitlement-purchases
+      RabbitMq__SalesAccessGrantedQueue: commerce.sales-access-granted
       ServiceAssertions__Issuers__learning__PublicKeys__local-learning-commerce-1: ${LEARNING_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__media__PublicKeys__local-media-commerce-1: ${MEDIA_COMMERCE_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__media__AllowedScopes__0: access-decision:read
@@ -103,9 +120,29 @@ services:
 
   notification:
     environment:
+      StudentContactIdentity__BaseUrl: http://identity:8080/
+      StudentContactIdentity__Issuer: notification
+      StudentContactIdentity__Audience: identity-internal
+      StudentContactIdentity__SigningKeyId: local-notification-identity-1
+      StudentContactIdentity__SigningKeyBase64: ${NOTIFICATION_IDENTITY_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
+      Email__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       <<: *remote-environment
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Email__SmtpHost: ${REMOTE_INFRA_HOST:-192.168.0.5}
+    depends_on: !reset {}
+
+  billing:
+    environment:
+      <<: *remote-environment
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?run scripts/remote-infra.sh provision};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      Billing__Namespace: ${BILLING_NAMESPACE:-default}
+      ServiceAssertions__Audience: billing
+      ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-billing-1: ${COMMERCE_BILLING_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
+      ServiceAssertions__Issuers__commerce__AllowedScopes__0: payment:request
+      ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-}
+      Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      PaymentReturn__AllowedHosts__0: localhost
     depends_on: !reset {}
 
   audit:

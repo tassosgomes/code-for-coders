@@ -13,6 +13,7 @@ public static class ServiceConfigurationExtensions
     public static WebApplicationBuilder AddCommerceConfiguration(this WebApplicationBuilder builder)
     {
         builder.Services.AddApplicationConfiguration();
+        builder.Services.AddBillingClientConfiguration(builder.Configuration);
         builder.Services.AddCourtesyGrantConfiguration(builder.Configuration);
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddMessagingConfiguration(builder.Configuration);
@@ -46,6 +47,9 @@ public static class ServiceConfigurationExtensions
             policy => policy.RequireAuthenticatedUser().RequireClaim("roles", CatalogPolicies.AdministratorRole)));
         builder.Services.AddAuthorization(options => options.AddPolicy(CourtesyPolicies.Grant,
             policy => policy.RequireAuthenticatedUser().RequireClaim("permissions", CourtesyPolicies.Permission)));
+        builder.Services.AddAuthorization(options => options.AddPolicy(StudentOrderPolicies.Use,
+            policy => policy.RequireAuthenticatedUser().RequireClaim("scope", "orders:use")
+                .RequireAssertion(context => !context.User.HasClaim(claim => claim.Type == "permissions"))));
         builder.Services.AddServiceAssertionConfiguration(builder.Configuration);
         builder.Services.AddErrorHandlingConfiguration();
         builder.Services.AddHealthConfiguration();

@@ -12,5 +12,6 @@ public sealed class TransactionalConsentService : IConsentService
         => Task.FromResult(
             purpose is NotificationPurposes.AccountConfirmation
                 or NotificationPurposes.PasswordRecovery
-                or NotificationPurposes.StaffInvitation);
+                or NotificationPurposes.StaffInvitation
+                or NotificationPurposes.PurchaseReceipt);
 }
