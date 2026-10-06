@@ -2,14 +2,14 @@
   "schema_version": 1,
   "branch": "feature/compra-avulsa",
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
-  "base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
-  "target_ref": null,
-  "last_checkpoint": "ed6fe7e",
-  "phase": "checkpoint",
-  "active_task": "10.0",
+  "base_ref": "43e223d5bd7527fad0f80c3bebadb1795eabb07e",
+  "target_ref": "43e223d5bd7527fad0f80c3bebadb1795eabb07e",
+  "last_checkpoint": "822047901f9536b6306ae2b9b36f71c5ab5a9d6b",
+  "phase": "reopen",
+  "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 1,
   "specs": [
     "techspec.md"
@@ -18,18 +18,18 @@
   "transport": "herdr",
   "validated_commit": null,
   "validated_tree": null,
-  "pending_delegation": {
-    "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "10.0"
-  },
+  "pending_delegation": null,
   "last_result": {
     "role": "validator",
-    "mode": "focused",
-    "task": "10.0",
-    "run_id": "run.bUmEzxhN",
-    "outcome": "approved",
-    "report": "tasks/prd-compra-avulsa/10.0_task_review.md"
+    "mode": "full",
+    "run_id": "run.HYUdHUSh",
+    "outcome": "rejected",
+    "blockers": [
+      "B1 suíte commerce 49/486 falham (colisão de filas RabbitMQ) — 5.0",
+      "B2 Dockerfile billing sem Infra.Gateway — 5.0"
+    ],
+    "validated_commit": "8220479",
+    "report": "tasks/prd-compra-avulsa/prd_review.md"
   },
   "history": [
     {
@@ -198,6 +198,24 @@
       "ts": "2026-10-05T23:51",
       "event": "10.0 aprovada em focused (0 bloqueantes, 3 recomendações)",
       "run_id": "run.bUmEzxhN"
+    },
+    {
+      "ts": "2026-10-05T23:55",
+      "event": "10.0 checkpoint f066af6; todas as tasks done"
+    },
+    {
+      "ts": "2026-10-05T23:58",
+      "event": "prepare-integration: rebase sobre main 43e223d; HEAD 8220479"
+    },
+    {
+      "ts": "2026-10-06T00:15",
+      "event": "full 1/3 reprovada (B1, B2 → 5.0)",
+      "run_id": "run.HYUdHUSh"
+    },
+    {
+      "ts": "2026-10-06",
+      "event": "5.0 reaberta para correção de B1 e B2",
+      "run_id": "run.WTthiDNU"
     }
   ],
   "blocked_tasks": {},
