@@ -18,7 +18,7 @@ BASE_REF="${BASE_REF:-origin/main}"
 changed=$(git diff --name-status --diff-filter=MDR "$BASE_REF...HEAD" -- '*Migrations/*' \
   | grep -v 'ModelSnapshot\.cs$' || true)
 
-if [ -n "$changed" ]; then
+if [[ -n "$changed" ]]; then
   echo "error: migration files already present on $BASE_REF were changed:"
   echo "$changed"
   echo

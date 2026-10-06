@@ -1,5 +1,6 @@
 # Várias aplicações compartilhando um host, cada uma no seu subpath.
 # O BASE_PATH da imagem precisa bater com o path daqui.
+# A porta do Service é a do container: 8080.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -18,11 +19,11 @@ spec:
               service:
                 name: poc-01-svc
                 port:
-                  number: 80
+                  number: 8080
           - path: /poc-02
             pathType: Prefix
             backend:
               service:
                 name: poc-02-svc
                 port:
-                  number: 80
+                  number: 8080
