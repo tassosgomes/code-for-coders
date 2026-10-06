@@ -70,11 +70,17 @@ smtp4dev at <https://smtp.tasso.dev.br> and telemetry in Kibana at <https://kiba
 
 ### Coolify development environment
 
-The whole stack (six APIs, both BFFs, both SPAs) is deployed on Coolify (project `code4coders`,
-environment `development`, server `192.168.0.11`) from `docker-compose.coolify.yml`. Builds run on
-the Coolify server itself; services keep talking to each other by compose service name (`bff-*`,
-`identity`, `learning`), and only the domains below are public through the Coolify proxy
-(Traefik, wildcard TLS `*.lab.tasso.dev.br`):
+The stack is deployed on Coolify (project `code4coders`, environment `development`, server
+`192.168.0.11`) as two resources: `code4coders-apis` (nine backend services, from
+`docker-compose.coolify.apis.yml`) and `code4coders-web` (both BFFs and both SPAs, from
+`docker-compose.coolify.web.yml`). The split keeps each rendered compose below the kernel
+per-argument limit that breaks Coolify deploys of large compose files
+([coollabsio/coolify#11737](https://github.com/coollabsio/coolify/issues/11737)). Deploy
+`code4coders-apis` first: the BFFs resolve the API hostnames (`identity`, `learning`, `media`,
+`commerce`, `audit`) through the external `c4c-shared` Docker network, which must exist on the
+server (`docker network create c4c-shared`). Builds run on the Coolify server itself, and only
+the domains below are public through the Coolify proxy (Traefik, wildcard TLS
+`*.lab.tasso.dev.br`):
 
 | Application | URL |
 | --- | --- |
@@ -86,6 +92,7 @@ the Coolify server itself; services keep talking to each other by compose servic
 | Commerce API | <https://c4c-commerce.lab.tasso.dev.br> |
 | Notification API | <https://c4c-notification.lab.tasso.dev.br> |
 | Audit API | <https://c4c-audit.lab.tasso.dev.br> |
+| Media Edge | <https://c4c-media-edge.lab.tasso.dev.br> |
 | Admin BFF | <https://c4c-bff-admin.lab.tasso.dev.br> |
 | Student BFF | <https://c4c-bff-student.lab.tasso.dev.br> |
 
