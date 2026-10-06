@@ -4,31 +4,31 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "43e223d5bd7527fad0f80c3bebadb1795eabb07e",
   "target_ref": "43e223d5bd7527fad0f80c3bebadb1795eabb07e",
-  "last_checkpoint": "ff31dbe",
-  "phase": "checkpoint",
-  "active_task": "5.0",
+  "last_checkpoint": "cf015ab",
+  "phase": "complete",
+  "active_task": null,
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 1,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
   "transport": "herdr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "cf015ab1a382c2147b468abf766ab5a3a14fb4a0",
+  "validated_tree": "640d2e2f5e8808b29f0adcdc471d9eb12c758913",
   "pending_delegation": {
     "role": "integrator",
-    "mode": "checkpoint-task",
-    "task": "5.0"
+    "mode": "complete-prd",
+    "delivery": "pr"
   },
   "last_result": {
     "role": "validator",
-    "mode": "revalidation",
-    "task": "5.0",
-    "run_id": "run.KgbPs1N2",
-    "outcome": "approved"
+    "mode": "full",
+    "run_id": "run.MtgqxZVz",
+    "outcome": "approved",
+    "report": "tasks/prd-compra-avulsa/prd_review.md"
   },
   "history": [
     {
@@ -224,6 +224,19 @@
       "ts": "2026-10-06T00:56",
       "event": "5.0 (reaberta) aprovada em revalidation",
       "run_id": "run.KgbPs1N2"
+    },
+    {
+      "ts": "2026-10-06T00:58",
+      "event": "5.0 checkpoint cf015ab (correção full)"
+    },
+    {
+      "ts": "2026-10-06T01:00",
+      "event": "prepare-integration 2 (base inalterada 43e223d); full 2/3"
+    },
+    {
+      "ts": "2026-10-06T01:15",
+      "event": "full 2/3 aprovada (validated cf015ab / 640d2e2)",
+      "run_id": "run.MtgqxZVz"
     }
   ],
   "blocked_tasks": {},
