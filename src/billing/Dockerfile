@@ -15,6 +15,7 @@ COPY ["src/billing/src/CodeForCoders.Billing.Application/CodeForCoders.Billing.A
 COPY ["src/billing/src/CodeForCoders.Billing.Contracts/CodeForCoders.Billing.Contracts.csproj", "src/billing/src/CodeForCoders.Billing.Contracts/"]
 COPY ["src/billing/src/CodeForCoders.Billing.Domain/CodeForCoders.Billing.Domain.csproj", "src/billing/src/CodeForCoders.Billing.Domain/"]
 COPY ["src/billing/src/CodeForCoders.Billing.Infra.Data/CodeForCoders.Billing.Infra.Data.csproj", "src/billing/src/CodeForCoders.Billing.Infra.Data/"]
+COPY ["src/billing/src/CodeForCoders.Billing.Infra.Gateway/CodeForCoders.Billing.Infra.Gateway.csproj", "src/billing/src/CodeForCoders.Billing.Infra.Gateway/"]
 COPY ["src/billing/src/CodeForCoders.Billing.Infra.Messaging/CodeForCoders.Billing.Infra.Messaging.csproj", "src/billing/src/CodeForCoders.Billing.Infra.Messaging/"]
 
 RUN dotnet restore "src/billing/src/CodeForCoders.Billing.Api/CodeForCoders.Billing.Api.csproj" --configfile nuget.config

@@ -4,8 +4,8 @@
   "original_base_ref": "0ea305063af0b665fa03b31a5a972a9fdbfd8429",
   "base_ref": "43e223d5bd7527fad0f80c3bebadb1795eabb07e",
   "target_ref": "43e223d5bd7527fad0f80c3bebadb1795eabb07e",
-  "last_checkpoint": "822047901f9536b6306ae2b9b36f71c5ab5a9d6b",
-  "phase": "reopen",
+  "last_checkpoint": "ff31dbe",
+  "phase": "checkpoint",
   "active_task": "5.0",
   "attempt": 1,
   "max_attempts": 3,
@@ -18,18 +18,17 @@
   "transport": "herdr",
   "validated_commit": null,
   "validated_tree": null,
-  "pending_delegation": null,
+  "pending_delegation": {
+    "role": "integrator",
+    "mode": "checkpoint-task",
+    "task": "5.0"
+  },
   "last_result": {
     "role": "validator",
-    "mode": "full",
-    "run_id": "run.HYUdHUSh",
-    "outcome": "rejected",
-    "blockers": [
-      "B1 suíte commerce 49/486 falham (colisão de filas RabbitMQ) — 5.0",
-      "B2 Dockerfile billing sem Infra.Gateway — 5.0"
-    ],
-    "validated_commit": "8220479",
-    "report": "tasks/prd-compra-avulsa/prd_review.md"
+    "mode": "revalidation",
+    "task": "5.0",
+    "run_id": "run.KgbPs1N2",
+    "outcome": "approved"
   },
   "history": [
     {
@@ -216,6 +215,15 @@
       "ts": "2026-10-06",
       "event": "5.0 reaberta para correção de B1 e B2",
       "run_id": "run.WTthiDNU"
+    },
+    {
+      "ts": "2026-10-06T00:17",
+      "event": "5.0 reaberta (ff31dbe) para B1/B2 da full"
+    },
+    {
+      "ts": "2026-10-06T00:56",
+      "event": "5.0 (reaberta) aprovada em revalidation",
+      "run_id": "run.KgbPs1N2"
     }
   ],
   "blocked_tasks": {},
@@ -275,5 +283,10 @@
     "reason": "limite do codex de novo até 2026-10-06 01:29 (instrução anterior do responsável: agy no lugar do codex)",
     "active_from": "2026-10-05T23:30-03:00",
     "until": "2026-10-06T01:29-03:00"
+  },
+  "full_fix_round": {
+    "full_attempt": 1,
+    "task": "5.0",
+    "task_attempts_before": 2
   }
 }

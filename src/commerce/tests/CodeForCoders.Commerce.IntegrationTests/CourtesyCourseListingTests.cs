@@ -166,6 +166,9 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
                     options.HeartbeatQueue = "commerce.courtesy-heartbeat-transient-test";
                     options.CatalogCourseQueue = "commerce.courtesy-catalog-transient-test";
                     options.EntitlementCourseQueue = "commerce.entitlement-transient-test";
+                    options.SalesPaymentsQueue = "commerce.courtesy-transient-sales-payments";
+                    options.EntitlementPurchasesQueue = "commerce.courtesy-transient-entitlement-purchases";
+                    options.SalesAccessGrantedQueue = "commerce.courtesy-transient-sales-access-granted";
                     options.DeliveryLimit = 3;
                 });
             },
