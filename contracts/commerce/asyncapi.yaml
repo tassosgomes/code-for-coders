@@ -1,35 +1,27 @@
 asyncapi: 3.0.0
 info:
-  title: Commerce — fatos do Catálogo e da Matrícula
-  version: 1.1.0
-  description: 'Contrato **vigente** consolidado. Fronteira: Aplicação `commerce`.
+  title: Commerce — fatos do Catálogo, da Matrícula e de Vendas
+  version: 1.2.0
+  description: |
+    Contrato **vigente** consolidado. Fronteira: Aplicação `commerce`.
 
-
-    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte
-    do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
-
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml` 1.0.0
-
     - `tasks/archive/prd-concessao-acesso/asyncapi-contract.yaml` 1.1.0
+    - `tasks/archive/prd-compra-avulsa/asyncapi-contract.yaml` 1.2.0
 
+    **Notas de prd-vitrine-oferta (1.0.0):** Recorte do primeiro PRD de CAP-003, `tasks/archive/prd-vitrine-oferta/prd.md` v1.0, aprovado em 2026-09-30. Aplicação `commerce`, módulo Catálogo (dono de Catálogo e Oferta). Recebe `conteudo.versao-publicada.v1` 1.1.0 para manter a própria visão dos cursos publicados (C-01, C-09 de CAP-005). Envia os fatos de oferta e os atos de oferta no envelope da Auditoria 1.3.0 (RN-O15). Nenhuma mensagem carrega nome, e-mail ou dado do visitante.
 
-    **Notas de prd-vitrine-oferta (1.0.0):** Recorte do primeiro PRD de CAP-003, `tasks/archive/prd-vitrine-oferta/prd.md`
-    v1.0, aprovado em 2026-09-30. Aplicação `commerce`, módulo Catálogo (dono de Catálogo e Oferta). Recebe `conteudo.versao-publicada.v1`
-    1.1.0 para manter a própria visão dos cursos publicados (C-01, C-09 de CAP-005). Envia os fatos de oferta e
-    os atos de oferta no envelope da Auditoria 1.3.0 (RN-O15). Nenhuma mensagem carrega nome, e-mail ou dado do
-    visitante.
+    **Notas de prd-concessao-acesso (1.1.0):** Recorte do primeiro PRD de CAP-008, `tasks/archive/prd-concessao-acesso/prd.md` v1.0, aprovado em 2026-10-01. Aplicação `commerce`, módulo Matrícula e Direito de Acesso (dono do direito de acesso), que evolui o contrato de `commerce` 1.0.0 (`tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml`, módulo Catálogo, sem mudança). Recebe `conteudo.versao-publicada.v1` 1.1.0 em **fila própria**, para manter a própria visão mínima dos cursos em que se pode conceder cortesia (C-01). Envia os fatos `matricula.acesso-concedido.v1` e `matricula.acesso-expirado.v1` e o ato de cortesia no envelope da Auditoria 1.4.0 (RN-D11). Nenhuma mensagem carrega e-mail, nome ou motivo: o aluno vai por referência (RN-21 de Identidade, G23).
 
+    **Notas de prd-compra-avulsa (1.2.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/commerce/asyncapi.yaml` 1.1.0 de forma **aditiva**: nasce o módulo Vendas, e Matrícula passa a conceder por compra. Catálogo e cortesia não mudam e não estão neste recorte.
 
-    **Notas de prd-concessao-acesso (1.1.0):** Recorte do primeiro PRD de CAP-008, `tasks/archive/prd-concessao-acesso/prd.md`
-    v1.0, aprovado em 2026-10-01. Aplicação `commerce`, módulo Matrícula e Direito de Acesso (dono do direito de
-    acesso), que evolui o contrato de `commerce` 1.0.0 (`tasks/archive/prd-vitrine-oferta/asyncapi-contract.yaml`,
-    módulo Catálogo, sem mudança). Recebe `conteudo.versao-publicada.v1` 1.1.0 em **fila própria**, para manter
-    a própria visão mínima dos cursos em que se pode conceder cortesia (C-01). Envia os fatos `matricula.acesso-concedido.v1`
-    e `matricula.acesso-expirado.v1` e o ato de cortesia no envelope da Auditoria 1.4.0 (RN-D11). Nenhuma mensagem
-    carrega e-mail, nome ou motivo: o aluno vai por referência (RN-21 de Identidade, G23).
+    Fluxo do pagamento confirmado (RF-07), sempre por fato, com Vendas e Matrícula falando "como se já fossem serviços distintos" (baseline, ressalva de `Entitlement`):
 
-    '
+    `cobranca.pagamento-confirmado.v1` (de `billing`) → Vendas: pedido `paid` → `vendas.compra-concluida.v1` + pedido de envio do comprovante → Matrícula: concessão `purchase` → `matricula.acesso-concedido.v1` → Vendas: registra a concessão no pedido (exibição, C-07).
+
+    Nenhuma mensagem carrega e-mail, nome, CPF ou dado de cartão: o aluno vai por referência (RN-21, G23), inclusive no pedido de envio, que vai **pela conta** (C-06).
 id: urn:code-4-coders:commerce
 defaultContentType: application/json
 servers:
@@ -99,13 +91,13 @@ channels:
         $ref: '#/components/messages/CompraConcluida'
   pagamentoAguardando:
     address: cobranca.pagamento-aguardando.v1
-    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    description: Fato de `billing` (`../billing/asyncapi.yaml`).
     messages:
       pagamentoAguardando:
         $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoAguardando
   pagamentoConfirmado:
     address: cobranca.pagamento-confirmado.v1
-    description: Fato de `billing` (`asyncapi-contract-billing.yaml`).
+    description: Fato de `billing` (`../billing/asyncapi.yaml`).
     messages:
       pagamentoConfirmado:
         $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoConfirmado
@@ -117,7 +109,7 @@ channels:
         $ref: ../billing/asyncapi.yaml#/components/messages/PagamentoNaoConfirmado
   pedidoCancelado:
     address: vendas.pedido-cancelado.v1
-    description: O aluno desistiu de um pedido aguardando pagamento (RF-06).
+    description: O aluno desistiu de um pedido aguardando pagamento (RN-V07).
     messages:
       pedidoCancelado:
         $ref: '#/components/messages/PedidoCancelado'
@@ -129,7 +121,7 @@ channels:
         $ref: '#/components/messages/PedidoExpirado'
   pedidoDeEnvio:
     address: notificacao.envio-solicitado.v1
-    description: Canal de Notificação, na forma 1.2.0 (`asyncapi-contract-notification.yaml`).
+    description: Canal de Notificação, na forma 1.2.0 (`../notification/asyncapi.yaml`).
     messages:
       pedidoDeEnvio:
         $ref: ../notification/asyncapi.yaml#/components/messages/PedidoDeEnvioSolicitado
@@ -657,11 +649,11 @@ components:
       properties:
         correlationId:
           type: string
-          description: traceparent da requisição do backoffice, ou identificador da execução da rotina de expiração.
-            Sem dado pessoal.
+          description: traceparent da requisição do backoffice ou do aluno, do fato de `billing` que originou a mudança,
+            ou identificador da execução da rotina de expiração. Sem dado pessoal.
     Vigencia:
-      description: Vigência da concessão (RN-D04). Mesmo formato de `AccessPeriod` nas interfaces HTTP e do fato
-        de oferta.
+      description: Vigência da concessão (RN-D04) ou a congelada no pedido. Mesmo formato de `AccessPeriod` nas interfaces
+        HTTP e do fato de oferta.
       oneOf:
       - type: object
         additionalProperties: false

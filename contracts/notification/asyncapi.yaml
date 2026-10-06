@@ -1,7 +1,7 @@
 asyncapi: 3.0.0
 info:
   title: Notificação — pedidos de envio e desfecho de entrega
-  version: 1.1.0
+  version: 1.2.0
   description: |
     Contrato **vigente** consolidado. Fronteira: Aplicação `notification`.
 
@@ -9,10 +9,18 @@ info:
 
     - `tasks/archive/prd-notificacao-transacional/asyncapi-contract.yaml` 1.0.0
     - `tasks/archive/prd-acesso-interno/asyncapi-contract-notification.yaml` 1.1.0
+    - `tasks/archive/prd-compra-avulsa/asyncapi-contract-notification.yaml` 1.2.0
 
     **Notas de prd-notificacao-transacional (1.0.0):** Contrato da fatia de fundação de `CAP-026` (PRD `tasks/archive/prd-notificacao-transacional/prd.md`, v1.1, aprovado em 2026-09-21). Cobre o recorte desta entrega: dois modelos de mensagem (`confirmacao-de-conta`, `recuperacao-de-senha`), consentimento sempre verificado e desfecho sempre publicado. Notificação é carteira, não redatora: não julga o motivo do envio, só a validade do pedido (RN-N01, RN-N02, RN-N03; RN-27/RN-28 de Identidade e Acesso).
 
     **Notas de prd-acesso-interno (1.1.0):** Versão 1.1.0 (CAP-002, 2026-09-25): acrescenta o modelo `convite-interno`, com `dados` próprios (`papel`, `link`), para o e-mail de Convite de Acesso Interno. Nada mais muda: canais, garantias, desfechos e os dois modelos da 1.0.0 permanecem idênticos. Contrato da fatia de fundação de `CAP-026` (PRD `tasks/archive/prd-notificacao-transacional/prd.md`, v1.1, aprovado em 2026-09-21). Cobre o recorte desta entrega: dois modelos de mensagem (`confirmacao-de-conta`, `recuperacao-de-senha`), consentimento sempre verificado e desfecho sempre publicado. Notificação é carteira, não redatora: não julga o motivo do envio, só a validade do pedido (RN-N01, RN-N02, RN-N03; RN-27/RN-28 de Identidade e Acesso).
+
+    **Notas de prd-compra-avulsa (1.2.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/notification/asyncapi.yaml` 1.1.0 de forma **aditiva** no pedido de envio (C-06):
+
+    1. **Destinatário pela conta.** Além de `destinatario` (e-mail, como hoje), o pedido pode trazer `destinatarioConta` (`{tipo: conta-aluno, id}`) — **exatamente um dos dois**. Com a conta, Notificação obtém e-mail e nome em Identity (`getStudentContactInternal`) na hora de entregar. É o que permite a um remetente que não conhece o e-mail do aluno (`commerce`) pedir o envio sem que o e-mail passe por ele, pelo outbox ou pelo broker (QA-01 do PRD, RN-21, RN-26).
+    2. **Modelo `comprovante-de-compra`**, finalidade transacional do mesmo nome, com os dados do pedido pago (RF-09). Transacional: não depende de consentimento de marketing (RN-N05).
+
+    Pedidos de envio com `destinatario`, e os modelos da 1.1.0, continuam exatamente como estavam: os produtores atuais (`identity`) não mudam. Os fatos `notificacao.mensagem-entregue.v1` e `notificacao.entrega-falhou.v1` não mudam de forma; passam a poder carregar a finalidade nova, e a falha ganha o motivo `destinatario-indisponivel`. Estão em `contracts/notification/asyncapi.yaml` e não neste recorte.
 id: urn:code-4-coders:notification
 defaultContentType: application/json
 servers:
@@ -29,7 +37,7 @@ channels:
   pedidoDeEnvio:
     address: notificacao.envio-solicitado.v1
     description: |
-      Canal endereçado a Notificação. Qualquer domínio de origem publica aqui; nesta fatia, somente Identidade e Acesso o faz (RF-02, RF-03). Routing key versionada por convenção do baseline (`{servico}.{evento}.v{n}`).
+      Canal endereçado a Notificação. Qualquer domínio de origem publica aqui; publicam Identidade e Acesso (RF-02, RF-03 de `CAP-026`) e, a partir da 1.2.0, Vendas (`commerce`). Routing key versionada por convenção do baseline (`{servico}.{evento}.v{n}`).
     messages:
       pedidoDeEnvioSolicitado:
         $ref: '#/components/messages/PedidoDeEnvioSolicitado'
@@ -99,7 +107,7 @@ components:
         properties:
           correlationId:
             type: string
-            description: 'Identificador de correlação do fluxo de origem (ex.: o cadastro que originou o pedido).'
+            description: 'Identificador de correlação do fluxo de origem (ex.: o cadastro que originou o pedido, ou o pedido de compra que originou o comprovante).'
       payload:
         $ref: '#/components/schemas/PedidoDeEnvioSolicitadoPayload'
       examples:
@@ -150,7 +158,7 @@ components:
             vigencia:
               type: months
               months: 12
-            link: https://app.code4coders.com.br/cursos/6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+            link: https://app.code4coders.com.br/student/pedidos/1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
           solicitadoEm: '2026-10-05T14:21:03Z'
     MensagemEntregue:
       name: MensagemEntregue
@@ -379,7 +387,7 @@ components:
         link:
           type: string
           format: uri
-          description: Link da mensagem. No comprovante, o curso no app do aluno.
+          description: Link da mensagem. No comprovante, a página do pedido no app do aluno (`/student/pedidos/{orderId}`), de onde ele segue para o curso.
         papel:
           type: string
           enum:

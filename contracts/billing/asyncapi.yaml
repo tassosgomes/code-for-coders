@@ -2,20 +2,18 @@ asyncapi: 3.0.0
 info:
   title: Billing — fatos de pagamento
   version: 1.0.0
-  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
-    novo**: aplicação `billing` (Cobrança e Assinatura em fatia mínima, C-01).
+  description: |
+    Contrato **vigente** consolidado. Fronteira: Aplicação `billing`.
 
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
-    `billing` traduz os eventos do gateway (`webhook-contract-billing.yaml`) para três fatos no vocabulário da plataforma
-    (RN-CB05) e recebe a desistência do pedido para cancelar o pagamento pendente no gateway. Nenhuma mensagem carrega
-    e-mail, nome, CPF, dado de cartão ou endereço do gateway: o aluno vai por referência, e a referência do gateway
-    é um identificador opaco.
+    - `tasks/archive/prd-compra-avulsa/asyncapi-contract-billing.yaml` 1.0.0
 
+    **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo**: aplicação `billing` (Cobrança e Assinatura em fatia mínima, C-01).
 
-    Consumidor conhecido dos três fatos: `commerce` (módulo Vendas). Fiscal, Notificação e Inteligência de Negócio
-    podem consumi-los depois sem mudança aqui.
+    `billing` traduz os eventos do gateway (`openapi-webhook.yaml`) para três fatos no vocabulário da plataforma (RN-CB05) e recebe a desistência do pedido para cancelar o pagamento pendente no gateway. Nenhuma mensagem carrega e-mail, nome, CPF, dado de cartão ou endereço do gateway: o aluno vai por referência, e a referência do gateway é um identificador opaco.
 
-    '
+    Consumidor conhecido dos três fatos: `commerce` (módulo Vendas). Fiscal, Notificação e Inteligência de Negócio podem consumi-los depois sem mudança aqui.
 id: urn:code-4-coders:billing
 defaultContentType: application/json
 servers:

@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0018-notificacao-resolve-destinatario-pela-conta.md`
 - Domínios/componentes afetados: `notification` (como chamador e como dono do pedido de envio), `identity` (como destino), remetentes de pedido de envio (`commerce` nesta entrega)
-- Origem histórica: `tasks/prd-compra-avulsa`, `CAP-011` (decisão C-06 do conjunto de contratos; QA-01 do PRD)
+- Origem histórica: `tasks/archive/prd-compra-avulsa`, `CAP-011` (decisão C-06 do conjunto de contratos; QA-01 do PRD)
 - Substitui: Nenhuma. Estende a [ADR-0004](0004-autenticacao-de-servico-bff-identity.md) a um emissor novo, no precedente da [ADR-0010](0010-autenticacao-de-servico-commerce-em-identity.md)
 
 ## Data
@@ -63,10 +63,10 @@ Com a compra, Vendas (`commerce`) precisa enviar o comprovante ao aluno. `commer
 ## Notas de Implementação
 
 - Chaves geradas por `scripts/generate-local-env.sh` (`NOTIFICATION_IDENTITY_PUBLIC_KEY_B64`/`NOTIFICATION_IDENTITY_PRIVATE_KEY_B64`) e registradas em Identity como `ServiceAssertions:Issuers:notification`.
-- Contratos: `tasks/prd-compra-avulsa/asyncapi-contract-notification.yaml` (1.2.0) e `internal-api-contract-identity.yaml` (`getStudentContactInternal`).
+- Os contratos vigentes estão em `contracts/notification/asyncapi.yaml` (1.2.0) e `contracts/identity/openapi-internal.yaml` (1.5.0, `getStudentContactInternal`), promovidos em 2026-10-06 a partir dos recortes históricos `tasks/archive/prd-compra-avulsa/asyncapi-contract-notification.yaml` e `internal-api-contract-identity.yaml`.
 
 ## Referências
 
 - [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0010](0010-autenticacao-de-servico-commerce-em-identity.md), [ADR-0013](0013-jwt-de-aluno-validado-por-servicos-de-dominio.md)
 - Domain doc de Identidade e Acesso: RN-21, RN-26, RN-27, RN-28
-- Origem histórica: `tasks/prd-compra-avulsa/contracts.md` (C-06)
+- Origem histórica: `tasks/archive/prd-compra-avulsa/contracts.md` (C-06)

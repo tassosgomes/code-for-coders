@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Identity — integração com o BFF do aluno
-  version: 1.1.0
+  version: 1.2.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `bff-student` → `identity`: conta, sessão e senha do aluno.
 
@@ -9,10 +9,13 @@ info:
 
     - `tasks/archive/prd-conta-aluno/internal-api-contract.yaml` 1.0.0
     - `tasks/archive/prd-reproducao-protegida/internal-api-contract-identity.yaml` 1.1.0
+    - `tasks/archive/prd-compra-avulsa/internal-api-contract-identity-student.yaml` 1.2.0
 
     **Notas de prd-conta-aluno (1.0.0):** Recorte interno de CAP-001. Consumidor único conhecido: BFF do aluno. A asserção de serviço autentica o BFF inclusive antes do login; ela nunca representa um aluno. Toda chamada usa TLS. O tenant é claim da asserção e Identity verifica que o BFF está autorizado para esse tenant.
 
     **Notas de prd-reproducao-protegida (1.1.0):** Recorte de `CAP-007` sobre `tasks/archive/prd-conta-aluno/internal-api-contract.yaml` 1.0.0. Só `validateStudentSessionInternal` é alterada com mudança aditiva (C-04): `media` e `learning` passam a ser audiências autorizadas para o BFF do aluno, e o JWT de aluno para a audiência `media` carrega a claim `email` (para compor a marca d'água de proteção; Identidade RN-21). Nenhuma outra operação de Identity muda.
+
+    **Notas de prd-compra-avulsa (1.2.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. Evolui `contracts/identity/openapi-internal-student.yaml` 1.1.0 de forma **aditiva**: `commerce` passa a ser audiência autorizada do JWT de aluno (C-03), para o `bff-student` repassar ao dono do pedido. Só `validateStudentSessionInternal` muda, e só na lista de audiências. O JWT de `commerce` tem `scope: orders:use` e **não** carrega `email` (a claim continua exclusiva da audiência `media`, ADR-0013): `commerce` não precisa do e-mail do aluno para nada nesta entrega (C-06).
   contact:
     name: Time de Identidade e Acesso
 servers:
@@ -141,8 +144,9 @@ paths:
       summary: Validar e renovar sessão
       description: 'Sem mudança de comportamento em relação a 1.0.0: valida sessão, tenant, situação da Conta e
         expiração; renova a inatividade atomicamente; com `audience`, emite JWT de aluno curto só para aquela audiência
-        autorizada. Mudança aditiva deste recorte (C-04): `media` e `learning` passam a ser audiências autorizadas,
-        e o JWT de `media` carrega `email`. Falha fecha acesso.'
+        autorizada. Mudanças aditivas: `media` e `learning` passam a ser audiências autorizadas, e o JWT de `media`
+        carrega `email` (1.1.0, C-04 de `CAP-007`); `commerce` passa a ser audiência autorizada, com `scope: orders:use`
+        e sem `email` (1.2.0, C-03 de `CAP-011`). Falha fecha acesso.'
       operationId: validateStudentSessionInternal
       security:
       - BffServiceAssertion: []
@@ -157,6 +161,10 @@ paths:
                 value:
                   sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
                   audience: media
+              paraCommerce:
+                value:
+                  sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+                  audience: commerce
       responses:
         '200':
           description: Sessão ativa com expiração renovada e JWT opcional.
@@ -164,6 +172,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionValidated'
+              examples:
+                comToken:
+                  value:
+                    accountId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    name: Ana Souza
+                    expiresAt: '2026-10-05T16:19:30Z'
+                    accessToken: eyJhbGciOiJSUzI1NiIsImtpZCI6InN0dWRlbnQtMjAyNi0xMCJ9.eyJhdWQiOiJjb21tZXJjZSJ9.c2lnbmF0dXJl
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -479,7 +494,8 @@ components:
         accessToken:
           type: string
           description: 'JWT interno de aluno; presente somente quando `audience` foi solicitada. Vida curta, RS256,
-            claims `iss`, `aud`, `sub`, `tenantId`, `sessionId`, `exp`, `jti`. **Com `audience: media`, acrescenta
+            claims `iss`, `aud`, `sub`, `tenantId`, `sessionId`, `scope`, `exp`, `jti`. `scope` por audiência: `media`
+            → `playback:use`, `learning` → `lessons:read`, `commerce` → `orders:use`. **Com `audience: media`, acrescenta
             a claim `email`**, o e-mail da conta: exposição declarada de Identidade RN-21, para a marca d''água.
             Em nenhuma outra audiência a claim existe. O e-mail nunca vai em log, URL ou métrica.'
     PasswordResetInput:

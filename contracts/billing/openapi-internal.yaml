@@ -2,21 +2,18 @@ openapi: 3.1.0
 info:
   title: Billing — API interna
   version: 1.0.0
-  description: 'Recorte de `CAP-011`, `tasks/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato
-    novo**: `billing` nasce nesta entrega (C-01), com Cobrança e Assinatura em fatia mínima — recebimento único
-    à vista, sem recorrência.
+  description: |
+    Contrato **vigente** consolidado. Fronteira: `commerce` (módulo Vendas) → `billing`: pagamento do pedido.
 
+    Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
-    Fronteira: `commerce` (módulo Vendas) → `billing`. Vendas pede o recebimento do valor de um pedido (Domain Map:
-    "Vendas aciona Cobrança para receber o pagamento"); `billing` conduz o pagamento no gateway, atrás de camada
-    anticorrupção (baseline, *Camadas anticorrupção obrigatórias*), e devolve o endereço da página de pagamento.
-    O resultado do pagamento **não** volta por aqui: volta pelos fatos `cobranca.pagamento-*` (`asyncapi-contract-billing.yaml`).
+    - `tasks/archive/prd-compra-avulsa/internal-api-contract-billing.yaml` 1.0.0
 
+    **Notas de prd-compra-avulsa (1.0.0):** Recorte de `CAP-011`, `tasks/archive/prd-compra-avulsa/prd.md` v1.0, aprovado em 2026-10-05. **Contrato novo**: `billing` nasce nesta entrega (C-01), com Cobrança e Assinatura em fatia mínima — recebimento único à vista, sem recorrência.
 
-    Nenhuma resposta carrega vocabulário do gateway (RN-CB05): o meio é `card`, `pix` ou `boleto`, e o endereço
-    devolvido é opaco. Dado de cartão nunca passa por `billing` (RN-CB01): é digitado na página do gateway.
+    Fronteira: `commerce` (módulo Vendas) → `billing`. Vendas pede o recebimento do valor de um pedido (Domain Map: "Vendas aciona Cobrança para receber o pagamento"); `billing` conduz o pagamento no gateway, atrás de camada anticorrupção (baseline, *Camadas anticorrupção obrigatórias*), e devolve o endereço da página de pagamento. O resultado do pagamento **não** volta por aqui: volta pelos fatos `cobranca.pagamento-*` (`asyncapi.yaml`).
 
-    '
+    Nenhuma resposta carrega vocabulário do gateway (RN-CB05): o meio é `card`, `pix` ou `boleto`, e o endereço devolvido é opaco. Dado de cartão nunca passa por `billing` (RN-CB01): é digitado na página do gateway.
   contact:
     name: Time de Cobrança
 servers:
@@ -106,6 +103,15 @@ paths:
         '503':
           $ref: '#/components/responses/GatewayUnavailable'
 components:
+  securitySchemes:
+    CommerceServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Asserção de serviço assimétrica e curta assinada pela chave exclusiva de `commerce`, no mecanismo da ADR-0004
+        (vários emissores, cada um com chaves e escopos próprios; precedente da ADR-0010). `billing` valida assinatura, `kid`,
+        emissor `commerce`, audiência `billing`, escopo `payment:request`, `tenantId` e `jti` contra replay. A escola do pagamento
+        é o `tenantId` da asserção (G07). Emissor e audiência novos: ADR-0017 (C-04).'
   responses:
     GatewayUnavailable:
       description: O gateway não respondeu ou recusou a operação por falha dele; nada foi criado. Repetir é seguro
