@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { House, KeyRound, Menu, X } from 'lucide-react';
+import { House, KeyRound, Menu, Receipt, X } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router';
 
 import { BrandLogo } from '@/components/blocks/brand-logo';
@@ -37,7 +37,7 @@ type AppShellProps = {
 };
 
 const getPageTitle = (pathname: string) =>
-  pathname.startsWith(paths.studentLesson.path.replace(':lessonId', '')) ? 'Aula' : pathname === paths.studentPasswordChange.path ? 'Trocar senha' : 'Início';
+  pathname.startsWith(paths.studentLesson.path.replace(':lessonId', '')) ? 'Aula' : pathname.startsWith(paths.studentMyOrders.path) ? 'Meus pedidos' : pathname === paths.studentPasswordChange.path ? 'Trocar senha' : 'Início';
 
 const sidebarStyle: CSSProperties & { '--sidebar-width': string } = {
   '--sidebar-width': '16.5rem',
@@ -50,6 +50,7 @@ export const AppShell = ({ accountMenu, children }: AppShellProps) => {
   const TitleTag = onLesson ? 'p' : 'h1';
   const onHome = pathname === paths.home.path;
   const onPasswordChange = pathname === paths.studentPasswordChange.path;
+  const onOrders = pathname === paths.studentMyOrders.path || pathname.startsWith(`${paths.studentMyOrders.path}/`);
 
   useDocumentTitle(onLesson ? undefined : `${pageTitle} | Code4Coders`);
 
@@ -71,6 +72,14 @@ export const AppShell = ({ accountMenu, children }: AppShellProps) => {
                     <Link aria-current={onHome ? 'page' : undefined} to={paths.home.getHref()}>
                       <House aria-hidden="true" />
                       <span>Início</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={onOrders}>
+                    <Link aria-current={pathname === paths.studentMyOrders.path ? 'page' : undefined} to={paths.studentMyOrders.getHref()}>
+                      <Receipt aria-hidden="true" />
+                      <span>Meus pedidos</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -126,6 +135,16 @@ export const AppShell = ({ accountMenu, children }: AppShellProps) => {
                       >
                         <House aria-hidden="true" className="size-4" />
                         Início
+                      </Link>
+                    </SheetClose>
+                  </li>
+                  <li>
+                    <SheetClose asChild>
+                      <Link aria-current={pathname === paths.studentMyOrders.path ? 'page' : undefined}
+                        className={`flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium ${onOrders ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}`}
+                        to={paths.studentMyOrders.getHref()}>
+                        <Receipt aria-hidden="true" className="size-4" />
+                        Meus pedidos
                       </Link>
                     </SheetClose>
                   </li>

@@ -1220,6 +1220,98 @@ paths:
           $ref: '#/components/responses/OfferNotAvailable'
         '422':
           $ref: '#/components/responses/IdempotencyKeyReused'
+    get:
+      tags:
+      - Meus pedidos
+      summary: Listar os pedidos do aluno
+      description: Pedidos do aluno do token, na escola do token, do mais recente para o mais antigo (RF-10). Mostram
+        o que o pedido congelou, mesmo que a oferta tenha mudado ou saído da vitrine (RN-V03, RN-V12). Sem pedidos
+        → lista vazia.
+      operationId: listStudentOrdersInternal
+      security:
+      - StudentUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de pedidos do aluno.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentOrderPage'
+              examples:
+                tres:
+                  value:
+                    data:
+                    - orderId: 2c3d4e5f-6071-4829-8b3c-4d5e6f7a8b92
+                      number: '000124'
+                      status: awaiting-payment
+                      course:
+                        courseId: 9a7e5c31-2b4d-4f68-8e01-6d3c5a7b9f24
+                        title: React na prática
+                      offer:
+                        offerId: 5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d
+                        name: Acesso por 6 meses
+                      priceCents: 29700
+                      currency: BRL
+                      accessPeriod:
+                        type: months
+                        months: 6
+                      paymentMethod: boleto
+                      pendingPayment:
+                        method: boleto
+                        expiresAt: '2026-10-09T02:59:59Z'
+                      paymentPageExpiresAt: null
+                      accessGrantedAt: null
+                      createdAt: '2026-10-06T10:00:00Z'
+                      paidAt: null
+                      expiredAt: null
+                      cancelledAt: null
+                    - orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                      number: '000123'
+                      status: paid
+                      course:
+                        courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+                        title: .NET do zero à API
+                      offer:
+                        offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                        name: Acesso por 12 meses
+                      priceCents: 49700
+                      currency: BRL
+                      accessPeriod:
+                        type: months
+                        months: 12
+                      paymentMethod: card
+                      pendingPayment: null
+                      paymentPageExpiresAt: null
+                      accessGrantedAt: '2026-10-05T14:21:04Z'
+                      createdAt: '2026-10-05T14:19:30Z'
+                      paidAt: '2026-10-05T14:21:02Z'
+                      expiredAt: null
+                      cancelledAt: null
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+                vazio:
+                  value:
+                    data: []
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 0
+                      totalPages: 0
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/StudentScopeDenied'
   /orders/{orderId}:
     parameters:
     - $ref: '#/components/parameters/OrderId'
@@ -1403,6 +1495,19 @@ components:
         em `decideAccessInternal`, para `media` e `learning`; `course-access:read` em `listStudentCourseAccessInternal`,
         só para `learning`), `tenantId` permitido ao emissor, validade e `jti` contra replay. Não representa aluno.'
   schemas:
+    StudentOrderPage:
+      type: object
+      additionalProperties: false
+      required:
+      - data
+      - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentOrder'
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
     Problem:
       type: object
       additionalProperties: false

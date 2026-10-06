@@ -18,7 +18,10 @@ public sealed class OrdersCommerceClient(HttpClient client) : IOrdersCommerceCli
             if (body.ValueKind != JsonValueKind.Object) return new(502, "COMMERCE_UNAVAILABLE");
             var status = (int)response.StatusCode;
             var payment = input.Path.EndsWith("/payment-session", StringComparison.Ordinal);
-            if (status is 200 or 201 && (payment ? PaymentResponseValidation.IsValid(body, input.Path) : OrderResponseValidation.IsValid(body, input.Path.EndsWith("/purchase-summary", StringComparison.Ordinal))))
+            var list = input.Method == HttpMethod.Get && input.Path.StartsWith("internal/v1/orders?", StringComparison.Ordinal);
+            if (status is 200 or 201 && (list ? OrderPageResponseValidation.IsValid(body)
+                : payment ? PaymentResponseValidation.IsValid(body, input.Path)
+                : OrderResponseValidation.IsValid(body, input.Path.EndsWith("/purchase-summary", StringComparison.Ordinal))))
                 return new(status, Body: body.Clone());
             var code = body.TryGetProperty("code", out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
             return (status, code) switch

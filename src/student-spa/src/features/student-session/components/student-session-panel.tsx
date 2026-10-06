@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ChevronDown, KeyRound, LogOut } from 'lucide-react';
+import { ChevronDown, KeyRound, LogOut, Receipt } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
@@ -120,6 +120,12 @@ export const StudentSessionPanel = () => {
           <p className="mt-1 text-xs text-muted-foreground">Conta do aluno</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to={paths.studentMyOrders.getHref()}>
+            <Receipt aria-hidden="true" />
+            Meus pedidos
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link to={paths.studentPasswordChange.getHref()}>
             <KeyRound aria-hidden="true" />

@@ -252,6 +252,7 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
           </p>
         </CardContent>
       </Card>
+      <Link className="text-sm underline underline-offset-4" to={paths.studentMyOrders.getHref()}>← Meus pedidos</Link>
     </div>
   );
 };

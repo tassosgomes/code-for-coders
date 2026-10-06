@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<ISalesAccessSink, Sales.SalesAccessSink>();
         services.AddScoped<IOrderPaymentStore, Sales.OrderPaymentStore>();
         services.AddScoped<IOrderStore, Sales.OrderStore>();
+        services.AddScoped<IStudentOrderQueries, Queries.StudentOrderQueries>();
         services.AddScoped<ICatalogPurchaseOfferQueries, Catalog.PurchaseOfferReader>();
         services.AddScoped<IExistingCourseAccessQueries, Entitlement.ExistingCourseAccessReader>();
         services.AddScoped<ICourtesyGrantStore, Entitlement.CourtesyGrantStore>();

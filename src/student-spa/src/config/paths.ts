@@ -39,6 +39,10 @@ export const paths = {
     path: '/pedidos/:orderId',
     getHref: (orderId: string) => `/pedidos/${encodeURIComponent(orderId)}`,
   },
+  studentMyOrders: {
+    path: '/pedidos',
+    getHref: () => '/pedidos',
+  },
   studentLesson: {
     path: '/aulas/:lessonId',
     getHref: (lessonId: string) => `/aulas/${encodeURIComponent(lessonId)}`,

@@ -10,6 +10,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationConfiguration(this IServiceCollection services)
     {
+        services.AddScoped<IValidator<UseCases.Sales.ListStudentOrders.ListStudentOrdersInput>, UseCases.Sales.ListStudentOrders.ListStudentOrdersInputValidator>();
         services.AddScoped<IValidator<UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInput>, UseCases.CatalogCourses.ListCatalogCourses.ListCatalogCoursesInputValidator>();
         services.AddScoped<IValidator<UseCases.Showcase.ListShowcaseCourses.ListShowcaseCoursesInput>, UseCases.Showcase.ListShowcaseCourses.ListShowcaseCoursesInputValidator>();
         services.AddScoped<IValidator<UseCases.Showcase.RegisterPurchaseIntent.RegisterPurchaseIntentInput>, UseCases.Showcase.RegisterPurchaseIntent.RegisterPurchaseIntentInputValidator>();

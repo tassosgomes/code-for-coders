@@ -9,9 +9,20 @@ public static class OrdersEndpoints
     {
         endpoints.MapGet("/api/v1/offers/{offerId:guid}/purchase-summary", SummaryAsync).WithName("getPurchaseSummary");
         endpoints.MapPost("/api/v1/orders", CreateAsync).WithName("createOrder");
+        endpoints.MapGet("/api/v1/orders", ListAsync).WithName("listMyOrders");
         endpoints.MapPost("/api/v1/orders/{orderId:guid}/payment-session", PaymentAsync).WithName("startOrderPayment");
         endpoints.MapPost("/api/v1/orders/{orderId:guid}/cancellation", CancelAsync).WithName("cancelMyOrder");
         endpoints.MapGet("/api/v1/orders/{orderId:guid}", GetAsync).WithName("getMyOrder");
+    }
+    private static async Task<IResult> ListAsync(HttpContext context, IOrdersCommerceClient client,
+        CancellationToken cancellationToken, int _page = 1, int _size = 10)
+    {
+        context.Response.Headers.CacheControl = "private, no-store";
+        if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue)
+            return Result(new(400, "VALIDATION_ERROR"));
+        return Result(await client.SendAsync(new(HttpMethod.Get,
+            FormattableString.Invariant($"internal/v1/orders?_page={_page}&_size={_size}"),
+            BffSessionContext.GetAccessToken(context)!), cancellationToken));
     }
     private static async Task<IResult> CancelAsync(Guid orderId, HttpContext context, IOrdersCommerceClient client, CancellationToken cancellationToken)
     {
