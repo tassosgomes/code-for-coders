@@ -2,6 +2,7 @@
 .vs/
 /.env
 /.env.tmp.*
+.env.test-credentials
 **/bin/
 **/obj/
 **/TestResults/
@@ -21,3 +22,7 @@ __pycache__/
 .tsg-flow
 .groma
 .playwright-mcp
+
+#QA
+qa-evidence
+anotacoes.md
