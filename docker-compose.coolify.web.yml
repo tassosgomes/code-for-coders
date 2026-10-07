@@ -36,7 +36,7 @@ services:
       ReverseProxy__Clusters__admin-backend__Destinations__destination__Address: http://learning:8080/
       Media__BaseAddress: http://media:8080/
       Learning__BaseAddress: http://learning:8080/
-      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-false}
+      CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-true}
       Audit__BaseAddress: http://audit:8080/
       Commerce__BaseAddress: http://commerce:8080/
     healthcheck:
