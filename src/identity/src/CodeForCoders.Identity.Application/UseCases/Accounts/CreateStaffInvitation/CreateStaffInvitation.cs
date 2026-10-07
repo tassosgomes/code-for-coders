@@ -33,8 +33,7 @@ public sealed class CreateStaffInvitation(
     {
         await validator.ValidateAndThrowAsync(input, cancellationToken);
 
-        var email = input.Email.Trim();
-        var normalizedEmail = email.ToLowerInvariant();
+        var normalizedEmail = input.Email.Trim().ToLowerInvariant();
         var role = input.Role.Trim();
         var reason = input.Reason.Trim();
         if (reason.Length == 0)
@@ -94,7 +93,7 @@ public sealed class CreateStaffInvitation(
         var invitation = StaffInvitation.Create(
             id,
             input.TenantId,
-            email,
+            normalizedEmail,
             normalizedEmail,
             role,
             HashToken(rawToken),

@@ -22,8 +22,8 @@ src/notification/tests/CodeForCoders.Notification.IntegrationTests/SendRequestId
 src/notification/tests/CodeForCoders.Notification.IntegrationTests/StaffInvitationEmailTests.cs:generic-api-key:184
 src/identity/src/CodeForCoders.Identity.Application/Services/StaffInvitationMessageWriter.cs:generic-api-key:19
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationAcceptanceTests.cs:generic-api-key:126
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:46
-src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:135
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:47
+src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffInvitationIssuingTests.cs:generic-api-key:137
 src/identity/tests/CodeForCoders.Identity.IntegrationTests/StaffPasswordResetTests.cs:generic-api-key:68
 src/media/tests/CodeForCoders.Media.IntegrationTests/VideoPreparationTests.cs:generic-api-key:485
 # Falso positivo: routing key do RabbitMQ ("midia.ativo-pronto.v1") no teste de outbox,

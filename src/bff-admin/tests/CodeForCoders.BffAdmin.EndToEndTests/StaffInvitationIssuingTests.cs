@@ -115,6 +115,40 @@ public sealed class StaffInvitationIssuingTests(BffAdminApiFactory factory)
         Assert.Equal(0, factory.StaffInvitationIdentityHandler.RequestCount);
     }
 
+    [Theory(DisplayName = nameof(StaffInvitationIssuing_RefusesExistingAccountWithContractGuidance))]
+    [Trait("Layer", "BffAdmin staff invitation - EndToEnd")]
+    [InlineData("EMAIL_BELONGS_TO_STAFF", "Este e-mail já é de um ator interno. Conceda o papel à conta existente.")]
+    [InlineData("EMAIL_BELONGS_TO_STUDENT", "Este e-mail pertence a uma conta de aluno. Use o endereço institucional.")]
+    public async Task StaffInvitationIssuing_RefusesExistingAccountWithContractGuidance(string code, string title)
+    {
+        ResetState();
+        factory.StaffInvitationIdentityHandler.CreateStatus = HttpStatusCode.UnprocessableEntity;
+        factory.StaffInvitationIdentityHandler.CreateCode = code;
+        using var client = factory.CreateClient();
+        var login = await LoginAsync(client);
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/staff-invitations")
+        {
+            Content = JsonContent.Create(new CreateStaffInvitationRequestV1(
+                "guest@example.com",
+                "professor",
+                "Motivo do convite.")),
+        };
+        request.Headers.Add("Cookie", login.Cookie);
+        request.Headers.Add("X-CSRF-Token", login.Session.CsrfToken);
+        request.Headers.Add("Origin", "http://localhost:8081");
+        request.Headers.Add("Idempotency-Key", "bff-staff-invitation-" + code);
+
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var problem = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        Assert.Equal(code, problem.RootElement.GetProperty("code").GetString());
+        Assert.Equal(title, problem.RootElement.GetProperty("title").GetString());
+    }
+
     private void ResetState()
     {
         factory.SessionStore.Reset();

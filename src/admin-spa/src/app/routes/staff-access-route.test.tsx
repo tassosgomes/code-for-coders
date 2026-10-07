@@ -130,8 +130,16 @@ describe('StaffInvitationIssuing', () => {
   });
 
   it.each([
-    { code: 'EMAIL_BELONGS_TO_STAFF', message: 'Este e-mail já pertence a uma conta interna.', status: 422 },
-    { code: 'EMAIL_BELONGS_TO_STUDENT', message: 'Este e-mail já pertence a uma conta de aluno.', status: 422 },
+    {
+      code: 'EMAIL_BELONGS_TO_STAFF',
+      message: 'Este e-mail já é de um ator interno. Conceda o papel à conta existente.',
+      status: 422,
+    },
+    {
+      code: 'EMAIL_BELONGS_TO_STUDENT',
+      message: 'Este e-mail pertence a uma conta de aluno. Use o endereço institucional.',
+      status: 422,
+    },
     { code: 'REASON_REQUIRED', message: 'Informe o motivo do convite.', status: 422 },
     { code: 'CSRF_INVALID', message: 'Você não tem permissão para gerenciar acessos.', status: 403 },
   ])('shows the specific message for $code', async ({ code, message, status }) => {

@@ -33,10 +33,11 @@ public sealed class StaffInvitationIssuingTests(IdentityIntegrationFixture fixtu
             Input(tenantId, actorId, "  Guest@Example.com  ", "professor", "Contratada para a trilha avançada.", "staff-invitation-create"),
             cancellationToken);
 
-        Assert.Equal("Guest@Example.com", result.Email);
+        Assert.Equal("guest@example.com", result.Email);
         Assert.Equal("professor", result.OfferedRole);
         Assert.Null(result.SupersededInvitationId);
         var invitation = await dbContext.StaffInvitations.SingleAsync(cancellationToken);
+        Assert.Equal("guest@example.com", invitation.Email);
         Assert.Equal("guest@example.com", invitation.NormalizedEmail);
         Assert.Equal(64, invitation.TokenHash.Length);
         Assert.Equal(result.ExpiresAt, result.InvitedAt.AddHours(168));
@@ -47,8 +48,8 @@ public sealed class StaffInvitationIssuingTests(IdentityIntegrationFixture fixtu
         var audit = Assert.Single(messages, message => message.RoutingKey == "auditoria.ato-praticado.v1");
         Assert.Equal("notification.events.default", notification.Exchange);
         Assert.Equal("audit.events", audit.Exchange);
-        Assert.DoesNotContain("Guest@Example.com", notification.Payload, StringComparison.Ordinal);
-        Assert.DoesNotContain("Guest@Example.com", audit.Payload, StringComparison.Ordinal);
+        Assert.DoesNotContain("guest@example.com", notification.Payload, StringComparison.Ordinal);
+        Assert.DoesNotContain("guest@example.com", audit.Payload, StringComparison.Ordinal);
         Assert.Contains("$protected", notification.Payload, StringComparison.Ordinal);
         Assert.Contains("$protected", audit.Payload, StringComparison.Ordinal);
 
@@ -59,6 +60,7 @@ public sealed class StaffInvitationIssuingTests(IdentityIntegrationFixture fixtu
         Assert.Equal(tenantId, notificationPayload.GetProperty("tenantId").GetGuid());
         Assert.Equal("convite-interno", notificationPayload.GetProperty("finalidade").GetString());
         Assert.Equal("convite-interno", notificationPayload.GetProperty("modelo").GetString());
+        Assert.Equal("guest@example.com", notificationPayload.GetProperty("destinatario").GetString());
         var data = notificationPayload.GetProperty("dados");
         Assert.Equal("professor", data.GetProperty("papel").GetString());
         Assert.False(data.TryGetProperty("nome", out _));

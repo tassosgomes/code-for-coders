@@ -255,8 +255,8 @@ public static class StaffInvitationEndpoints
         };
         var title = code switch
         {
-            "EMAIL_BELONGS_TO_STAFF" => "Este e-mail já pertence a uma conta interna.",
-            "EMAIL_BELONGS_TO_STUDENT" => "Este e-mail já pertence a uma conta de aluno.",
+            "EMAIL_BELONGS_TO_STAFF" => "Este e-mail já é de um ator interno. Conceda o papel à conta existente.",
+            "EMAIL_BELONGS_TO_STUDENT" => "Este e-mail pertence a uma conta de aluno. Use o endereço institucional.",
             "REASON_REQUIRED" => "Informe o motivo do convite.",
             "PERMISSION_DENIED" => "O ator não tem permissão para gerenciar acessos.",
             "INVITATION_INVALID" => "Este convite não vale mais. Peça um novo ao administrador.",
