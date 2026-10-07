@@ -7,7 +7,7 @@ public static class EndpointExtensions
     public static void MapApiEndpoints(this WebApplication app)
     {
         app.MapPlatformEndpoints();
-        if (app.Configuration.GetValue<bool>("CourseAuthoring:Enabled")) app.MapCourseAuthoringEndpoints();
+        if (app.Configuration.GetValue("CourseAuthoring:Enabled", true)) app.MapCourseAuthoringEndpoints();
         app.MapSessionEndpoints();
         app.MapStaffPasswordResetEndpoints();
         app.MapStaffPasswordRecoveryEndpoints();
