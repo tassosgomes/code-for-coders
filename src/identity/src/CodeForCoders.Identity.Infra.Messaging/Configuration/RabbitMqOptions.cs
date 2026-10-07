@@ -33,6 +33,15 @@ public sealed class RabbitMqOptions
     [Required]
     public string HeartbeatQueue { get; set; } = "identity.platform-heartbeat";
 
+    [Required]
+    public string AccountFactRetentionQueue { get; set; } = "identity.account-fact-retention";
+
+    [Range(1, int.MaxValue)]
+    public int AccountFactRetentionMaxLength { get; set; } = 10000;
+
+    [Range(1, int.MaxValue)]
+    public int AccountFactRetentionTtlMilliseconds { get; set; } = 604800000;
+
     [Range(1, 1000)]
     public ushort PrefetchCount { get; set; } = 10;
 
