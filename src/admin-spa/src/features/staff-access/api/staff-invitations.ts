@@ -96,9 +96,9 @@ export const getStaffInvitationRequestError = (error: unknown): string => {
   if (axios.isAxiosError<{ code?: unknown }>(error)) {
     switch (error.response?.data?.code) {
       case 'EMAIL_BELONGS_TO_STAFF':
-        return 'Este e-mail já pertence a uma conta interna.';
+        return 'Este e-mail já é de um ator interno. Conceda o papel à conta existente.';
       case 'EMAIL_BELONGS_TO_STUDENT':
-        return 'Este e-mail já pertence a uma conta de aluno.';
+        return 'Este e-mail pertence a uma conta de aluno. Use o endereço institucional.';
       case 'REASON_REQUIRED':
         return 'Informe o motivo do convite.';
       case 'PERMISSION_DENIED':
