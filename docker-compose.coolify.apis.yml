@@ -81,6 +81,9 @@ services:
       StaffInvitation__AcceptanceBaseUrl: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}/admin/convite
       StaffInvitation__LifetimeHours: ${STAFF_INVITATION_VALIDITY_HOURS:-168}
       RabbitMq__AuditExchange: audit.events
+      RabbitMq__AccountFactRetentionQueue: identity.account-fact-retention
+      RabbitMq__AccountFactRetentionMaxLength: ${IDENTITY_ACCOUNT_FACT_RETENTION_MAX_LENGTH:-10000}
+      RabbitMq__AccountFactRetentionTtlMilliseconds: ${IDENTITY_ACCOUNT_FACT_RETENTION_TTL_MS:-604800000}
       Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set in Coolify}
       OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set in Coolify}
       ServiceAssertions__Issuer: bff-student

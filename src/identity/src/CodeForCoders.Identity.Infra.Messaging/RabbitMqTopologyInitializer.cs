@@ -9,6 +9,13 @@ public sealed class RabbitMqTopologyInitializer(
     RabbitMqConnectionProvider connectionProvider,
     IOptions<RabbitMqOptions> options) : IHostedService
 {
+    private static readonly string[] AccountFactRoutingKeys =
+    [
+        "identidade.conta-criada.v1",
+        "identidade.conta-confirmada.v1",
+        "identidade.senha-redefinida.v1",
+    ];
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         var settings = options.Value;
@@ -72,6 +79,36 @@ public sealed class RabbitMqTopologyInitializer(
             "identity.platform.heartbeat.v1",
             arguments: null,
             cancellationToken: cancellationToken);
+        await DeclareAccountFactRetentionAsync(channel, settings, cancellationToken);
+    }
+
+    private static async Task DeclareAccountFactRetentionAsync(
+        IChannel channel,
+        RabbitMqOptions settings,
+        CancellationToken cancellationToken)
+    {
+        await channel.QueueDeclareAsync(
+            settings.AccountFactRetentionQueue,
+            durable: true,
+            exclusive: false,
+            autoDelete: false,
+            arguments: new Dictionary<string, object?>
+            {
+                ["x-queue-type"] = "quorum",
+                ["x-max-length"] = settings.AccountFactRetentionMaxLength,
+                ["x-message-ttl"] = settings.AccountFactRetentionTtlMilliseconds,
+                ["x-overflow"] = "drop-head",
+            },
+            cancellationToken: cancellationToken);
+        foreach (var routingKey in AccountFactRoutingKeys)
+        {
+            await channel.QueueBindAsync(
+                settings.AccountFactRetentionQueue,
+                settings.Exchange,
+                routingKey,
+                arguments: null,
+                cancellationToken: cancellationToken);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
