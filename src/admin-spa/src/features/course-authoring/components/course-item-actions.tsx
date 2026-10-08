@@ -20,7 +20,8 @@ export const CourseItemActions = ({ title, disabled, children }: CourseItemActio
     };
     const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
     const onClick = (event: MouseEvent) => {
-      if (event.target instanceof HTMLElement && event.target.closest('button') !== trigger.current) { setOpen(false); trigger.current?.focus(); }
+      // Adiado: fechar agora desmontaria o item antes do onClick do React, e a ação nunca rodaria.
+      if (event.target instanceof HTMLElement && event.target.closest('button') !== trigger.current) { window.setTimeout(() => setOpen(false)); trigger.current?.focus(); }
     };
     node.addEventListener('focusout', onFocusOut);
     node.addEventListener('keydown', onKeyDown);
