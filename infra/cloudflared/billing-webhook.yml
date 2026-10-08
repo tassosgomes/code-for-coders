@@ -1,0 +1,10 @@
+# Ingress do tunnel c4c-billing-webhook (Cloudflare Tunnel) usado pelo serviço
+# cloudflared-billing-webhook do docker-compose.coolify.apis.yml.
+# Expõe somente o webhook do Stripe do billing; qualquer outro caminho responde 404.
+# As credenciais do tunnel não ficam aqui: entram pela variável TUNNEL_CRED_CONTENTS (Coolify).
+tunnel: 0a5d533d-77d2-4df9-ab7c-3c02cf95f87f
+ingress:
+  - hostname: billing-webhook.tasso.dev.br
+    path: ^/webhooks/v1/stripe/events$
+    service: http://billing:8080
+  - service: http_status:404

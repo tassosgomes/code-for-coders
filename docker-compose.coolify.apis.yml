@@ -403,8 +403,8 @@ services:
       Stripe__SecretKey: ${STRIPE_SECRET_KEY:?set in Coolify}
       Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:?set in Coolify}
       PaymentReturn__AllowedHosts__0: ${BILLING_RETURN_HOST:-c4c-student.lab.tasso.dev.br}
-      # Domínio público do webhook (https://<domínio de billing>/webhooks/v1/stripe/events) a definir;
-      # o Coolify deve expor somente /webhooks/v1 deste serviço.
+      # Webhook público do Stripe (https://billing-webhook.tasso.dev.br/webhooks/v1/stripe/events),
+      # exposto pelo serviço cloudflared-billing-webhook abaixo. Não há domínio do Coolify para billing.
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -412,6 +412,19 @@ services:
       retries: 12
       start_period: 30s
 
+    networks:
+      - c4c-shared
+
+  # Conector do Cloudflare Tunnel "c4c-billing-webhook": é a única forma de a Stripe alcançar o billing.
+  # Conexão de saída para a Cloudflare, sem portas publicadas no servidor. As regras de ingress
+  # (somente /webhooks/v1/stripe/events, resto 404) estão em infra/cloudflared/billing-webhook.yml.
+  cloudflared-billing-webhook:
+    image: cloudflare/cloudflared:2026.10.0
+    command: ["--no-autoupdate", "--config", "/etc/cloudflared/billing-webhook.yml", "tunnel", "run"]
+    environment:
+      TUNNEL_CRED_CONTENTS: ${BILLING_WEBHOOK_TUNNEL_CREDENTIALS:?set in Coolify}
+    volumes:
+      - ./infra/cloudflared/billing-webhook.yml:/etc/cloudflared/billing-webhook.yml:ro
     networks:
       - c4c-shared
 
