@@ -419,12 +419,11 @@ services:
   # Conexão de saída para a Cloudflare, sem portas publicadas no servidor. As regras de ingress
   # (somente /webhooks/v1/stripe/events, resto 404) estão em infra/cloudflared/billing-webhook.yml.
   cloudflared-billing-webhook:
-    image: cloudflare/cloudflared:2026.10.0
-    command: ["--no-autoupdate", "--config", "/etc/cloudflared/billing-webhook.yml", "tunnel", "run"]
+    build:
+      context: ./infra/cloudflared
+    command: ["--config", "/etc/cloudflared/billing-webhook.yml", "tunnel", "run"]
     environment:
       TUNNEL_CRED_CONTENTS: ${BILLING_WEBHOOK_TUNNEL_CREDENTIALS:?set in Coolify}
-    volumes:
-      - ./infra/cloudflared/billing-webhook.yml:/etc/cloudflared/billing-webhook.yml:ro
     networks:
       - c4c-shared
 
