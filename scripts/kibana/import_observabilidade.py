@@ -403,6 +403,11 @@ ALERT_RULES = {
     "midia-a2-taxa-falha-preparacao": {
         "code": "A2",
         "name": "[Mídia] A2 · Taxa de falha de preparação",
+        # O Kibana aplica ao ES|QL o filtro de tempo da regra antes da query. Com janela de
+        # 15 min o baseline (amostra anterior à janela) some, cada série parece nova e o total
+        # cumulativo vira incremento: foi o disparo falso observado em dev em 2026-10-08.
+        # Por isso a regra usa 16 min: a janela de 15 min da query não muda.
+        "window_minutes": 16,
         "instruments": ("media.videos.completed", "media.videos.failed"),
         "threshold_markers": ("total >= 4", "failure_rate > 0.10"),
         # media.videos.completed/failed são counters cumulativos (o exportador OTLP
@@ -512,7 +517,7 @@ def stable_id(name: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"code-for-coders:{DASHBOARD_ID}:panel/{name}"))
 
 
-def alert_rule_params(esql: str) -> dict:
+def alert_rule_params(esql: str, window_minutes: int = ALERT_TIME_WINDOW_SIZE) -> dict:
     """Return the canonical .es-query params for an A1–A5 rule."""
     return {
         "aggType": "count",
@@ -524,7 +529,7 @@ def alert_rule_params(esql: str) -> dict:
         "threshold": [0],
         "thresholdComparator": ">",
         "timeField": TIME_FIELD,
-        "timeWindowSize": ALERT_TIME_WINDOW_SIZE,
+        "timeWindowSize": window_minutes,
         "timeWindowUnit": ALERT_TIME_WINDOW_UNIT,
     }
 
@@ -540,7 +545,7 @@ def build_alert_saved_object(rule_id: str, rule: dict) -> dict:
             "consumer": ALERT_CONSUMER,
             "schedule": {"interval": ALERT_SCHEDULE_INTERVAL},
             "alertTypeId": ALERT_RULE_TYPE_ID,
-            "params": alert_rule_params(rule["esql"]),
+            "params": alert_rule_params(rule["esql"], rule.get("window_minutes", ALERT_TIME_WINDOW_SIZE)),
             "actions": [],
             "enabled": True,
             "throttle": None,
@@ -874,8 +879,9 @@ def verify_alert_rules(by_type_and_id: dict) -> None:
             raise ValueError(f"regra {rule['code']} não consulta metrics-generic*")
         if params.get("timeField") != TIME_FIELD:
             raise ValueError(f"regra {rule['code']} precisa usar o campo temporal {TIME_FIELD}")
-        if params.get("timeWindowSize") != ALERT_TIME_WINDOW_SIZE or params.get("timeWindowUnit") != ALERT_TIME_WINDOW_UNIT:
-            raise ValueError(f"regra {rule['code']} precisa da janela de 15 min")
+        expected_window = rule.get("window_minutes", ALERT_TIME_WINDOW_SIZE)
+        if params.get("timeWindowSize") != expected_window or params.get("timeWindowUnit") != ALERT_TIME_WINDOW_UNIT:
+            raise ValueError(f"regra {rule['code']} precisa da janela de {expected_window} min")
         if params.get("threshold") != [0] or params.get("thresholdComparator") != ">":
             raise ValueError(f"regra {rule['code']} dispara por contagem de linhas acima de zero")
 
@@ -1731,7 +1737,7 @@ def upsert_alert_rule(
     kibana_url: str, authorization: str, username: str, password: str, rule_id: str, rule: dict
 ) -> str:
     """Create or replace an A1–A5 rule via the Alerting API; returns created|updated."""
-    params = alert_rule_params(rule["esql"])
+    params = alert_rule_params(rule["esql"], rule.get("window_minutes", ALERT_TIME_WINDOW_SIZE))
     existing = fetch_alert_rule(kibana_url, authorization, username, password, rule_id)
     if existing is None:
         _, body = alerting_request(
