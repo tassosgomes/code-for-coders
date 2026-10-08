@@ -183,9 +183,9 @@ def counter_increment_query(panel_key: str) -> str:
     dimension = COUNTER_PANEL_DIMENSION[panel_key]
     where = " OR ".join(f"{INSTRUMENT_FIELDS[name]} IS NOT NULL" for name in fields)
     aggregations = ", ".join(
-        f"{_counter_alias(name)}_base = LAST({INSTRUMENT_FIELDS[name]}, @timestamp) "
+        f"{_counter_alias(name)}_base = LAST(TO_DOUBLE({INSTRUMENT_FIELDS[name]}), @timestamp) "
         f"WHERE in_window == 0, "
-        f"{_counter_alias(name)}_last = LAST({INSTRUMENT_FIELDS[name]}, @timestamp) "
+        f"{_counter_alias(name)}_last = LAST(TO_DOUBLE({INSTRUMENT_FIELDS[name]}), @timestamp) "
         f"WHERE in_window == 1"
         for name in fields
     )
@@ -241,8 +241,8 @@ def verify_counter_increment_shape(query: str, panel_key: str, title: str) -> No
                 "repetem o total acumulado em cada snapshot; calcule incrementos na janela"
             )
         for aggregation in (
-            f"LAST({field}, @timestamp) WHERE in_window == 0",
-            f"LAST({field}, @timestamp) WHERE in_window == 1",
+            f"LAST(TO_DOUBLE({field}), @timestamp) WHERE in_window == 0",
+            f"LAST(TO_DOUBLE({field}), @timestamp) WHERE in_window == 1",
         ):
             if aggregation not in query:
                 raise ValueError(
@@ -279,6 +279,27 @@ def verify_no_counter_sum(panels_query_text: str) -> None:
             raise ValueError(
                 f"SUM({field}) em painel soma snapshots cumulativos e multiplica o valor; "
                 "use incrementos na janela (LAST − FIRST por série, com tratamento de reset)"
+            )
+
+
+def verify_esql_type_casts(esql_text: str) -> None:
+    """Reject ES|QL que o Elasticsearch 9.5 recusa em tempo de execução.
+
+    Counters cumulativos chegam como counter_long e precisam de TO_DOUBLE antes de
+    LAST/FIRST; histogramas OTLP chegam como histogram e precisam de TO_TDIGEST antes
+    de PERCENTILE. Sem os casts a regra ou o painel falha ao executar, e a verificação
+    offline não percebe porque valida só o texto.
+    """
+    if re.search(r"PERCENTILE\(\s*metrics\.", esql_text):
+        raise ValueError(
+            "PERCENTILE sobre métrica histogram precisa de TO_TDIGEST(...): "
+            "o Elasticsearch 9.5 recusa o tipo histogram direto"
+        )
+    for name in CUMULATIVE_COUNTER_FIELDS:
+        field = re.escape(INSTRUMENT_FIELDS[name])
+        if re.search(rf"\b(?:LAST|FIRST)\(\s*{field}\b", esql_text):
+            raise ValueError(
+                f"{INSTRUMENT_FIELDS[name]} é counter_long: use TO_DOUBLE(...) antes de LAST/FIRST"
             )
 
 
@@ -362,7 +383,7 @@ ALERT_RULES = {
         "esql": (
             "FROM metrics-generic* | WHERE @timestamp >= NOW() - 15 minutes"
             " AND metrics.learning.playback_progress.lag IS NOT NULL"
-            " | STATS p95_seconds = PERCENTILE(metrics.learning.playback_progress.lag, 95)"
+            " | STATS p95_seconds = PERCENTILE(TO_TDIGEST(metrics.learning.playback_progress.lag), 95)"
             " | WHERE p95_seconds > 60"
         ),
     },
@@ -407,12 +428,12 @@ ALERT_RULES = {
             " OR metrics.media.videos.failed IS NOT NULL)"
             " | EVAL reason = COALESCE(attributes.reason, \"__completed__\"),"
             " in_window = CASE(@timestamp >= NOW() - 15 minutes, 1, 0)"
-            " | STATS c_base = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 0,"
-            " c_first = FIRST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1,"
-            " c_last = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1,"
-            " f_base = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 0,"
-            " f_first = FIRST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1,"
-            " f_last = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1 BY reason"
+            " | STATS c_base = LAST(TO_DOUBLE(metrics.media.videos.completed), @timestamp) WHERE in_window == 0,"
+            " c_first = FIRST(TO_DOUBLE(metrics.media.videos.completed), @timestamp) WHERE in_window == 1,"
+            " c_last = LAST(TO_DOUBLE(metrics.media.videos.completed), @timestamp) WHERE in_window == 1,"
+            " f_base = LAST(TO_DOUBLE(metrics.media.videos.failed), @timestamp) WHERE in_window == 0,"
+            " f_first = FIRST(TO_DOUBLE(metrics.media.videos.failed), @timestamp) WHERE in_window == 1,"
+            " f_last = LAST(TO_DOUBLE(metrics.media.videos.failed), @timestamp) WHERE in_window == 1 BY reason"
             " | EVAL c_start = COALESCE(c_base, 0), c_end = COALESCE(c_last, c_start),"
             " f_start = COALESCE(f_base, 0), f_end = COALESCE(f_last, f_start)"
             " | EVAL c_inc = CASE(c_end >= c_start, c_end - c_start, c_end),"
@@ -537,10 +558,10 @@ def verify_a2_esql_shape(esql: str, rule_id: str) -> None:
     required = (
         "NOW() - 16 minutes",
         "in_window",
-        "c_base = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 0",
-        "c_last = LAST(metrics.media.videos.completed, @timestamp) WHERE in_window == 1",
-        "f_base = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 0",
-        "f_last = LAST(metrics.media.videos.failed, @timestamp) WHERE in_window == 1",
+        "c_base = LAST(TO_DOUBLE(metrics.media.videos.completed), @timestamp) WHERE in_window == 0",
+        "c_last = LAST(TO_DOUBLE(metrics.media.videos.completed), @timestamp) WHERE in_window == 1",
+        "f_base = LAST(TO_DOUBLE(metrics.media.videos.failed), @timestamp) WHERE in_window == 0",
+        "f_last = LAST(TO_DOUBLE(metrics.media.videos.failed), @timestamp) WHERE in_window == 1",
         "COALESCE(c_base, 0)",
         "COALESCE(f_base, 0)",
         "BY reason",
@@ -1158,7 +1179,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     progress_lag_query = panel_query(panels_by_id[stable_id("progress-lag")])
     if (
         INSTRUMENT_FIELDS["learning.playback_progress.lag"] not in progress_lag_query
-        or "PERCENTILE(metrics.learning.playback_progress.lag, 95)" not in progress_lag_query
+        or "PERCENTILE(TO_TDIGEST(metrics.learning.playback_progress.lag), 95)" not in progress_lag_query
     ):
         raise ValueError("painel de atraso do progresso deve mostrar p95 do histograma")
 
@@ -1236,6 +1257,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     if summary.get("exportedCount") != len(saved_objects):
         raise ValueError("exportedCount não corresponde à quantidade de saved objects")
     verify_no_counter_sum(query_text)
+    verify_esql_type_casts(nested_strings(saved_objects))
     verify_counter_panel_semantics()
     verify_alert_rules(by_type_and_id)
     return saved_objects, summary
@@ -1389,21 +1411,21 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
         ),
         (
             "progress-lag",
-            "FROM metrics-generic* | WHERE metrics.learning.playback_progress.lag IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.learning.playback_progress.lag, 50), p95_seconds = PERCENTILE(metrics.learning.playback_progress.lag, 95)",
+            "FROM metrics-generic* | WHERE metrics.learning.playback_progress.lag IS NOT NULL | STATS p50_seconds = PERCENTILE(TO_TDIGEST(metrics.learning.playback_progress.lag), 50), p95_seconds = PERCENTILE(TO_TDIGEST(metrics.learning.playback_progress.lag), 95)",
             [("p50_seconds", "number"), ("p95_seconds", "number")],
             24,
             136,
         ),
         (
             "preparation-stage-duration",
-            "FROM metrics-generic* | WHERE metrics.media.videos.prepare_duration IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.videos.prepare_duration, 50), p95_seconds = PERCENTILE(metrics.media.videos.prepare_duration, 95) BY stage = attributes.stage | SORT stage ASC",
+            "FROM metrics-generic* | WHERE metrics.media.videos.prepare_duration IS NOT NULL | STATS p50_seconds = PERCENTILE(TO_TDIGEST(metrics.media.videos.prepare_duration), 50), p95_seconds = PERCENTILE(TO_TDIGEST(metrics.media.videos.prepare_duration), 95) BY stage = attributes.stage | SORT stage ASC",
             [("stage", "string"), ("p50_seconds", "number"), ("p95_seconds", "number")],
             0,
             54,
         ),
         (
             "preparation-time-to-ready",
-            "FROM metrics-generic* | WHERE metrics.media.videos.time_to_ready IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.videos.time_to_ready, 50), p95_seconds = PERCENTILE(metrics.media.videos.time_to_ready, 95)",
+            "FROM metrics-generic* | WHERE metrics.media.videos.time_to_ready IS NOT NULL | STATS p50_seconds = PERCENTILE(TO_TDIGEST(metrics.media.videos.time_to_ready), 50), p95_seconds = PERCENTILE(TO_TDIGEST(metrics.media.videos.time_to_ready), 95)",
             [("p50_seconds", "number"), ("p95_seconds", "number")],
             24,
             54,
@@ -1452,14 +1474,14 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
         ),
         (
             "playback-time-to-start",
-            "FROM metrics-generic* | WHERE metrics.media.playback.time_to_start IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.playback.time_to_start, 50), p95_seconds = PERCENTILE(metrics.media.playback.time_to_start, 95)",
+            "FROM metrics-generic* | WHERE metrics.media.playback.time_to_start IS NOT NULL | STATS p50_seconds = PERCENTILE(TO_TDIGEST(metrics.media.playback.time_to_start), 50), p95_seconds = PERCENTILE(TO_TDIGEST(metrics.media.playback.time_to_start), 95)",
             [("p50_seconds", "number"), ("p95_seconds", "number")],
             0,
             112,
         ),
         (
             "decision-latency",
-            "FROM metrics-generic* | WHERE metrics.media.decision.duration IS NOT NULL | STATS p50_seconds = PERCENTILE(metrics.media.decision.duration, 50), p95_seconds = PERCENTILE(metrics.media.decision.duration, 95)",
+            "FROM metrics-generic* | WHERE metrics.media.decision.duration IS NOT NULL | STATS p50_seconds = PERCENTILE(TO_TDIGEST(metrics.media.decision.duration), 50), p95_seconds = PERCENTILE(TO_TDIGEST(metrics.media.decision.duration), 95)",
             [("p50_seconds", "number"), ("p95_seconds", "number")],
             24,
             112,
@@ -1494,6 +1516,33 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             grid.get("w", 24),
             grid.get("h", 12),
             ignore_timerange=True,
+        )
+    # Histogram panels owned by earlier slices are rewritten in place as well, keeping
+    # their grid position; the query casts histograms with TO_TDIGEST before PERCENTILE.
+    histogram_rewrites = {
+        "upload-sizes": (
+            "FROM metrics-generic* | WHERE metrics.media.upload.size IS NOT NULL | STATS p50_bytes = PERCENTILE(TO_TDIGEST(metrics.media.upload.size), 50), p95_bytes = PERCENTILE(TO_TDIGEST(metrics.media.upload.size), 95)",
+            [("p50_bytes", "number"), ("p95_bytes", "number")],
+        ),
+        "queue-wait": (
+            "FROM metrics-generic* | WHERE metrics.media.videos.wait IS NOT NULL | STATS p50_wait_seconds = PERCENTILE(TO_TDIGEST(metrics.media.videos.wait), 50), p95_wait_seconds = PERCENTILE(TO_TDIGEST(metrics.media.videos.wait), 95)",
+            [("p50_wait_seconds", "number"), ("p95_wait_seconds", "number")],
+        ),
+    }
+    for key, (query, columns) in histogram_rewrites.items():
+        panel_id = stable_id(key)
+        grid = existing_panels[panel_id].get("gridData", {})
+        existing_panels[panel_id] = make_lens_panel(
+            panel_id,
+            PANEL_TITLES[key],
+            query,
+            columns,
+            data_view_id,
+            data_view,
+            grid.get("x", 0),
+            grid.get("y", 0),
+            grid.get("w", 24),
+            grid.get("h", 12),
         )
     for key, query, columns, x, y in panel_definitions:
         panel_id = stable_id(key)
