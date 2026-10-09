@@ -27,6 +27,21 @@ docker compose --env-file .env \
 roles e bancos PostgreSQL, o vhost e os usuários RabbitMQ, e o bucket/usuário MinIO; em seguida,
 `migrate` aplica as migrations.
 
+### Migração única de permissões do volume MinIO
+
+A imagem MinIO roda como UID/GID `10001`. Antes de reconstruí-la em um host cujo volume `infra-minio`
+foi criado pela imagem anterior executada como root, pare o serviço e transfira a propriedade dos
+arquivos uma vez:
+
+```bash
+cd /home/tsgomes/infra
+docker compose stop minio
+docker run --rm --user 0:0 --volume infra-minio:/data alpine:3.22.2 chown -R 10001:10001 /data
+docker compose up -d --build minio
+```
+
+Volumes novos recebem a propriedade do diretório `/data` da imagem e não precisam dessa migração.
+
 Para manter segredos e chaves de runtime separados dos valores locais, a configuração pode ser
 gerada em outro arquivo e selecionada pelos scripts:
 
