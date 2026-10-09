@@ -91,7 +91,7 @@ services:
       BillingClient__Audience: billing
       BillingClient__SigningKeyId: local-commerce-billing-1
       BillingClient__SigningKeyBase64: ${COMMERCE_BILLING_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
-      StudentApp__PublicBaseUrl: ${STUDENT_APP_PUBLIC_BASE_URL:-http://localhost:8082}
+      StudentApp__PublicBaseUrl: ${STUDENT_APP_PUBLIC_BASE_URL:-http://localhost:8082/student}
       RabbitMq__BillingExchange: billing.events
       RabbitMq__SalesPaymentsQueue: commerce.sales-payments
       RabbitMq__EntitlementPurchasesQueue: commerce.entitlement-purchases

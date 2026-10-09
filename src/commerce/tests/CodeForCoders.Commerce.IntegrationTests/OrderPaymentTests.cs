@@ -256,6 +256,29 @@ public sealed class OrderPaymentTests(CommerceHosts hosts) : IClassFixture<Comme
         Assert.Equal("ORDER_UNKNOWN", ex.Code);
     }
 
+    [Fact(DisplayName = nameof(StartPaymentSendsReturnUrlsToTheStudentOrderPage))]
+    public async Task StartPaymentSendsReturnUrlsToTheStudentOrderPage()
+    {
+        var f = Fixture();
+        var ids = await f.SeedAsync();
+        using var createResp = await f.CreateAsync(ids[1], "key-return-urls");
+        var orderId = (await OrderFixture.BodyAsync(createResp)).GetProperty("orderId").GetGuid();
+
+        BillingPaymentRequest? sent = null;
+        f.Factory.BillingClient.Handler = (req, _) =>
+        {
+            sent = req;
+            return Task.FromResult(new BillingPaymentSession(req.OrderId, "checkout",
+                "https://checkout.stripe.com/pay/return-urls", null, DateTimeOffset.UtcNow.AddHours(24)));
+        };
+
+        using var client = f.Client();
+        using var payResp = await client.PostAsync($"/internal/v1/orders/{orderId:D}/payment-session", null, OrderFixture.Cancellation);
+        Assert.Equal(HttpStatusCode.OK, payResp.StatusCode);
+        Assert.Equal($"http://localhost:8082/student/pedidos/{orderId:D}?resultado=concluido", sent!.SuccessUrl);
+        Assert.Equal($"http://localhost:8082/student/pedidos/{orderId:D}?resultado=saiu", sent.CancelUrl);
+    }
+
     [Fact(DisplayName = nameof(PaymentConfirmedFact_EmptyIds_ThrowsOrderRuleException))]
     public async Task PaymentConfirmedFact_EmptyIds_ThrowsOrderRuleException()
     {
