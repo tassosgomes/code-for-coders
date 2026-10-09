@@ -24,5 +24,5 @@ COPY --from=build /out/minio /usr/local/bin/minio
 
 EXPOSE 9000 9001
 VOLUME ["/data"]
-ENTRYPOINT ["/usr/local/bin/minio"]
 USER 10001:10001
+ENTRYPOINT ["/usr/local/bin/minio"]
