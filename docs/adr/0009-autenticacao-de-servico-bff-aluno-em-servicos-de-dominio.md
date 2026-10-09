@@ -87,6 +87,6 @@ A vitrine pública de cursos (primeira superfície anônima de leitura de catál
 
 ## Referências
 
-- [ADR-0001](0001-monorepo-de-codigo.md), [ADR-0002](0002-plataforma-de-runtime-coolify.md), [ADR-0003](0003-verificacao-de-sessao-do-aluno.md), [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md).
+- [ADR-0001](0001-monorepo-de-codigo.md), [ADR-0019](0019-runtime-e-deploy-atual.md), [ADR-0003](0003-verificacao-de-sessao-do-aluno.md), [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md).
 - [Baseline arquitetural](../../context/architecture-baseline.md) — G07, G10, G15, G26; BA05.
 - Origem histórica: `tasks/archive/prd-vitrine-oferta/techspec.md` e `tasks/archive/prd-vitrine-oferta/contracts.md` (C-04).

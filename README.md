@@ -68,35 +68,20 @@ API settings; `scripts/remote-infra.sh` prepares the server and requires SSH acc
 `code-for-coders-media` with a bucket-scoped user. Emails land in the shared
 smtp4dev at <https://smtp.tasso.dev.br> and telemetry in Kibana at <https://kibana.tasso.dev.br>.
 
-### Coolify development environment
+### Deployed environments
 
-The stack is deployed on Coolify (project `code4coders`, environment `development`, server
-`192.168.0.11`) as two resources: `code4coders-apis` (nine backend services, from
-`docker-compose.coolify.apis.yml`) and `code4coders-web` (both BFFs and both SPAs, from
-`docker-compose.coolify.web.yml`). The split keeps each rendered compose below the kernel
-per-argument limit that breaks Coolify deploys of large compose files
-([coollabsio/coolify#11737](https://github.com/coollabsio/coolify/issues/11737)). Deploy
-`code4coders-apis` first: the BFFs resolve the API hostnames (`identity`, `learning`, `media`,
-`commerce`, `audit`) through the external `c4c-shared` Docker network, which must exist on the
-server (`docker network create c4c-shared`). Builds run on the Coolify server itself, and only
-the domains below are public through the Coolify proxy (Traefik, wildcard TLS
-`*.lab.tasso.dev.br`):
+Development runs on `desenv-server` (`192.168.0.5`). The `code-for-coders` Compose project is
+managed by Komodo and uses `docker-compose.komodo.apis.yml` with
+`docker-compose.komodo.web.yml`. It is served at <https://dev-code4coders.tasso.dev.br>, with the
+admin SPA under `/admin/` and the student SPA under `/students/`.
 
-| Application | URL |
-| --- | --- |
-| Admin SPA | <https://c4c-admin.lab.tasso.dev.br/admin/> |
-| Student SPA | <https://c4c-student.lab.tasso.dev.br/student/> |
-| Identity API | <https://c4c-identity.lab.tasso.dev.br> |
-| Learning API | <https://c4c-learning.lab.tasso.dev.br> |
-| Media API | <https://c4c-media.lab.tasso.dev.br> |
-| Commerce API | <https://c4c-commerce.lab.tasso.dev.br> |
-| Notification API | <https://c4c-notification.lab.tasso.dev.br> |
-| Audit API | <https://c4c-audit.lab.tasso.dev.br> |
-| Media Edge | <https://c4c-media-edge.lab.tasso.dev.br> |
-| Admin BFF | <https://c4c-bff-admin.lab.tasso.dev.br> |
-| Student BFF | <https://c4c-bff-student.lab.tasso.dev.br> |
+The stable environment runs on `infra-server` (`192.168.0.11`) as Compose project
+`code-for-coders-stable`. It combines the same two files with `docker-compose.remote.yml` and
+`docker-compose.stable.yml`. Its isolated dependencies run in a separate `infra` Compose project.
+The edge Caddy on `desenv-server` serves <https://code4coders.tasso.dev.br> and forwards the SPA
+paths to ports `18081` and `18082` on `infra-server`.
 
-Secrets (`REMOTE_*`, `*_KEY_B64`) live only in the Coolify environment variables — never in the
-repository. Pushes to `main` under the watched paths redeploy automatically. The local stack and
-the Coolify stack share the same PostgreSQL/RabbitMQ/Valkey on `192.168.0.5`; avoid running both
-at the same time against the same databases.
+Both domains currently resolve to the private address `192.168.0.5`; access is available through
+the corresponding local network or VPN. See [the deployment topology](deploy/topology.md) and
+[the stable environment guide](deploy/stable/README.md) for routing, secrets, migrations and
+container updates. Keep each environment's credentials outside the repository.

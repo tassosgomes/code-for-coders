@@ -54,7 +54,7 @@ Até aqui, o aluno só chegava a `commerce` de forma anônima: a vitrine e o cli
 
 ### Negativas
 
-- Mais uma audiência a configurar em cada ambiente (compose local, override remoto e Coolify).
+- Mais uma audiência a configurar em cada ambiente (Compose local, de desenvolvimento e estável).
 - A separação aluno × ator em `commerce` depende de política e precisa de teste nos dois sentidos.
 
 ### Riscos

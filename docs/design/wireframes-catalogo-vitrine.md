@@ -27,7 +27,7 @@
 
 ### 1.2 Telas e sobreposições
 
-**Backoffice** (`admin-spa`, base `/admin/`; origem `http://localhost:8081` no Compose e `https://c4c-admin.lab.tasso.dev.br` no Coolify de desenvolvimento)
+**Backoffice** (`admin-spa`, base `/admin/`; origem `http://localhost:8081/admin/` no Compose e `https://dev-code4coders.tasso.dev.br/admin/` no ambiente de desenvolvimento)
 
 | # | Tela | Rota | Permissão | Estados principais |
 |---|---|---|---|---|
@@ -41,7 +41,7 @@
 | C8 | Trilha de auditoria — atos de oferta | telas existentes `/admin/auditoria` e `/admin/auditoria/{recordId}` | papel `administrador` | rótulo resolvido · rótulo não disponível · `Oferta alterada` com valores |
 | B12/B13/B1 | Sem permissão · erro geral · sessão encerrada | rotas protegidas | — | reusam os frames de Acesso interno |
 
-**Área pública** (`student-spa`, base `/student/`; origem `http://localhost:8082` no Compose e `https://c4c-student.lab.tasso.dev.br` no Coolify de desenvolvimento). Sem sessão, sem carregador de login.
+**Área pública** (`student-spa`, base `/students/`; origem `http://localhost:8082/students/` no Compose e `https://dev-code4coders.tasso.dev.br/students/` no ambiente de desenvolvimento). Sem sessão, sem carregador de login.
 
 | # | Tela | Rota | Estados principais |
 |---|---|---|---|

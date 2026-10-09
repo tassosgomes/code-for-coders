@@ -53,7 +53,7 @@
 
 **Rotas:** são relativas à origem pública do backoffice. No Compose, a lista é
 `http://localhost:8081/admin/autoria`; no desenvolvimento remoto, o prefixo é
-`https://c4c-admin.lab.tasso.dev.br/admin/autoria`. A versão histórica tem URL própria; A2 e A4–A9
+`https://dev-code4coders.tasso.dev.br/admin/autoria`. A versão histórica tem URL própria; A2 e A4–A9
 são estados do editor/lista, sem rota nova. O link de pendência usa `#modulo-{moduleId}` ou
 `#aula-{lessonId}` no editor.
 

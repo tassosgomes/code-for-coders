@@ -64,7 +64,7 @@ Essa rota responde outra pergunta e expõe mais do que a decisão: dado um aluno
 
 ### Negativas
 
-- Mais uma entrada de escopo por ambiente na configuração de `commerce` (compose local, remoto e Coolify).
+- Mais uma entrada de escopo por ambiente na configuração de `commerce` (Compose local, de desenvolvimento e estável).
 - O chamador `learning` passa a assinar asserções com escopos diferentes conforme a rota.
 
 ### Riscos

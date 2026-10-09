@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 readonly script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
-readonly env_file="$repository_root/.env"
+readonly env_file="${REMOTE_INFRA_ENV_FILE:-$repository_root/.env}"
 readonly database_bootstrap="$script_directory/init-local-databases.sql"
 
 readonly rabbitmq_vhost=code-for-coders
@@ -47,6 +47,7 @@ Commands:
   check      Verify that PostgreSQL, RabbitMQ, Valkey, MinIO, OTel, and SMTP accept connections.
 
 Environment (read from .env, all optional):
+  REMOTE_INFRA_ENV_FILE  Path to the environment file (default: repository .env)
   REMOTE_INFRA_HOST      Infra server address (default 192.168.0.5)
   REMOTE_INFRA_SSH       SSH host alias used by provision (default desenv-server)
   REMOTE_VALKEY_DATABASE Valkey logical database for this project (default 1)

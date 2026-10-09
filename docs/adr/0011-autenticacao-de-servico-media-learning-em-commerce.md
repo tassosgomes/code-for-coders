@@ -84,6 +84,6 @@ Matrícula e Direito de Acesso é a fonte única da resposta "este aluno pode ac
 
 ## Referências
 
-- [ADR-0001](0001-monorepo-de-codigo.md), [ADR-0002](0002-plataforma-de-runtime-coolify.md), [ADR-0003](0003-verificacao-de-sessao-do-aluno.md), [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md), [ADR-0009](0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md), [ADR-0010](0010-autenticacao-de-servico-commerce-em-identity.md).
+- [ADR-0001](0001-monorepo-de-codigo.md), [ADR-0019](0019-runtime-e-deploy-atual.md), [ADR-0003](0003-verificacao-de-sessao-do-aluno.md), [ADR-0004](0004-autenticacao-de-servico-bff-identity.md), [ADR-0005](0005-sessao-e-servico-do-backoffice.md), [ADR-0009](0009-autenticacao-de-servico-bff-aluno-em-servicos-de-dominio.md), [ADR-0010](0010-autenticacao-de-servico-commerce-em-identity.md).
 - [Baseline arquitetural](../../context/architecture-baseline.md) — BA07, G07, G10, G11.
 - Origem histórica: `tasks/archive/prd-concessao-acesso/techspec.md` e `tasks/archive/prd-concessao-acesso/contracts.md` (C-04).

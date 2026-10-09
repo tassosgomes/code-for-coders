@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Superseded by ADR-0019 for the active deployment model. This entry remains as a historical record of
+the foundation decision; current runtime guidance is maintained in ADR-0019.
 
 ## Identidade e escopo
 

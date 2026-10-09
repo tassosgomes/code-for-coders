@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 readonly script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
-readonly env_file="$repository_root/.env"
+readonly env_file="${LOCAL_ENV_FILE:-$repository_root/.env}"
 
 read_local_database_password() {
   local password

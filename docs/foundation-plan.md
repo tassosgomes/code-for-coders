@@ -3,6 +3,7 @@
 > Checklist vivo da Fase 0. Marque cada caixa conforme construir.
 > A Fase 0 corre **fora do fluxo TSG**, por decisão registrada em `flow-state.json` (`foundation.nota`).
 > Critério de fechamento: hello-world de cada serviço da Fase 1 passando pela esteira.
+> O plano de runtime abaixo é histórico; o modelo vigente é Komodo no desenvolvimento e Docker Compose no ambiente estável, conforme [ADR-0019](adr/0019-runtime-e-deploy-atual.md).
 
 **Status:** Etapa 3 concluída · **Criado em:** 2026-09-20
 
@@ -36,7 +37,8 @@ tiver continua rastreado como issue em `template-pipeline`, com a operação des
 `docs/foundation.md`.
 
 **Decisões tomadas nesta sessão:** monorepo de código neste repo · golden path `identity` primeiro,
-réplica depois · Coolify em VPS para compute e dados, AWS S3+CloudFront só para mídia.
+réplica depois · runtime inicial em VPS para compute e dados, AWS S3+CloudFront só para mídia
+(decisão histórica, supersedida para o runtime atual pela ADR-0019).
 
 ---
 
@@ -107,17 +109,16 @@ parte da Etapa 0 e devem permanecer rastreáveis até o fechamento formal. A Eta
 
 ### 0.B Plataforma — CD (fecha a dependência #1 do baseline)
 
-- [ ] **F0-04 ([issue #6](https://github.com/tassosgomes/template-pipeline/issues/6)) — Fase 3: `cd-coolify.yml` reusável.** Deploy por serviço a partir de `image-digest`,
-      ambientes `dev`/`staging`/`prod` com reviewers, **rollback por redeploy do digest anterior**.
-      Consome os outputs `image-digest`/`version` que os `ci-*.yml` já expõem esperando exatamente isso.
-      Épico. · label `enhancement`
+- [ ] **F0-04 ([issue #6](https://github.com/tassosgomes/template-pipeline/issues/6)) — Fase 3: deploy reusável por serviço.** A proposta original de CD por `image-digest`
+      foi supersedida pelo processo atual de atualização, descrito na ADR-0019 e em
+      `scripts/update-containers.sh`. · label `enhancement`
 - [ ] **F0-05 ([issue #7](https://github.com/tassosgomes/template-pipeline/issues/7)) — Migration como step de deploy.** Regra 9 de Propriedade dos Dados: *"Migration é step de
       deploy, nunca no boot, e cada tabela tem exatamente um serviço que a migra."* Job `migrate` no CD
       antes do rollout (EF bundle), e action de CI envolvendo
       `.agents/skills/dotnet/assets/ci/check-migrations-immutable.sh`. · label `enhancement`
-- [ ] **F0-06 ([issue #8](https://github.com/tassosgomes/template-pipeline/issues/8)) — Ambientes e segredos (dependência #7).** GitHub Environments com reviewers + integração com
-      o secret manager do Coolify; nenhuma credencial em repositório ou imagem. · label `enhancement`
-- [ ] **F0-07 ([issue #9](https://github.com/tassosgomes/template-pipeline/issues/9)) — Provisionamento das dependências de runtime no Coolify (#3, #4, #5, #6 do baseline).**
+- [ ] **F0-06 ([issue #8](https://github.com/tassosgomes/template-pipeline/issues/8)) — Ambientes e segredos (dependência #7).** GitHub Environments com reviewers e
+      variáveis locais por host; nenhuma credencial em repositório ou imagem. · label `enhancement`
+- [ ] **F0-07 ([issue #9](https://github.com/tassosgomes/template-pipeline/issues/9)) — Provisionamento das dependências de runtime (#3, #4, #5, #6 do baseline).**
       Postgres com **banco e credencial por serviço** (mecanismo de G04; a permissão sem `UPDATE`/`DELETE`
       é o de G13), RabbitMQ com quorum queues + DLX/DLQ e retenção, Valkey, coletor OTLP com backend de
       traces, métricas e logs. · label `enhancement`
@@ -226,7 +227,7 @@ jobs:
 
 ### 1.6 CD
 
-- [ ] Deploy via `cd-coolify.yml` (F0-04): `dev` automático, `staging` e `prod` com reviewer
+- [ ] Deploy automatizado (F0-04): plano substituído pelo processo documentado na ADR-0019 e em `scripts/update-containers.sh`.
 - [ ] **Rollback provado**, não presumido: redeploy do digest anterior e `curl` confirmando
 
 ### 1.7 Fechar a etapa
@@ -250,7 +251,7 @@ chamador com `paths:` próprio, `image-name` próprio e entrada em `foundation.s
 - [x] **`bff-admin`** (.NET + YARP) — idem
 - [x] **`student-spa`** (React/Vite/TS, `ci-react-ts.yml`) — assets da skill `react`: `Dockerfile`,
       `nginx.conf.template`, `docker/40-runtime-env.sh`; `window.RUNTIME_ENV` (imagem única); OTel Web com
-      `traceparent`. `ingress.yaml` é de Kubernetes — descartar no Coolify
+      `traceparent`. `ingress.yaml` é de Kubernetes e não é usado pelo deploy Compose atual
 - [x] **`admin-spa`** (React/Vite/TS) — idem
 
 ---
@@ -260,15 +261,15 @@ chamador com `paths:` próprio, `image-name` próprio e entrada em `foundation.s
 - [x] **[`docs/adr/0001-monorepo-de-codigo.md`](adr/0001-monorepo-de-codigo.md)** — por que um repo e não dez, e por que isso **não** viola
       BA01: serviço continua sendo unidade de deploy, escala e falha; cada um tem imagem, deploy e
       rollback próprios
-- [x] **[`docs/adr/0002-plataforma-de-runtime-coolify.md`](adr/0002-plataforma-de-runtime-coolify.md)** — registra uma divergência que precisa ser
+- [x] **[ADR-0002 — decisão inicial de runtime, supersedida pela ADR-0019](adr/0002-plataforma-de-runtime-coolify.md)** — registra uma divergência que precisa ser
       explícita: `vision.md` §Restrições Técnicas diz *"Infraestrutura: nuvem AWS, com S3 + CloudFront"*.
-      Coolify em VPS para compute e dados diverge disso
+      A decisão inicial de VPS para compute e dados diverge disso
 - [x] **`vision.md` → v1.2** restringindo a exigência de AWS a armazenamento e distribuição de mídia. O
       ADR sozinho não basta: o validador de fluxo compara versão e origem entre níveis
 - [x] **`docs/foundation.md`** — o que a Fase 0 entregou, como subir o ambiente local, como um serviço
       novo nasce
 - [x] **`flow-state.json`** — `foundation.status: "done"`, `platform_ready: true`, todos os `path`
-      preenchidos; fechar `OD4` movendo-a para `decisions`; registrar as decisões novas (monorepo, Coolify)
+      preenchidos; fechar `OD4` movendo-a para `decisions`; registrar as decisões novas (monorepo, runtime inicial)
 - [x] **`context/architecture-baseline.md` → v1.2** fechando **AB05**
 - [x] Retomar o fluxo TSG em NA1 → NA2 → NA3; o estado atual já avançou para NA5 → NA6
 

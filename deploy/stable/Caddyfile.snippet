@@ -1,0 +1,28 @@
+code4coders.{$DOMAIN} {
+	import tls_cf
+
+	@root path /
+	redir @root /admin/ 302
+	@admin_root path /admin
+	redir @admin_root /admin/ 308
+	@students_root path /students
+	redir @students_root /students/ 308
+
+	@admin path /admin/*
+	handle @admin {
+		reverse_proxy 192.168.0.11:18081 {
+			header_up Host {host}
+		}
+	}
+
+	@students path /students/*
+	handle @students {
+		reverse_proxy 192.168.0.11:18082 {
+			header_up Host {host}
+		}
+	}
+
+	handle {
+		respond "Not found" 404
+	}
+}

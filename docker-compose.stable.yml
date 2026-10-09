@@ -1,0 +1,65 @@
+services:
+  media-edge:
+    environment:
+      MEDIA_EDGE_SPA_ORIGIN: https://code4coders.tasso.dev.br
+
+  identity:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      StudentAccount__ConfirmationBaseUrl: https://code4coders.tasso.dev.br/students/confirm-account
+      StudentAccount__PasswordResetBaseUrl: https://code4coders.tasso.dev.br/students/redefinir-senha
+      StaffAccount__PasswordResetBaseUrl: https://code4coders.tasso.dev.br/admin/redefinir-senha
+      StaffInvitation__AcceptanceBaseUrl: https://code4coders.tasso.dev.br/admin/convite
+
+  learning:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  media:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  media-worker:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  commerce:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      StudentApp__PublicBaseUrl: https://code4coders.tasso.dev.br/students
+
+  billing:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      PaymentReturn__AllowedHosts__0: code4coders.tasso.dev.br
+
+  notification:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Email__Transport: http
+
+  audit:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  bff-admin:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      BffSecurity__AllowedOrigins__0: https://code4coders.tasso.dev.br
+
+  bff-student:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Cors__AllowedOrigins__0: https://code4coders.tasso.dev.br
+
+  admin-spa:
+    environment:
+      API_URL: https://code4coders.tasso.dev.br/admin
+    ports:
+      - "${STABLE_HOST_IP:-192.168.0.11}:18081:8080"
+
+  student-spa:
+    environment:
+      API_URL: https://code4coders.tasso.dev.br/students
+    ports:
+      - "${STABLE_HOST_IP:-192.168.0.11}:18082:8080"
