@@ -46,7 +46,7 @@ public sealed class SalesPaymentSink(IOrderPaymentStore store, ITenantContext te
                     vigencia = order.PeriodType == "months"
                         ? (object)new { type = "months", months = order.PeriodMonths!.Value }
                         : new { type = "lifetime" },
-                    link = $"{app.Value.PublicBaseUrl.TrimEnd('/')}/student/pedidos/{order.Id:D}"
+                    link = app.Value.OrderPageUrl(order.Id)
                 },
                 solicitadoEm = now
             };

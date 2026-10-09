@@ -13,7 +13,7 @@ public sealed class StartOrderPayment(IOrderPaymentStore store, IBillingPaymentC
         var order = await store.FindAsync(input.OrderId, cancellationToken);
         if (order is null || order.StudentId != input.StudentId) throw new NotFoundException("ORDER_NOT_FOUND");
         order.EnsurePayable();
-        var returnUrl = $"{app.Value.PublicBaseUrl.TrimEnd('/')}/student/pedidos/{order.Id:D}";
+        var returnUrl = app.Value.OrderPageUrl(order.Id);
         var session = await billing.EnsureAsync(new(order.TenantId, order.Id, order.StudentId, order.PriceCents, order.Currency,
          $"{order.CourseTitle} — {order.OfferName}", $"{returnUrl}?resultado=concluido", $"{returnUrl}?resultado=saiu"), cancellationToken);
         order.OpenPayment(session.ExpiresAt);
