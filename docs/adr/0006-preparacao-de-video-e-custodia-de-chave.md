@@ -7,7 +7,7 @@ Accepted
 ## Identidade e escopo
 
 - Caminho: `docs/adr/0006-preparacao-de-video-e-custodia-de-chave.md`
-- Domínios/componentes afetados: Entrega de Mídia e Proteção (`media` — API e worker), implantação (compose e Coolify)
+- Domínios/componentes afetados: Entrega de Mídia e Proteção (`media` — API e worker), implantação em Docker Compose
 - Origem histórica: `tasks/archive/prd-ingestao-midia`, CAP-006
 - Substitui: Nenhuma
 
@@ -84,7 +84,7 @@ durável para todo o domínio: **onde roda o ffmpeg** e **onde vive a chave**.
 
 ### Negativas
 
-- Mais um container no compose e no Coolify, com volume de trabalho de alguns gigabytes.
+- Mais um container nas implantações Compose, com volume de trabalho de alguns gigabytes.
 - A chave-mestra passa a ser segredo operacional crítico: perdê-la inutiliza todos os vídeos preparados.
 - A entrega ao aluno precisa reescrever a playlist em vez de servi-la direto do armazenamento.
 
@@ -101,5 +101,5 @@ durável para todo o domínio: **onde roda o ffmpeg** e **onde vive a chave**.
 
 - [Baseline arquitetural](../../context/architecture-baseline.md) — proteção de conteúdo sem DRM, G21, G22, camada anticorrupção.
 - [Domínio Entrega de Mídia e Proteção](../../domains/entrega-de-midia-e-protecao/domain.md) — RN-M01, RN-M07, RN-M08, RF-M06.
-- [ADR-0002](0002-plataforma-de-runtime-coolify.md) — compute no Coolify, AWS restrita a S3 + CloudFront.
+- [ADR-0019](0019-runtime-e-deploy-atual.md) — runtime Compose e armazenamento S3 compatível por ambiente.
 - [TechSpec de origem](../../tasks/archive/prd-ingestao-midia/techspec.md).

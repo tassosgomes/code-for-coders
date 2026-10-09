@@ -114,17 +114,20 @@ python3 .tsg/validate_state.py
 
 ## Runtime e segredos
 
-O runtime decidido para compute, dados e dependências operacionais é Coolify em VPS. A decisão e seus
-guardrails estão no [ADR-0002](adr/0002-plataforma-de-runtime-coolify.md): deploy por digest, `dev`
-automático, reviewers em `staging`/`prod`, migrations como step de deploy e rollback por redeploy do
-digest anterior.
+A implantação atual mantém dois ambientes isolados. Dev roda no `desenv-server` (`192.168.0.5`) no
+projeto Compose `code-for-coders`, gerenciado pelo Komodo. O estável roda no `infra-server`
+(`192.168.0.11`) no projeto `code-for-coders-stable`, com dependências próprias no projeto Compose
+`infra`. O Caddy no host de borda termina TLS e encaminha os dois domínios; detalhes estão no
+[ADR-0019](adr/0019-runtime-e-deploy-atual.md) e no [diagrama de topologia](../deploy/topology.md).
 
-AWS não é requisito geral de infraestrutura. O domínio `media` usa S3 + CloudFront para armazenamento
-e distribuição de vídeo e materiais; compute, bancos, broker, cache, telemetria e segredos seguem a
-plataforma de runtime. Nenhuma chave, senha ou token deve entrar no repositório, no Dockerfile ou na
-imagem. O secret manager e os GitHub Environments entregam valores somente no ambiente de execução.
+Cada host mantém sua configuração de ambiente local. `.env` e credenciais não entram no repositório,
+Dockerfiles ou imagens. A atualização da aplicação recompõe os containers a partir do working tree;
+provisionamento e migrations continuam em passos explícitos, fora do boot dos serviços.
 
-Quando uma entrega depender de uma capacidade ainda não presente no `template-pipeline`, registre a
-lacuna como issue lá e mantenha a decisão/rastro neste repositório. Não contorne a fronteira inserindo
-um deploy manual ou uma credencial local no código.
+Os serviços de mídia usam a API S3 compatível. Os ambientes atuais têm MinIO isolado por host; um
+provedor externo pode ser configurado no ambiente de execução quando necessário. Credenciais e
+valores operacionais não devem ser incorporados ao código.
+
+Quando uma entrega depender de capacidade ainda ausente no `template-pipeline`, registre a lacuna
+como issue lá e mantenha a decisão e seu histórico neste repositório.
 

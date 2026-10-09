@@ -6,8 +6,9 @@ no BFF. `COURSE_AUTHORING_ENABLED` continua false por padrão nos dois Compose.
 1. No broker de cada ambiente, configurar `max_message_size = 67108864` e conferir com
    `rabbitmqctl environment`. O currículo C-07 contém até 100 módulos × 200 aulas e títulos de
    200 caracteres: o escape de JSON pode ultrapassar os 16 MiB padrão. O Compose local define
-   o teto de 64 MiB; no Coolify o broker pertence à infraestrutura externa e a configuração
-   deve ser aplicada nela antes da liberação. O teste `CoursePublicationTests` mede e entrega
+   o teto de 64 MiB; nos ambientes remotos, RabbitMQ pertence ao projeto de infraestrutura
+   separado de cada host, e a configuração deve ser aplicada nele antes da liberação. O teste
+   `CoursePublicationTests` mede e entrega
    o payload no limite por RabbitMQ real com esse mesmo teto.
 2. Gerar/aplicar migrations somente pelo EF. Nesta entrega, aplicar `AddCoursePublication` e `AddContentPublicationOutbox` em
    Learning e `AddCourseReferences` em Media. Para histórico e descarte, aplicar também

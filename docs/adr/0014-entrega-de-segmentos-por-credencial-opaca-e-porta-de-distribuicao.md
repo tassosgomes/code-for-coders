@@ -9,7 +9,7 @@ Accepted
 - Caminho: `docs/adr/0014-entrega-de-segmentos-por-credencial-opaca-e-porta-de-distribuicao.md`
 - Domínios/componentes afetados: Entrega de Mídia e Proteção (`media`), distribuição (CloudFront em produção; borda nginx em desenvolvimento), `bff-student`, `student-spa`
 - Origem histórica: `tasks/prd-reproducao-protegida`, `CAP-007` (decisões C-01, C-06, C-07 do conjunto de contratos)
-- Substitui: Nenhuma. Complementa a [ADR-0006](0006-preparacao-de-video-e-custodia-de-chave.md) (a chave e a playlist guardada com marcador opaco) e a [ADR-0002](0002-plataforma-de-runtime-coolify.md) (S3 e CloudFront só para mídia)
+- Substitui: Nenhuma. Complementa a [ADR-0006](0006-preparacao-de-video-e-custodia-de-chave.md) (a chave e a playlist guardada com marcador opaco); o runtime atual está descrito na [ADR-0019](0019-runtime-e-deploy-atual.md).
 
 ## Data
 
@@ -83,7 +83,7 @@ Em produção, a distribuição é CloudFront (ADR-0002), que aceita uma políti
 ### Negativas
 
 - O player precisa reescrever o endereço de cada pedido de segmento com a cadeia vigente (comportamento do player, não do navegador nativo).
-- Um container novo (`media-edge`) no compose local, no remoto e no Coolify de desenvolvimento, e um segredo compartilhado entre `media` e a borda.
+- A ativação opcional do container `media-edge` pelo perfil Compose `media-config` e um segredo compartilhado entre `media` e a borda.
 - A borda de desenvolvimento usa MD5 na validação (limite do `secure_link` padrão do nginx): serve ao desenvolvimento e **não** deve ser usada fora dele.
 
 ### Riscos
@@ -102,7 +102,7 @@ Em produção, a distribuição é CloudFront (ADR-0002), que aceita uma políti
 
 ## Referências
 
-- [ADR-0002](0002-plataforma-de-runtime-coolify.md), [ADR-0006](0006-preparacao-de-video-e-custodia-de-chave.md), [ADR-0013](0013-jwt-de-aluno-validado-por-servicos-de-dominio.md).
+- [ADR-0006](0006-preparacao-de-video-e-custodia-de-chave.md), [ADR-0013](0013-jwt-de-aluno-validado-por-servicos-de-dominio.md), [ADR-0019](0019-runtime-e-deploy-atual.md).
 - [Baseline arquitetural](../../context/architecture-baseline.md) — G15, G21, G22, "Proteção de conteúdo" e "Premissas de Escalabilidade".
 - [Domínio Entrega de Mídia e Proteção](../../domains/entrega-de-midia-e-protecao/domain.md) — RN-M01, RN-M07, RN-M08, RN-M12, RF-M03.
 - Documentação consultada: [CloudFront, URL assinada com política personalizada](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-creating-signed-url-custom-policy.html) (parâmetros `Policy`, `Signature`, `Key-Pair-Id`); [hls.js, API de personalização de requisições](https://github.com/video-dev/hls.js/blob/master/docs/API.md) (`xhrSetup(xhr, url)`).

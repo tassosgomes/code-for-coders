@@ -96,7 +96,7 @@ chega. A liberação automática usa TTL absoluto, conforme [EXPIRE no Valkey](h
 ## Referências
 
 - [Baseline arquitetural](../../context/architecture-baseline.md) — BA03, G07, G13 e cache descartável.
-- [ADR-0002](0002-plataforma-de-runtime-coolify.md) — Valkey na plataforma, sem ser fonte de verdade.
+- [ADR-0019](0019-runtime-e-deploy-atual.md) — Valkey no projeto de infraestrutura de cada ambiente, sem ser fonte de verdade.
 - [Domínio Auditoria](../../domains/auditoria-e-conformidade/domain.md) — RN-A01, RN-A04, RN-A09 e RN-A13.
 - [ADR-0005](0005-sessao-e-servico-do-backoffice.md) — revalidação de sessão e JWT de `audit`.
 - [Contrato de consulta](../../tasks/archive/prd-consulta-trilha-auditoria/contracts.md) — C-01, origem histórica.

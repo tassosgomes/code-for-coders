@@ -1,10 +1,8 @@
-# Backend stack deployed by Coolify (project code4coders, resource code4coders-apis,
-# environment development) on 192.168.0.11. Split of the former docker-compose.coolify.yml
-# (see docker-compose.coolify.web.yml for the frontend resource) to keep each rendered
-# compose below the kernel MAX_ARG_STR_SZ limit hit by Coolify issue #11737.
+# Backend services shared by the development and stable Compose deployments.
+# Each target combines this file with the web services and its environment overrides.
 # Builds every backend service from this repository and points them at the shared development
 # infrastructure on 192.168.0.5 (PostgreSQL, RabbitMQ, Valkey, OTel Collector, smtp4dev).
-# Provision/credentials: scripts/remote-infra.sh provision (values live in Coolify env vars).
+# Provision dependencies with scripts/remote-infra.sh provision; credentials are supplied per target.
 # The PostgreSQL server is shared (max_connections=200), so every pool is capped via
 # REMOTE_DB_MAX_POOL_SIZE (default 10) and idle connections are released after 60 s.
 # The external c4c-shared network (pre-created on the server) carries DNS between this
@@ -13,20 +11,19 @@
 services:
 
   media-edge:
+    profiles: ["media-config"]
     build:
       context: .
       dockerfile: src/media-edge/Dockerfile
     environment:
       MEDIA_EDGE_SHARED_SECRET: ${MEDIA_EDGE_SHARED_SECRET:?run scripts/generate-local-env.sh}
-      MEDIA_EDGE_SPA_ORIGIN: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}
+      MEDIA_EDGE_SPA_ORIGIN: https://dev-code4coders.tasso.dev.br
       MEDIA_EDGE_S3_HOST: ${REMOTE_INFRA_HOST:-192.168.0.5}:9000
       MEDIA_EDGE_S3_ACCESS_KEY: code_for_coders_media
-      MEDIA_EDGE_S3_SECRET_KEY: ${REMOTE_S3_SECRET_KEY:?set in Coolify}
-      MEDIA_EDGE_S3_BUCKET: ${AWS_MEDIA_BUCKET:?set in Coolify}
+      MEDIA_EDGE_S3_SECRET_KEY: ${REMOTE_S3_SECRET_KEY:?set in the target environment}
+      MEDIA_EDGE_S3_BUCKET: ${AWS_MEDIA_BUCKET:-}
       MEDIA_EDGE_S3_PREFIX: ${AWS_MEDIA_OBJECT_PREFIX:-media}
       MEDIA_EDGE_S3_REGION: us-east-1
-    ports:
-      - "5109:8080"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/healthz"]
       interval: 10s
@@ -56,41 +53,41 @@ services:
       StudentSessionTokens__EmailAudiences__0: media
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
       RabbitMq__NotificationExchange: notification.events.${NOTIFICATION_NAMESPACE:-default}
       StaffSessionTokens__Issuer: identity
       StaffSessionTokens__SigningKeyId: local-dev-1
-      StaffSessionTokens__SigningKeyBase64: ${IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64:?set in Coolify}
+      StaffSessionTokens__SigningKeyBase64: ${IDENTITY_STAFF_TOKEN_PRIVATE_KEY_B64:?set in the target environment}
       StaffSessionTokens__LifetimeMinutes: "5"
       StaffSessionTokens__AudienceScopes__commerce: finance-area:read
       StaffSessionTokens__AudienceScopes__media: videos:write
       StaffSessionTokens__AudienceScopes__learning: courses:authoring
       StaffSessionTokens__AudienceScopes__audit: audit-records:read
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
-      StudentAccount__ConfirmationBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/confirm-account
+      StudentAccount__ConfirmationBaseUrl: https://dev-code4coders.tasso.dev.br/students/confirm-account
       StudentAccount__ConfirmationLifetimeHours: ${ACCOUNT_CONFIRMATION_VALIDITY_HOURS:-24}
-      StudentAccount__PasswordResetBaseUrl: ${STUDENT_SPA_URL:-https://c4c-student.lab.tasso.dev.br}/student/redefinir-senha
+      StudentAccount__PasswordResetBaseUrl: https://dev-code4coders.tasso.dev.br/students/redefinir-senha
       StudentAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
-      StaffAccount__PasswordResetBaseUrl: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}/admin/redefinir-senha
+      StaffAccount__PasswordResetBaseUrl: https://dev-code4coders.tasso.dev.br/admin/redefinir-senha
       StaffAccount__PasswordResetLifetimeHours: ${PASSWORD_RESET_VALIDITY_HOURS:-1}
-      StaffInvitation__AcceptanceBaseUrl: ${ADMIN_SPA_URL:-https://c4c-admin.lab.tasso.dev.br}/admin/convite
+      StaffInvitation__AcceptanceBaseUrl: https://dev-code4coders.tasso.dev.br/admin/convite
       StaffInvitation__LifetimeHours: ${STAFF_INVITATION_VALIDITY_HOURS:-168}
       RabbitMq__AuditExchange: audit.events
       RabbitMq__AccountFactRetentionQueue: identity.account-fact-retention
       RabbitMq__AccountFactRetentionMaxLength: ${IDENTITY_ACCOUNT_FACT_RETENTION_MAX_LENGTH:-10000}
       RabbitMq__AccountFactRetentionTtlMilliseconds: ${IDENTITY_ACCOUNT_FACT_RETENTION_TTL_MS:-604800000}
-      Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set in Coolify}
-      OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set in Coolify}
+      Idempotency__FingerprintKeyBase64: ${IDENTITY_IDEMPOTENCY_KEY_B64:?set in the target environment}
+      OutboxProtection__KeyBase64: ${IDENTITY_OUTBOX_KEY_B64:?set in the target environment}
       ServiceAssertions__Issuer: bff-student
       ServiceAssertions__Audience: identity-internal
-      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in the target environment}
       ServiceAssertions__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
-      ServiceAssertions__Issuers__bff-student__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-student__PublicKeys__local-dev-1: ${BFF_IDENTITY_PUBLIC_KEY_B64:?set in the target environment}
       ServiceAssertions__Issuers__bff-student__AllowedScopes__0: student-accounts:create
       ServiceAssertions__Issuers__bff-student__AllowedScopes__1: student-accounts:confirm
       ServiceAssertions__Issuers__bff-student__AllowedScopes__2: student-accounts:request-confirmation
@@ -101,7 +98,7 @@ services:
       ServiceAssertions__Issuers__bff-student__AllowedScopes__7: student-password-resets:execute
       ServiceAssertions__Issuers__bff-student__AllowedScopes__8: student-password-changes:execute
       ServiceAssertions__Issuers__bff-student__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
-      ServiceAssertions__Issuers__bff-admin__PublicKeys__local-dev-1: ${BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-admin__PublicKeys__local-dev-1: ${BFF_ADMIN_IDENTITY_PUBLIC_KEY_B64:?set in the target environment}
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__0: staff-sessions:create
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__1: staff-sessions:validate
       ServiceAssertions__Issuers__bff-admin__AllowedScopes__2: staff-sessions:revoke
@@ -131,8 +128,6 @@ services:
     depends_on:
       audit:
         condition: service_healthy
-      media-worker:
-        condition: service_healthy
     build:
       context: .
       dockerfile: src/learning/Dockerfile
@@ -146,7 +141,7 @@ services:
       AccessDecision__CacheSeconds: "30"
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       LearningTokens__Issuer: identity
       LearningTokens__Audience: learning
       LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
@@ -155,9 +150,9 @@ services:
       RabbitMq__AuditExchange: audit.events
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
@@ -170,6 +165,7 @@ services:
       - c4c-shared
 
   media:
+    profiles: ["media-config"]
     build:
       context: .
       dockerfile: src/media/Dockerfile
@@ -180,20 +176,20 @@ services:
       AccessDecision__SigningKeyId: local-media-commerce-1
       AccessDecision__SigningKeyBase64: ${MEDIA_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       Playback__Delivery__Adapter: DevelopmentEdge
-      Playback__Delivery__BaseAddress: ${MEDIA_EDGE_PUBLIC_URL:?set the public HTTPS edge address}
+      Playback__Delivery__BaseAddress: ${MEDIA_EDGE_PUBLIC_URL:-}
       Playback__Delivery__SharedSecret: ${MEDIA_EDGE_SHARED_SECRET:?run scripts/generate-local-env.sh}
       Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in environment}
       Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:-local-v1}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Media__Role: api
       RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-https://rabbit.tasso.dev.br}
       MediaTokens__Issuer: identity
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       AwsMedia__Region: ${AWS_REGION:-us-east-1}
-      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:?set in Coolify}
+      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:-}
       AwsMedia__ObjectKeyPrefix: ${AWS_MEDIA_OBJECT_PREFIX:-media}
       AwsMedia__EndpointInternal: ${AWS_S3_ENDPOINT:-}
       AwsMedia__EndpointPublic: ${AWS_S3_PUBLIC_ENDPOINT:-}
@@ -202,11 +198,11 @@ services:
       AwsMedia__ForcePathStyle: ${AWS_S3_FORCE_PATH_STYLE:-false}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
       RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
       RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
@@ -219,6 +215,7 @@ services:
       - c4c-shared
 
   media-worker:
+    profiles: ["media-config"]
     build:
       context: .
       dockerfile: src/media/Dockerfile
@@ -227,7 +224,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Media__Role: worker
       RabbitMq__LearningExchange: learning.events
       RabbitMq__CoursePublicationsQueue: media.course-publications
@@ -236,23 +233,23 @@ services:
       MediaTokens__Audience: media
       MediaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       AwsMedia__Region: ${AWS_REGION:-us-east-1}
-      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:?set in Coolify}
+      AwsMedia__BucketName: ${AWS_MEDIA_BUCKET:-}
       AwsMedia__ObjectKeyPrefix: ${AWS_MEDIA_OBJECT_PREFIX:-media}
       AwsMedia__EndpointInternal: ${AWS_S3_ENDPOINT:-}
       AwsMedia__EndpointPublic: ${AWS_S3_PUBLIC_ENDPOINT:-}
       AwsMedia__AccessKeyId: ${AWS_ACCESS_KEY_ID:-}
       AwsMedia__SecretAccessKey: ${AWS_SECRET_ACCESS_KEY:-}
       AwsMedia__ForcePathStyle: ${AWS_S3_FORCE_PATH_STYLE:-false}
-      Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in Coolify}
-      Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:?set in Coolify}
+      Preparation__MasterKey: ${MEDIA_PREPARATION_MASTER_KEY:?set in the target environment}
+      Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:?set in the target environment}
       Preparation__Threads: ${MEDIA_PREPARATION_THREADS:-2}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
       RabbitMq__AuditMessageTtlMilliseconds: ${MEDIA_AUDIT_TTL_MS:-604800000}
       RabbitMq__AuditMaxLength: ${MEDIA_AUDIT_MAX_LENGTH:-100000}
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     volumes:
       - media-worker-work:/var/lib/media-work
@@ -280,7 +277,7 @@ services:
       BillingClient__Audience: billing
       BillingClient__SigningKeyId: local-commerce-billing-1
       BillingClient__SigningKeyBase64: ${COMMERCE_BILLING_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
-      StudentApp__PublicBaseUrl: ${STUDENT_APP_PUBLIC_BASE_URL:-http://localhost:8082/student}
+      StudentApp__PublicBaseUrl: https://dev-code4coders.tasso.dev.br/students
       RabbitMq__BillingExchange: billing.events
       RabbitMq__SalesPaymentsQueue: commerce.sales-payments
       RabbitMq__EntitlementPurchasesQueue: commerce.entitlement-purchases
@@ -294,7 +291,7 @@ services:
       ServiceAssertions__Issuers__learning__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       FinanceAreaTokens__Issuer: identity
       FinanceAreaTokens__Audience: commerce
       StudentAccountIdentity__BaseAddress: http://identity:8080/
@@ -308,16 +305,16 @@ services:
       RabbitMq__EntitlementFactRetentionTtlMilliseconds: ${ENTITLEMENT_FACT_RETENTION_TTL_MS:-86400000}
       FinanceAreaTokens__JwksUrl: http://identity:8080/internal/v1/jwks
       ServiceAssertions__Audience: commerce
-      ServiceAssertions__Issuers__bff-student__PublicKeys__local-commerce-1: ${BFF_COMMERCE_PUBLIC_KEY_B64:?set in Coolify}
+      ServiceAssertions__Issuers__bff-student__PublicKeys__local-commerce-1: ${BFF_COMMERCE_PUBLIC_KEY_B64:?set in the target environment}
       ServiceAssertions__Issuers__bff-student__AllowedScopes__0: showcase:read
       ServiceAssertions__Issuers__bff-student__AllowedScopes__1: purchase-intent:write
       ServiceAssertions__Issuers__bff-student__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       RabbitMq__AuditExchange: audit.events
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     depends_on:
       identity:
@@ -349,12 +346,12 @@ services:
       Email__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       Email__Transport: smtp
       Email__FromAddress: no-reply@codeforcoders.local
@@ -385,26 +382,26 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       Billing__Namespace: ${BILLING_NAMESPACE:-default}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
       RabbitMq__Exchange: billing.events
       RabbitMq__DeadLetterExchange: billing.events.dlx
       RabbitMq__HeartbeatQueue: billing.platform-heartbeat
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
       ServiceAssertions__Audience: billing
       ServiceAssertions__Issuers__commerce__PublicKeys__local-commerce-billing-1: ${COMMERCE_BILLING_PUBLIC_KEY_B64:?run scripts/generate-local-env.sh}
       ServiceAssertions__Issuers__commerce__AllowedScopes__0: payment:request
       ServiceAssertions__Issuers__commerce__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
-      Stripe__SecretKey: ${STRIPE_SECRET_KEY:?set in Coolify}
-      Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:?set in Coolify}
-      PaymentReturn__AllowedHosts__0: ${BILLING_RETURN_HOST:-c4c-student.lab.tasso.dev.br}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:?set in the target environment}
+      Stripe__WebhookSigningSecret: ${STRIPE_WEBHOOK_SECRET:?set in the target environment}
+      PaymentReturn__AllowedHosts__0: dev-code4coders.tasso.dev.br
       # Webhook público do Stripe (https://billing-webhook.tasso.dev.br/webhooks/v1/stripe/events),
-      # exposto pelo serviço cloudflared-billing-webhook abaixo. Não há domínio do Coolify para billing.
+      # exposto pelo serviço cloudflared-billing-webhook abaixo; não exige rota no domínio da aplicação.
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -419,11 +416,13 @@ services:
   # Conexão de saída para a Cloudflare, sem portas publicadas no servidor. As regras de ingress
   # (somente /webhooks/v1/stripe/events, resto 404) estão em infra/cloudflared/billing-webhook.yml.
   cloudflared-billing-webhook:
-    build:
-      context: ./infra/cloudflared
-    command: ["--config", "/etc/cloudflared/billing-webhook.yml", "tunnel", "run"]
+    profiles: ["stripe-webhook"]
+    image: cloudflare/cloudflared:2026.10.0
+    command: ["--no-autoupdate", "--config", "/etc/cloudflared/billing-webhook.yml", "tunnel", "run"]
     environment:
-      TUNNEL_CRED_CONTENTS: ${BILLING_WEBHOOK_TUNNEL_CREDENTIALS:?set in Coolify}
+      TUNNEL_CRED_CONTENTS: ${BILLING_WEBHOOK_TUNNEL_CREDENTIALS:-}
+    volumes:
+      - ./infra/cloudflared/billing-webhook.yml:/etc/cloudflared/billing-webhook.yml:ro
     networks:
       - c4c-shared
 
@@ -436,7 +435,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?set in Coolify};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
       AuditTokens__MetadataAddress: http://identity:8080/.well-known/openid-configuration
       AuditTokens__Issuer: identity
       AuditTokens__Audience: audit
@@ -445,10 +444,10 @@ services:
       RabbitMq__AuditComplementEventRoutingKey: auditoria.registro.complemento-confirmado.v1
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
-      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in Coolify}
+      RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
       RabbitMq__VirtualHost: code-for-coders
-      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
-      AuditSnapshots__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in Coolify},defaultDatabase=${AUDIT_VALKEY_DATABASE:-5},abortConnect=false
+      Valkey__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${REMOTE_VALKEY_DATABASE:-1},abortConnect=false
+      AuditSnapshots__ConnectionString: ${REMOTE_INFRA_HOST:-192.168.0.5}:6379,password=${REMOTE_VALKEY_PASSWORD:?set in the target environment},defaultDatabase=${AUDIT_VALKEY_DATABASE:-5},abortConnect=false
       AuditSnapshots__KeyPrefix: "code4coders:audit:snapshot:v1:"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://${REMOTE_INFRA_HOST:-192.168.0.5}:4317
     healthcheck:

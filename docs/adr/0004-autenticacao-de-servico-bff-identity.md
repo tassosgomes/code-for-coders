@@ -67,6 +67,6 @@ Após validar credencial de aluno e situação da conta, somente Identity emite 
 ## Referências
 
 - [Baseline arquitetural](../../context/architecture-baseline.md) — BA05/BA06, autenticação e JWKS.
-- [ADR-0002](0002-plataforma-de-runtime-coolify.md) — gestão de segredos no runtime.
+- [ADR-0019](0019-runtime-e-deploy-atual.md) — configuração por ambiente e segredos no deploy.
 - [ADR-0003](0003-verificacao-de-sessao-do-aluno.md) — verificação de sessão entre BFF e Identity.
 - [TechSpec de origem](../../tasks/archive/prd-conta-aluno/techspec.md) — contrato e fatias de CAP-001.

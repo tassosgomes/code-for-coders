@@ -54,12 +54,13 @@ Esta lista permanece como contrato arquitetural; este baseline não é um runboo
 
 ### Estado da fundação
 
-**AB05 está fechada.** `docs/foundation.md` registra a entrega da fundação e `docs/adr/0002-plataforma-de-runtime-coolify.md`
-registra a adoção de Coolify para compute e dados, mantendo AWS restrita a S3 + CloudFront para armazenamento e
-distribuição de mídia conforme `vision.md` v1.2. Para este baseline, as sete dependências acima estão entregues e
-prontas para o produto — ou assumidas como prontas quando a responsabilidade permanece no time de plataforma.
-Detalhes de provisionamento, configuração operacional e evidências de execução pertencem à fundação e à plataforma;
-este registro preserva a exigência arquitetural sem transformar o baseline em runbook de infraestrutura.
+**AB05 está fechada.** `docs/foundation.md` registra a entrega da fundação e
+`docs/adr/0019-runtime-e-deploy-atual.md` registra o runtime implantado: Komodo no desenvolvimento,
+Docker Compose no estável, Caddy na borda e dependências isoladas por host. Para este baseline, as
+sete dependências acima estão entregues e prontas para o produto — ou assumidas como prontas quando
+a responsabilidade permanece no time de plataforma. A topologia e as instruções operacionais estão
+em [`deploy/topology.md`](../deploy/topology.md) e no guia do ambiente estável; este registro
+preserva a exigência arquitetural sem se tornar um runbook.
 
 ---
 
@@ -535,4 +536,4 @@ Revisar este documento apenas quando uma premissa estrutural mudar.*
 | 1.0 | 2026-09-20 | Tasso Gomes | Baseline inicial (BA01–BA16, G01–G26) sobre `vision.md` v1.1 e `context/domain-map.md` v1.1 |
 | 1.2 | 2026-09-20 | Tasso Gomes | Correção de contradição interna: BA15 listava "limite de sessões simultâneas" na pilha de proteção, enquanto BA16 rejeita sessão única e lease de reprodução e G24 proíbe restrição de concorrência sem decisão com dado. BA15 passa a declarar a ausência de trava e a remeter a BA16. A prosa de "Proteção de conteúdo" já estava correta; a divergência era só da tabela. Nenhuma decisão de mérito mudou — achado do domain doc de Identidade e Acesso (QA-02) |
 | 1.1 | 2026-09-20 | Tasso Gomes | O roadmap de serviços por fase vira agrupamento em unidades de deploy: o baseline decide agrupamento e gatilho de extração, não sequência — ele é escrito antes do backlog e não enxerga dependência entre capacidades. `notification` passa ao grupo inicial (BA02: 6 serviços), porque `CAP-001` e `CAP-011` não fecham ciclo sem e-mail transacional |
-| 1.2 | 2026-09-21 | Tasso Gomes | Revisão de trabalho: preserva a correção de BA15 sobre a ausência de trava de concorrência, atualiza a procedência para `vision.md` v1.2, alinha BA14 à restrição de AWS para mídia e ao runtime Coolify registrado no ADR 0002, e fecha AB05 com a fundação entregue/assumida como pronta conforme `docs/foundation.md`. Nenhuma decisão BA01–BA16 foi alterada além do texto necessário em BA14 |
+| 1.2 | 2026-09-21 | Tasso Gomes | Revisão de trabalho: preserva a correção de BA15 sobre a ausência de trava de concorrência, atualiza a procedência para `vision.md` v1.2, alinha BA14 à restrição de AWS para mídia e à decisão de runtime registrada na ADR-0002, e fecha AB05 com a fundação entregue/assumida como pronta conforme `docs/foundation.md`. Nenhuma decisão BA01–BA16 foi alterada além do texto necessário em BA14 |
