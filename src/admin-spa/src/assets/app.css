@@ -3972,15 +3972,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 @media(max-width:500px) {
-  .app-shell:has(.videos-page) .app-header {
+  .app-shell .app-header {
     gap:8px;
   }
 
-  .app-shell:has(.videos-page) .menu-button {
+  .app-shell .menu-button {
     width:40px;
   }
 
-  .app-shell:has(.videos-page) .account-avatar {
+  .app-shell .account-avatar {
     width:32px;
     height:32px;
   }
@@ -3995,12 +3995,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     font-size:10px;
   }
 
-  .app-shell:has(.videos-page) .mobile-backoffice-brand {
+  .app-shell .mobile-backoffice-brand {
     gap:10px;
     font-size:16px;
   }
 
-  .app-shell:has(.videos-page) .mobile-backoffice-brand .brand-badge {
+  .app-shell .mobile-backoffice-brand .brand-badge {
     padding:2px 10px;
     font-size:12px;
   }
@@ -4057,7 +4057,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .sidebar-group { display: grid; gap: 8px; }
 .authoring-page { display: grid; gap: 24px; align-content: start; }
 .authoring-page h1, .authoring-page .eyebrow, .authoring-page .page-subtitle { margin: 0; }
-.course-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.course-page-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
 .course-page-heading .page-subtitle { margin-top: 8px; }
 .course-filters { display: flex; gap: 4px; align-items: center; }
 .course-filters button, .course-draft-tab { padding: 6px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; }
