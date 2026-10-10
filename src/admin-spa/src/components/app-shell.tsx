@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Gift, Menu, Moon, Sun, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
+import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Gift, Menu, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 
+import { ThemeMenu } from '@/components/theme-menu';
 import { paths } from '@/config/paths';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useShellStore } from '@/stores/use-shell-store';
@@ -23,16 +24,14 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
   useDocumentTitle(title);
   const menuOpen = useShellStore((state) => state.menuOpen);
   const toggleMenu = useShellStore((state) => state.toggleMenu);
-  const theme = useShellStore((state) => state.theme);
-  const toggleTheme = useShellStore((state) => state.toggleTheme);
   const { pathname } = useLocation();
   const isDashboard = pathname === paths.home.path;
-  const isAuthoring = pathname === paths.authoring.path || pathname.startsWith(`${paths.authoring.path}/`);
+  const isAuthoring =pathname === paths.authoring.path || pathname.startsWith(`${paths.authoring.path}/`);
   const [accountOpen, setAccountOpen] = useState(false);
   const initials = name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
 
   return (
-    <div className="app-shell" data-theme={theme ?? undefined}>
+    <div className="app-shell">
       <aside className={`app-sidebar ${menuOpen ? 'is-open' : ''}`}>
         <Link aria-label={`${serviceName} — início`} className="backoffice-brand" to={paths.home.getHref()}>
           <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
@@ -64,7 +63,7 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
           {isAuthoring ? <span className="authoring-mobile-label">Autoria</span> : <Link aria-label={`${serviceName} — início`} className="mobile-backoffice-brand" to={paths.home.getHref()}>
             <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
           </Link>}
-          {isAuthoring || isDashboard ? <button className="course-theme-toggle" type="button" aria-label="Alternar tema claro e escuro" onClick={toggleTheme}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button> : null}
+          <ThemeMenu />
           <div className="account-menu-wrap">
             <button aria-expanded={accountOpen} aria-haspopup="menu" className="account-trigger" onClick={() => setAccountOpen(!accountOpen)} type="button">
               <span className="account-avatar">{initials}</span><span>{name}</span><ChevronDown size={16} />

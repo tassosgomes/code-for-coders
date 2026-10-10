@@ -6,6 +6,19 @@
     <meta name="description" content="Admin workspace for platform operations." />
     <title>Admin Workspace</title>
     <script src="%BASE_URL%runtime-env.js"></script>
+    <script>
+      // Aplica o tema antes da primeira pintura, para não haver flash claro com tema escuro.
+      // Mesma chave e regra do next-themes (src/app/providers.tsx).
+      (function () {
+        try {
+          var stored = window.localStorage.getItem('theme');
+          var dark = stored === 'dark' || ((!stored || stored === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.add(dark ? 'dark' : 'light');
+        } catch (error) {
+          document.documentElement.classList.add('light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

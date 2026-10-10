@@ -1,14 +1,19 @@
 import type { ReactNode } from 'react';
 import { CodeXml } from 'lucide-react';
 
+import { ThemeMenu } from '@/components/theme-menu';
+
 type AuthLayoutProps = { children: ReactNode };
 
 export const AuthLayout = ({ children }: AuthLayoutProps) => (
   <main className="auth-layout">
     <div className="auth-form-side">
-      <div className="backoffice-brand">
-        <span className="brand-mark"><CodeXml size={18} strokeWidth={2} /></span>
-        <span>Code4Coders</span><span className="brand-badge">Backoffice</span>
+      <div className="auth-toolbar">
+        <div className="backoffice-brand">
+          <span className="brand-mark"><CodeXml size={18} strokeWidth={2} /></span>
+          <span>Code4Coders</span><span className="brand-badge">Backoffice</span>
+        </div>
+        <ThemeMenu />
       </div>
       <div className="auth-content">{children}</div>
       <small className="auth-copyright">© {new Date().getFullYear()} Code4Coders · Área restrita à equipe</small>
