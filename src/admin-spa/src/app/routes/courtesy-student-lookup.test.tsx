@@ -1,4 +1,5 @@
-import { cleanup, screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -23,8 +24,8 @@ describe('courtesy student lookup', () => {
     await lookupCourtesyStudent('  JOANA@STUDENT.TEST  ');
     expect(await screen.findByRole('heading', { name: 'Joana Ribeiro' })).toBeInTheDocument();
     expect(screen.getByText('joana@student.test')).toBeInTheDocument();
-    expect(screen.getByText('E-mail ainda não confirmado. Isso não impede a cortesia.')).toBeInTheDocument();
-    expect(screen.getByText('Conta ativa')).toBeInTheDocument();
+    expect(screen.getByText('E-mail ainda não confirmado. Você pode conceder; o aluno usa o acesso depois de confirmar e entrar.')).toBeInTheDocument();
+    expect(screen.getByText('E-mail não confirmado')).toBeInTheDocument();
     expect(requestBody).toEqual({ email: 'joana@student.test' }); expect(csrf).toBe('courtesy-csrf');
     expect(url).toBe(`${env.API_URL}/api/v1/student-account-lookups`);
   });
@@ -46,14 +47,34 @@ describe('courtesy student lookup', () => {
       : state === 'unavailable' ? HttpResponse.json({ code: 'IDENTITY_UNAVAILABLE' }, { status: 502 })
         : HttpResponse.json({ ...courtesyStudentFixture, status: state, emailConfirmed: true })));
     await lookupCourtesyStudent();
-    expect(await screen.findByText('Esta conta está desativada. Não é possível conceder cortesia.')).toBeInTheDocument();
+    expect(await screen.findByText('Esta conta está desativada e não pode receber cortesia.')).toBeInTheDocument();
     state = 'missing'; await lookupCourtesyStudent('missing@student.test');
-    expect(await screen.findByText('Não há conta de aluno com este e-mail')).toBeInTheDocument();
+    expect(await screen.findByText(/Não há conta de aluno com este e-mail\./)).toBeInTheDocument();
+    expect(screen.getByText(/Confira o e-mail e tente de novo\./)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'E-mail do aluno' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Joana Ribeiro' })).not.toBeInTheDocument();
     state = 'unavailable'; await lookupCourtesyStudent();
-    expect(await screen.findByText('Não foi possível localizar o aluno agora. Tente de novo.')).toBeInTheDocument();
-    state = 'active'; await lookupCourtesyStudent();
+    expect(await screen.findByText('Não foi possível localizar agora.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument();
+    state = 'active'; await userEvent.setup().click(screen.getByRole('button', { name: 'Tentar de novo' }));
     expect(await screen.findByRole('heading', { name: 'Joana Ribeiro' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Trocar aluno' })).not.toBeInTheDocument();
+  });
+
+  it('shows the stepper with labels, completed check, ALUNO summary with edit, and hides the stepper on the result', async () => {
+    renderCourtesy(); const user = await lookupCourtesyStudent();
+    const stepper = await screen.findByRole('list', { name: 'Passos da cortesia' });
+    expect(Array.from(stepper.children).map((item) => item.textContent)).toEqual(['1Aluno', '2Curso', '3Vigência', '4Motivo', '5Revisão', '6Resultado']);
+    expect(screen.queryByLabelText('Resumo Aluno')).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Continuar' }));
+    const summary = await screen.findByLabelText('Resumo Aluno');
+    expect(summary).toHaveTextContent('Joana Ribeiro · joana@student.test');
+    expect(stepper.children[0]).toHaveClass('is-complete'); expect(stepper.children[0]?.querySelector('svg')).not.toBeNull();
+    expect(stepper.children[1]).toHaveAttribute('aria-current', 'step');
+    await user.click(within(summary).getByRole('button', { name: 'Editar aluno' }));
+    expect(await screen.findByRole('button', { name: 'Voltar' })).toBeVisible();
+    expect(screen.queryByLabelText('Resumo Aluno')).not.toBeInTheDocument();
   });
 
   it('keeps email out of URL query keys and browser storage and discards form and mutation data on exit', async () => {

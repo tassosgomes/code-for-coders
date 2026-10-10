@@ -17,7 +17,8 @@ public sealed class CourtesyCourseQueries(CommerceDbContext dbContext) : ICourte
         var total = await query.CountAsync(cancellationToken);
         var courses = await query.OrderBy(course => course.Title).ThenBy(course => course.CourseId)
             .Skip((input.Page - 1) * input.Size).Take(input.Size)
-            .Select(course => new CourtesyCourse(course.CourseId, course.Title)).ToListAsync(cancellationToken);
+            .Select(course => new CourtesyCourse(course.CourseId, course.Title,
+                dbContext.CatalogOffers.Any(offer => offer.CourseId == course.CourseId && offer.Status == "published"))).ToListAsync(cancellationToken);
         return new(courses, new(input.Page, input.Size, total, (int)Math.Ceiling((double)total / input.Size)));
     }
 }

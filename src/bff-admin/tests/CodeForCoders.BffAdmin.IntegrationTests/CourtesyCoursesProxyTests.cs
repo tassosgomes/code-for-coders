@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Net;
 using CodeForCoders.BffAdmin.Api.Clients;
 using CodeForCoders.BffAdmin.Application.Interfaces;
@@ -21,7 +22,10 @@ public sealed class CourtesyCoursesProxyTests
         Assert.Equal("commerce", factory.Identity.LastAudience); Assert.Equal("server-commerce-token", factory.Courses.Token);
         Assert.Equal("/internal/v1/courtesy-courses", factory.Courses.Uri!.AbsolutePath);
         Assert.Equal("?_page=2&_size=10&title=A%C3%A7%C3%A3o%20%26%20C%23", factory.Courses.Uri.Query);
-        Assert.Contains("Course without an offer", await response.Content.ReadAsStringAsync(Cancellation));
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync(Cancellation)).RootElement.GetProperty("data");
+        Assert.Collection(data.EnumerateArray(),
+            item => { Assert.Equal("Course without an offer", item.GetProperty("title").GetString()); Assert.False(item.GetProperty("hasOffer").GetBoolean()); },
+            item => { Assert.Equal("Course with an offer", item.GetProperty("title").GetString()); Assert.True(item.GetProperty("hasOffer").GetBoolean()); });
     }
 
     [Fact(DisplayName = nameof(MissingPermissionCannotReachCommerce))]

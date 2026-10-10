@@ -120,8 +120,10 @@ paths:
                     data:
                     - courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
                       title: .NET do zero à API
+                      hasOffer: true
                     - courseId: 3b4c5d6e-7f80-4a91-8b2c-4d5e6f7a8b9c
                       title: Fundamentos de C#
+                      hasOffer: false
                     pagination:
                       page: 1
                       size: 10
@@ -495,6 +497,7 @@ components:
       required:
       - courseId
       - title
+      - hasOffer
       properties:
         courseId:
           type: string
@@ -503,6 +506,9 @@ components:
         title:
           type: string
           description: Título da versão vigente.
+        hasOffer:
+          type: boolean
+          description: 'Informativo: o curso tem oferta publicada no catálogo. Cortesia não depende de oferta (RN-D11).'
     CourtesyGrantInput:
       type: object
       additionalProperties: false

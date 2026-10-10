@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -31,7 +31,7 @@ describe('courtesy course step', () => {
     await user.click(screen.getByRole('button', { name: 'Continuar' }));
     expect(await screen.findByRole('button', { name: 'Escolhido Fundamentos de C#' })).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Continuar' }));
-    expect(await screen.findByRole('region', { name: 'Passo Prazo' })).toHaveTextContent('Fundamentos de C#');
+    expect(await screen.findByRole('region', { name: 'Passo Vigência' })).toBeInTheDocument(); expect(screen.getByLabelText('Resumo Curso')).toHaveTextContent('Fundamentos de C#');
   });
 
   it('submits title search, resets pagination, pages results and offers show-all on an empty result', async () => {
@@ -41,7 +41,7 @@ describe('courtesy course step', () => {
       return HttpResponse.json({ data: title === 'inexistente' ? [] : [{ ...courtesyCourseFixture, title: page === 2 ? 'Testes na prática' : courtesyCourseFixture.title }], pagination: { page, size: 10, total: title === 'inexistente' ? 0 : 11, totalPages: title === 'inexistente' ? 0 : 2 } });
     }));
     const user = await openCourseStep(); await screen.findByRole('button', { name: 'Escolher Fundamentos de C#' });
-    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+    await user.click(screen.getByRole('button', { name: 'Próxima página' }));
     expect(await screen.findByRole('button', { name: 'Escolher Testes na prática' })).toBeInTheDocument();
     const input = screen.getByRole('textbox', { name: 'Buscar curso pelo título' });
     await user.type(input, 'fundamentos'); await user.click(screen.getByRole('button', { name: 'Buscar' }));
@@ -54,6 +54,15 @@ describe('courtesy course step', () => {
     await user.click(screen.getByRole('button', { name: 'Ver todos' }));
     expect(await screen.findByRole('button', { name: 'Escolher Fundamentos de C#' })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Buscar curso pelo título' })).toHaveValue('');
+  });
+
+  it('shows the offer pill, the chosen state and hides pagination for a single page', async () => {
+    renderCourtesy();
+    server.use(http.get(`${env.API_URL}/api/v1/courtesy-courses`, () => HttpResponse.json({ data: [courtesyCourseFixture, { courseId: crypto.randomUUID(), title: 'Curso sem venda', hasOffer: false }], pagination: { page: 1, size: 10, total: 2, totalPages: 1 } })));
+    const user = await openCourseStep(); const list = await screen.findByRole('list', { name: 'Cursos publicados' });
+    const rows = within(list).getAllByRole('listitem'); expect(rows[0]).toHaveTextContent('Com oferta'); expect(rows[1]).toHaveTextContent('Sem oferta');
+    expect(screen.queryByRole('button', { name: 'Página 1' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Escolher Curso sem venda' })); expect(screen.getByRole('button', { name: 'Escolhido Curso sem venda' })).toHaveTextContent('Escolhido');
   });
 
   it('shows loading and an upstream error and retries the same query', async () => {

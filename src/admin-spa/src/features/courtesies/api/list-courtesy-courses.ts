@@ -5,7 +5,7 @@ import { apiClient } from '@/lib/api-client';
 
 export const courtesyCourseSearchSchema = z.object({ title: z.string().max(100, 'Use até 100 caracteres.') });
 export type CourtesyCourseSearchInput = z.infer<typeof courtesyCourseSearchSchema>;
-export type CourtesyCourse = { courseId: string; title: string };
+export type CourtesyCourse = { courseId: string; title: string; hasOffer: boolean };
 export type CourtesyCoursePage = { data: CourtesyCourse[]; pagination: { page: number; size: number; total: number; totalPages: number } };
 export type CourtesyCoursesInput = { page: number; title: string };
 

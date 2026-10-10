@@ -38,16 +38,29 @@ describe('courtesy student grants', () => {
     renderCourtesy([grant(), grant({ grantId: crypto.randomUUID(), courseTitle: 'Expired purchase', origin: 'purchase', status: 'expired', reason: null, endsOn: '2026-01-02' }), grant({ grantId: crypto.randomUUID(), courseTitle: 'Lifetime course', accessPeriod: { type: 'lifetime' }, endsOn: null, expiresAt: null })]);
     await lookup(); const region = await screen.findByRole('region', { name: 'Concessões do aluno' });
     await waitFor(() => expect(within(region).getAllByRole('listitem')).toHaveLength(3));
-    expect(region).toHaveTextContent('Fundamentos de C#'); expect(region).toHaveTextContent('Cortesia'); expect(region).toHaveTextContent('6 meses · até 02/04/2027'); expect(region).toHaveTextContent('Compra'); expect(region).toHaveTextContent('Vencida'); expect(region).toHaveTextContent('Ativa'); expect(region).toHaveTextContent('Acesso vitalício');
+    expect(region).toHaveTextContent('Fundamentos de C#'); expect(region).toHaveTextContent('Cortesia'); expect(region).toHaveTextContent('6 meses · até 02/04/2027'); expect(region).toHaveTextContent('Compra'); expect(region).toHaveTextContent('Vencida'); expect(region).toHaveTextContent('Ativa'); expect(region).toHaveTextContent('Vitalícia');
   });
   it('shows an empty state for a student without grants', async () => {
-    renderCourtesy(); await lookup(); expect(await screen.findByText('Este aluno ainda não tem concessões.')).toBeInTheDocument();
+    renderCourtesy(); await lookup(); expect(await screen.findByText('Nenhuma concessão para este aluno ainda.')).toBeInTheDocument();
+  });
+  it('paginates grants client-side with 10 per page', async () => {
+    renderCourtesy(Array.from({ length: 12 }, (_, index) => grant({ grantId: crypto.randomUUID(), courseTitle: `Curso ${index + 1}` })));
+    const user = await lookup(); const region = await screen.findByRole('region', { name: 'Concessões do aluno' });
+    await waitFor(() => expect(within(region).getAllByRole('listitem')).toHaveLength(10));
+    expect(region).toHaveTextContent('Vigência sempre em data absoluta.'); expect(screen.queryByText('Ver mais concessões')).not.toBeInTheDocument();
+    await user.click(within(region).getByRole('button', { name: 'Página 2' }));
+    expect(within(region).getAllByRole('listitem')).toHaveLength(2); expect(within(region).getByRole('button', { name: 'Próxima página' })).toBeDisabled();
+    await user.click(within(region).getByRole('button', { name: 'Página anterior' })); expect(within(region).getAllByRole('listitem')).toHaveLength(10);
+  });
+  it('hides pagination with a single page', async () => {
+    renderCourtesy([grant()]); await lookup(); await screen.findByText('Fundamentos de C#');
+    expect(screen.queryByRole('button', { name: 'Página 1' })).not.toBeInTheDocument();
   });
   it('warns about the latest active end date without blocking a second courtesy', async () => {
     renderCourtesy([grant(), grant({ grantId: crypto.randomUUID(), endsOn: '2027-08-02', expiresAt: '2027-08-03T03:00:00Z' }), grant({ grantId: crypto.randomUUID(), status: 'expired', endsOn: '2028-01-02' })]);
     const user = await review(); expect(await screen.findByText('Este aluno já tem acesso até 02/08/2027.')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar cortesia' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' }));
-    expect(await screen.findByRole('heading', { name: 'Cortesia concedida' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Resultado da cortesia' })).toBeInTheDocument();
   });
   it('does not warn about expired grants or active grants for another course', async () => {
     renderCourtesy([grant({ status: 'expired' }), grant({ grantId: crypto.randomUUID(), courseId: crypto.randomUUID() })]); await review();
@@ -57,11 +70,11 @@ describe('courtesy student grants', () => {
     renderCourtesy(); let calls = 0;
     server.use(http.post(`${env.API_URL}/api/v1/courtesy-grants`, async ({ request }) => { calls++; expect(await request.json()).toHaveProperty('accessPeriod', { type: 'lifetime' }); return HttpResponse.json(grant({ accessPeriod: { type: 'lifetime' }, endsOn: null, expiresAt: null }), { status: 201 }); }));
     const user = await review(true); const checkbox = screen.getByRole('checkbox', { name: /não há como desfazer pela tela/ });
-    expect(checkbox).toHaveFocus(); expect(checkbox).not.toBeChecked(); expect(screen.getByRole('button', { name: 'Confirmar cortesia' })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' })); expect(calls).toBe(0);
+    expect(checkbox).toHaveFocus(); expect(checkbox).not.toBeChecked(); expect(screen.getByRole('button', { name: 'Confirmar cortesia vitalícia' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Confirmar cortesia vitalícia' })); expect(calls).toBe(0);
     await user.click(checkbox); await user.click(screen.getByRole('button', { name: 'Voltar' })); await user.click(screen.getByRole('button', { name: 'Revisar' }));
-    await screen.findByRole('heading', { name: 'Revisão' }); expect(screen.getByRole('checkbox')).not.toBeChecked(); expect(screen.getByRole('button', { name: 'Confirmar cortesia' })).toBeDisabled();
-    await user.click(screen.getByRole('checkbox')); await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' })); await screen.findByRole('heading', { name: 'Cortesia concedida' }); expect(calls).toBe(1);
+    await screen.findByRole('heading', { name: 'Revisão' }); expect(screen.getByRole('checkbox')).not.toBeChecked(); expect(screen.getByRole('button', { name: 'Confirmar cortesia vitalícia' })).toBeDisabled();
+    await user.click(screen.getByRole('checkbox')); await user.click(screen.getByRole('button', { name: 'Confirmar cortesia vitalícia' })); await screen.findByRole('region', { name: 'Resultado da cortesia' }); expect(calls).toBe(1);
   });
   it('warns about lifetime access and still permits a period courtesy without reinforcement', async () => {
     renderCourtesy([grant({ accessPeriod: { type: 'lifetime' }, endsOn: null, expiresAt: null })]); await review();

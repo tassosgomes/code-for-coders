@@ -18,7 +18,7 @@ const openTerm = async () => {
   const user = await openCourseStep();
   await user.click(await screen.findByRole('button', { name: 'Escolher Fundamentos de C#' }));
   await user.click(screen.getByRole('button', { name: 'Continuar' }));
-  await screen.findByText('Acesso até 02/04/2027'); return user;
+  await screen.findByText('Termina em até 02/04/2027 — vindo do servidor.'); return user;
 };
 const openReview = async () => {
   const user = await openTerm(); await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled());
@@ -44,7 +44,7 @@ describe('courtesy confirm', () => {
     await user.click(screen.getByRole('button', { name: 'Revisar' })); await screen.findByRole('heading', { name: 'Revisão' }); await waitFor(() => expect(previews).toBeGreaterThan(beforeReview));
     expect(screen.getByRole('region', { name: 'Passo Revisão' })).toHaveTextContent('até 02/04/2027');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar cortesia' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' }));
-    expect(await screen.findByRole('heading', { name: 'Cortesia concedida' })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Resultado da cortesia' })).toHaveTextContent('Acesso até 03/04/2027');
+    expect(await screen.findByRole('region', { name: 'Resultado da cortesia' })).toBeInTheDocument(); expect(screen.getByRole('region', { name: 'Resultado da cortesia' })).toHaveTextContent('até 03/04/2027');
   });
   it('keeps one key and the typed reason when retrying an uncertain grant', async () => {
     renderCourtesy(); const keys: (string | null)[] = []; let calls = 0;
@@ -53,13 +53,18 @@ describe('courtesy confirm', () => {
       return calls === 1 ? HttpResponse.json({ code: 'UPSTREAM_TIMEOUT' }, { status: 504 }) : HttpResponse.json({ grantId: crypto.randomUUID(), courseTitle: 'Fundamentos de C#', endsOn: '2027-04-02', reason: 'Bolsa de mentoria' });
     }));
     const user = await openReview(); await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar cortesia' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('mesmos dados'); expect(screen.getByRole('region', { name: 'Passo Revisão' })).toHaveTextContent('Bolsa de mentoria');
-    await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' })); await screen.findByRole('heading', { name: 'Cortesia concedida' }); expect(keys).toHaveLength(2); expect(keys[0]).toBe(keys[1]);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível conceder agora.'); expect(screen.queryByRole('heading', { name: 'Revisão' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Tentar de novo' })); await screen.findByText('Cortesia concedida.', { selector: 'p.courtesy-result-title' }); expect(keys).toHaveLength(2); expect(keys[0]).toBe(keys[1]);
   });
-  it('rejects blank and oversized reasons and presents field errors', async () => {
+  it('rejects blank and oversized reasons, hides Revisar while invalid and recovers once valid', async () => {
     renderCourtesy(); const user = await openTerm(); await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled()); await user.click(screen.getByRole('button', { name: 'Continuar' }));
-    await user.click(screen.getByRole('button', { name: 'Revisar' })); expect(await screen.findByRole('alert')).toHaveTextContent('Informe o motivo');
-    await user.click(screen.getByRole('textbox', { name: 'Motivo da cortesia' })); await user.paste('a'.repeat(501)); await user.click(screen.getByRole('button', { name: 'Revisar' })); expect(await screen.findByRole('alert')).toHaveTextContent('500');
+    await user.click(screen.getByRole('button', { name: 'Revisar' })); expect(await screen.findByRole('alert')).toHaveTextContent('Informe o motivo da cortesia.');
+    expect(screen.queryByRole('button', { name: 'Revisar' })).not.toBeInTheDocument(); expect(screen.getByRole('button', { name: 'Voltar' })).toBeInTheDocument();
+    await user.click(screen.getByRole('textbox', { name: 'Motivo da cortesia' })); await user.paste('a'.repeat(505));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Use até 500 caracteres: tire 5.'); expect(screen.getByText('505/500')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Motivo da cortesia' })).toHaveValue('a'.repeat(505)); expect(screen.queryByRole('button', { name: 'Revisar' })).not.toBeInTheDocument();
+    await user.clear(screen.getByRole('textbox', { name: 'Motivo da cortesia' })); await user.type(screen.getByRole('textbox', { name: 'Motivo da cortesia' }), 'ok');
+    expect(await screen.findByRole('button', { name: 'Revisar' })).toBeEnabled();
   });
   it('concedes lifetime without sending months or requesting another term preview', async () => {
     renderCourtesy(); let body: unknown;
@@ -67,6 +72,6 @@ describe('courtesy confirm', () => {
     const user = await openTerm(); await user.click(screen.getByRole('radio', { name: 'Vitalícia' })); await user.click(screen.getByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByRole('textbox', { name: 'Motivo da cortesia' }), 'Lifetime scholarship'); await user.click(screen.getByRole('button', { name: 'Revisar' })); await screen.findByRole('heading', { name: 'Revisão' });
     await user.click(screen.getByRole('checkbox', { name: /não há como desfazer pela tela/ }));
-    await user.click(screen.getByRole('button', { name: 'Confirmar cortesia' })); await screen.findByRole('heading', { name: 'Cortesia concedida' }); expect(body).toHaveProperty('accessPeriod', { type: 'lifetime' }); expect(screen.getByRole('region', { name: 'Resultado da cortesia' })).toHaveTextContent('Acesso vitalício');
+    await user.click(screen.getByRole('button', { name: 'Confirmar cortesia vitalícia' })); await screen.findByRole('region', { name: 'Resultado da cortesia' }); expect(body).toHaveProperty('accessPeriod', { type: 'lifetime' }); expect(screen.getByRole('region', { name: 'Resultado da cortesia' })).toHaveTextContent('Acesso vitalício');
   });
 });
