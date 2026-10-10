@@ -61,13 +61,13 @@ describe('authoring structure', () => {
     screen.getByLabelText('Ações de Coleções').focus(); await user.keyboard('{Enter}');
     const up = screen.getByRole('button', { name: 'Mover para cima' }); up.focus(); await user.keyboard('{Enter}');
     await waitFor(() => expect(screen.getByRole('region', { name: 'Coleções' })).toHaveFocus());
-    expect(screen.getByRole('heading', { name: '1. Coleções' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '1 Coleções' })).toBeInTheDocument();
     await openActions(user, 'Fluxo');
     within(screen.getByRole('article', { name: 'Fluxo' })).getByRole('button', { name: 'Mover para cima' }).focus(); await user.keyboard('{Enter}');
     await waitFor(() => expect(screen.getByRole('article', { name: 'Fluxo' })).toHaveFocus());
-    expect(screen.getByRole('heading', { name: '1. Fluxo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '1 Fluxo' })).toBeInTheDocument();
     await openActions(user, 'Fluxo');
-    within(screen.getByRole('article', { name: 'Fluxo' })).getByRole('button', { name: 'Mover para Coleções' }).focus(); await user.keyboard('{Enter}');
+    await user.click(within(screen.getByRole('article', { name: 'Fluxo' })).getByRole('button', { name: /Mover para outro módulo/ })); within(screen.getByRole('article', { name: 'Fluxo' })).getByRole('button', { name: 'Mover para Coleções' }).focus(); await user.keyboard('{Enter}');
     await waitFor(() => expect(screen.getByRole('article', { name: 'Fluxo' })).toHaveFocus());
     expect(within(screen.getByRole('region', { name: 'Coleções' })).getByRole('article', { name: 'Fluxo' })).toHaveAttribute('id', `aula-${structureCourseFixture.modules[0]?.lessons[1]?.lessonId}`);
     expect(boundary.snapshot().modules[1]?.lessons[0]?.position).toBe(1);
@@ -89,7 +89,7 @@ describe('authoring structure', () => {
     await user.click(within(screen.getByRole('region', { name: 'Fundamentos' })).getByRole('button', { name: 'Remover módulo…' }));
     await user.click(screen.getByRole('button', { name: 'Remover módulo' }));
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Fundamentos' })).not.toBeInTheDocument());
-    expect(screen.getByRole('heading', { name: '1. Coleções' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '1 Coleções' })).toBeInTheDocument();
   });
 
   it('failed writes retain the form and reuse the same intention on retry', async () => {
@@ -112,8 +112,8 @@ describe('authoring structure', () => {
 
   it('readers see the ordered curriculum without mutation controls', async () => {
     renderStructure(['autoria.ler']);
-    expect(await screen.findByRole('heading', { name: '1. Fundamentos' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '2. Fluxo' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '1 Fundamentos' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '2 Fluxo' })).toBeInTheDocument();
     expect(screen.getByText(/Somente leitura/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Editar|Adicionar|Arrastar|Aula/ })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Ações de Tipos')).not.toBeInTheDocument();

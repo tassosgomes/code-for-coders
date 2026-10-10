@@ -41,7 +41,7 @@ export const CourseDelete = ({ course, onDeleted, onReload, onNotice, presentati
     {presentation === 'menu' ? <div ref={menuRef} className="course-item-actions">
       <button type="button" className="course-action-trigger" aria-label={`Ações de ${course.title}`} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
       {menuOpen ? <div className="course-action-menu"><button type="button" onClick={confirm}>Excluir curso</button></div> : null}
-    </div> : <button type="button" className="outline-button" onClick={confirm}>Excluir curso</button>}
+    </div> : <button type="button" className="text-button" onClick={confirm}>Excluir curso</button>}
     {key ? <Dialog role="alertdialog" className="course-delete-dialog" title={`Excluir “${course.title}”?`} description="Este curso nunca foi publicado. O rascunho, seus módulos e suas aulas serão removidos. Esta ação não pode ser desfeita." busy={deletion.isPending} onClose={() => setKey(undefined)}>
       {error ? <p role="alert" className="inline-alert">{error}</p> : null}
       <div className="dialog-actions"><button autoFocus type="button" className="outline-button" disabled={deletion.isPending} onClick={() => setKey(undefined)}>Cancelar</button>

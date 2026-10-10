@@ -11,7 +11,7 @@ export const RevisionNoteForm = ({ schema, revision, versionNumber, busy, onSubm
   const form = useForm<RevisionNote>({ resolver: zodResolver(schema), defaultValues: { draftRevision: revision } });
   const note = useWatch({ control: form.control, name: 'versionNote' }) ?? '';
   return <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="text-details-form">
-    <label htmlFor="publication-note">Nota da versão (opcional)</label>
+    <label htmlFor="publication-note">Nota de versão (opcional)</label>
     <textarea id="publication-note" rows={4} maxLength={1000} disabled={busy} {...form.register('versionNote', { setValueAs: (value: string) => value === '' ? undefined : value })} />
     <small>{note.length}/1000 · A nota não aparece na Auditoria.</small>
     {form.formState.errors.versionNote ? <p role="alert" className="field-error">A nota deve ter até 1 000 caracteres.</p> : null}

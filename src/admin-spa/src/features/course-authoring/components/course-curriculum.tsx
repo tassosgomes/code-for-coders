@@ -1,5 +1,5 @@
 import { useRef, useState, type ReactNode } from 'react';
-import { BookOpen, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronUp, GripVertical, Info } from 'lucide-react';
 
 import { Dialog } from '@/components/ui/dialog';
 import { CourseHistory } from '@/features/course-authoring/components/course-history';
@@ -10,7 +10,8 @@ import { CoursePublication } from '@/features/course-authoring/components/course
 import { CourseAudience } from '@/features/course-authoring/components/course-audience';
 import { CourseLevelNotice } from '@/features/course-authoring/components/course-level-notice';
 import { useCourse } from '@/features/course-authoring/api/get-course';
-import type { PublicationPendency } from '@/features/course-authoring/utils/publication-pendencies';
+import { publicationPendencies, type PublicationPendency } from '@/features/course-authoring/utils/publication-pendencies';
+import { countLabel } from '@/features/course-authoring/utils/count-label';
 import { CourseVideoPicker } from '@/features/course-authoring/components/course-video-picker';
 import { CourseEditDialog } from '@/features/course-authoring/components/course-edit-dialog';
 import { CourseItemActions } from '@/features/course-authoring/components/course-item-actions';
@@ -19,6 +20,19 @@ import type { Course, CourseLesson, CourseModule } from '@/features/course-autho
 
 type CourseCurriculumProps = { course: Course; canEdit: boolean; canChooseVideo: boolean; children: ReactNode; actions?: ReactNode };
 type DraggedItem = { kind: 'module' | 'lesson'; id: string };
+type LessonMoveMenuProps = { modules: CourseModule[]; busy: boolean; onMove: (moduleId: string) => void };
+const LessonMoveMenu = ({ modules, busy, onMove }: LessonMoveMenuProps) => {
+  const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
+  if (!modules.length) return <button type="button" disabled title="Adicione outro módulo para mover a aula.">Mover para outro módulo</button>;
+  return <>
+    <button ref={toggle} type="button" disabled={busy} aria-haspopup="true" aria-expanded={open} data-keep-menu onClick={() => setOpen(!open)}>Mover para outro módulo ›</button>
+    {open ? <>
+      {modules.map((parent) => <button key={parent.moduleId} type="button" disabled={busy} onClick={() => onMove(parent.moduleId)}>Mover para {parent.title}</button>)}
+      <button type="button" data-keep-menu onClick={() => { toggle.current?.focus(); setOpen(false); }}>Cancelar</button>
+    </> : null}
+  </>;
+};
 export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children, actions }: CourseCurriculumProps) => {
   const [tab, setTab] = useState<'draft' | 'history'>('draft');
   const editor = useCourseStructure(course);
@@ -57,6 +71,8 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children, ac
     if (element) editor.elements.current.set(id, element); else editor.elements.current.delete(id);
   };
   const moveButton = (label: string, disabled: boolean, action: () => void) => <button type="button" disabled={disabled || editor.busy} title={disabled ? 'Item já está no limite da lista.' : undefined} onClick={action}>{label}</button>;
+  const limitHint = (position: number, total: number) => position === 1 ? <small className="course-action-hint">Primeiro item: não pode subir.</small> : position === total ? <small className="course-action-hint">Último item: não pode descer.</small> : null;
+  const pendencies = publicationPendencies(course);
   return <>
     <div className="course-editor-overview" hidden={tab !== 'draft'}><div>{children}</div>{canEdit ? <button className="primary-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'course' })}>Editar dados</button> : null}</div>
     {tab === 'history' ? <header className="course-history-heading"><p className="eyebrow">Autoria</p><h1>{course.title}</h1><p className="page-subtitle">Versões publicadas deste curso.</p></header> : null}
@@ -64,50 +80,52 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children, ac
       <CourseLevelNotice course={course} canEdit={canEdit} onChooseLevel={chooseLevel} onPublish={() => publicationButton.current?.click()} />
       <CourseAudience course={course} canEdit={canEdit} />
     </div>
+    {course.currentVersion ? <div className="course-draft-sync" hidden={tab !== 'draft'}>{course.hasUnpublishedChanges ? <p className="course-info-notice" role="status"><Info size={16} />As alterações ficam no rascunho até você publicar uma nova versão.</p> : <p>O rascunho está igual à versão vigente.</p>}</div> : null}
     <div className="course-draft-navigation">
     <div className="course-filters" role="tablist" aria-label="Conteúdo do curso"><button type="button" role="tab" aria-selected={tab === 'draft'} aria-controls="course-draft-panel" id="course-draft-tab" tabIndex={tab === 'draft' ? 0 : -1} onKeyDown={(event) => { if (event.key === 'ArrowRight' || event.key === 'ArrowLeft' || event.key === 'End') { event.preventDefault(); setTab('history'); document.getElementById('course-history-tab')?.focus(); } }} onClick={() => setTab('draft')}>Rascunho</button><button type="button" role="tab" aria-selected={tab === 'history'} aria-controls="course-history-panel" id="course-history-tab" tabIndex={tab === 'history' ? 0 : -1} onKeyDown={(event) => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'Home') { event.preventDefault(); setTab('draft'); document.getElementById('course-draft-tab')?.focus(); } }} onClick={() => setTab('history')}>Histórico</button></div>
     <div hidden={tab !== 'draft'} className="course-publication-actions">{canEdit ? <CoursePublication triggerRef={publicationButton} course={course} onFocusPendency={focusPendency} onChooseLevel={chooseLevel} onReload={query.refetch} /> : null}</div>
     </div>
     {tab === 'history' ? <div id="course-history-panel" role="tabpanel" aria-labelledby="course-history-tab"><CourseHistory courseId={course.courseId} /></div> : null}
     <div id="course-draft-panel" role="tabpanel" aria-labelledby="course-draft-tab" hidden={tab !== 'draft'}>
-    <div id="course-modules" tabIndex={-1} className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div>
+    {course.modules.length ? <div id="course-modules" tabIndex={-1} className="course-curriculum-heading"><h2>Módulos</h2>{canEdit ? <button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</div> : null}
     <p role="status" aria-live="polite">{editor.notice}</p>
     {editor.error && !editor.editTarget && !editor.removeTarget && !editor.videoTarget ? <p className="inline-alert" role="alert">{editor.error}</p> : null}
-    {!course.modules.length ? <section className="empty-state course-curriculum"><BookOpen size={32} /><h3>Comece pelos módulos.</h3><p>Cada módulo terá ao menos uma aula com vídeo antes da publicação.</p></section> : null}
+    {!course.modules.length ? <section id="course-modules" tabIndex={-1} className="empty-state course-curriculum"><BookOpen size={32} /><h3>Comece pelos módulos.</h3><p>Cada módulo terá ao menos uma aula com vídeo antes da publicação.</p>{canEdit ? <button className="primary-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-module' })}>+ Adicionar módulo</button> : null}</section> : null}
     <div className="course-module-list">
       {course.modules.map((module) => <section key={module.moduleId} id={`modulo-${module.moduleId}`} aria-label={module.title} tabIndex={-1} ref={itemRef(`modulo-${module.moduleId}`)} className="course-module" onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => drop(event, module)}>
         <div className="course-module-heading">
           {canEdit ? <button type="button" className="course-drag-handle" aria-label={`Arrastar módulo ${module.title}`} draggable={!editor.busy} disabled={editor.busy} onDragStart={(event) => startDrag(event, { kind: 'module', id: module.moduleId })} onDragEnd={() => { dragged.current = null; }}><GripVertical size={18} /></button> : null}
-          <div className="course-module-summary"><h3>{module.position}. {module.title}</h3><span>{module.lessons.length} aulas</span></div>
+          <div className="course-module-summary"><h3>{module.position} {module.title}</h3><span>{countLabel(module.lessons.length, 'aula', 'aulas')}</span></div>
           {canEdit ? <><button className="outline-button" type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'create-lesson', module })} aria-label={`+ Aula em ${module.title}`}>+ Aula</button>
             <button type="button" className="course-collapse-button" aria-label={`${collapsed.has(module.moduleId) ? 'Expandir' : 'Recolher'} ${module.title}`} aria-expanded={!collapsed.has(module.moduleId)} aria-controls={`conteudo-${module.moduleId}`} onClick={() => setCollapsed((current) => { const next = new Set(current); if (!next.delete(module.moduleId)) next.add(module.moduleId); return next; })}>{collapsed.has(module.moduleId) ? <ChevronDown size={16} /> : <ChevronUp size={16} />}</button>
             <CourseItemActions title={module.title} disabled={editor.busy}>
               <button type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'module', module })}>Editar título</button>
               {moveButton('Mover para cima', module.position === 1, () => void editor.editModule(module.moduleId, { position: module.position - 1 }))}
               {moveButton('Mover para baixo', module.position === course.modules.length, () => void editor.editModule(module.moduleId, { position: module.position + 1 }))}
-              <button type="button" disabled={editor.busy} onClick={() => editor.openRemove({ kind: 'module', module })}>Remover módulo…</button>
+              <button type="button" className="course-action-danger" disabled={editor.busy} onClick={() => editor.openRemove({ kind: 'module', module })}>Remover módulo…</button>
+              {limitHint(module.position, course.modules.length)}
             </CourseItemActions></> : null}
         </div>
         <div id={`conteudo-${module.moduleId}`} className="course-module-body" hidden={collapsed.has(module.moduleId)}>
           {!module.lessons.length ? <p className="course-empty-lessons">Este módulo ainda não tem aulas.</p> : null}
           {module.lessons.map((lesson) => <article key={lesson.lessonId} id={`aula-${lesson.lessonId}`} aria-label={lesson.title} tabIndex={-1} ref={itemRef(`aula-${lesson.lessonId}`)} className="course-lesson" onDragOver={(event) => { if (canEdit) event.preventDefault(); }} onDrop={(event) => drop(event, module, lesson)}>
             {canEdit ? <button type="button" className="course-drag-handle" aria-label={`Arrastar aula ${lesson.title}`} draggable={!editor.busy} disabled={editor.busy} onDragStart={(event) => { event.stopPropagation(); startDrag(event, { kind: 'lesson', id: lesson.lessonId }); }} onDragEnd={() => { dragged.current = null; }}><GripVertical size={18} /></button> : null}
-            <div className="course-lesson-details"><h4>{lesson.position}. {lesson.title}</h4><span className={`course-video-state ${lesson.video ? 'is-linked' : 'is-missing'}`}>{lesson.video ? (lesson.video.title ? `Vídeo: ${lesson.video.title}${lesson.video.durationSeconds ? ` · ${Math.floor(lesson.video.durationSeconds / 60)}:${String(lesson.video.durationSeconds % 60).padStart(2, '0')}` : ''}` : `Vídeo vinculado · ID ${lesson.video.videoId}`) : 'Sem vídeo'}</span>{lesson.description ? <p>{lesson.description}</p> : null}{lesson.video && !lesson.video.title ? <p className="inline-alert">Os detalhes deste vídeo não estão disponíveis agora.</p> : null}</div>
+            <div className="course-lesson-details"><h4>{lesson.position} {lesson.title}</h4><span className={`course-video-state ${lesson.video ? 'is-linked' : 'is-missing'}`}>{lesson.video ? (lesson.video.title ? `Vídeo: ${lesson.video.title}${lesson.video.durationSeconds ? ` · ${Math.floor(lesson.video.durationSeconds / 60)}:${String(lesson.video.durationSeconds % 60).padStart(2, '0')}` : ''}` : `Vídeo vinculado · ID ${lesson.video.videoId}`) : 'Sem vídeo'}</span>{lesson.description ? <p>{lesson.description}</p> : null}{lesson.video && !lesson.video.title ? <p className="inline-alert">Os detalhes deste vídeo não estão disponíveis agora.</p> : null}</div>
             {canEdit ? <button className="outline-button" type="button" disabled={editor.busy || !canChooseVideo} title={canChooseVideo ? undefined : 'Seu papel precisa de acesso à área Vídeos.'} onClick={() => editor.openVideo(lesson)}>{lesson.video ? 'Trocar vídeo' : 'Escolher vídeo'}</button> : null}
             {canEdit ? <CourseItemActions title={lesson.title} disabled={editor.busy}>
               <button type="button" disabled={editor.busy} onClick={() => editor.openEdit({ kind: 'lesson', lesson })}>Editar aula</button>
               {moveButton('Mover para cima', lesson.position === 1, () => void moveLesson(lesson.lessonId, { position: lesson.position - 1 }))}
               {moveButton('Mover para baixo', lesson.position === module.lessons.length, () => void moveLesson(lesson.lessonId, { position: lesson.position + 1 }))}
-              <span>Mover para outro módulo</span>
-              {course.modules.filter((parent) => parent.moduleId !== module.moduleId).map((parent) => <button key={parent.moduleId} type="button" disabled={editor.busy} onClick={() => void moveLesson(lesson.lessonId, { moduleId: parent.moduleId })}>Mover para {parent.title}</button>)}
-              {course.modules.length === 1 ? <button type="button" disabled title="Adicione outro módulo para mover a aula.">Mover para outro módulo</button> : null}
-              <button type="button" disabled={editor.busy} onClick={() => editor.openRemove({ kind: 'lesson', lesson })}>Remover aula…</button>
+              <LessonMoveMenu modules={course.modules.filter((parent) => parent.moduleId !== module.moduleId)} busy={editor.busy} onMove={(moduleId) => void moveLesson(lesson.lessonId, { moduleId })} />
+              <button type="button" className="course-action-danger" disabled={editor.busy} onClick={() => editor.openRemove({ kind: 'lesson', lesson })}>Remover aula…</button>
+              {limitHint(lesson.position, module.lessons.length)}
             </CourseItemActions> : null}
           </article>)}
         </div>
       </section>)}
     </div>
     <footer className="course-draft-footer">
+      {pendencies.length && course.modules.length ? <p className="course-pendency-strip"><span className="course-pendency-count">{countLabel(pendencies.length, 'pendência', 'pendências')}</span><button type="button" className="text-button" onClick={() => focusPendency(pendencies[0]!)}>Ver pendências</button></p> : null}
       {canEdit ? <CourseDiscard course={course} onReload={query.refetch} /> : null}
       {course.currentVersion ? <Link className="text-button" to={paths.authoringVersion.getHref(course.courseId, course.currentVersion)}>Ver versão vigente</Link> : null}
       {actions}

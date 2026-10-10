@@ -60,8 +60,8 @@ describe('authoring versions', () => {
   it('republishes the displayed revision and history shows newest first, author, note and current marker', async () => {
     const user = userEvent.setup(); const { boundary } = renderCourse();
     await user.click(await screen.findByRole('button', { name: 'Publicar nova versão' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Revisão 4');
-    await user.type(screen.getByLabelText('Nota da versão (opcional)'), 'Segunda versão');
+    expect(screen.getByRole('dialog')).toHaveTextContent('A versão 2 ficará vigente para todos; a versão 1 continuará no histórico.');
+    await user.type(screen.getByLabelText('Nota de versão (opcional)'), 'Segunda versão');
     await user.click(screen.getByRole('button', { name: 'Publicar versão 2' }));
     await screen.findByText(/Versão 2 publicada por Rafael/);
     await user.click(screen.getByRole('tab', { name: 'Histórico' }));
@@ -100,7 +100,7 @@ describe('authoring versions', () => {
     await user.click(await screen.findByRole('button', { name: 'Publicar nova versão' })); await user.click(screen.getByRole('button', { name: 'Publicar versão 2' }));
     await screen.findByText(/O rascunho mudou/); await screen.findByRole('heading', { name: 'Edição do colega' }); expect(boundary.writes).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Recarregar rascunho' })); boundary.setMode('success');
-    await user.click(screen.getByRole('button', { name: 'Publicar nova versão' })); expect(screen.getByRole('dialog')).toHaveTextContent('Revisão 5');
+    await user.click(screen.getByRole('button', { name: 'Publicar nova versão' })); expect(screen.getByRole('dialog')).toHaveTextContent('Publicar nova versão');
     await user.click(screen.getByRole('button', { name: 'Publicar versão 2' })); await screen.findByText(/Versão 2 publicada por Rafael/);
     expect(boundary.writes[1]?.revision).toBe(5); expect(boundary.writes[1]?.key).not.toBe(boundary.writes[0]?.key);
   });

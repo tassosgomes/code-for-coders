@@ -31,8 +31,8 @@ describe('authoring publish', () => {
   it('confirms the displayed revision and optional note and displays publication author and time', async () => {
     const user = userEvent.setup(); const boundary = renderEditor();
     await user.click(await screen.findByRole('button', { name: 'Publicar curso' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Revisão 1');
-    await user.type(screen.getByLabelText('Nota da versão (opcional)'), 'Primeira versão');
+    expect(screen.getByRole('dialog')).toHaveTextContent('Confira o que será publicado. Esta será a versão 1.'); expect(screen.getByRole('dialog')).not.toHaveTextContent('Revisão');
+    await user.type(screen.getByLabelText('Nota de versão (opcional)'), 'Primeira versão');
     await user.click(screen.getByRole('button', { name: 'Publicar versão 1' }));
     expect(await screen.findByText(/Versão 1 publicada por Professor/)).toBeInTheDocument();
     expect(boundary.writes[0]?.body).toEqual({ draftRevision: 1, versionNote: 'Primeira versão' });
@@ -41,10 +41,10 @@ describe('authoring publish', () => {
 
   it('a failed request retains the note and reuses the intent key on retry', async () => {
     const user = userEvent.setup(); const boundary = renderEditor(); boundary.setMode('unavailable');
-    await user.click(await screen.findByRole('button', { name: 'Publicar curso' })); await user.type(screen.getByLabelText('Nota da versão (opcional)'), 'Mantida');
+    await user.click(await screen.findByRole('button', { name: 'Publicar curso' })); await user.type(screen.getByLabelText('Nota de versão (opcional)'), 'Mantida');
     await user.click(screen.getByRole('button', { name: 'Publicar versão 1' }));
     expect(await screen.findByText(/Sua nota foi mantida/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Nota da versão (opcional)')).toHaveValue('Mantida'); boundary.setMode('success');
+    expect(screen.getByLabelText('Nota de versão (opcional)')).toHaveValue('Mantida'); boundary.setMode('success');
     await user.click(screen.getByRole('button', { name: 'Publicar versão 1' })); await screen.findByText(/Versão 1 publicada por/);
     expect(boundary.writes[0]?.key).toBe(boundary.writes[1]?.key);
   });
@@ -55,7 +55,7 @@ describe('authoring publish', () => {
     expect(await screen.findByText(/O rascunho mudou/)).toBeInTheDocument(); expect(boundary.writes).toHaveLength(1);
     boundary.setMode('success'); await user.click(screen.getByRole('button', { name: 'Recarregar rascunho' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: 'Publicar curso' })); expect(screen.getByRole('dialog')).toHaveTextContent('Revisão 2');
+    await user.click(screen.getByRole('button', { name: 'Publicar curso' })); expect(screen.getByRole('dialog')).toHaveTextContent('Publicar curso');
     await user.click(screen.getByRole('button', { name: 'Publicar versão 1' })); await screen.findByText(/Versão 1 publicada por/);
     expect(boundary.writes[1]?.body).toEqual({ draftRevision: 2 }); expect(boundary.writes[1]?.key).not.toBe(boundary.writes[0]?.key);
   });
@@ -70,7 +70,7 @@ describe('authoring publish', () => {
   it('limits the optional note to 1000 characters before publishing', async () => {
     const user = userEvent.setup(); const boundary = renderEditor();
     await user.click(await screen.findByRole('button', { name: 'Publicar curso' }));
-    const note = screen.getByLabelText('Nota da versão (opcional)');
+    const note = screen.getByLabelText('Nota de versão (opcional)');
     await user.click(note); await user.paste('x'.repeat(1001));
     expect(note).toHaveValue('x'.repeat(1000));
     await user.click(screen.getByRole('button', { name: 'Publicar versão 1' })); await screen.findByText(/Versão 1 publicada por/);

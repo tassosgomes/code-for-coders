@@ -39,7 +39,7 @@ describe('authoring video picker', () => {
     await open(user); expect(await screen.findByRole('radio', { name: /Vídeo da colega/ })).toBeChecked();
     await user.click(screen.getByRole('radio', { name: /Vídeo do professor/ })); await user.click(screen.getByRole('button', { name: 'Vincular vídeo' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await open(user); await user.click(screen.getByRole('button', { name: 'Desvincular vídeo' }));
+    await open(user); expect(screen.getByRole('button', { name: 'Desvincular vídeo' })).toHaveClass('outline-button'); await user.click(screen.getByRole('button', { name: 'Desvincular vídeo' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(screen.getByRole('article', { name: 'Tipos' })).toHaveAttribute('id', `aula-${id}`);
     expect(screen.getByRole('article', { name: 'Tipos' })).toHaveTextContent('Sem vídeo');
