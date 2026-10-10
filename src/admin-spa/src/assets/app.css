@@ -3463,6 +3463,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .video-upload-dialog form,
 .video-edit-dialog form {
   display:grid;
+  grid-template-columns:minmax(0,1fr);
   gap:8px;
 }
 
