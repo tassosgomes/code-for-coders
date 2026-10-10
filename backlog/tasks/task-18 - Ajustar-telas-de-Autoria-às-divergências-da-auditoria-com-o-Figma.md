@@ -1,11 +1,11 @@
 ---
 id: TASK-18
 title: Ajustar telas de Autoria às divergências da auditoria com o Figma
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 20:19'
-updated_date: '2026-10-10 20:19'
+updated_date: '2026-10-10 20:43'
 labels:
   - frontend
   - bug
@@ -22,6 +22,12 @@ Auditoria de 2026-10-10 comparando o SPA admin em dev (/admin/autoria) com o Fig
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 As subtarefas de currículo/publicação e de cabeçalho/lista/versão estão concluídas
-- [ ] #2 Lint, build e testes do admin-spa passam
+- [x] #1 As subtarefas de currículo/publicação e de cabeçalho/lista/versão estão concluídas
+- [x] #2 Lint, build e testes do admin-spa passam
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Divergências da auditoria de Autoria com o Figma corrigidas nas subtarefas 18.1 e 18.2 (PR #207). Temas e shell ficaram fora por decisão do usuário. Verificado com lint, build, vitest 274/274 e conferência em dev.
+<!-- SECTION:FINAL_SUMMARY:END -->

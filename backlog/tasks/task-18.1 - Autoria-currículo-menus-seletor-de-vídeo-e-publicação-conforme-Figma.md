@@ -1,11 +1,11 @@
 ---
 id: TASK-18.1
 title: 'Autoria: currículo, menus, seletor de vídeo e publicação conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 20:19'
-updated_date: '2026-10-10 20:29'
+updated_date: '2026-10-10 20:43'
 labels:
   - frontend
   - bug
@@ -30,9 +30,9 @@ Parte da auditoria (TASK-18) que cobre o editor de currículo (A3/A4/A5), o sele
 - [x] #5 Rascunho com pendências mostra a faixa 'N pendências · Ver pendências' no rodapé, que leva às pendências
 - [x] #6 Publicado com alterações mostra o aviso 'As alterações ficam no rascunho até você publicar uma nova versão.'
 - [x] #7 Publicado sem alterações mostra 'O rascunho está igual à versão vigente.' e o botão 'Publicar nova versão', como no Figma A3 Publicado v1
-- [ ] #8 Ações de módulo e aula ficam alinhadas à direita do card em qualquer largura
+- [x] #8 Ações de módulo e aula ficam alinhadas à direita do card em qualquer largura
 - [x] #9 Estado vazio 'Comece pelos módulos' tem o botão primário '+ Adicionar módulo'; 'Excluir curso' é link de texto como no Figma
-- [ ] #10 Seletor de vídeo mantém o rodapé (Cancelar/Vincular vídeo) visível com a lista longa; 'Desvincular vídeo' é botão outline
+- [x] #10 Seletor de vídeo mantém o rodapé (Cancelar/Vincular vídeo) visível com a lista longa; 'Desvincular vídeo' é botão outline
 - [x] #11 Modal de publicação: título 'Publicar curso' (1ª) ou 'Publicar nova versão', descrição, resumo 'N aulas com vídeo', linha de nível e pré-requisito e rótulo 'Nota de versão' conforme A7/A7.h
 - [x] #12 Testes do admin-spa cobrem os comportamentos alterados e passam
 <!-- AC:END -->
@@ -52,4 +52,12 @@ Parte da auditoria (TASK-18) que cobre o editor de currículo (A3/A4/A5), o sele
 Implementado em course-curriculum/publication/item-actions/delete/video-picker, authoring.css e revision-note-form (rótulo 'Nota de versão'). Botão Publicar nova versão agora sempre visível; o contrato OpenAPI não prevê recusa por falta de alterações, então nenhum tratamento extra além do fluxo de erro existente. Testes novos em authoring-editor-figma.test.tsx; lint/build/test ok.
 
 Validação conjunta 2026-10-10 com TASK-18.2: npm run lint ok, npm run build ok, vitest 50 arquivos/274 testes ok. AC #8 (ações alinhadas à direita) e #10 (rodapé do seletor visível com lista longa) dependem de layout real; jsdom não cobre. Ficam abertos até conferência no navegador.
+
+Conferência em dev (2026-10-10, viewport 1278px, PR #207 implantada): ações do módulo terminam em 1214px e da aula em 1214px dentro de card que vai até 1231px; seletor de vídeo com 20 itens mantém Cancelar/Vincular em 782–822px numa viewport de 847px, lista rola; Desvincular vídeo com outline-button.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Editor de currículo, seletor de vídeo e modal de publicação alinhados ao Figma (A3/A5/A6/A7/A7.h): submenu único de mover aula, itens destrutivos, plural e numeração, faixa de pendências, avisos de rascunho, botão de publicar sempre visível, estado vazio com CTA, rodapé fixo no seletor e textos do modal. Verificado com lint, build, vitest 274/274 e conferência visual em dev.
+<!-- SECTION:FINAL_SUMMARY:END -->

@@ -1,11 +1,11 @@
 ---
 id: TASK-18.2
 title: 'Autoria: cabeçalho do curso, lista, versão e textos conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 20:19'
-updated_date: '2026-10-10 20:29'
+updated_date: '2026-10-10 20:43'
 labels:
   - frontend
   - bug
@@ -24,7 +24,7 @@ Parte da auditoria (TASK-18) que cobre o cabeçalho do curso (A3), a lista de cu
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 A descrição do curso no cabeçalho é renderizada como markdown seguro (sem HTML arbitrário)
-- [ ] #2 'Editar dados' fica à direita do bloco de título, alinhado ao topo, em qualquer largura
+- [x] #2 'Editar dados' fica à direita do bloco de título, alinhado ao topo, em qualquer largura
 - [x] #3 Breadcrumb mostra 'Autoria › Cursos › Título'
 - [x] #4 Datas seguem o Figma: forma relativa ('hoje, 10:20') quando aplicável na lista e nos metadados; metadados 'Editado por X hoje, 10:20'; versão 'Publicada por X · data'
 - [x] #5 Na lista, o indicador 'Sem nível' fica na coluna Estado, com ícone de alerta, como em A1.g
@@ -44,4 +44,12 @@ Parte da auditoria (TASK-18) que cobre o cabeçalho do curso (A3), a lista de cu
 Implementado: react-markdown@10 (MarkdownText, skipHtml, sem img, headings compactos) no cabeçalho e na versão; format-moment util (+teste); breadcrumb; Editar dados à direita; Sem nível na coluna Estado; placeholder e caixa do vazio. Lint/build/test verdes (274 testes).
 
 Validação conjunta 2026-10-10 com TASK-18.1: lint ok, build ok, vitest 274/274 ok. AC #2 (Editar dados à direita em qualquer largura) é só CSS; fica aberto até conferência no navegador.
+
+Conferência em dev (2026-10-10, viewport 1278px): 'Editar dados' termina em 1231px, mesma borda direita do bloco de visão geral, e no topo (164px) junto do h1.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Cabeçalho do curso, lista, pré-requisito, histórico e versão alinhados ao Figma: descrição em markdown seguro (react-markdown), breadcrumb, datas relativas, 'Sem nível' na coluna Estado, placeholder e caixa vazia de recomendados, 'Editar dados' à direita. Verificado com lint, build, vitest 274/274 e conferência visual em dev.
+<!-- SECTION:FINAL_SUMMARY:END -->
