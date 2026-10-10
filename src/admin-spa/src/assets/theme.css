@@ -1,0 +1,130 @@
+/* Code4Coders — tokens de tema do backoffice.
+ * Única fonte de cor do admin-spa. O tema é aplicado pelo next-themes como classe no <html>:
+ * sem classe ou com .light usa :root; com .dark usa :root.dark. Nenhuma tela define cor própria
+ * fora destes tokens; o guardrail em src/assets/theme-tokens.test.ts falha se houver cor literal
+ * em app.css ou authoring.css.
+ * Valores escuros da Autoria seguem a paleta aprovada no Figma (authoring.css antigo).
+ */
+:root {
+  color-scheme: light;
+
+  --background: #f8f7fc;
+  --sidebar: #f8f7fc;
+  --topbar: #ffffff;
+  --surface: #ffffff;
+  --surface-subtle: #faf9fc;
+  --surface-muted: #f5f3f8;
+  --input: #ffffff;
+  --input-border: #e4e1ef;
+  --border: #e4e1ef;
+  --border-subtle: #f0eef5;
+  --border-strong: #d8d3e5;
+  --overlay: rgb(13 11 20 / 0.5);
+  --shadow-rgb: 22 19 31;
+
+  --foreground: #16131f;
+  --foreground-secondary: #3a354c;
+  --muted: #6e6883;
+
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-foreground: #ffffff;
+  --accent: #ede9fe;
+  --accent-foreground: #5b21b6;
+  --accent-subtle: #f5f3ff;
+  --accent-subtle-foreground: #6d28d9;
+  --accent-border: #ddd6fe;
+
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-foreground: #ffffff;
+  --danger-text: #991b1b;
+  --danger-soft: #fef2f2;
+  --danger-border: #fecaca;
+
+  --warning-soft: #fffbeb;
+  --warning-soft-foreground: #b45309;
+  --warning-text: #92400e;
+  --warning-border: #fde68a;
+
+  --success-soft: #ecfdf5;
+  --success-soft-foreground: #047857;
+  --success-border: #bbf7d0;
+
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+  --info-text: #1e3a8a;
+  --info-border: #bfdbfe;
+
+  --status-success: #039855;
+  --status-danger: #d92d20;
+  --status-neutral: #98a2b3;
+
+  /* Painel de código da tela de acesso: decorativo, igual nos dois temas. */
+  --code-surface: #0d0b14;
+  --code-border: #242033;
+  --code-text: #f8f7fc;
+  --code-muted: #9a94ae;
+  --code-faint: #6e6883;
+  --code-accent: #a78bfa;
+  --code-highlight: #fbbf24;
+  --code-success: #34d399;
+  --code-error: #f87171;
+  --code-dot-red: #fb7185;
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  --background: #242033;
+  --sidebar: #16131f;
+  --topbar: #0d0b14;
+  --surface: #16131f;
+  --surface-subtle: #1c1829;
+  --surface-muted: #1f1b2d;
+  --input: #0d0b14;
+  --input-border: #3a354c;
+  --border: #242033;
+  --border-subtle: #1f1b2c;
+  --border-strong: #3a354c;
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow-rgb: 0 0 0;
+
+  --foreground: #f8f7fc;
+  --foreground-secondary: #d4cfe3;
+  --muted: #9a94ae;
+
+  --primary: #a78bfa;
+  --primary-hover: #c4b5fd;
+  --primary-foreground: #0d0b14;
+  --accent: #242033;
+  --accent-foreground: #f8f7fc;
+  --accent-subtle: #2a2445;
+  --accent-subtle-foreground: #c4b5fd;
+  --accent-border: #4c3f7a;
+
+  --danger: #f87171;
+  --danger-hover: #ef4444;
+  --danger-foreground: #0d0b14;
+  --danger-text: #fca5a5;
+  --danger-soft: #3b1219;
+  --danger-border: #6b1d22;
+
+  --warning-soft: #242033;
+  --warning-soft-foreground: #fbbf24;
+  --warning-text: #fbbf24;
+  --warning-border: #5b4516;
+
+  --success-soft: #062b20;
+  --success-soft-foreground: #34d399;
+  --success-border: #0f4d35;
+
+  --info: #60a5fa;
+  --info-soft: #0f1d3d;
+  --info-text: #bfdbfe;
+  --info-border: #1e3a8a;
+
+  --status-success: #34d399;
+  --status-danger: #f87171;
+  --status-neutral: #667085;
+}
