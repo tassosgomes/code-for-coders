@@ -7,6 +7,7 @@ import { useOpenPlaybackSession, type PlaybackSession } from '@/features/student
 import { recordPlaybackProgress, type ProgressReason } from '@/features/student-lessons/api/record-playback-progress';
 import { useRenewPlaybackSession } from '@/features/student-lessons/api/renew-playback-session';
 import { setupPlaybackRequest } from '@/features/student-lessons/utils/playback-request';
+import { joinApiUrl } from '@/lib/api-url';
 import { startPlaybackTiming } from '@/lib/telemetry';
 import { registerTelemetrySecret } from '@/lib/telemetry-url-redaction';
 
@@ -108,10 +109,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
 
       if (keepalive) {
         try {
-          const url = new URL(
-            `/api/v1/playback-sessions/${encodeURIComponent(session.sessionId)}/progress`,
-            env.API_URL || window.location.origin,
-          ).href;
+          const url = joinApiUrl(env.API_URL, `/api/v1/playback-sessions/${encodeURIComponent(session.sessionId)}/progress`);
           void fetch(url, {
             method: 'POST',
             headers: {
@@ -247,7 +245,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
           }
         });
         hls.attachMedia(videoRef.current);
-        hls.loadSource(new URL('/api/v1/playback-sessions/' + session.sessionId + '/playlist', window.location.origin).href);
+        hls.loadSource(joinApiUrl(env.API_URL, `/api/v1/playback-sessions/${session.sessionId}/playlist`));
         reposition = setInterval(() => setZone((previous) => (previous + 1 + Math.floor(Math.random() * 3)) % 4),
           session.watermark.repositionSeconds * 1000);
       } catch (error) {

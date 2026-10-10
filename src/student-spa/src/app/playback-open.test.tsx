@@ -39,7 +39,7 @@ describe('Playback opening', () => {
     server.use(http.post(endpoint, ({ request }) => { proof = request.headers.get('X-CSRF-Token'); return HttpResponse.json(playbackData(), { status: 201 }); }));
     renderPlayer(); await started();
     expect(proof).toBe('csrf-proof');
-    expect(hls.loadSource).toHaveBeenCalledWith(expect.stringContaining('/api/v1/playback-sessions/'));
+    expect(hls.loadSource).toHaveBeenCalledWith(`${env.API_URL}/api/v1/playback-sessions/${playbackData().sessionId}/playlist`);
     expect(screen.getByTestId('video-watermark')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByTestId('video-watermark')).toHaveClass('pointer-events-none');
     expect(JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } })).not.toContain('student@example.com');
