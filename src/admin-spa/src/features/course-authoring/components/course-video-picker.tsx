@@ -26,7 +26,7 @@ export const CourseVideoPicker = ({ lesson, busy, error, onClose, onSave }: Cour
     <SingleChoiceForm schema={updateLessonInputSchema.pick({ videoId: true }).required()} fieldName="videoId" defaultValues={{ videoId: lesson.video?.videoId ?? null }} legend="Vídeos prontos" actions={<button className="outline-button" type="button" disabled={busy} onClick={onClose}>Cancelar</button>} submitLabel="Vincular vídeo" disabled={busy || videos.isFetching || videos.isError} onSubmit={(input) => save(input.videoId ?? null)} options={(videos.isError ? [] : videos.data?.data ?? []).map((video) => ({ value: video.videoId, label: <><strong>{video.title}</strong><span>{Math.floor(video.durationSeconds / 60)}:{String(video.durationSeconds % 60).padStart(2, '0')} · {video.uploadedBy.name}</span><span className="course-ready-badge">Pronto</span></> }))}>
     <CoursePagination label="Páginas de vídeos" page={page} totalPages={videos.data?.pagination.totalPages ?? 0} disabled={busy || videos.isFetching} onChange={setPage} />
     <button className="text-button" type="button" disabled={videos.isFetching || busy} onClick={() => void videos.refetch()}>Atualizar lista</button>
-    <div className="course-video-links"><Link to={paths.videos.getHref()}>Ir para Vídeos</Link>{lesson.video ? <button className="text-button" type="button" disabled={busy} onClick={() => void save(null)}>Desvincular vídeo</button> : null}</div>
+    <div className="course-video-links"><Link to={paths.videos.getHref()}>Ir para Vídeos</Link>{lesson.video ? <button className="outline-button" type="button" disabled={busy} onClick={() => void save(null)}>Desvincular vídeo</button> : null}</div>
     </SingleChoiceForm>
   </Dialog>;
 };

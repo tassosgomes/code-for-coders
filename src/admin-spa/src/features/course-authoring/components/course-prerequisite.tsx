@@ -14,7 +14,7 @@ export const CoursePrerequisite = ({ course, canEdit }: CoursePrerequisiteProps)
   const defaultValues = { prerequisiteText: course.prerequisite.text, recommendedCourseIds: course.prerequisite.recommendedCourses.map((item) => item.courseId) };
   if (!canEdit) return <><h3>O que a pessoa deveria saber antes</h3><p>{course.prerequisite.text ?? 'Sem pré-requisito'}</p>
     <h3>Cursos recomendados</h3><ol>{course.prerequisite.recommendedCourses.map((item) => <li key={item.courseId}>{item.title}</li>)}</ol>
-    {!course.prerequisite.recommendedCourses.length ? <p>Nenhum curso recomendado.</p> : null}</>;
+    {!course.prerequisite.recommendedCourses.length ? <p className="course-recommended-empty">Nenhum curso recomendado.</p> : null}</>;
   return <ValidatedForm key={`${course.courseId}:${JSON.stringify(defaultValues)}`} schema={coursePrerequisiteInputSchema} defaultValues={defaultValues} onSubmit={editor.save}>{(form) => {
     const { prerequisiteText, recommendedCourseIds } = form.watch();
     const setIds = (ids: string[]) => { form.setValue('recommendedCourseIds', ids, { shouldDirty: true, shouldValidate: true }); editor.clear(); };
@@ -27,11 +27,11 @@ export const CoursePrerequisite = ({ course, canEdit }: CoursePrerequisiteProps)
     const textError = form.formState.errors.prerequisiteText?.message ?? (editor.error?.field === 'prerequisiteText' ? editor.error.message : undefined);
     return <>
       <label htmlFor="prerequisite-text">O que a pessoa deveria saber antes (opcional)</label>
-      <textarea id="prerequisite-text" rows={4} maxLength={1000} disabled={editor.busy} aria-invalid={Boolean(textError)} aria-describedby="prerequisite-help prerequisite-count prerequisite-error" {...form.register('prerequisiteText', { setValueAs: (value: unknown) => value === '' ? null : value })} />
+      <textarea id="prerequisite-text" placeholder="O que a pessoa deveria saber antes..." rows={4} maxLength={1000} disabled={editor.busy} aria-invalid={Boolean(textError)} aria-describedby="prerequisite-help prerequisite-count prerequisite-error" {...form.register('prerequisiteText', { setValueAs: (value: unknown) => value === '' ? null : value })} />
       <div className="course-field-help"><small id="prerequisite-help">É uma recomendação; não impede a compra nem o acesso.</small><small id="prerequisite-count">{prerequisiteText?.length ?? 0}/1000</small></div>
       <p id="prerequisite-error" role={textError ? 'alert' : undefined}>{textError}</p>
       <h3 id="recommended-heading">Cursos recomendados (até 5)</h3>
-      {!recommendedCourseIds.length ? <p>Nenhum curso recomendado.</p> : null}
+      {!recommendedCourseIds.length ? <p className="course-recommended-empty">Nenhum curso recomendado.</p> : null}
       <ol className="course-recommended-list" aria-labelledby="recommended-heading">{recommendedCourseIds.map((id, index) => {
         const title = course.prerequisite.recommendedCourses.find((item) => item.courseId === id)?.title ?? titles.current.get(id) ?? '';
         return <li key={id} id={`recommended-${id}`} tabIndex={-1}><span>{index + 1}. {title}</span>
