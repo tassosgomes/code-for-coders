@@ -19,12 +19,15 @@ flowchart LR
                 devSpas["admin-spa · student-spa"]
                 devBffs["bff-admin · bff-student"]
                 devApis["identity · learning · commerce<br/>billing · notification · audit"]
+                devMedia["media · media-worker · media-edge<br/>(profile media-config)"]
                 devSpas --> devBffs --> devApis
+                devBffs --> devMedia
             end
         end
     end
 
     caddy -->|/admin/* e /students/*<br/>pela c4c-shared local| devSpas
+    caddy -->|/media/* → media-edge:8080<br/>pela c4c-shared local| devMedia
     devApp -->|192.168.0.5 · portas publicadas<br/>25 · 5432 · 5672 · 6379 · 9000 · 4317/4318| devDeps
 
     subgraph stable["infra-server · 192.168.0.11 · Docker Engine"]
@@ -63,6 +66,28 @@ flowchart LR
 - As aplicações conectam-se às dependências pelas portas publicadas no endereço do próprio host: `.5` para dev e `.11` para estável. As redes `c4c-shared` têm o mesmo nome, mas pertencem a Docker Engines diferentes e não formam uma rede entre hosts.
 - PostgreSQL, RabbitMQ, Valkey e MinIO são separados por ambiente. O stack estável não usa dados nem filas do ambiente dev.
 - No estável, o smtp4dev fica disponível para diagnóstico, mas não transporta e-mails da aplicação. Os serviços opcionais de mídia e do túnel Stripe também não estão iniciados enquanto as variáveis correspondentes permanecerem vazias.
+- No dev, a mídia está ativa desde 2026-10-10 (profile `media-config`). A borda de entrega de segmentos fica em `https://dev-code4coders.tasso.dev.br/media/`, roteada pela Caddy para `media-edge:8080`. O upload e as leituras do S3 usam o MinIO do próprio `desenv-server`, com endereço público `https://s3.tasso.dev.br`. Detalhes em [Mídia no ambiente dev](#mídia-no-ambiente-dev).
+
+## Mídia no ambiente dev
+
+Configuração de `desenv-server:/home/tsgomes/code-for-coders/.env` (nomes; os valores ficam só no servidor):
+
+| Variável | Valor | Motivo |
+| --- | --- | --- |
+| `COMPOSE_PROFILES` | `media-config` | Sobe `media`, `media-worker` e `media-edge`. |
+| `AWS_MEDIA_BUCKET` | `code4coders-midia` | Bucket com os HLS e originais dos vídeos já preparados para o QA. `code-for-coders-media` existe, mas não contém esses vídeos. |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | usuário `code_for_coders_media` | Mesmo usuário com política restrita ao bucket. O segredo é `REMOTE_S3_SECRET_KEY`. |
+| `AWS_S3_ENDPOINT` | `http://192.168.0.5:9000` | Endereço interno, usado pelos containers. |
+| `AWS_S3_PUBLIC_ENDPOINT` | `https://s3.tasso.dev.br` | Endereço usado nas URLs assinadas de upload enviadas ao navegador. |
+| `AWS_S3_FORCE_PATH_STYLE` | `true` | O MinIO usa estilo de caminho. |
+| `AWS_REGION` | `us-east-1` | Região padrão do cliente S3. |
+| `MEDIA_EDGE_PUBLIC_URL` | `https://dev-code4coders.tasso.dev.br/media/` | Base dos segmentos. A barra final é obrigatória. |
+
+A rota `/media/*` fica no bloco `dev-code4coders` da Caddyfile do projeto `infra` (`/home/tsgomes/infra/caddy/Caddyfile`), fora deste repositório. Ela usa `handle_path`, então o prefixo `/media` é removido antes de chegar ao `media-edge`.
+
+A SPA de aluno monta o playlist do HLS com caminho absoluto na raiz do host (`/api/v1/playback-sessions/{id}/playlist`, em `src/student-spa/src/features/student-lessons/hooks/use-protected-playback.ts`). No lab, a SPA ficava na raiz do próprio host e isso funcionava. No dev, a SPA mora em `/students/`, então a Caddy encaminha `/api/v1/playback-sessions/*` para `student-spa:8080`, cujo nginx repassa `/api/v1/` ao `bff-student`. Essa rota é específica de propósito: não expõe o restante de `/api/v1` na raiz. É provisória: a correção no hook, que passa a montar as URLs a partir de `API_URL` (`src/lib/api-url.ts`), dispensa a rota, que deve ser removida depois que o build com essa correção estiver no ar. O estável ainda não tem essa rota e receberá a correção no próximo deploy. Como o arquivo está montado como somente leitura no container, o reload usa uma cópia dentro do container; uma reinicialização da Caddy carrega o arquivo do host, que tem o mesmo conteúdo.
+
+Verificação feita em 2026-10-10: abertura de sessão 201, playlist 200, variante 200, segmento pela borda pública 200, e upload com preflight 204, PUT 200 e `Access-Control-Allow-Origin` da origem do admin SPA.
 
 ## Projetos Compose
 

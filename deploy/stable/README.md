@@ -60,6 +60,8 @@ O registro DNS `code4coders.tasso.dev.br` segue o padrão dos demais hosts e apo
 
 ## Variáveis ainda pendentes
 
+Esta seção vale só para o ambiente estável (`infra-server`). No ambiente dev (`desenv-server`), a mídia já está configurada e ativa; veja [Mídia no ambiente dev](../topology.md#mídia-no-ambiente-dev).
+
 `AWS_MEDIA_BUCKET`, `BILLING_WEBHOOK_TUNNEL_CREDENTIALS` e `MEDIA_EDGE_PUBLIC_URL` ficam vazias.
 Os perfis `media-config` e `stripe-webhook` não são iniciados. Billing usa as chaves Stripe de teste
 existentes no ambiente local; sem as credenciais do túnel, os eventos de pagamento não chegam ao
