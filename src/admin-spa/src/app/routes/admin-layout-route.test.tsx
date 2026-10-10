@@ -11,7 +11,7 @@ import { env } from '@/config/env';
 import { server } from '@/testing/server';
 import { renderWithProviders } from '@/testing/test-utils';
 
-const renderAdminHome = (permissions: string[]) => {
+const renderAdminHome = (permissions: string[], initialPath = '/') => {
   server.use(http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () =>
     HttpResponse.json({
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
@@ -26,9 +26,12 @@ const renderAdminHome = (permissions: string[]) => {
       path: '/',
       loader: loadStaffSession,
       element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
-      children: [{ index: true, element: <DashboardRoute /> }],
+      children: [
+        { index: true, element: <DashboardRoute /> },
+        { path: 'autoria', element: <p>Cursos da escola</p> },
+      ],
     },
-  ], { initialEntries: ['/'] });
+  ], { initialEntries: [initialPath] });
 
   renderWithProviders(<RouterProvider router={router} />);
 };
@@ -44,6 +47,15 @@ describe('StaffSession areas', () => {
     expect(navigation.queryByRole('link', { name: 'Acessos' })).not.toBeInTheDocument();
     expect(navigation.queryByRole('link', { name: 'Suporte' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Olá, Marina' })).toBeInTheDocument();
+  });
+
+  it.each(['/', '/autoria'])('keeps Vídeos before Autoria in the sidebar on %s', async (path) => {
+    renderAdminHome(['midia.enviar', 'autoria.ler'], path);
+
+    const navigation = within(await screen.findByRole('navigation', { name: 'admin-spa navigation' }));
+    const labels = navigation.getAllByRole('link').map((link) => link.textContent);
+    expect(labels.indexOf('Vídeos')).toBeGreaterThan(-1);
+    expect(labels.indexOf('Vídeos')).toBeLessThan(labels.indexOf('Autoria'));
   });
 
   it('shows the no-access guidance without any area when the account has no role', async () => {

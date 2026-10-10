@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Gift, Menu, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { Link, NavLink, Outlet } from 'react-router';
 
 import { ThemeMenu } from '@/components/theme-menu';
 import { paths } from '@/config/paths';
@@ -24,9 +24,6 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
   useDocumentTitle(title);
   const menuOpen = useShellStore((state) => state.menuOpen);
   const toggleMenu = useShellStore((state) => state.toggleMenu);
-  const { pathname } = useLocation();
-  const isDashboard = pathname === paths.home.path;
-  const isAuthoring =pathname === paths.authoring.path || pathname.startsWith(`${paths.authoring.path}/`);
   const [accountOpen, setAccountOpen] = useState(false);
   const initials = name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
 
@@ -44,7 +41,6 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
                 : area.permission === 'oferta.editar' ? 'commerce' : area.permission === 'financeiro.ler' || area.permission === 'cortesia.conceder' ? 'finance' : 'operations';
               return areaSection === section && area.href;
             });
-            if ((isAuthoring || isDashboard) && section === 'content') group.sort((first, second) => Number(second.permission === 'autoria.ler') - Number(first.permission === 'autoria.ler'));
             if (group.length === 0) return null;
             return <div className="sidebar-group" key={section}><p className="sidebar-heading">{section === 'content' ? 'Conteúdo' : section === 'commerce' ? 'Comercial' : section === 'finance' ? 'Financeiro' : 'Operação'}</p>
               {group.map((area) => <NavLink key={area.label} to={area.href!}>
@@ -60,9 +56,9 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
           <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Fechar navegação' : 'Abrir navegação'} className="menu-button" onClick={toggleMenu} type="button">
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          {isAuthoring ? <span className="authoring-mobile-label">Autoria</span> : <Link aria-label={`${serviceName} — início`} className="mobile-backoffice-brand" to={paths.home.getHref()}>
+          <Link aria-label={`${serviceName} — início`} className="mobile-backoffice-brand" to={paths.home.getHref()}>
             <span className="brand-mark"><CodeXml size={18} /></span><span>Code4Coders</span><span className="brand-badge">Backoffice</span>
-          </Link>}
+          </Link>
           <ThemeMenu />
           <div className="account-menu-wrap">
             <button aria-expanded={accountOpen} aria-haspopup="menu" className="account-trigger" onClick={() => setAccountOpen(!accountOpen)} type="button">
