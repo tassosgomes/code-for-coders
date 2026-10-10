@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using CodeForCoders.Commerce.Application.Common;
 using CodeForCoders.Commerce.Application.Interfaces;
+using CodeForCoders.Commerce.Domain.ValueObjects;
 using CodeForCoders.Commerce.Infra.Data;
 using CodeForCoders.Commerce.Infra.Messaging;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +76,44 @@ public sealed class CourtesyCourseListingTests(CommerceIntegrationFixture fixtur
         Assert.Equal("Zebra", Assert.Single((await second.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data).Title);
         using var isolated = await SendAsync(factory, client, other);
         Assert.Equal("Other school", Assert.Single((await isolated.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data).Title);
+    }
+
+    [Fact(DisplayName = nameof(HasOfferIsTrueOnlyWithPublishedOfferAndCoursesWithoutOfferStillAppear))]
+    public async Task HasOfferIsTrueOnlyWithPublishedOfferAndCoursesWithoutOfferStillAppear()
+    {
+        var factory = hosts.CatalogWithWorkers; using var client = factory.CreateClient();
+        var tenant = Guid.CreateVersion7(); var other = Guid.CreateVersion7();
+        var published = Guid.CreateVersion7(); var draft = Guid.CreateVersion7(); var unpublished = Guid.CreateVersion7(); var none = Guid.CreateVersion7();
+        var foreign = Guid.CreateVersion7();
+        foreach (var (school, id, title) in new[] { (tenant, published, "A published"), (tenant, draft, "B draft"), (tenant, unpublished, "C unpublished"), (tenant, none, "D none"), (other, foreign, "E foreign") })
+        {
+            var body = CatalogCourseFactFixture.Create(school, id, 1, rich: true, title: title);
+            await ApplyAsync(factory, body);
+            await using var scope = factory.Services.CreateAsyncScope();
+            scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(school);
+            await scope.ServiceProvider.GetRequiredService<ICatalogCourseProjectionStore>().ApplyAsync(PublishedCourseFact.Parse(body), Cancellation);
+        }
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var now = DateTimeOffset.UtcNow;
+            foreach (var (school, id, state) in new[] { (tenant, published, "published"), (tenant, draft, "draft"), (tenant, unpublished, "unpublished"), (other, foreign, "published") })
+            {
+                scope.ServiceProvider.GetRequiredService<ITenantContext>().Set(school);
+                var db = scope.ServiceProvider.GetRequiredService<CommerceDbContext>();
+                var course = await db.CatalogCourseViews.SingleAsync(item => item.CourseId == id, Cancellation);
+                var offer = course.CreateOffer(new("12 months", 49700, AccessPeriod.Create("months", 12)), now);
+                if (state != "draft") course.PublishOffer(offer.OfferId, now);
+                if (state == "unpublished") course.UnpublishOffer(offer.OfferId, now);
+                await db.SaveChangesAsync(Cancellation);
+            }
+        }
+        using var response = await SendAsync(factory, client, tenant);
+        var page = await response.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation);
+        Assert.Equal([("A published", true), ("B draft", false), ("C unpublished", false), ("D none", false)], page!.Data.Select(course => (course.Title, course.HasOffer)));
+        using var json = JsonDocument.Parse(await (await SendAsync(factory, client, tenant, path: "?_size=1")).Content.ReadAsStringAsync(Cancellation));
+        Assert.True(json.RootElement.GetProperty("data")[0].GetProperty("hasOffer").GetBoolean());
+        using var foreignResponse = await SendAsync(factory, client, other);
+        Assert.True(Assert.Single((await foreignResponse.Content.ReadFromJsonAsync<CourtesyCoursePage>(Cancellation))!.Data).HasOffer);
     }
 
     [Fact(DisplayName = nameof(BrokerDeliveryIgnoresEqualAndOlderVersionsIncludingRichReplay))]

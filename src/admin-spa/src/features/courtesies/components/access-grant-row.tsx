@@ -8,6 +8,6 @@ export const AccessGrantRow = ({ grant }: AccessGrantRowProps) => <li className=
   <strong>{grant.courseTitle}</strong>
   <span className="status-badge courtesy-grant-origin">{origins[grant.origin] ?? grant.origin}</span>
   <span className="courtesy-grant-mobile-meta">{origins[grant.origin] ?? grant.origin}{grant.accessPeriod.type === 'months' ? ` · ${grant.accessPeriod.months} meses` : ''}</span>
-  <span>{grant.endsOn ? <><span className="courtesy-grant-months">{grant.accessPeriod.type === 'months' ? `${grant.accessPeriod.months} meses · ` : ''}</span>até {formatTermDate(grant.endsOn)}</> : 'Acesso vitalício'}</span>
+  <span>{grant.endsOn ? <><span className="courtesy-grant-months">{grant.accessPeriod.type === 'months' ? `${grant.accessPeriod.months} meses · ` : ''}</span>até {formatTermDate(grant.endsOn)}</> : 'Vitalícia'}</span>
   <span className={`status-badge ${grant.status === 'active' ? 'status-active' : ''}`}>{statuses[grant.status] ?? grant.status}</span>
 </li>;

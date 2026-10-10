@@ -24,7 +24,7 @@ public sealed class CourtesyCoursesHttpHandler : HttpMessageHandler
             Content = Malformed ? new StringContent("invalid JSON") : Status != HttpStatusCode.OK ? JsonContent.Create(new { code = "PERMISSION_DENIED" })
                 : JsonContent.Create(new
                 {
-                    data = new[] { new { courseId = Guid.CreateVersion7(), title = "Course without an offer" } },
+                    data = new[] { new { courseId = Guid.CreateVersion7(), title = "Course without an offer", hasOffer = false }, new { courseId = Guid.CreateVersion7(), title = "Course with an offer", hasOffer = true } },
                     pagination = new { page = 2, size = 10, total = 11, totalPages = 2 }
                 }),
         });
