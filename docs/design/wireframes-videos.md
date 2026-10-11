@@ -1,6 +1,7 @@
 # Wireframes ASCII — Vídeos do backoffice (CAP-006)
 
 > **Status:** aprovado (ASCII e Figma) em 2026-09-26 · implementação não iniciada
+> **Adendo tags de vídeo:** ASCII aprovado pelo responsável em 2026-10-11 (seção 8)
 > **Objetivo:** desenhar no Figma, sobre o Design System Code4Coders e o AppShell do backoffice
 > aprovado em CAP-002, as telas da área Vídeos antes da implementação no `admin-spa` (tasks 3.0–9.0 de
 > `tasks/archive/prd-ingestao-midia`). Aprovado este ASCII → desenho no Figma (task 2.0) → aprovação → código.
@@ -428,3 +429,180 @@ Ajustes de desenho em relação ao ASCII, sem mudar comportamento:
   tema não tem tokens "soft" de info e destructive; *Recebido* e *Pronto* usam os tokens soft.
 - O filtro por estado usa o `Tab` do DS (não há `ToggleGroup` no arquivo).
 - O Início do professor (V7) mostra o card sem contagem, como no ASCII.
+
+---
+
+## 8. Adendo — Tags de vídeo (CAP-006, 3ª fatia)
+
+> **Situação do adendo:** ASCII aprovado pelo responsável em 2026-10-11 (esta seção).
+> **Fontes:** `tasks/prd-tags-video/prd.md` v1.0 (RF-01…RF-06, Experiência do Usuário, DP-01…DP-05),
+> `techspec.md` (Bloco Frontend, V-01…V-05, EN-01), `api-contract.md` (códigos `TAG_INVALID` e
+> `TAGS_LIMIT_EXCEEDED`).
+
+Este adendo acrescenta o campo de tags no envio, as etiquetas na lista, o diálogo de edição e o
+filtro por tags com E/OU, **sem reabrir** as decisões G1–G17 nem as seções 1–7. Convenções, legenda
+(ver § 4), componentes e AppShell são os das seções 3 e 4. O seletor de vídeo da aula está no
+adendo correspondente em `wireframes-autoria-curso.md` (seção 8).
+
+### 8.1 O que muda em cada tela
+
+| Tela | Mudança | RF |
+|---|---|---|
+| V2 · Enviar vídeo | Campo opcional **Tags** abaixo do título, com etiquetas removíveis e sugestões | RF-01, RF-03 |
+| V1 · Vídeos (lista) | Etiquetas de tags em cada linha; ação de editar as tags na linha | RF-02 |
+| V8 · Editar tags | Superfície de edição nova (Dialog) sobre V1, com sugestão, remoção, Salvar e Cancelar | RF-02, RF-03 |
+| V1 · Filtro | Filtro por tags junto dos filtros de estado e título, com escolha **E / OU** | RF-04, RF-06 |
+
+Não mudam: V3 (transferência), V4 (aviso de envio incompleto), V5 (sair interrompe), V6 (editar
+título), V7 (Início), B12/B13. Fora do escopo: gestão das tags da escola (DP-04).
+
+### 8.2 Decisões de desenho aprovadas (T1–T8)
+
+| # | Ponto | Decisão aprovada e fundamento |
+|---|---|---|
+| T1 | Componente único | Um **campo de tags com sugestão** compartilhado por envio, edição e filtros, no padrão WAI-ARIA *combobox* com lista de sugestões e etiquetas removíveis. Etiqueta = `Badge` com texto e botão-ícone ✕ com rótulo acessível `Remover tag <grafia>` (ex.: "Remover tag docker"). |
+| T2 | Confirmação | **Enter ou vírgula** confirma a tag digitada. A sugestão vem de `listVideoTags` com o trecho digitado, com espera curta entre teclas; setas navegam, Enter escolhe, Esc fecha sem confirmar. |
+| T3 | Texto livre × sugestão | **No envio e na edição:** aceita texto livre (tag nova nasce no uso, DP-01); confirmar "introducao" com "Introdução" existente grava **"Introdução"** (grafia canônica). **Nos filtros:** só aceita uma sugestão existente. |
+| T4 | Limites e equivalência | Até **10 tags** por vídeo, de **1 a 30 caracteres** (RN-T03). A equivalência ignora maiúsculas, acentos e espaços das pontas/repetidos (RN-T02): a tag equivalente **não duplica** — confirmar "docker" com "Docker" já incluído mantém uma etiqueta só. Os mesmos limites do servidor são aplicados no cliente para a mensagem imediata; o servidor continua sendo a autoridade. |
+| T5 | Textos exatos de erro do campo | Tag vazia (só espaços) ou com mais de 30 caracteres → `TAG_INVALID`: **"Cada tag precisa ter de 1 a 30 caracteres."** 11ª tag → `TAGS_LIMIT_EXCEEDED`: **"Um vídeo pode ter no máximo 10 tags."** A tag recusada não entra no conjunto; o restante digitado é preservado. Erro 422 do servidor após Salvar/Enviar mostra a mensagem pelo `code`, com os valores preservados. |
+| T6 | E/OU | O controle só aparece com **duas ou mais tags** no filtro; **E é o padrão** (RF-06). Na tela Vídeos ele entra na URL (`tag` repetido + `tagMatch`). Com uma tag só, sem efeito e sem controle. |
+| T7 | Mensagens de lista vazia | Passam a considerar as tags (ver 8.5): informa que nenhum vídeo atende aos filtros e oferece **limpar os filtros**. No envio/edição, vídeo sem tags é válido (tags opcionais). |
+| T8 | Permissão e estados | Qualquer ator com `midia.enviar` edita tags de qualquer vídeo da escola, em qualquer estado (RN-T04). Sem a permissão, sem o controle de edição, como no título. |
+
+### 8.3 V2 · Campo de tags no envio
+
+```text
+V2.g  Conferir título + tags (desktop; mobile: Dialog adaptado à largura)
+┌─ Dialog ─────────────────────────────── ✕ ┐
+│ Enviar vídeo                              │
+│                                           │
+│ 🎞 aula-3.mp4 · 3,1 GB    _Trocar arquivo_│
+│                                           │
+│ Título                                    │
+│ [aula-3___________________________] 6/200 │
+│ Só para reconhecer o vídeo na escola.     │
+│ Você pode mudar depois.                   │
+│                                           │
+│ Tags (opcional)                           │
+│ [mó____________________________]       │
+│ ┌───────────────────────────────────────┐ │
+│ │ [Docker ✕] [Módulo 2 ✕]                │ │
+│ │ ┌─ sugestões ───────────────────────┐ │ │
+│ │ │ Módulo 1                          │ │ │
+│ │ │ Módulo 3                          │ │ │
+│ │ └───────────────────────────────────┘ │ │
+│ Enter ou vírgula confirma a tag.          │
+│                                           │
+│              [ Cancelar ]  [ ⤒ Enviar ]   │
+└───────────────────────────────────────────┘
+Depois de Enviar, valem as tags do servidor (grafia canônica). Na retomada de envio incompleto,
+valem as tags do envio pendente; as do novo pedido são ignoradas.
+```
+
+```text
+V2.h  Erros do campo (junto do campo; valores preservados)
+Tag vazia (só espaços) ou 31 caracteres:
+  (!) Cada tag precisa ter de 1 a 30 caracteres.        ← TAG_INVALID
+11ª tag (10 já incluídas):
+  (!) Um vídeo pode ter no máximo 10 tags.              ← TAGS_LIMIT_EXCEEDED
+Tag equivalente ("docker" com "Docker" incluído):
+  nenhuma etiqueta nova; a etiqueta existente recebe um destaque breve e o leitor de tela anuncia "Docker já incluída"; sem erro.
+```
+
+### 8.4 V1 · Etiquetas na lista e V8 · Editar tags
+
+```text
+V1.g  Linha com tags (desktop 1440)
+│ Aula 3 — Injeção de         (✓ Pronto) 42:15  Júlia     25/09 ✎ 🏷 │
+│ dependência                                   Lima      18:40       │
+│ [Docker] [Módulo 2] …                               │
+│ Na lista, as etiquetas são leitura; a edição abre V8 pelo botão-ícone │
+│ "Editar tags" (🏷, ghost) ao lado do ✎ "Editar título".              │
+│ Vídeo sem tags: nenhuma etiqueta, só o botão 🏷.                     │
+│ Vídeo com 1 tag: uma etiqueta. Vídeo com 10 tags: dez etiquetas em   │
+│ ordem alfabética; quando não cabem, quebram para a linha seguinte    │
+│ dentro da célula (nunca cortadas, nunca sobrepostas à ação ✎/🏷).    │
+
+V1.h  Mobile 390: etiquetas abaixo do badge de estado, com quebra de linha;
+      botões ✎/🏷 no canto do VideoCard, como hoje.
+```
+
+```text
+V8.a  Editar tags — Dialog sobre V1
+┌─ Dialog ─────────────────────────────── ✕ ┐
+│ Editar tags                          (H4) │
+│ Aula 3 — Injeção de dependência           │
+│                                           │
+│ Tags                                      │
+│ [dock_____________________________]       │
+│ ┌───────────────────────────────────────┐ │
+│ │ [Docker ✕] [Módulo 2 ✕]                │ │
+│ │ ┌─ sugestões ───────────────────────┐ │ │
+│ │ │ ● Docker                          │ │ │
+│ │ │   Docker Compose                  │ │ │
+│ │ └───────────────────────────────────┘ │ │
+│ Remover todas deixa o vídeo sem tags.     │
+│                                           │
+│              [ Cancelar ]  [ Salvar ]     │
+└───────────────────────────────────────────┘
+Sugestão, remoção (✕ "Remover tag docker"), Enter/vírgula, setas e Esc como em T1–T3.
+Salvar desabilitado sem mudança; durante o salvamento, "Salvando…" contra clique duplo.
+
+V8.b  Erro de servidor (422) após Salvar: o Dialog fica aberto, valores mantidos,
+      (!) "Cada tag precisa ter de 1 a 30 caracteres." ou
+      (!) "Um vídeo pode ter no máximo 10 tags.", conforme o `code`.
+      Outro erro (rede/serviço): Alert "Não foi possível salvar as tags. Tente de novo."
+      [ Tentar de novo ], valores mantidos.
+
+V8.c  Após salvar: toast "Tags atualizadas"; a linha mostra as tags gravadas na grafia
+      canônica e em ordem alfabética. Remover todas → linha sem etiquetas + toast
+      "Tags atualizadas".
+```
+
+### 8.5 V1 · Filtro por tags com E/OU
+
+```text
+V1.i  Filtro com tags (desktop 1440)
+│ [ Todos ]( Em andamento )( Prontos )( Falharam )  [🔍 Buscar título_]│
+│ Tags: [docker ✕] [módulo 2 ✕] [ Filtrar por tag___ ]                 │
+│       (• E ) ( OU )  ← só com 2+ tags; E padrão, indicado como ativo │
+│ Sugestões ao digitar, como no envio; no filtro, Enter escolhe uma   │
+│ sugestão existente (nada de texto livre).                            │
+│ A lista filtrada combina tag + estado + título (todos ao mesmo tempo).│
+│ A URL carrega tag/tagMatch junto de status, q e page, e sobrevive ao │
+│ recarregamento. A atualização automática ("● Atualizando             │
+│ automaticamente") mantém o filtro aplicado.                          │
+
+V1.j  Lista vazia com filtro de tag
+│ Nenhum vídeo atende aos filtros.                                     │
+│ _Limpar filtros_ (limpa estado, título e tags de uma vez)            │
+│ Com 1 tag no filtro: sem a escolha E/OU. Com OU e 3 tags, remover até│
+│ sobrar uma esconde a escolha; o resultado é o da tag restante.       │
+
+V1.k  Mobile 390: campo de tags abaixo da busca, em largura total; E/OU como
+      Segmented/Tab rolável; etiquetas do filtro com quebra de linha.
+```
+
+### 8.6 Estados transversais e acessibilidade do adendo
+
+- **Teclado:** campo e sugestões operáveis só por teclado — setas navegam, Enter ou vírgula
+  confirma, Esc fecha a lista sem confirmar. Abrir V8 foca o campo; fechar devolve o foco ao
+  botão 🏷.
+- **Leitor de tela:** etiqueta removível com rótulo "Remover tag docker"; lista de sugestões
+  anunciada (contagem + opção focada); E/OU é um controle de grupo com o estado anunciado
+  ("E, selecionado").
+- **Sem cor como único sinal:** etiquetas, erros e E/OU são texto (com ícone onde o DS indica);
+  erros ficam junto do campo com `aria-describedby`.
+- **Resposta do servidor:** após Salvar/Enviar, a linha usa as tags da resposta (grafia canônica,
+  ordem alfabética). Editar tags não muda título, estado nem vínculos, e não publica fato.
+- **Sem escopo novo:** gestão de tags da escola, tags em Material/curso/aula, aplicação em massa
+  e busca do aluno ficam fora.
+
+### 8.7 Handoff para o Figma (task 2.0)
+
+Desenhar sobre o arquivo **Code4Coders — Design System** e os frames aprovados das seções 4–5:
+V2.g–V2.h (desktop; V2.g também em 390 px), V1.g–V1.k (desktop 1440; V1.g e V1.i também em
+390 px), V8.a–V8.c (desktop; V8.a também em Dark e 390 px). Reusar `Badge`, `FormField`, `Input`,
+`Dialog`, `Button`, `Alert`, `Tab`/Segmented, `Skeleton`, `Toast` e `EmptyState`; o campo de tags
+com sugestão e a linha com etiquetas são composições visuais propostas, sujeitas à regra de três
+usos de `Components.md`.

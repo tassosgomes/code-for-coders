@@ -1,6 +1,7 @@
 # Wireframes ASCII — Autoria de curso (CAP-005)
 
 > **Status:** ASCII e Figma aprovados pelo responsável em 2026-09-29.
+> **Adendo tags de vídeo:** ASCII aprovado pelo responsável em 2026-10-11 (seção 8)
 > **Adendo nível e pré-requisito:** ASCII e Figma aprovados pelo responsável em 2026-09-30 (seção 7; aprovações explícitas “Está aprovado” e “Tá aprovado”; frames na seção 7.12).
 > **Responsável:** responsável pelo produto (usuário desta conversa), com aprovação explícita “Está aprovado” após receber o link do desenho real.
 > **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040) · task_01 concluída; gate visual das tasks 2.0–7.0 satisfeito, preservadas as demais dependências.
@@ -1184,4 +1185,90 @@ leitor de tela seguem a seção 7.10.
 | A3.h · Seção Para quem é este curso | 1440 × 1653 | [193:24792](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=193-24792) |
 | A13.a · Seletor — resultados | 1440 × 900 | [194:12927](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=194-12927) |
 | A7.h · Republicar sem nível | 1440 × 900 | [196:14028](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=196-14028) |
+
+---
+
+## 8. Adendo — Tags de vídeo no seletor da aula (CAP-006, 3ª fatia)
+
+> **Situação do adendo:** ASCII aprovado pelo responsável em 2026-10-11 (esta seção).
+> **Fontes:** `tasks/prd-tags-video/prd.md` v1.0 (RF-05, RF-06, Experiência do Usuário, DP-03),
+> `techspec.md` (Bloco Frontend, V-05, EN-01). O campo de tags, a lista da tela Vídeos e o filtro
+> da tela Vídeos estão no adendo correspondente em `wireframes-videos.md` (seção 8).
+
+Este adendo acrescenta o filtro por tags com E/OU e as etiquetas por vídeo no seletor A6,
+**sem reabrir** as decisões G1–G13 nem as seções 1–7. Convenções, legenda, componentes e AppShell
+são os das seções 3 e 4. O vínculo (`updateLesson`) não muda; o seletor continua oferecendo **só
+vídeos prontos** da escola (RN-C04).
+
+### 8.1 O que muda em cada tela
+
+| Tela | Mudança | RF |
+|---|---|---|
+| A6 · Escolher vídeo pronto | Filtro por tags ao lado da busca por título, com a mesma escolha E/OU da tela Vídeos; etiquetas de tags em cada vídeo do seletor; mensagem de vazio com ação de limpar | RF-05, RF-06 |
+
+Não mudam: A1–A5, A7–A12, B12/B13, nem o adendo da seção 7. Fora do escopo: gestão das tags da
+escola (DP-04).
+
+### 8.2 Decisões de desenho aprovadas (S1–S5)
+
+| # | Ponto | Decisão aprovada e fundamento |
+|---|---|---|
+| S1 | Mesmo componente | O filtro usa o **campo de tags com sugestão** do adendo de Vídeos (T1–T3): combobox com sugestões de `listVideoTags`, etiquetas removíveis com rótulo "Remover tag docker". **No filtro, só aceita sugestão existente** (nada de texto livre). |
+| S2 | E/OU igual | A escolha **E / OU** só aparece com 2 ou mais tags, com **E** indicado como padrão (RF-06). Aqui o estado é **local do seletor**, como a busca por título hoje — não entra na URL. |
+| S3 | Etiquetas por vídeo | Cada opção do seletor mostra suas tags em ordem alfabética, para distinguir títulos parecidos. Vídeo sem tags: sem etiquetas (válido). |
+| S4 | Mensagem de vazio | Com filtro que nenhum vídeo pronto atende: **"Nenhum vídeo pronto atende aos filtros."** com a ação **limpar os filtros** (limpa título e tags de uma vez). Vídeo em preparação com a tag nunca aparece. |
+| S5 | Vínculo intacto | Escolher um vídeo achado pelo filtro e confirmar segue o fluxo atual (A6.a, A6.e–A6.g); a tag não é registrada na aula nem no curso (RN-T01). |
+
+### 8.3 A6 · Seletor com filtro por tags
+
+```text
+A6.f  Com filtro por tags (desktop: Sheet lateral; mobile: Sheet inferior)
+┌─ Sheet · Escolher vídeo para “Controle de fluxo” ────────────────────── ✕ ┐
+│ Só vídeos prontos desta escola podem entrar na aula.                    │
+│ [ Buscar título____________________________________________ ]           │
+│ Tags: [docker ✕] [ Filtrar por tag________________ ]                    │
+│       (• E ) ( OU )  ← só com 2+ tags; E padrão, indicado como ativo    │
+│                                                                         │
+│ ○ Aula 3 — tipos            42:15 · Júlia Lima   (Pronto)                │
+│   [Docker] [Módulo 2]                                                   │
+│ ○ Controle de fluxo explicado  18:32 · Rafael    (Pronto)                │
+│   [Docker]                                                              │
+│ ○ Parte 3 — exercícios      26:10 · Júlia Lima   (Pronto)                │
+│   (sem etiquetas)                                                       │
+│                                                                         │
+│                                            ‹ 1 2 › · 20 por página       │
+│ [ Ir para Vídeos ]                   [ Cancelar ] [ Vincular vídeo ]    │
+└─────────────────────────────────────────────────────────────────────────┘
+Com 1 tag: sem a escolha E/OU. Com OU e 3 tags, remover até sobrar uma esconde a
+escolha. Na troca, a opção atual continua vindo selecionada.
+
+A6.g  Filtro sem vídeo pronto correspondente
+│ Nenhum vídeo pronto atende aos filtros.                                  │
+│ [ Limpar filtros ] (limpa a busca por título e as tags)                  │
+│ A busca por título sem resultado mantém o texto atual (A6.c); com tags no │
+│ filtro, a mensagem é a deste adendo.                                     │
+
+A6.h  Mobile 390: campo de tags abaixo da busca, em largura total; E/OU rolável;
+      etiquetas com quebra de linha dentro de cada opção do Sheet inferior.
+```
+
+### 8.4 Estados transversais e acessibilidade do adendo
+
+- **Teclado:** como no adendo de Vídeos (T1–T2, 8.6) — setas, Enter para escolher a sugestão,
+  Esc fecha sem confirmar. Abrir A6 foca a busca, como hoje; o campo de tags é alcançado por Tab.
+- **Leitor de tela:** "Remover tag docker" nas etiquetas do filtro; E/OU com estado anunciado;
+  etiquetas de cada vídeo lidas junto do título ("Aula 3 — tipos, tags: Docker, Módulo 2").
+- **Sem cor como único sinal:** etiquetas e E/OU são texto; erros do campo seguem T5 onde
+  aplicável (no filtro não há texto livre, logo sem erro de limite).
+- **Resposta do servidor:** a lista do seletor usa `status=ready` + `tag`/`tagMatch`; vídeo em
+  preparação nunca aparece, mesmo com a tag. Falha de Mídia mantém A6.d; `VIDEO_NOT_AVAILABLE`
+  mantém A6.e.
+- **Sem escopo novo:** vínculo, publicação, player e gestão de tags ficam fora.
+
+### 8.5 Handoff para o Figma (task 2.0)
+
+Desenhar sobre o arquivo **Code4Coders — Design System** e os frames aprovados de A6 (seção 5):
+A6.f–A6.g (desktop; A6.f também em 390 px e Dark). Reusar `Sheet`, `Badge`, `Input`, `Button`,
+`Tab`/Segmented, `Skeleton`, `Alert` e `Pagination`; o filtro por tags e a opção com etiquetas
+são composições visuais propostas, sujeitas à regra de três usos de `Components.md`.
 

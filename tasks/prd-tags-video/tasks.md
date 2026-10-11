@@ -83,7 +83,7 @@ do EF.
 
 ## Tasks
 
-- [ ] 1.0 Adendo ASCII de tags de vídeo (envio, tela Vídeos e seletor da aula) aprovado
+- [x] 1.0 Adendo ASCII de tags de vídeo (envio, tela Vídeos e seletor da aula) aprovado
 - [ ] 2.0 Figma do adendo de tags de vídeo aprovado
 - [ ] 3.0 O professor edita as tags de um vídeo na tela Vídeos e as vê na lista
 - [ ] 4.0 Ao digitar uma tag, o professor vê as tags que a escola já usa
