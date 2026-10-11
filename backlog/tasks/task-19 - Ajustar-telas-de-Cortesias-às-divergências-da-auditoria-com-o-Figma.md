@@ -1,11 +1,11 @@
 ---
 id: TASK-19
 title: Ajustar telas de Cortesias às divergências da auditoria com o Figma
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 22:29'
-updated_date: '2026-10-10 22:30'
+updated_date: '2026-10-11 14:07'
 labels:
   - frontend
   - backend
@@ -23,6 +23,18 @@ Auditoria de 2026-10-10 comparando o SPA admin em dev (/admin/cortesias) com o F
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 As subtarefas de oferta no BFF, passo Aluno/stepper e passos Curso a Resultado estão concluídas
-- [ ] #2 Lint, build e testes do admin-spa e testes dos serviços alterados passam
+- [x] #1 As subtarefas de oferta no BFF, passo Aluno/stepper e passos Curso a Resultado estão concluídas
+- [x] #2 Lint, build e testes do admin-spa e testes dos serviços alterados passam
 <!-- AC:END -->
+
+## Implementation Plan
+
+<!-- SECTION:PLAN:BEGIN -->
+Subtarefas 19.1 (hasOffer no Commerce/bff-admin), 19.2 (stepper e passo Aluno) e 19.3 (passos Curso a Resultado), seguidas de conferência em dev (TASK-20 e #212).
+<!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Telas de Cortesias alinhadas ao Figma em #208, #209 e #212, com hasOffer exposto pelo Commerce. Verificado em dev ponta a ponta com uma cortesia real e por admin-spa em main (2026-10-11): lint ok, build ok, vitest 52 arquivos/313 testes. Testes de integração do Commerce e bff-admin passaram na 19.1.
+<!-- SECTION:FINAL_SUMMARY:END -->

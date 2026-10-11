@@ -1,11 +1,11 @@
 ---
 id: TASK-19.3
 title: 'Cortesias: passos Curso, Vigência, Motivo, Revisão e Resultado conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 22:29'
-updated_date: '2026-10-11 02:01'
+updated_date: '2026-10-11 14:07'
 labels:
   - frontend
 dependencies:
@@ -26,13 +26,13 @@ Parte da auditoria TASK-19 que cobre os passos 2 a 6 (frames T2.a–T6.b3). Bugs
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Curso: busca com botão na mesma linha e placeholder "Digite parte do título"; tabela Curso/Oferta com selo Com oferta/Sem oferta vindo de `hasOffer`; linha escolhida destacada com "✓ Escolhido"; rodapé "Só cursos com versão vigente." com paginação ‹ 1 2 ›; vazio e erro como no Figma
-- [ ] #2 Vigência: cartões Por período e Vitalícia com subtítulos; input de meses estreito com ajuda ao lado; prévia "Termina em até DD/MM/AAAA — vindo do servidor." com "A prévia vale se a confirmação for hoje."; vitalícia "Acesso vitalício, sem data de término."; erro de meses some ao trocar de opção ou corrigir o valor e não se repete na prévia; falha da prévia mostra aviso com "Tentar de novo" e só Voltar
-- [ ] #3 Nos passos Vigência e Motivo aparecem os cartões de resumo CURSO e VIGÊNCIA com Editar
-- [ ] #4 Motivo: descrição "Diga por que esta cortesia existe. O motivo vai para a trilha.", rótulo Motivo, ajuda "Não inclua dado pessoal de terceiros." com contador N/500 na mesma linha; vazio e acima de 500 marcam o campo, mostram "Informe o motivo da cortesia." ou "Use até 500 caracteres: tire N." e deixam só Voltar
-- [ ] #5 Revisão: frase sem vírgula antes de "até" e sem ponto duplicado; tabela Aluno/Curso/Vigência/Motivo com Editar por linha; aviso de acesso existente com o texto do Figma; vitalícia com botão "Confirmar cortesia vitalícia"; falha de confirmação em caixa de erro com "Tentar de novo" dentro do cartão
-- [ ] #6 Resultado: sucesso com ícone, "Cortesia concedida.", cartão do curso, botão Conceder outra cortesia, link "Ver concessões do aluno" que volta ao passo Aluno com o aluno carregado, e toast; erros STUDENT_ACCOUNT_NOT_ELIGIBLE/COURSE_NOT_ELIGIBLE, IDEMPOTENCY_KEY_REUSED e 502/504 viram telas de Resultado com textos e ações do Figma
-- [ ] #7 Testes do admin-spa cobrem os bugs de meses, a frase de revisão, a coluna Oferta e as telas de Resultado
+- [x] #1 Curso: busca com botão na mesma linha e placeholder "Digite parte do título"; tabela Curso/Oferta com selo Com oferta/Sem oferta vindo de `hasOffer`; linha escolhida destacada com "✓ Escolhido"; rodapé "Só cursos com versão vigente." com paginação ‹ 1 2 ›; vazio e erro como no Figma
+- [x] #2 Vigência: cartões Por período e Vitalícia com subtítulos; input de meses estreito com ajuda ao lado; prévia "Termina em até DD/MM/AAAA — vindo do servidor." com "A prévia vale se a confirmação for hoje."; vitalícia "Acesso vitalício, sem data de término."; erro de meses some ao trocar de opção ou corrigir o valor e não se repete na prévia; falha da prévia mostra aviso com "Tentar de novo" e só Voltar
+- [x] #3 Nos passos Vigência e Motivo aparecem os cartões de resumo CURSO e VIGÊNCIA com Editar
+- [x] #4 Motivo: descrição "Diga por que esta cortesia existe. O motivo vai para a trilha.", rótulo Motivo, ajuda "Não inclua dado pessoal de terceiros." com contador N/500 na mesma linha; vazio e acima de 500 marcam o campo, mostram "Informe o motivo da cortesia." ou "Use até 500 caracteres: tire N." e deixam só Voltar
+- [x] #5 Revisão: frase sem vírgula antes de "até" e sem ponto duplicado; tabela Aluno/Curso/Vigência/Motivo com Editar por linha; aviso de acesso existente com o texto do Figma; vitalícia com botão "Confirmar cortesia vitalícia"; falha de confirmação em caixa de erro com "Tentar de novo" dentro do cartão
+- [x] #6 Resultado: sucesso com ícone, "Cortesia concedida.", cartão do curso, botão Conceder outra cortesia, link "Ver concessões do aluno" que volta ao passo Aluno com o aluno carregado, e toast; erros STUDENT_ACCOUNT_NOT_ELIGIBLE/COURSE_NOT_ELIGIBLE, IDEMPOTENCY_KEY_REUSED e 502/504 viram telas de Resultado com textos e ações do Figma
+- [x] #7 Testes do admin-spa cobrem os bugs de meses, a frase de revisão, a coluna Oferta e as telas de Resultado
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -54,3 +54,9 @@ Conferência em dev (2026-10-11): a frase da revisão baixava a primeira letra d
 
 Conferência do Resultado em dev (cortesia real para qa-compra-a-dev, Lógica de Programação Básica, 6 meses): ações estavam invertidas e à direita; cartão de resumo com espaços e tipografia diferentes do Figma T6.a. Ajustado; toast passa a usar o Toast compartilhado. Ver concessões do aluno volta ao passo Aluno e a nova concessão aparece na tabela.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Passos Curso, Vigência, Motivo, Revisão e Resultado alinhados ao Figma, com bugs de meses e da frase corrigidos; após conferência em dev, sigla no motivo preservada e ações/cartão do Resultado ajustados (#212). Verificado em dev com uma cortesia real (qa-compra-a-dev, Lógica de Programação Básica, 6 meses): revisão, Resultado e Ver concessões do aluno; telas de erro do Resultado por testes. admin-spa em main (2026-10-11): lint ok, build ok, vitest 52 arquivos/313 testes.
+<!-- SECTION:FINAL_SUMMARY:END -->
