@@ -5,7 +5,7 @@
 .staff-access-page .staff-grid { grid-template-columns: minmax(170px, 1.2fr) minmax(160px, 1.1fr) minmax(120px, 1fr) 32px; }
 .staff-access-page .invite-grid { grid-template-columns: minmax(180px, 1.3fr) minmax(120px, .8fr) minmax(130px, .9fr) minmax(130px, .9fr) 32px; }
 .staff-access-page .access-row .row-muted { font-size: 14px; line-height: 20px; }
-.staff-access-page .access-table-footer { margin: 0; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; line-height: 16px; }
+.staff-access-page .access-table-footer { margin: 24px 0 0; color: var(--muted); font-size: 12px; line-height: 16px; }
 .staff-access-page .staff-name > span:last-child { display: grid; gap: 2px; justify-items: start; }
 .staff-access-page .self-badge { border: 1px solid var(--border); background: transparent; color: var(--muted); }
 

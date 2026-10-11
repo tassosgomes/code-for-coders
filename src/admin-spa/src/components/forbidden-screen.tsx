@@ -13,7 +13,7 @@ export const ForbiddenScreen = ({ path }: ForbiddenScreenProps) => {
     <section className="forbidden-card">
       <div aria-hidden="true" className="code-window">
         <div className="code-title"><span className="window-dots"><i /><i /><i /></span>terminal</div>
-        <pre>1  $ GET {shownPath}{'\n'}2  <span className="code-error">403 Forbidden</span></pre>
+        <pre><span className="code-ln">1  </span>$ GET {shownPath}{'\n'}<span className="code-ln">2  </span><span className="code-error">403 Forbidden</span></pre>
       </div>
       <h1>Esta área não é do seu papel</h1>
       <p>Se você precisa dela, peça a um administrador. O menu só mostra as áreas das suas permissões.</p>
