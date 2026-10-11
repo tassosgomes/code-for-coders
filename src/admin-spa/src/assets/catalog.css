@@ -1,0 +1,228 @@
+/* Catálogo conforme o Figma Screens — Catálogo e vitrine (205:5898, C1 a C7). app.css vem depois deste arquivo, então os seletores precisam de mais especificidade. */
+
+/* Cabeçalho da página (C1.a, C2.a) */
+.catalog-page .catalog-heading { display: grid; gap: 8px; }
+.catalog-page .catalog-heading .eyebrow { margin: 0; }
+.catalog-page .catalog-heading h1 { margin: 0; font-size: 30px; line-height: 36px; letter-spacing: -0.75px; }
+.catalog-page .catalog-heading .page-subtitle { margin: 0; font-size: 14px; line-height: 20px; }
+.catalog-page .catalog-heading + * { margin-top: 24px; }
+
+/* Selos (Badge do DS) */
+.catalog-badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 10px; border-radius: 9999px; background: var(--accent-subtle); color: var(--accent-subtle-foreground); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+.catalog-badge.is-warning { background: var(--warning-soft); color: var(--warning-soft-foreground); }
+.catalog-badge.is-success { background: var(--success-soft); color: var(--success-soft-foreground); }
+.catalog-badge.is-outline { padding: 1px 9px; border: 1px solid var(--border); background: transparent; color: var(--foreground); }
+.catalog-badge-group { display: inline-flex; align-items: center; gap: 6px; }
+.catalog-badge-group > svg { flex: none; color: var(--foreground); }
+.catalog-badge-group > svg.is-success { color: var(--success-soft-foreground); }
+.catalog-badge-group > svg.is-muted { color: var(--muted); }
+.catalog-showcase-state { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; line-height: 20px; }
+.catalog-showcase-state > svg { flex: none; }
+.catalog-showcase-state.is-on > svg { color: var(--success-soft-foreground); }
+.catalog-showcase-state.is-off { color: var(--muted); }
+
+/* Alert do DS: erro, aviso e informação */
+.catalog-page .catalog-alert,
+.catalog-dialog .catalog-alert { display: grid; gap: 4px; margin: 0; padding: 16px; border: 1px solid var(--danger); border-radius: 12px; background: var(--surface); color: var(--danger); font-size: 14px; line-height: 20px; }
+.catalog-alert.is-warning { border-color: var(--warning-border); background: var(--warning-soft); color: var(--warning-soft-foreground); }
+.catalog-alert.is-info { border-color: var(--border); color: var(--foreground); }
+.catalog-alert .catalog-alert-title { display: flex; align-items: center; gap: 12px; margin: 0; font-weight: 500; }
+.catalog-alert .catalog-alert-title > svg { flex: none; }
+.catalog-alert .catalog-alert-detail { margin: 0 0 0 28px; }
+.catalog-alert.is-info .catalog-alert-detail { color: var(--muted); }
+.catalog-alert .catalog-alert-action { justify-self: start; min-height: 32px; margin-left: 28px; padding: 0; border: 0; background: transparent; color: var(--primary); font-size: 12px; font-weight: 500; line-height: 16px; cursor: pointer; }
+
+/* Lista de cursos (C1.a) */
+.catalog-page .catalog-table-card { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+.catalog-courses-table { width: 100%; border-collapse: collapse; }
+.catalog-courses-table th { padding: 12px 8px; background: var(--background); color: var(--muted); font-size: 14px; font-weight: 500; line-height: 20px; text-align: left; white-space: nowrap; }
+.catalog-courses-table td { padding: 16px 8px; border-top: 1px solid var(--border); font-size: 14px; line-height: 20px; }
+.catalog-courses-table th:first-child,
+.catalog-courses-table td:first-child { padding-left: 20px; }
+.catalog-courses-table th:last-child,
+.catalog-courses-table td:last-child { padding-right: 20px; }
+.catalog-courses-table .catalog-col-level { width: 186px; }
+.catalog-courses-table .catalog-col-showcase { width: 146px; }
+.catalog-courses-table .catalog-col-offers { width: 276px; }
+.catalog-courses-table .catalog-col-open { width: 128px; }
+.catalog-courses-table tbody tr { position: relative; }
+.catalog-courses-table tbody tr:focus-within { outline: 2px solid var(--primary); outline-offset: -2px; }
+.catalog-courses-table .catalog-course-title { color: var(--foreground); font-size: 16px; font-weight: 500; line-height: 24px; }
+.catalog-courses-table .is-muted { color: var(--muted); }
+.catalog-page .catalog-open-link { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 10px; color: var(--foreground); font-size: 12px; font-weight: 500; line-height: 16px; text-decoration: none; white-space: nowrap; }
+.catalog-page .catalog-open-link::after { content: ''; position: absolute; inset: 0; }
+.catalog-page .catalog-open-link:focus-visible { outline: 0; }
+.catalog-courses-table tbody tr:hover .catalog-open-link { background: var(--accent-subtle); }
+
+/* Carregando (C1.c) */
+.catalog-skeleton-bar { display: block; height: 16px; border-radius: 10px; background: var(--background); }
+.catalog-courses-table .catalog-skeleton-bar { width: 200px; max-width: 100%; }
+.catalog-courses-table .catalog-col-level .catalog-skeleton-bar { width: 90px; }
+.catalog-courses-table .catalog-col-showcase .catalog-skeleton-bar { width: 70px; }
+.catalog-courses-table .catalog-col-offers .catalog-skeleton-bar { width: 150px; }
+.catalog-courses-table .catalog-col-open .catalog-skeleton-bar { width: 60px; }
+
+/* Paginação (C1.a): '‹ 1 2 › · 10 por página' alinhada à esquerda */
+.catalog-page .catalog-pagination { display: flex; align-items: center; gap: 4px; margin-top: 24px; color: var(--muted); font-size: 12px; line-height: 16px; }
+.catalog-pagination button { min-width: 20px; min-height: 24px; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+.catalog-pagination button:disabled { opacity: 0.5; cursor: default; }
+.catalog-pagination button[aria-current='page'] { color: var(--foreground); font-weight: 600; }
+.catalog-pagination > span { margin-left: 4px; }
+
+/* Vazio com janela de código (C1.b) e vazio simples (C2.g) */
+.catalog-page .catalog-empty { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 48px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); text-align: center; }
+.catalog-page .catalog-empty.is-compact { gap: 16px; }
+.catalog-page .catalog-empty h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-page .catalog-empty p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+.catalog-page .catalog-empty .code-window { width: min(540px, 100%); text-align: left; box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); }
+.catalog-page .catalog-empty .code-window pre { color: var(--code-faint); }
+
+/* Ficha do curso (C2) */
+.catalog-page .catalog-back { display: inline-flex; align-items: center; gap: 6px; width: max-content; color: var(--primary); font-size: 14px; font-weight: 500; line-height: 20px; text-decoration: none; }
+.catalog-page .catalog-record-top { display: grid; gap: 12px; }
+.catalog-page .catalog-record-header { display: flex; align-items: flex-end; gap: 16px; }
+.catalog-page .catalog-record-header .catalog-heading { flex: 1; min-width: 0; }
+.catalog-page .catalog-record-header .catalog-heading h1 { overflow-wrap: anywhere; }
+.catalog-page .catalog-record-header > .catalog-badge-group { margin-bottom: 7px; }
+.catalog-page .catalog-record-body { display: grid; gap: 24px; margin-top: 24px; }
+.catalog-page .catalog-card { display: grid; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 1px rgb(var(--shadow-rgb) / 0.06); }
+.catalog-page .catalog-card-header { display: flex; align-items: center; gap: 12px; }
+.catalog-page .catalog-card-header h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; }
+.catalog-page .catalog-facts { display: grid; gap: 16px; margin: 0; }
+.catalog-page .catalog-facts > div { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: 16px; }
+.catalog-page .catalog-facts dt { color: var(--muted); font-size: 14px; line-height: 20px; }
+.catalog-page .catalog-facts dd { margin: 0; color: var(--foreground); font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+.catalog-page .catalog-note { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+.catalog-page .catalog-note a { color: var(--primary); font-weight: 500; text-decoration: none; }
+
+/* Chamada comercial (C2.a, C2.h) */
+.catalog-page .catalog-card .text-details-form { gap: 16px; }
+.catalog-page .catalog-card textarea { display: block; width: 100%; height: 76px; min-height: 76px; padding: 12px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--input); color: var(--foreground); font: inherit; font-size: 14px; line-height: 20px; resize: vertical; }
+.catalog-page .catalog-card textarea[aria-invalid='true'] { border-color: var(--danger); }
+.catalog-page .catalog-tagline-meta { display: flex; align-items: flex-start; gap: 16px; }
+.catalog-page .catalog-tagline-meta > div { display: grid; flex: 1; gap: 4px; }
+.catalog-page .catalog-tagline-meta p { margin: 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+.catalog-page .catalog-tagline-meta .catalog-tagline-error { color: var(--danger); }
+.catalog-page .catalog-tagline-count { color: var(--muted); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+.catalog-page .catalog-tagline-count.is-over { color: var(--danger); }
+.catalog-page .catalog-card-actions { display: flex; justify-content: flex-end; }
+.catalog-page .catalog-card-actions .primary-button:disabled { opacity: 0.5; cursor: default; }
+
+/* Ofertas (C2.a, C2.b, C2.d) */
+.catalog-page .catalog-offers { display: grid; gap: 24px; }
+.catalog-page .catalog-offers-header { display: flex; align-items: center; gap: 16px; }
+.catalog-page .catalog-offers-header h2 { flex: 1; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-page .catalog-offer-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+.catalog-page .catalog-offer-row { display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 16px 20px; }
+.catalog-page .catalog-offer-row + .catalog-offer-row { border-top: 1px solid var(--border); }
+.catalog-page .catalog-offer-info { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.catalog-page .catalog-offer-info h3 { margin: 0; color: var(--foreground); font-size: 16px; font-weight: 500; line-height: 24px; overflow-wrap: anywhere; }
+.catalog-page .catalog-offer-info p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+.catalog-page .catalog-offer-price { flex: none; width: 110px; color: var(--foreground); font-size: 16px; font-weight: 500; line-height: 24px; text-align: right; white-space: nowrap; }
+.catalog-page .catalog-offer-status { display: flex; flex: none; width: 150px; }
+.catalog-page .catalog-offer-action { display: flex; flex: none; justify-content: flex-end; width: 140px; }
+.catalog-page .catalog-offer-action button { min-height: 32px; padding: 0 12px; font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+.catalog-page .catalog-offer-action .outline-button { border-color: var(--input-border); }
+.catalog-page .catalog-offer-row .course-item-actions { flex: none; }
+.catalog-page .catalog-offer-row .course-action-trigger { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 10px; color: var(--foreground); }
+.catalog-page .catalog-offers-empty { padding: 32px; border: 1px dashed var(--border); border-radius: 16px; background: var(--surface); color: var(--muted); font-size: 14px; line-height: 20px; text-align: center; }
+
+/* Carregando da ficha (C2.e) */
+.catalog-page .catalog-record-skeleton { display: grid; gap: 24px; margin-top: 24px; }
+.catalog-page .catalog-record-skeleton .catalog-skeleton-lines { display: grid; gap: 24px; }
+.catalog-page .catalog-record-skeleton .catalog-card { gap: 12px; }
+.catalog-record-skeleton .catalog-skeleton-bar { max-width: 100%; }
+.catalog-record-skeleton .catalog-skeleton-lines > :nth-child(1) { width: 320px; height: 24px; }
+.catalog-record-skeleton .catalog-skeleton-lines > :nth-child(2) { width: 560px; }
+.catalog-record-skeleton .catalog-skeleton-lines > :nth-child(3) { width: 420px; }
+.catalog-record-skeleton .catalog-card > :nth-child(1) { width: 200px; height: 20px; }
+.catalog-record-skeleton .catalog-card > :nth-child(2) { width: 520px; }
+.catalog-record-skeleton .catalog-card > :nth-child(3) { width: 360px; }
+.catalog-page .catalog-heading .catalog-skeleton-bar.is-title { width: 320px; max-width: 100%; height: 36px; }
+
+/* Diálogos de oferta (C3 a C7) */
+.catalog-dialog .dialog-card { display: grid; gap: 16px; border-radius: 16px; box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); }
+.catalog-dialog.is-wide .dialog-card { width: min(560px, calc(100vw - 32px)); }
+.catalog-dialog .dialog-card[role='alertdialog'] { width: min(480px, calc(100vw - 32px)); }
+.catalog-dialog .dialog-card[role='alertdialog'] .dialog-close { display: none; }
+.catalog-dialog .dialog-card .course-dialog-heading { margin: 0; }
+.catalog-dialog .dialog-card .course-dialog-heading > div { display: grid; gap: 4px; }
+.catalog-dialog .dialog-card[role='alertdialog'] .course-dialog-heading > div { gap: 16px; }
+.catalog-dialog .dialog-card .course-dialog-heading h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-dialog .dialog-card .course-dialog-heading p { line-height: 20px; }
+.catalog-dialog .dialog-card .dialog-close { top: 25px; right: 25px; }
+.catalog-dialog .dialog-card form { display: grid; gap: 16px; }
+.catalog-dialog .dialog-card .dialog-actions { margin: 0; }
+.catalog-dialog .dialog-card .dialog-actions button:disabled { opacity: 0.5; cursor: default; }
+.catalog-dialog .dialog-card > p,
+.catalog-dialog .catalog-dialog-text { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+.catalog-dialog .catalog-field { display: grid; gap: 6px; }
+.catalog-dialog .catalog-field-label { display: flex; align-items: center; gap: 8px; }
+.catalog-dialog .dialog-card .catalog-field-label label { flex: 1; color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
+.catalog-dialog .catalog-field-label small { color: var(--muted); font-size: 12px; line-height: 16px; }
+.catalog-dialog .dialog-card .catalog-field input:not([type=radio]) { min-height: 40px; height: 40px; padding: 0 12px; border-color: var(--input-border); line-height: 20px; }
+.catalog-dialog .dialog-card .catalog-field input[aria-invalid='true'] { border-color: var(--danger); }
+.catalog-dialog .catalog-price-row { display: flex; align-items: center; gap: 8px; }
+.catalog-dialog .catalog-price-row > span { color: var(--muted); font-size: 14px; font-weight: 500; line-height: 20px; }
+.catalog-dialog .dialog-card .catalog-price-row input:not([type=radio]) { width: 200px; }
+.catalog-dialog .dialog-card .catalog-months-field input:not([type=radio]) { width: 120px; }
+.catalog-dialog .catalog-field-hint { margin: 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+.catalog-dialog .dialog-card .catalog-field-error { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--danger); font-size: 12px; line-height: 16px; }
+.catalog-dialog .catalog-field-error > svg { flex: none; }
+.catalog-dialog .dialog-card .catalog-period { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.catalog-dialog .dialog-card .catalog-period legend { margin: 0 0 8px; padding: 0; color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
+.catalog-dialog .catalog-period-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.catalog-dialog .dialog-card .catalog-period-option { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; cursor: pointer; }
+.catalog-dialog .catalog-period-option:has(input:checked) { border-color: var(--primary); background: var(--accent); }
+.catalog-dialog .catalog-period-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.catalog-dialog .catalog-period-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
+.catalog-dialog .catalog-period-note { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+
+/* Prévia da opção (C4) e antes e depois (C5) */
+.catalog-dialog .offer-option { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.catalog-dialog .offer-option h3 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; }
+.catalog-dialog .offer-option p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+.catalog-dialog .offer-option strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-dialog .offer-change-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.catalog-dialog .offer-change-side { display: grid; gap: 4px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.catalog-dialog .offer-change-side.is-after { border-color: var(--accent-border); background: var(--accent-subtle); }
+.catalog-dialog .offer-change-side h3 { margin: 0; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 16px; }
+.catalog-dialog .offer-change-side strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-dialog .offer-change-side p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
+
+.catalog-mobile-only { display: none; }
+
+/* Mobile 390 (C1.e, C2.i): cada curso e cada oferta viram um cartão */
+@media (max-width: 640px) {
+  .catalog-desktop-only { display: none; }
+  .catalog-mobile-only { display: inline; }
+  .catalog-page .catalog-table-card { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  .catalog-courses-table thead { display: none; }
+  .catalog-courses-table,
+  .catalog-courses-table tbody { display: block; }
+  .catalog-courses-table tbody { display: grid; gap: 16px; }
+  .catalog-courses-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+  .catalog-courses-table td { display: block; width: auto; padding: 0; border: 0; }
+  .catalog-courses-table td:first-child,
+  .catalog-courses-table td:last-child { padding: 0; }
+  .catalog-courses-table .catalog-course-title,
+  .catalog-courses-table .catalog-col-offers,
+  .catalog-courses-table .catalog-col-open { flex-basis: 100%; }
+  .catalog-page .catalog-open-link { margin-left: -12px; }
+  .catalog-page .catalog-offer-list { display: grid; gap: 16px; border: 0; background: transparent; box-shadow: none; }
+  .catalog-page .catalog-offer-row { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+  .catalog-page .catalog-offer-row + .catalog-offer-row { border-top: 1px solid var(--border); }
+  .catalog-page .catalog-offers-header .primary-button { white-space: nowrap; }
+  .catalog-page .catalog-record-header { flex-wrap: wrap; align-items: flex-start; }
+  .catalog-page .catalog-record-header > .catalog-badge-group { margin-bottom: 0; }
+  .catalog-page .catalog-card { padding: 16px; }
+  .catalog-page .catalog-facts > div { grid-template-columns: 1fr; gap: 4px; }
+  .catalog-page .catalog-empty { padding: 32px 16px; }
+  .catalog-page .catalog-offer-row { flex-wrap: wrap; gap: 8px 12px; }
+  .catalog-page .catalog-offer-info { flex-basis: 100%; }
+  .catalog-page .catalog-offer-price { width: auto; text-align: left; }
+  .catalog-page .catalog-offer-status { width: auto; flex: 1; }
+  .catalog-page .catalog-offer-action { width: auto; }
+  .catalog-dialog .catalog-period-options,
+  .catalog-dialog .offer-change-comparison { grid-template-columns: 1fr; }
+}

@@ -5,11 +5,12 @@ import { useCreateOffer } from '@/features/catalog-courses/api/create-offer';
 import { useUpdateOffer } from '@/features/catalog-courses/api/update-offer';
 import { offerBody } from '@/features/catalog-courses/api/offer-input';
 import type { OfferInput } from '@/features/catalog-courses/api/offer-input';
+import type { CatalogProblem } from '@/features/catalog-courses/types/catalog-offer';
 
 export const useOfferWrite = (courseId: string, offerId?: string) => {
   const creation = useCreateOffer(); const update = useUpdateOffer();
   const intent = useRef<{ body: string; key: string } | null>(null);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<CatalogProblem>();
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof OfferInput, string>>>({});
   const save = async (input: OfferInput) => {
     const body = JSON.stringify(offerBody(input));
@@ -24,9 +25,9 @@ export const useOfferWrite = (courseId: string, offerId?: string) => {
       if (problem?.code === 'FIELD_INVALID' && field === 'name') setFieldErrors({ name: 'Informe um nome de 1 a 60 caracteres.' });
       else if (problem?.code === 'FIELD_INVALID' && field === 'priceCents') setFieldErrors({ price: 'Informe um valor entre R$ 0,01 e R$ 99.999,99.' });
       else if (problem?.code === 'FIELD_INVALID' && field === 'accessPeriod') setFieldErrors({ months: 'Informe de 1 a 60 meses inteiros.' });
-      else setError(problem?.code === 'FIELD_INVALID' && field === 'offers' ? 'O curso já tem 50 ofertas. Exclua um rascunho primeiro.'
-        : problem?.code === 'IDEMPOTENCY_KEY_REUSED' ? 'Esta tentativa já foi usada para outra alteração. Edite os campos e salve novamente.'
-          : 'Não foi possível confirmar o salvamento. Tente de novo para confirmar a mesma alteração.');
+      else setError(problem?.code === 'FIELD_INVALID' && field === 'offers' ? { title: 'O curso já tem 50 ofertas.', detail: 'Exclua um rascunho primeiro.' }
+        : problem?.code === 'IDEMPOTENCY_KEY_REUSED' ? { title: 'Esta tentativa já foi usada para outra alteração.', detail: 'Edite os campos e salve novamente.' }
+          : { title: 'Não foi possível salvar agora.', detail: offerId ? 'Nada foi alterado. Tente de novo.' : 'Seus dados foram mantidos. Tente de novo.', retry: true });
       return false;
     }
   };

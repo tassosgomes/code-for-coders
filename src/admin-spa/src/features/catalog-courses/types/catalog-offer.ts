@@ -10,3 +10,5 @@ export const catalogOfferSchema = z.object({
   createdAt: z.iso.datetime({ offset: true }), updatedAt: z.iso.datetime({ offset: true }), publishedAt: z.iso.datetime({ offset: true }).nullable(),
 });
 export type CatalogOffer = z.infer<typeof catalogOfferSchema>;
+// Erro de uma ação de oferta como o Alert do DS: título, detalhe e se cabe repetir a mesma tentativa.
+export type CatalogProblem = { title: string; detail?: string; retry?: boolean };

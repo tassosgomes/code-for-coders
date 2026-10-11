@@ -1,8 +1,10 @@
 import axios from 'axios';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useUpdateCatalogCourse } from '@/features/catalog-courses/api/update-catalog-course';
 import type { UpdateCatalogCourseInput } from '@/features/catalog-courses/api/update-catalog-course';
+
+const noticeDurationMs = 5000;
 
 export const useCatalogTagline = (courseId: string) => {
   const update = useUpdateCatalogCourse();
@@ -10,6 +12,11 @@ export const useCatalogTagline = (courseId: string) => {
   const [error, setError] = useState<string>();
   const [fieldError, setFieldError] = useState<string>();
   const [notice, setNotice] = useState('');
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(''), noticeDurationMs);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
   const save = async (input: UpdateCatalogCourseInput) => {
     const body = JSON.stringify(input);
     const key = intent.current?.body === body ? intent.current.key : crypto.randomUUID();

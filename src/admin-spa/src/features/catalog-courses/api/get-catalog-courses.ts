@@ -1,4 +1,4 @@
-import { queryOptions, useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { apiClient } from '@/lib/api-client';
@@ -22,3 +22,9 @@ export const getCatalogCoursesQueryOptions = (input: CatalogCoursesInput) => que
 });
 
 export const useCatalogCourses = (input: CatalogCoursesInput) => useQuery(getCatalogCoursesQueryOptions(input));
+
+// Título e vitrine já vistos na lista, para a ficha não ficar sem título enquanto carrega ou quando falha.
+export const useCachedCatalogCourse = (courseId: string) => useQueryClient()
+  .getQueriesData<CatalogCoursePage>({ queryKey: ['catalog-courses'] })
+  .flatMap(([, page]) => page?.data ?? [])
+  .find((course) => course.courseId === courseId);

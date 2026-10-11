@@ -18,16 +18,16 @@ const renderRecord = (counts: number[]) => {
 
 describe('catalog purchase intents', () => {
   afterEach(cleanup);
-  it('shows each offer total and the course total after clicks on the lifetime option', async () => {
+  it('shows each offer total after clicks on the lifetime option', async () => {
     renderRecord([0, 14]); const lifetime = await screen.findByRole('heading', { name: 'Vitalício' });
     const monthly = screen.getByRole('heading', { name: 'Mensal' });
     expect(within(lifetime.closest('li')!).getByText(/14 cliques em Comprar/)).toBeInTheDocument();
     expect(within(monthly.closest('li')!).getByText(/Nenhum clique em Comprar ainda/)).toBeInTheDocument();
-    expect(screen.getAllByText(/14 cliques em Comprar/)).toHaveLength(2);
+    expect(screen.getAllByText(/14 cliques em Comprar/)).toHaveLength(1);
   });
-  it('shows totals across all offers including unpublished history and zero before any click', async () => {
+  it('shows each offer total without a course total', async () => {
     renderRecord([5, 14]); await screen.findByRole('heading', { name: 'Vitalício' });
-    expect(screen.getByText('19 cliques em Comprar')).toBeInTheDocument();
+    expect(screen.queryByText(/19 cliques em Comprar/)).not.toBeInTheDocument();
     expect(screen.getByText(/5 cliques em Comprar/)).toBeInTheDocument();
   });
 });

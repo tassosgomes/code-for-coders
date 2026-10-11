@@ -1,12 +1,14 @@
-import { AlertTriangle } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 
 import { paths } from '@/config/paths';
 
 import { useCatalogCourses } from '@/features/catalog-courses/api/get-catalog-courses';
 import type { CatalogCourse } from '@/features/catalog-courses/api/get-catalog-courses';
+import { CatalogAlert } from '@/features/catalog-courses/components/catalog-alert';
+import { LevelBadge, ShowcaseState } from '@/features/catalog-courses/components/catalog-badges';
+import { CatalogPagination } from '@/features/catalog-courses/components/catalog-pagination';
 
-const levelLabels = { beginner: 'Iniciante', intermediate: 'Intermediário', advanced: 'Avançado' };
+const pageSize = 10;
 const offerSummary = (counts: CatalogCourse['offerCounts']) => {
   const parts = [
     counts.published > 0 ? `${counts.published} ${counts.published === 1 ? 'publicada' : 'publicadas'}` : '',
@@ -16,28 +18,49 @@ const offerSummary = (counts: CatalogCourse['offerCounts']) => {
   return parts.length > 0 ? parts.join(' · ') : 'Sem ofertas';
 };
 
+const CatalogTableHead = () => <thead><tr>
+  <th scope="col">Curso</th><th className="catalog-col-level" scope="col">Nível</th><th className="catalog-col-showcase" scope="col">Na vitrine</th>
+  <th className="catalog-col-offers" scope="col">Ofertas</th><th className="catalog-col-open" scope="col"><span className="visually-hidden">Abrir</span></th>
+</tr></thead>;
+
+const CatalogCoursesSkeleton = () => <div aria-label="Carregando catálogo" className="catalog-table-card" role="status">
+  <table aria-hidden="true" className="catalog-courses-table"><CatalogTableHead /><tbody>{Array.from({ length: 5 }, (_, index) => <tr key={index}>
+    <td><span className="catalog-skeleton-bar" /></td><td className="catalog-col-level"><span className="catalog-skeleton-bar" /></td>
+    <td className="catalog-col-showcase"><span className="catalog-skeleton-bar" /></td><td className="catalog-col-offers"><span className="catalog-skeleton-bar" /></td>
+    <td className="catalog-col-open"><span className="catalog-skeleton-bar" /></td>
+  </tr>)}</tbody></table>
+</div>;
+
+const CatalogEmpty = () => <section className="catalog-empty">
+  <div aria-hidden="true" className="code-window"><div className="code-title"><span className="window-dots"><i /><i /><i /></span>catalogo.ts<span>TS</span></div><pre>1  // nenhum curso publicado ainda</pre></div>
+  <h2>Nenhum curso publicado ainda.</h2>
+  <p>Só cursos publicados pelo professor aparecem aqui para receber ofertas.</p>
+</section>;
+
 export const CatalogCoursesScreen = () => {
   const [params, setParams] = useSearchParams();
   const requestedPage = Number(params.get('page') ?? 1);
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= Math.floor(2147483647 / 10) ? requestedPage : 1;
-  const courses = useCatalogCourses({ page, size: 10 });
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= Math.floor(2147483647 / pageSize) ? requestedPage : 1;
+  const courses = useCatalogCourses({ page, size: pageSize });
   return <main className="page-shell catalog-page">
-    <p className="eyebrow">Catálogo</p>
-    <h1>Cursos publicados da escola</h1>
-    <p className="page-subtitle">Escolha um curso para montar as ofertas de venda.</p>
-    {courses.isPending ? <div aria-label="Carregando catálogo" role="status" className="catalog-skeleton">{Array.from({ length: 5 }, (_, index) => <div key={index} />)}</div>
-      : courses.isError ? <section className="empty-state" role="alert"><h2>Não foi possível carregar o catálogo agora.</h2><button className="outline-button" onClick={() => void courses.refetch()} type="button">Tentar de novo</button></section>
-        : courses.data.data.length === 0 ? <section className="empty-state"><h2>Nenhum curso publicado ainda.</h2><p>Só cursos publicados pelo professor aparecem aqui para receber ofertas.</p></section>
-          : <div className="course-table-wrap"><table className="course-table catalog-table"><thead><tr><th>Curso</th><th>Nível</th><th>Na vitrine</th><th>Ofertas</th></tr></thead><tbody>
+    <header className="catalog-heading">
+      <p className="eyebrow">Catálogo</p>
+      <h1>Cursos publicados da escola</h1>
+      <p className="page-subtitle">Escolha um curso para montar as ofertas de venda.</p>
+    </header>
+    {courses.isPending ? <CatalogCoursesSkeleton />
+      : courses.isError ? <CatalogAlert detail="O serviço do Catálogo não respondeu. Tente de novo em instantes." onRetry={() => void courses.refetch()} retry title="Não foi possível carregar o catálogo agora." />
+        : courses.data.data.length === 0 ? <CatalogEmpty />
+          : <div className="catalog-table-card"><table className="catalog-courses-table"><CatalogTableHead /><tbody>
             {courses.data.data.map((course) => <tr key={course.courseId}>
-              <td><Link to={paths.catalogCourse.getHref(course.courseId)}><strong>{course.title}</strong></Link></td><td>{course.level ? levelLabels[course.level] : <span className="catalog-no-level"><AlertTriangle aria-hidden="true" size={16} />Sem nível</span>}</td>
-              <td>{course.inShowcase ? '✓ Sim' : '– Não'}</td><td>{offerSummary(course.offerCounts)}</td>
+              <td className="catalog-course-title">{course.title}</td>
+              <td className="catalog-col-level"><LevelBadge level={course.level} /></td>
+              <td className="catalog-col-showcase"><ShowcaseState inShowcase={course.inShowcase} /></td>
+              <td className={`catalog-col-offers ${offerSummary(course.offerCounts) === 'Sem ofertas' ? 'is-muted' : ''}`}>{offerSummary(course.offerCounts)}</td>
+              <td className="catalog-col-open"><Link aria-label={`Abrir ${course.title}`} className="catalog-open-link" to={paths.catalogCourse.getHref(course.courseId)}>Abrir →</Link></td>
             </tr>)}
           </tbody></table></div>}
-    {courses.data && courses.data.pagination.total > 0 ? <nav aria-label="Páginas do catálogo" className="course-pagination">
-      <button aria-label="Página anterior" className="outline-button" disabled={page === 1 || courses.isFetching} onClick={() => setParams(page > 2 ? { page: String(page - 1) } : {})} type="button">‹</button>
-      <span>Página {page} de {courses.data.pagination.totalPages} · 10 por página</span>
-      <button aria-label="Próxima página" className="outline-button" disabled={page >= courses.data.pagination.totalPages || courses.isFetching} onClick={() => setParams({ page: String(page + 1) })} type="button">›</button>
-    </nav> : null}
+    {courses.data && courses.data.pagination.total > 0 ? <CatalogPagination disabled={courses.isFetching} onPageChange={(next) => setParams(next > 1 ? { page: String(next) } : {})}
+      page={page} size={pageSize} totalPages={courses.data.pagination.totalPages} /> : null}
   </main>;
 };
