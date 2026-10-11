@@ -5,14 +5,14 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-10 22:29'
-updated_date: '2026-10-11 01:57'
+updated_date: '2026-10-11 02:01'
 labels:
   - frontend
 dependencies:
   - TASK-19.1
 modified_files:
-  - src/admin-spa/src/features/courtesies/components/review-sentence.tsx
-  - src/admin-spa/src/app/routes/courtesy-steps.test.tsx
+  - src/admin-spa/src/features/courtesies/components/courtesy-result-card.tsx
+  - src/admin-spa/src/assets/courtesies-steps.css
 parent_task_id: TASK-19
 type: bug
 ordinal: 22000
@@ -51,4 +51,6 @@ Parte da auditoria TASK-19 que cobre os passos 2 a 6 (frames T2.a–T6.b3). Bugs
 Implementado por subagente: Curso em tabela com Oferta (hasOffer), Vigência em cartões com prévia (bugs B1/B2 corrigidos), Motivo com contador e erros, Revisão com frase corrigida (B3), tabela com Editar e botão vitalício, Resultado com link/toast e telas de erro T6.b1–b3. Lint ok, build ok, vitest 290/290 (51 arquivos).
 
 Conferência em dev (2026-10-11): a frase da revisão baixava a primeira letra de siglas ("motivo: qA: …"). Agora só baixa quando a primeira palavra é capitalizada normalmente.
+
+Conferência do Resultado em dev (cortesia real para qa-compra-a-dev, Lógica de Programação Básica, 6 meses): ações estavam invertidas e à direita; cartão de resumo com espaços e tipografia diferentes do Figma T6.a. Ajustado; toast passa a usar o Toast compartilhado. Ver concessões do aluno volta ao passo Aluno e a nova concessão aparece na tabela.
 <!-- SECTION:NOTES:END -->
