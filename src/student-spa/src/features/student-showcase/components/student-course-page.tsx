@@ -46,7 +46,7 @@ const CourseSkeleton = () => (
         <Skeleton aria-hidden="true" className="h-4 w-full max-w-140" />
         <Skeleton aria-hidden="true" className="h-4 w-full max-w-155" />
       </div>
-      <div className="flex flex-col gap-3 rounded-xl border p-4">
+      <div className="flex flex-col gap-3 rounded-lg border p-4">
         <Skeleton aria-hidden="true" className="h-5 w-45" />
         <Skeleton aria-hidden="true" className="h-4 w-full" />
         <Skeleton aria-hidden="true" className="h-7 w-30" />
@@ -127,7 +127,7 @@ const CourseContent = ({ course }: { course: ShowcaseCourseDetail }) => {
             {/* Cada módulo é um cartão (P2.a): seta à esquerda, contagem de aulas à direita. */}
             <Accordion className="flex flex-col gap-3" defaultValue={['module-0']} type="multiple">
               {course.modules.map((module, index) => (
-                <div className="overflow-hidden rounded-xl border bg-card" key={`${index}-${module.title}`}>
+                <div className="overflow-hidden rounded-lg border bg-card" key={`${index}-${module.title}`}>
                   <AccordionItem value={`module-${index}`}>
                     <AccordionTrigger className="group/module items-center! gap-3! px-4 hover:no-underline! [&>svg]:hidden">
                       <ChevronRight aria-hidden="true" className="size-4 shrink-0 transition-transform group-data-[state=open]/module:rotate-90" />
