@@ -10,6 +10,7 @@ import { createVideoUploadPartUrls } from '@/features/videos/api/create-video-up
 import { getVideoUpload } from '@/features/videos/api/get-video-upload';
 import { getPendingVideoUploadsQueryOptions, usePendingVideoUploads } from '@/features/videos/api/get-pending-video-uploads';
 import { getVideosQueryOptions, useVideos, type VideoPage, type VideoStatus } from '@/features/videos/api/get-videos';
+import { getVideoTagsQueryOptions } from '@/features/videos/api/get-video-tags';
 import { useUpdateVideoTitle } from '@/features/videos/api/update-video-title';
 import { useReplaceVideoTags, type ReplaceVideoTagsInput } from '@/features/videos/api/replace-video-tags';
 import { EditVideoTagsDialog } from '@/features/videos/components/edit-video-tags-dialog';
@@ -23,6 +24,7 @@ type TransferSession = {
   uploadId: string;
   file: File;
   title: string;
+  tags: string[];
   expiresAt: string;
   partSize: number;
   partCount: number;
@@ -79,6 +81,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
+  const [uploadTagError, setUploadTagError] = useState<string | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<VideoTransferView | null>(null);
   const [transferInProgress, setTransferInProgress] = useState(false);
@@ -270,6 +273,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         operationControllerRef.current = null;
         await queryClient.invalidateQueries({ queryKey: getVideosQueryOptions().queryKey });
         await queryClient.invalidateQueries({ queryKey: getPendingVideoUploadsQueryOptions().queryKey });
+        await queryClient.invalidateQueries({ queryKey: getVideoTagsQueryOptions().queryKey.slice(0, 1) });
         return;
       } catch (error) {
         if (getVideoUploadErrorCode(error) !== 'UPLOAD_INCOMPLETE' || incompleteRetry === 3) throw error;
@@ -306,6 +310,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
     setTransfer({
       fileName: session.file.name,
       title: session.title,
+      tags: session.tags,
       progress,
       transferredBytes: receivedBytes,
       totalBytes: session.file.size,
@@ -328,11 +333,12 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
     }
   };
 
-  const startUpload = async (file: File, title: string) => {
+  const startUpload = async (file: File, title: string, tags: string[]) => {
     const controller = new AbortController();
     operationControllerRef.current = controller;
     setDialogBusy(true);
     setDialogError(null);
+    setUploadTagError(null);
     setSuccessToast(null);
     setTransferInProgress(true);
     try {
@@ -343,11 +349,13 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         fileSize: file.size,
         contentType: file.type,
         fingerprint,
+        tags,
       }, crypto.randomUUID(), controller.signal);
       const session: TransferSession = {
         uploadId: upload.uploadId,
         file,
         title: upload.title,
+        tags: upload.tags,
         expiresAt: upload.expiresAt,
         partSize: upload.partSize,
         partCount: upload.partCount,
@@ -362,7 +370,9 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
       if (controller.signal.aborted) return;
       setTransferInProgress(false);
       operationControllerRef.current = null;
-      setDialogError(getVideoUploadErrorMessage(error));
+      const code = getVideoUploadErrorCode(error);
+      if (code === 'TAG_INVALID' || code === 'TAGS_LIMIT_EXCEEDED') setUploadTagError(code);
+      else setDialogError(getVideoUploadErrorMessage(error));
     } finally {
       setDialogBusy(false);
     }
@@ -412,10 +422,10 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
       uploadDisabled={transferInProgress}
       transfer={transfer}
       currentAccountId={session.accountId}
-      onUpload={() => { setDialogError(null); setDialogOpen(true); }}
+      onUpload={() => { setDialogError(null); setUploadTagError(null); setDialogOpen(true); }}
       onRetry={() => void videos.refetch()}
       onRetryTransfer={() => void retryTransfer()}
-      onResumeUpload={() => { setDialogError(null); setDialogOpen(true); }}
+      onResumeUpload={() => { setDialogError(null); setUploadTagError(null); setDialogOpen(true); }}
       filter={filter}
       search={searchInput}
       onFilterChange={(value) => changeFilters(value, searchInput)}
@@ -459,6 +469,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
     {dialogOpen ? <VideoUploadDialog
       busy={dialogBusy}
       error={dialogError}
+      tagError={uploadTagError}
       onClose={() => { if (!dialogBusy) setDialogOpen(false); }}
       onStart={startUpload}
       pendingUploads={pendingUploads.data?.data ?? []}

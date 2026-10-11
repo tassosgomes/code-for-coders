@@ -6,10 +6,10 @@ import { useVideoTagSuggestions } from '@/features/videos/hooks/use-video-tag-su
 import { distinctVideoTags, displayVideoTag, normalizeVideoTag } from '@/features/videos/utils/video-tags';
 
 type VideoTagFieldProps = {
-  tags: string[]; disabled: boolean; error?: string | null; mode?: 'free-text' | 'suggestion-only';
+  label?: string; tags: string[]; disabled: boolean; error?: string | null; mode?: 'free-text' | 'suggestion-only';
   onChange: (tags: string[]) => void; onDraftChange: (draft: string) => void;
 };
-export const VideoTagField = ({ tags, disabled, error, mode = 'free-text', onChange, onDraftChange }: VideoTagFieldProps) => {
+export const VideoTagField = ({ label = 'Tags', tags, disabled, error, mode = 'free-text', onChange, onDraftChange }: VideoTagFieldProps) => {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState('');
@@ -34,7 +34,7 @@ export const VideoTagField = ({ tags, disabled, error, mode = 'free-text', onCha
   };
   const message = localError ?? error;
   return <div className="video-tag-field">
-    <label htmlFor={id}>Tags</label>
+    <label htmlFor={id}>{label}</label>
     <input id={id} ref={inputRef} value={draft} disabled={disabled} role="combobox" aria-autocomplete="list"
       aria-expanded={expanded} aria-controls={`${id}-suggestions`} aria-activedescendant={active ? `${id}-option-${activeIndex}` : undefined}
       aria-invalid={Boolean(message)} aria-describedby={`${id}-hint${message ? ` ${id}-error` : ''}`}

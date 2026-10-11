@@ -35,6 +35,7 @@ paths:
       summary: Iniciar ou retomar o envio de um vídeo
       description: |
         Verifica formato e tamanho **antes** de qualquer byte ser transferido (RF-02). Se o mesmo ator já tem um envio pendente e não expirado com a mesma `fingerprint`, devolve esse envio (200), com as partes já recebidas, em vez de criar outro (RF-03). Fingerprint igual de outro ator não retoma nada: cada ator só vê os próprios envios pendentes.
+        Tags opcionais: ausência equivale a `[]`. `TAG_INVALID` e `TAGS_LIMIT_EXCEEDED` são validados antes do multipart; nenhum envio ou URL de parte é criado em caso de erro. A chave de idempotência inclui as tags: outro conjunto com a mesma chave retorna 422 `IDEMPOTENCY_KEY_REUSED`. Na retomada, valem as tags originais do envio pendente; as novas são ignoradas (C-05).
       operationId: createVideoUploadInternal
       security:
       - StaffUserToken: []
@@ -73,7 +74,7 @@ paths:
                 novo:
                   $ref: '#/components/examples/VideoUploadNew'
         '200':
-          description: Envio pendente do mesmo ator com a mesma fingerprint — retomada.
+          description: Envio pendente do mesmo ator com a mesma fingerprint — retomada com as tags originais, ignorando as tags do novo pedido.
           content:
             application/json:
               schema:
@@ -88,8 +89,7 @@ paths:
         '403':
           $ref: '#/components/responses/PermissionDenied'
         '422':
-          description: Arquivo acima de 5 GB, formato não aceito, título em branco ou chave de idempotência reutilizada
-            com outro corpo.
+          description: Arquivo acima de 5 GB, formato não aceito, título em branco, tags inválidas ou acima do limite, ou chave de idempotência reutilizada com outro corpo.
           content:
             application/problem+json:
               schema:
@@ -111,6 +111,20 @@ paths:
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
                 semTitulo:
                   $ref: '#/components/examples/TitleRequired'
+                tagInvalida:
+                  value:
+                    type: about:blank
+                    title: Cada tag precisa ter de 1 a 30 caracteres.
+                    status: 422
+                    code: TAG_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                tagsAcimaDoLimite:
+                  value:
+                    type: about:blank
+                    title: Um vídeo pode ter no máximo 10 tags.
+                    status: 422
+                    code: TAGS_LIMIT_EXCEEDED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
         '503':
@@ -268,6 +282,7 @@ paths:
       summary: Concluir o envio
       description: |
         O serviço de mídia confere no armazenamento que **todas** as partes chegaram, e só então cria o vídeo no estado `received`, com o ator como autor. A preparação começa sozinha (RF-04). Repetir a conclusão do mesmo envio devolve o mesmo vídeo, nunca um segundo (RF-02), mesmo com outra `Idempotency-Key`.
+        As tags do envio são resolvidas novamente para a grafia canônica vigente e vinculadas na mesma transação que cria o vídeo. Repetir a conclusão, com a mesma chave ou outra, devolve as tags atuais do vídeo.
       operationId: completeVideoUploadInternal
       security:
       - StaffUserToken: []
@@ -1410,6 +1425,8 @@ components:
           description: Nome do ator no momento do envio, obtido pelo BFF da validação de sessão (`SessionValidated.name`).
             Só para exibição em `uploadedBy.name`; a identidade do autor vem de `sub` do token, nunca deste campo
             (C-13). Não vai para log, métrica nem fato publicado.
+        tags:
+          $ref: '#/components/schemas/TagInputList'
     VideoUpload:
       type: object
       additionalProperties: false

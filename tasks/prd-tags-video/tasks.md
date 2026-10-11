@@ -87,7 +87,7 @@ do EF.
 - [x] 2.0 Figma do adendo de tags de vídeo aprovado
 - [x] 3.0 O professor edita as tags de um vídeo na tela Vídeos e as vê na lista
 - [x] 4.0 Ao digitar uma tag, o professor vê as tags que a escola já usa
-- [ ] 5.0 O professor informa tags ao enviar um vídeo
+- [x] 5.0 O professor informa tags ao enviar um vídeo
 - [ ] 6.0 O professor filtra a tela Vídeos por tags, com E ou OU
 - [ ] 7.0 O professor filtra o seletor de vídeo da aula por tags
 

@@ -40,7 +40,9 @@ public sealed class CompleteVideoUpload(
         if (existingIdempotency is not null && existingIdempotency.ExpiresAt > now)
         {
             VideoUploadUseCaseHelpers.EnsureSameRequest(existingIdempotency, requestHash);
-            return VideoUploadUseCaseHelpers.Replay<CompletedVideoOutput>(existingIdempotency);
+            var replay = VideoUploadUseCaseHelpers.Replay<CompletedVideoOutput>(existingIdempotency);
+            var currentTags = await videoTags.GetAsync([replay.Video.VideoId], cancellationToken);
+            return replay with { Video = replay.Video with { Tags = currentTags.GetValueOrDefault(replay.Video.VideoId, []) } };
         }
 
         var upload = await videoUploads.GetOwnedAsync(input.UploadId, tenantId, actorAccountId, true, cancellationToken);

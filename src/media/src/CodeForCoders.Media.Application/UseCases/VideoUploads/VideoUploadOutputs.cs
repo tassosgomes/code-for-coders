@@ -25,7 +25,8 @@ public sealed record VideoUploadOutput(
             VideoUpload.PartSizeBytes,
             upload.PartCount,
             receivedParts,
-            upload.ExpiresAt);
+            upload.ExpiresAt,
+            upload.Tags);
 }
 
 public sealed record VideoUploadPaginationOutput(int Page, int Size, long Total, long TotalPages);

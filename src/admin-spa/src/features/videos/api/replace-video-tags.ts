@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { getVideoTagsQueryOptions } from '@/features/videos/api/get-video-tags';
 import { getVideosQueryOptions, videoSchema, type VideoPage } from '@/features/videos/api/get-videos';
 import { displayVideoTag, distinctVideoTags, normalizeVideoTag } from '@/features/videos/utils/video-tags';
 import { apiClient } from '@/lib/api-client';
@@ -29,6 +30,7 @@ export const useReplaceVideoTags = () => {
         ...page, data: page.data.map((current) => current.videoId === video.videoId ? video : current),
       } : page);
       await queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
+      await queryClient.invalidateQueries({ queryKey: getVideoTagsQueryOptions().queryKey.slice(0, 1) });
     },
   });
 };

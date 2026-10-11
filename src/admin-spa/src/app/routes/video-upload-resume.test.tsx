@@ -130,7 +130,7 @@ describe('video upload resume', () => {
     await selectFile(user, videoFile('aula-nova.mp4'));
 
     const dialog = within(await screen.findByRole('dialog', { name: 'Enviar vídeo' }));
-    expect(await dialog.findByRole('status')).toHaveTextContent(
+    expect(await dialog.findByText(/Este não é o arquivo do envio incompleto/)).toHaveTextContent(
       /Este não é o arquivo do envio incompleto \(aula-pendente\.mp4\)\. Ele será enviado como um vídeo novo;/,
     );
   });

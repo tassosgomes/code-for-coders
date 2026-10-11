@@ -12,6 +12,7 @@ public sealed record CreateVideoUploadInput(
     string ContentType,
     string Fingerprint,
     string UploaderName,
-    string IdempotencyKey);
+    string IdempotencyKey,
+    IReadOnlyList<string>? Tags = null);
 
 public sealed record CreateVideoUploadOutput(VideoUploadOutput Upload, bool Resumed = false);

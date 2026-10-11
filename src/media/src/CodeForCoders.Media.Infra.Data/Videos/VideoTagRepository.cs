@@ -21,10 +21,25 @@ public sealed class VideoTagRepository(MediaDbContext dbContext, ITenantContext 
         if (video is null) return false;
         await update(video, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        RecordAssignments();
+        return true;
+    }
+
+    public async Task<IReadOnlyList<string>> ResolveExistingAsync(IReadOnlyList<VideoTagValue> tags, CancellationToken cancellationToken)
+    {
+        var names = tags.Select(tag => tag.NormalizedName).ToArray();
+        var existing = await dbContext.Tags.AsNoTracking()
+            .Where(tag => names.Contains(tag.NormalizedName))
+            .ToDictionaryAsync(tag => tag.NormalizedName, tag => tag.DisplayName, cancellationToken);
+        // Pending uploads do not claim a new spelling before a video actually uses the tag.
+        return tags.Select(tag => existing.GetValueOrDefault(tag.NormalizedName, tag.DisplayName)).ToArray();
+    }
+
+    public void RecordAssignments()
+    {
         foreach (var origin in assignedOrigins)
             MediaTelemetry.VideoTagsAssigned.Add(1, new KeyValuePair<string, object?>("origin", origin));
         assignedOrigins.Clear();
-        return true;
     }
 
     public async Task<IReadOnlyList<string>> ReplaceAsync(Guid videoId, IReadOnlyList<VideoTagValue> tags, CancellationToken cancellationToken)

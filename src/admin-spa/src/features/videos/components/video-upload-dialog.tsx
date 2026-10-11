@@ -1,23 +1,21 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Film, Info, ShieldCheck, TriangleAlert, Upload, X } from 'lucide-react';
 import { useRef, useState, type DragEvent } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
+import { useValidatedForm } from '@/components/ui/form/validated-form';
+import { createVideoUploadInputSchema } from '@/features/videos/api/create-video-upload';
+import { VideoTagField } from '@/features/videos/components/video-tag-field';
+import { distinctVideoTags } from '@/features/videos/utils/video-tags';
 import type { PendingVideoUpload } from '@/features/videos/api/get-pending-video-uploads';
 import { getVideoFileProblem } from '@/features/videos/utils/video-upload';
 
-const videoTitleSchema = z.object({
-  title: z.string().trim().min(1, 'Dê um título para reconhecer o vídeo.').max(200, 'O título deve ter até 200 caracteres.'),
-});
-
-type VideoTitleForm = z.infer<typeof videoTitleSchema>;
+const videoUploadFormSchema = createVideoUploadInputSchema.pick({ title: true, tags: true });
 
 type VideoUploadDialogProps = {
   busy: boolean;
   error: string | null;
+  tagError?: string | null;
   onClose: () => void;
-  onStart: (file: File, title: string) => Promise<void>;
+  onStart: (file: File, title: string, tags: string[]) => Promise<void>;
   pendingUploads?: readonly PendingVideoUpload[];
 };
 
@@ -31,24 +29,24 @@ const getFileProblemMessage = (problem: string, fileName: string) => {
   return problem;
 };
 
-export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUploads = [] }: VideoUploadDialogProps) => {
+export const VideoUploadDialog = ({ busy, error, tagError, onClose, onStart, pendingUploads = [] }: VideoUploadDialogProps) => {
   const fileInput = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileProblem, setFileProblem] = useState<string | null>(null);
   const [rejectedFile, setRejectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [title, setTitle] = useState('');
+  const [tagDraft, setTagDraft] = useState('');
   const hasMatchingPendingUpload = file && pendingUploads.some(
     (upload) => upload.fileName === file.name && upload.fileSize === file.size,
   );
   const differentPendingUpload = file && pendingUploads.length > 0 && !hasMatchingPendingUpload
     ? pendingUploads[0]
     : undefined;
-  const form = useForm<VideoTitleForm>({
-    defaultValues: { title: '' },
-    resolver: zodResolver(videoTitleSchema),
-    mode: 'onChange',
-  });
+  const form = useValidatedForm(videoUploadFormSchema, { title: '', tags: [] });
+  const tags = form.watch('tags') ?? [];
+  const tagMessage = tagError === 'TAG_INVALID' ? 'Cada tag precisa ter de 1 a 30 caracteres.'
+    : tagError === 'TAGS_LIMIT_EXCEEDED' ? 'Um vídeo pode ter no máximo 10 tags.' : form.formState.errors.tags?.message;
   const selectFile = (selected: File | undefined) => {
     if (!selected) return;
     const problem = getVideoFileProblem(selected);
@@ -85,7 +83,12 @@ export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUpload
         <button aria-label="Fechar" className="dialog-close" disabled={busy} onClick={onClose} type="button"><X size={18} /></button>
       </div>
       <form noValidate onSubmit={form.handleSubmit(async (values) => {
-        if (file) await onStart(file, values.title);
+        const result = videoUploadFormSchema.safeParse({ ...values, tags: tagDraft ? [...tags, tagDraft] : tags });
+        if (!result.success) {
+          form.setError('tags', { message: result.error.issues[0]?.message });
+          return;
+        }
+        if (file) await onStart(file, result.data.title, distinctVideoTags(result.data.tags ?? []));
       })}>
         {differentPendingUpload ? <div className="video-upload-alert info" role="status">
           <Info aria-hidden="true" size={16} />
@@ -110,6 +113,8 @@ export const VideoUploadDialog = ({ busy, error, onClose, onStart, pendingUpload
           />
           {form.formState.errors.title ? <p className="field-error" role="alert">{form.formState.errors.title.message}</p> : null}
           <p className="video-title-hint"><span>Só para reconhecer o vídeo na escola. Você pode mudar depois.</span><span>{title.length}/200</span></p>
+          <VideoTagField label="Tags (opcional)" tags={tags} disabled={busy} error={tagMessage}
+            onChange={(value) => form.setValue('tags', value, { shouldValidate: true })} onDraftChange={setTagDraft} />
           {error ? <p className="video-upload-alert error" role="alert">{error}</p> : null}
           <p className="video-duration-note"><Info aria-hidden="true" size={16} /><span>A duração só é conferida depois do envio: vídeos acima de 3 horas falham na preparação.</span></p>
         </> : <>

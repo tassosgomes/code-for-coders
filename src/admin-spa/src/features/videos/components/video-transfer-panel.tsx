@@ -5,6 +5,7 @@ export type VideoTransferStatus = 'uploading' | 'reconnecting' | 'completing' | 
 export type VideoTransferView = {
   fileName: string;
   title: string;
+  tags?: string[];
   progress: number;
   transferredBytes: number;
   totalBytes: number;
@@ -81,6 +82,8 @@ export const VideoTransferPanel = ({ transfer, onRetry }: VideoTransferPanelProp
         <strong>{getHeading(transfer)}</strong>
         <span>{transfer.progress}%</span>
       </div>
+      {transfer.tags?.length ? <div className="video-tag-chips" aria-label="Tags do envio">{transfer.tags.map((tag) =>
+        <span className="video-tag-chip" key={tag}>{tag}</span>)}</div> : null}
       <div aria-label="Progresso do envio" aria-valuemax={100} aria-valuemin={0} aria-valuenow={transfer.progress} className="video-transfer-progress" role="progressbar">
         <span style={{ width: `${transfer.progress}%` }} />
       </div>

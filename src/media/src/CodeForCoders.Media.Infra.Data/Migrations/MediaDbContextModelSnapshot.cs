@@ -372,6 +372,13 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                         .HasColumnType("character varying(1024)")
                         .HasColumnName("storage_upload_id");
 
+                    b.PrimitiveCollection<string[]>("Tags")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasColumnName("tags")
+                        .HasDefaultValueSql("ARRAY[]::text[]");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
