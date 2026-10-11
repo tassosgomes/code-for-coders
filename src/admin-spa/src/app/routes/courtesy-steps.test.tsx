@@ -62,6 +62,11 @@ describe('courtesy vigência, motivo and revisão', () => {
     expect(screen.getByLabelText('Conceder a joana@student.test acesso a Fundamentos de C# até 02/04/2027 — motivo: bolsa de mentoria.')).toBeInTheDocument();
   });
 
+  it('keeps an acronym at the start of the reason in the review sentence', async () => {
+    renderCourtesy(); await toReview('QA: validação da tela');
+    expect(screen.getByLabelText('Conceder a joana@student.test acesso a Fundamentos de C# até 02/04/2027 — motivo: QA: validação da tela.')).toBeInTheDocument();
+  });
+
   it('writes the lifetime sentence and labels the lifetime confirm button', async () => {
     renderCourtesy(); await toReview('Parceria', true);
     expect(screen.getByLabelText('Conceder a joana@student.test acesso vitalício a Fundamentos de C# — motivo: parceria.')).toBeInTheDocument();

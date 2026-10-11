@@ -5,32 +5,14 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-10 22:29'
-updated_date: '2026-10-10 22:41'
+updated_date: '2026-10-11 01:57'
 labels:
   - frontend
 dependencies:
   - TASK-19.1
 modified_files:
-  - src/admin-spa/src/features/courtesies/api/list-courtesy-courses.ts
-  - src/admin-spa/src/features/courtesies/components/courtesy-course-step.tsx
-  - src/admin-spa/src/features/courtesies/components/course-pick-row.tsx
-  - src/admin-spa/src/features/courtesies/components/course-pagination.tsx
-  - >-
-    src/admin-spa/src/features/courtesies/components/courtesy-confirmation-steps.tsx
-  - src/admin-spa/src/features/courtesies/components/period-fieldset.tsx
-  - src/admin-spa/src/features/courtesies/components/term-preview.tsx
   - src/admin-spa/src/features/courtesies/components/review-sentence.tsx
-  - src/admin-spa/src/features/courtesies/components/review-table.tsx
-  - src/admin-spa/src/features/courtesies/components/courtesy-result-card.tsx
-  - src/admin-spa/src/features/courtesies/components/courtesy-result-error.tsx
-  - src/admin-spa/src/features/courtesies/hooks/use-courtesy-confirmation.ts
-  - src/admin-spa/src/features/courtesies/utils/format-access-period.ts
-  - src/admin-spa/src/assets/courtesies-steps.css
-  - src/admin-spa/src/testing/courtesy-course-handlers.ts
-  - src/admin-spa/src/app/routes/courtesy-course-step.test.tsx
-  - src/admin-spa/src/app/routes/courtesy-confirm.test.tsx
   - src/admin-spa/src/app/routes/courtesy-steps.test.tsx
-  - src/admin-spa/src/app/routes/courtesy-student-grants.test.tsx
 parent_task_id: TASK-19
 type: bug
 ordinal: 22000
@@ -67,4 +49,6 @@ Parte da auditoria TASK-19 que cobre os passos 2 a 6 (frames T2.a–T6.b3). Bugs
 
 <!-- SECTION:NOTES:BEGIN -->
 Implementado por subagente: Curso em tabela com Oferta (hasOffer), Vigência em cartões com prévia (bugs B1/B2 corrigidos), Motivo com contador e erros, Revisão com frase corrigida (B3), tabela com Editar e botão vitalício, Resultado com link/toast e telas de erro T6.b1–b3. Lint ok, build ok, vitest 290/290 (51 arquivos).
+
+Conferência em dev (2026-10-11): a frase da revisão baixava a primeira letra de siglas ("motivo: qA: …"). Agora só baixa quando a primeira palavra é capitalizada normalmente.
 <!-- SECTION:NOTES:END -->
