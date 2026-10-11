@@ -35,6 +35,11 @@ public sealed class VideoUploadConfiguration : IEntityTypeConfiguration<VideoUpl
             .HasColumnName("title")
             .HasMaxLength(200)
             .IsRequired();
+        builder.Property(upload => upload.Tags)
+            .HasColumnName("tags")
+            .HasColumnType("text[]")
+            .HasDefaultValueSql("ARRAY[]::text[]")
+            .IsRequired();
         builder.Property(upload => upload.FileName)
             .HasColumnName("file_name")
             .HasMaxLength(255)

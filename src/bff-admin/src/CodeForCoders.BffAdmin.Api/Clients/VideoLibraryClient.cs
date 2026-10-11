@@ -12,23 +12,27 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public Task<VideoLibraryResult> ListVideosAsync(
-        int page,
-        int size,
-        IReadOnlyList<string> statuses,
-        string? query,
+        VideoLibraryListRequest filters,
         string accessToken,
         CancellationToken cancellationToken)
     {
-        var filters = string.Concat(statuses.Select(status => $"&status={Uri.EscapeDataString(status)}"));
-        if (query is not null) filters += $"&q={Uri.EscapeDataString(query)}";
-        return SendAsync($"internal/v1/videos?_page={page}&_size={size}{filters}", accessToken, true, cancellationToken);
+        var query = string.Concat(filters.Statuses.Select(status => $"&status={Uri.EscapeDataString(status)}"));
+        if (filters.Query is not null) query += $"&q={Uri.EscapeDataString(filters.Query)}";
+        query += string.Concat((filters.Tags ?? []).Select(tag => $"&tag={Uri.EscapeDataString(tag)}"));
+        if (filters.Tags?.Count > 0 || filters.TagMatch != "all")
+            query += $"&tagMatch={Uri.EscapeDataString(filters.TagMatch)}";
+        return SendAsync($"internal/v1/videos?_page={filters.Page}&_size={filters.Size}{query}", accessToken, VideoLibraryResponseKind.Page, cancellationToken);
     }
+
+    public Task<VideoLibraryResult> ListVideoTagsAsync(string? query, string accessToken, CancellationToken cancellationToken)
+        => SendAsync("internal/v1/video-tags" + (query is null ? string.Empty : $"?q={Uri.EscapeDataString(query)}"),
+            accessToken, VideoLibraryResponseKind.Tags, cancellationToken);
 
     public Task<VideoLibraryResult> GetVideoAsync(
         Guid videoId,
         string accessToken,
         CancellationToken cancellationToken)
-        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, false, cancellationToken);
+        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, VideoLibraryResponseKind.Video, cancellationToken);
 
     public Task<VideoLibraryResult> UpdateVideoTitleAsync(
         Guid videoId,
@@ -36,15 +40,20 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         string idempotencyKey,
         string accessToken,
         CancellationToken cancellationToken)
-        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, false, cancellationToken, HttpMethod.Patch, title, idempotencyKey);
+        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, VideoLibraryResponseKind.Video, cancellationToken, HttpMethod.Patch, new UpdateVideoTitleRequest(title), idempotencyKey);
+
+    public Task<VideoLibraryResult> ReplaceVideoTagsAsync(
+        Guid videoId, IReadOnlyList<string> tags, string idempotencyKey, string accessToken, CancellationToken cancellationToken)
+        => SendAsync($"internal/v1/videos/{videoId:D}/tags", accessToken, VideoLibraryResponseKind.Video, cancellationToken,
+            HttpMethod.Put, new ReplaceVideoTagsRequest(tags), idempotencyKey);
 
     private async Task<VideoLibraryResult> SendAsync(
         string path,
         string accessToken,
-        bool isList,
+        VideoLibraryResponseKind kind,
         CancellationToken cancellationToken,
         HttpMethod? method = null,
-        string? title = null,
+        object? body = null,
         string? idempotencyKey = null)
     {
         using var request = new HttpRequestMessage(method ?? HttpMethod.Get, path);
@@ -52,13 +61,13 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         if (idempotencyKey is not null)
         {
             request.Headers.Add("Idempotency-Key", idempotencyKey);
-            request.Content = JsonContent.Create(new UpdateVideoTitleRequest(title!));
+            request.Content = JsonContent.Create(body);
         }
 
         try
         {
             using var response = await httpClient.SendAsync(request, cancellationToken);
-            return await ReadResponseAsync(response, isList, cancellationToken);
+            return await ReadResponseAsync(response, kind, cancellationToken);
         }
         catch (TimeoutRejectedException)
         {
@@ -80,19 +89,26 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
 
     private static async Task<VideoLibraryResult> ReadResponseAsync(
         HttpResponseMessage response,
-        bool isList,
+        VideoLibraryResponseKind kind,
         CancellationToken cancellationToken)
     {
         if (response.StatusCode == HttpStatusCode.OK)
         {
             try
             {
-                if (isList)
+                if (kind == VideoLibraryResponseKind.Page)
                 {
                     var page = await response.Content.ReadFromJsonAsync<VideoPageResponse>(JsonOptions, cancellationToken);
                     return page is null
                         ? Unavailable(HttpStatusCode.BadGateway)
                         : new VideoLibraryResult(response.StatusCode, null, page, null);
+                }
+
+                if (kind == VideoLibraryResponseKind.Tags)
+                {
+                    var tags = await response.Content.ReadFromJsonAsync<VideoTagListResponse>(JsonOptions, cancellationToken);
+                    return tags?.Data is null ? Unavailable(HttpStatusCode.BadGateway)
+                        : new VideoLibraryResult(response.StatusCode, null, null, null, tags);
                 }
 
                 var video = await response.Content.ReadFromJsonAsync<VideoResponse>(JsonOptions, cancellationToken);

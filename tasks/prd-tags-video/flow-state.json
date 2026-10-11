@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "branch": "docs/prd-tags-video",
+  "original_base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
+  "base_ref": "5957c5b054f4e67b9c29833c1b8712f46e542bd9",
+  "target_ref": "5957c5b054f4e67b9c29833c1b8712f46e542bd9",
+  "last_checkpoint": "e15fca8",
+  "phase": "complete-prd",
+  "active_task": null,
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 1,
+  "transport_retries": 3,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "transport": "herdr",
+  "validated_commit": "e15fca83a96ff2109c504fa422095f7d2ddb24db",
+  "validated_tree": "99a1dc87a24aa251bb5c0787f29b648ba47595a3",
+  "last_result": {
+    "run_id": "run.p7dMDhoo",
+    "role": "validator",
+    "kind": "cursor",
+    "mode": "full",
+    "outcome": "approved"
+  },
+  "history": [
+    {
+      "ts": "2026-10-11",
+      "event": "prepare-prd-branch",
+      "run_id": "run.MB8FN6Sf",
+      "outcome": "branch_ready"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 1.0",
+      "run_id": "run.8Zj1z8BY",
+      "outcome": "task_blocked (aprovação humana)",
+      "note": "transport result_invalid; não consome tentativa"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "intervenção humana",
+      "note": "ASCII aprovado pelo responsável com 3 ajustes; nova rodada fix"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 1.0",
+      "commit": "babc86a"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 2.0",
+      "note": "kind=claude sonnet effort=medium por escolha do usuário"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 2.0",
+      "run_id": "run.OVkwiEUv",
+      "outcome": "task_blocked (aprovação humana)"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "intervenção humana",
+      "note": "Figma aprovado pelo responsável; nova rodada fix"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 2.0",
+      "commit": "c9cc889"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 3.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "plano corrigido",
+      "note": "Spectral passa a usar contracts/.spectral-exception.yaml nas tasks 3.0–6.0"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 3.0",
+      "commit": "96b586c"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 4.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "transport_failure 4.0",
+      "run_id": "run.s9wmb1jm",
+      "note": "codex encerrou antes do prompt; sem escrita; repetição 1/2"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 4.0",
+      "commit": "64993ce"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 5.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "gate_error 5.0 (ambiente)",
+      "run_id": "run.gb7EDuUr",
+      "note": "repetição só do smoke; não consome tentativa"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 5.0",
+      "commit": "be70d44"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 6.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 6.0",
+      "commit": "3b37922",
+      "note": "envelope result_invalid; commit, checkbox e status reconciliados"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 7.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "transport_failure 7.0",
+      "run_id": "run.rAfhYOgO",
+      "note": "codex sem cota até 21h; pane fechado sem escrita; responsável escolheu claude haiku-5-5 para implementar e cursor para revisar"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "smoke 7.0 impedido por ambiente",
+      "run_id": "run.lMrP1UkU"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 7.0",
+      "commit": "8a41ff7"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "prepare-integration",
+      "run_id": "run.izShZhzV",
+      "note": "rebase sobre 5957c5b; HEAD e15fca8"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "full validation aprovada",
+      "run_id": "run.p7dMDhoo"
+    }
+  ],
+  "pending": [
+    "smoke dev 7.0: montar aula filtrando o seletor por tag (PG remoto instável)"
+  ]
+}

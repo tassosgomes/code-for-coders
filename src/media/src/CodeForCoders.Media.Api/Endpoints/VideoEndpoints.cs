@@ -1,3 +1,5 @@
+using CodeForCoders.Media.Application.UseCases.Videos.ListVideoTags;
+using CodeForCoders.Media.Application.UseCases.Videos.ReplaceVideoTags;
 using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Application.UseCases.Videos.GetVideo;
 using CodeForCoders.Media.Application.UseCases.Videos.ListVideos;
@@ -15,6 +17,13 @@ public static class VideoEndpoints
             .RequireAuthorization(MediaAuthorization.PolicyName)
             .WithTags("Videos");
 
+        group.MapGet("/video-tags", ListVideoTagsAsync)
+            .WithName("ListVideoTagsInternal")
+            .Produces<VideoTagListOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
         group.MapGet("/videos", ListVideosAsync)
             .WithName("ListVideosInternal")
             .Produces<VideoPageOutput>(StatusCodes.Status200OK)
@@ -29,12 +38,23 @@ public static class VideoEndpoints
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
+        group.MapPut("/videos/{videoId:guid}/tags", ReplaceVideoTagsAsync)
+            .WithName("ReplaceVideoTagsInternal")
+            .Produces<VideoOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         group.MapPatch("/videos/{videoId:guid}", UpdateVideoTitleAsync)
             .WithName("UpdateVideoTitleInternal")
             .Produces<VideoOutput>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
+
+    private static async Task<IResult> ListVideoTagsAsync(
+        IListVideoTags listVideoTags, CancellationToken cancellationToken, string? q = null)
+        => Results.Ok(await listVideoTags.ExecuteAsync(new(q), cancellationToken));
 
     private static async Task<IResult> ListVideosAsync(
         HttpContext httpContext,
@@ -43,7 +63,9 @@ public static class VideoEndpoints
         int _page = 1,
         int _size = 10,
         string[]? status = null,
-        string? q = null)
+        string? q = null,
+        string[]? tag = null,
+        string tagMatch = "all")
     {
         if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue
             || status?.Any(value => value is not ("received" or "preparing" or "ready" or "failed")) == true
@@ -52,7 +74,7 @@ public static class VideoEndpoints
             return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The requested page is invalid.");
         }
 
-        var page = await listVideos.ExecuteAsync(new ListVideosInput(_page, _size, status ?? [], q?.Trim()), cancellationToken);
+        var page = await listVideos.ExecuteAsync(new ListVideosInput(_page, _size, status ?? [], q?.Trim(), tag ?? [], tagMatch), cancellationToken);
         return Results.Ok(page);
     }
 
@@ -65,6 +87,12 @@ public static class VideoEndpoints
         => Results.Ok(await updateVideoTitle.ExecuteAsync(
             new UpdateVideoTitleInput(videoId, request.Title, httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty),
             cancellationToken));
+
+    private static async Task<IResult> ReplaceVideoTagsAsync(
+        Guid videoId, ReplaceVideoTagsRequest request, HttpContext httpContext,
+        IReplaceVideoTags replaceVideoTags, CancellationToken cancellationToken)
+        => Results.Ok(await replaceVideoTags.ExecuteAsync(
+            new(videoId, request.Tags, httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty), cancellationToken));
 
     private static async Task<IResult> GetVideoAsync(
         Guid videoId,

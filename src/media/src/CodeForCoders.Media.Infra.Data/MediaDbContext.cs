@@ -17,6 +17,9 @@ public sealed class MediaDbContext(
 
     public DbSet<PlaybackSession> PlaybackSessions => Set<PlaybackSession>();
 
+    public DbSet<VideoTag> Tags => Set<VideoTag>();
+    public DbSet<VideoTagLink> VideoTags => Set<VideoTagLink>();
+
     public DbSet<Video> Videos => Set<Video>();
 
     public DbSet<VideoUpload> VideoUploads => Set<VideoUpload>();
@@ -32,6 +35,8 @@ public sealed class MediaDbContext(
         modelBuilder.Entity<CourseReferences.CourseVideoReference>().HasQueryFilter(reference => tenantContext.TenantId.HasValue && reference.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<OutboxMessage>().HasQueryFilter(
             message => tenantContext.TenantId.HasValue && message.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<VideoTag>().HasQueryFilter(tag => tenantContext.TenantId.HasValue && tag.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<VideoTagLink>().HasQueryFilter(link => tenantContext.TenantId.HasValue && link.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<Video>().HasQueryFilter(
             video => tenantContext.TenantId.HasValue && video.TenantId == tenantContext.TenantId.Value);
         modelBuilder.Entity<VideoUpload>().HasQueryFilter(

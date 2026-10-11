@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
         services.AddScoped<IVideoQueries, VideoQueries>();
+        services.AddScoped<IVideoTagRepository, VideoTagRepository>();
         services.AddScoped<IPlaybackRepository, PlaybackSessions.PlaybackRepository>();
         services.AddScoped<IPlaybackSessionMaintenance, PlaybackSessions.PlaybackSessionMaintenance>();
         services.AddScoped<IVideoUploadRepository, VideoUploadRepository>();

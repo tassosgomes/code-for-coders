@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-10-06",
+  "updated": "2026-10-11",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/archive/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/archive/prd-ingestao-midia, fora do indice por colisao de chave unica. PRDs concluidos ficam arquivados em tasks/archive/ (so historico, nao sao fonte da verdade). O contrato vigente de cada fronteira vive em contracts/ (artifacts.contracts); novos PRDs continuam em tasks/prd-[slug]/ e promovem o recorte para contracts/ ao concluir.",
   "artifacts": {
     "vision": "vision.md",
@@ -83,14 +83,19 @@
     },
     {
       "id": "CAP-006",
-      "stage": "done",
+      "stage": "tasks",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
-        "prd": "tasks/archive/prd-observabilidade-midia/prd.md",
-        "techspec": "tasks/archive/prd-observabilidade-midia/techspec.md",
-        "tasks": "tasks/archive/prd-observabilidade-midia/tasks.md"
+        "prd": "tasks/prd-tags-video/prd.md",
+        "contract": "tasks/prd-tags-video/contracts.md",
+        "techspec": "tasks/prd-tags-video/techspec.md",
+        "tasks": "tasks/prd-tags-video/tasks.md"
       },
-      "mvp_order": 3
+      "mvp_order": 3,
+      "delivered": [
+        "tasks/archive/prd-ingestao-midia (1o PRD, done)",
+        "tasks/archive/prd-observabilidade-midia (2o PRD, done)"
+      ]
     },
     {
       "id": "CAP-007",

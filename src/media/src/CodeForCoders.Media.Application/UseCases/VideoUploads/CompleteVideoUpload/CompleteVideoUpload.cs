@@ -12,6 +12,7 @@ namespace CodeForCoders.Media.Application.UseCases.VideoUploads.CompleteVideoUpl
 public sealed class CompleteVideoUpload(
     ITenantContext tenantContext,
     IVideoUploadRepository videoUploads,
+    IVideoTagRepository videoTags,
     IOperationIdempotencyRepository idempotencyRecords,
     IMediaStoragePort mediaStorage,
     IUnitOfWork unitOfWork,
@@ -39,7 +40,9 @@ public sealed class CompleteVideoUpload(
         if (existingIdempotency is not null && existingIdempotency.ExpiresAt > now)
         {
             VideoUploadUseCaseHelpers.EnsureSameRequest(existingIdempotency, requestHash);
-            return VideoUploadUseCaseHelpers.Replay<CompletedVideoOutput>(existingIdempotency);
+            var replay = VideoUploadUseCaseHelpers.Replay<CompletedVideoOutput>(existingIdempotency);
+            var currentTags = await videoTags.GetAsync([replay.Video.VideoId], cancellationToken);
+            return replay with { Video = replay.Video with { Tags = currentTags.GetValueOrDefault(replay.Video.VideoId, []) } };
         }
 
         var upload = await videoUploads.GetOwnedAsync(input.UploadId, tenantId, actorAccountId, true, cancellationToken);
@@ -71,7 +74,8 @@ public sealed class CompleteVideoUpload(
             throw VideoUploadUseCaseHelpers.UploadNotFound();
         }
 
-        var output = new CompletedVideoOutput(ToOutput(completedVideo));
+        var tags = await videoTags.GetAsync([completedVideo.VideoId], cancellationToken);
+        var output = new CompletedVideoOutput(ToOutput(completedVideo) with { Tags = tags.GetValueOrDefault(completedVideo.VideoId, []) });
         var idempotencyRecord = VideoUploadUseCaseHelpers.CreateOrReuseIdempotencyRecord(
             existingIdempotency,
             upload.TenantId,

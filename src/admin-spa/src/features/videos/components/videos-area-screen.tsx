@@ -1,4 +1,4 @@
-import { CircleAlert, Clapperboard, Pencil, Search } from 'lucide-react';
+import { CircleAlert, Clapperboard, Pencil, Search, Tags } from 'lucide-react';
 import { useState } from 'react';
 
 import { ForbiddenScreen } from '@/components/forbidden-screen';
@@ -6,6 +6,7 @@ import { Toast } from '@/components/toast';
 import type { PendingVideoUpload } from '@/features/videos/api/get-pending-video-uploads';
 import type { VideoPage, VideoStatus } from '@/features/videos/api/get-videos';
 import { PendingVideoUploadsAlert } from '@/features/videos/components/pending-video-uploads-alert';
+import { VideoTagField } from '@/features/videos/components/video-tag-field';
 import { VideoStatusBadge } from '@/features/videos/components/video-status-badge';
 import { VideoTransferPanel, type VideoTransferView } from '@/features/videos/components/video-transfer-panel';
 
@@ -22,9 +23,15 @@ type VideosAreaScreenProps = {
   onResumeUpload?: () => void;
   filter?: string;
   search?: string;
+  tags?: string[];
+  tagMatch?: 'all' | 'any';
+  onTagsChange?: (tags: string[]) => void;
+  onTagMatchChange?: (match: 'all' | 'any') => void;
+  onClearFilters?: () => void;
   onFilterChange?: (filter: string) => void;
   onSearchChange?: (search: string) => void;
   onEditTitle?: (video: VideoPage['data'][number]) => void;
+  onEditTags?: (video: VideoPage['data'][number]) => void;
   onPageChange?: (page: number) => void;
   successMessage?: string | null;
 };
@@ -100,9 +107,15 @@ export const VideosAreaScreen = ({
   onResumeUpload,
   filter = 'all',
   search = '',
+  tags = [],
+  tagMatch = 'all',
+  onTagsChange,
+  onTagMatchChange,
+  onClearFilters,
   onFilterChange,
   onSearchChange,
   onEditTitle,
+  onEditTags,
   onPageChange,
   successMessage,
 }: VideosAreaScreenProps) => {
@@ -120,7 +133,7 @@ export const VideosAreaScreen = ({
     Enviar vídeo
   </button>;
   const hasProcessingVideo = videos?.data.some((video) => video.status === 'received' || video.status === 'preparing') ?? false;
-  const showControls = state !== 'empty' || filter !== 'all' || Boolean(search);
+  const showControls = state !== 'empty' || filter !== 'all' || Boolean(search) || tags.length > 0;
   const totalPages = videos?.pagination.totalPages ?? 0;
 
   return <main className="page-shell videos-page">
@@ -160,6 +173,17 @@ export const VideosAreaScreen = ({
       </label>
     </div> : null}
 
+    {showControls && onTagsChange ? <div className="video-library-tag-controls">
+      <VideoTagField autoFocus={false} label="Filtrar por tag" tags={tags} disabled={false} mode="suggestion-only"
+        onChange={onTagsChange} onDraftChange={() => undefined} />
+      {tags.length >= 2 ? <div aria-label="Combinar tags" className="video-filter-options" role="group">
+        <button aria-pressed={tagMatch === 'all'} className={tagMatch === 'all' ? 'video-filter-active' : ''}
+          onClick={() => onTagMatchChange?.('all')} type="button">E</button>
+        <button aria-pressed={tagMatch === 'any'} className={tagMatch === 'any' ? 'video-filter-active' : ''}
+          onClick={() => onTagMatchChange?.('any')} type="button">OU</button>
+      </div> : null}
+    </div> : null}
+
     {state === 'has-videos' && hasProcessingVideo ? <p className="video-refresh-status"><span aria-hidden="true" />Atualizando automaticamente enquanto há vídeo em andamento</p> : null}
 
     {state === 'loading' ? <section aria-label="Carregando vídeos" aria-busy="true" className="videos-table videos-loading">
@@ -169,12 +193,12 @@ export const VideosAreaScreen = ({
       </div>)}
     </section> : null}
 
-    {state === 'empty' && (filter !== 'all' || search) ? <section className="video-empty-filter">
-      <p>{getEmptySearchMessage(filter, search)}</p>
-      <button className="video-link-button" onClick={() => { onFilterChange?.('all'); onSearchChange?.(''); }} type="button">Limpar filtros</button>
+    {state === 'empty' && (filter !== 'all' || search || tags.length > 0) ? <section className="video-empty-filter">
+      <p>{tags.length ? 'Nenhum vídeo atende aos filtros.' : getEmptySearchMessage(filter, search)}</p>
+      <button className="video-link-button" onClick={onClearFilters ?? (() => { onFilterChange?.('all'); onSearchChange?.(''); })} type="button">Limpar filtros</button>
     </section> : null}
 
-    {state === 'empty' && filter === 'all' && !search ? <section aria-label="Biblioteca de vídeos vazia" className="video-empty-library">
+    {state === 'empty' && filter === 'all' && !search && tags.length === 0 ? <section aria-label="Biblioteca de vídeos vazia" className="video-empty-library">
       <span aria-hidden="true" className="video-empty-icon"><Clapperboard size={20} /></span>
       <h2>Nenhum vídeo ainda</h2>
       <p>Envie a primeira gravação. Ela fica pronta para a aula sozinha.</p>
@@ -186,7 +210,7 @@ export const VideosAreaScreen = ({
       <p aria-atomic="true" aria-live="polite" className="visually-hidden" role="status">{statusAnnouncement}</p>
       <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
       {videos?.data.map((video) => <div className="videos-table-row" key={video.videoId}>
-        <strong className="video-title-cell">{video.title}</strong>
+        <div className="video-title-cell"><strong>{video.title}</strong></div>
         <div className={`video-status-cell ${video.status}`}>
           <div className="video-status-content">
             <VideoStatusBadge status={video.status} />
@@ -209,7 +233,11 @@ export const VideosAreaScreen = ({
           <span aria-hidden="true" className="video-meta-separator">·</span>
           <time className="video-date" dateTime={video.uploadedAt}>{formatDate(video.uploadedAt)}</time>
         </div>
+        <div className="video-row-tags" aria-label={`Tags de ${video.title}`}>{video.tags.map((tag) => <span className="video-tag-chip" key={tag}>{tag}</span>)}</div>
+        <div className="video-row-actions">
         {onEditTitle ? <button aria-label={`Editar título de ${video.title}`} className="video-edit-title" onClick={() => onEditTitle(video)} type="button"><Pencil aria-hidden="true" size={16} /></button> : <span className="video-edit-placeholder" />}
+        {onEditTags ? <button aria-label={`Editar tags de ${video.title}`} className="video-edit-title" onClick={() => onEditTags(video)} type="button"><Tags aria-hidden="true" size={16} /></button> : null}
+        </div>
       </div>)}
       </section>
       {videos && totalPages > 1 ? <nav aria-label="Paginação dos vídeos" className="video-pagination">

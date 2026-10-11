@@ -74,7 +74,8 @@ public static class VideoUploadEndpoints
                 request.ContentType,
                 request.Fingerprint,
                 request.UploaderName,
-                httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty),
+                httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty,
+                request.Tags),
             cancellationToken);
         return result.Resumed
             ? Results.Ok(result.Upload)

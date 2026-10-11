@@ -19,31 +19,39 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
 
     public string? LastIdempotencyKey { get; private set; }
 
-    protected override Task<HttpResponseMessage> SendAsync(
+    public string? LastBody { get; private set; }
+
+    public string[] Tags { get; set; } = [];
+
+    protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
         RequestCount++;
+        LastBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         LastAccessToken = request.Headers.Authorization?.Parameter;
         LastPath = request.RequestUri?.PathAndQuery;
         LastMethod = request.Method;
         LastIdempotencyKey = request.Headers.TryGetValues("Idempotency-Key", out var keys) ? keys.FirstOrDefault() : null;
 
+        if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath == "/internal/v1/video-tags")
+            return new HttpResponseMessage(StatusCode) { Content = JsonContent.Create(new { data = Tags }) };
+
         if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath.EndsWith("/videos", StringComparison.Ordinal) == true)
         {
-            return Task.FromResult(new HttpResponseMessage(StatusCode)
+            return new HttpResponseMessage(StatusCode)
             {
                 Content = JsonContent.Create(new
                 {
                     data = Array.Empty<object>(),
                     pagination = new { page = 1, size = 10, total = 0, totalPages = 0 },
                 }),
-            });
+            };
         }
 
         if ((int)StatusCode < 400)
         {
-            return Task.FromResult(new HttpResponseMessage(StatusCode)
+            return new HttpResponseMessage(StatusCode)
             {
                 Content = JsonContent.Create(new
                 {
@@ -54,11 +62,12 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
                     uploadedAt = DateTimeOffset.UtcNow,
                     durationSeconds = (int?)null,
                     failureReason = (string?)null,
+                    tags = Tags,
                 }),
-            });
+            };
         }
 
-        return Task.FromResult(new HttpResponseMessage(StatusCode)
+        return new HttpResponseMessage(StatusCode)
         {
             Content = JsonContent.Create(new
             {
@@ -68,12 +77,14 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
                 code = ProblemCode,
                 traceId = "video-library-test",
             }),
-        });
+        };
     }
 
     public void Reset()
     {
         StatusCode = HttpStatusCode.OK;
+        LastBody = null;
+        Tags = [];
         ProblemCode = null;
         RequestCount = 0;
         LastAccessToken = null;

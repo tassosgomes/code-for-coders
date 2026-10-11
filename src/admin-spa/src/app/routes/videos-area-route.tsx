@@ -10,7 +10,10 @@ import { createVideoUploadPartUrls } from '@/features/videos/api/create-video-up
 import { getVideoUpload } from '@/features/videos/api/get-video-upload';
 import { getPendingVideoUploadsQueryOptions, usePendingVideoUploads } from '@/features/videos/api/get-pending-video-uploads';
 import { getVideosQueryOptions, useVideos, type VideoPage, type VideoStatus } from '@/features/videos/api/get-videos';
+import { getVideoTagsQueryOptions } from '@/features/videos/api/get-video-tags';
 import { useUpdateVideoTitle } from '@/features/videos/api/update-video-title';
+import { useReplaceVideoTags, type ReplaceVideoTagsInput } from '@/features/videos/api/replace-video-tags';
+import { EditVideoTagsDialog } from '@/features/videos/components/edit-video-tags-dialog';
 import { EditVideoTitleDialog } from '@/features/videos/components/edit-video-title-dialog';
 import { VideoUploadDialog } from '@/features/videos/components/video-upload-dialog';
 import { VideosAreaScreen } from '@/features/videos/components/videos-area-screen';
@@ -21,6 +24,7 @@ type TransferSession = {
   uploadId: string;
   file: File;
   title: string;
+  tags: string[];
   expiresAt: string;
   partSize: number;
   partCount: number;
@@ -59,20 +63,27 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = searchParams.get('status') ?? 'all';
   const search = searchParams.get('q') ?? '';
+  const tags = searchParams.getAll('tag');
+  const tagMatch = searchParams.get('tagMatch') === 'any' ? 'any' : 'all';
   const [searchInput, setSearchInput] = useState(search);
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const statuses: VideoStatus[] = filter === 'progress' ? ['received', 'preparing']
     : filter === 'ready' || filter === 'failed' ? [filter] : [];
-  const videos = useVideos({ page, size: 20, statuses, query: search.trim() || undefined });
+  const videos = useVideos({ page, size: 20, statuses, query: search.trim() || undefined, tags, tagMatch });
   const pendingUploads = usePendingVideoUploads();
   const queryClient = useQueryClient();
   const updateTitle = useUpdateVideoTitle();
+  const replaceTags = useReplaceVideoTags();
+  const [tagVideo, setTagVideo] = useState<VideoPage['data'][number] | null>(null);
+  const [tagError, setTagError] = useState<string | null>(null);
+  const tagIntent = useRef<{ body: string; key: string } | null>(null);
   const [editingVideo, setEditingVideo] = useState<VideoPage['data'][number] | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [editIdempotencyKey, setEditIdempotencyKey] = useState('');
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogBusy, setDialogBusy] = useState(false);
+  const [uploadTagError, setUploadTagError] = useState<string | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<VideoTransferView | null>(null);
   const [transferInProgress, setTransferInProgress] = useState(false);
@@ -83,12 +94,26 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const blocker = useBlocker(transferInProgress);
 
   const changeFilters = useCallback((nextFilter: string, nextSearch: string, nextPage = 1) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
+    params.delete('status'); params.delete('q'); params.delete('page');
     if (nextFilter !== 'all') params.set('status', nextFilter);
     if (nextSearch.trim()) params.set('q', nextSearch);
     if (nextPage > 1) params.set('page', String(nextPage));
     setSearchParams(params);
-  }, [setSearchParams]);
+  }, [searchParams, setSearchParams]);
+
+  const changeTags = (nextTags: string[], nextMatch = tagMatch) => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('tag'); params.delete('tagMatch'); params.delete('page');
+    for (const tag of nextTags) params.append('tag', tag);
+    if (nextTags.length) params.set('tagMatch', nextMatch);
+    setSearchParams(params);
+  };
+
+  const clearFilters = () => {
+    setSearchInput('');
+    setSearchParams(new URLSearchParams());
+  };
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -262,8 +287,9 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         setTransferInProgress(false);
         sessionRef.current = null;
         operationControllerRef.current = null;
-        await queryClient.invalidateQueries({ queryKey: getVideosQueryOptions().queryKey });
+        await queryClient.invalidateQueries({ queryKey: getVideosQueryOptions().queryKey.slice(0, 1) });
         await queryClient.invalidateQueries({ queryKey: getPendingVideoUploadsQueryOptions().queryKey });
+        await queryClient.invalidateQueries({ queryKey: getVideoTagsQueryOptions().queryKey.slice(0, 1) });
         return;
       } catch (error) {
         if (getVideoUploadErrorCode(error) !== 'UPLOAD_INCOMPLETE' || incompleteRetry === 3) throw error;
@@ -300,6 +326,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
     setTransfer({
       fileName: session.file.name,
       title: session.title,
+      tags: session.tags,
       progress,
       transferredBytes: receivedBytes,
       totalBytes: session.file.size,
@@ -322,11 +349,12 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
     }
   };
 
-  const startUpload = async (file: File, title: string) => {
+  const startUpload = async (file: File, title: string, tags: string[]) => {
     const controller = new AbortController();
     operationControllerRef.current = controller;
     setDialogBusy(true);
     setDialogError(null);
+    setUploadTagError(null);
     setSuccessToast(null);
     setTransferInProgress(true);
     try {
@@ -337,11 +365,13 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         fileSize: file.size,
         contentType: file.type,
         fingerprint,
+        tags,
       }, crypto.randomUUID(), controller.signal);
       const session: TransferSession = {
         uploadId: upload.uploadId,
         file,
         title: upload.title,
+        tags: upload.tags,
         expiresAt: upload.expiresAt,
         partSize: upload.partSize,
         partCount: upload.partCount,
@@ -356,7 +386,9 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
       if (controller.signal.aborted) return;
       setTransferInProgress(false);
       operationControllerRef.current = null;
-      setDialogError(getVideoUploadErrorMessage(error));
+      const code = getVideoUploadErrorCode(error);
+      if (code === 'TAG_INVALID' || code === 'TAGS_LIMIT_EXCEEDED') setUploadTagError(code);
+      else setDialogError(getVideoUploadErrorMessage(error));
     } finally {
       setDialogBusy(false);
     }
@@ -406,16 +438,22 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
       uploadDisabled={transferInProgress}
       transfer={transfer}
       currentAccountId={session.accountId}
-      onUpload={() => { setDialogError(null); setDialogOpen(true); }}
+      onUpload={() => { setDialogError(null); setUploadTagError(null); setDialogOpen(true); }}
       onRetry={() => void videos.refetch()}
       onRetryTransfer={() => void retryTransfer()}
-      onResumeUpload={() => { setDialogError(null); setDialogOpen(true); }}
+      onResumeUpload={() => { setDialogError(null); setUploadTagError(null); setDialogOpen(true); }}
       filter={filter}
       search={searchInput}
+      tags={tags}
+      tagMatch={tagMatch}
+      onTagsChange={changeTags}
+      onTagMatchChange={(value) => changeTags(tags, value)}
+      onClearFilters={clearFilters}
       onFilterChange={(value) => changeFilters(value, searchInput)}
       onSearchChange={setSearchInput}
-      onPageChange={(value) => changeFilters(filter, search, value)}
+      onPageChange={(value) => changeFilters(filter, searchInput, value)}
       onEditTitle={(video) => { setEditError(null); setSuccessToast(null); setEditIdempotencyKey(crypto.randomUUID()); setEditingVideo(video); }}
+      onEditTags={(video) => { setTagError(null); setSuccessToast(null); tagIntent.current = null; setTagVideo(video); }}
       successMessage={successToast}
     />
     {editingVideo ? <EditVideoTitleDialog
@@ -436,9 +474,23 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         }
       }}
     /> : null}
+    {tagVideo ? <EditVideoTagsDialog key={tagVideo.videoId} title={tagVideo.title} tags={tagVideo.tags}
+      busy={replaceTags.isPending} error={tagError} onClose={() => setTagVideo(null)}
+      onSave={async (input: ReplaceVideoTagsInput) => {
+        const body = JSON.stringify(input);
+        if (tagIntent.current?.body !== body) tagIntent.current = { body, key: crypto.randomUUID() };
+        setTagError(null);
+        try {
+          await replaceTags.mutateAsync({ videoId: tagVideo.videoId, input, idempotencyKey: tagIntent.current.key });
+          setTagVideo(null); setSuccessToast('Tags atualizadas');
+        } catch (error) {
+          setTagError(getVideoUploadErrorCode(error) ?? 'MEDIA_UNAVAILABLE');
+        }
+      }} /> : null}
     {dialogOpen ? <VideoUploadDialog
       busy={dialogBusy}
       error={dialogError}
+      tagError={uploadTagError}
       onClose={() => { if (!dialogBusy) setDialogOpen(false); }}
       onStart={startUpload}
       pendingUploads={pendingUploads.data?.data ?? []}

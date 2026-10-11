@@ -5,7 +5,8 @@ public sealed record CreateVideoUploadRequest(
     string FileName,
     long FileSize,
     string ContentType,
-    string Fingerprint);
+    string Fingerprint,
+    IReadOnlyList<string>? Tags = null);
 
 public sealed record CreateVideoUploadInternalRequest(
     string Title,
@@ -13,7 +14,8 @@ public sealed record CreateVideoUploadInternalRequest(
     long FileSize,
     string ContentType,
     string Fingerprint,
-    string UploaderName);
+    string UploaderName,
+    IReadOnlyList<string>? Tags = null);
 
 public sealed record CreateVideoUploadPartUrlsRequest(IReadOnlyList<int> PartNumbers);
 
@@ -25,7 +27,11 @@ public sealed record VideoUploadResponse(
     long PartSize,
     int PartCount,
     IReadOnlyList<int> ReceivedParts,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    IReadOnlyList<string>? Tags = null)
+{
+    public IReadOnlyList<string> Tags { get; init; } = Tags ?? [];
+}
 
 public sealed record VideoUploadPaginationResponse(int Page, int Size, long Total, long TotalPages);
 

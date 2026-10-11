@@ -152,6 +152,9 @@
 .authoring-page .course-video-search { position: relative; gap: 8px; font-size: 14px; }
 .authoring-page .course-video-search > svg { position: absolute; left: 12px; top: 12px; color: var(--muted); pointer-events: none; }
 .authoring-page .dialog-card .course-video-search input { height: 40px; padding: 10px 12px 10px 36px; border: 1px solid var(--border); }
+.authoring-page .course-video-filters { display: grid; gap: 8px; min-width: 0; }
+.authoring-page .course-video-filters .video-filter-options { justify-self: start; max-width: 100%; overflow-x: auto; }
+.authoring-page .course-ready-video-sheet .single-choice-content > .course-ready-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .authoring-page .course-ready-video-sheet .single-choice-options { gap: 16px; margin: 0; padding: 0; }
 .authoring-page .course-ready-video-sheet .single-choice-options legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .authoring-page .course-ready-video-sheet .single-choice-option { position: relative; margin: 0; min-height: 94px; padding: 16px; background: var(--surface); border-radius: 16px; }
