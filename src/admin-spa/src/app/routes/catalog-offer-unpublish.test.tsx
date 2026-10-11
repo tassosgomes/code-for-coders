@@ -17,11 +17,9 @@ const renderRecord = (offerCount: 1 | 2 = 1) => {
   renderWithProviders(<RouterProvider router={createMemoryRouter(routes, { initialEntries: [`/catalogo/${catalogOfferFixture.courseId}`] })} />);
   return model;
 };
-const openMenu = async (user: ReturnType<typeof userEvent.setup>, name = 'Acesso por 12 meses') => {
-  await user.click(await screen.findByRole('button', { name: `Ações de ${name}` }));
-};
+const offerRow = async (name = 'Acesso por 12 meses') => within((await screen.findByRole('heading', { name })).closest('li')!);
 const open = async (user: ReturnType<typeof userEvent.setup>) => {
-  await openMenu(user); await user.click(screen.getByRole('button', { name: 'Despublicar' }));
+  await user.click((await offerRow()).getByRole('button', { name: 'Despublicar' }));
   return within(screen.getByRole('alertdialog'));
 };
 
@@ -35,22 +33,24 @@ describe('catalog offer unpublication', () => {
     expect(dialog.queryByText('O curso também sai da vitrine.')).not.toBeInTheDocument();
     await user.click(dialog.getByRole('button', { name: 'Cancelar' })); expect(model.keys).toHaveLength(0);
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    await openMenu(user); await user.click(screen.getByRole('button', { name: 'Despublicar' }));
+    await user.click((await offerRow()).getByRole('button', { name: 'Despublicar' }));
     await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Despublicar' }));
     expect(await screen.findByText('Oferta despublicada.')).toBeInTheDocument();
-    expect(screen.getByText('– Despublicada')).toBeInTheDocument(); expect(model.keys).toHaveLength(1); expect(model.keys[0]).toBeTruthy();
-    expect(screen.getByText('✓ Na vitrine')).toBeInTheDocument();
-    await openMenu(user);
-    expect(screen.getByRole('button', { name: 'Publicar de novo' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Despublicar' })).not.toBeInTheDocument();
+    expect(screen.getByText('Despublicada')).toBeInTheDocument(); expect(model.keys).toHaveLength(1); expect(model.keys[0]).toBeTruthy();
+    expect(screen.getByText('Na vitrine')).toBeInTheDocument();
+    const row = await offerRow();
+    expect(row.getByRole('button', { name: 'Publicar de novo' })).toBeInTheDocument();
+    expect(row.queryByRole('button', { name: 'Despublicar' })).not.toBeInTheDocument();
+    await user.click(row.getByRole('button', { name: 'Ações de Acesso por 12 meses' }));
+    expect(row.getByRole('button', { name: 'Editar' })).toBeInTheDocument();
+    expect(row.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
   });
 
   it('warns that unpublishing the last published offer removes the course from the showcase and refreshes it', async () => {
-    const user = userEvent.setup(); renderRecord(1); expect(await screen.findByText('✓ Na vitrine')).toBeInTheDocument();
+    const user = userEvent.setup(); renderRecord(1); expect(await screen.findByText('Na vitrine')).toBeInTheDocument();
     const dialog = await open(user); expect(dialog.getByText('O curso também sai da vitrine.')).toBeInTheDocument();
     await user.click(dialog.getByRole('button', { name: 'Despublicar' }));
-    expect(await screen.findByText('– Fora da vitrine')).toBeInTheDocument(); expect(screen.getByText('– Despublicada')).toBeInTheDocument();
+    expect(await screen.findByText('Fora da vitrine')).toBeInTheDocument(); expect(screen.getByText('Despublicada')).toBeInTheDocument();
   });
 
   it('keeps the offer published, shows the conflict, and retries an uncertain unpublication with the same key and CSRF', async () => {
@@ -62,8 +62,8 @@ describe('catalog offer unpublication', () => {
     }));
     const dialog = await open(user); await user.click(dialog.getByRole('button', { name: 'Despublicar' }));
     await dialog.findByText('Não foi possível despublicar agora.'); await user.click(dialog.getByRole('button', { name: 'Tentar de novo' }));
-    expect(await dialog.findByText('Esta oferta não está mais publicada. Atualize a ficha do curso.')).toBeInTheDocument();
+    expect(await dialog.findByText('Esta oferta não está mais publicada.')).toBeInTheDocument(); expect(dialog.getByText('Atualize a ficha do curso.')).toBeInTheDocument();
     await waitFor(() => expect(keys).toHaveLength(2)); expect(keys[0]).toBeTruthy(); expect(keys[1]).toBe(keys[0]);
-    expect(screen.getByText('✓ Publicada')).toBeInTheDocument();
+    expect(screen.getByText('Publicada')).toBeInTheDocument();
   });
 });

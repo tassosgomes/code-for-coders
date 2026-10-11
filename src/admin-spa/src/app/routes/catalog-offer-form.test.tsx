@@ -22,7 +22,7 @@ const renderRecord = (initial: Parameters<typeof createCatalogOfferHandlers>[0] 
 const fill = async (user: ReturnType<typeof userEvent.setup>, name = 'Acesso por 12 meses', price = '497,00') => {
   await user.click(await screen.findByRole('button', { name: '+ Nova oferta' }));
   await user.type(screen.getByRole('textbox', { name: 'Nome da opção' }), name);
-  await user.type(screen.getByRole('textbox', { name: 'Preço (R$)' }), price);
+  await user.type(screen.getByRole('textbox', { name: 'Preço' }), price);
 };
 
 describe('catalog offer form', () => {
@@ -36,7 +36,7 @@ describe('catalog offer form', () => {
     expect(screen.queryByRole('textbox', { name: 'Meses' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Salvar rascunho' })); await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(model.writes[1]?.body).toEqual({ name: 'Acesso vitalício', priceCents: 89700, accessPeriod: { type: 'lifetime' } });
-    expect(await screen.findByText('Acesso vitalício')).toBeInTheDocument(); expect(screen.getByText('R$ 497,00 ·')).toBeInTheDocument(); expect(screen.getByText('R$ 897,00 ·')).toBeInTheDocument();
+    expect(await screen.findByText('Acesso vitalício')).toBeInTheDocument(); expect(screen.getByText('R$ 497,00')).toBeInTheDocument(); expect(screen.getByText('R$ 897,00')).toBeInTheDocument();
     expect(model.writes[0]?.key).toBeTruthy(); expect(model.writes[0]?.key).not.toBe(model.writes[1]?.key);
   });
 
@@ -51,7 +51,7 @@ describe('catalog offer form', () => {
     const user = userEvent.setup(); const model = renderRecord(); await fill(user, 'Option', '497,005');
     await user.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
     expect(await screen.findByText('Use até duas casas decimais.')).toBeInTheDocument(); expect(model.writes).toHaveLength(0);
-    expect(screen.getByRole('textbox', { name: 'Preço (R$)' })).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('textbox', { name: 'Preço' })).toHaveAttribute('aria-invalid', 'true');
   });
 
   it.each(['0', '-1', '100000,00'])('rejects price %s and keeps the error at the price', async (price) => {
@@ -68,17 +68,17 @@ describe('catalog offer form', () => {
   it('edits a draft and reloads its price and lifetime promise', async () => {
     const user = userEvent.setup(); const model = renderRecord([{ ...catalogOfferFixture, accessPeriod: { type: 'months', months: 12 } }]);
     await user.click(await screen.findByRole('button', { name: `Ações de ${catalogOfferFixture.name}` }));
-    await user.click(screen.getByRole('button', { name: 'Editar' })); expect(screen.getByRole('textbox', { name: 'Preço (R$)' })).toHaveValue('497,00');
-    await user.clear(screen.getByRole('textbox', { name: 'Preço (R$)' })); await user.type(screen.getByRole('textbox', { name: 'Preço (R$)' }), '897,00');
+    await user.click(screen.getByRole('button', { name: 'Editar' })); expect(screen.getByRole('textbox', { name: 'Preço' })).toHaveValue('497,00');
+    await user.clear(screen.getByRole('textbox', { name: 'Preço' })); await user.type(screen.getByRole('textbox', { name: 'Preço' }), '897,00');
     await user.click(screen.getByRole('radio', { name: 'Vitalícia' })); await user.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
-    expect(await screen.findByText('R$ 897,00 ·')).toBeInTheDocument(); expect(model.writes[0]?.method).toBe('PATCH');
+    expect(await screen.findByText('R$ 897,00')).toBeInTheDocument(); expect(model.writes[0]?.method).toBe('PATCH');
     expect(model.writes[0]?.body).toEqual({ name: catalogOfferFixture.name, priceCents: 89700, accessPeriod: { type: 'lifetime' } });
   });
 
   it('requires deletion confirmation, supports cancel and removes only the confirmed draft', async () => {
     const user = userEvent.setup(); const model = renderRecord([{ ...catalogOfferFixture, accessPeriod: { type: 'months', months: 12 } }]);
     await user.click(await screen.findByRole('button', { name: `Ações de ${catalogOfferFixture.name}` }));
-    await user.click(screen.getByRole('button', { name: 'Excluir' })); expect(screen.getByRole('alertdialog')).toHaveTextContent('Esta ação não pode ser desfeita.'); expect(model.writes).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Excluir' })); expect(screen.getByRole('alertdialog')).toHaveTextContent('O rascunho será apagado e não poderá ser recuperado.'); expect(model.writes).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Cancelar' })); expect(model.writes).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: `Ações de ${catalogOfferFixture.name}` }));
     await user.click(screen.getByRole('button', { name: 'Excluir' })); await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Excluir' }));
@@ -88,7 +88,7 @@ describe('catalog offer form', () => {
 
   it.each([
     ['name', 'Nome da opção', 'Informe um nome de 1 a 60 caracteres.'],
-    ['priceCents', 'Preço (R$)', 'Informe um valor entre R$ 0,01 e R$ 99.999,99.'],
+    ['priceCents', 'Preço', 'Informe um valor entre R$ 0,01 e R$ 99.999,99.'],
     ['accessPeriod', 'Meses', 'Informe de 1 a 60 meses inteiros.'],
   ])('shows server FIELD_INVALID for %s at its named field', async (field, label, message) => {
     const user = userEvent.setup(); renderRecord(); server.use(http.post(postEndpoint, () => HttpResponse.json({ code: 'FIELD_INVALID', detail: `${field} is invalid.` }, { status: 422 })));
@@ -99,7 +99,7 @@ describe('catalog offer form', () => {
   it('shows the course limit and preserves the form', async () => {
     const user = userEvent.setup(); renderRecord(); server.use(http.post(postEndpoint, () => HttpResponse.json({ code: 'FIELD_INVALID', detail: 'offers cannot exceed 50 per course.' }, { status: 422 })));
     await fill(user); await user.click(screen.getByRole('button', { name: 'Salvar rascunho' }));
-    expect(await screen.findByText('O curso já tem 50 ofertas. Exclua um rascunho primeiro.')).toBeInTheDocument(); expect(screen.getByRole('textbox', { name: 'Preço (R$)' })).toHaveValue('497,00');
+    expect(await screen.findByText('O curso já tem 50 ofertas.')).toBeInTheDocument(); expect(screen.getByText('Exclua um rascunho primeiro.')).toBeInTheDocument(); expect(screen.getByRole('textbox', { name: 'Preço' })).toHaveValue('497,00');
   });
 
   it('retries an uncertain write with the same key and changes the key for another body', async () => {

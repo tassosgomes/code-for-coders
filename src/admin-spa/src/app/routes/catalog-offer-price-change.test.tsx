@@ -24,7 +24,7 @@ const open = async (user: ReturnType<typeof userEvent.setup>) => {
   return within(screen.getByRole('dialog'));
 };
 const changePrice = async (user: ReturnType<typeof userEvent.setup>, price = '397,00') => {
-  await user.clear(screen.getByLabelText('Preço (R$)')); await user.type(screen.getByLabelText('Preço (R$)'), price);
+  await user.clear(screen.getByLabelText('Preço')); await user.type(screen.getByLabelText('Preço'), price);
 };
 
 describe('catalog offer price and period changes', () => {
@@ -38,9 +38,9 @@ describe('catalog offer price and period changes', () => {
     expect(within(dialog.getByRole('region', { name: 'Depois' })).getByText('R$ 397,00')).toBeInTheDocument();
     expect(dialog.getByText('Vale para compras futuras e não altera quem já comprou.')).toBeInTheDocument(); expect(model.writes).toHaveLength(0);
     await user.click(dialog.getByRole('button', { name: 'Voltar e editar' }));
-    expect(dialog.getByLabelText('Preço (R$)')).toHaveValue('397,00'); expect(model.writes).toHaveLength(0);
+    expect(dialog.getByLabelText('Preço')).toHaveValue('397,00'); expect(model.writes).toHaveLength(0);
     await user.click(dialog.getByRole('button', { name: 'Revisar alteração' })); await user.click(dialog.getByRole('button', { name: 'Confirmar' }));
-    await screen.findByText('Oferta salva.'); expect(screen.getByText('✓ Publicada')).toBeInTheDocument();
+    await screen.findByText('Oferta salva.'); expect(screen.getByText('Publicada')).toBeInTheDocument();
     expect(model.writes).toHaveLength(1); expect(model.writes[0]?.body).toMatchObject({ priceCents: 39700, accessPeriod: { type: 'months', months: 12 } });
   });
 

@@ -27,7 +27,7 @@ describe('catalog courses', () => {
     expect(await screen.findByText('Fundamentos de C#')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Catálogo' })).toHaveAttribute('href', '/catalogo');
     expect(screen.getByText('Comercial')).toBeInTheDocument(); expect(screen.getByRole('link', { name: 'Financeiro' })).toBeInTheDocument();
-    expect(screen.getByText('Sem nível')).toBeInTheDocument(); expect(screen.getByText('– Não')).toBeInTheDocument(); expect(screen.getByText('Sem ofertas')).toBeInTheDocument();
+    expect(screen.getByText('Sem nível')).toBeInTheDocument(); expect(screen.getByText('Não')).toBeInTheDocument(); expect(screen.getByText('Sem ofertas')).toBeInTheDocument();
   });
 
   it.each([['administrador', 'acesso.gerir'], ['professor', 'autoria.ler'], ['suporte', 'suporte.atender']])('%s has no menu and cannot request catalog data via direct route', async (role, permission) => {
@@ -45,7 +45,7 @@ describe('catalog courses', () => {
       return HttpResponse.json({ data: [{ ...catalogCourseFixture, title: page === 1 ? 'Curso A' : 'Curso B', level: 'advanced', inShowcase: true, offerCounts: { published: 2, draft: 1, unpublished: 1 } }], pagination: { page, size: 10, total: 11, totalPages: 2 } });
     }));
     expect(await screen.findByText('Curso A')).toBeInTheDocument(); expect(screen.getByText('Avançado')).toBeInTheDocument();
-    expect(screen.getByText('✓ Sim')).toBeInTheDocument(); expect(screen.getByText('2 publicadas · 1 rascunho · 1 despublicada')).toBeInTheDocument();
+    expect(screen.getByText('Sim')).toBeInTheDocument(); expect(screen.getByText('2 publicadas · 1 rascunho · 1 despublicada')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Próxima página' }));
     expect(await screen.findByText('Curso B')).toBeInTheDocument(); expect(router.state.location.search).toBe('?page=2');
     await user.click(screen.getByRole('button', { name: 'Página anterior' }));
@@ -56,7 +56,7 @@ describe('catalog courses', () => {
     const user = userEvent.setup(); renderCatalog(); let failed = true;
     server.use(http.get(`${env.API_URL}/api/v1/catalog/courses`, () => failed ? HttpResponse.json({ code: 'COMMERCE_UNAVAILABLE' }, { status: 502 })
       : HttpResponse.json({ data: [], pagination: { page: 1, size: 10, total: 0, totalPages: 0 } })));
-    expect(await screen.findByRole('heading', { name: 'Não foi possível carregar o catálogo agora.' })).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar o catálogo agora.');
     failed = false; await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
     expect(await screen.findByRole('heading', { name: 'Nenhum curso publicado ainda.' })).toBeInTheDocument();
     expect(screen.getByText('Só cursos publicados pelo professor aparecem aqui para receber ofertas.')).toBeInTheDocument();

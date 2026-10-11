@@ -18,8 +18,7 @@ const renderRecord = (status = 'draft', lifetime = false) => {
   return model;
 };
 const open = async (user: ReturnType<typeof userEvent.setup>, label = 'Publicar') => {
-  await user.click(await screen.findByRole('button', { name: `Ações de ${catalogOfferFixture.name}` }));
-  await user.click(screen.getByRole('button', { name: label }));
+  await user.click(await screen.findByRole('button', { name: label }));
   return within(screen.getByRole('dialog'));
 };
 
@@ -35,21 +34,23 @@ describe('catalog offer publication', () => {
     await user.click(dialog.getByRole('button', { name: 'Cancelar' })); expect(model.keys).toHaveLength(0);
     dialog = await open(user); await user.click(dialog.getByRole('button', { name: 'Publicar' }));
     expect(await screen.findByText('Oferta publicada.')).toBeInTheDocument();
-    expect(screen.getByText('✓ Publicada')).toBeInTheDocument(); expect(model.keys).toHaveLength(1); expect(model.keys[0]).toBeTruthy();
+    expect(screen.getByText('Publicada')).toBeInTheDocument(); expect(model.keys).toHaveLength(1); expect(model.keys[0]).toBeTruthy();
   });
 
   it('shows the lifetime promise when republishing an unpublished offer', async () => {
     const user = userEvent.setup(); const model = renderRecord('unpublished', true); const dialog = await open(user, 'Publicar de novo');
     expect(dialog.getByText('Acesso vitalício, sem data de término')).toBeInTheDocument();
-    await user.click(dialog.getByRole('button', { name: 'Publicar' })); await screen.findByText('✓ Publicada'); expect(model.keys).toHaveLength(1);
+    await user.click(dialog.getByRole('button', { name: 'Publicar' })); await screen.findByText('Publicada'); expect(model.keys).toHaveLength(1);
   });
 
   it('keeps the draft and shows the missing course level beside the publication action', async () => {
     const user = userEvent.setup(); renderRecord();
     server.use(http.post(endpoint, () => HttpResponse.json({ code: 'COURSE_LEVEL_REQUIRED' }, { status: 422 })));
     const dialog = await open(user); await user.click(dialog.getByRole('button', { name: 'Publicar' }));
-    expect(await dialog.findByRole('alert')).toHaveTextContent('O curso não declara nível. O professor precisa declarar o nível e publicar o curso.');
-    expect(screen.getByText('Rascunho')).toBeInTheDocument(); expect(screen.queryByText('✓ Publicada')).not.toBeInTheDocument();
+    const alert = await dialog.findByRole('alert'); expect(alert).toHaveTextContent('O curso não declara nível.');
+    expect(alert).toHaveTextContent('O professor precisa declarar o nível e publicar o curso. A oferta continua em rascunho.');
+    expect(dialog.getAllByRole('button', { name: 'Fechar' })).toHaveLength(2); expect(dialog.queryByRole('button', { name: 'Publicar' })).not.toBeInTheDocument();
+    expect(screen.getByText('Rascunho')).toBeInTheDocument(); expect(screen.queryByText('Publicada')).not.toBeInTheDocument();
   });
 
   it('retries an uncertain publication with the same key and forwards CSRF', async () => {

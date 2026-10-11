@@ -27,7 +27,7 @@ describe('catalog course record', () => {
     expect(screen.getByText('Conhecimentos básicos de programação.')).toBeInTheDocument(); expect(screen.getByText('Lógica atualizada')).toBeInTheDocument();
     expect(screen.getByRole('note')).toHaveTextContent('Nenhuma oferta pode ser publicada até o professor declarar o nível');
     expect(screen.getByText('Descreva o que a pessoa vai aprender. Não prometa exclusividade de conteúdo nem proteção contra cópia.')).toBeInTheDocument();
-    expect(screen.getByText('0/160')).toBeInTheDocument(); expect(screen.getByText('0 cliques em Comprar')).toBeInTheDocument();
+    expect(screen.getByText('0/160')).toBeInTheDocument(); expect(screen.queryByText(/cliques em Comprar/)).not.toBeInTheDocument();
     expect(screen.getByText('Nenhuma oferta ainda. Crie a primeira para colocar o curso à venda.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Abrir na Autoria' })).not.toBeInTheDocument(); expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
@@ -92,9 +92,10 @@ describe('catalog course record', () => {
   it('uses the same not-found screen for inaccessible courses and retries unavailable records', async () => {
     const user = userEvent.setup(); renderRecord(); let status = 502;
     server.use(http.get(endpoint, () => HttpResponse.json({ code: status === 404 ? 'CATALOG_COURSE_NOT_FOUND' : 'COMMERCE_UNAVAILABLE' }, { status })));
-    expect(await screen.findByRole('heading', { name: 'Não foi possível carregar a ficha agora.' })).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar este curso agora.');
     status = 404; await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
-    expect(await screen.findByRole('heading', { name: 'Curso não encontrado no catálogo.' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '← Catálogo' })).toHaveAttribute('href', '/catalogo');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Curso não encontrado no catálogo.' })).toBeInTheDocument();
+    expect(screen.getByText('O curso pode nunca ter sido publicado, não existir ou pertencer a outra escola.')).toBeInTheDocument();
+    for (const link of screen.getAllByRole('link', { name: 'Voltar ao Catálogo' })) expect(link).toHaveAttribute('href', '/catalogo');
   });
 });
