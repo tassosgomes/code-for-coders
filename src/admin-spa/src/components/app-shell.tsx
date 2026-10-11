@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Gift, Menu, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
+import { CodeXml, BookOpen, ChevronDown, Clapperboard, House, Gift, LogOut, Menu, ScrollText, Tags, Users, Wallet, X } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 
 import { ThemeMenu } from '@/components/theme-menu';
@@ -19,6 +19,8 @@ type AppShellProps = {
   logoutError: string | null;
   onLogout: () => void;
 };
+
+const formatRole = (role: string) => role.charAt(0).toUpperCase() + role.slice(1);
 
 export const AppShell = ({ serviceName, title, areas, name, roles, outletContext, isLoggingOut, logoutError, onLogout }: AppShellProps) => {
   useDocumentTitle(title);
@@ -65,8 +67,9 @@ export const AppShell = ({ serviceName, title, areas, name, roles, outletContext
               <span className="account-avatar">{initials}</span><span>{name}</span><ChevronDown size={16} />
             </button>
             {accountOpen ? <div aria-label="Conta" className="account-menu" role="menu">
-              <strong>{name}</strong><div className="role-badges">{roles.map((role) => <span className="role-badge" key={role}>{role}</span>)}</div>
-              <button disabled={isLoggingOut} onClick={onLogout} role="menuitem" type="button">{isLoggingOut ? 'Saindo…' : 'Sair'}</button>
+              <div className="account-menu-label"><span className="account-menu-name">{name}</span>{roles.length ? <span className="account-menu-roles">{roles.map(formatRole).join(', ')}</span> : null}</div>
+              <hr className="account-menu-separator" />
+              <button className="account-menu-item" disabled={isLoggingOut} onClick={onLogout} role="menuitem" type="button"><LogOut aria-hidden="true" size={16} />{isLoggingOut ? 'Saindo…' : 'Sair'}</button>
             </div> : null}
           </div>
         </header>

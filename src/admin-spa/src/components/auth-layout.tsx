@@ -22,9 +22,15 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => (
       <div className="auth-panel-content">
         <div className="code-window">
           <div className="code-title"><span className="window-dots"><i /><i /><i /></span>acesso.ts <span>TS</span></div>
-          <pre><span>1  // acesso.ts</span>{'\n'}2  if (!voce.pode(<em>"financeiro.ler"</em>)){'\n'}<span>3    return negar();  // 403</span>{'\n'}4{'\n'}5  abrir(area);  <strong>{'// ✓ permitido'}</strong></pre>
+          <pre>
+            <span className="code-ln">1  </span><span className="code-cm">// acesso.ts</span>{'\n'}
+            <span className="code-ln">2  </span><span className="code-kw">if</span> (!voce.pode(<em>"financeiro.ler"</em>)){'\n'}
+            <span className="code-ln">3  </span><span className="code-kw">  return</span> negar();  <span className="code-cm">// 403</span>{'\n'}
+            <span className="code-ln">4</span>{'\n'}
+            <span className="code-ln">5  </span>abrir(area);  <strong>{'// ✓ permitido'}</strong>
+          </pre>
         </div>
-        <h2>Operação da escola, com <span>acesso por papel.</span></h2>
+        <h2>Operação da escola, com <span>acesso por papel</span>.</h2>
         <p>Área restrita à equipe. Cada pessoa vê só o que é dela.</p>
       </div>
     </aside>

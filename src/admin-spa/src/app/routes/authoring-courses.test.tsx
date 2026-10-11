@@ -136,7 +136,7 @@ describe('authoring courses', () => {
 
   it('opens the authoring card from the professor home', async () => {
     const user = userEvent.setup(); renderCourses(['autoria.ler', 'autoria.editar'], '/');
-    await user.click(await screen.findByRole('link', { name: 'Abrir Autoria' }));
+    await user.click(await screen.findByRole('link', { name: 'Abrir autoria' }));
     expect(await screen.findByRole('heading', { name: 'Cursos da escola' })).toBeInTheDocument();
   });
 });
