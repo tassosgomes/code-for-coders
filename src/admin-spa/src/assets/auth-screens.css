@@ -1,0 +1,130 @@
+/* TASK-21.2: telas de autenticação do backoffice (Figma B1-B4). */
+
+/* Painel escuro: coloração do código e do título (Figma Auth Brand Panel). */
+.auth-layout .code-window pre .code-ln,
+.auth-layout .code-window pre .code-cm { color: var(--code-faint); }
+.auth-layout .code-window pre .code-kw { color: var(--code-accent); }
+
+/* Cartão */
+.auth-layout .auth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: min(420px, 100%);
+  padding: 32px;
+}
+.auth-layout .auth-card-header { display: flex; flex-direction: column; gap: 8px; }
+.auth-layout .auth-card-header .eyebrow { margin: 0; }
+.auth-layout .auth-card-header h1 { margin: 0; font-size: 30px; line-height: 36px; letter-spacing: -0.75px; }
+.auth-layout .auth-card-header p:not(.eyebrow) { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+
+.auth-layout .auth-card form { gap: 16px; margin-top: 0; }
+.auth-layout .auth-card .auth-field { display: flex; flex-direction: column; gap: 8px; }
+.auth-layout .auth-card .auth-field .field-heading { margin-top: 0; }
+.auth-layout .auth-card label { line-height: 20px; }
+.auth-layout .auth-card input { min-height: 40px; padding: 0 12px; }
+.auth-layout .auth-card .password-input input { padding: 0 44px 0 12px; }
+.auth-layout .auth-card .field-heading a { line-height: 16px; }
+.auth-layout .auth-card form [role=alert] { margin: 0; font-size: 12px; line-height: 16px; }
+.auth-layout .auth-card form button[type=submit] { margin-top: 0; }
+.auth-layout .auth-card .primary-link { margin-top: 0; font-weight: 600; line-height: 20px; }
+.auth-layout .auth-card .auth-footnote { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+
+/* Aviso (erro ou neutro) */
+.auth-layout .auth-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+.auth-layout .auth-notice-danger { border-color: var(--danger); color: var(--danger); }
+.auth-layout .auth-notice svg { flex: none; margin-top: 2px; }
+.auth-layout .auth-notice-content { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.auth-layout .auth-notice-content p { margin: 0; }
+.auth-layout .auth-notice-title { font-weight: 500; }
+.auth-layout .auth-notice-neutral .auth-notice-content p:not(.auth-notice-title) { color: var(--muted); }
+
+/* Cartão de resultado */
+.auth-layout .auth-result-card .auth-card-header h1 { margin: 0; }
+.auth-layout .auth-status-tile {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--primary);
+}
+.auth-layout .auth-status-tile-success { background: var(--success-soft); color: var(--success-soft-foreground); }
+.auth-layout .auth-status-tile-warning { background: var(--warning-soft); color: var(--warning-soft-foreground); }
+.auth-layout .auth-result-actions { display: flex; flex-direction: column; gap: 16px; }
+.auth-layout .auth-solid-link,
+.auth-layout .auth-outline-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.auth-layout .auth-solid-link { background: var(--primary); color: var(--primary-foreground); }
+.auth-layout .auth-solid-link:hover { background: var(--primary-hover); }
+.auth-layout .auth-outline-link { border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.auth-layout .auth-outline-link:hover { background: var(--surface-muted); }
+
+/* Resumo do convite */
+.auth-layout .auth-invitation-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+  font-size: 14px;
+  line-height: 20px;
+}
+.auth-layout .auth-invitation-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.auth-layout .auth-invitation-summary dt { color: var(--muted); }
+.auth-layout .auth-invitation-summary dd { margin: 0; font-weight: 500; text-align: right; }
+.auth-layout .auth-role-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+/* Esqueleto do convite */
+.auth-layout .auth-skeleton-card { align-items: flex-start; }
+.auth-layout .auth-skeleton-tile { width: 48px; height: 48px; border-radius: 12px; background: var(--surface-muted); }
+.auth-layout .auth-skeleton-lines { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.auth-layout .auth-skeleton-bar { display: block; height: 12px; border-radius: 6px; background: var(--surface-muted); }
+.auth-layout .auth-skeleton-title { width: 70%; height: 20px; }
+.auth-layout .auth-skeleton-short { width: 55%; }
+.auth-layout .auth-skeleton-card > p { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+
+/* Requisitos da senha */
+.auth-layout .auth-card .password-requirements { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 16px; color: var(--muted); }
+.auth-layout .auth-card .password-requirements .met { color: var(--foreground); }
+.auth-layout .auth-card .password-requirements svg { flex: none; }
+.auth-layout .auth-card .password-requirements .met svg { color: var(--success-soft-foreground); }
+
+@media (max-width: 900px) {
+  .auth-layout .auth-card { border: 0; padding: 0; width: 100%; max-width: 420px; }
+}

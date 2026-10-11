@@ -33,7 +33,7 @@ describe('catalog courses', () => {
   it.each([['administrador', 'acesso.gerir'], ['professor', 'autoria.ler'], ['suporte', 'suporte.atender']])('%s has no menu and cannot request catalog data via direct route', async (role, permission) => {
     let calls = 0; renderCatalog([permission], role);
     server.use(http.get(`${env.API_URL}/api/v1/catalog/courses`, () => { calls++; return HttpResponse.json({}); }));
-    expect(await screen.findByRole('heading', { name: 'Você não tem acesso a esta área.' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Esta área não é do seu papel' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Catálogo' })).not.toBeInTheDocument(); expect(calls).toBe(0);
   });
 

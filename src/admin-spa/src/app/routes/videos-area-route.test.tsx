@@ -47,7 +47,7 @@ describe('videos area', () => {
 
     expect(screen.getByRole('heading', { name: 'Vídeos' })).toBeInTheDocument();
     expect(screen.getByText('Envie gravações e acompanhe a preparação.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Abrir Vídeos/ })).toHaveAttribute('href', '/videos');
+    expect(screen.getByRole('link', { name: /Abrir vídeos/ })).toHaveAttribute('href', '/videos');
   });
 
   it('blocks direct access when the permission is missing', async () => {

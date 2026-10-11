@@ -1,12 +1,15 @@
 import { useLayoutEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
-import { Eye, EyeOff } from 'lucide-react';
+import { CircleAlert, Eye, EyeOff } from 'lucide-react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
 
 import { paths } from '@/config/paths';
 import { AuthLayout } from '@/components/auth-layout';
+import { AuthNotice } from '@/components/auth-notice';
+import { AuthResultCard } from '@/components/auth-result-card';
 import { PasswordRequirements } from '@/components/password-requirements';
 import {
   getStaffInvitationAcceptanceError,
@@ -17,10 +20,38 @@ import {
 } from '@/features/staff-access/api/staff-invitation-acceptance';
 
 const staffRoleLabels: Record<string, string> = {
-  administrador: 'administrador',
-  financeiro: 'financeiro',
-  professor: 'professor',
-  suporte: 'suporte',
+  administrador: 'Administrador',
+  financeiro: 'Financeiro',
+  professor: 'Professor',
+  suporte: 'Suporte',
+};
+
+const formatInvitationExpiry = (value: string) => {
+  const date = new Date(value);
+  const day = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `${day} às ${time}`;
+};
+
+const getErrorCode = (error: unknown) =>
+  axios.isAxiosError<{ code?: unknown }>(error) ? error.response?.data?.code : undefined;
+
+const InvitationUnavailable = ({ error }: { error?: unknown }) => {
+  const code = error === undefined ? 'INVITATION_INVALID' : getErrorCode(error);
+  const isInvalid = code === 'INVITATION_INVALID';
+  const isEmailUnavailable = code === 'INVITATION_EMAIL_UNAVAILABLE';
+  const title = isInvalid
+    ? 'Este convite não vale mais'
+    : isEmailUnavailable ? 'E-mail indisponível' : 'Não foi possível abrir o convite';
+  const description = isInvalid
+    ? 'Ele expirou, já foi usado ou foi substituído por um mais novo. Peça um novo ao administrador que te convidou.'
+    : getStaffInvitationAcceptanceError(error);
+
+  return (
+    <AuthResultCard alert description={description} icon={CircleAlert} title={title} titleId="invitation-acceptance-title" tone="warning">
+      <Link className="primary-link" to={paths.staffLogin.getHref()}>Já tem conta? Entrar</Link>
+    </AuthResultCard>
+  );
 };
 
 export const StaffInvitationAcceptanceScreen = () => {
@@ -43,7 +74,6 @@ export const StaffInvitationAcceptanceScreen = () => {
       currentUrl.hash = '';
       window.history.replaceState(window.history.state, '', currentUrl.toString());
     }
-
   }, []);
 
   const submitAcceptance = async (input: StaffInvitationAcceptanceFormInput) => {
@@ -56,68 +86,84 @@ export const StaffInvitationAcceptanceScreen = () => {
     }
   };
 
+  if (!token) {
+    return <AuthLayout><InvitationUnavailable /></AuthLayout>;
+  }
+
+  if (preview.isError) {
+    return <AuthLayout><InvitationUnavailable error={preview.error} /></AuthLayout>;
+  }
+
+  if (!preview.data) {
+    return (
+      <AuthLayout>
+        <section aria-busy="true" aria-labelledby="invitation-loading-title" className="password-reset-card auth-card auth-skeleton-card">
+          <div aria-hidden="true" className="auth-skeleton-tile" />
+          <div aria-hidden="true" className="auth-skeleton-lines">
+            <span className="auth-skeleton-bar auth-skeleton-title" />
+            <span className="auth-skeleton-bar" />
+            <span className="auth-skeleton-bar auth-skeleton-short" />
+          </div>
+          <p id="invitation-loading-title" role="status">Conferindo seu convite…</p>
+        </section>
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout>
-      <section aria-labelledby="invitation-acceptance-title" className="password-reset-card">
-        <p className="eyebrow">Backoffice</p>
-        <h1 id="invitation-acceptance-title">Aceite seu convite</h1>
-
-        {!token ? (
-          <>
-            <p role="alert">Este convite não vale mais. Peça um novo ao administrador.</p>
-            <Link className="primary-link" to={paths.staffLogin.getHref()}>Ir para entrar</Link>
-          </>
-        ) : null}
-
-        {token && preview.isPending ? <p role="status">Validando convite…</p> : null}
-        {token && preview.isError ? (
-          <>
-            <p role="alert">{getStaffInvitationAcceptanceError(preview.error)}</p>
-            <Link className="primary-link" to={paths.staffLogin.getHref()}>Ir para entrar</Link>
-          </>
-        ) : null}
-
-        {token && preview.data ? (
-          <>
-            <p>Você recebeu o papel de {staffRoleLabels[preview.data.offeredRole] ?? preview.data.offeredRole}.</p>
-            <p>
-              Válido até{' '}
-              <time dateTime={preview.data.expiresAt}>{new Date(preview.data.expiresAt).toLocaleString('pt-BR')}</time>.
-            </p>
-            {requestError ? <p role="alert">{requestError}</p> : null}
-            <form noValidate onSubmit={(event) => void form.handleSubmit(submitAcceptance)(event)}>
-              <label htmlFor="invitation-name">Nome</label>
-              <div className="password-input"><input
-                autoComplete="name"
-                id="invitation-name"
-                type="text"
-                {...form.register('name')}
-                aria-invalid={Boolean(form.formState.errors.name)}
-                aria-describedby={form.formState.errors.name ? 'invitation-name-error' : undefined}
-              />
-              {form.formState.errors.name ? (
-                <p id="invitation-name-error" role="alert">{form.formState.errors.name.message}</p>
-              ) : null}
-
-              <label htmlFor="invitation-password">Senha</label>
-              <input
-                autoComplete="new-password"
-                id="invitation-password"
-                type={showPassword ? 'text' : 'password'}
-                {...form.register('password')}
-                aria-invalid={Boolean(form.formState.errors.password)}
-                aria-describedby={form.formState.errors.password ? 'invitation-password-error' : undefined}
-              /><button aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} className="visibility-button" onClick={() => setShowPassword(!showPassword)} type="button">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
-              {form.formState.errors.password ? (
-                <p id="invitation-password-error" role="alert">{form.formState.errors.password.message}</p>
-              ) : null}
-              <PasswordRequirements password={password} />
-              <button disabled={acceptInvitation.isPending} type="submit">
-                {acceptInvitation.isPending ? 'Ativando conta…' : 'Aceitar convite'}
-              </button>
-            </form>
-          </>
-        ) : null}
+      <section aria-labelledby="invitation-acceptance-title" className="password-reset-card auth-card">
+        <div className="auth-card-header">
+          <p className="eyebrow">Backoffice</p>
+          <h1 id="invitation-acceptance-title">Você foi convidado para a equipe</h1>
+          <p>Crie seu acesso para entrar no backoffice. O e-mail é o mesmo que recebeu este convite.</p>
+        </div>
+        <dl className="auth-invitation-summary">
+          <div>
+            <dt>Papel oferecido</dt>
+            <dd><span className="auth-role-badge">{staffRoleLabels[preview.data.offeredRole] ?? preview.data.offeredRole}</span></dd>
+          </div>
+          <div>
+            <dt>Vale até</dt>
+            <dd><time dateTime={preview.data.expiresAt}>{formatInvitationExpiry(preview.data.expiresAt)}</time></dd>
+          </div>
+        </dl>
+        {requestError ? <AuthNotice role="alert" tone="danger">{requestError}</AuthNotice> : null}
+        <form noValidate onSubmit={(event) => void form.handleSubmit(submitAcceptance)(event)}>
+          <div className="auth-field">
+            <label htmlFor="invitation-name">Seu nome</label>
+            <input
+              autoComplete="name"
+              id="invitation-name"
+              placeholder="Seu nome completo"
+              type="text"
+              {...form.register('name')}
+              aria-invalid={Boolean(form.formState.errors.name)}
+              aria-describedby={form.formState.errors.name ? 'invitation-name-error' : undefined}
+            />
+            {form.formState.errors.name ? (
+              <p id="invitation-name-error" role="alert">{form.formState.errors.name.message}</p>
+            ) : null}
+          </div>
+          <div className="auth-field">
+            <label htmlFor="invitation-password">Crie uma senha</label>
+            <div className="password-input"><input
+              autoComplete="new-password"
+              id="invitation-password"
+              type={showPassword ? 'text' : 'password'}
+              {...form.register('password')}
+              aria-invalid={Boolean(form.formState.errors.password)}
+              aria-describedby={form.formState.errors.password ? 'invitation-password-error' : undefined}
+            /><button aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} className="visibility-button" onClick={() => setShowPassword(!showPassword)} type="button">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
+            <PasswordRequirements password={password} />
+            {form.formState.errors.password ? (
+              <p id="invitation-password-error" role="alert">{form.formState.errors.password.message}</p>
+            ) : null}
+          </div>
+          <button disabled={acceptInvitation.isPending} type="submit">
+            {acceptInvitation.isPending ? 'Ativando conta…' : 'Aceitar e entrar'}
+          </button>
+        </form>
       </section>
     </AuthLayout>
   );

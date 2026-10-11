@@ -7,7 +7,7 @@ import axios from 'axios';
 import { loadStaffSession } from '@/app/routes/staff-session-loader';
 import { AppShell } from '@/components/app-shell';
 import { paths } from '@/config/paths';
-import { activeStaffSessionMarker, expiredStaffSessionMarker } from '@/config/session-markers';
+import { activeStaffSessionMarker, expiredStaffSessionMarker, loggedOutStaffSessionMarker } from '@/config/session-markers';
 import { useEndCurrentStaffSession } from '@/features/staff-session/api/staff-session';
 import { getStaffAreas } from '@/features/staff-session/utils/get-staff-areas';
 
@@ -65,6 +65,7 @@ const AdminLayoutContent = ({ serviceName, session, title }: AdminLayoutContentP
       queryClient.clear();
       window.sessionStorage.removeItem(activeStaffSessionMarker);
       window.sessionStorage.removeItem(expiredStaffSessionMarker);
+      window.sessionStorage.setItem(loggedOutStaffSessionMarker, 'true');
       await navigate(paths.staffLogin.getHref(), { replace: true });
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {

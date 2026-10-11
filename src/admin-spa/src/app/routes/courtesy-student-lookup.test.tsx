@@ -34,7 +34,7 @@ describe('courtesy student lookup', () => {
     for (const role of ['professor', 'suporte', 'administrador', 'aluno']) {
       let calls = 0; renderCourtesy(role === 'administrador' ? ['acesso.gerir'] : [], role);
       server.use(http.post(`${env.API_URL}/api/v1/student-account-lookups`, () => { calls++; return HttpResponse.json(courtesyStudentFixture); }));
-      expect(await screen.findByRole('heading', { name: 'Você não tem acesso a esta área.' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Esta área não é do seu papel' })).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: 'Cortesias' })).not.toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: 'E-mail do aluno' })).not.toBeInTheDocument(); expect(calls).toBe(0);
       cleanup();

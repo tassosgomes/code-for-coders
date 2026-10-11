@@ -104,4 +104,34 @@ describe('StaffSession areas', () => {
     expect(await screen.findByRole('heading', { name: 'Gerenciar acessos' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('shows name, roles as plain text and a Sair item with icon in the account menu', async () => {
+    server.use(
+      http.get(`${env.API_URL}/api/v1/staff-sessions/current`, () => HttpResponse.json({
+        accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
+        name: 'Marina Alves',
+        roles: ['administrador', 'professor'],
+        permissions: ['acesso.gerir'],
+        csrfToken: 'staff-session-csrf',
+      })),
+    );
+    const router = createMemoryRouter([
+      {
+        path: '/',
+        loader: loadStaffSession,
+        element: <AdminLayoutRoute serviceName="admin-spa" title="Admin Workspace" />,
+        children: [{ index: true, element: <h1>Início</h1> }],
+      },
+    ], { initialEntries: ['/'] });
+    const user = userEvent.setup();
+
+    renderWithProviders(<RouterProvider router={router} />);
+
+    await user.click(await screen.findByRole('button', { name: /Marina Alves/ }));
+    const menu = within(screen.getByRole('menu', { name: 'Conta' }));
+    expect(menu.getByText('Marina Alves')).toBeInTheDocument();
+    expect(menu.getByText('Administrador, Professor')).toBeInTheDocument();
+    const logout = menu.getByRole('menuitem', { name: 'Sair' });
+    expect(logout.querySelector('svg')).not.toBeNull();
+  });
 });

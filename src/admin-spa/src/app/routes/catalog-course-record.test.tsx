@@ -86,7 +86,7 @@ describe('catalog course record', () => {
   it('denies the direct route without permission without requesting a record', async () => {
     renderRecord(['autoria.ler']); let calls = 0;
     server.use(http.get(endpoint, () => { calls++; return HttpResponse.json(catalogCourseRecordFixture); }));
-    expect(await screen.findByRole('heading', { name: 'Você não tem acesso a esta área.' })).toBeInTheDocument(); expect(calls).toBe(0);
+    expect(await screen.findByRole('heading', { name: 'Esta área não é do seu papel' })).toBeInTheDocument(); expect(calls).toBe(0);
   });
 
   it('uses the same not-found screen for inaccessible courses and retries unavailable records', async () => {

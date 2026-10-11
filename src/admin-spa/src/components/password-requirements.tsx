@@ -1,3 +1,5 @@
+import { Circle, CircleCheck } from 'lucide-react';
+
 type PasswordRequirementsProps = { password: string };
 
 export const PasswordRequirements = ({ password }: PasswordRequirementsProps) => {
@@ -9,5 +11,14 @@ export const PasswordRequirements = ({ password }: PasswordRequirementsProps) =>
     ['Símbolo', /[^\w\s]/.test(password)],
   ] as const;
 
-  return <ul aria-label="Requisitos da senha" className="password-requirements">{requirements.map(([label, met]) => <li className={met ? 'met' : ''} key={label}><span aria-hidden="true">{met ? '✓' : '○'}</span>{label}</li>)}</ul>;
+  return (
+    <ul aria-label="Requisitos da senha" className="password-requirements">
+      {requirements.map(([label, met]) => (
+        <li className={met ? 'met' : ''} key={label}>
+          {met ? <CircleCheck aria-hidden="true" size={14} /> : <Circle aria-hidden="true" size={14} />}
+          {label}
+        </li>
+      ))}
+    </ul>
+  );
 };
