@@ -5,8 +5,8 @@ import { courseSchema, type Course } from '@/features/course-authoring/types/cou
 import { structureCourseFixture } from '@/testing/authoring-structure-handlers';
 
 export const readyVideoFixtures = [
-  { videoId: '0198dfac-674a-7000-8000-000000000051', title: 'Vídeo da colega', status: 'ready', durationSeconds: 125, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000031', name: 'Marina' } },
-  { videoId: '0198dfac-674a-7000-8000-000000000052', title: 'Vídeo do professor', status: 'ready', durationSeconds: 90, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000032', name: 'Rafael' } },
+  { videoId: '0198dfac-674a-7000-8000-000000000051', title: 'Vídeo da colega', status: 'ready', tags: [], durationSeconds: 125, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000031', name: 'Marina' } },
+  { videoId: '0198dfac-674a-7000-8000-000000000052', title: 'Vídeo do professor', status: 'ready', tags: [], durationSeconds: 90, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000032', name: 'Rafael' } },
 ];
 export const createAuthoringVideoHandlers = () => {
   const course: Course = courseSchema.parse(structuredClone(structureCourseFixture));

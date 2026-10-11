@@ -11,6 +11,8 @@ import { getVideoUpload } from '@/features/videos/api/get-video-upload';
 import { getPendingVideoUploadsQueryOptions, usePendingVideoUploads } from '@/features/videos/api/get-pending-video-uploads';
 import { getVideosQueryOptions, useVideos, type VideoPage, type VideoStatus } from '@/features/videos/api/get-videos';
 import { useUpdateVideoTitle } from '@/features/videos/api/update-video-title';
+import { useReplaceVideoTags, type ReplaceVideoTagsInput } from '@/features/videos/api/replace-video-tags';
+import { EditVideoTagsDialog } from '@/features/videos/components/edit-video-tags-dialog';
 import { EditVideoTitleDialog } from '@/features/videos/components/edit-video-title-dialog';
 import { VideoUploadDialog } from '@/features/videos/components/video-upload-dialog';
 import { VideosAreaScreen } from '@/features/videos/components/videos-area-screen';
@@ -67,6 +69,10 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const pendingUploads = usePendingVideoUploads();
   const queryClient = useQueryClient();
   const updateTitle = useUpdateVideoTitle();
+  const replaceTags = useReplaceVideoTags();
+  const [tagVideo, setTagVideo] = useState<VideoPage['data'][number] | null>(null);
+  const [tagError, setTagError] = useState<string | null>(null);
+  const tagIntent = useRef<{ body: string; key: string } | null>(null);
   const [editingVideo, setEditingVideo] = useState<VideoPage['data'][number] | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [editIdempotencyKey, setEditIdempotencyKey] = useState('');
@@ -416,6 +422,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
       onSearchChange={setSearchInput}
       onPageChange={(value) => changeFilters(filter, search, value)}
       onEditTitle={(video) => { setEditError(null); setSuccessToast(null); setEditIdempotencyKey(crypto.randomUUID()); setEditingVideo(video); }}
+      onEditTags={(video) => { setTagError(null); setSuccessToast(null); tagIntent.current = null; setTagVideo(video); }}
       successMessage={successToast}
     />
     {editingVideo ? <EditVideoTitleDialog
@@ -436,6 +443,19 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         }
       }}
     /> : null}
+    {tagVideo ? <EditVideoTagsDialog key={tagVideo.videoId} title={tagVideo.title} tags={tagVideo.tags}
+      busy={replaceTags.isPending} error={tagError} onClose={() => setTagVideo(null)}
+      onSave={async (input: ReplaceVideoTagsInput) => {
+        const body = JSON.stringify(input);
+        if (tagIntent.current?.body !== body) tagIntent.current = { body, key: crypto.randomUUID() };
+        setTagError(null);
+        try {
+          await replaceTags.mutateAsync({ videoId: tagVideo.videoId, input, idempotencyKey: tagIntent.current.key });
+          setTagVideo(null); setSuccessToast('Tags atualizadas');
+        } catch (error) {
+          setTagError(getVideoUploadErrorCode(error) ?? 'MEDIA_UNAVAILABLE');
+        }
+      }} /> : null}
     {dialogOpen ? <VideoUploadDialog
       busy={dialogBusy}
       error={dialogError}

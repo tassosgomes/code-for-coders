@@ -36,7 +36,12 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         string idempotencyKey,
         string accessToken,
         CancellationToken cancellationToken)
-        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, false, cancellationToken, HttpMethod.Patch, title, idempotencyKey);
+        => SendAsync($"internal/v1/videos/{videoId:D}", accessToken, false, cancellationToken, HttpMethod.Patch, new UpdateVideoTitleRequest(title), idempotencyKey);
+
+    public Task<VideoLibraryResult> ReplaceVideoTagsAsync(
+        Guid videoId, IReadOnlyList<string> tags, string idempotencyKey, string accessToken, CancellationToken cancellationToken)
+        => SendAsync($"internal/v1/videos/{videoId:D}/tags", accessToken, false, cancellationToken,
+            HttpMethod.Put, new ReplaceVideoTagsRequest(tags), idempotencyKey);
 
     private async Task<VideoLibraryResult> SendAsync(
         string path,
@@ -44,7 +49,7 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         bool isList,
         CancellationToken cancellationToken,
         HttpMethod? method = null,
-        string? title = null,
+        object? body = null,
         string? idempotencyKey = null)
     {
         using var request = new HttpRequestMessage(method ?? HttpMethod.Get, path);
@@ -52,7 +57,7 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         if (idempotencyKey is not null)
         {
             request.Headers.Add("Idempotency-Key", idempotencyKey);
-            request.Content = JsonContent.Create(new UpdateVideoTitleRequest(title!));
+            request.Content = JsonContent.Create(body);
         }
 
         try

@@ -16,6 +16,7 @@ export const videoSchema = z.object({
   uploadedAt: z.string().datetime({ offset: true }),
   durationSeconds: z.number().int().nullable(),
   failureReason: z.string().nullable(),
+  tags: z.array(z.string()),
 }).strict();
 
 export const videoPageSchema = z.object({

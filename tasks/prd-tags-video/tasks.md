@@ -85,7 +85,7 @@ do EF.
 
 - [x] 1.0 Adendo ASCII de tags de vídeo (envio, tela Vídeos e seletor da aula) aprovado
 - [x] 2.0 Figma do adendo de tags de vídeo aprovado
-- [ ] 3.0 O professor edita as tags de um vídeo na tela Vídeos e as vê na lista
+- [x] 3.0 O professor edita as tags de um vídeo na tela Vídeos e as vê na lista
 - [ ] 4.0 Ao digitar uma tag, o professor vê as tags que a escola já usa
 - [ ] 5.0 O professor informa tags ao enviar um vídeo
 - [ ] 6.0 O professor filtra a tela Vídeos por tags, com E ou OU
@@ -99,7 +99,7 @@ do EF.
 | `src/bff-admin` | `.github/workflows/bff-admin.yml` → `ci-dotnet.yml@v1` | Idem, cobertura ≥ 70% | Não medido | Nenhuma |
 | `src/admin-spa` | `.github/workflows/admin-spa.yml` → `ci-react-ts.yml@v1` (`--base=/admin/`, cobertura 70) | lint; typecheck; `vitest run --coverage` ≥ 70%; `vite build`; imagem | Não medido | Nenhuma |
 | Migrations de `media` | AGENTS.md; `dotnet-ef` 10.0.12 em `.config/dotnet-tools.json` | Migration gerada pela ferramenta; `has-pending-model-changes` sem pendência | Não medido | 3.0 e 5.0 geram a migration |
-| Contratos | `contracts/README.md` (regra 2) | Promoção aditiva por task a `contracts/bff-admin/openapi-midia.yaml` e `contracts/media/openapi-internal.yaml`; Spectral sem erros | Recortes validados em 2026-10-11 (`contracts.md`) | Cada task de 3.0 a 6.0 promove o que implementa; a consolidação (versão, origem, README) fica para o encerramento do PRD |
+| Contratos | `contracts/README.md` (regra 2) | Promoção aditiva por task a `contracts/bff-admin/openapi-midia.yaml` e `contracts/media/openapi-internal.yaml`; Spectral sem erros com `contracts/.spectral-exception.yaml` (exceção HLS C-08 vigente) | Recortes validados em 2026-10-11 (`contracts.md`) | Cada task de 3.0 a 6.0 promove o que implementa; a consolidação (versão, origem, README) fica para o encerramento do PRD |
 
 O workflow reutilizável `ci-dotnet.yml@v1` é de outro repositório e não foi lido nesta sessão. Os
 passos acima vêm do plano de `CAP-011` (arquivado), que os registrou. A paridade com o CI não foi

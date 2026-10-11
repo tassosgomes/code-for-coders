@@ -23,6 +23,7 @@ const video = {
   uploadedAt: '2026-09-26T14:05:11.0000999+00:00',
   durationSeconds: null,
   failureReason: null,
+  tags: [],
 };
 
 const partSize = 2 * 1024 * 1024;
@@ -36,6 +37,7 @@ const upload = (overrides: Record<string, unknown> = {}) => ({
   partSize,
   partCount: 2,
   receivedParts: [],
+  tags: [],
   expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
   ...overrides,
 });

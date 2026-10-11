@@ -10,6 +10,7 @@ export const createVideoUploadResponseSchema = z.object({
   partSize: z.number().int().positive(),
   partCount: z.number().int().positive(),
   receivedParts: z.array(z.number().int().positive()),
+  tags: z.array(z.string()),
   expiresAt: z.string().datetime({ offset: true }),
 }).strict();
 

@@ -25,7 +25,11 @@ public sealed record VideoUploadResponse(
     long PartSize,
     int PartCount,
     IReadOnlyList<int> ReceivedParts,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    IReadOnlyList<string>? Tags = null)
+{
+    public IReadOnlyList<string> Tags { get; init; } = Tags ?? [];
+}
 
 public sealed record VideoUploadPaginationResponse(int Page, int Size, long Total, long TotalPages);
 

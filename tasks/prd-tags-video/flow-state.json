@@ -4,9 +4,9 @@
   "original_base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
   "base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
   "target_ref": null,
-  "last_checkpoint": "babc86a",
+  "last_checkpoint": "c9cc889",
   "phase": "checkpoint",
-  "active_task": "2.0",
+  "active_task": "3.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,9 +19,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.TZvTA5Xs",
+    "run_id": "run.1bcnYHIS",
     "role": "validator",
-    "task": "2.0",
+    "task": "3.0",
     "outcome": "approved"
   },
   "history": [
@@ -63,6 +63,20 @@
       "ts": "2026-10-11",
       "event": "intervenção humana",
       "note": "Figma aprovado pelo responsável; nova rodada fix"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 2.0",
+      "commit": "c9cc889"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 3.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "plano corrigido",
+      "note": "Spectral passa a usar contracts/.spectral-exception.yaml nas tasks 3.0–6.0"
     }
   ]
 }

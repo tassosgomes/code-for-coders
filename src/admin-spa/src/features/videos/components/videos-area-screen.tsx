@@ -1,4 +1,4 @@
-import { CircleAlert, Clapperboard, Pencil, Search } from 'lucide-react';
+import { CircleAlert, Clapperboard, Pencil, Search, Tags } from 'lucide-react';
 import { useState } from 'react';
 
 import { ForbiddenScreen } from '@/components/forbidden-screen';
@@ -25,6 +25,7 @@ type VideosAreaScreenProps = {
   onFilterChange?: (filter: string) => void;
   onSearchChange?: (search: string) => void;
   onEditTitle?: (video: VideoPage['data'][number]) => void;
+  onEditTags?: (video: VideoPage['data'][number]) => void;
   onPageChange?: (page: number) => void;
   successMessage?: string | null;
 };
@@ -103,6 +104,7 @@ export const VideosAreaScreen = ({
   onFilterChange,
   onSearchChange,
   onEditTitle,
+  onEditTags,
   onPageChange,
   successMessage,
 }: VideosAreaScreenProps) => {
@@ -186,7 +188,7 @@ export const VideosAreaScreen = ({
       <p aria-atomic="true" aria-live="polite" className="visually-hidden" role="status">{statusAnnouncement}</p>
       <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
       {videos?.data.map((video) => <div className="videos-table-row" key={video.videoId}>
-        <strong className="video-title-cell">{video.title}</strong>
+        <div className="video-title-cell"><strong>{video.title}</strong></div>
         <div className={`video-status-cell ${video.status}`}>
           <div className="video-status-content">
             <VideoStatusBadge status={video.status} />
@@ -209,7 +211,11 @@ export const VideosAreaScreen = ({
           <span aria-hidden="true" className="video-meta-separator">·</span>
           <time className="video-date" dateTime={video.uploadedAt}>{formatDate(video.uploadedAt)}</time>
         </div>
+        <div className="video-row-tags" aria-label={`Tags de ${video.title}`}>{video.tags.map((tag) => <span className="video-tag-chip" key={tag}>{tag}</span>)}</div>
+        <div className="video-row-actions">
         {onEditTitle ? <button aria-label={`Editar título de ${video.title}`} className="video-edit-title" onClick={() => onEditTitle(video)} type="button"><Pencil aria-hidden="true" size={16} /></button> : <span className="video-edit-placeholder" />}
+        {onEditTags ? <button aria-label={`Editar tags de ${video.title}`} className="video-edit-title" onClick={() => onEditTags(video)} type="button"><Tags aria-hidden="true" size={16} /></button> : null}
+        </div>
       </div>)}
       </section>
       {videos && totalPages > 1 ? <nav aria-label="Paginação dos vídeos" className="video-pagination">

@@ -61,6 +61,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                     uploadedAt = DateTimeOffset.UtcNow,
                     durationSeconds = (int?)null,
                     failureReason = (string?)null,
+                    tags = Array.Empty<string>(),
                 }),
             };
         }
@@ -90,6 +91,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                     partSize = 67108864,
                     partCount = 1,
                     receivedParts = Array.Empty<int>(),
+                    tags = Array.Empty<string>(),
                     expiresAt = DateTimeOffset.UtcNow.AddHours(24),
                 }),
             };
@@ -119,6 +121,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                 partSize = 67108864,
                 partCount = 1,
                 receivedParts = Array.Empty<int>(),
+                tags = Array.Empty<string>(),
                 expiresAt = DateTimeOffset.UtcNow.AddHours(24),
             }),
         };

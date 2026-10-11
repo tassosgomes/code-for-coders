@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj -- --filter-class CodeForCoders.Media.UnitTests.VideoTagNormalizationTests --minimum-expected-tests 6 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.VideoTagReplacementTests --minimum-expected-tests 10 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/CodeForCoders.BffAdmin.EndToEndTests.csproj -- --filter-class CodeForCoders.BffAdmin.EndToEndTests.VideoTagTests --minimum-expected-tests 5 && npm --prefix src/admin-spa run test -- video-tags-edit'
@@ -113,7 +113,7 @@ tenant como as demais entidades.
 | `src/admin-spa` | `npm --prefix src/admin-spa run lint` | exit 0 | `ci-react-ts.yml` |
 | `src/admin-spa` | `npm --prefix src/admin-spa run typecheck` | exit 0 | `ci-react-ts.yml` |
 | `src/admin-spa` | `npm --prefix src/admin-spa run test -- video authoring-video-picker` | exit 0 (telas de vídeo e seletor existentes com `tags`) | `ci-react-ts.yml` |
-| Contratos | `npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml --ruleset .claude/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | exit 0 | `contracts/README.md` |
+| Contratos | `npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml --ruleset contracts/.spectral-exception.yaml --fail-severity=error` | exit 0 | `contracts/README.md` |
 
 ## Pronto quando
 

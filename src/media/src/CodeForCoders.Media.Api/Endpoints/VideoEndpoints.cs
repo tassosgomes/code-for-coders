@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.UseCases.Videos.ReplaceVideoTags;
 using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Application.UseCases.Videos.GetVideo;
 using CodeForCoders.Media.Application.UseCases.Videos.ListVideos;
@@ -28,6 +29,13 @@ public static class VideoEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status404NotFound);
+
+        group.MapPut("/videos/{videoId:guid}/tags", ReplaceVideoTagsAsync)
+            .WithName("ReplaceVideoTagsInternal")
+            .Produces<VideoOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         group.MapPatch("/videos/{videoId:guid}", UpdateVideoTitleAsync)
             .WithName("UpdateVideoTitleInternal")
@@ -65,6 +73,12 @@ public static class VideoEndpoints
         => Results.Ok(await updateVideoTitle.ExecuteAsync(
             new UpdateVideoTitleInput(videoId, request.Title, httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty),
             cancellationToken));
+
+    private static async Task<IResult> ReplaceVideoTagsAsync(
+        Guid videoId, ReplaceVideoTagsRequest request, HttpContext httpContext,
+        IReplaceVideoTags replaceVideoTags, CancellationToken cancellationToken)
+        => Results.Ok(await replaceVideoTags.ExecuteAsync(
+            new(videoId, request.Tags, httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty), cancellationToken));
 
     private static async Task<IResult> GetVideoAsync(
         Guid videoId,

@@ -16,6 +16,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: null,
+    tags: Array<string>(),
   },
   preparing: {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
@@ -28,6 +29,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: null,
+    tags: Array<string>(),
   },
   ready: {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
@@ -40,6 +42,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: 20,
     failureReason: null,
+    tags: Array<string>(),
   },
   failed: {
     videoId: 'd3844c70-62d3-5f3d-93d9-7ef705301ea8',
@@ -52,6 +55,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: 'unreadable-file',
+    tags: Array<string>(),
   },
 } as const;
 
@@ -88,6 +92,10 @@ export const handlers = [
     confirmationId: 'd69bd911-9631-4f59-8242-c43629806177',
     status: 'accepted',
   }, { status: 202 })),
+  http.put(`${env.API_URL}/api/v1/videos/:videoId/tags`, async ({ request, params }) => {
+    const body = await request.json() as { tags: string[] }; // The validated HTTP input is controlled by the test client.
+    return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, tags: body.tags });
+  }),
   http.patch(`${env.API_URL}/api/v1/videos/:videoId`, async ({ params, request }) => {
     const body = await request.json() as { title: string };
     if (!body.title.trim()) {
@@ -103,6 +111,7 @@ export const handlers = [
     partSize: 67108864,
     partCount: 1,
     receivedParts: [],
+    tags: Array<string>(),
     expiresAt: '2026-09-27T14:05:11Z',
   }, { status: 201 })),
   http.get(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
@@ -117,6 +126,7 @@ export const handlers = [
     partSize: 67108864,
     partCount: 1,
     receivedParts: [],
+    tags: Array<string>(),
     expiresAt: '2026-09-27T14:05:11Z',
   })),
   http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/part-urls`, async ({ request }) => {
@@ -142,6 +152,7 @@ export const handlers = [
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: null,
+    tags: Array<string>(),
   }, { status: 201 })),
   http.delete(`${env.API_URL}/api/v1/staff-sessions/current`, () => new HttpResponse(null, { status: 204 })),
   http.get(`${env.API_URL}/v1/admin/workspace/status`, () =>

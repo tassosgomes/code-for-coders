@@ -56,3 +56,22 @@
 .dialog-card.video-upload-dialog .video-selected-file { gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--background); }
 .dialog-card.video-upload-dialog .video-selected-file > span { font-weight: 500; }
 .dialog-card.video-upload-dialog .video-selected-file .video-link-button { font-weight: 500; }
+
+/* Tags stay inside the row's content area and wrap independently of its actions. */
+.video-row-actions { display: flex; gap: 4px; grid-column: 5; grid-row: 1; }
+.video-row-tags { grid-column: 1; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.video-row-tags:empty { display: none; }
+.video-tag-chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 3px 8px; background: var(--surface-subtle); color: var(--foreground-secondary); font-size: 12px; overflow-wrap: anywhere; }
+.video-tag-chip button { display: inline-flex; border: 0; background: transparent; color: inherit; padding: 2px; cursor: pointer; }
+.video-tag-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.video-tag-field input { width: 100%; box-sizing: border-box; margin-top: 6px; }
+.video-tags-dialog .dialog-card { max-width: 480px; }
+@media (max-width: 767px) {
+  .videos-page .videos-table-row .video-meta { grid-row: 4; }
+  .video-row-actions { grid-column: 2; grid-row: 1; }
+  .videos-page .videos-table-row .video-row-tags { grid-column: 1 / -1; grid-row: 3; }
+}
+
+.video-tag-duplicate { animation: video-tag-highlight 0.8s ease-out; }
+@keyframes video-tag-highlight { from { background: var(--accent); } to { background: var(--surface-subtle); } }
+@media (prefers-reduced-motion: reduce) { .video-tag-duplicate { animation: none; outline: 1px solid currentColor; } }

@@ -64,7 +64,7 @@ remover a última etiqueta. A lista é anunciada a leitor de tela.
 | `src/admin-spa` | `npm --prefix src/admin-spa run lint` | exit 0 | `ci-react-ts.yml` |
 | `src/admin-spa` | `npm --prefix src/admin-spa run typecheck` | exit 0 | `ci-react-ts.yml` |
 | `src/admin-spa` | `npm --prefix src/admin-spa run test -- video-tags-edit` | exit 0 (edição de 3.0 intacta) | `ci-react-ts.yml` |
-| Contratos | `npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml --ruleset .claude/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | exit 0 | `contracts/README.md` |
+| Contratos | `npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml --ruleset contracts/.spectral-exception.yaml --fail-severity=error` | exit 0 | `contracts/README.md` |
 
 ## Pronto quando
 

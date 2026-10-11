@@ -151,6 +151,7 @@ paths:
                       - 9
                       - 10
                       expiresAt: '2026-09-27T09:12:00Z'
+                      tags: []
                     pagination:
                       page: 1
                       size: 10
@@ -383,6 +384,7 @@ paths:
                       uploadedAt: '2026-09-26T09:40:00Z'
                       durationSeconds: 2415
                       failureReason: null
+                      tags: []
                     - videoId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
                       title: Aula 4 — Testes de integração
                       status: failed
@@ -392,6 +394,7 @@ paths:
                       uploadedAt: '2026-09-26T08:05:00Z'
                       durationSeconds: null
                       failureReason: unreadable-file
+                      tags: []
                     pagination:
                       page: 1
                       size: 10
@@ -489,6 +492,79 @@ paths:
               examples:
                 semTitulo:
                   $ref: '#/components/examples/TitleRequired'
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
+  /videos/{videoId}/tags:
+    put:
+      tags:
+      - Vídeos
+      summary: Substituir as tags de um vídeo
+      description: 'Qualquer ator com `midia.enviar` troca o conjunto **inteiro** de
+        tags de qualquer vídeo da escola, em qualquer estado (RF-02, RN-T04). `[]` remove
+        todas. Não muda título, estado nem vínculos, e não publica fato `midia.*` (RN-T01).
+
+
+        Concorrência: a última gravação prevalece por inteiro (C-03). A resposta traz
+        o estado real do vídeo depois desta gravação. A tag que deixa de estar em todos
+        os vídeos da escola some de `listVideoTags` e não casa mais com o filtro (RN-T05).
+        Vídeo de outra escola responde o mesmo 404 de vídeo inexistente (RN-T06).
+
+        '
+      operationId: replaceVideoTags
+      security:
+      - StaffSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceVideoTagsRequest'
+            examples:
+              trocar:
+                value:
+                  tags:
+                  - kubernetes
+              removerTodas:
+                value:
+                  tags: []
+      responses:
+        '200':
+          description: Tags substituídas; o vídeo no estado gravado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                trocadas:
+                  $ref: '#/components/examples/VideoTagsReplaced'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionOrCsrfDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '422':
+          description: Tag vazia ou com mais de 30 caracteres, mais de 10 tags distintas,
+            ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                tagInvalida:
+                  $ref: '#/components/examples/TagInvalid'
+                tagsDemais:
+                  $ref: '#/components/examples/TagsLimitExceeded'
                 chaveReutilizada:
                   $ref: '#/components/examples/IdempotencyKeyReused'
         '502':
@@ -706,6 +782,7 @@ components:
         partCount: 48
         receivedParts: []
         expiresAt: '2026-09-27T09:12:00Z'
+        tags: []
     VideoUploadResumed:
       value:
         uploadId: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
@@ -726,6 +803,7 @@ components:
         - 9
         - 10
         expiresAt: '2026-09-27T09:12:00Z'
+        tags: []
     VideoReceived:
       value:
         videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
@@ -737,10 +815,39 @@ components:
         uploadedAt: '2026-09-26T09:40:00Z'
         durationSeconds: null
         failureReason: null
+        tags: []
     VideoReady:
       value:
         videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
         title: Aula 3 — Injeção de dependência
+        status: ready
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: 2415
+        failureReason: null
+        tags: []
+    TagInvalid:
+      value:
+        type: about:blank
+        title: Cada tag precisa ter de 1 a 30 caracteres.
+        status: 422
+        code: TAG_INVALID
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TagsLimitExceeded:
+      value:
+        type: about:blank
+        title: Um vídeo pode ter no máximo 10 tags.
+        status: 422
+        code: TAGS_LIMIT_EXCEEDED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    VideoTagsReplaced:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        tags:
+        - Kubernetes
         status: ready
         uploadedBy:
           accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
@@ -847,6 +954,7 @@ components:
       - partCount
       - receivedParts
       - expiresAt
+      - tags
       properties:
         uploadId:
           type: string
@@ -859,7 +967,8 @@ components:
           type: integer
         partSize:
           type: integer
-          description: Tamanho de cada parte em bytes; a última pode ser menor. Definido pelo serviço.
+          description: Tamanho de cada parte em bytes; a última pode ser menor. Definido
+            pelo serviço.
         partCount:
           type: integer
           minimum: 1
@@ -869,12 +978,18 @@ components:
           items:
             type: integer
             minimum: 1
-          description: Partes que o armazenamento confirmou, em ordem crescente; `[]` quando nenhuma.
+          description: Partes que o armazenamento confirmou, em ordem crescente; `[]` quando
+            nenhuma.
         expiresAt:
           type: string
           format: date-time
-          description: |
-            Até quando o envio pode ser retomado. Pelo menos 24 horas depois da validade da última URL de parte emitida (RF-03); depois disso o envio e as partes são descartados.
+          description: 'Até quando o envio pode ser retomado. Pelo menos 24 horas depois
+            da validade da última URL de parte emitida (RF-03); depois disso o envio e as
+            partes são descartados.
+
+            '
+        tags:
+          $ref: '#/components/schemas/TagList'
     VideoUploadPage:
       type: object
       additionalProperties: false
@@ -957,6 +1072,7 @@ components:
       - uploadedAt
       - durationSeconds
       - failureReason
+      - tags
       properties:
         videoId:
           type: string
@@ -981,6 +1097,8 @@ components:
           - $ref: '#/components/schemas/FailureReason'
           - type: 'null'
           description: Preenchido só em `failed`.
+        tags:
+          $ref: '#/components/schemas/TagList'
     VideoPage:
       type: object
       additionalProperties: false
@@ -1023,3 +1141,49 @@ components:
         totalPages:
           type: integer
           minimum: 0
+    Tag:
+      type: string
+      minLength: 1
+      maxLength: 30
+      description: 'Rótulo livre de um vídeo, na grafia canônica da escola: a da primeira
+        vez que a tag foi usada nela (RN-T02). Sem significado para a plataforma (RN-T01).
+
+        '
+      examples:
+      - Docker
+    TagList:
+      type: array
+      maxItems: 10
+      uniqueItems: true
+      items:
+        $ref: '#/components/schemas/Tag'
+      description: Tags do vídeo, em ordem alfabética sem diferenciar maiúsculas nem acentos;
+        `[]` quando não há nenhuma (RN-T03).
+      examples:
+      - - Docker
+        - Módulo 2
+    TagInputList:
+      type: array
+      maxItems: 50
+      items:
+        type: string
+        maxLength: 100
+      description: 'Tags informadas pelo professor. O serviço tira os espaços das pontas,
+        reduz espaços repetidos a um e junta as equivalentes (RN-T02) sem erro. Cada tag
+        equivalente a uma tag da escola recebe a grafia canônica; as demais passam a existir
+        na escola com a grafia informada. Depois disso: tag vazia ou com mais de 30 caracteres
+        → 422 `TAG_INVALID`; mais de 10 tags distintas → 422 `TAGS_LIMIT_EXCEEDED` (RN-T03).
+        Os limites deste schema são só de proteção (400).
+
+        '
+      examples:
+      - - docker
+        - Módulo 2
+    ReplaceVideoTagsRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - tags
+      properties:
+        tags:
+          $ref: '#/components/schemas/TagInputList'

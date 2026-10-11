@@ -15,6 +15,8 @@ public interface IVideoLibraryClient
 
     Task<VideoLibraryResult> GetVideoAsync(Guid videoId, string accessToken, CancellationToken cancellationToken);
 
+    Task<VideoLibraryResult> ReplaceVideoTagsAsync(Guid videoId, IReadOnlyList<string> tags, string idempotencyKey, string accessToken, CancellationToken cancellationToken);
+
     Task<VideoLibraryResult> UpdateVideoTitleAsync(Guid videoId, string title, string idempotencyKey, string accessToken, CancellationToken cancellationToken);
 }
 

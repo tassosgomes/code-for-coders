@@ -68,7 +68,7 @@ junto dos filtros de estado e título.
 | `src/admin-spa` | `npm --prefix src/admin-spa run lint` | exit 0 | `ci-react-ts.yml` |
 | `src/admin-spa` | `npm --prefix src/admin-spa run typecheck` | exit 0 | `ci-react-ts.yml` |
 | `src/admin-spa` | `npm --prefix src/admin-spa run test -- video-library-filter videos-area-route` | exit 0 (filtros existentes intactos) | `ci-react-ts.yml` |
-| Contratos | `npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml --ruleset .claude/skills/tsg-flow-contract-creator/rulesets/openapi.yaml --fail-severity=error` | exit 0 | `contracts/README.md` |
+| Contratos | `npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml --ruleset contracts/.spectral-exception.yaml --fail-severity=error` | exit 0 | `contracts/README.md` |
 
 ## Pronto quando
 

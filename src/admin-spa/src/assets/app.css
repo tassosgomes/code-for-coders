@@ -3056,7 +3056,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .videos-page .videos-table-header,
 .videos-page .videos-table-row {
   display:grid;
-  grid-template-columns:minmax(0,1fr) 280px 180px 110px 32px;
+  grid-template-columns:minmax(0,1fr) 280px 180px 110px 72px;
   align-items:center;
   gap:16px;
   padding:12px 16px;
@@ -3291,7 +3291,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .videos-loading .videos-skeleton-row {
   display:grid;
-  grid-template-columns:minmax(0,1fr) 280px 180px 110px 32px;
+  grid-template-columns:minmax(0,1fr) 280px 180px 110px 72px;
   align-items:center;
   gap:16px;
   min-height:36px;
@@ -3826,7 +3826,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 
   .videos-page .videos-table-row {
-    grid-template-columns:minmax(0,1fr) 32px;
+    grid-template-columns:minmax(0,1fr) 72px;
     gap:8px;
     min-height:0;
     margin-bottom:8px;
@@ -3910,7 +3910,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 
   .videos-loading .videos-skeleton-row {
-    grid-template-columns:minmax(0,1fr) 32px;
+    grid-template-columns:minmax(0,1fr) 72px;
     gap:12px;
     min-height:54px;
   }

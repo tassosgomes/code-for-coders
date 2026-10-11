@@ -3,11 +3,12 @@ using CodeForCoders.Media.Application.UseCases;
 
 namespace CodeForCoders.Media.Application.UseCases.Videos.GetVideo;
 
-public sealed class GetVideo(IVideoQueries videoQueries) : IGetVideo
+public sealed class GetVideo(IVideoQueries videoQueries, IVideoTagRepository videoTags) : IGetVideo
 {
     public async Task<VideoOutput?> ExecuteAsync(GetVideoInput input, CancellationToken cancellationToken)
     {
         var video = await videoQueries.GetAsync(input.VideoId, cancellationToken);
+        var tags = video is null ? new Dictionary<Guid, IReadOnlyList<string>>() : await videoTags.GetAsync([video.VideoId], cancellationToken);
         return video is null
             ? null
             : new VideoOutput(
@@ -17,6 +18,6 @@ public sealed class GetVideo(IVideoQueries videoQueries) : IGetVideo
                 new VideoUploaderOutput(video.UploadedByAccountId, video.UploadedByName),
                 video.UploadedAt,
                 video.DurationSeconds,
-                video.FailureReason);
+                video.FailureReason, tags.GetValueOrDefault(video.VideoId, []));
     }
 }

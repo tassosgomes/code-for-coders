@@ -12,6 +12,7 @@ namespace CodeForCoders.Media.Application.UseCases.VideoUploads.CompleteVideoUpl
 public sealed class CompleteVideoUpload(
     ITenantContext tenantContext,
     IVideoUploadRepository videoUploads,
+    IVideoTagRepository videoTags,
     IOperationIdempotencyRepository idempotencyRecords,
     IMediaStoragePort mediaStorage,
     IUnitOfWork unitOfWork,
@@ -71,7 +72,8 @@ public sealed class CompleteVideoUpload(
             throw VideoUploadUseCaseHelpers.UploadNotFound();
         }
 
-        var output = new CompletedVideoOutput(ToOutput(completedVideo));
+        var tags = await videoTags.GetAsync([completedVideo.VideoId], cancellationToken);
+        var output = new CompletedVideoOutput(ToOutput(completedVideo) with { Tags = tags.GetValueOrDefault(completedVideo.VideoId, []) });
         var idempotencyRecord = VideoUploadUseCaseHelpers.CreateOrReuseIdempotencyRecord(
             existingIdempotency,
             upload.TenantId,

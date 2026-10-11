@@ -9,7 +9,11 @@ public sealed record VideoOutput(
     VideoUploaderOutput UploadedBy,
     DateTimeOffset UploadedAt,
     int? DurationSeconds,
-    string? FailureReason);
+    string? FailureReason,
+    IReadOnlyList<string>? Tags = null)
+{
+    public IReadOnlyList<string> Tags { get; init; } = Tags ?? [];
+}
 
 public sealed record VideoPaginationOutput(int Page, int Size, long Total, long TotalPages);
 
