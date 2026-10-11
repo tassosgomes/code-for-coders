@@ -16,7 +16,9 @@ public static class DependencyInjection
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IExpirePendingVideoUploads, ExpirePendingVideoUploads>();
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<IValidator<RecordPlatformHeartbeatInput>, RecordPlatformHeartbeatInputValidator>();
+        services.Scan(scan => scan.FromAssemblyOf<RecordPlatformHeartbeatInputValidator>()
+            .AddClasses(classes => classes.AssignableTo(typeof(IValidator<>)))
+            .AsImplementedInterfaces().WithScopedLifetime());
         services.Scan(scan => scan
             .FromAssemblyOf<IRecordPlatformHeartbeat>()
             .AddClasses(classes => classes.AssignableTo(typeof(IUseCase<,>)))

@@ -571,6 +571,44 @@ paths:
           $ref: '#/components/responses/MediaUnavailable'
         '504':
           $ref: '#/components/responses/MediaTimeout'
+  /video-tags:
+    get:
+      tags:
+        - Vídeos
+      summary: Sugerir tags da escola
+      description: |
+        Tags usadas em pelo menos um vídeo da escola do ator, em qualquer estado, que contêm o trecho `q` (RF-03, RN-T05, RN-T06). Serve à sugestão no envio e na edição e às opções do filtro na tela Vídeos e no seletor da aula. Sem paginação: teto fixo de 20 (C-04).
+      operationId: listVideoTags
+      security:
+        - StaffSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/TagQuery'
+      responses:
+        '200':
+          description: Tags sugeridas; `data` vazio quando nenhuma contém `q`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoTagList'
+              examples:
+                dock:
+                  value:
+                    data:
+                      - Docker
+                      - Docker Compose
+                nenhuma:
+                  value:
+                    data: []
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
 components:
   securitySchemes:
     StaffSessionCookie:
@@ -639,6 +677,18 @@ components:
         minimum: 1
         maximum: 50
         default: 10
+    TagQuery:
+      name: q
+      in: query
+      required: false
+      description: Trecho da tag, sem diferenciar maiúsculas nem acentos. Ausente → as primeiras tags da escola em ordem alfabética.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+      examples:
+        dock:
+          value: dock
   responses:
     InvalidRequest:
       description: JSON malformado, campo obrigatório ausente ou valor fora do schema.
@@ -1187,3 +1237,16 @@ components:
       properties:
         tags:
           $ref: '#/components/schemas/TagInputList'
+    VideoTagList:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: |
+            Até 20 tags da escola que contêm `q`: primeiro as que começam por ele, depois as demais, cada grupo em ordem alfabética. `[]` quando nenhuma. Coleção de teto fixo, sem paginação (C-04).

@@ -30,6 +30,19 @@ public sealed class VideoQueries(MediaDbContext dbContext) : IVideoQueries
         return new VideoPageSnapshot(data, total);
     }
 
+    public async Task<IReadOnlyList<string>> ListTagsAsync(string? query, CancellationToken cancellationToken)
+    {
+        const int suggestionLimit = 20;
+        var normalizedQuery = query is null ? string.Empty : Video.NormalizeSearchTitle(query);
+        var tags = dbContext.Tags.AsNoTracking()
+            .Where(tag => dbContext.VideoTags.Any(link => link.TagId == tag.TagId));
+        if (query is not null)
+            tags = tags.Where(tag => tag.NormalizedName.Contains(normalizedQuery));
+        return await tags.OrderByDescending(tag => tag.NormalizedName.StartsWith(normalizedQuery))
+            .ThenBy(tag => tag.NormalizedName).ThenBy(tag => tag.TagId)
+            .Select(tag => tag.DisplayName).Take(suggestionLimit).ToArrayAsync(cancellationToken);
+    }
+
     public Task<Video?> GetAsync(Guid videoId, CancellationToken cancellationToken)
         => dbContext.Videos.AsNoTracking().SingleOrDefaultAsync(
             video => video.VideoId == videoId,

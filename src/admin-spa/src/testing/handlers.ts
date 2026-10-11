@@ -92,6 +92,7 @@ export const handlers = [
     confirmationId: 'd69bd911-9631-4f59-8242-c43629806177',
     status: 'accepted',
   }, { status: 202 })),
+  http.get(`${env.API_URL}/api/v1/video-tags`, () => HttpResponse.json({ data: [] })),
   http.put(`${env.API_URL}/api/v1/videos/:videoId/tags`, async ({ request, params }) => {
     const body = await request.json() as { tags: string[] }; // The validated HTTP input is controlled by the test client.
     return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, tags: body.tags });

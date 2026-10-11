@@ -11,6 +11,16 @@ public static class VideoLibraryEndpoints
 
     public static void MapVideoLibraryEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/v1/video-tags", ListVideoTagsAsync)
+            .WithName("ListVideoTags")
+            .WithTags("Videos")
+            .Produces<VideoTagListResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+
         endpoints.MapGet("/api/v1/videos", ListVideosAsync)
             .WithName("ListVideos")
             .WithTags("Videos")
@@ -48,6 +58,19 @@ public static class VideoLibraryEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status502BadGateway);
+    }
+
+    private static async Task<IResult> ListVideoTagsAsync(
+        HttpContext httpContext, IStaffSessionIdentityClient identityClient,
+        IVideoLibraryClient mediaClient, CancellationToken cancellationToken, string? q = null)
+    {
+        var access = await GetMediaAccessAsync(httpContext, identityClient, cancellationToken);
+        if (access.Problem is not null) return access.Problem;
+        if (q is not null && (string.IsNullOrWhiteSpace(q) || q.Length > 100))
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The tag query is invalid.");
+        var result = await mediaClient.ListVideoTagsAsync(q, access.AccessToken!, cancellationToken);
+        return result.StatusCode == HttpStatusCode.OK && result.Tags is not null
+            ? Results.Ok(result.Tags) : MediaProblem(httpContext, result);
     }
 
     private static async Task<IResult> ListVideosAsync(

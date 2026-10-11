@@ -75,3 +75,7 @@
 .video-tag-duplicate { animation: video-tag-highlight 0.8s ease-out; }
 @keyframes video-tag-highlight { from { background: var(--accent); } to { background: var(--surface-subtle); } }
 @media (prefers-reduced-motion: reduce) { .video-tag-duplicate { animation: none; outline: 1px solid currentColor; } }
+
+.video-tag-suggestions { list-style: none; padding: 4px; margin: 4px 0 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); max-height: 180px; overflow-y: auto; }
+.video-tag-suggestions li { padding: 6px 8px; cursor: pointer; border-radius: 4px; }
+.video-tag-suggestions li:hover, .video-tag-suggestions li[aria-selected="true"] { background: var(--surface-subtle); outline: 1px solid var(--foreground-secondary); }

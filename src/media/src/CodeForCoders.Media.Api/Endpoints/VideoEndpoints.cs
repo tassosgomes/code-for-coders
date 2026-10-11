@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.UseCases.Videos.ListVideoTags;
 using CodeForCoders.Media.Application.UseCases.Videos.ReplaceVideoTags;
 using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Application.UseCases.Videos.GetVideo;
@@ -15,6 +16,13 @@ public static class VideoEndpoints
         var group = endpoints.MapGroup("/internal/v1")
             .RequireAuthorization(MediaAuthorization.PolicyName)
             .WithTags("Videos");
+
+        group.MapGet("/video-tags", ListVideoTagsAsync)
+            .WithName("ListVideoTagsInternal")
+            .Produces<VideoTagListOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         group.MapGet("/videos", ListVideosAsync)
             .WithName("ListVideosInternal")
@@ -43,6 +51,10 @@ public static class VideoEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
     }
+
+    private static async Task<IResult> ListVideoTagsAsync(
+        IListVideoTags listVideoTags, CancellationToken cancellationToken, string? q = null)
+        => Results.Ok(await listVideoTags.ExecuteAsync(new(q), cancellationToken));
 
     private static async Task<IResult> ListVideosAsync(
         HttpContext httpContext,

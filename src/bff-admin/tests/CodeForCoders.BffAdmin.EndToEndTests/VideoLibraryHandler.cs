@@ -34,6 +34,9 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
         LastMethod = request.Method;
         LastIdempotencyKey = request.Headers.TryGetValues("Idempotency-Key", out var keys) ? keys.FirstOrDefault() : null;
 
+        if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath == "/internal/v1/video-tags")
+            return new HttpResponseMessage(StatusCode) { Content = JsonContent.Create(new { data = Tags }) };
+
         if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath.EndsWith("/videos", StringComparison.Ordinal) == true)
         {
             return new HttpResponseMessage(StatusCode)
