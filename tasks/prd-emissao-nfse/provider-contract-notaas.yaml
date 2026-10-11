@@ -1,0 +1,339 @@
+openapi: 3.1.0
+info:
+  title: Emissor de NFS-e — recorte consumido pela camada anticorrupção
+  version: 1.0.0
+  description: |
+    Recorte externo consultado em 2026-10-11 em `github.com/tassosgomes/fake-nfe`, revisão `ac5306e68a8c5b10651a8cceaab691a975109c4a` (2026-10-07), que é o contrato da Notaas adotado em OD89.
+    Não é API da plataforma. A norma HTTP interna (problem+json, paths em inglês) não se aplica. Validação estrutural em `spectral-provider.yaml`.
+
+    O módulo fiscal de `billing` chama só o que está aqui: emitir, consultar, baixar PDF e baixar XML. Não chama cancelamento, cadastro de empresa nem cadastro de webhook no caminho da nota. O cadastro do webhook (`POST /api/v1/webhooks/endpoints`) é configuração de implantação, não operação deste recorte.
+
+    Vocabulário do emissor fica nesta fronteira. Centavos, situação da plataforma e motivo traduzido não aparecem neste documento.
+  contact:
+    name: Time de Cobrança
+servers:
+  - url: https://platform.notaas.com.br/api/v1
+    description: Produção Notaas, quando houver conta (QA-03). Mesmos paths da bancada.
+  - url: http://fake-nfe.local/api/v1
+    description: Bancada de estudo (fake-nfe) em dev e homologação. O host real é configuração.
+tags:
+  - name: Emissao
+    description: Fila, consulta e arquivos
+paths:
+  /emitir:
+    post:
+      tags: [Emissao]
+      summary: Aceitar uma NFS-e na fila
+      description: |
+        Responde 202 com a nota ainda `queued`. Não é autorização.
+        `Idempotency-Key` opcional, até 80 caracteres `[A-Za-z0-9_-]`. A plataforma envia `{orderId}-{n}`.
+        A mesma chave e o mesmo corpo devolvem a mesma resposta 202. Chave repetida com corpo diferente fica a cargo do emissor; a plataforma não reutiliza a chave com outro corpo.
+        `referencia` é o `orderId` da plataforma.
+        `valores.total` é o preço congelado em reais, com duas casas (49700 centavos → 497.00), não em centavos.
+        `competencia` é `YYYY-MM` no mês civil de Brasília do pagamento.
+      operationId: enqueueNfse
+      security:
+        - ApiKey: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Obrigatoriedade é da plataforma. O emissor aceita a chave quando presente.
+          schema:
+            type: string
+            maxLength: 80
+            pattern: '^[A-Za-z0-9_-]{1,80}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmitRequest'
+            examples:
+              cpf:
+                value:
+                  tomador:
+                    nome: Ana Souza
+                    cpf: '52998224725'
+                    email: ana.souza@example.com
+                  servico:
+                    descricao: Acesso ao curso .NET do zero à API
+                    codigo: '010700'
+                  valores:
+                    total: 497.00
+                    aliquotaIss: 2
+                  competencia: 2026-10
+                  referencia: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+      responses:
+        '202':
+          description: Aceita na fila.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmitAccepted'
+              examples:
+                fila:
+                  value:
+                    queued: true
+                    invoiceId: inv_01J9STUDYNOTE
+                    status: queued
+                    pollUrl: /api/v1/invoices/inv_01J9STUDYNOTE/status
+        '400':
+          description: Payload rejeitado pelo emissor, no formato dele.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderError'
+              examples:
+                payload:
+                  value:
+                    type: erro_de_estudo
+                    code: payload_invalido
+                    message: Informe CNPJ, CPF ou NIF do tomador
+                    campo: tomador.cnpj
+                    aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+        '403':
+          description: Cota ou chave sem permissão, no formato do emissor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderError'
+              examples:
+                cota:
+                  value:
+                    type: erro_de_estudo
+                    code: cota_esgotada
+                    message: A cota de notas do plano de estudo acabou.
+                    campo: null
+                    aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+  /invoices/{invoiceId}/status:
+    parameters:
+      - $ref: '#/components/parameters/InvoiceId'
+    get:
+      tags: [Emissao]
+      summary: Consultar a nota no emissor
+      description: |
+        Usado quando o webhook atrasa. `queued` e `processing` continuam na fila da plataforma.
+        `issued` libera PDF e XML. `error` é falha. `cancel_queued` e `cancelled` não são pedidos por esta fatia; se aparecerem, a plataforma não muda a nota para cancelada.
+      operationId: getNfseStatus
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: Estado no emissor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceStatus'
+              examples:
+                emitida:
+                  value:
+                    invoiceId: inv_01J9STUDYNOTE
+                    status: issued
+                    numeroNfse: '000042'
+                    ambiente: estudo
+                    aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+                    errorCode: null
+                    errorMessage: null
+        '404':
+          description: Nota inexistente neste projeto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderError'
+              examples:
+                nao:
+                  value:
+                    type: erro_de_estudo
+                    code: nao_encontrado
+                    message: Nota não encontrada neste projeto.
+                    campo: null
+                    aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+  /invoices/{invoiceId}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/InvoiceId'
+    get:
+      tags: [Emissao]
+      summary: Baixar o PDF do emissor
+      description: Disponível com status `issued` ou `cancelled`. A plataforma só baixa em `issued`. Na bancada o PDF traz a faixa de sem valor fiscal.
+      operationId: getNfsePdf
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: PDF.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '409':
+          description: Arquivo ainda indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderError'
+              examples:
+                cedo:
+                  value:
+                    type: erro_de_estudo
+                    code: documento_indisponivel
+                    message: O PDF só fica disponível depois da emissão simulada.
+                    campo: null
+                    aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+  /invoices/{invoiceId}/xml:
+    parameters:
+      - $ref: '#/components/parameters/InvoiceId'
+    get:
+      tags: [Emissao]
+      summary: Baixar o XML do emissor
+      description: |
+        Sem `type=cancel`. A plataforma não pede o XML de cancelamento nesta fatia.
+        Na bancada a raiz é `NfseEstudo`, não o leiaute municipal. A plataforma guarda e entrega esse arquivo sem reinterpretar.
+      operationId: getNfseXml
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: XML.
+          content:
+            application/xml:
+              schema:
+                type: string
+                format: binary
+        '409':
+          description: Arquivo ainda indisponível.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderError'
+              examples:
+                cedo:
+                  value:
+                    type: erro_de_estudo
+                    code: documento_indisponivel
+                    message: O XML só fica disponível depois da emissão simulada.
+                    campo: null
+                    aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Chave do projeto no emissor. Na bancada o prefixo é `ntaas_`. A plataforma guarda a chave no prestador e não a devolve.
+  parameters:
+    InvoiceId:
+      name: invoiceId
+      in: path
+      required: true
+      description: Identificador devolvido em `enqueueNfse`.
+      schema:
+        type: string
+  schemas:
+    EmitRequest:
+      type: object
+      additionalProperties: false
+      required: [tomador, servico, valores, competencia, referencia]
+      properties:
+        tomador:
+          type: object
+          additionalProperties: false
+          required: [nome]
+          description: Exatamente um identificador entre `cpf`, `cnpj` e `nif`.
+          properties:
+            nome:
+              type: string
+              minLength: 2
+              maxLength: 300
+            cpf:
+              type: string
+            cnpj:
+              type: string
+            nif:
+              type: string
+              maxLength: 40
+            email:
+              type: string
+              format: email
+              maxLength: 160
+        servico:
+          type: object
+          additionalProperties: false
+          required: [descricao, codigo]
+          properties:
+            descricao:
+              type: string
+              minLength: 1
+              maxLength: 2000
+            codigo:
+              type: string
+              minLength: 1
+              maxLength: 20
+        valores:
+          type: object
+          additionalProperties: false
+          required: [total, aliquotaIss]
+          properties:
+            total:
+              type: number
+              exclusiveMinimum: 0
+              description: Reais, não centavos.
+            aliquotaIss:
+              type: number
+              minimum: 0
+              maximum: 100
+        competencia:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}$'
+        referencia:
+          type: string
+          maxLength: 80
+    EmitAccepted:
+      type: object
+      additionalProperties: true
+      required: [queued, invoiceId, status]
+      properties:
+        queued:
+          type: boolean
+        invoiceId:
+          type: string
+        status:
+          type: string
+        pollUrl:
+          type: string
+    InvoiceStatus:
+      type: object
+      additionalProperties: true
+      required: [invoiceId, status]
+      properties:
+        invoiceId:
+          type: string
+        status:
+          type: string
+          description: '`queued`, `processing`, `issued`, `error`, `cancel_queued` ou `cancelled`.'
+        numeroNfse:
+          type: [string, 'null']
+        ambiente:
+          type: string
+        aviso:
+          type: string
+        errorCode:
+          type: [string, 'null']
+        errorMessage:
+          type: [string, 'null']
+    ProviderError:
+      type: object
+      additionalProperties: true
+      required: [code, message]
+      properties:
+        type:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        campo:
+          type: [string, 'null']
+        aviso:
+          type: string

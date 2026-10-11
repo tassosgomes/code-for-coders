@@ -1,0 +1,301 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — documento do tomador
+  version: 1.1.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/bff-student/openapi-conta.yaml` 1.0.0 de forma **aditiva** com a leitura e a gravação do documento do tomador na conta (RF-03, RN-F07, RN-F08). Cadastro, sessão e senha não mudam.
+
+    O BFF não valida dígito: Identity valida. A compra não chama estas operações. CPF, CNPJ e NIF não entram em URL, log, cache nem routing key (G23). A resposta leva `Cache-Control: no-store`.
+
+    Gravar um documento válido publica `identidade.identificacao-fiscal-informada.v1` sem o documento no payload. Repetir o mesmo valor não publica de novo.
+  contact:
+    name: Time de Identidade
+servers:
+  - url: /api/v1
+    description: URL pública versionada do BFF do aluno
+tags:
+  - name: Tomador
+    description: CPF, CNPJ ou NIF da conta do aluno
+paths:
+  /student-accounts/current/tax-document:
+    get:
+      tags: [Tomador]
+      summary: Ler o documento do tomador da conta
+      description: |
+        Repasse de `readStudentTaxDocumentInternal`, com o `sessionId` da sessão corrente. Sem efeito.
+        Conta sem documento devolve `taxDocument: null`, não 404.
+      operationId: getMyTaxDocument
+      security:
+        - StudentSessionCookie: []
+      responses:
+        '200':
+          description: Documento atual da conta, ou ausência.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxDocumentState'
+              examples:
+                cpf:
+                  value:
+                    taxDocument:
+                      kind: cpf
+                      value: '52998224725'
+                ausente:
+                  value:
+                    taxDocument: null
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+    put:
+      tags: [Tomador]
+      summary: Informar ou substituir o documento do tomador
+      description: |
+        Repasse de `putStudentTaxDocumentInternal`. Exige `X-CSRF-Token` e `Idempotency-Key` (G09, G18).
+
+        - CPF ou CNPJ com dígito verificador inválido, ou NIF vazio → 422 `TAX_DOCUMENT_INVALID`. A conta não grava e a nota que esperava o tomador continua `awaiting-holder`.
+        - O mesmo valor já gravado → 200 sem novo fato.
+        - Valor novo → 200 e um fato `identidade.identificacao-fiscal-informada.v1`. Notas ainda não aceitas pelo emissor passam a usar este documento. Nota já `issued` não muda (RN-F09). O financeiro não usa esta operação (RN-F08).
+      operationId: putMyTaxDocument
+      security:
+        - StudentSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxDocument'
+            examples:
+              cpf:
+                value:
+                  kind: cpf
+                  value: '52998224725'
+              cnpj:
+                value:
+                  kind: cnpj
+                  value: '19131243000197'
+              nif:
+                value:
+                  kind: nif
+                  value: PT123456789
+      responses:
+        '200':
+          description: Documento gravado na conta.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxDocumentState'
+              examples:
+                gravado:
+                  value:
+                    taxDocument:
+                      kind: cpf
+                      value: '52998224725'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/CsrfInvalid'
+        '422':
+          $ref: '#/components/responses/TaxDocumentInvalid'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+components:
+  securitySchemes:
+    StudentSessionCookie:
+      type: apiKey
+      in: cookie
+      name: student_session
+      description: Sessão opaca do aluno (ADR-0003). A conta alterada é a da sessão, nunca um id vindo do cliente.
+  parameters:
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Prova CSRF da sessão (G18).
+      schema:
+        type: string
+        minLength: 1
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Repetir a mesma chave e o mesmo corpo devolve o mesmo resultado. Corpo diferente com a mesma chave → 422.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+  responses:
+    SessionRequired:
+      description: Sessão ausente, expirada ou revogada. code `SESSION_REQUIRED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CsrfInvalid:
+      description: Prova CSRF ausente ou inválida. code `CSRF_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            csrf:
+              value:
+                type: about:blank
+                title: Prova CSRF ausente ou inválida.
+                status: 403
+                code: CSRF_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    InvalidRequest:
+      description: JSON malformado ou campos obrigatórios ausentes. code `INVALID_REQUEST`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TaxDocumentInvalid:
+      description: Documento bem formado com dígito inválido ou NIF vazio. code `TAX_DOCUMENT_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            digito:
+              value:
+                type: about:blank
+                title: Documento do tomador inválido.
+                status: 422
+                code: TAX_DOCUMENT_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                errors:
+                  - field: value
+                    detail: Os dígitos do CPF não fecham.
+    UpstreamUnavailable:
+      description: Identity não respondeu. code `UPSTREAM_UNAVAILABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível gravar o documento.
+                status: 502
+                code: UPSTREAM_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamTimeout:
+      description: Identity não respondeu a tempo. code `UPSTREAM_TIMEOUT`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            estouro:
+              value:
+                type: about:blank
+                title: A gravação do documento demorou demais.
+                status: 504
+                code: UPSTREAM_TIMEOUT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [field, detail]
+            properties:
+              field:
+                type: string
+              detail:
+                type: string
+    TaxDocument:
+      type: object
+      additionalProperties: false
+      required: [kind, value]
+      properties:
+        kind:
+          type: string
+          enum: [cpf, cnpj, nif]
+          description: Exatamente um. Clientes devem tolerar valor novo.
+        value:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: |
+            CPF e CNPJ só com dígitos (11 e 14). NIF é o texto informado, sem espaço nas pontas, até 40 caracteres.
+            A pontuação de CPF e CNPJ é recusada: o cliente envia só dígitos.
+      examples:
+        - kind: cpf
+          value: '52998224725'
+    TaxDocumentState:
+      type: object
+      additionalProperties: false
+      required: [taxDocument]
+      properties:
+        taxDocument:
+          oneOf:
+            - $ref: '#/components/schemas/TaxDocument'
+            - type: 'null'
+      examples:
+        - taxDocument:
+            kind: cpf
+            value: '52998224725'
+        - taxDocument: null

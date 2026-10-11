@@ -1,0 +1,5 @@
+# O contrato do emissor é externo (Notaas / fake-nfe). A norma HTTP deste repositório
+# não se aplica a ele: o erro não é problem+json e o PDF/XML são do provedor.
+# Este ruleset só confere estrutura OpenAPI.
+extends:
+  - spectral:oas

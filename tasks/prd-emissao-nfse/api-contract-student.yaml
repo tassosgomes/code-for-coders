@@ -1,0 +1,295 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — documento fiscal do pedido
+  version: 1.1.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/bff-student/openapi-compra.yaml` 1.0.0 de forma **aditiva**: três leituras novas.
+    Nenhuma operação de compra, pagamento ou *Meus pedidos* muda de path, corpo ou código.
+
+    O BFF não decide a nota. Valida a sessão (ADR-0003), pede a Identity um JWT de aluno com audiência `billing` e escopo `fiscal-document:own` (sem `email` e sem `permissions`) e repassa a `billing`. O aluno é a claim `sub`. Pedido de outro aluno e pedido sem documento respondem 404 igual.
+
+    A situação vista aqui não é a situação interna do financeiro. `awaiting-provider` e `queued` aparecem como `issuing` ("Nota em emissão"). Falha não traz o motivo do emissor nem botão de nova tentativa (RN-F12, experiência do aluno).
+
+    PDF e XML só existem com a nota `issued`. A resposta não é JSON: exceção C-08 deste PRD, registrada em `spectral-fiscal.yaml`. `Cache-Control: no-store`. O nome do arquivo usa o número do pedido, nunca e-mail, CPF, CNPJ ou NIF (G23).
+  contact:
+    name: Time de Cobrança
+servers:
+  - url: /api/v1
+    description: URL pública versionada do BFF do aluno
+tags:
+  - name: Documento fiscal
+    description: NFS-e do próprio pedido, no vocabulário do aluno
+paths:
+  /orders/{orderId}/fiscal-document:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: Ver a nota do próprio pedido
+      description: |
+        Repasse de `getMyFiscalDocumentInternal`. Sem efeito.
+
+        - Pedido ainda não pago, expirado ou cancelado sem ter ficado pago, ou pedido de outro aluno → 404 `FISCAL_DOCUMENT_NOT_FOUND`. Não revela se o pedido existe.
+        - Falta CPF, CNPJ ou NIF → `awaiting-holder`. O curso não depende desta chamada.
+        - Prestador ainda não utilizável, ou nota aceita e ainda não autorizada → `issuing`.
+        - Emissor autorizou e os arquivos existem → `issued`, com `downloadsReady: true`.
+        - Recusa ou tentativas esgotadas → `failed`. O texto da falha é fixo na tela; esta resposta não traz a razão do emissor.
+        - `billing` indisponível → 502/504. A página do pedido, que vem de outra operação, não depende desta.
+      operationId: getMyFiscalDocument
+      security:
+        - StudentSessionCookie: []
+      responses:
+        '200':
+          description: Situação da nota para o aluno.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentFiscalDocument'
+              examples:
+                aguardandoTomador:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    status: awaiting-holder
+                    studyDocument: false
+                    downloadsReady: false
+                emEmissao:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    status: issuing
+                    studyDocument: false
+                    downloadsReady: false
+                emitidaEstudo:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    status: issued
+                    studyDocument: true
+                    downloadsReady: true
+                falha:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    status: failed
+                    studyDocument: false
+                    downloadsReady: false
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /orders/{orderId}/fiscal-document/pdf:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: Baixar o PDF da própria nota
+      description: |
+        Repasse de `getFiscalDocumentFileInternal` com `kind: pdf`. Só o aluno do pedido, autenticado (RN-F12).
+        Nota que não está `issued` → 404, o mesmo código de pedido alheio. O corpo é o arquivo devolvido pelo emissor, sem reescrita.
+        Se `studyDocument` é verdadeiro, o arquivo já traz a marca de sem valor fiscal (RN-F14).
+      operationId: downloadMyFiscalDocumentPdf
+      security:
+        - StudentSessionCookie: []
+      responses:
+        '200':
+          description: PDF da nota.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+            Content-Disposition:
+              description: Anexo com o número do pedido. Sem documento do tomador.
+              schema:
+                type: string
+                examples:
+                  - attachment; filename="nfse-000123.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                contentMediaType: application/pdf
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /orders/{orderId}/fiscal-document/xml:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: Baixar o XML da própria nota
+      description: |
+        Repasse de `getFiscalDocumentFileInternal` com `kind: xml`. Mesmas regras do PDF.
+        Não há XML de cancelamento nesta fatia.
+      operationId: downloadMyFiscalDocumentXml
+      security:
+        - StudentSessionCookie: []
+      responses:
+        '200':
+          description: XML da nota.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+            Content-Disposition:
+              description: Anexo com o número do pedido.
+              schema:
+                type: string
+                examples:
+                  - attachment; filename="nfse-000123.xml"
+          content:
+            application/xml:
+              schema:
+                type: string
+                contentMediaType: application/xml
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+components:
+  securitySchemes:
+    StudentSessionCookie:
+      type: apiKey
+      in: cookie
+      name: student_session
+      description: |
+        Sessão opaca do aluno (ADR-0003). O BFF troca pela validação em Identity e pelo JWT de audiência `billing`.
+        Esta operação é leitura: não exige `X-CSRF-Token`.
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Pedido do aluno. Não é o identificador da nota no emissor.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        pedido:
+          value: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+  responses:
+    SessionRequired:
+      description: Sessão ausente, expirada ou revogada. code `SESSION_REQUIRED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    FiscalDocumentNotFound:
+      description: Não há nota baixável deste aluno para este pedido. code `FISCAL_DOCUMENT_NOT_FOUND`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            ausente:
+              value:
+                type: about:blank
+                title: Nota não encontrada.
+                status: 404
+                code: FISCAL_DOCUMENT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamUnavailable:
+      description: '`billing` não respondeu. A venda e o acesso não mudam. code `UPSTREAM_UNAVAILABLE`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível consultar a nota.
+                status: 502
+                code: UPSTREAM_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamTimeout:
+      description: '`billing` não respondeu a tempo. code `UPSTREAM_TIMEOUT`.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            estouro:
+              value:
+                type: about:blank
+                title: A consulta da nota demorou demais.
+                status: 504
+                code: UPSTREAM_TIMEOUT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          description: Código estável para o cliente. O cliente não decide pelo texto.
+        traceId:
+          type: string
+        instance:
+          type: string
+    StudentFiscalStatus:
+      type: string
+      enum: [awaiting-holder, issuing, issued, failed]
+      description: |
+        Vocabulário do aluno. `issuing` cobre prestador ainda não configurado e nota na fila.
+        Clientes devem tolerar valor novo.
+    StudentFiscalDocument:
+      type: object
+      additionalProperties: false
+      required: [orderId, status, studyDocument, downloadsReady]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/StudentFiscalStatus'
+        studyDocument:
+          type: boolean
+          description: Verdadeiro quando o emissor marcou o arquivo como sem valor fiscal (RN-F14). Não muda `issued`.
+        downloadsReady:
+          type: boolean
+          description: Verdadeiro só quando PDF e XML já podem ser baixados.
+      examples:
+        - orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          status: issued
+          studyDocument: true
+          downloadsReady: true

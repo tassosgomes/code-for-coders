@@ -1,0 +1,89 @@
+asyncapi: 3.0.0
+info:
+  title: Billing — fiscal da compra avulsa
+  version: 1.1.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/billing/asyncapi.yaml` 1.0.0 de forma **aditiva**.
+    Os fatos `cobranca.pagamento-*` e o consumo de `vendas.pedido-cancelado.v1` não mudam e não estão aqui.
+
+    Fiscal, módulo de `billing`, passa a receber a compra concluída e a identificação fiscal da conta, e a pedir o aviso de nota disponível.
+    Não publica situação de nota para Matrícula, aula ou progresso.
+
+    Abre o documento ao receber `vendas.compra-concluida.v1` com `courseTitle`. Sem `courseTitle`, confirma e não abre documento (DP-06).
+    Confirmação repetida do mesmo `orderId` não abre outro (RN-F02).
+    Ao receber `identidade.identificacao-fiscal-informada.v1`, relê o tomador e enfileira só os documentos daquele aluno que esperavam só o tomador.
+    Quando a nota fica com PDF e XML, publica um pedido de envio. Falha desse pedido não volta a nota para outra situação (RN-F13).
+id: urn:code-4-coders:billing
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline. Topologia física é configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  compraConcluida:
+    address: vendas.compra-concluida.v1
+    description: Fato de `commerce`. Fiscal consome com fila própria.
+    messages:
+      compraConcluida:
+        $ref: ./asyncapi-contract-commerce.yaml#/components/messages/CompraConcluida
+  identificacaoFiscalInformada:
+    address: identidade.identificacao-fiscal-informada.v1
+    description: Fato de `identity`. Fiscal consome com fila própria.
+    messages:
+      identificacaoFiscalInformada:
+        $ref: ./asyncapi-contract-identity.yaml#/components/messages/IdentificacaoFiscalInformada
+  notaFiscalDisponivel:
+    address: notificacao.envio-solicitado.v1
+    description: Canal de Notificação. Fiscal publica o variante da nota disponível.
+    messages:
+      notaFiscalDisponivel:
+        $ref: ./asyncapi-contract-notification.yaml#/components/messages/NotaFiscalDisponivel
+operations:
+  receberCompraConcluida:
+    action: receive
+    summary: Abrir o documento fiscal do pedido pago.
+    channel:
+      $ref: '#/channels/compraConcluida'
+    messages:
+      - $ref: '#/channels/compraConcluida/messages/compraConcluida'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: |
+      Fila própria de Fiscal, distinta da fila de Matrícula. Deduplica por `eventId` e, para o efeito, por `orderId`.
+      Sem `courseTitle`, confirma sem abrir documento.
+      Com título, prestador utilizável e tomador válido na leitura a Identity, submete ao emissor e fica `queued`.
+      Sem tomador → `awaiting-holder`. Sem prestador → `awaiting-provider`. Identity fora no momento de submeter não confirma a mensagem: nova tentativa. Esgotada a entrega, fila de erro, reprocessável sem segundo documento.
+      Não chama concessão nem comprovante. Venda e acesso já seguiram.
+  receberIdentificacaoFiscalInformada:
+    action: receive
+    summary: Enfileirar notas que esperavam o tomador deste aluno.
+    channel:
+      $ref: '#/channels/identificacaoFiscalInformada'
+    messages:
+      - $ref: '#/channels/identificacaoFiscalInformada/messages/identificacaoFiscalInformada'
+    bindings:
+      amqp:
+        ack: true
+        bindingVersion: 0.3.0
+    description: |
+      Deduplica por `eventId`. Relê `getStudentTaxDocumentInternal`. Documento já `queued` ou `issued` não é reenviado com o documento novo.
+      Se a leitura ainda não tem documento válido, confirma sem efeito.
+      Identity indisponível: não confirma.
+  publicarNotaFiscalDisponivel:
+    action: send
+    summary: Pedir o aviso de que a nota pode ser baixada.
+    channel:
+      $ref: '#/channels/notaFiscalDisponivel'
+    messages:
+      - $ref: '#/channels/notaFiscalDisponivel/messages/notaFiscalDisponivel'
+    description: |
+      Outbox na mesma transação em que o documento passa a `issued` (G06). Um pedido por documento.
+      `destinatarioConta` com a conta do aluno. Sem `destinatario`. Sem arquivo.
+      Republicar usa o mesmo `pedidoId`. Não sai em `awaiting-holder`, `awaiting-provider` nem `failed`.

@@ -1,0 +1,134 @@
+asyncapi: 3.0.0
+info:
+  title: Notificação — nota fiscal disponível
+  version: 1.3.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/notification/asyncapi.yaml` 1.2.0 de forma **aditiva** no pedido de envio.
+
+    Novo par finalidade/modelo `nota-fiscal-disponivel`. É o mesmo canal `notificacao.envio-solicitado.v1` e a mesma mensagem de pedido de envio.
+    Este arquivo descreve só o variante novo. Os modelos da 1.2.0, inclusive `comprovante-de-compra`, continuam no contrato vigente e não são repetidos.
+    Na consolidação, o variante vira mais um `if` de `PedidoDeEnvioSolicitadoPayload` e mais um valor de `Finalidade`.
+
+    O aviso não leva anexo, URL do emissor, e-mail, CPF, CNPJ nem NIF (RN-F12, RN-F13, DP-04). O link é a página do pedido do aluno.
+    Transacional: não depende de consentimento de marketing. Falha do aviso não tira a nota de `issued`.
+id: urn:code-4-coders:notification
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline. Topologia física é configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  pedidoDeEnvio:
+    address: notificacao.envio-solicitado.v1
+    description: Canal já existente. Este recorte acrescenta o modelo da nota disponível.
+    messages:
+      notaFiscalDisponivel:
+        $ref: '#/components/messages/NotaFiscalDisponivel'
+operations:
+  receberNotaFiscalDisponivel:
+    action: receive
+    summary: Aceitar o aviso de nota disponível.
+    channel:
+      $ref: '#/channels/pedidoDeEnvio'
+    messages:
+      - $ref: '#/channels/pedidoDeEnvio/messages/notaFiscalDisponivel'
+    bindings:
+      amqp:
+        ack: false
+        bindingVersion: 0.3.0
+    description: |
+      Mesmas garantias da 1.2.0 para `destinatarioConta`: idempotente por `pedidoId`; Identity indisponível retém;
+      conta inexistente ou desativada publica `entrega-falhou` com `destinatario-indisponivel` e não descarta o pedido por isso.
+      `pedidoId` é estável por documento fiscal, derivado do `fiscalDocumentId`, para a republicação não enviar um segundo aviso (RN-F13, RN-N09).
+      O e-mail resolvido não volta para `billing`.
+components:
+  messages:
+    NotaFiscalDisponivel:
+      name: NotaFiscalDisponivel
+      title: Nota fiscal disponível
+      summary: Variante de pedido de envio. Na consolidação não é uma segunda mensagem de canal; é o modelo novo.
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/NotaFiscalDisponivelPayload'
+      examples:
+        - name: notaDisponivel
+          headers:
+            correlationId: 00-d4e5f60718293a4b5c6d7e8f90011223-d4e5f60718293a4b-01
+          payload:
+            pedidoId: 5e6f7081-9203-5a4b-8c5d-6e7f8091a2b3
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            destinatarioConta:
+              tipo: conta-aluno
+              id: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+            finalidade: nota-fiscal-disponivel
+            modelo: nota-fiscal-disponivel
+            dados:
+              numeroPedido: '000123'
+              curso: .NET do zero à API
+              link: https://app.code4coders.com.br/student/pedidos/1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+            solicitadoEm: '2026-10-11T18:05:00Z'
+  schemas:
+    Cabecalho:
+      type: object
+      additionalProperties: false
+      required: [correlationId]
+      properties:
+        correlationId:
+          type: string
+    ContaDestinatario:
+      type: object
+      additionalProperties: false
+      required: [tipo, id]
+      properties:
+        tipo:
+          const: conta-aluno
+        id:
+          type: string
+          format: uuid
+    NotaFiscalDisponivelPayload:
+      type: object
+      additionalProperties: false
+      required: [pedidoId, tenantId, destinatarioConta, finalidade, modelo, dados, solicitadoEm]
+      properties:
+        pedidoId:
+          type: string
+          format: uuid
+          description: Estável por documento fiscal. Não é o `orderId`.
+        tenantId:
+          type: string
+          format: uuid
+        destinatarioConta:
+          $ref: '#/components/schemas/ContaDestinatario'
+        finalidade:
+          const: nota-fiscal-disponivel
+        modelo:
+          const: nota-fiscal-disponivel
+        dados:
+          type: object
+          additionalProperties: false
+          required: [numeroPedido, curso, link]
+          properties:
+            numeroPedido:
+              type: string
+              pattern: '^[0-9]{6,}$'
+            curso:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Título congelado. Sem e-mail.
+            link:
+              type: string
+              format: uri
+              description: Página do pedido do aluno. Sem arquivo e sem endereço do emissor.
+        solicitadoEm:
+          type: string
+          format: date-time
