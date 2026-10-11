@@ -3,9 +3,18 @@
    que as regras antigas do app.css. */
 
 /* Logo: nenhuma peça encolhe; o selo pode passar um pouco da área útil (como no Figma). */
+/* O logo do cabeçalho só aparece no mobile (display vem das media queries do app.css). */
+.app-shell .backoffice-brand {
+  display: flex;
+}
+
+/* "Sem papel" não é nome de papel: sem capitalizar cada palavra. */
+.app-shell .role-badge-empty {
+  text-transform: none;
+}
+
 .app-shell .backoffice-brand,
 .app-shell .mobile-backoffice-brand {
-  display: flex;
   align-items: center;
   gap: 10px;
   white-space: nowrap;
@@ -190,6 +199,15 @@
 .forbidden-page .code-window {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* .code-title > span:last-child (app.css) empurra o último span para a direita; aqui ele é o grupo de pontos. */
+.forbidden-page .code-title > .window-dots {
+  margin-left: 0;
+}
+
+.forbidden-page .code-window .code-ln {
+  color: var(--code-faint);
 }
 
 .forbidden-page .forbidden-card h1 {
