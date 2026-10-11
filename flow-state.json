@@ -173,7 +173,7 @@
       "id": "CAP-016",
       "stage": "prd",
       "artifacts": {
-        "prd": "tasks/prd-emissao-nfse/prd.draft.md"
+        "prd": "tasks/prd-emissao-nfse/prd.md"
       }
     },
     {
@@ -273,8 +273,8 @@
   "next_actions": [
     {
       "id": "NA25",
-      "what": "CAP-016: tasks/prd-emissao-nfse/prd.draft.md aguarda aprovacao. Fatia confirmada (OD90): NFS-e da compra avulsa. Sem domain doc. Depois da aprovacao, tsg-flow-contract-creator. Q5 e QA-03 bloqueiam ir a publico, nao a revisao do draft. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-prd-creator",
+      "what": "CAP-016: prd.md 1.0 aprovado em 2026-10-11 (tasks/prd-emissao-nfse/prd.md). Proximo: tsg-flow-contract-creator. QA-01, QA-02 e QA-03 seguem abertas e nao bloqueiam o contrato da fatia; QA-03 bloqueia nota valida em producao. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-contract-creator",
       "blocked_by": []
     }
   ],
@@ -1058,11 +1058,19 @@
     },
     {
       "id": "OD90",
-      "ref": "tasks/prd-emissao-nfse/prd.draft.md",
+      "ref": "tasks/prd-emissao-nfse/prd.md",
       "what": "Fatia do primeiro PRD de CAP-016",
       "owner": "tasso",
       "decided_at": "2026-10-11",
-      "decision": "Confirmada pelo responsavel (pode seguir): NFS-e da compra avulsa, um documento por pedido Pago, PDF e XML para o aluno e para o financeiro, falha fiscal sem travar venda nem acesso. Fora: cancelamento (CAP-015) e nota de assinatura (CAP-013). Sem domain doc. O draft registra DP-01 a DP-06 e aguarda aprovacao; ainda nao e prd.md."
+      "decision": "Confirmada pelo responsavel (pode seguir): NFS-e da compra avulsa, um documento por pedido Pago, PDF e XML para o aluno e para o financeiro, falha fiscal sem travar venda nem acesso. Fora: cancelamento (CAP-015) e nota de assinatura (CAP-013). Sem domain doc. O recorte ficou em tasks/prd-emissao-nfse/prd.md e foi aprovado em OD91."
+    },
+    {
+      "id": "OD91",
+      "ref": "tasks/prd-emissao-nfse/prd.md",
+      "what": "Aprovacao do PRD de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "PRD 1.0 aprovado, com DP-01 a DP-06. A compra nao passa a exigir CPF nem CNPJ: o aluno informa o documento na conta e a NFS-e espera em Aguardando tomador. QA-01, QA-02 e QA-03 permanecem abertas e nao bloqueiam o contrato desta fatia."
     }
   ]
 }

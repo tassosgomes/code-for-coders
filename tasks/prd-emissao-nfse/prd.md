@@ -2,8 +2,8 @@
 tsg_artifact: prd
 product: code-4-coders
 capability: CAP-016
-version: 0.1
-status: draft
+version: 1.0
+status: approved
 updated: 2026-10-11
 sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1
 ---
