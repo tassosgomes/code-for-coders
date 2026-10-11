@@ -1,7 +1,7 @@
 # Wireframes ASCII — Vídeos do backoffice (CAP-006)
 
 > **Status:** aprovado (ASCII e Figma) em 2026-09-26 · implementação não iniciada
-> **Adendo tags de vídeo:** ASCII aprovado pelo responsável em 2026-10-11 (seção 8)
+> **Adendo tags de vídeo:** ASCII e Figma aprovados pelo responsável em 2026-10-11 (seção 8; aprovação explícita "Figma está aprovado")
 > **Objetivo:** desenhar no Figma, sobre o Design System Code4Coders e o AppShell do backoffice
 > aprovado em CAP-002, as telas da área Vídeos antes da implementação no `admin-spa` (tasks 3.0–9.0 de
 > `tasks/archive/prd-ingestao-midia`). Aprovado este ASCII → desenho no Figma (task 2.0) → aprovação → código.
@@ -606,3 +606,58 @@ V2.g–V2.h (desktop; V2.g também em 390 px), V1.g–V1.k (desktop 1440; V1.g e
 `Dialog`, `Button`, `Alert`, `Tab`/Segmented, `Skeleton`, `Toast` e `EmptyState`; o campo de tags
 com sugestão e a linha com etiquetas são composições visuais propostas, sujeitas à regra de três
 usos de `Components.md`.
+
+### 8.8 Figma do adendo — aprovado
+
+O desenho foi materializado em **2026-10-11** no arquivo **Code4Coders — Design System**, página
+**Screens — Vídeos**, na seção **“🏷 Tags de vídeo — adendo (CAP-006 · 3ª fatia)”**
+([319:2437](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=319-2437)). Os frames de tela são clones dos frames aprovados de V1, V2 e V6 (mesmo AppShell,
+`Dialog Header`, `Form Field`/`Input`, `Tab`, `Button`, `Video Row`, `Video Card`), alterados só onde
+o adendo manda; as etiquetas e o campo de tags são composições novas sobre `Badge`/`Input`/tokens.
+Dados ilustrativos; o protótipo não executa escrita, busca nem autorização do servidor.
+
+**Situação:** frames aprovados pelo responsável em 2026-10-11 (aprovação explícita "Figma está aprovado").
+
+**Componente único de tags (proposto)**
+
+| Peça | Descrição | Link e `node-id` |
+|---|---|---|
+| Tag Chip | Etiqueta, variantes `removable=true/false` (propriedade de texto `Label`) | [319:4637](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=319-4637) |
+| Tag Field · estados | Padrão, digitando com sugestões, erro e filtro (só sugestão existente) | [320:2474](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=320-2474) |
+
+**Desktop · Light**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| V2.g · Conferir título + tags (Dialog) | 520 × 630 | [321:2533](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=321-2533) |
+| V2.h · Tag vazia ou de 31 caracteres — `TAG_INVALID` | 520 × 520 | [321:2586](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=321-2586) |
+| V2.h · 11ª tag — `TAGS_LIMIT_EXCEEDED` | 520 × 548 | [321:2895](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=321-2895) |
+| V2.h · Tag equivalente — sem duplicar, sem erro | 520 × 524 | [321:2984](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=321-2984) |
+| V1.g · Lista com etiquetas e botão 🏷 “Editar tags” (0, 1, 2, 3 e 10 tags) | 1440 × 900 | [323:2756](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=323-2756) |
+| V1.i · Filtro por tags com E/OU na URL | 1440 × 900 | [323:25515](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=323-25515) |
+| V1.j · Lista vazia com filtro de tag (“Limpar filtros”) | 1440 × 900 | [323:25839](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=323-25839) |
+| V8.a · Editar tags (Dialog sobre V1; Salvar desabilitado sem mudança) | 1440 × 900 | [324:3074](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-3074) |
+| V8.b · Erro 422 após Salvar — `TAG_INVALID` | 520 × ~454 | [324:3326](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-3326) |
+| V8.b · Falha de serviço após Salvar (Alert + “Tentar de novo”) | 520 × ~454 | [324:3633](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-3633) |
+| V8.c · Tags atualizadas (toast; grafia canônica e ordem alfabética) | 1440 × 900 | [324:40684](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-40684) |
+
+**Mobile · Light · 390 px**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| V2.g · Conferir título + tags | 390 × 844 | [321:3029](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=321-3029) |
+| V1.h · Lista com etiquetas e botão 🏷 (VideoCard) | 390 × 844 | [323:25916](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=323-25916) |
+| V1.k · Filtro por tags com E/OU | 390 × 844 | [323:26092](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=323-26092) |
+| V8.a · Editar tags | 390 × 844 | [324:3241](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-3241) |
+
+**Desktop · Dark**
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| V8.a · Editar tags | 1440 × 900 | [324:3172](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-3172) |
+
+Notas de desenho, sem mudar comportamento: V1.g e V1.i mostram 10 tags em duas linhas dentro da
+célula (nunca cortadas); o E/OU usa o `Tab` do DS (E ativo); o Alert de falha de serviço usa
+contorno `destructive` sobre `card`, como o `Alert` do DS; o campo de tags é a composição de
+`Tag Field` e o filtro (V1.i/V1.k) é a mesma composição em largura de linha. Em V1.g/V1.h
+um vídeo sem tags mostra só o botão 🏷.

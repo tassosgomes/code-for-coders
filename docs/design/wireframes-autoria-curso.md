@@ -1,7 +1,7 @@
 # Wireframes ASCII — Autoria de curso (CAP-005)
 
 > **Status:** ASCII e Figma aprovados pelo responsável em 2026-09-29.
-> **Adendo tags de vídeo:** ASCII aprovado pelo responsável em 2026-10-11 (seção 8)
+> **Adendo tags de vídeo:** ASCII e Figma aprovados pelo responsável em 2026-10-11 (seção 8; aprovação explícita "Figma está aprovado")
 > **Adendo nível e pré-requisito:** ASCII e Figma aprovados pelo responsável em 2026-09-30 (seção 7; aprovações explícitas “Está aprovado” e “Tá aprovado”; frames na seção 7.12).
 > **Responsável:** responsável pelo produto (usuário desta conversa), com aprovação explícita “Está aprovado” após receber o link do desenho real.
 > **Figma:** [Índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=176-11040) · task_01 concluída; gate visual das tasks 2.0–7.0 satisfeito, preservadas as demais dependências.
@@ -1272,3 +1272,24 @@ A6.f–A6.g (desktop; A6.f também em 390 px e Dark). Reusar `Sheet`, `Badge`, `
 `Tab`/Segmented, `Skeleton`, `Alert` e `Pagination`; o filtro por tags e a opção com etiquetas
 são composições visuais propostas, sujeitas à regra de três usos de `Components.md`.
 
+### 8.6 Figma do adendo — aprovado
+
+O desenho foi materializado em **2026-10-11** no arquivo **Code4Coders — Design System**, página
+**Screens — Autoria**, na seção **“🏷 Tags de vídeo — adendo (CAP-006 · 3ª fatia)”**
+([324:40939](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-40939)). Os frames são clones dos frames aprovados de A6 (Sheet lateral e Sheet inferior,
+`VideoOption`, `Input`, `Tab`, `Button`), com o mesmo componente de tags da seção 8 de
+`wireframes-videos.md` (`Tag Chip`, `Tag Field`, em `Screens — Vídeos`). Dados ilustrativos.
+
+**Situação:** frames aprovados pelo responsável em 2026-10-11 (aprovação explícita "Figma está aprovado").
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| A6.f · Seletor com filtro por tags e E/OU — Desktop Light (Sheet lateral) | 1440 × 900 | [324:40940](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-40940) |
+| A6.g · Filtro sem vídeo pronto correspondente (“Limpar filtros”) — Desktop Light | 1440 × 900 | [324:41118](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-41118) |
+| A6.f · Seletor com filtro por tags — Desktop Dark | 1440 × 900 | [324:41210](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-41210) |
+| A6.f · Seletor com filtro por tags — Mobile Light (Sheet inferior; 1 tag, sem E/OU) | 390 × 844 | [324:41311](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=324-41311) |
+
+Notas de desenho: A6.f desktop mostra 2 tags com E/OU (E ativo) e três opções com etiquetas; o
+mobile mostra 1 tag, sem a escolha E/OU (regra T6). A opção “sem etiquetas” do ASCII não aparece em
+A6.f porque nenhum vídeo sem tag atende a um filtro de tags; o estado “vídeo sem tags” fica coberto
+pela lista de Vídeos (V1.g).
