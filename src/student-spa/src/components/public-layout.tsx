@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Link, Outlet } from 'react-router';
+import { Link, NavLink, Outlet } from 'react-router';
 
 import { BrandLogo } from '@/components/blocks/brand-logo';
 import { ThemeMenu } from '@/components/theme-menu';
@@ -33,17 +33,17 @@ export const PublicLayout = ({ children }: PublicLayoutProps) => (
       Pular para o conteúdo
     </a>
     <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex min-h-17 w-full max-w-280 items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex min-h-18 w-full max-w-292 items-center gap-4 px-4 sm:px-6">
         <Link aria-label="Code4Coders — cursos" className="w-fit" to={paths.studentShowcase.getHref()}>
           <BrandLogo />
         </Link>
         <nav aria-label="Principal" className="ml-4 hidden md:block">
-          <Link
-            className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground"
+          <NavLink
+            className={({ isActive }) => `rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground ${isActive ? 'text-primary' : 'text-foreground'}`}
             to={paths.studentShowcase.getHref()}
           >
             Cursos
-          </Link>
+          </NavLink>
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <ThemeMenu />
@@ -102,11 +102,11 @@ export const PublicLayout = ({ children }: PublicLayoutProps) => (
         </div>
       </div>
     </header>
-    <main className="mx-auto w-full max-w-280 flex-1 px-4 py-8 sm:px-6 sm:py-10" id="conteudo" tabIndex={-1}>
+    <main className="mx-auto w-full max-w-292 flex-1 px-4 py-8 sm:px-6 sm:py-12" id="conteudo" tabIndex={-1}>
       {children ?? <Outlet />}
     </main>
-    <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground sm:px-6">
-      © {new Date().getFullYear()} Code4Coders · cursos de programação
+    <footer className="bg-inverse text-inverse-foreground">
+      <div className="mx-auto flex min-h-16 w-full max-w-292 items-center px-4 text-sm sm:px-6">© Code4Coders · cursos de programação</div>
     </footer>
   </div>
 );

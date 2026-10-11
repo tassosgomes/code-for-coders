@@ -94,9 +94,9 @@ describe('student course page', () => {
   it('shows the modules with their lesson titles and opens the first one', () => {
     renderPage({ status: 'success', course });
 
-    expect(screen.getByRole('button', { name: /Fundamentos da linguagem \(2 aulas\)/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: /Fundamentos da linguagem 2 aulas/ })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Tipos e variáveis')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Construindo a API \(1 aula\)/ })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: /Construindo a API 1 aula/ })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('hides the sections that have nothing to say', () => {

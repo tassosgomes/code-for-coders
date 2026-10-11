@@ -13,10 +13,10 @@ export const OfferOption = ({ offer, courseId }: OfferOptionProps) => {
   const period = formatAccessPeriod(offer.accessPeriod);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
-      <h3 className="font-heading text-base font-semibold leading-snug text-foreground">{offer.name}</h3>
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
+      <h3 className="typo-h5 text-foreground">{offer.name}</h3>
       {period ? <p className="text-sm text-muted-foreground">{period}</p> : null}
-      <p className="text-xl font-semibold text-foreground">{formatPriceCents(offer.priceCents)}</p>
+      <p className="typo-h4 text-foreground">{formatPriceCents(offer.priceCents)}</p>
       <PurchaseIntentButton courseId={courseId} offerId={offer.offerId} offerName={offer.name} />
     </div>
   );
