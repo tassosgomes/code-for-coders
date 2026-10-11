@@ -2,27 +2,27 @@
   "schema_version": 1,
   "branch": "docs/prd-tags-video",
   "original_base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
-  "base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
-  "target_ref": null,
-  "last_checkpoint": "3b37922",
-  "phase": "checkpoint",
-  "active_task": "7.0",
+  "base_ref": "5957c5b054f4e67b9c29833c1b8712f46e542bd9",
+  "target_ref": "5957c5b054f4e67b9c29833c1b8712f46e542bd9",
+  "last_checkpoint": "e15fca8",
+  "phase": "complete-prd",
+  "active_task": null,
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 3,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
   "transport": "herdr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "e15fca83a96ff2109c504fa422095f7d2ddb24db",
+  "validated_tree": "99a1dc87a24aa251bb5c0787f29b648ba47595a3",
   "last_result": {
-    "run_id": "run.UVOb78Co",
+    "run_id": "run.p7dMDhoo",
     "role": "validator",
     "kind": "cursor",
-    "task": "7.0",
+    "mode": "full",
     "outcome": "approved"
   },
   "history": [
@@ -138,6 +138,22 @@
       "ts": "2026-10-11",
       "event": "smoke 7.0 impedido por ambiente",
       "run_id": "run.lMrP1UkU"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 7.0",
+      "commit": "8a41ff7"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "prepare-integration",
+      "run_id": "run.izShZhzV",
+      "note": "rebase sobre 5957c5b; HEAD e15fca8"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "full validation aprovada",
+      "run_id": "run.p7dMDhoo"
     }
   ],
   "pending": [
