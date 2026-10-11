@@ -38,8 +38,8 @@ const formatRemaining = (seconds: number) => {
 
 const getHeading = (transfer: VideoTransferView) => {
   if (transfer.status === 'uploading') return `${transfer.resumed ? 'Continuando' : 'Enviando'} ${transfer.fileName}`;
-  if (transfer.status === 'reconnecting') return 'Conexão instável — tentando de novo...';
-  if (transfer.status === 'completing') return 'Conferindo o envio...';
+  if (transfer.status === 'reconnecting') return 'Conexão instável — tentando de novo…';
+  if (transfer.status === 'completing') return 'Conferindo o envio…';
   if (transfer.status === 'paused') return `Envio pausado em ${transfer.progress}%`;
   return `${transfer.title} recebido`;
 };

@@ -24,7 +24,7 @@ describe('admin dashboard route', () => {
   it.each([
     ['Acessos', { permission: 'acesso.gerir' }, 'Convide pessoas e ajuste os papéis da equipe.'],
     ['Autoria', { permission: 'autoria.ler' }, 'Monte módulos e aulas, depois publique.'],
-    ['Vídeos', { permission: 'midia.enviar' }, 'Envie gravações e acompanhe a preparação.'],
+    ['Vídeos', { permission: 'midia.enviar' }, 'Envie as gravações das aulas e acompanhe a preparação.'],
     ['Financeiro', { permission: 'financeiro.ler' }, 'Vendas, pedidos e repasses da escola.'],
     ['Catálogo', { permission: 'oferta.editar' }, 'Publique ofertas e ajuste preços dos cursos.'],
     ['Auditoria', { role: 'administrador' }, 'Consulte os atos administrativos registrados para o seu tenant.'],

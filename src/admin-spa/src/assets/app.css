@@ -7,6 +7,7 @@
 @import './backoffice-shell.css';
 @import './auth-screens.css';
 @import './staff-access.css';
+@import './videos.css';
 :root {
   font-family:Inter,system-ui,sans-serif;
   font-synthesis:none;
@@ -3400,31 +3401,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   margin-left:28px;
 }
 
-.videos-toast {
-  position:fixed;
-  z-index:60;
-  right:24px;
-  bottom:24px;
-  display:flex;
-  min-height:52px;
-  align-items:center;
-  gap:8px;
-  padding:12px 16px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:var(--surface);
-  box-shadow:0 8px 24px rgb(var(--shadow-rgb) / 0.12);
-  color:var(--foreground);
-  font-size:12px;
-  line-height:16px;
-}
-
-.videos-toast>span {
-  color:var(--success-soft-foreground);
-  font-size:16px;
-  font-weight:700;
-}
-
 .video-dialog-heading {
   display:flex;
   align-items:center;
@@ -3969,12 +3945,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
   .video-transfer-message {
     flex:1;
-  }
-
-  .videos-toast {
-    right:16px;
-    bottom:16px;
-    left:16px;
   }
 }
 
