@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["6.0"]
 gate: 'npm --prefix src/admin-spa run test -- authoring-video-picker-tags'

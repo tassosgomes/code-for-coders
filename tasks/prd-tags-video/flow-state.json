@@ -4,13 +4,13 @@
   "original_base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
   "base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
   "target_ref": null,
-  "last_checkpoint": "be70d44",
+  "last_checkpoint": "3b37922",
   "phase": "checkpoint",
-  "active_task": "6.0",
+  "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
-  "transport_retries": 2,
+  "transport_retries": 3,
   "specs": [
     "techspec.md"
   ],
@@ -19,9 +19,10 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.yGbU3uGs",
+    "run_id": "run.UVOb78Co",
     "role": "validator",
-    "task": "6.0",
+    "kind": "cursor",
+    "task": "7.0",
     "outcome": "approved"
   },
   "history": [
@@ -116,6 +117,30 @@
     {
       "ts": "2026-10-11",
       "event": "implement 6.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 6.0",
+      "commit": "3b37922",
+      "note": "envelope result_invalid; commit, checkbox e status reconciliados"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 7.0 tentativa 1"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "transport_failure 7.0",
+      "run_id": "run.rAfhYOgO",
+      "note": "codex sem cota até 21h; pane fechado sem escrita; responsável escolheu claude haiku-5-5 para implementar e cursor para revisar"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "smoke 7.0 impedido por ambiente",
+      "run_id": "run.lMrP1UkU"
     }
+  ],
+  "pending": [
+    "smoke dev 7.0: montar aula filtrando o seletor por tag (PG remoto instável)"
   ]
 }
