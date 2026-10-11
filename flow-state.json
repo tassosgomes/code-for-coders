@@ -83,12 +83,13 @@
     },
     {
       "id": "CAP-006",
-      "stage": "techspec",
+      "stage": "tasks",
       "artifacts": {
         "domain": "domains/entrega-de-midia-e-protecao/domain.md",
         "prd": "tasks/prd-tags-video/prd.md",
         "contract": "tasks/prd-tags-video/contracts.md",
-        "techspec": "tasks/prd-tags-video/techspec.md"
+        "techspec": "tasks/prd-tags-video/techspec.md",
+        "tasks": "tasks/prd-tags-video/tasks.md"
       },
       "mvp_order": 3,
       "delivered": [
