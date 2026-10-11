@@ -9,7 +9,7 @@
 /* Stepper */
 .courtesy-page .courtesy-stepper { gap: 12px; margin: 0; }
 .courtesy-page .courtesy-stepper li { color: var(--muted); font-weight: 400; }
-.courtesy-page .courtesy-stepper li:not(:last-child)::after { background: var(--border); height: 1px; min-width: 12px; }
+.courtesy-page .courtesy-stepper li:not(:last-child)::after { background: var(--border-strong); height: 1px; min-width: 12px; }
 .courtesy-page .courtesy-stepper li.is-complete:not(:last-child)::after { background: var(--primary); }
 .courtesy-page .courtesy-stepper li > span:first-child { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
 .courtesy-page .courtesy-stepper li.is-complete > span:first-child { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
