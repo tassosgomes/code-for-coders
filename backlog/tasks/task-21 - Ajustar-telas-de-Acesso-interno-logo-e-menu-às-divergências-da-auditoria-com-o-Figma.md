@@ -3,11 +3,11 @@ id: TASK-21
 title: >-
   Ajustar telas de Acesso interno, logo e menu às divergências da auditoria com
   o Figma
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-11 00:21'
-updated_date: '2026-10-11 00:24'
+updated_date: '2026-10-11 14:08'
 labels:
   - frontend
 dependencies: []
@@ -32,8 +32,8 @@ Auditoria de 2026-10-10 comparou dev com o Figma Screens — Acesso interno (nod
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 As subtarefas de shell/Início, telas de entrada e Acessos estão concluídas
-- [ ] #2 Lint, build e testes do admin-spa passam e as telas foram conferidas em dev
+- [x] #1 As subtarefas de shell/Início, telas de entrada e Acessos estão concluídas
+- [x] #2 Lint, build e testes do admin-spa passam e as telas foram conferidas em dev
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -43,3 +43,9 @@ Auditoria de 2026-10-10 comparou dev com o Figma Screens — Acesso interno (nod
 2. Três subtarefas em paralelo com arquivos exclusivos: 21.1 shell/Início/sem permissão, 21.2 telas de entrada, 21.3 Acessos.
 3. Integração: lint, build, vitest completo; PR; conferência em dev após deploy.
 <!-- SECTION:PLAN:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Acesso interno, logo e menu alinhados ao Figma em #210 e #211 (subtarefas 21.1–21.4). Verificado em dev com as contas admin e financeira e por admin-spa em main (2026-10-11): lint ok, build ok, vitest 52 arquivos/313 testes.
+<!-- SECTION:FINAL_SUMMARY:END -->

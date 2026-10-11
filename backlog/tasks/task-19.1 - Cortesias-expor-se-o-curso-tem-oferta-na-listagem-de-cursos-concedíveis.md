@@ -1,11 +1,11 @@
 ---
 id: TASK-19.1
 title: 'Cortesias: expor se o curso tem oferta na listagem de cursos concedíveis'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 22:29'
-updated_date: '2026-10-10 22:34'
+updated_date: '2026-10-11 14:07'
 labels:
   - backend
 dependencies: []
@@ -35,10 +35,10 @@ O passo Curso do Figma (T2.a) mostra a coluna Oferta com selo "Com oferta"/"Sem 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Cada item de GET /courtesy-courses no Commerce e no bff-admin traz o booleano obrigatório `hasOffer`, verdadeiro quando o curso tem oferta publicada
-- [ ] #2 Os contratos contracts/commerce/openapi-internal.yaml e contracts/bff-admin/openapi-cortesias.yaml descrevem `hasOffer` com exemplo
-- [ ] #3 Testes de integração do Commerce e do bff-admin cobrem curso com e sem oferta publicada
-- [ ] #4 A listagem continua incluindo cursos sem oferta
+- [x] #1 Cada item de GET /courtesy-courses no Commerce e no bff-admin traz o booleano obrigatório `hasOffer`, verdadeiro quando o curso tem oferta publicada
+- [x] #2 Os contratos contracts/commerce/openapi-internal.yaml e contracts/bff-admin/openapi-cortesias.yaml descrevem `hasOffer` com exemplo
+- [x] #3 Testes de integração do Commerce e do bff-admin cobrem curso com e sem oferta publicada
+- [x] #4 A listagem continua incluindo cursos sem oferta
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -55,3 +55,9 @@ O passo Curso do Figma (T2.a) mostra a coluna Oferta com selo "Com oferta"/"Sem 
 <!-- SECTION:NOTES:BEGIN -->
 hasOffer = existe CatalogOffer do curso com Status 'published' (mesma regra de PurchaseOfferReader.cs:9 e CatalogCourseView.cs:36). Uma SQL com Any no Select; sem migration. bff-admin repassa o JSON do Commerce sem reserializar, então só testes e contrato mudaram. Commerce: CourtesyCourseListingTests + OrderHttpContract 15/15; bff-admin filtro Courtes 40/40.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Commerce passou a expor hasOffer (oferta publicada) em GET /courtesy-courses sem migration; bff-admin repassa o campo; contratos atualizados. Verificado com testes de integração (Commerce CourtesyCourseListing + OrderHttpContract 15/15, bff-admin Courtes 40/40) e em dev: a coluna Oferta mostra Com oferta/Sem oferta e lista cursos sem oferta.
+<!-- SECTION:FINAL_SUMMARY:END -->

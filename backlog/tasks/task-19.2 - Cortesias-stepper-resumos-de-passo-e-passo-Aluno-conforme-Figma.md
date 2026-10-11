@@ -1,11 +1,11 @@
 ---
 id: TASK-19.2
 title: 'Cortesias: stepper, resumos de passo e passo Aluno conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-10 22:29'
-updated_date: '2026-10-10 22:34'
+updated_date: '2026-10-11 14:07'
 labels:
   - frontend
 dependencies: []
@@ -33,12 +33,12 @@ Parte da auditoria TASK-19 que cobre o cabeçalho do fluxo e o passo 1 (frames T
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Stepper usa os rótulos Aluno, Curso, Vigência, Motivo, Revisão, Resultado; passos concluídos mostram check e conector destacado; o atual tem círculo contornado; o stepper some no passo Resultado
-- [ ] #2 Nos passos Curso, Vigência e Motivo aparece o cartão de resumo ALUNO com "Nome · e-mail" e link Editar que volta ao passo Aluno
-- [ ] #3 Aluno inexistente marca o input como inválido e mostra abaixo dele "Não há conta de aluno com este e-mail." e "Confira o e-mail e tente de novo."; falha de serviço mostra caixa de erro com "Não foi possível localizar agora." e "Tentar de novo"; carregamento usa blocos esqueleto
-- [ ] #4 Cartão do aluno tem avatar com iniciais, selo Ativa ou Desativada, aviso de e-mail não confirmado com o texto e selo do Figma, aviso de conta desativada com o texto do Figma, e as ações Voltar e Continuar no lugar de Trocar aluno
-- [ ] #5 Concessões aparecem como CONCESSÕES DESTA CONTA com "10/página", tabela Curso/Origem/Vigência/Situação, rodapé "Vigência sempre em data absoluta.", paginação de 10 por página e vazio "Nenhuma concessão para este aluno ainda."
-- [ ] #6 Testes do admin-spa cobrem stepper, resumo, erro de aluno inexistente e paginação das concessões
+- [x] #1 Stepper usa os rótulos Aluno, Curso, Vigência, Motivo, Revisão, Resultado; passos concluídos mostram check e conector destacado; o atual tem círculo contornado; o stepper some no passo Resultado
+- [x] #2 Nos passos Curso, Vigência e Motivo aparece o cartão de resumo ALUNO com "Nome · e-mail" e link Editar que volta ao passo Aluno
+- [x] #3 Aluno inexistente marca o input como inválido e mostra abaixo dele "Não há conta de aluno com este e-mail." e "Confira o e-mail e tente de novo."; falha de serviço mostra caixa de erro com "Não foi possível localizar agora." e "Tentar de novo"; carregamento usa blocos esqueleto
+- [x] #4 Cartão do aluno tem avatar com iniciais, selo Ativa ou Desativada, aviso de e-mail não confirmado com o texto e selo do Figma, aviso de conta desativada com o texto do Figma, e as ações Voltar e Continuar no lugar de Trocar aluno
+- [x] #5 Concessões aparecem como CONCESSÕES DESTA CONTA com "10/página", tabela Curso/Origem/Vigência/Situação, rodapé "Vigência sempre em data absoluta.", paginação de 10 por página e vazio "Nenhuma concessão para este aluno ainda."
+- [x] #6 Testes do admin-spa cobrem stepper, resumo, erro de aluno inexistente e paginação das concessões
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -56,3 +56,9 @@ Parte da auditoria TASK-19 que cobre o cabeçalho do fluxo e o passo 1 (frames T
 <!-- SECTION:NOTES:BEGIN -->
 Implementado por subagente: stepper com check/conectores e oculto no Resultado, resumo ALUNO, erros e esqueleto do lookup, cartão do aluno com avatar/selos, concessões em tabela paginada (10/página, cliente). Lint ok; vitest 277/277; tsc pendente só da prop onViewGrants da 19.3.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Stepper com rótulos e checks (oculto no Resultado), resumo ALUNO, erros/esqueleto do lookup, cartão do aluno e concessões em tabela paginada conforme Figma. Verificado em dev (aluno inexistente, cartão Ativa, tabela de concessões, stepper e resumos, Resultado sem stepper) e por testes do admin-spa; admin-spa em main (2026-10-11): lint ok, build ok, vitest 52 arquivos/313 testes.
+<!-- SECTION:FINAL_SUMMARY:END -->
