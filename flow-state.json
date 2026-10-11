@@ -271,11 +271,9 @@
   "next_actions": [
     {
       "id": "NA25",
-      "what": "Fase 2, passo 12: CAP-016 (emissao de NFS-e) na fatia da compra avulsa (fato gerador de CAP-011). Sem domain doc: Fiscal tem uma capacidade so. Nao comeca enquanto OD89 (provedor de NFS-e) estiver aberta. Q5 (NFS-e entre a primeira venda real e o passo 12) bloqueia ir a publico, nao este PRD. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-prd-creator",
-      "blocked_by": [
-        "OD89"
-      ]
+      "what": "Fase 2, passo 12: CAP-016 (emissao de NFS-e). Provedor fechado em OD89: contrato Notaas, duplo fake-nfe em dev/homologacao. Falta confirmar a fatia antes do PRD: so a compra avulsa (CAP-011); cancelamento fica com CAP-015 e assinatura com CAP-013. Sem domain doc. Q5 bloqueia ir a publico, nao o PRD. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-next",
+      "blocked_by": []
     }
   ],
   "open_decisions": [
@@ -325,15 +323,6 @@
       "what": "Ambiente: em scripts/apps.sh start --remote o bridge Docker local nao alcanca o RabbitMQ remoto, e a stack completa nao sobe apontando para o servidor; investigar rede do Docker local (WSL) ou override em docker-compose.remote.yml",
       "owner": "tasso",
       "blocks": []
-    },
-    {
-      "id": "OD89",
-      "ref": "backlog/capabilities.md passo 12 / CAP-016",
-      "what": "Contratar o provedor de NFS-e antes de atacar CAP-016. A fatia da compra avulsa nao tem com quem emitir a nota sem esse provedor",
-      "owner": "negocio",
-      "blocks": [
-        "CAP-016"
-      ]
     }
   ],
   "foundation": {
@@ -1056,6 +1045,14 @@
       "owner": "tasso",
       "decided_at": "2026-10-11",
       "decision": "Confirmado pelo responsavel em 2026-10-11: o checkpoint ja foi concluido no ambiente de homologacao. Uma compra real percorre CAP-011 -> CAP-008 sem intervencao manual, com cartao, PIX e boleto ate a concessao. O criterio de conclusao do MVP em backlog/capabilities.md fica satisfeito nesse ambiente. Descartado: repetir o mesmo checkpoint num sandbox local sem chave Stripe — a evidencia pedida e a compra no ambiente integrado, e homologacao ja e esse ambiente."
+    },
+    {
+      "id": "OD89",
+      "ref": "https://github.com/tassosgomes/fake-nfe ; https://www.notaas.com.br/",
+      "what": "Provedor de NFS-e da CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "O contrato da camada anticorrupcao e o da Notaas, no recorte que o fake-nfe implementa: POST /api/v1/emitir com x-api-key (prefixo ntaas_), resposta 202 queued, consulta de status, PDF e XML, cancelamento em fila, webhook HMAC no header X-Notaas-Signature. Eventos: nfse.issued, nfse.error, nfse.cancelled, nfse.documents_ready. Em dev e homologacao o duplo e github.com/tassosgomes/fake-nfe: X-Ambiente estudo, PDF e XML sem valor fiscal, sem SEFAZ e sem prefeitura. Producao fica a Notaas (platform.notaas.com.br) atras do mesmo contrato; conta e certificado A1 de producao nao bloqueiam o PRD. Descartado: tratar o fake como provedor de producao; integrar o leiaute municipal direto; seguir o marketing da Notaas onde ele diverge do fake (201 sincrona e POST /v1/nfse na pagina, 202 e fila no contrato implementado)."
     }
   ]
 }
