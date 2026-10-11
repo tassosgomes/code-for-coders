@@ -124,7 +124,7 @@ describe('student showcase screen', () => {
     const { onPageChange } = renderScreen({ result: { status: 'success', page: successPage([api, csharp], 3) }, page: 2 });
 
     expect(screen.getByRole('button', { name: 'Página 2' })).toHaveAttribute('aria-current', 'page');
-    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+    await user.click(screen.getByRole('button', { name: 'Próxima página' }));
     expect(onPageChange).toHaveBeenCalledWith(3);
   });
 

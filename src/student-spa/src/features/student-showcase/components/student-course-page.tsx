@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { CodeWindow } from '@/components/blocks/code-window';
@@ -31,24 +31,37 @@ const BackToShowcase = () => (
   </Link>
 );
 
+// P2.c: voltar, título e as duas colunas em barras.
 const CourseSkeleton = () => (
-  <div aria-label="Carregando curso" className="grid gap-8 lg:grid-cols-[1fr_22rem]" role="status">
-    <div className="flex flex-col gap-4">
-      <Skeleton aria-hidden="true" className="h-5 w-24" />
-      <Skeleton aria-hidden="true" className="h-10 w-3/4" />
-      <Skeleton aria-hidden="true" className="h-24 w-full" />
-      <Skeleton aria-hidden="true" className="h-24 w-full" />
-      <Skeleton aria-hidden="true" className="h-24 w-full" />
+  <div aria-label="Carregando curso" className="flex flex-col gap-6" role="status">
+    <BackToShowcase />
+    <div className="flex flex-col gap-3">
+      <Skeleton aria-hidden="true" className="h-5 w-20" />
+      <Skeleton aria-hidden="true" className="h-9 w-full max-w-120" />
     </div>
-    <Skeleton aria-hidden="true" className="h-64 w-full" />
+    <div className="grid gap-8 lg:grid-cols-[1fr_22.5rem] lg:gap-12">
+      <div className="flex flex-col gap-4">
+        <Skeleton aria-hidden="true" className="h-6 w-55" />
+        <Skeleton aria-hidden="true" className="h-4 w-full max-w-160" />
+        <Skeleton aria-hidden="true" className="h-4 w-full max-w-140" />
+        <Skeleton aria-hidden="true" className="h-4 w-full max-w-155" />
+      </div>
+      <div className="flex flex-col gap-3 rounded-xl border p-4">
+        <Skeleton aria-hidden="true" className="h-5 w-45" />
+        <Skeleton aria-hidden="true" className="h-4 w-full" />
+        <Skeleton aria-hidden="true" className="h-7 w-30" />
+        <Skeleton aria-hidden="true" className="h-10 w-full" />
+      </div>
+    </div>
   </div>
 );
 
+// P4: centralizado na área de conteúdo.
 const CourseNotAvailable = () => (
-  <div className="flex max-w-xl flex-col items-start gap-5">
-    <CodeWindow className="w-full" code={'// curso não encontrado'} filename="curso.ts" />
-    <div className="space-y-2">
-      <h1 className="typo-h2">Este curso não está disponível.</h1>
+  <div className="flex flex-col items-center gap-6 py-12 text-center sm:py-24">
+    <CodeWindow className="w-full max-w-135 text-left" code={'// curso não encontrado'} filename="curso.ts" />
+    <div className="flex flex-col gap-6">
+      <h1 className="typo-h2 sm:typo-h1">Este curso não está disponível.</h1>
       <p className="text-muted-foreground">Ele pode ter saído da vitrine ou o endereço pode estar incorreto.</p>
     </div>
     <Button asChild>
@@ -67,28 +80,28 @@ const CourseContent = ({ course }: { course: ShowcaseCourseDetail }) => {
       <div className="flex flex-col gap-3">
         <BackToShowcase />
         {levelLabel ? <Badge className="w-fit" variant="secondary">{levelLabel}</Badge> : null}
-        <h1 className="typo-h2">{course.title}</h1>
+        <h1 className="typo-h2 sm:typo-h1">{course.title}</h1>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start">
+      <div className="grid gap-8 lg:grid-cols-[1fr_22.5rem] lg:items-start lg:gap-12">
         <div className="flex min-w-0 flex-col gap-8">
           {course.description.trim() ? (
             <section aria-labelledby="sobre-o-curso" className="space-y-3">
-              <h2 className="font-heading text-xl font-semibold" id="sobre-o-curso">Sobre o curso</h2>
-              <p className="max-w-prose whitespace-pre-line leading-relaxed text-foreground">{course.description}</p>
+              <h2 className="typo-h4" id="sobre-o-curso">Sobre o curso</h2>
+              <p className="whitespace-pre-line leading-6 text-foreground">{course.description}</p>
             </section>
           ) : null}
 
           {hasPrerequisite ? (
             <section aria-labelledby="recomendamos-saber-antes" className="space-y-3">
-              <h2 className="font-heading text-xl font-semibold" id="recomendamos-saber-antes">
+              <h2 className="typo-h4" id="recomendamos-saber-antes">
                 Recomendamos saber antes
               </h2>
-              {text?.trim() ? <p className="max-w-prose whitespace-pre-line leading-relaxed text-foreground">{text}</p> : null}
+              {text?.trim() ? <p className="whitespace-pre-line leading-6 text-foreground">{text}</p> : null}
               {recommendedCourses.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Cursos recomendados:</p>
-                  <ul className="list-disc space-y-1 pl-5">
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">Cursos recomendados:</p>
+                  <ul className="list-disc space-y-1.5 pl-5">
                     {recommendedCourses.map((recommended) => (
                       <li key={recommended.courseId}>
                         {recommended.inShowcase ? (
@@ -110,23 +123,26 @@ const CourseContent = ({ course }: { course: ShowcaseCourseDetail }) => {
           ) : null}
 
           <section aria-labelledby="o-que-voce-vai-ver" className="space-y-3">
-            <h2 className="font-heading text-xl font-semibold" id="o-que-voce-vai-ver">O que você vai ver</h2>
-            <Accordion defaultValue={['module-0']} type="multiple">
+            <h2 className="typo-h4" id="o-que-voce-vai-ver">O que você vai ver</h2>
+            {/* Cada módulo é um cartão (P2.a): seta à esquerda, contagem de aulas à direita. */}
+            <Accordion className="flex flex-col gap-3" defaultValue={['module-0']} type="multiple">
               {course.modules.map((module, index) => (
-                <AccordionItem key={`${index}-${module.title}`} value={`module-${index}`}>
-                  <AccordionTrigger>
-                    <span>
-                      {module.title} <span className="font-normal text-muted-foreground">({formatLessonCount(module.lessons.length)})</span>
-                    </span>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="space-y-1 pl-4 text-foreground">
-                      {module.lessons.map((lesson, lessonIndex) => (
-                        <li key={`${lessonIndex}-${lesson.title}`}>{lesson.title}</li>
-                      ))}
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
+                <div className="overflow-hidden rounded-xl border bg-card" key={`${index}-${module.title}`}>
+                  <AccordionItem value={`module-${index}`}>
+                    <AccordionTrigger className="group/module items-center! gap-3! px-4 hover:no-underline! [&>svg]:hidden">
+                      <ChevronRight aria-hidden="true" className="size-4 shrink-0 transition-transform group-data-[state=open]/module:rotate-90" />
+                      <span className="flex-1 text-base leading-6 text-foreground">{module.title}</span>
+                      <span className="text-sm font-normal text-muted-foreground">{formatLessonCount(module.lessons.length)}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-0!">
+                      <ul className="flex flex-col gap-2 border-t px-11 py-3 text-foreground">
+                        {module.lessons.map((lesson, lessonIndex) => (
+                          <li key={`${lessonIndex}-${lesson.title}`}>{lesson.title}</li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                </div>
               ))}
             </Accordion>
           </section>
@@ -137,7 +153,7 @@ const CourseContent = ({ course }: { course: ShowcaseCourseDetail }) => {
           className="flex scroll-mt-24 flex-col gap-4 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1"
           id={OPTIONS_ID}
         >
-          <h2 className="font-heading text-xl font-semibold" id={`${OPTIONS_ID}-titulo`}>Opções de acesso</h2>
+          <h2 className="typo-h5" id={`${OPTIONS_ID}-titulo`}>Opções de acesso</h2>
           <ul className="flex flex-col gap-4">
             {course.offers.map((offer) => (
               <li key={offer.offerId}>
@@ -170,11 +186,12 @@ export const StudentCoursePage = ({ result, onRetry }: StudentCoursePageProps) =
     return (
       <div className="flex flex-col gap-4">
         <BackToShowcase />
-        <Alert variant="destructive">
+        <Alert className="rounded-xl border-destructive p-4" variant="destructive">
           <AlertCircle aria-hidden="true" />
           <AlertTitle>Não foi possível carregar este curso agora.</AlertTitle>
           <AlertDescription>
-            <Button onClick={onRetry} size="sm" variant="outline">
+            <p>Tente de novo em instantes.</p>
+            <Button className="h-8 px-0 text-xs text-primary" onClick={onRetry} variant="link">
               Tentar de novo
             </Button>
           </AlertDescription>
