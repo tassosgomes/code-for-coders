@@ -42,7 +42,7 @@ export const createAuthoringVideoHandlers = () => {
       }),
       http.get(`${env.API_URL}/api/v1/video-tags`, ({ request }) => {
         const query = (new URL(request.url).searchParams.get('q') ?? '').toLowerCase();
-        const catalog = Array.from(new Set(videoFixtures.flatMap((video) => video.tags))).sort();
+        const catalog = Array.from(new Set(videoFixtures.flatMap((video) => video.tags))).sort((a, b) => a.localeCompare(b));
         return HttpResponse.json({ data: catalog.filter((tag) => tag.toLowerCase().includes(query)) });
       }),
       http.patch(`${env.API_URL}/api/v1/courses/:courseId/lessons/:lessonId`, async ({ request, params }) => {
