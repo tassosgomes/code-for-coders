@@ -1,8 +1,8 @@
 import { CircleAlert, Clapperboard, Pencil, Search } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
 
-import { paths } from '@/config/paths';
+import { ForbiddenScreen } from '@/components/forbidden-screen';
+import { Toast } from '@/components/toast';
 import type { PendingVideoUpload } from '@/features/videos/api/get-pending-video-uploads';
 import type { VideoPage, VideoStatus } from '@/features/videos/api/get-videos';
 import { PendingVideoUploadsAlert } from '@/features/videos/components/pending-video-uploads-alert';
@@ -114,16 +114,7 @@ export const VideosAreaScreen = ({
     if (changes) setStatusAnnouncement(changes);
   }
 
-  if (state === 'forbidden') {
-    return <main className="page-shell videos-page">
-      <p className="eyebrow">Vídeos</p>
-      <h1>Sem permissão</h1>
-      <section className="empty-state" role="alert">
-        <h2>Você não tem permissão para acessar esta área.</h2>
-        <Link className="outline-button" to={paths.home.getHref()}>Voltar para o início</Link>
-      </section>
-    </main>;
-  }
+  if (state === 'forbidden') return <ForbiddenScreen />;
 
   const sendButton = <button className="primary-button" disabled={uploadDisabled} onClick={onUpload} type="button" title={uploadDisabled ? 'Aguarde o envio atual terminar.' : undefined}>
     Enviar vídeo
@@ -244,6 +235,6 @@ export const VideosAreaScreen = ({
       <button className="video-link-button" onClick={onRetry} type="button">Tentar de novo</button>
     </section> : null}
 
-    {successMessage ? <p className="videos-toast" role="status"><span aria-hidden="true">✓</span>{successMessage}</p> : null}
+    {successMessage ? <Toast message={successMessage} /> : null}
   </main>;
 };

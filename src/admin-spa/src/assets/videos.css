@@ -1,0 +1,58 @@
+/* Vídeos conforme o Figma Screens — Vídeos (109:5071). app.css vem depois deste arquivo, então os seletores precisam de mais especificidade. */
+
+/* Selos: Recebido e Pronto sem borda (20 px); Em preparação e Falhou mantêm a borda. */
+.videos-page .video-status-badge.received,
+.videos-page .video-status-badge.ready { border: 0; padding: 2px 10px 2px 8px; }
+
+/* Ponto de "Atualizando automaticamente". */
+.videos-page .video-refresh-status { gap: 6px; }
+.videos-page .video-refresh-status > span { width: 8px; height: 8px; }
+
+/* Busca sem resultado (V1.c). */
+.videos-page .video-empty-filter { min-height: 0; gap: 8px; padding: 48px 32px; }
+.videos-page .video-empty-filter p { color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
+.videos-page .video-empty-filter .video-link-button { font-size: 14px; font-weight: 500; line-height: 20px; }
+
+/* Biblioteca vazia (V1.b). */
+.videos-page .video-empty-library { min-height: 0; gap: 16px; padding: 40px 32px; border-radius: 16px; }
+.videos-page .video-empty-library .video-empty-icon { border-radius: 12px; }
+.videos-page .video-empty-library h2 { margin: 0; font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.videos-page .video-empty-library p { margin: 0; }
+
+/* Erro ao carregar (V1.e) e envio incompleto (V4.a): Alert do DS, ícone a 12 px do texto. */
+.videos-page .video-unavailable-alert,
+.videos-page .pending-video-upload:not(.pending-video-upload-group) { gap: 4px; padding: 16px; border-radius: 12px; font-size: 14px; line-height: 20px; }
+.videos-page .video-unavailable-title,
+.videos-page .pending-video-upload:not(.pending-video-upload-group) .pending-video-upload-title { gap: 12px; margin: 0; font-weight: 500; }
+.videos-page .pending-video-upload:not(.pending-video-upload-group) .pending-video-upload-title strong { font-weight: 500; }
+.videos-page .video-unavailable-alert > p:not(.video-unavailable-title),
+.videos-page .pending-video-upload:not(.pending-video-upload-group) > p:not(.pending-video-upload-title) { margin: 0 0 0 28px; }
+.videos-page .video-unavailable-alert .video-link-button,
+.videos-page .pending-video-upload:not(.pending-video-upload-group) .video-link-button { min-height: 32px; margin-left: 28px; font-size: 12px; font-weight: 500; line-height: 16px; text-decoration: none; }
+.videos-page .pending-video-upload-group { border-radius: 12px; }
+
+/* Carregando (V1.d): linhas de 51 px, barras de 14 px com larguras fixas. */
+.videos-page .videos-loading .videos-skeleton-row { display: flex; min-height: 51px; gap: 16px; padding: 18px 16px; }
+.videos-page .videos-loading .videos-skeleton-row span { flex: none; height: 14px; border-radius: 10px; background: var(--background); }
+.videos-page .videos-loading .videos-skeleton-row .skeleton-title { width: 360px; flex-shrink: 1; }
+.videos-page .videos-loading .videos-skeleton-row .skeleton-status,
+.videos-page .videos-loading .videos-skeleton-row .skeleton-author { width: 120px; }
+.videos-page .videos-loading .videos-skeleton-row .skeleton-date { width: 90px; }
+
+/* Paginação: 24 px abaixo da tabela, páginas logo após o texto. */
+.videos-page .video-pagination { justify-content: flex-start; gap: 12px; margin-top: 24px; }
+
+/* Painel de envio (V3). */
+.videos-page .video-transfer-panel { box-shadow: 0 1px 3px rgb(var(--shadow-rgb) / 0.08), 0 1px 2px rgb(var(--shadow-rgb) / 0.04); }
+.videos-page .video-transfer-panel .video-transfer-retry { border-radius: 10px; font-weight: 500; line-height: 16px; }
+
+/* Diálogos de enviar, editar título e sair durante o envio (V2, V5, V6). */
+.dialog-card.video-upload-dialog,
+.dialog-card.video-edit-dialog,
+.dialog-card.leave-upload-dialog { border-radius: 16px; box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); }
+.dialog-card .video-dialog-heading h2 { font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.dialog-card.video-upload-dialog input.visually-hidden { width: 1px; min-height: 0; height: 1px; padding: 0; }
+.dialog-card.video-upload-dialog .video-choose-file { border-radius: 10px; font-size: 12px; font-weight: 500; line-height: 16px; }
+.dialog-card.video-upload-dialog .video-selected-file { gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--background); }
+.dialog-card.video-upload-dialog .video-selected-file > span { font-weight: 500; }
+.dialog-card.video-upload-dialog .video-selected-file .video-link-button { font-weight: 500; }

@@ -13,7 +13,7 @@ const getAreaContent = (area: StaffArea): { icon: LucideIcon; description: strin
   switch (area.permission) {
     case 'acesso.gerir': return { icon: Users, description: 'Convide pessoas e ajuste os papéis da equipe.' };
     case 'autoria.ler': return { icon: BookOpen, description: 'Monte módulos e aulas, depois publique.' };
-    case 'midia.enviar': return { icon: Clapperboard, description: 'Envie gravações e acompanhe a preparação.' };
+    case 'midia.enviar': return { icon: Clapperboard, description: 'Envie as gravações das aulas e acompanhe a preparação.' };
     case 'financeiro.ler': return { icon: Wallet, description: 'Vendas, pedidos e repasses da escola.' };
     case 'oferta.editar': return { icon: Tags, description: 'Publique ofertas e ajuste preços dos cursos.' };
     default:

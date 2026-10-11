@@ -1,7 +1,7 @@
-/* Aviso no canto (Figma B1.d e B10.b). */
-.app-toast { position: fixed; z-index: 60; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 8px; min-height: 52px; margin: 0; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 8px 24px rgb(var(--shadow-rgb) / 0.12); color: var(--foreground); font-size: 12px; font-weight: 500; line-height: 16px; }
+/* Aviso no canto, conforme o Toast do DS (51:536): bottom-right no desktop, bottom-center no mobile. */
+.app-toast { position: fixed; z-index: 60; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 12px; box-sizing: border-box; width: 356px; max-width: calc(100vw - 32px); margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
 .app-toast svg { flex: none; color: var(--success-soft-foreground); }
 
 @media (max-width: 640px) {
-  .app-toast { right: 16px; left: 16px; bottom: 16px; }
+  .app-toast { right: auto; left: 50%; bottom: 16px; transform: translateX(-50%); }
 }
