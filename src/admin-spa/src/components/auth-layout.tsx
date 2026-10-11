@@ -23,9 +23,9 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => (
         <div className="code-window">
           <div className="code-title"><span className="window-dots"><i /><i /><i /></span>acesso.ts <span>TS</span></div>
           <pre>
-            <span className="code-ln">1  </span><span className="code-cm">// acesso.ts</span>{'\n'}
+            <span className="code-ln">1  </span><span className="code-cm">{'// acesso.ts'}</span>{'\n'}
             <span className="code-ln">2  </span><span className="code-kw">if</span> (!voce.pode(<em>"financeiro.ler"</em>)){'\n'}
-            <span className="code-ln">3  </span><span className="code-kw">  return</span> negar();  <span className="code-cm">// 403</span>{'\n'}
+            <span className="code-ln">3  </span><span className="code-kw">  return</span> negar();  <span className="code-cm">{'// 403'}</span>{'\n'}
             <span className="code-ln">4</span>{'\n'}
             <span className="code-ln">5  </span>abrir(area);  <strong>{'// ✓ permitido'}</strong>
           </pre>
