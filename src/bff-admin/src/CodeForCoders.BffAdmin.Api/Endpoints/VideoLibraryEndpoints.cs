@@ -24,6 +24,7 @@ public static class VideoLibraryEndpoints
         endpoints.MapGet("/api/v1/videos", ListVideosAsync)
             .WithName("ListVideos")
             .WithTags("Videos")
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .Produces<VideoPageResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -81,11 +82,16 @@ public static class VideoLibraryEndpoints
         int _page = 1,
         int _size = 10,
         string[]? status = null,
-        string? q = null)
+        string? q = null,
+        string[]? tag = null,
+        string tagMatch = "all")
     {
         if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue
             || status?.Any(value => value is not ("received" or "preparing" or "ready" or "failed")) == true
-            || (q is not null && (string.IsNullOrWhiteSpace(q) || q.Length > 120)))
+            || (q is not null && (string.IsNullOrWhiteSpace(q) || q.Length > 120))
+            || tag?.Length > 10
+            || tag?.Any(value => string.IsNullOrWhiteSpace(value) || value.Length > 100) == true
+            || tagMatch is not ("all" or "any"))
         {
             return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The requested page is invalid.");
         }
@@ -96,7 +102,7 @@ public static class VideoLibraryEndpoints
             return access.Problem;
         }
 
-        var result = await mediaClient.ListVideosAsync(_page, _size, status ?? [], q?.Trim(), access.AccessToken!, cancellationToken);
+        var result = await mediaClient.ListVideosAsync(new(_page, _size, status ?? [], q?.Trim(), tag ?? [], tagMatch), access.AccessToken!, cancellationToken);
         return result.StatusCode == HttpStatusCode.OK && result.Page is not null
             ? Results.Ok(result.Page)
             : MediaProblem(httpContext, result);

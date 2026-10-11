@@ -63,11 +63,13 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = searchParams.get('status') ?? 'all';
   const search = searchParams.get('q') ?? '';
+  const tags = searchParams.getAll('tag');
+  const tagMatch = searchParams.get('tagMatch') === 'any' ? 'any' : 'all';
   const [searchInput, setSearchInput] = useState(search);
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const statuses: VideoStatus[] = filter === 'progress' ? ['received', 'preparing']
     : filter === 'ready' || filter === 'failed' ? [filter] : [];
-  const videos = useVideos({ page, size: 20, statuses, query: search.trim() || undefined });
+  const videos = useVideos({ page, size: 20, statuses, query: search.trim() || undefined, tags, tagMatch });
   const pendingUploads = usePendingVideoUploads();
   const queryClient = useQueryClient();
   const updateTitle = useUpdateVideoTitle();
@@ -92,12 +94,26 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
   const blocker = useBlocker(transferInProgress);
 
   const changeFilters = useCallback((nextFilter: string, nextSearch: string, nextPage = 1) => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams);
+    params.delete('status'); params.delete('q'); params.delete('page');
     if (nextFilter !== 'all') params.set('status', nextFilter);
     if (nextSearch.trim()) params.set('q', nextSearch);
     if (nextPage > 1) params.set('page', String(nextPage));
     setSearchParams(params);
-  }, [setSearchParams]);
+  }, [searchParams, setSearchParams]);
+
+  const changeTags = (nextTags: string[], nextMatch = tagMatch) => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('tag'); params.delete('tagMatch'); params.delete('page');
+    for (const tag of nextTags) params.append('tag', tag);
+    if (nextTags.length) params.set('tagMatch', nextMatch);
+    setSearchParams(params);
+  };
+
+  const clearFilters = () => {
+    setSearchInput('');
+    setSearchParams(new URLSearchParams());
+  };
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -271,7 +287,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
         setTransferInProgress(false);
         sessionRef.current = null;
         operationControllerRef.current = null;
-        await queryClient.invalidateQueries({ queryKey: getVideosQueryOptions().queryKey });
+        await queryClient.invalidateQueries({ queryKey: getVideosQueryOptions().queryKey.slice(0, 1) });
         await queryClient.invalidateQueries({ queryKey: getPendingVideoUploadsQueryOptions().queryKey });
         await queryClient.invalidateQueries({ queryKey: getVideoTagsQueryOptions().queryKey.slice(0, 1) });
         return;
@@ -428,9 +444,14 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
       onResumeUpload={() => { setDialogError(null); setUploadTagError(null); setDialogOpen(true); }}
       filter={filter}
       search={searchInput}
+      tags={tags}
+      tagMatch={tagMatch}
+      onTagsChange={changeTags}
+      onTagMatchChange={(value) => changeTags(tags, value)}
+      onClearFilters={clearFilters}
       onFilterChange={(value) => changeFilters(value, searchInput)}
       onSearchChange={setSearchInput}
-      onPageChange={(value) => changeFilters(filter, search, value)}
+      onPageChange={(value) => changeFilters(filter, searchInput, value)}
       onEditTitle={(video) => { setEditError(null); setSuccessToast(null); setEditIdempotencyKey(crypto.randomUUID()); setEditingVideo(video); }}
       onEditTags={(video) => { setTagError(null); setSuccessToast(null); tagIntent.current = null; setTagVideo(video); }}
       successMessage={successToast}

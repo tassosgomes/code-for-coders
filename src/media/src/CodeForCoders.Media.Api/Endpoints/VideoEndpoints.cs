@@ -63,7 +63,9 @@ public static class VideoEndpoints
         int _page = 1,
         int _size = 10,
         string[]? status = null,
-        string? q = null)
+        string? q = null,
+        string[]? tag = null,
+        string tagMatch = "all")
     {
         if (_page < 1 || _size is < 1 or > 50 || (long)(_page - 1) * _size > int.MaxValue
             || status?.Any(value => value is not ("received" or "preparing" or "ready" or "failed")) == true
@@ -72,7 +74,7 @@ public static class VideoEndpoints
             return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "The requested page is invalid.");
         }
 
-        var page = await listVideos.ExecuteAsync(new ListVideosInput(_page, _size, status ?? [], q?.Trim()), cancellationToken);
+        var page = await listVideos.ExecuteAsync(new ListVideosInput(_page, _size, status ?? [], q?.Trim(), tag ?? [], tagMatch), cancellationToken);
         return Results.Ok(page);
     }
 

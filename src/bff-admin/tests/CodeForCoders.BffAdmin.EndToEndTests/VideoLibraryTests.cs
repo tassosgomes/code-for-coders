@@ -132,10 +132,7 @@ public sealed class VideoLibraryTests(BffAdminApiFactory factory)
         var mediaClient = new VideoLibraryClient(httpClient);
 
         var result = await mediaClient.ListVideosAsync(
-            1,
-            10,
-            [],
-            null,
+            new(1, 10, [], null),
             "teacher-media-token",
             TestContext.Current.CancellationToken);
 

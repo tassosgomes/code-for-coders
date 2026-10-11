@@ -370,6 +370,8 @@ paths:
             value: injeção
       - $ref: '#/components/parameters/Page'
       - $ref: '#/components/parameters/Size'
+      - $ref: '#/components/parameters/Tag'
+      - $ref: '#/components/parameters/TagMatch'
       responses:
         '200':
           description: Página de vídeos; `data` vazio quando nenhum atende ao filtro.
@@ -1033,6 +1035,37 @@ components:
       examples:
         hd:
           value: 720p
+    Tag:
+      name: tag
+      in: query
+      required: false
+      description: |
+        Tags da escola a filtrar; repetível, até 10. Cada valor é comparado sem diferenciar maiúsculas, acentos nem espaços nas pontas e repetidos (RN-T02). Valor que não é tag da escola não casa com nenhum vídeo: com `tagMatch=all` o resultado fica vazio, com `any` ele é ignorado. Combina-se com `status` e `q` como "todos ao mesmo tempo" (RF-04, RF-05).
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 10
+        items:
+          type: string
+          minLength: 1
+          maxLength: 100
+      examples:
+        duasTags:
+          value:
+            - docker
+            - módulo 2
+    TagMatch:
+      name: tagMatch
+      in: query
+      required: false
+      description: |
+        Combinação entre as tags de `tag` (RF-06): `all` traz o vídeo que tem todas; `any`, o que tem pelo menos uma. Ausente → `all`. Sem efeito com menos de duas tags.
+      schema:
+        $ref: '#/components/schemas/TagMatch'
+      examples:
+        qualquer:
+          value: any
     TagQuery:
       name: q
       in: query
@@ -1317,6 +1350,13 @@ components:
         durationSeconds: 2415
         failureReason: null
   schemas:
+    TagMatch:
+      type: string
+      enum:
+        - all
+        - any
+      default: all
+      description: '`all` = E (o vídeo tem todas as tags); `any` = OU (tem pelo menos uma).'
     Problem:
       type: object
       additionalProperties: false

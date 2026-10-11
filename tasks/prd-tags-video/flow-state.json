@@ -4,9 +4,9 @@
   "original_base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
   "base_ref": "2a4cb101225fe3810af73b3b663be71399ae2ae9",
   "target_ref": null,
-  "last_checkpoint": "64993ce",
+  "last_checkpoint": "be70d44",
   "phase": "checkpoint",
-  "active_task": "5.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -19,9 +19,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "run_id": "run.JRGAlqAO",
+    "run_id": "run.yGbU3uGs",
     "role": "validator",
-    "task": "5.0",
+    "task": "6.0",
     "outcome": "approved"
   },
   "history": [
@@ -107,6 +107,15 @@
       "event": "gate_error 5.0 (ambiente)",
       "run_id": "run.gb7EDuUr",
       "note": "repetição só do smoke; não consome tentativa"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "checkpoint 5.0",
+      "commit": "be70d44"
+    },
+    {
+      "ts": "2026-10-11",
+      "event": "implement 6.0 tentativa 1"
     }
   ]
 }

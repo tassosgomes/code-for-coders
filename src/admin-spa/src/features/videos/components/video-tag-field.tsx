@@ -6,10 +6,10 @@ import { useVideoTagSuggestions } from '@/features/videos/hooks/use-video-tag-su
 import { distinctVideoTags, displayVideoTag, normalizeVideoTag } from '@/features/videos/utils/video-tags';
 
 type VideoTagFieldProps = {
-  label?: string; tags: string[]; disabled: boolean; error?: string | null; mode?: 'free-text' | 'suggestion-only';
+  label?: string; autoFocus?: boolean; tags: string[]; disabled: boolean; error?: string | null; mode?: 'free-text' | 'suggestion-only';
   onChange: (tags: string[]) => void; onDraftChange: (draft: string) => void;
 };
-export const VideoTagField = ({ label = 'Tags', tags, disabled, error, mode = 'free-text', onChange, onDraftChange }: VideoTagFieldProps) => {
+export const VideoTagField = ({ label = 'Tags', autoFocus = true, tags, disabled, error, mode = 'free-text', onChange, onDraftChange }: VideoTagFieldProps) => {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState('');
@@ -20,11 +20,14 @@ export const VideoTagField = ({ label = 'Tags', tags, disabled, error, mode = 'f
   const { suggestions, isFetching } = useVideoTagSuggestions(draft, !disabled && open);
   const expanded = open && suggestions.length > 0;
   const active = expanded ? suggestions[activeIndex] : undefined;
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => { if (autoFocus) inputRef.current?.focus(); }, [autoFocus]);
   const confirm = (suggestion?: string) => {
     const canonical = suggestion ?? suggestions.find((tag) => normalizeVideoTag(tag) === normalizeVideoTag(displayVideoTag(draft)));
     const value = canonical ?? (mode === 'free-text' ? draft : '');
-    if (!value) return;
+    if (!value) {
+      if (mode === 'suggestion-only') setLocalError('Escolha uma tag existente nas sugestões.');
+      return;
+    }
     const result = replaceVideoTagsInputSchema.safeParse({ tags: [...tags, value] });
     if (!result.success) { setLocalError(result.error.issues[0]?.message ?? null); return; }
     const existing = tags.find((tag) => normalizeVideoTag(tag) === normalizeVideoTag(displayVideoTag(value)));
@@ -64,7 +67,7 @@ export const VideoTagField = ({ label = 'Tags', tags, disabled, error, mode = 'f
     </span>)}</div>
     <p id={`${id}-hint`} className="video-title-hint">{mode === 'free-text'
       ? 'Enter ou vírgula adiciona uma tag. Até 10 tags, com 1 a 30 caracteres.' : 'Use as setas e Enter para escolher uma tag existente.'}</p>
-    <span className="visually-hidden" role="status" aria-live="polite">{duplicate ? `${duplicate} já incluída` : expanded
+    <span className="visually-hidden" role={duplicate || expanded || (open && isFetching) ? 'status' : undefined} aria-live="polite">{duplicate ? `${duplicate} já incluída` : expanded
       ? `${suggestions.length} sugestões disponíveis${active ? `, ${active}` : ''}` : open && isFetching ? 'Buscando tags…' : ''}</span>
     {message ? <p id={`${id}-error`} className="field-error" role="alert">{message}</p> : null}
   </div>;

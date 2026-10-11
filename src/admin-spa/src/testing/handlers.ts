@@ -82,10 +82,12 @@ export const handlers = [
       csrfToken: 'staff-session-csrf',
     }),
   ),
-  http.get(`${env.API_URL}/api/v1/videos`, () => HttpResponse.json({
-    data: [],
-    pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
-  })),
+  http.get(`${env.API_URL}/api/v1/videos`, ({ request }) => {
+    const params = new URL(request.url).searchParams;
+    return HttpResponse.json({ data: [], pagination: {
+      page: Number(params.get('_page') ?? 1), size: Number(params.get('_size') ?? 10), total: 0, totalPages: 0,
+    } });
+  }),
   http.post(`${env.API_URL}/api/v1/audit-record-searches`, () => HttpResponse.json({
     data: [],
     pagination: { page: 1, size: 20, total: 0, totalPages: 0, snapshot: 'snap_testfixture' },

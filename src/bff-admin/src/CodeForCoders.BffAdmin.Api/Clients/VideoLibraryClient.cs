@@ -12,16 +12,16 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public Task<VideoLibraryResult> ListVideosAsync(
-        int page,
-        int size,
-        IReadOnlyList<string> statuses,
-        string? query,
+        VideoLibraryListRequest filters,
         string accessToken,
         CancellationToken cancellationToken)
     {
-        var filters = string.Concat(statuses.Select(status => $"&status={Uri.EscapeDataString(status)}"));
-        if (query is not null) filters += $"&q={Uri.EscapeDataString(query)}";
-        return SendAsync($"internal/v1/videos?_page={page}&_size={size}{filters}", accessToken, VideoLibraryResponseKind.Page, cancellationToken);
+        var query = string.Concat(filters.Statuses.Select(status => $"&status={Uri.EscapeDataString(status)}"));
+        if (filters.Query is not null) query += $"&q={Uri.EscapeDataString(filters.Query)}";
+        query += string.Concat((filters.Tags ?? []).Select(tag => $"&tag={Uri.EscapeDataString(tag)}"));
+        if (filters.Tags?.Count > 0 || filters.TagMatch != "all")
+            query += $"&tagMatch={Uri.EscapeDataString(filters.TagMatch)}";
+        return SendAsync($"internal/v1/videos?_page={filters.Page}&_size={filters.Size}{query}", accessToken, VideoLibraryResponseKind.Page, cancellationToken);
     }
 
     public Task<VideoLibraryResult> ListVideoTagsAsync(string? query, string accessToken, CancellationToken cancellationToken)

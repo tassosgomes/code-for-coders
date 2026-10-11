@@ -6,10 +6,7 @@ namespace CodeForCoders.BffAdmin.Api.Clients;
 public interface IVideoLibraryClient
 {
     Task<VideoLibraryResult> ListVideosAsync(
-        int page,
-        int size,
-        IReadOnlyList<string> statuses,
-        string? query,
+        VideoLibraryListRequest filters,
         string accessToken,
         CancellationToken cancellationToken);
 
