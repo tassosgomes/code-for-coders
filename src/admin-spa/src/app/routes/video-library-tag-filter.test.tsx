@@ -76,7 +76,7 @@ describe('video library tag filter', () => {
     const { router } = renderRoute();
     await screen.findByText('Aula A');
     expect(screen.queryByRole('group', { name: 'Combinar tags' })).not.toBeInTheDocument();
-    const input = screen.getByRole('combobox', { name: 'Filtrar por tag' });
+    const input = screen.getByRole('combobox', { name: 'Filtrar por Tags' });
     await user.type(input, 'dock');
     await user.click(await screen.findByRole('option', { name: 'Docker' }));
     expect(await screen.findByText('Aula B')).toBeInTheDocument();
@@ -85,6 +85,7 @@ describe('video library tag filter', () => {
     await screen.findByRole('option', { name: 'Módulo 2' });
     await user.keyboard('{ArrowDown}{Enter}');
     expect(await screen.findByRole('button', { name: 'E' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Combinar tags')).toBeVisible();
     await waitFor(() => expect(screen.queryByText('Aula B')).not.toBeInTheDocument());
     expect(paramsOf(router).getAll('tag')).toEqual(['Docker', 'Módulo 2']);
     expect(paramsOf(router).get('tagMatch')).toBe('all');
@@ -152,7 +153,7 @@ describe('video library tag filter', () => {
   it('guides the teacher when Enter cannot select an existing tag', async () => {
     const user = userEvent.setup();
     const { router } = renderRoute(); await screen.findByText('Aula A');
-    await user.type(screen.getByRole('combobox', { name: 'Filtrar por tag' }), 'unknown');
+    await user.type(screen.getByRole('combobox', { name: 'Filtrar por Tags' }), 'unknown');
     await user.keyboard('{Enter}');
     expect(await screen.findByText('Escolha uma tag existente nas sugestões.')).toBeInTheDocument();
     expect(paramsOf(router).getAll('tag')).toEqual([]);

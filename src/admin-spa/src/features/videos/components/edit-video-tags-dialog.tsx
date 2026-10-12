@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TriangleAlert } from 'lucide-react';
 
 import { Dialog } from '@/components/ui/dialog';
 import { useValidatedForm } from '@/components/ui/form/validated-form';
@@ -26,11 +27,10 @@ export const EditVideoTagsDialog = ({ title, tags, busy, error, onClose, onSave 
   };
   return <Dialog title="Editar tags" description={title} busy={busy} onClose={onClose} className="video-tags-dialog">
     <form noValidate onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-      <VideoTagField tags={current} disabled={busy} error={fieldError}
+      {serviceError ? <div className="video-tags-alert" role="alert"><p><TriangleAlert aria-hidden="true" size={16} />Não foi possível salvar as tags. Tente de novo.</p>
+        <button className="video-link-button" disabled={busy} type="button" onClick={() => void submit()}>Tentar de novo</button></div> : null}
+      <VideoTagField tags={current} disabled={busy} error={fieldError} help="Remover todas deixa o vídeo sem tags."
         onChange={(value) => { form.setValue('tags', value, { shouldValidate: true }); setSubmitError(null); }} onDraftChange={setDraft} />
-      <p>Remover todas deixa o vídeo sem tags.</p>
-      {serviceError ? <div className="inline-alert" role="alert"><p>Não foi possível salvar as tags. Tente de novo.</p>
-        <button className="outline-button" disabled={busy} type="button" onClick={() => void submit()}>Tentar de novo</button></div> : null}
       <div className="dialog-actions">
         <button className="outline-button" disabled={busy} onClick={onClose} type="button">Cancelar</button>
         <button className="primary-button" disabled={busy || (!draft && sameVideoTags(current, tags))} type="submit">{busy ? 'Salvando…' : 'Salvar'}</button>

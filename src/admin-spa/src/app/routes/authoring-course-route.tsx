@@ -14,7 +14,7 @@ import { formatMoment, isRelativeMoment } from '@/utils/format-moment';
 import type { StaffSession } from '@/features/staff-session/api/staff-session';
 
 // Composição: o filtro por tags do seletor usa o campo de tags de Vídeos, só com sugestões existentes.
-const renderVideoTagFilter = (filter: VideoTagFilterProps) => <VideoTagField autoFocus={false} label="Filtrar por tag" tags={filter.tags} disabled={filter.disabled}
+const renderVideoTagFilter = (filter: VideoTagFilterProps) => <VideoTagField autoFocus={false} tags={filter.tags} disabled={filter.disabled}
   mode="suggestion-only" onChange={filter.onChange} onDraftChange={() => undefined} />;
 
 export const AuthoringCourseRoute = () => {

@@ -26,7 +26,7 @@ const open = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(within(await screen.findByRole('article', { name: 'Tipos' })).getByRole('button', { name: /Escolher vídeo|Trocar vídeo/ }));
 };
 const addTag = async (user: ReturnType<typeof userEvent.setup>, tag: string) => {
-  const field = screen.getByRole('combobox', { name: 'Filtrar por tag' });
+  const field = screen.getByRole('combobox', { name: 'Filtrar por Tags' });
   await user.click(field); await user.type(field, tag);
   await user.click(await screen.findByRole('option', { name: tag }));
 };
