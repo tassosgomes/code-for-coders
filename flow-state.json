@@ -179,7 +179,8 @@
       "stage": "prd",
       "artifacts": {
         "prd": "tasks/prd-emissao-nfse/prd.md",
-        "contract": "tasks/prd-emissao-nfse/contracts.md"
+        "contract": "tasks/prd-emissao-nfse/contracts.md",
+        "techspec": "tasks/prd-emissao-nfse/techspec.md"
       }
     },
     {
@@ -279,8 +280,8 @@
   "next_actions": [
     {
       "id": "NA25",
-      "what": "CAP-016: contratos aprovados em 2026-10-12 (tasks/prd-emissao-nfse/contracts.md, C-01 a C-13). Proximo: tsg-flow-techspec-creator. QA-01, QA-02 e QA-03 seguem abertas; QA-03 bloqueia nota valida em producao. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-techspec-creator",
+      "what": "CAP-016: techspec aprovada em 2026-10-12 (tasks/prd-emissao-nfse/techspec.md, OD94). ADR-0020 e ADR-0021 aceitas. QA-01, QA-02 e QA-03 fechadas em OD93. Proximo: tsg-flow-task-creator. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-task-creator",
       "blocked_by": []
     }
   ],
@@ -1085,6 +1086,22 @@
       "owner": "tasso",
       "decided_at": "2026-10-12",
       "decision": "Aprovados C-01 a C-13. Fiscal permanece modulo de billing. A nota nao entra no JSON do pedido: o BFF chama billing a parte. Aluno ve issuing/failed sem a razao do emissor; financeiro ve a situacao canonica com fiscal.gerir na escrita e financeiro.ler na leitura. JWT de aluno audiencia billing, escopo fiscal-document:own. Documento do tomador nao vai ao broker; billing le em Identity. Emissor no recorte do fake-nfe (202 nao e nota pronta; issued e documents_ready fecham Emitida; cancelled ignorado). PDF e XML como arquivo. courseTitle opcional em compra-concluida; fato sem titulo nao abre nota. Uma submissao em aberto; aviso nota-fiscal-disponivel. Sem ODCS. QA-01, QA-02 e QA-03 seguem abertas."
+    },
+    {
+      "id": "OD93",
+      "ref": "tasks/prd-emissao-nfse/prd.md",
+      "what": "QA-01, QA-02 e QA-03 de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-12",
+      "decision": "QA-01: guarda de um ano. No aniversario UTC de issued saem PDF, XML e a copia do tomador; a linha do documento fica para nao emitir outra nota. O documento na conta sai um ano apos a ultima gravacao valida. A nota nao se apaga com a conta antes disso. QA-02: codigo de servico e aliquota sao os que o financeiro informar, sem valor fixo. QA-03: esta fatia usa so a bancada (fake-nfe). Sem conta de producao da Notaas e sem certificado A1. O PDF da bancada nao e documento fiscal valido."
+    },
+    {
+      "id": "OD94",
+      "ref": "tasks/prd-emissao-nfse/techspec.md",
+      "what": "TechSpec de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-12",
+      "decision": "TechSpec 1.0 aprovada. ADR-0020 e ADR-0021 aceitas. Fiscal em billing, nota fora do JSON do pedido, guarda de um ano, emissor so na bancada. Proximo passo: tsg-flow-task-creator."
     }
   ]
 }
