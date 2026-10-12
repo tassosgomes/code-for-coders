@@ -49,6 +49,54 @@ public sealed class Transcription
         };
     }
 
+    public void MarkSubmitted(string jobId, DateTimeOffset now, TimeSpan maxWait, TimeSpan pollDelay)
+    {
+        if (Status != "working" || string.IsNullOrWhiteSpace(jobId) || jobId.Length > 128)
+            throw new EntityValidationException("The transcription submission transition is invalid.");
+        WhisperJobId = jobId;
+        Submissions++;
+        SubmittedAt = now;
+        DeadlineAt = now.Add(maxWait);
+        SchedulePoll(now.Add(pollDelay));
+    }
+
+    public void SchedulePoll(DateTimeOffset nextActionAt)
+    {
+        if (Status != "working") throw new EntityValidationException("The transcription poll transition is invalid.");
+        Status = "waiting";
+        NextActionAt = nextActionAt;
+        SignaledAt = null;
+        LeaseId = null;
+        LeaseUntil = null;
+    }
+
+    public void MarkReady(TranscriptionContent content, DateTimeOffset now)
+    {
+        if (Status != "working" || content.TranscriptionId != TranscriptionId || content.TenantId != TenantId)
+            throw new EntityValidationException("The transcription completion transition is invalid.");
+        Status = "ready";
+        IsCurrent = true;
+        ReadyAt = now;
+        DurationMs = content.DurationMs;
+        using var document = System.Text.Json.JsonDocument.Parse(content.SegmentsJson);
+        SegmentCount = document.RootElement.GetArrayLength();
+        LeaseId = null;
+        LeaseUntil = null;
+    }
+
+    public void Retire() => IsCurrent = false;
+    public void MarkAudioDeleted(DateTimeOffset now) => AudioDeletedAt = now;
+
+    public void RecoverExpiredLease(DateTimeOffset now)
+    {
+        if (Status != "working" || LeaseUntil > now)
+            throw new EntityValidationException("The transcription lease has not expired.");
+        Status = WhisperJobId is null ? "queued" : "waiting";
+        NextActionAt = now;
+        LeaseId = null;
+        LeaseUntil = null;
+    }
+
     public void MarkFailed(string reason)
     {
         if (Status is not ("queued" or "working" or "waiting")

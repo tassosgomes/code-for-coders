@@ -37,6 +37,8 @@ public interface IMediaStoragePort
 
     Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken);
 
+    Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken);
+
     Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken);
 
     Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken);

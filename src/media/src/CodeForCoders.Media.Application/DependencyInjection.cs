@@ -33,4 +33,9 @@ public static class DependencyInjection
         services.AddScoped<IVideoPreparationWorkflow, PrepareVideo>();
         return services;
     }
+    public static IServiceCollection AddTranscriptionConfiguration(this IServiceCollection services)
+    {
+        services.AddScoped<ITranscriptionWorkflow, UseCases.Transcriptions.ProcessTranscription.ProcessTranscription>();
+        return services;
+    }
 }

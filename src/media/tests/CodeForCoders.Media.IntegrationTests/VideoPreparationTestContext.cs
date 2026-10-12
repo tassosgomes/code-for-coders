@@ -56,6 +56,8 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         WorkDirectory = Path.Combine(rootDirectory, "work");
     }
 
+    public bool IncludeAudio { get; private set; }
+
     public string FfmpegPath { get; }
 
     public string FfprobePath { get; }
@@ -120,7 +122,8 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             options.BucketName = MediaIntegrationFixture.MinioBucketName;
             options.ObjectKeyPrefix = "media";
             options.EndpointInternal = factory.MinioEndpoint;
-            options.EndpointPublic = factory.MinioEndpoint;
+            options.EndpointPublic = overrides.TranscriptionServiceAddress is null ? factory.MinioEndpoint : "http://playback-unreachable.test:9000";
+            options.EndpointTranscription = factory.MinioEndpoint;
             options.AccessKeyId = MediaIntegrationFixture.MinioAccessKey;
             options.SecretAccessKey = MediaIntegrationFixture.MinioSecretKey;
             options.ForcePathStyle = true;
@@ -144,6 +147,20 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         services.AddSingleton<RabbitMqConnectionProvider>();
         services.AddSingleton<RabbitMqPublisher>();
         services.AddSingleton<RabbitMqTopologyInitializer>();
+        if (overrides.TranscriptionServiceAddress is not null)
+        {
+            services.AddScoped<IPlaybackPlaylistReader, S3MediaStorageAdapter>();
+            services.AddScoped<ITranscriptionWorkerRepository, CodeForCoders.Media.Infra.Data.Transcriptions.TranscriptionWorkerRepository>();
+            services.AddScoped<ITranscriptionAudioExtractor, FfmpegTranscriptionAudioExtractor>();
+            services.AddScoped<ITranscriptionWorkflow, CodeForCoders.Media.Application.UseCases.Transcriptions.ProcessTranscription.ProcessTranscription>();
+            services.AddHttpClient<ITranscriptionServiceClient, TranscriptionServiceClient>().RemoveAllLoggers();
+            services.Configure<CodeForCoders.Media.Application.Common.TranscriptionOptions>(settings => settings.Enabled = true);
+            services.Configure<TranscriptionServiceOptions>(settings =>
+            {
+                settings.BaseAddress = overrides.TranscriptionServiceAddress;
+                settings.ApiKey = TranscriptionHttpSimulator.ApiKey;
+            });
+        }
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true });
         var context = new VideoPreparationTestContext(
             factory,
@@ -153,6 +170,7 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             ffmpegPath,
             ffprobePath,
             rootDirectory);
+        context.IncludeAudio = overrides.IncludeAudio;
         await context.ResetDatabaseAsync(cancellationToken);
         return context;
     }
@@ -535,6 +553,7 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             [
                 "-hide_banner", "-loglevel", "error", "-y",
                 "-f", "lavfi", "-i", $"testsrc=size={size}:rate=10:duration={durationSeconds}",
+                .. (IncludeAudio ? new[] { "-f", "lavfi", "-i", $"sine=frequency=440:duration={durationSeconds}", "-c:a", "aac" } : Array.Empty<string>()),
                 "-t", durationSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
                 path,
@@ -692,7 +711,9 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         int StorageDownloadFailures = 0,
         string? TranscoderFfmpegPath = null,
         int Threads = 2,
-        bool CaptureFfmpegArguments = false);
+        bool CaptureFfmpegArguments = false,
+        bool IncludeAudio = false,
+        string? TranscriptionServiceAddress = null);
 
     private sealed class StorageFailureController(int remainingFailures)
     {
@@ -773,8 +794,11 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             CancellationToken cancellationToken)
             => inner.UploadDirectoryAsync(sourceDirectory, objectPrefix, cancellationToken);
 
+        public Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+        => inner.CreateTranscriptionReadUriAsync(objectKey, expiresAt, cancellationToken);
+
         public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
-            => inner.DeleteObjectAsync(objectKey, cancellationToken);
+                => inner.DeleteObjectAsync(objectKey, cancellationToken);
 
         public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
             => inner.DeletePrefixAsync(objectPrefix, cancellationToken);
