@@ -1,14 +1,23 @@
 import { http, HttpResponse } from 'msw';
 
 import { env } from '@/config/env';
+import type { VideoTranscription } from '@/features/videos/api/get-videos';
 import { courtesyGrantHandlers } from '@/testing/courtesy-grant-handlers';
 import { courtesyCourseHandlers } from '@/testing/courtesy-course-handlers';
+
+export const videoTranscriptionFixtures = {
+  'not-requested': { status: 'not-requested', readable: false, readyAt: null, failureReason: null, canStart: true },
+  'in-progress': { status: 'in-progress', readable: false, readyAt: null, failureReason: null, canStart: false },
+  ready: { status: 'ready', readable: true, readyAt: '2026-10-12T14:30:00Z', failureReason: null, canStart: true },
+  failed: { status: 'failed', readable: false, readyAt: null, failureReason: 'processing-failed', canStart: true },
+} satisfies Record<string, VideoTranscription>;
 
 export const videoStatusFixtures = {
   received: {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
     title: 'Aula de exemplo',
     status: 'received',
+    transcription: { ...videoTranscriptionFixtures['not-requested'], canStart: false },
     uploadedBy: {
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
       name: 'Marina Alves',
@@ -22,6 +31,7 @@ export const videoStatusFixtures = {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
     title: 'Aula de exemplo',
     status: 'preparing',
+    transcription: { ...videoTranscriptionFixtures['not-requested'], canStart: false },
     uploadedBy: {
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
       name: 'Marina Alves',
@@ -35,6 +45,7 @@ export const videoStatusFixtures = {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
     title: 'Aula de exemplo',
     status: 'ready',
+    transcription: videoTranscriptionFixtures['not-requested'],
     uploadedBy: {
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
       name: 'Marina Alves',
@@ -48,6 +59,7 @@ export const videoStatusFixtures = {
     videoId: 'd3844c70-62d3-5f3d-93d9-7ef705301ea8',
     title: 'Aula de exemplo',
     status: 'failed',
+    transcription: { ...videoTranscriptionFixtures['not-requested'], canStart: false },
     uploadedBy: {
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
       name: 'Marina Alves',
@@ -97,6 +109,9 @@ export const handlers = [
     status: 'accepted',
   }, { status: 202 })),
   http.get(`${env.API_URL}/api/v1/video-tags`, () => HttpResponse.json({ data: [] })),
+  http.post(`${env.API_URL}/api/v1/videos/:videoId/transcription-requests`, ({ params }) => HttpResponse.json({
+    ...videoStatusFixtures.ready, videoId: params.videoId, transcription: videoTranscriptionFixtures['in-progress'],
+  }, { status: 202 })),
   http.put(`${env.API_URL}/api/v1/videos/:videoId/tags`, async ({ request, params }) => {
     const body = await request.json() as { tags: string[] }; // The validated HTTP input is controlled by the test client.
     return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, tags: body.tags });

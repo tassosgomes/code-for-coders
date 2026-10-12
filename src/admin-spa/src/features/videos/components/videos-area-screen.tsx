@@ -7,7 +7,8 @@ import type { PendingVideoUpload } from '@/features/videos/api/get-pending-video
 import type { VideoPage, VideoStatus } from '@/features/videos/api/get-videos';
 import { PendingVideoUploadsAlert } from '@/features/videos/components/pending-video-uploads-alert';
 import { VideoTagField } from '@/features/videos/components/video-tag-field';
-import { VideoStatusBadge } from '@/features/videos/components/video-status-badge';
+import { VideoStatusBadge, transcriptionStatusLabels } from '@/features/videos/components/video-status-badge';
+import { VideoTranscriptionStatus } from '@/features/videos/components/video-transcription-status';
 import { VideoTransferPanel, type VideoTransferView } from '@/features/videos/components/video-transfer-panel';
 
 type VideosAreaScreenProps = {
@@ -73,13 +74,18 @@ const formatDuration = (durationSeconds: number) => {
 };
 
 const describeStatusChanges = (previous: readonly VideoSummary[], current: readonly VideoSummary[]) => {
-  const previousStatuses = new Map(previous.map((video) => [video.videoId, video.status]));
+  const previousVideos = new Map(previous.map((video) => [video.videoId, video]));
   return current
-    .filter((video) => {
-      const previousStatus = previousStatuses.get(video.videoId);
-      return previousStatus !== undefined && previousStatus !== video.status;
+    .flatMap((video) => {
+      const before = previousVideos.get(video.videoId);
+      if (!before) return [];
+      const changes = [];
+      if (before.status !== video.status) changes.push(statusLabels[video.status]);
+      if (before.transcription.status !== video.transcription.status) {
+        changes.push(`transcrição ${transcriptionStatusLabels[video.transcription.status].toLocaleLowerCase('pt-BR')}`);
+      }
+      return changes.length ? [`${video.title}: ${changes.join(', ')}`] : [];
     })
-    .map((video) => `${video.title}: ${statusLabels[video.status]}`)
     .join('. ');
 };
 
@@ -132,7 +138,7 @@ export const VideosAreaScreen = ({
   const sendButton = <button className="primary-button" disabled={uploadDisabled} onClick={onUpload} type="button" title={uploadDisabled ? 'Aguarde o envio atual terminar.' : undefined}>
     Enviar vídeo
   </button>;
-  const hasProcessingVideo = videos?.data.some((video) => video.status === 'received' || video.status === 'preparing') ?? false;
+  const hasProcessingVideo = videos?.data.some((video) => video.status === 'received' || video.status === 'preparing' || video.transcription.status === 'in-progress') ?? false;
   const showControls = state !== 'empty' || filter !== 'all' || Boolean(search) || tags.length > 0;
   const totalPages = videos?.pagination.totalPages ?? 0;
 
@@ -190,9 +196,9 @@ export const VideosAreaScreen = ({
     {state === 'has-videos' && hasProcessingVideo ? <p className="video-refresh-status"><span aria-hidden="true" />Atualizando automaticamente enquanto há vídeo em andamento</p> : null}
 
     {state === 'loading' ? <section aria-label="Carregando vídeos" aria-busy="true" className="videos-table videos-loading">
-      <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
+      <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Transcrição</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
       {Array.from({ length: 5 }, (_, index) => <div className="videos-skeleton-row" key={index}>
-        <span className="skeleton-title" /><span className="skeleton-status" /><span className="skeleton-author" /><span className="skeleton-date" />
+        <span className="skeleton-title" /><span className="skeleton-status" /><span className="skeleton-transcription" /><span className="skeleton-author" /><span className="skeleton-date" />
       </div>)}
     </section> : null}
 
@@ -211,7 +217,7 @@ export const VideosAreaScreen = ({
     {state === 'has-videos' ? <>
       <section aria-label="Biblioteca de vídeos" className="videos-table">
       <p aria-atomic="true" aria-live="polite" className="visually-hidden" role="status">{statusAnnouncement}</p>
-      <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
+      <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Transcrição</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
       {videos?.data.map((video) => <div className="videos-table-row" key={video.videoId}>
         <div className="video-title-cell"><strong>{video.title}</strong>
           {video.tags.length ? <div className="video-row-tags" aria-label={`Tags de ${video.title}`}>{video.tags.map((tag) => <span className="video-tag-chip" key={tag}>{tag}</span>)}</div> : null}
@@ -230,6 +236,7 @@ export const VideosAreaScreen = ({
             type="button"
           >Enviar de novo</button> : null}
         </div>
+        <VideoTranscriptionStatus video={video} />
         <div className="video-meta">
           <span className="video-author">
             {video.uploadedBy.name}

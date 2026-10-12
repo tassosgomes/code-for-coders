@@ -5,7 +5,7 @@
 .videos-page .video-status-badge.ready { border: 0; padding: 2px 10px 2px 8px; }
 
 /* Ponto de "Atualizando automaticamente". */
-.videos-page .video-refresh-status { gap: 6px; }
+.videos-page .video-refresh-status { display: flex; gap: 6px; }
 .videos-page .video-refresh-status > span { width: 8px; height: 8px; }
 
 /* Busca sem resultado (V1.c). */
@@ -111,9 +111,28 @@
 .videos-page .videos-table-row .video-title-cell { display: flex; flex-direction: column; gap: 6px; }
 .videos-page .videos-table-row .video-title-cell > strong { font-weight: 500; }
 .video-row-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.video-row-actions { display: flex; gap: 16px; grid-column: 5; grid-row: 1; }
+.video-row-actions { display: flex; gap: 16px; grid-column: 6; grid-row: 1; }
+
+/* TV1: a transcrição ocupa sua própria coluna e não trunca o texto. */
+.videos-page .videos-table .videos-table-header,
+.videos-page .videos-table .videos-table-row { grid-template-columns: minmax(0, 260fr) minmax(0, 140fr) minmax(0, 280fr) minmax(0, 120fr) minmax(0, 90fr) 80px; align-items: start; }
+.videos-page .video-status-content { flex-wrap: wrap; }
+.video-transcription-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.video-transcription-heading { display: none; }
+.video-transcription-cell small { color: var(--muted); font-size: 12px; line-height: 18px; }
+.video-transcription-state { max-width: 100%; border-radius: 6px; }
+.video-transcription-state:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.videos-page .video-transcription-badge { max-width: 100%; width: auto; white-space: normal; }
+.video-transcription-badge.not-requested { border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+.video-transcription-badge.in-progress { border: 1px solid var(--info-border); background: var(--info-soft); color: var(--info-text); }
+.video-transcription-cell .video-transcription-action { min-height: 44px; }
+.video-transcription-error { margin: 0; padding: 8px; border: 1px solid var(--danger); border-radius: 8px; color: var(--danger); font-size: 12px; line-height: 18px; }
+.videos-page .videos-loading .videos-skeleton-row .skeleton-transcription { width: 240px; flex-shrink: 1; }
 
 @media (max-width: 767px) {
+  .videos-page .videos-table .videos-table-row { grid-template-columns: minmax(0, 1fr) 72px; }
+  .videos-page .videos-table-row .video-transcription-cell { grid-column: 1 / -1; grid-row: 5; padding-top: 12px; border-top: 1px solid var(--border); }
+  .video-transcription-heading { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
   /* Cartão (V1.h): título e ações, estado, etiquetas e autor. */
   .videos-page .videos-table-row .video-title-cell { display: contents; }
   .videos-page .videos-table-row .video-title-cell > strong { grid-column: 1; grid-row: 1; }

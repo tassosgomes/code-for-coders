@@ -111,7 +111,7 @@ sequencial e ambas tocam o `media`.
 - [x] 2.0 Figma da transcrição (tela Vídeos e página da aula) aprovado
 - [x] 3.0 O professor pede a transcrição de um vídeo pronto e o estado aparece no vídeo
 - [x] 4.0 O worker leva a transcrição da fila ao texto pronto, a partir do vídeo cifrado
-- [ ] 5.0 A tela Vídeos mostra o estado da transcrição e o professor transcreve, com atualização automática
+- [x] 5.0 A tela Vídeos mostra o estado da transcrição e o professor transcreve, com atualização automática
 - [ ] 6.0 Todo vídeo novo é transcrito sem ação de ninguém
 - [ ] 7.0 O aviso do serviço acelera o resultado sem ser necessário
 - [ ] 8.0 Falhas aparecem com motivo e o professor refaz sem perder a transcrição vigente

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0", "4.0"]
 gate: 'npm --prefix src/admin-spa run test -- video-transcription-status'
