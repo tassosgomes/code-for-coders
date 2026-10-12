@@ -11,8 +11,11 @@ public sealed record VideoUploadOutput(
     long PartSize,
     int PartCount,
     IReadOnlyList<int> ReceivedParts,
-    DateTimeOffset ExpiresAt)
+    DateTimeOffset ExpiresAt,
+    IReadOnlyList<string>? Tags = null)
 {
+    public IReadOnlyList<string> Tags { get; init; } = Tags ?? [];
+
     public static VideoUploadOutput From(VideoUpload upload, IReadOnlyList<int> receivedParts)
         => new(
             upload.UploadId,
@@ -22,7 +25,8 @@ public sealed record VideoUploadOutput(
             VideoUpload.PartSizeBytes,
             upload.PartCount,
             receivedParts,
-            upload.ExpiresAt);
+            upload.ExpiresAt,
+            upload.Tags);
 }
 
 public sealed record VideoUploadPaginationOutput(int Page, int Size, long Total, long TotalPages);

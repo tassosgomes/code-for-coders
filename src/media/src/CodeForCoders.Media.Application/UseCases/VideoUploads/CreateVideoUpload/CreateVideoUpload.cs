@@ -3,12 +3,14 @@ using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Application.UseCases.VideoUploads;
 using CodeForCoders.Media.Domain.Entities;
+using CodeForCoders.Media.Domain.ValueObjects;
 
 namespace CodeForCoders.Media.Application.UseCases.VideoUploads.CreateVideoUpload;
 
 public sealed class CreateVideoUpload(
     ITenantContext tenantContext,
     IVideoUploadRepository videoUploads,
+    IVideoTagRepository videoTags,
     IOperationIdempotencyRepository idempotencyRecords,
     IMediaStoragePort mediaStorage,
     IUnitOfWork unitOfWork,
@@ -25,6 +27,9 @@ public sealed class CreateVideoUpload(
             throw new MediaApiException(400, "INVALID_REQUEST", "A valid idempotency key is required.");
         }
 
+        if (input.Tags is not null && (input.Tags.Count > 50 || input.Tags.Any(tag => tag is null || tag.Length > 100)))
+            throw new MediaApiException(400, "INVALID_REQUEST", "The video tags request is invalid.");
+
         var proposedUpload = VideoUpload.Create(
             tenantId,
             actorAccountId,
@@ -34,7 +39,8 @@ public sealed class CreateVideoUpload(
             input.ContentType,
             input.Fingerprint,
             input.UploaderName,
-            now);
+            now,
+            input.Tags);
 
         var requestHash = VideoUploadUseCaseHelpers.HashRequest(input);
         var existingIdempotency = await idempotencyRecords.GetAsync(
@@ -81,6 +87,7 @@ public sealed class CreateVideoUpload(
                 cancellationToken);
         }
 
+        proposedUpload.ResolveTags(await videoTags.ResolveExistingAsync(VideoTagSet.Normalize(proposedUpload.Tags), cancellationToken));
         var storageUploadId = await mediaStorage.InitiateMultipartUploadAsync(
             proposedUpload.ObjectKey,
             proposedUpload.ContentType,

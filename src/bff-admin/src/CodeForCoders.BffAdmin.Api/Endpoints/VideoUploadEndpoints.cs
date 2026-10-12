@@ -87,7 +87,8 @@ public static class VideoUploadEndpoints
                 request.FileSize,
                 request.ContentType,
                 request.Fingerprint,
-                access.UploaderName!),
+                access.UploaderName!,
+                request.Tags),
             access.AccessToken!,
             idempotencyKey,
             cancellationToken);

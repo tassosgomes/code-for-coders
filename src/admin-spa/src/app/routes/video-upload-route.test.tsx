@@ -24,6 +24,7 @@ const video = {
   uploadedAt: '2026-09-26T14:05:11.0000999+00:00',
   durationSeconds: null,
   failureReason: null,
+  tags: [],
 };
 
 const upload = (overrides: Record<string, unknown> = {}) => ({
@@ -34,6 +35,7 @@ const upload = (overrides: Record<string, unknown> = {}) => ({
   partSize: 2,
   partCount: 2,
   receivedParts: [],
+  tags: [],
   expiresAt: '2026-09-27T14:05:11Z',
   ...overrides,
 });

@@ -17,6 +17,8 @@ public static class MediaTelemetry
     public static readonly Counter<long> HeartbeatsConsumed = Meter.CreateCounter<long>(
         "media.platform.heartbeat.consumed",
         unit: "{heartbeat}");
+    public static readonly Counter<long> VideosListed = Meter.CreateCounter<long>("media.videos.listed", unit: "{list}");
+    public static readonly Counter<long> VideoTagsAssigned = Meter.CreateCounter<long>("media.video_tags.assigned", unit: "{tag}");
     public static readonly Counter<long> UploadsCreated = Meter.CreateCounter<long>(
         "media.upload.created",
         unit: "{upload}");

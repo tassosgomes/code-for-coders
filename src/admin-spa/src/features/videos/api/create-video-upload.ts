@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { replaceVideoTagsInputSchema } from '@/features/videos/api/replace-video-tags';
 import { apiClient } from '@/lib/api-client';
 
 export const createVideoUploadResponseSchema = z.object({
@@ -10,18 +11,21 @@ export const createVideoUploadResponseSchema = z.object({
   partSize: z.number().int().positive(),
   partCount: z.number().int().positive(),
   receivedParts: z.array(z.number().int().positive()),
+  tags: z.array(z.string()),
   expiresAt: z.string().datetime({ offset: true }),
 }).strict();
 
 export type VideoUpload = z.infer<typeof createVideoUploadResponseSchema>;
 
-export type CreateVideoUploadInput = {
-  title: string;
-  fileName: string;
-  fileSize: number;
-  contentType: string;
-  fingerprint: string;
-};
+export const createVideoUploadInputSchema = z.object({
+  title: z.string().trim().min(1, 'Dê um título para reconhecer o vídeo.').max(200, 'O título deve ter até 200 caracteres.'),
+  fileName: z.string(),
+  fileSize: z.number().int().positive(),
+  contentType: z.string(),
+  fingerprint: z.string(),
+  tags: replaceVideoTagsInputSchema.shape.tags.optional(),
+});
+export type CreateVideoUploadInput = z.infer<typeof createVideoUploadInputSchema>;
 
 export const createVideoUpload = async (
   input: CreateVideoUploadInput,

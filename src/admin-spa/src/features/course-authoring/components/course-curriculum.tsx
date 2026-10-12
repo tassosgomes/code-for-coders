@@ -12,13 +12,13 @@ import { CourseLevelNotice } from '@/features/course-authoring/components/course
 import { useCourse } from '@/features/course-authoring/api/get-course';
 import { publicationPendencies, type PublicationPendency } from '@/features/course-authoring/utils/publication-pendencies';
 import { countLabel } from '@/features/course-authoring/utils/count-label';
-import { CourseVideoPicker } from '@/features/course-authoring/components/course-video-picker';
+import { CourseVideoPicker, type VideoTagFilterRenderer } from '@/features/course-authoring/components/course-video-picker';
 import { CourseEditDialog } from '@/features/course-authoring/components/course-edit-dialog';
 import { CourseItemActions } from '@/features/course-authoring/components/course-item-actions';
 import { useCourseStructure } from '@/features/course-authoring/hooks/use-course-structure';
 import type { Course, CourseLesson, CourseModule } from '@/features/course-authoring/types/course';
 
-type CourseCurriculumProps = { course: Course; canEdit: boolean; canChooseVideo: boolean; children: ReactNode; actions?: ReactNode };
+type CourseCurriculumProps = { course: Course; canEdit: boolean; canChooseVideo: boolean; children: ReactNode; actions?: ReactNode; renderVideoTagFilter: VideoTagFilterRenderer };
 type DraggedItem = { kind: 'module' | 'lesson'; id: string };
 type LessonMoveMenuProps = { modules: CourseModule[]; busy: boolean; onMove: (moduleId: string) => void };
 const LessonMoveMenu = ({ modules, busy, onMove }: LessonMoveMenuProps) => {
@@ -33,7 +33,7 @@ const LessonMoveMenu = ({ modules, busy, onMove }: LessonMoveMenuProps) => {
     </> : null}
   </>;
 };
-export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children, actions }: CourseCurriculumProps) => {
+export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children, actions, renderVideoTagFilter }: CourseCurriculumProps) => {
   const [tab, setTab] = useState<'draft' | 'history'>('draft');
   const editor = useCourseStructure(course);
   const query = useCourse(course.courseId);
@@ -131,7 +131,7 @@ export const CourseCurriculum = ({ course, canEdit, canChooseVideo, children, ac
       {actions}
     </footer>
     </div>
-    {editor.videoTarget ? <CourseVideoPicker lesson={editor.videoTarget} busy={editor.busy} error={editor.error} onClose={editor.closeVideo} onSave={(videoId) => editor.editLesson(editor.videoTarget!.lessonId, { videoId })} /> : null}
+    {editor.videoTarget ? <CourseVideoPicker lesson={editor.videoTarget} busy={editor.busy} error={editor.error} renderTagFilter={renderVideoTagFilter} onClose={editor.closeVideo} onSave={(videoId) => editor.editLesson(editor.videoTarget!.lessonId, { videoId })} /> : null}
     {editor.editTarget ? <CourseEditDialog target={editor.editTarget} course={course} busy={editor.busy} error={editor.error} onClose={editor.closeEdit} onSubmit={editor.saveDetails} /> : null}
     {editor.removeTarget ? <Dialog title={`Remover “${editor.removeTarget.kind === 'module' ? editor.removeTarget.module.title : editor.removeTarget.lesson.title}”?`} description={editor.removeTarget.kind === 'module' ? `As ${editor.removeTarget.module.lessons.length} aulas deste módulo também saem do rascunho. Uma versão já publicada continua como estava.` : 'Ela sairá do rascunho. Uma aula nova terá outra identidade, mesmo com o mesmo título.'} busy={editor.busy} onClose={editor.closeRemove}>
       {editor.error ? <p role="alert" className="inline-alert">{editor.error}</p> : null}

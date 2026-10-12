@@ -6,6 +6,7 @@ public sealed record CreateVideoUploadRequest(
     long FileSize,
     string ContentType,
     string Fingerprint,
-    string UploaderName);
+    string UploaderName,
+    IReadOnlyList<string>? Tags = null);
 
 public sealed record CreateVideoUploadPartUrlsRequest(IReadOnlyList<int> PartNumbers);

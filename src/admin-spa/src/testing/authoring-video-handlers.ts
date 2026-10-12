@@ -5,9 +5,14 @@ import { courseSchema, type Course } from '@/features/course-authoring/types/cou
 import { structureCourseFixture } from '@/testing/authoring-structure-handlers';
 
 export const readyVideoFixtures = [
-  { videoId: '0198dfac-674a-7000-8000-000000000051', title: 'Vídeo da colega', status: 'ready', durationSeconds: 125, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000031', name: 'Marina' } },
-  { videoId: '0198dfac-674a-7000-8000-000000000052', title: 'Vídeo do professor', status: 'ready', durationSeconds: 90, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000032', name: 'Rafael' } },
+  { videoId: '0198dfac-674a-7000-8000-000000000051', title: 'Vídeo da colega', status: 'ready', tags: ['Docker', 'Módulo 2'], durationSeconds: 125, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000031', name: 'Marina' } },
+  { videoId: '0198dfac-674a-7000-8000-000000000052', title: 'Vídeo do professor', status: 'ready', tags: ['Docker'], durationSeconds: 90, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000032', name: 'Rafael' } },
 ];
+// Em preparação com as mesmas tags do primeiro vídeo pronto: o seletor nunca pode listá-lo (RN-C04).
+const preparingVideoFixture = { videoId: '0198dfac-674a-7000-8000-000000000053', title: 'Vídeo em preparação', status: 'preparing', tags: ['Docker', 'Módulo 2'], durationSeconds: null, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000033', name: 'Júlia' } };
+const videoFixtures = [...readyVideoFixtures, preparingVideoFixture];
+const hasTag = (video: { tags: string[] }, tag: string) => video.tags.some((item) => item.toLowerCase() === tag.toLowerCase());
+
 export const createAuthoringVideoHandlers = () => {
   const course: Course = courseSchema.parse(structuredClone(structureCourseFixture));
   let unavailable = false; let listFails = false; let unknownStatus = false;
@@ -23,8 +28,22 @@ export const createAuthoringVideoHandlers = () => {
         const url = new URL(request.url); lists.push(url);
         if (listFails) return HttpResponse.json({ code: 'MEDIA_UNAVAILABLE' }, { status: 502 });
         const query = url.searchParams.get('q') ?? '';
-        const data = readyVideoFixtures.filter((video) => video.title.includes(query)).map((video) => ({ ...video, status: unknownStatus ? 'preparing' : 'ready' }));
+        const statuses = url.searchParams.getAll('status');
+        const tags = url.searchParams.getAll('tag');
+        const tagMatch = url.searchParams.get('tagMatch') ?? 'all';
+        const matches = videoFixtures
+          .filter((video) => statuses.length === 0 || statuses.includes(video.status))
+          .filter((video) => video.title.includes(query))
+          .filter((video) => tags.length === 0 || (tagMatch === 'any'
+            ? tags.some((tag) => hasTag(video, tag))
+            : tags.every((tag) => hasTag(video, tag))));
+        const data = matches.map((video) => ({ ...video, status: unknownStatus ? 'preparing' : video.status }));
         return HttpResponse.json({ data, pagination: { page: 1, size: 20, total: data.length, totalPages: data.length ? 1 : 0 } });
+      }),
+      http.get(`${env.API_URL}/api/v1/video-tags`, ({ request }) => {
+        const query = (new URL(request.url).searchParams.get('q') ?? '').toLowerCase();
+        const catalog = Array.from(new Set(videoFixtures.flatMap((video) => video.tags))).sort((a, b) => a.localeCompare(b));
+        return HttpResponse.json({ data: catalog.filter((tag) => tag.toLowerCase().includes(query)) });
       }),
       http.patch(`${env.API_URL}/api/v1/courses/:courseId/lessons/:lessonId`, async ({ request, params }) => {
         const body = await request.json() as { videoId: string | null }; // The typed client sends this validated patch to MSW's HTTP boundary.

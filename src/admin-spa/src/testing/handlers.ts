@@ -16,6 +16,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: null,
+    tags: Array<string>(),
   },
   preparing: {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
@@ -28,6 +29,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: null,
+    tags: Array<string>(),
   },
   ready: {
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
@@ -40,6 +42,7 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: 20,
     failureReason: null,
+    tags: Array<string>(),
   },
   failed: {
     videoId: 'd3844c70-62d3-5f3d-93d9-7ef705301ea8',
@@ -52,8 +55,11 @@ export const videoStatusFixtures = {
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: 'unreadable-file',
+    tags: Array<string>(),
   },
 } as const;
+
+const uploadTags = new Map<string, string[]>();
 
 export const handlers = [
   ...courtesyCourseHandlers,
@@ -76,10 +82,12 @@ export const handlers = [
       csrfToken: 'staff-session-csrf',
     }),
   ),
-  http.get(`${env.API_URL}/api/v1/videos`, () => HttpResponse.json({
-    data: [],
-    pagination: { page: 1, size: 10, total: 0, totalPages: 0 },
-  })),
+  http.get(`${env.API_URL}/api/v1/videos`, ({ request }) => {
+    const params = new URL(request.url).searchParams;
+    return HttpResponse.json({ data: [], pagination: {
+      page: Number(params.get('_page') ?? 1), size: Number(params.get('_size') ?? 10), total: 0, totalPages: 0,
+    } });
+  }),
   http.post(`${env.API_URL}/api/v1/audit-record-searches`, () => HttpResponse.json({
     data: [],
     pagination: { page: 1, size: 20, total: 0, totalPages: 0, snapshot: 'snap_testfixture' },
@@ -88,6 +96,11 @@ export const handlers = [
     confirmationId: 'd69bd911-9631-4f59-8242-c43629806177',
     status: 'accepted',
   }, { status: 202 })),
+  http.get(`${env.API_URL}/api/v1/video-tags`, () => HttpResponse.json({ data: [] })),
+  http.put(`${env.API_URL}/api/v1/videos/:videoId/tags`, async ({ request, params }) => {
+    const body = await request.json() as { tags: string[] }; // The validated HTTP input is controlled by the test client.
+    return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, tags: body.tags });
+  }),
   http.patch(`${env.API_URL}/api/v1/videos/:videoId`, async ({ params, request }) => {
     const body = await request.json() as { title: string };
     if (!body.title.trim()) {
@@ -95,7 +108,11 @@ export const handlers = [
     }
     return HttpResponse.json({ ...videoStatusFixtures.ready, videoId: params.videoId, title: body.title.trim() });
   }),
-  http.post(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
+  http.post(`${env.API_URL}/api/v1/video-uploads`, async ({ request }) => {
+    const body = await request.json() as { tags?: string[] }; // Upload payload is controlled by the test client.
+    const tags = body.tags ?? [];
+    uploadTags.set('e2ef6f47-cb6b-4a08-b126-c3b21e9475d2', tags);
+    return HttpResponse.json({
     uploadId: 'e2ef6f47-cb6b-4a08-b126-c3b21e9475d2',
     title: 'Aula de exemplo',
     fileName: 'aula.mp4',
@@ -103,8 +120,10 @@ export const handlers = [
     partSize: 67108864,
     partCount: 1,
     receivedParts: [],
+    tags,
     expiresAt: '2026-09-27T14:05:11Z',
-  }, { status: 201 })),
+  }, { status: 201 });
+  }),
   http.get(`${env.API_URL}/api/v1/video-uploads`, () => HttpResponse.json({
     data: [],
     pagination: { page: 1, size: 50, total: 0, totalPages: 0 },
@@ -117,6 +136,7 @@ export const handlers = [
     partSize: 67108864,
     partCount: 1,
     receivedParts: [],
+    tags: Array<string>(),
     expiresAt: '2026-09-27T14:05:11Z',
   })),
   http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/part-urls`, async ({ request }) => {
@@ -131,7 +151,7 @@ export const handlers = [
     });
   }),
   http.put('http://localhost:9000/:part', () => new HttpResponse(null, { status: 200 })),
-  http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/complete`, () => HttpResponse.json({
+  http.post(`${env.API_URL}/api/v1/video-uploads/:uploadId/complete`, ({ params }) => HttpResponse.json({
     videoId: 'c2733b6f-51ee-4c10-8f9c-255904b08a93',
     title: 'Aula de exemplo',
     status: 'received',
@@ -142,6 +162,7 @@ export const handlers = [
     uploadedAt: '2026-09-26T14:05:11Z',
     durationSeconds: null,
     failureReason: null,
+    tags: uploadTags.get(String(params.uploadId)) ?? [],
   }, { status: 201 })),
   http.delete(`${env.API_URL}/api/v1/staff-sessions/current`, () => new HttpResponse(null, { status: 204 })),
   http.get(`${env.API_URL}/v1/admin/workspace/status`, () =>

@@ -1,5 +1,6 @@
 using CodeForCoders.Media.Domain.Exceptions;
 using CodeForCoders.Media.Domain.SeedWork;
+using CodeForCoders.Media.Domain.ValueObjects;
 
 namespace CodeForCoders.Media.Domain.Entities;
 
@@ -23,6 +24,8 @@ public sealed class VideoUpload
     public string UploaderName { get; private set; } = string.Empty;
 
     public string Title { get; private set; } = string.Empty;
+
+    public string[] Tags { get; private set; } = [];
 
     public string FileName { get; private set; } = string.Empty;
 
@@ -59,7 +62,8 @@ public sealed class VideoUpload
         string contentType,
         string fingerprint,
         string uploaderName,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt,
+        IReadOnlyList<string>? tags = null)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
@@ -113,6 +117,7 @@ public sealed class VideoUpload
             UploaderAccountId = uploaderAccountId,
             UploaderName = uploaderName.Trim(),
             Title = trimmedTitle,
+            Tags = VideoTagSet.Normalize(tags ?? []).Select(tag => tag.DisplayName).ToArray(),
             FileName = fileName,
             FileSize = fileSize,
             ContentType = contentType.Trim().ToLowerInvariant(),
@@ -122,6 +127,11 @@ public sealed class VideoUpload
             CreatedAt = createdAt,
             ExpiresAt = createdAt.AddHours(24),
         };
+    }
+
+    public void ResolveTags(IReadOnlyList<string> canonicalTags)
+    {
+        Tags = VideoTagSet.Normalize(canonicalTags).Select(tag => tag.DisplayName).ToArray();
     }
 
     public void SetStorageUploadId(string storageUploadId)

@@ -1,10 +1,11 @@
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Domain.Entities;
+using CodeForCoders.Media.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeForCoders.Media.Infra.Data.Videos;
 
-public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUploadRepository
+public sealed class VideoUploadRepository(MediaDbContext dbContext, IVideoTagRepository videoTags) : IVideoUploadRepository
 {
     public Task<VideoUpload?> GetOwnedAsync(
         Guid uploadId,
@@ -200,7 +201,10 @@ public sealed class VideoUploadRepository(MediaDbContext dbContext) : IVideoUplo
         dbContext.Videos.Add(video);
         current.MarkCompleted(completedAt);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await videoTags.ReplaceAsync(video.VideoId, VideoTagSet.Normalize(current.Tags), cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        videoTags.RecordAssignments();
         return (video, true);
     }
 }

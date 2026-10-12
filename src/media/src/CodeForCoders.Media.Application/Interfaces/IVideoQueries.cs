@@ -4,7 +4,9 @@ namespace CodeForCoders.Media.Application.Interfaces;
 
 public interface IVideoQueries
 {
-    Task<VideoPageSnapshot> ListAsync(int page, int size, IReadOnlyList<string> statuses, string? query, CancellationToken cancellationToken);
+    Task<VideoPageSnapshot> ListAsync(VideoListQuery filters, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<string>> ListTagsAsync(string? query, CancellationToken cancellationToken);
 
     Task<Video?> GetAsync(Guid videoId, CancellationToken cancellationToken);
 

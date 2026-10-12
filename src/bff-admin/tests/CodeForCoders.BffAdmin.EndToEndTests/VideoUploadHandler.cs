@@ -7,6 +7,10 @@ public sealed class VideoUploadHandler : HttpMessageHandler
 {
     public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
 
+    public HttpStatusCode CreateStatusCode { get; set; } = HttpStatusCode.Created;
+
+    public string[] Tags { get; set; } = [];
+
     public string? ProblemCode { get; set; }
 
     public int RequestCount { get; private set; }
@@ -61,6 +65,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                     uploadedAt = DateTimeOffset.UtcNow,
                     durationSeconds = (int?)null,
                     failureReason = (string?)null,
+                    tags = Tags,
                 }),
             };
         }
@@ -79,7 +84,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
 
         if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == "/internal/v1/video-uploads")
         {
-            return new HttpResponseMessage(HttpStatusCode.Created)
+            return new HttpResponseMessage(CreateStatusCode)
             {
                 Content = JsonContent.Create(new
                 {
@@ -90,6 +95,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                     partSize = 67108864,
                     partCount = 1,
                     receivedParts = Array.Empty<int>(),
+                    tags = Tags,
                     expiresAt = DateTimeOffset.UtcNow.AddHours(24),
                 }),
             };
@@ -119,6 +125,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                 partSize = 67108864,
                 partCount = 1,
                 receivedParts = Array.Empty<int>(),
+                tags = Tags,
                 expiresAt = DateTimeOffset.UtcNow.AddHours(24),
             }),
         };
@@ -128,6 +135,8 @@ public sealed class VideoUploadHandler : HttpMessageHandler
     {
         StatusCode = HttpStatusCode.OK;
         ProblemCode = null;
+        CreateStatusCode = HttpStatusCode.Created;
+        Tags = [];
         RequestCount = 0;
         LastAccessToken = null;
         LastPath = null;

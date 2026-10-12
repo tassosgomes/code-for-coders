@@ -1,0 +1,967 @@
+openapi: 3.1.0
+info:
+  title: Media — vídeos do backoffice e reprodução protegida (interno)
+  version: 1.2.0
+  description: |
+    Recorte interno de `CAP-006` (terceira fatia), PRD `tasks/prd-tags-video/prd.md` v1.0, aprovado em 2026-10-11. Fronteira `bff-admin` → `media`. Contrato anterior: `contracts/media/openapi-internal.yaml` 1.1.0.
+
+    Espelha 1:1 o recorte público `api-contract.yaml` 1.2.0, com as diferenças de sempre: sem cookie nem CSRF, e 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`. `media` valida localmente o JWT de ator interno e exige `midia.enviar`. Ator = `sub` e escola = `tenantId` do token, que delimita tag, sugestão e filtro (RN-T06). `Video` e `VideoUpload` ganham `tags`; `listPendingVideoUploadsInternal`, `getVideoUploadInternal` e `updateVideoTitleInternal`, fora deste recorte, passam a devolver o campo sem outra mudança. As operações de reprodução (`CAP-007`) não mudam e ficam fora.
+  contact:
+    name: Time de Entrega de Mídia
+servers:
+  - url: /internal/v1
+    description: Rota privada de Media, inacessível ao navegador
+tags:
+  - name: Envio
+    description: Envio em partes, agora com tags opcionais (RF-01)
+  - name: Vídeos
+    description: Biblioteca de vídeos da escola com tags e filtro por tag (RF-02 a RF-06)
+paths:
+  /video-uploads:
+    post:
+      tags:
+        - Envio
+      summary: Iniciar ou retomar o envio de um vídeo
+      description: |
+        Verifica formato e tamanho **antes** de qualquer byte ser transferido (RF-02). Se o mesmo ator já tem um envio pendente e não expirado com a mesma `fingerprint`, devolve esse envio (200), com as partes já recebidas, em vez de criar outro (RF-03). Fingerprint igual de outro ator não retoma nada: cada ator só vê os próprios envios pendentes.
+
+        **Tags (prd-tags-video):** `tags` é opcional (RF-01). As tags são validadas e resolvidas para a grafia canônica da escola junto com formato e tamanho, antes de qualquer byte transferido, e ficam guardadas no envio. Na retomada (200) valem as tags do envio pendente, como o título: as do novo pedido são ignoradas, e o professor as ajusta depois com `replaceVideoTags` (C-05).
+      operationId: createVideoUploadInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVideoUploadRequest'
+            examples:
+              aula:
+                value:
+                  title: Aula 3 — Injeção de dependência
+                  fileName: aula-3-injecao-de-dependencia.mp4
+                  fileSize: 3221225472
+                  contentType: video/mp4
+                  fingerprint: 6c1f0b9e2d7a4e53a1c8f4d2b9e07a31
+                  uploaderName: Marina Alves
+                  tags:
+                    - docker
+                    - Módulo 2
+      responses:
+        '201':
+          description: Envio novo criado.
+          headers:
+            Location:
+              description: Endereço do envio criado.
+              schema:
+                type: string
+                examples:
+                  - /internal/v1/video-uploads/3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUpload'
+              examples:
+                novo:
+                  $ref: '#/components/examples/VideoUploadNew'
+        '200':
+          description: Envio pendente do mesmo ator com a mesma fingerprint — retomada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUpload'
+              examples:
+                retomada:
+                  $ref: '#/components/examples/VideoUploadResumed'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '422':
+          description: Arquivo acima de 5 GB, formato não aceito, título em branco, tag inválida, mais de 10 tags ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                grandeDemais:
+                  value:
+                    type: about:blank
+                    title: O arquivo passa do limite de 5 GB.
+                    status: 422
+                    code: FILE_TOO_LARGE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                formato:
+                  value:
+                    type: about:blank
+                    title: Formato não aceito. Envie MP4, MOV ou MKV.
+                    status: 422
+                    code: FORMAT_NOT_SUPPORTED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                semTitulo:
+                  $ref: '#/components/examples/TitleRequired'
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+                tagInvalida:
+                  $ref: '#/components/examples/TagInvalid'
+                tagsDemais:
+                  $ref: '#/components/examples/TagsLimitExceeded'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /video-uploads/{uploadId}/complete:
+    post:
+      tags:
+        - Envio
+      summary: Concluir o envio
+      description: |
+        O serviço de mídia confere no armazenamento que **todas** as partes chegaram, e só então cria o vídeo no estado `received`, com o ator como autor. A preparação começa sozinha (RF-04). Repetir a conclusão do mesmo envio devolve o mesmo vídeo, nunca um segundo (RF-02), mesmo com outra `Idempotency-Key`.
+
+        **Tags (prd-tags-video):** o vídeo nasce com as tags do envio, resolvidas de novo para a grafia canônica vigente na escola no momento da conclusão (RF-01, RN-T02).
+      operationId: completeVideoUploadInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/UploadId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Vídeo criado a partir do envio, ou o mesmo vídeo de uma conclusão anterior.
+          headers:
+            Location:
+              description: Endereço do vídeo.
+              schema:
+                type: string
+                examples:
+                  - /internal/v1/videos/0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                recebido:
+                  $ref: '#/components/examples/VideoReceived'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/UploadNotFound'
+        '422':
+          description: Ainda faltam partes, ou chave de idempotência reutilizada com outro envio.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                incompleto:
+                  value:
+                    type: about:blank
+                    title: Ainda faltam partes deste envio.
+                    status: 422
+                    code: UPLOAD_INCOMPLETE
+                    detail: Faltam 38 de 48 partes.
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+        '503':
+          $ref: '#/components/responses/StorageUnavailable'
+  /videos:
+    get:
+      tags:
+        - Vídeos
+      summary: Listar os vídeos da escola
+      description: |
+        Todos os vídeos da escola do ator, de qualquer autor (DP-03), do mais recente ao mais antigo. Filtro por estado e busca por trecho do título, sem diferenciar maiúsculas nem acento. A tela consulta de novo enquanto houver vídeo em `received` ou `preparing` (DP-04). Serve também ao seletor de vídeo pronto da tela de aula (RF-08), com `status=ready`.
+
+        **Tags (prd-tags-video):** cada vídeo traz `tags`. Filtro por `tag` (repetível) e `tagMatch` (`all` padrão, ou `any`), combinado com `status` e `q` (RF-04, RF-06). O seletor de vídeo da aula usa `status=ready` com os mesmos filtros (RF-05); nenhum vídeo fora de `ready` é oferecido a ele (RN-C04).
+      operationId: listVideosInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Estados a incluir; repetível. Ausente → todos.
+          style: form
+          explode: true
+          schema:
+            type: array
+            uniqueItems: true
+            items:
+              $ref: '#/components/schemas/VideoStatus'
+          examples:
+            falhou:
+              value:
+                - failed
+        - name: q
+          in: query
+          required: false
+          description: Trecho do título.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 120
+          examples:
+            injecao:
+              value: injeção
+        - $ref: '#/components/parameters/Tag'
+        - $ref: '#/components/parameters/TagMatch'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: Página de vídeos; `data` vazio quando nenhum atende ao filtro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoPage'
+              examples:
+                variados:
+                  value:
+                    data:
+                      - videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                        title: Aula 3 — Injeção de dependência
+                        status: ready
+                        uploadedBy:
+                          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                          name: Marina Alves
+                        uploadedAt: '2026-09-26T09:40:00Z'
+                        durationSeconds: 2415
+                        failureReason: null
+                        tags:
+                          - Docker
+                          - Módulo 2
+                      - videoId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
+                        title: Aula 4 — Testes de integração
+                        status: failed
+                        uploadedBy:
+                          accountId: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                          name: Rafael Costa
+                        uploadedAt: '2026-09-26T08:05:00Z'
+                        durationSeconds: null
+                        failureReason: unreadable-file
+                        tags: []
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /videos/{videoId}:
+    get:
+      tags:
+        - Vídeos
+      summary: Consultar um vídeo
+      description: |
+        Existência, estado, título e duração de um vídeo da escola do ator (RF-08). Vídeo de outra escola responde o mesmo 404 de vídeo inexistente. Nunca devolve endereço, chave nem nome de arquivo guardado.
+
+        **Tags (prd-tags-video):** inclui `tags`.
+      operationId: getVideoInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/VideoId'
+      responses:
+        '200':
+          description: Vídeo encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                pronto:
+                  $ref: '#/components/examples/VideoReady'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+  /videos/{videoId}/tags:
+    put:
+      tags:
+        - Vídeos
+      summary: Substituir as tags de um vídeo
+      description: |
+        Qualquer ator com `midia.enviar` troca o conjunto **inteiro** de tags de qualquer vídeo da escola, em qualquer estado (RF-02, RN-T04). `[]` remove todas. Não muda título, estado nem vínculos, e não publica fato `midia.*` (RN-T01).
+
+        Concorrência: a última gravação prevalece por inteiro (C-03). A resposta traz o estado real do vídeo depois desta gravação. A tag que deixa de estar em todos os vídeos da escola some de `listVideoTags` e não casa mais com o filtro (RN-T05). Vídeo de outra escola responde o mesmo 404 de vídeo inexistente (RN-T06).
+      operationId: replaceVideoTagsInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/VideoId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceVideoTagsRequest'
+            examples:
+              trocar:
+                value:
+                  tags:
+                    - kubernetes
+              removerTodas:
+                value:
+                  tags: []
+      responses:
+        '200':
+          description: Tags substituídas; o vídeo no estado gravado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                trocadas:
+                  $ref: '#/components/examples/VideoTagsReplaced'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '422':
+          description: Tag vazia ou com mais de 30 caracteres, mais de 10 tags distintas, ou chave de idempotência reutilizada com outro corpo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                tagInvalida:
+                  $ref: '#/components/examples/TagInvalid'
+                tagsDemais:
+                  $ref: '#/components/examples/TagsLimitExceeded'
+                chaveReutilizada:
+                  $ref: '#/components/examples/IdempotencyKeyReused'
+  /video-tags:
+    get:
+      tags:
+        - Vídeos
+      summary: Sugerir tags da escola
+      description: |
+        Tags usadas em pelo menos um vídeo da escola do ator, em qualquer estado, que contêm o trecho `q` (RF-03, RN-T05, RN-T06). Serve à sugestão no envio e na edição e às opções do filtro na tela Vídeos e no seletor da aula. Sem paginação: teto fixo de 20 (C-04).
+      operationId: listVideoTagsInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/TagQuery'
+      responses:
+        '200':
+          description: Tags sugeridas; `data` vazio quando nenhuma contém `q`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoTagList'
+              examples:
+                dock:
+                  value:
+                    data:
+                      - Docker
+                      - Docker Compose
+                nenhuma:
+                  value:
+                    data: []
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+components:
+  securitySchemes:
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT RS256 de ator interno emitido por Identity na validação de sessão (`validateStaffSessionInternal` com `audience: media`), vida curta, claims iss, aud, sub, tenantId, sessionId, scope, roles, permissions, exp, jti. Chave pública por `kid` no JWKS de Identity.'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Chave propagada sem alteração pelo BFF. Isolada por tenant, operationId e ator; mesma janela e regra do contrato público.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    UploadId:
+      name: uploadId
+      in: path
+      required: true
+      description: Identificador opaco do envio.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        envio:
+          value: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+    VideoId:
+      name: videoId
+      in: path
+      required: true
+      description: Identificador opaco do vídeo, o mesmo usado nos fatos `midia.*`.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        video:
+          value: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+    Page:
+      name: _page
+      in: query
+      required: false
+      description: Página, iniciando em 1.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Size:
+      name: _size
+      in: query
+      required: false
+      description: Itens por página.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 10
+    Tag:
+      name: tag
+      in: query
+      required: false
+      description: |
+        Tags da escola a filtrar; repetível, até 10. Cada valor é comparado sem diferenciar maiúsculas, acentos nem espaços nas pontas e repetidos (RN-T02). Valor que não é tag da escola não casa com nenhum vídeo: com `tagMatch=all` o resultado fica vazio, com `any` ele é ignorado. Combina-se com `status` e `q` como "todos ao mesmo tempo" (RF-04, RF-05).
+      style: form
+      explode: true
+      schema:
+        type: array
+        maxItems: 10
+        items:
+          type: string
+          minLength: 1
+          maxLength: 100
+      examples:
+        duasTags:
+          value:
+            - docker
+            - módulo 2
+    TagMatch:
+      name: tagMatch
+      in: query
+      required: false
+      description: |
+        Combinação entre as tags de `tag` (RF-06): `all` traz o vídeo que tem todas; `any`, o que tem pelo menos uma. Ausente → `all`. Sem efeito com menos de duas tags.
+      schema:
+        $ref: '#/components/schemas/TagMatch'
+      examples:
+        qualquer:
+          value: any
+    TagQuery:
+      name: q
+      in: query
+      required: false
+      description: Trecho da tag, sem diferenciar maiúsculas nem acentos. Ausente → as primeiras tags da escola em ordem alfabética.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+      examples:
+        dock:
+          value: dock
+  responses:
+    InvalidRequest:
+      description: JSON malformado, campo obrigatório ausente ou valor fora do schema.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: JSON ou campos obrigatórios inválidos.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: Token válido sem `midia.enviar`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semPermissao:
+              $ref: '#/components/examples/PermissionDenied'
+    UploadNotFound:
+      description: Envio inexistente, de outro ator, expirado ou já concluído — resposta idêntica.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Envio não encontrado ou expirado.
+                status: 404
+                code: UPLOAD_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    VideoNotFound:
+      description: Vídeo inexistente ou de outra escola — resposta idêntica.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            naoEncontrado:
+              value:
+                type: about:blank
+                title: Vídeo não encontrado.
+                status: 404
+                code: VIDEO_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TokenInvalid:
+      description: Token ausente, inválido, expirado, com audiência ou emissor errados.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tokenInvalido:
+              value:
+                type: about:blank
+                title: Token de acesso inválido.
+                status: 401
+                code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    StorageUnavailable:
+      description: O armazenamento de objetos não respondeu ou recusou a operação (C-16). Nenhum estado de negócio muda; o cliente pode repetir com a mesma `Idempotency-Key`. O corpo não traz bucket, host nem identificador do upload do provedor.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            armazenamentoIndisponivel:
+              value:
+                type: about:blank
+                title: Armazenamento indisponível no momento.
+                status: 503
+                code: STORAGE_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  examples:
+    PermissionDenied:
+      value:
+        type: about:blank
+        title: Sem permissão para esta área.
+        status: 403
+        code: PERMISSION_DENIED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TitleRequired:
+      value:
+        type: about:blank
+        title: O título é obrigatório.
+        status: 422
+        code: TITLE_REQUIRED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    IdempotencyKeyReused:
+      value:
+        type: about:blank
+        title: Chave de idempotência já usada com outro pedido.
+        status: 422
+        code: IDEMPOTENCY_KEY_REUSED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    VideoUploadNew:
+      value:
+        uploadId: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+        title: Aula 3 — Injeção de dependência
+        fileName: aula-3-injecao-de-dependencia.mp4
+        fileSize: 3221225472
+        partSize: 67108864
+        partCount: 48
+        receivedParts: []
+        expiresAt: '2026-09-27T09:12:00Z'
+        tags:
+          - Docker
+          - Módulo 2
+    VideoUploadResumed:
+      value:
+        uploadId: 3f6d2c1a-8b7e-4f90-a1b2-c3d4e5f60718
+        title: Aula 3 — Injeção de dependência
+        fileName: aula-3-injecao-de-dependencia.mp4
+        fileSize: 3221225472
+        partSize: 67108864
+        partCount: 48
+        receivedParts:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+          - 8
+          - 9
+          - 10
+        expiresAt: '2026-09-27T09:12:00Z'
+        tags:
+          - Docker
+          - Módulo 2
+    VideoReceived:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        status: received
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: null
+        failureReason: null
+        tags:
+          - Docker
+          - Módulo 2
+    VideoReady:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        status: ready
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: 2415
+        failureReason: null
+        tags:
+          - Docker
+          - Módulo 2
+    TagInvalid:
+      value:
+        type: about:blank
+        title: Cada tag precisa ter de 1 a 30 caracteres.
+        status: 422
+        code: TAG_INVALID
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TagsLimitExceeded:
+      value:
+        type: about:blank
+        title: Um vídeo pode ter no máximo 10 tags.
+        status: 422
+        code: TAGS_LIMIT_EXCEEDED
+        traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    VideoTagsReplaced:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        tags:
+          - Kubernetes
+        status: ready
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: 2415
+        failureReason: null
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - title
+        - status
+        - code
+        - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+        reason:
+          type: string
+          enum:
+            - no-grant
+            - grant-ended
+          description: 'Só em `ACCESS_DENIED`: `no-grant` (nunca teve acesso ao curso) ou `grant-ended` (já teve, nenhuma concessão está ativa). Clientes devem tolerar valor novo (`suspended` e `revoked` virão com `CAP-009`).'
+        accessEndedAt:
+          type: string
+          format: date-time
+          description: 'Só em `ACCESS_DENIED` com `reason: grant-ended`: término (exclusivo, UTC) da última concessão. O último dia de acesso é o dia anterior a este instante, no fuso da escola (DP-03 de `CAP-008`); é a data da mensagem "Seu acesso a este curso terminou em ...".'
+    Title:
+      type: string
+      minLength: 1
+      maxLength: 200
+      description: |
+        Nome do vídeo para reconhecê-lo no vínculo à aula. Não é título de aula. Só espaços é recusado com `TITLE_REQUIRED`.
+      examples:
+        - Aula 3 — Injeção de dependência
+    VideoStatus:
+      type: string
+      enum:
+        - received
+        - preparing
+        - ready
+        - failed
+      description: |
+        `received` recebido e aguardando preparação; `preparing` em preparação; `ready` pronto para vínculo e reprodução; `failed` a preparação esgotou as tentativas. Só anda para frente; `ready` e `failed` são finais (RN-M05).
+    FailureReason:
+      type: string
+      enum:
+        - unreadable-file
+        - unsupported-format
+        - duration-exceeded
+        - preparation-failed
+      description: |
+        Categoria do motivo da falha. O SPA mostra o texto do PRD (RF-05): "arquivo de vídeo ilegível", "formato de vídeo não suportado", "duração acima de 3 horas", "não foi possível preparar este vídeo — envie novamente".
+    CreateVideoUploadRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - fileName
+        - fileSize
+        - contentType
+        - fingerprint
+        - uploaderName
+      properties:
+        title:
+          $ref: '#/components/schemas/Title'
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Nome do arquivo no computador do professor. Só para exibição; não vira nome de objeto.
+        fileSize:
+          type: integer
+          minimum: 1
+          description: Tamanho em bytes. Acima de 5368709120 (5 GiB) → 422 `FILE_TOO_LARGE`.
+        contentType:
+          type: string
+          minLength: 1
+          description: |
+            Tipo declarado pelo navegador. Aceitos: `video/mp4`, `video/quicktime`, `video/x-matroska`, conferidos junto com a extensão de `fileName` (`.mp4`, `.mov`, `.mkv`). Outro → 422 `FORMAT_NOT_SUPPORTED`. A leitura real do conteúdo acontece na preparação (RF-04).
+          examples:
+            - video/mp4
+        fingerprint:
+          type: string
+          minLength: 16
+          maxLength: 128
+          description: |
+            Impressão opaca do arquivo calculada pelo cliente (nome, tamanho e data de modificação). Só serve para reconhecer o mesmo arquivo na retomada (RF-03).
+        uploaderName:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Nome do ator no momento do envio, obtido pelo BFF da validação de sessão (`SessionValidated.name`). Só para exibição em `uploadedBy.name`; a identidade do autor vem de `sub` do token, nunca deste campo (C-13). Não vai para log, métrica nem fato publicado.
+        tags:
+          $ref: '#/components/schemas/TagInputList'
+          description: Opcional; ausente vale `[]` (RF-01).
+    VideoUpload:
+      type: object
+      additionalProperties: false
+      required:
+        - uploadId
+        - title
+        - fileName
+        - fileSize
+        - partSize
+        - partCount
+        - receivedParts
+        - expiresAt
+        - tags
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        title:
+          $ref: '#/components/schemas/Title'
+        fileName:
+          type: string
+        fileSize:
+          type: integer
+        partSize:
+          type: integer
+          description: Tamanho de cada parte em bytes; a última pode ser menor. Definido pelo serviço.
+        partCount:
+          type: integer
+          minimum: 1
+        receivedParts:
+          type: array
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+          description: Partes que o armazenamento confirmou, em ordem crescente; `[]` quando nenhuma.
+        expiresAt:
+          type: string
+          format: date-time
+          description: |
+            Até quando o envio pode ser retomado. Pelo menos 24 horas depois da validade da última URL de parte emitida (RF-03); depois disso o envio e as partes são descartados.
+        tags:
+          $ref: '#/components/schemas/TagList'
+    UploadedBy:
+      type: object
+      additionalProperties: false
+      required:
+        - accountId
+        - name
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Nome do autor no momento do envio. Continua exibido mesmo se o papel dele for revogado.
+    Video:
+      type: object
+      additionalProperties: false
+      required:
+        - videoId
+        - title
+        - status
+        - uploadedBy
+        - uploadedAt
+        - durationSeconds
+        - failureReason
+        - tags
+      properties:
+        videoId:
+          type: string
+          format: uuid
+        title:
+          $ref: '#/components/schemas/Title'
+        status:
+          $ref: '#/components/schemas/VideoStatus'
+        uploadedBy:
+          $ref: '#/components/schemas/UploadedBy'
+        uploadedAt:
+          type: string
+          format: date-time
+        durationSeconds:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          description: Duração em segundos; preenchida só em `ready`.
+        failureReason:
+          oneOf:
+            - $ref: '#/components/schemas/FailureReason'
+            - type: 'null'
+          description: Preenchido só em `failed`.
+        tags:
+          $ref: '#/components/schemas/TagList'
+    VideoPage:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    Pagination:
+      type: object
+      additionalProperties: false
+      required:
+        - page
+        - size
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        size:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+    Tag:
+      type: string
+      minLength: 1
+      maxLength: 30
+      description: |
+        Rótulo livre de um vídeo, na grafia canônica da escola: a da primeira vez que a tag foi usada nela (RN-T02). Sem significado para a plataforma (RN-T01).
+      examples:
+        - Docker
+    TagList:
+      type: array
+      maxItems: 10
+      uniqueItems: true
+      items:
+        $ref: '#/components/schemas/Tag'
+      description: Tags do vídeo, em ordem alfabética sem diferenciar maiúsculas nem acentos; `[]` quando não há nenhuma (RN-T03).
+      examples:
+        - - Docker
+          - Módulo 2
+    TagInputList:
+      type: array
+      maxItems: 50
+      items:
+        type: string
+        maxLength: 100
+      description: |
+        Tags informadas pelo professor. O serviço tira os espaços das pontas, reduz espaços repetidos a um e junta as equivalentes (RN-T02) sem erro. Cada tag equivalente a uma tag da escola recebe a grafia canônica; as demais passam a existir na escola com a grafia informada. Depois disso: tag vazia ou com mais de 30 caracteres → 422 `TAG_INVALID`; mais de 10 tags distintas → 422 `TAGS_LIMIT_EXCEEDED` (RN-T03). Os limites deste schema são só de proteção (400).
+      examples:
+        - - docker
+          - Módulo 2
+    TagMatch:
+      type: string
+      enum:
+        - all
+        - any
+      default: all
+      description: '`all` = E (o vídeo tem todas as tags); `any` = OU (tem pelo menos uma).'
+    ReplaceVideoTagsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - tags
+      properties:
+        tags:
+          $ref: '#/components/schemas/TagInputList'
+    VideoTagList:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/Tag'
+          description: |
+            Até 20 tags da escola que contêm `q`: primeiro as que começam por ele, depois as demais, cada grupo em ordem alfabética. `[]` quando nenhuma. Coleção de teto fixo, sem paginação (C-04).

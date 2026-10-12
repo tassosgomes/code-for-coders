@@ -33,6 +33,8 @@ public sealed class GlobalExceptionHandler(
                 "/problems/upload-not-found",
                 "The video upload was not found",
                 null),
+            VideoTagRuleViolationException tagViolation => (
+                StatusCodes.Status422UnprocessableEntity, "/problems/video-tag-rule-violation", tagViolation.Message, null),
             VideoUploadRuleViolationException ruleViolation => (
                 StatusCodes.Status422UnprocessableEntity,
                 "/problems/video-upload-rule-violation",
@@ -85,6 +87,7 @@ public sealed class GlobalExceptionHandler(
             StorageUnavailableException => "STORAGE_UNAVAILABLE",
             MultipartUploadNotFoundException => "UPLOAD_NOT_FOUND",
             VideoUploadRuleViolationException ruleViolation => ruleViolation.Code,
+            VideoTagRuleViolationException tagViolation => tagViolation.Code,
             _ => null,
         };
         if (code is not null)

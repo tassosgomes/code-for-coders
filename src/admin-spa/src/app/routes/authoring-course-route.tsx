@@ -6,10 +6,16 @@ import { paths } from '@/config/paths';
 import { useCourse } from '@/features/course-authoring/api/get-course';
 import { CourseCurriculum } from '@/features/course-authoring/components/course-curriculum';
 import { CourseStatusBadge } from '@/features/course-authoring/components/course-status-badge';
+import type { VideoTagFilterProps } from '@/features/course-authoring/components/course-video-picker';
 import { CourseDelete } from '@/features/course-authoring/components/course-delete';
 import { MarkdownText } from '@/components/ui/markdown-text';
+import { VideoTagField } from '@/features/videos/components/video-tag-field';
 import { formatMoment, isRelativeMoment } from '@/utils/format-moment';
 import type { StaffSession } from '@/features/staff-session/api/staff-session';
+
+// Composição: o filtro por tags do seletor usa o campo de tags de Vídeos, só com sugestões existentes.
+const renderVideoTagFilter = (filter: VideoTagFilterProps) => <VideoTagField autoFocus={false} label="Filtrar por tag" tags={filter.tags} disabled={filter.disabled}
+  mode="suggestion-only" onChange={filter.onChange} onDraftChange={() => undefined} />;
 
 export const AuthoringCourseRoute = () => {
   const session = useOutletContext<StaffSession>();
@@ -27,7 +33,7 @@ const AuthoringCourseContent = ({ courseId, canEdit, canChooseVideo }: { courseI
   return <main className="page-shell authoring-page">
     <nav aria-label="Caminho" className="course-breadcrumb"><span className="course-breadcrumb-area">Autoria ›</span><Link to={paths.authoring.getHref()}>Cursos</Link><span className="course-breadcrumb-current">› {course.data.title}</span></nav>
     {notice ? <p role="status">{notice}</p> : null}
-    <CourseCurriculum course={course.data} canEdit={canEdit} canChooseVideo={canChooseVideo} actions={canEdit ? <CourseDelete course={course.data} onReload={course.refetch} onNotice={setNotice} onDeleted={() => void navigate(paths.authoring.getHref(), { state: { courseNotice: 'Curso excluído' } })} /> : null}>
+    <CourseCurriculum course={course.data} canEdit={canEdit} canChooseVideo={canChooseVideo} renderVideoTagFilter={renderVideoTagFilter} actions={canEdit ? <CourseDelete course={course.data} onReload={course.refetch} onNotice={setNotice} onDeleted={() => void navigate(paths.authoring.getHref(), { state: { courseNotice: 'Curso excluído' } })} /> : null}>
     <header className="course-editor-heading"><p className="eyebrow">Autoria</p><h1>{course.data.title}</h1>
     {course.data.description ? <MarkdownText className="page-subtitle">{course.data.description}</MarkdownText> : null}
     </header>
