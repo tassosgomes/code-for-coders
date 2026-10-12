@@ -3,7 +3,7 @@ tsg_artifact: techspec
 product: code-4-coders
 capability: CAP-016
 version: 1.0
-status: in-review
+status: approved
 updated: 2026-10-12
 sources: tasks/prd-emissao-nfse/prd.md@1.0, tasks/prd-emissao-nfse/contracts.md@1.0, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
@@ -15,8 +15,8 @@ sources: tasks/prd-emissao-nfse/prd.md@1.0, tasks/prd-emissao-nfse/contracts.md@
 > **PRD de origem:** `tasks/prd-emissao-nfse/prd.md` (v1.0, OD91)
 > **Contratos de integração:** [contracts.md](contracts.md) (aprovado para implementação em 2026-10-12, C-01 a C-13) e os documentos que ele indexa
 > **Data:** 2026-10-12
-> **Status:** Em Revisão
-> **Handoff:** draft — não gerar Tasks
+> **Status:** Aprovado (2026-10-12)
+> **Handoff:** approved — pode alimentar o Task Creator
 
 ---
 
@@ -27,8 +27,8 @@ A nota da compra avulsa nasce em `billing`, módulo Fiscal, quando `commerce` pu
 Decisões principais, todas herdadas do contrato aprovado:
 
 - **Fiscal permanece em `billing`** (C-01, BA11). O webhook do emissor entra ao lado do webhook do Stripe, sem se misturar com ele.
-- **O aluno chega a `billing` com JWT de audiência `billing`** (C-04, [ADR-0020](../../docs/adr/0020-jwt-de-aluno-em-billing.md), proposta). O ator interno usa a audiência `billing` que a ADR-0005 já prevê.
-- **CPF, CNPJ, NIF e e-mail não vão ao broker** (C-05, [ADR-0021](../../docs/adr/0021-billing-le-tomador-em-identity.md), proposta). Fiscal relê Identity na hora de submeter. A nota emitida congela a cópia.
+- **O aluno chega a `billing` com JWT de audiência `billing`** (C-04, [ADR-0020](../../docs/adr/0020-jwt-de-aluno-em-billing.md)). O ator interno usa a audiência `billing` que a ADR-0005 já prevê.
+- **CPF, CNPJ, NIF e e-mail não vão ao broker** (C-05, [ADR-0021](../../docs/adr/0021-billing-le-tomador-em-identity.md)). Fiscal relê Identity na hora de submeter. A nota emitida congela a cópia.
 - **O emissor é o recorte da Notaas no fake-nfe** (C-06, OD89). 202 não é nota pronta. `issued` e `documents_ready`, os dois, na submissão corrente, mais os arquivos gravados na plataforma, fecham *Emitida*.
 
 **Trade-off primário:** a nota fica fora do JSON do pedido. Ganha-se que uma queda de `billing` não desfaz a venda nem esconde *Meus pedidos*. Abre-se mão de uma tela que já traria a situação junto do pedido: cada tela faz uma segunda chamada, e o aluno vê `issuing` tanto quando falta prestador quanto quando a nota está na fila do emissor.
@@ -422,5 +422,5 @@ Aplicar ADR-0005 ao JWT de ator em `billing` não é decisão nova. C-01 a C-13 
 - [ADR-0016](../../docs/adr/0016-jwt-de-aluno-em-commerce.md) — precedente da audiência por serviço. O pedido continua nela.
 - [ADR-0017](../../docs/adr/0017-autenticacao-de-servico-commerce-em-billing.md) — pagamento inalterado. `commerce` não ganha chamada de nota.
 - [ADR-0018](../../docs/adr/0018-notificacao-resolve-destinatario-pela-conta.md) — o aviso vai pela conta; Notificação resolve o e-mail.
-- [ADR-0020](../../docs/adr/0020-jwt-de-aluno-em-billing.md) — proposta. Audiência `billing` para o aluno baixar a própria nota.
-- [ADR-0021](../../docs/adr/0021-billing-le-tomador-em-identity.md) — proposta. `billing` lê o tomador por asserção, sem o documento no broker.
+- [ADR-0020](../../docs/adr/0020-jwt-de-aluno-em-billing.md) — aceita em 2026-10-12. Audiência `billing` para o aluno baixar a própria nota.
+- [ADR-0021](../../docs/adr/0021-billing-le-tomador-em-identity.md) — aceita em 2026-10-12. `billing` lê o tomador por asserção, sem o documento no broker.

@@ -180,7 +180,7 @@
       "artifacts": {
         "prd": "tasks/prd-emissao-nfse/prd.md",
         "contract": "tasks/prd-emissao-nfse/contracts.md",
-        "techspec": "tasks/prd-emissao-nfse/techspec.draft.md"
+        "techspec": "tasks/prd-emissao-nfse/techspec.md"
       }
     },
     {
@@ -280,7 +280,7 @@
   "next_actions": [
     {
       "id": "NA25",
-      "what": "CAP-016: techspec em revisão (tasks/prd-emissao-nfse/techspec.draft.md, 2026-10-12). ADR-0020 e ADR-0021 propostas. QA-01, QA-02 e QA-03 fechadas em OD93 (guarda de 1 ano, código e alíquota na tela, só a bancada). Depois da aprovação da spec, promover a techspec.md e seguir para tsg-flow-task-creator. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "what": "CAP-016: techspec aprovada em 2026-10-12 (tasks/prd-emissao-nfse/techspec.md, OD94). ADR-0020 e ADR-0021 aceitas. QA-01, QA-02 e QA-03 fechadas em OD93. Proximo: tsg-flow-task-creator. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
       "skill": "tsg-flow-task-creator",
       "blocked_by": []
     }
@@ -1094,6 +1094,14 @@
       "owner": "tasso",
       "decided_at": "2026-10-12",
       "decision": "QA-01: guarda de um ano. No aniversario UTC de issued saem PDF, XML e a copia do tomador; a linha do documento fica para nao emitir outra nota. O documento na conta sai um ano apos a ultima gravacao valida. A nota nao se apaga com a conta antes disso. QA-02: codigo de servico e aliquota sao os que o financeiro informar, sem valor fixo. QA-03: esta fatia usa so a bancada (fake-nfe). Sem conta de producao da Notaas e sem certificado A1. O PDF da bancada nao e documento fiscal valido."
+    },
+    {
+      "id": "OD94",
+      "ref": "tasks/prd-emissao-nfse/techspec.md",
+      "what": "TechSpec de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-12",
+      "decision": "TechSpec 1.0 aprovada. ADR-0020 e ADR-0021 aceitas. Fiscal em billing, nota fora do JSON do pedido, guarda de um ano, emissor so na bancada. Proximo passo: tsg-flow-task-creator."
     }
   ]
 }
