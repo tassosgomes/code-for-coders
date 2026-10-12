@@ -72,7 +72,7 @@ Não há rota nova no aluno. A nota e o campo de documento ficam em `/pedidos/{o
 **`billing` — módulo Fiscal, schema `billing_access`, banco `code_for_coders_billing`.** Não é serviço novo. Migrations só pelo EF Core do projeto.
 
 - **Documento fiscal** é o agregado, um por pedido (índice único por tenant e `orderId`). Guarda `orderId`, número do pedido, aluno, curso, `courseTitle`, preço em centavos, descrição, competência, situação canônica, motivo em texto, marca de estudo, número da submissão corrente, contador de ausências dessa submissão, identificador da submissão no emissor e os momentos. PDF e XML, quando existem, são bytes nesse agregado, no mesmo banco. Não vão para o S3 de mídia (BA14 reserva S3 a vídeo) e não guardam URL do emissor.
-- **Tomador congelado** (nome, e-mail, tipo e valor do documento) só é escrito na transição para `issued`. Antes disso Fiscal relê Identity a cada submissão. Troca posterior na conta não altera essa cópia nem os arquivos.
+- **Tomador congelado** (nome, e-mail, tipo e valor do documento) só é escrito na transição para `issued`. Antes disso Fiscal relê Identity a cada submissão. Troca posterior na conta não altera essa cópia nem os arquivos. Um ano depois de `issued`, a cópia e os arquivos saem; a linha do documento fica (QA-01).
 - **Prestador** é um por tenant: chave do emissor cifrada, código de serviço, alíquota em texto, flag de utilizável. Utilizável exige os três. A chave usa AES-GCM com chave de 256 bits vinda de configuração (a mesma família de proteção já usada no outbox de Identity e na chave de vídeo), associada ao tenant. A leitura nunca devolve a chave. Gravação sem chave, quando já existe uma, mantém a anterior. A primeira gravação sem chave responde 422 `PROVIDER_KEY_REQUIRED`.
 - **Situação.** Sem tomador válido → `awaiting-holder`, mesmo sem prestador. Com tomador e sem prestador → `awaiting-provider`. Com os dois → submete e fica `queued`. `issued` exige, na submissão corrente, `nfse.issued` e `nfse.documents_ready` e os dois arquivos gravados. `failed` é terminal até o financeiro pedir nova tentativa, que volta o **mesmo** documento a `queued` com outro número de submissão.
 - **Submissão.** `Idempotency-Key` do emissor é `{orderId}-{n}`, `n` começando em 1. `referencia` é o `orderId`. Total enviado é o preço congelado em reais com duas casas (`49700` → `497.00`), nunca centavos. Alíquota sai do texto configurado, sem passar por binário de ponto flutuante. Descrição é `Acesso ao curso {courseTitle}`. Competência é o mês civil de `America/Sao_Paulo` de `paidAt`, `YYYY-MM`.
@@ -84,11 +84,12 @@ Não há rota nova no aluno. A nota e o campo de documento ficam em `/pedidos/{o
   - identificação fiscal, ligada a `identity.events`.
   - O aviso `notificacao.envio-solicitado.v1` sai no exchange que Notificação já consome (`notification.events.default` no mapa de `commerce`). O publicador atual de `billing` manda tudo para `billing.events.{namespace}` (`RabbitMqPublisher`); o aviso fiscal não pode ir para lá. `cobranca.*` continuam nesse exchange.
 - **`pedidoId` do aviso** é UUIDv5 (RFC 4122, SHA-1) do `fiscalDocumentId` em minúsculas, formato com hífens, sob o namespace `f46b5092-dcc2-58f2-a330-b5da00d8ac65` (UUIDv5 de `urn:code-4-coders:fiscal-notification` no namespace de URL da RFC). Para o documento de exemplo `8f3e2d1c-0b9a-4c8d-9e7f-6a5b4c3d2e1f`, o `pedidoId` é `8a981d19-6d32-54f4-9f29-1011ffeaf273`. O UUID de exemplo no AsyncAPI não é esse valor. Republicar a transição gera o mesmo `pedidoId`, e Notificação não manda um segundo e-mail.
-- **Camada anticorrupção.** Porta com enfileirar, consultar, baixar PDF e baixar XML. Tipos, códigos E001–E004 e nomes de evento do emissor não saem dessa porta. O adaptador aponta para a base configurada (fake-nfe em dev e homologação, Notaas em produção). Cadastro de endpoint de webhook no emissor é configuração de deploy, não caso de uso.
+- **Guarda de um ano (QA-01).** O prazo é o aniversário do instante, em UTC. Para a nota, conta de `issued`: nessa data saem os bytes do PDF e do XML e a cópia congelada do tomador. A linha permanece, com `status` `issued` e `downloadsReady` falso, para o mesmo pedido não ganhar outra nota. O GET do arquivo passa a responder 404 `FISCAL_DOCUMENT_NOT_FOUND`. A leitura da situação continua 200. Excluir a conta não antecipa esse prazo. Para o documento na conta, conta da última gravação válida: Identity apaga o valor, publica o mesmo fato sem documento, e Fiscal relê. Nota já `issued` não muda por isso. Documento ainda não emitido que dependia do tomador volta a `awaiting-holder`. Submissão já aceita pelo emissor não é cancelada. O ciclo é periódico e idempotente, no formato do ciclo de expiração de acesso de Matrícula.
+- **Camada anticorrupção.** Porta com enfileirar, consultar, baixar PDF e baixar XML. Tipos, códigos E001–E004 e nomes de evento do emissor não saem dessa porta. Nesta fatia a base é só a bancada (fake-nfe). Conta de produção da Notaas e certificado A1 ficam de fora (QA-03). Cadastro de endpoint de webhook no emissor é configuração de deploy, não caso de uso.
 
 **`commerce`.** `PurchaseCompletedFact` ganha `courseTitle` opcional, sempre preenchido nas publicações novas, a partir de `Order.CourseTitle`, que já está congelado no pedido. Fato sem título não abre documento (DP-06). Matrícula continua no mesmo processo e ignora propriedade desconhecida. Cortesia e pedido que não fica *Pago* não publicam esse fato, então não abrem nota. O valor da nota é `priceCents` do fato, não `paidAmountCents`.
 
-**`identity`.** O documento do tomador entra na conta do aluno. CPF e CNPJ são só dígitos (11 e 14) com verificador; NIF é texto aparado, não vazio, até 40 caracteres. Inválido → 422 `TAX_DOCUMENT_INVALID` e nada grava. Papel `financeiro` ganha `fiscal.gerir` ao lado de `financeiro.ler` em `StaffRoleCatalog`. Professor e suporte não ganham nenhuma das duas. Audiência de aluno `billing` / `fiscal-document:own` e audiência de ator `billing` / `fiscal-documents:use`, como na ADR-0020. Asserção de `billing`, como na ADR-0021.
+**`identity`.** O documento do tomador entra na conta do aluno e dura um ano desde a última gravação válida (QA-01). CPF e CNPJ são só dígitos (11 e 14) com verificador; NIF é texto aparado, não vazio, até 40 caracteres. Inválido → 422 `TAX_DOCUMENT_INVALID` e nada grava. Papel `financeiro` ganha `fiscal.gerir` ao lado de `financeiro.ler` em `StaffRoleCatalog`. Professor e suporte não ganham nenhuma das duas. Audiência de aluno `billing` / `fiscal-document:own` e audiência de ator `billing` / `fiscal-documents:use`, como na ADR-0020. Asserção de `billing`, como na ADR-0021.
 
 **`notification`.** Aceita finalidade e modelo `nota-fiscal-disponivel` no mesmo canal, como mais um ramo ao lado de `comprovante-de-compra`. Dados: número do pedido, curso e link. Sem anexo e sem URL de emissor. Entrega pela conta, regras já existentes (Identity fora retém; conta indisponível falha com `destinatario-indisponivel`). Uma Notificação 1.2.0 recusa o modelo; por isso ela sobe antes de `billing` publicar o aviso. Falha do aviso não tira a nota de `issued`.
 
@@ -109,7 +110,8 @@ Pedido não pago: nenhuma menção a nota. Pedido pago:
 
 - `awaiting-holder`: texto pedindo CPF, CNPJ ou NIF, com o campo da conta na própria página. O curso segue acessível pelo caminho que já existe. Erro de dígito é texto.
 - `issuing`: "Nota em emissão". Sem prazo e sem pedir ação sobre o prestador.
-- `issued`: baixar PDF e baixar XML. Se `studyDocument`, a marca "sem valor fiscal" aparece junto dos botões, não só por cor.
+- `issued` com `downloadsReady`: baixar PDF e baixar XML. Se `studyDocument`, a marca "sem valor fiscal" aparece junto dos botões, não só por cor. Esta fatia só fala com a bancada, então a marca é o caso esperado.
+- `issued` sem `downloadsReady`: a nota existiu e o arquivo não está mais disponível. Sem botões de download e sem tratar isso como falha. O texto diz que a guarda é de um ano.
 - `failed`: "A nota não pôde ser emitida. O acesso ao curso não depende disso." Sem botão de tentar de novo.
 
 O campo da conta também aparece no pedido pago cuja nota já está `issued`, para o aluno substituir o documento da próxima compra. O texto diz que o PDF já disponível não muda.
@@ -122,7 +124,7 @@ O campo da conta também aparece no pedido pago cuja nota já está `issued`, pa
 | Pedido | `/financeiro/pedidos/:orderId` | detalhe atual mais `getFinanceFiscalDocument`. 404: não há nota. Outra falha: o pedido continua e a seção diz que a nota não carregou |
 | Prestador | `/financeiro/prestador` | `getServiceProvider` / `putServiceProvider`. A chave digitada não volta na resposta nem fica em estado depois do envio |
 
-A nova tentativa só aparece em `failed`. Não há ação de cancelar nota nem de marcar emitida à mão. Professor e suporte continuam sem a área (a navegação já exige `financeiro.ler`). Salvar prestador e pedir nova tentativa exigem `fiscal.gerir`; sem ela, a ação responde 403.
+No detalhe, `issued` sem `downloadsReady` mostra a mesma frase de guarda de um ano, sem download e sem nova tentativa. A nova tentativa só aparece em `failed`. Não há ação de cancelar nota nem de marcar emitida à mão. Não há código de serviço nem alíquota padrão: a tela do prestador é a única origem (QA-02). Professor e suporte continuam sem a área (a navegação já exige `financeiro.ler`). Salvar prestador e pedir nova tentativa exigem `fiscal.gerir`; sem ela, a ação responde 403.
 
 As três superfícies novas (bloco no pedido do aluno, bloco no pedido do financeiro, tela do prestador) esperam o wireframe (EN-01).
 
@@ -193,11 +195,23 @@ As três superfícies novas (bloco no pedido do aluno, bloco no pedido do financ
 - **Evidência / checkpoint:** testes de `billing` desses três caminhos e da autorização tardia; teste de rota do detalhe financeiro com o botão só em `failed`.
 - **Bloqueado por:** V-04.
 
+### V-06: um ano depois, o arquivo e o documento do tomador saem
+
+- **Cobre:** QA-01; RN-F02, RN-F09.
+- **Entrada / gatilho:** o aniversário de um ano, em UTC, de `issued` ou da última gravação válida do documento na conta.
+- **Processamento:**
+  - Na nota: apaga PDF, XML e a cópia do tomador. Conserva a linha, `issued`, `downloadsReady` falso. Não chama o emissor e não abre outro documento.
+  - Na conta: apaga o documento e publica `identidade.identificacao-fiscal-informada.v1` sem o valor. Fiscal relê. Nota já emitida não é reescrita. Quem ainda esperava o tomador volta a `awaiting-holder`.
+  - Exclusão da conta não remove a nota antes do aniversário de `issued`.
+- **Saída observável:** a situação da nota continua 200 e `issued`; o download responde 404; a conta não devolve mais o documento; o pedido não ganha segunda nota.
+- **Evidência / checkpoint:** teste de `billing` com o relógio no aniversário (arquivo some, linha fica, reentrega da compra não abre outra); teste de Identity (documento some um ano após a gravação e o fato não leva o valor); teste de rota das duas telas de pedido com `downloadsReady` falso.
+- **Bloqueado por:** V-02, V-04.
+
 ### Habilitadores inevitáveis
 
 | Habilitador | Por que não cabe numa fatia | Menor escopo | Primeira fatia desbloqueada |
 |---|---|---|---|
-| EN-01 — wireframe ASCII e Figma das três superfícies | O projeto só implementa tela com design aprovado. O bloco do aluno, o bloco do financeiro e a tela do prestador compartilham a linguagem da situação | Estender `docs/design/wireframes-compra.md` com o bloco no pedido do aluno, o bloco no pedido do financeiro e a rota `/financeiro/prestador` | V-02, V-03 e a parte de tela de V-04 |
+| EN-01 — wireframe ASCII e Figma das três superfícies | O projeto só implementa tela com design aprovado. O bloco do aluno, o bloco do financeiro e a tela do prestador compartilham a linguagem da situação, inclusive a nota emitida cujo arquivo já saiu | Estender `docs/design/wireframes-compra.md` com o bloco no pedido do aluno, o bloco no pedido do financeiro e a rota `/financeiro/prestador` | V-02, V-03 e a parte de tela de V-04 |
 
 ---
 
@@ -223,9 +237,9 @@ Não há ODCS (C-13).
 | E-mail e nome | Conta já existente | Memória de `billing` na submissão; nome e e-mail congelados junto do tomador em `issued` | Cópia no documento `issued` | `getStudentTaxDocumentInternal` | JWT de audiência `billing`, broker da nota, log |
 | Chave do emissor | Formulário do prestador, uma vez | Memória do BFF até `billing` | Cifrada no prestador | Só o adaptador, ao chamar o emissor | Resposta, log, outbox |
 | Segredo HMAC do webhook | Configuração de ambiente | Memória na verificação | Configuração, como o segredo do Stripe | Verificação do webhook | API e SPA |
-| PDF e XML | Resposta do emissor | Memória até gravar | Bytes no documento, banco de `billing` | Download autenticado | URL pública, anexo, `localStorage` |
+| PDF e XML | Resposta do emissor | Memória até gravar | Bytes no documento, banco de `billing`, por um ano a partir de `issued` | Download autenticado enquanto `downloadsReady` | URL pública, anexo, `localStorage`. Depois do ano, os bytes saem |
 
-Enquanto QA-01 seguir aberta, a nota `issued` e a cópia do tomador não se apagam com a conta.
+A nota `issued` não se apaga junto com a conta. O arquivo, a cópia do tomador e o documento na conta duram um ano, como em V-06.
 
 ### Mapeamento do contrato de API
 
@@ -317,6 +331,7 @@ Os schemas ficam nos YAML. O BFF repassa e traduz o erro de rede para 502/504 da
 | `src/commerce/src/CodeForCoders.Commerce.Application/Common/StudentAppOptions.cs` | Forma do link do pedido |
 | `src/identity/src/CodeForCoders.Identity.Infra.Data/Outbox/OutboxPayloadProtector.cs` | Família AES-GCM para a chave do emissor; o outbox de `billing` não cifra sozinho |
 | `src/billing/src/CodeForCoders.Billing.Infra.Data/Payments/GatewayInboxWorker.cs` | Inbox: gravar, responder, processar depois |
+| `src/commerce/src/CodeForCoders.Commerce.Infra.Data/Entitlement/AccessExpirationCycle.cs` | Formato do ciclo periódico e idempotente usado na guarda de um ano |
 | `docs/adr/0017-autenticacao-de-servico-commerce-em-billing.md` | A asserção de pagamento não muda |
 | `tasks/prd-emissao-nfse/provider-contract-notaas.yaml` | Recorte externo; não é fronteira nossa |
 
@@ -359,7 +374,7 @@ Ordem de deploy: Identity → Notificação → `commerce` (com Matrícula) → 
 
 - **Decisão:** PDF e XML ficam em bytes no documento, no PostgreSQL de `billing`.
 - **Racional:** o arquivo tem de permanecer na plataforma, sem URL do emissor, e `billing` não tem cliente de objeto. S3 está decidido para vídeo.
-- **Trade-offs:** o banco guarda arquivo. Uma nota é pequena; a retenção segue QA-01.
+- **Trade-offs:** o banco guarda arquivo por um ano. Uma nota é pequena. Depois disso os bytes saem e a linha fica.
 - **Alternativas rejeitadas:** buscar o arquivo no emissor a cada download (a nota some se o emissor cair depois de autorizar); gravar no bucket de mídia (mistura domínio e torna o arquivo vizinho de vídeo).
 
 - **Decisão:** falha ao baixar PDF ou XML depois de `documents_ready` não é a ausência que leva a `failed` e não incrementa `n`.
@@ -372,24 +387,31 @@ Ordem de deploy: Identity → Notificação → `commerce` (com Matrícula) → 
 - **Trade-offs:** o exemplo do AsyncAPI não é o valor calculado.
 - **Alternativas rejeitadas:** `Guid` aleatório gravado à parte, que divergiria se a transação recomeçasse antes de persistir o id.
 
+- **Decisão:** a guarda é de um ano, no aniversário UTC de `issued` para o arquivo e a cópia do tomador, e no aniversário da última gravação válida para o documento na conta (QA-01, 2026-10-12).
+- **Racional:** o responsável fechou o prazo que o PRD tinha deixado aberto. Um ano, não o prazo legal de cerca de cinco anos que o PRD só recomendava.
+- **Trade-offs:** depois de um ano o aluno e o financeiro não baixam mais o arquivo. A linha do documento continua, senão o mesmo pedido poderia emitir de novo.
+- **Alternativas rejeitadas:** guardar por tempo indeterminado; apagar a linha inteira no fim do prazo.
+
+- **Decisão:** código de serviço e alíquota não têm valor de fábrica. O financeiro informa os dois na tela (QA-02, 2026-10-12).
+- **Racional:** são configuração da escola, não regra desta fatia.
+- **Trade-offs:** sem os dois, o prestador não fica utilizável e a venda segue.
+- **Alternativas rejeitadas:** gravar um código ou uma alíquota fixos no produto.
+
+- **Decisão:** o emissor desta fatia é só a bancada (fake-nfe). Sem conta de produção da Notaas e sem certificado A1 (QA-03, 2026-10-12).
+- **Racional:** a prova é na bancada. O PDF da bancada não é documento fiscal válido.
+- **Trade-offs:** a marca de sem valor fiscal é o caso esperado. A mesma porta continua capaz de apontar para outro host numa fatia futura, que esta não configura.
+- **Alternativas rejeitadas:** exigir a conta de produção para construir a fatia.
+
 Aplicar ADR-0005 ao JWT de ator em `billing` não é decisão nova. C-01 a C-13 não se reabrem.
 
 ---
 
 ## Verificação
 
-- **Cenários críticos não óbvios:** três entregas do mesmo pagamento abrem uma nota; cortesia e expiração sem pagamento não abrem; sem prestador e sem tomador a nota fica `awaiting-holder`; CPF válido passa a `awaiting-provider` e, com prestador, a `queued`; dígito inválido responde 422 e a nota não muda; nota autorizada conserva tomador, descrição, valor e competência depois da troca do documento; 202 deixa `queued`; `nfse.issued` sozinho não baixa; com `documents_ready` e os arquivos, baixa; assinatura ruim não muda nada; a mesma entrega não manda segundo aviso; E001 falha sem retry automático; E002 três vezes falha; nova tentativa conserva o id; autorização da submissão antiga não cria outra nota; marca de estudo não cria outra nota; compra sem `courseTitle` não abre documento; `billing` parado devolve 502 na nota e *Meus pedidos* abre; outro aluno e um professor não baixam o arquivo.
-- **Dados ou ambiente especiais:** fake-nfe na base configurada, não a Notaas de produção (QA-03). Chaves de asserção e o segredo HMAC por `scripts/generate-local-env.sh`, no padrão das chaves que já existem. Fuso `America/Sao_Paulo`. O webhook local é `http://localhost:5110/webhooks/v1/notaas/events`.
+- **Cenários críticos não óbvios:** três entregas do mesmo pagamento abrem uma nota; cortesia e expiração sem pagamento não abrem; sem prestador e sem tomador a nota fica `awaiting-holder`; CPF válido passa a `awaiting-provider` e, com prestador, a `queued`; dígito inválido responde 422 e a nota não muda; nota autorizada conserva tomador, descrição, valor e competência depois da troca do documento; 202 deixa `queued`; `nfse.issued` sozinho não baixa; com `documents_ready` e os arquivos, baixa; assinatura ruim não muda nada; a mesma entrega não manda segundo aviso; E001 falha sem retry automático; E002 três vezes falha; nova tentativa conserva o id; autorização da submissão antiga não cria outra nota; marca de estudo não cria outra nota; compra sem `courseTitle` não abre documento; `billing` parado devolve 502 na nota e *Meus pedidos* abre; outro aluno e um professor não baixam o arquivo; no aniversário de um ano o arquivo e a cópia do tomador somem, a linha `issued` fica e a compra reentregue não abre outra nota; o documento na conta some um ano após a última gravação.
+- **Dados ou ambiente especiais:** só a bancada fake-nfe. Sem Notaas de produção e sem certificado A1. Chaves de asserção e o segredo HMAC por `scripts/generate-local-env.sh`, no padrão das chaves que já existem. Fuso `America/Sao_Paulo` na competência. A guarda usa o aniversário em UTC. O webhook local é `http://localhost:5110/webhooks/v1/notaas/events`.
 - **Observabilidade além do padrão:** contadores de documento aberto, de `issued`, de `failed` e de autorização ignorada por submissão antiga. Nenhum log com e-mail, CPF, CNPJ, NIF, chave ou corpo de webhook. A verificação procura esses valores na telemetria de `billing`, `commerce` e Identity.
 - **Verificação dos contratos:** os cenários acima exercem os `operationId`s e as três mensagens. Lint dos YAML já foi feito na aprovação do contrato e não substitui estes testes. O download se prova pelo arquivo autenticado e pela marca de estudo, não por JSON.
-
----
-
-## Questões em Aberto
-
-- [ ] QA-01 — prazo de guarda da nota emitida e do documento do tomador — encarregado de dados — se ficar aberta, a nota `issued` não se apaga com a conta.
-- [ ] QA-02 — código de serviço e alíquota reais — financeiro — a fatia usa o que for configurado na tela.
-- [ ] QA-03 — conta de produção da Notaas e certificado A1 — negócio — não bloqueia a prova na bancada; bloqueia tratar o PDF como documento fiscal válido fora do estudo.
 
 ---
 
