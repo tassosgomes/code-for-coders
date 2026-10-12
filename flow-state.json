@@ -179,7 +179,8 @@
       "stage": "prd",
       "artifacts": {
         "prd": "tasks/prd-emissao-nfse/prd.md",
-        "contract": "tasks/prd-emissao-nfse/contracts.md"
+        "contract": "tasks/prd-emissao-nfse/contracts.md",
+        "techspec": "tasks/prd-emissao-nfse/techspec.draft.md"
       }
     },
     {
@@ -279,8 +280,8 @@
   "next_actions": [
     {
       "id": "NA25",
-      "what": "CAP-016: contratos aprovados em 2026-10-12 (tasks/prd-emissao-nfse/contracts.md, C-01 a C-13). Proximo: tsg-flow-techspec-creator. QA-01, QA-02 e QA-03 seguem abertas; QA-03 bloqueia nota valida em producao. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-techspec-creator",
+      "what": "CAP-016: techspec em revisão (tasks/prd-emissao-nfse/techspec.draft.md, 2026-10-12). ADR-0020 e ADR-0021 propostas. Depois da aprovação, promover a techspec.md e seguir para tsg-flow-task-creator. QA-01, QA-02 e QA-03 seguem abertas; QA-03 bloqueia nota valida em producao. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-task-creator",
       "blocked_by": []
     }
   ],
