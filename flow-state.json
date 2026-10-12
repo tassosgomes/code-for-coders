@@ -176,8 +176,10 @@
     },
     {
       "id": "CAP-016",
-      "stage": "backlog",
-      "artifacts": {}
+      "stage": "prd",
+      "artifacts": {
+        "prd": "tasks/prd-emissao-nfse/prd.md"
+      }
     },
     {
       "id": "CAP-017",
@@ -275,9 +277,9 @@
   ],
   "next_actions": [
     {
-      "id": "NA24",
-      "what": "MVP (Fase 1): as 11 capacidades estao done com CAP-011. Falta o criterio de conclusao do MVP (backlog/capabilities.md): uma compra real percorrer CAP-011 -> CAP-008 sem intervencao manual, o que depende de OD87 (checkpoint no sandbox do Stripe) e de OD80 (boleto). O flow-state nao indica a proxima capacidade: escolher com o responsavel. Ao entrar CAP-009 (revogacao): o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-next",
+      "id": "NA25",
+      "what": "CAP-016: prd.md 1.0 aprovado em 2026-10-11 (tasks/prd-emissao-nfse/prd.md). Proximo: tsg-flow-contract-creator. QA-01, QA-02 e QA-03 seguem abertas e nao bloqueiam o contrato da fatia; QA-03 bloqueia nota valida em producao. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-contract-creator",
       "blocked_by": []
     }
   ],
@@ -316,29 +318,11 @@
       "blocks": []
     },
     {
-      "id": "OD80",
-      "ref": "tasks/archive/prd-compra-avulsa/prd.md QA-02",
-      "what": "PIX confirmado no Stripe em 2026-10-05. Falta confirmar boleto habilitado na conta (e no sandbox); meio indisponivel sai do recorte por decisao explicita, sem mudar contrato",
-      "owner": "tasso",
-      "blocks": [
-        "OD87 (checkpoint de CAP-011 no sandbox do Stripe, boleto)"
-      ]
-    },
-    {
       "id": "OD86",
       "ref": "tasks/archive/prd-compra-avulsa/prd_review.md Recomendacoes",
       "what": "Recomendacoes nao bloqueantes da full validation de CAP-011 (run.MtgqxZVz): (1) CreateOrder consulta o catalogo antes de FindPendingAsync e devolve 404 para pedido pendente de oferta despublicada (RN-V06), inverter a ordem; (2) inbox de billing: ProcessPendingAsync faz continue sem Payment em lote LIMIT 50, falta teste da janela de graca e do descarte por tempo; (3) paymentUrl aceita http alem de https (PaymentResponseValidation, adaptador, start-order-payment.ts), restringir a https fora de desenvolvimento; (4) fallback de GetPaymentMethodAsync por next_action sem teste; (5) comentario de OrderCancellationConsumerWorker promete nao gravar cancelamento com PIX vivo, RN-V08 admite a coexistencia; (6) contratos de notification/identity: resolvido na consolidacao de 2026-10-06; (7) Meus pedidos so com smoke de HTTP controlado, repetir contra commerce real no checkpoint de integracao; (8) tag FinanceOrders resolvida na consolidacao; restam linhas longas em finance-orders-screen.tsx e o filtro de cursos que percorre o catalogo de 50 em 50. Tambem: vendas.pedido-cancelado e vendas.pedido-expirado sem AssertSends nos testes de commerce",
       "owner": "tasso",
       "blocks": []
-    },
-    {
-      "id": "OD87",
-      "ref": "tasks/archive/prd-compra-avulsa/prd_review.md Limitacoes",
-      "what": "Checkpoint manual de CAP-011 no sandbox do Stripe nunca executado (sem STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET de teste): compra com cartao, PIX e boleto ate a concessao, comprovante no smtp4dev, link /student/pedidos/{orderId} e varredura do e-mail em commerce e billing. Junto: dominio publico de billing em homologacao e cadastro do webhook no painel do Stripe por ambiente",
-      "owner": "tasso",
-      "blocks": [
-        "criterio de conclusao do MVP (compra real CAP-011 -> CAP-008)"
-      ]
     },
     {
       "id": "OD88",
@@ -1052,6 +1036,46 @@
       "owner": "tasso",
       "decided_at": "2026-10-05",
       "decision": "Aprovado: 10 tasks (1.0 ASCII, 2.0 Figma, 3.0 unidade billing, 4.0 a 10.0 fatias V-01 a V-07), sequencia linear a partir de 4.0, 3.0 paralela ao design. Orquestracao nao iniciada por decisao do responsavel."
+    },
+    {
+      "id": "OD80",
+      "ref": "tasks/archive/prd-compra-avulsa/prd.md QA-02",
+      "what": "Boleto habilitado na conta Stripe e em homologacao",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "Confirmado pelo responsavel em 2026-10-11: boleto habilitado na conta e no ambiente de homologacao. Permanece no recorte de CAP-011, junto de cartao e PIX. Descartado: retirar o boleto do recorte por falta de confirmacao — o meio existe, e o contrato nao muda."
+    },
+    {
+      "id": "OD87",
+      "ref": "tasks/archive/prd-compra-avulsa/prd_review.md Limitacoes",
+      "what": "Checkpoint de compra real CAP-011 -> CAP-008 em homologacao",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "Confirmado pelo responsavel em 2026-10-11: o checkpoint ja foi concluido no ambiente de homologacao. Uma compra real percorre CAP-011 -> CAP-008 sem intervencao manual, com cartao, PIX e boleto ate a concessao. O criterio de conclusao do MVP em backlog/capabilities.md fica satisfeito nesse ambiente. Descartado: repetir o mesmo checkpoint num sandbox local sem chave Stripe — a evidencia pedida e a compra no ambiente integrado, e homologacao ja e esse ambiente."
+    },
+    {
+      "id": "OD89",
+      "ref": "https://github.com/tassosgomes/fake-nfe ; https://www.notaas.com.br/",
+      "what": "Provedor de NFS-e da CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "O contrato da camada anticorrupcao e o da Notaas, no recorte que o fake-nfe implementa: POST /api/v1/emitir com x-api-key (prefixo ntaas_), resposta 202 queued, consulta de status, PDF e XML, cancelamento em fila, webhook HMAC no header X-Notaas-Signature. Eventos: nfse.issued, nfse.error, nfse.cancelled, nfse.documents_ready. Em dev e homologacao o duplo e github.com/tassosgomes/fake-nfe: X-Ambiente estudo, PDF e XML sem valor fiscal, sem SEFAZ e sem prefeitura. Producao fica a Notaas (platform.notaas.com.br) atras do mesmo contrato; conta e certificado A1 de producao nao bloqueiam o PRD. Descartado: tratar o fake como provedor de producao; integrar o leiaute municipal direto; seguir o marketing da Notaas onde ele diverge do fake (201 sincrona e POST /v1/nfse na pagina, 202 e fila no contrato implementado)."
+    },
+    {
+      "id": "OD90",
+      "ref": "tasks/prd-emissao-nfse/prd.md",
+      "what": "Fatia do primeiro PRD de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "Confirmada pelo responsavel (pode seguir): NFS-e da compra avulsa, um documento por pedido Pago, PDF e XML para o aluno e para o financeiro, falha fiscal sem travar venda nem acesso. Fora: cancelamento (CAP-015) e nota de assinatura (CAP-013). Sem domain doc. O recorte ficou em tasks/prd-emissao-nfse/prd.md e foi aprovado em OD91."
+    },
+    {
+      "id": "OD91",
+      "ref": "tasks/prd-emissao-nfse/prd.md",
+      "what": "Aprovacao do PRD de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-11",
+      "decision": "PRD 1.0 aprovado, com DP-01 a DP-06. A compra nao passa a exigir CPF nem CNPJ: o aluno informa o documento na conta e a NFS-e espera em Aguardando tomador. QA-01, QA-02 e QA-03 permanecem abertas e nao bloqueiam o contrato desta fatia."
     }
   ]
 }
