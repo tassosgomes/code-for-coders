@@ -5,7 +5,7 @@ capability: CAP-006
 version: 1.0
 status: approved
 updated: 2026-10-11
-sources: tasks/prd-tags-video/prd.md@1.0, tasks/prd-tags-video/contracts.md@1.0, context/architecture-baseline.md@1.2, domains/entrega-de-midia-e-protecao/domain.md@1.0, domains/conteudo-e-curriculo/domain.md@1.1
+sources: tasks/prd-tags-video/prd.md@1.0, tasks/prd-tags-video/contracts.md@1.0, context/architecture-baseline.md@1.2, domains/entrega-de-midia-e-protecao/domain.md@1.1, domains/conteudo-e-curriculo/domain.md@1.1
 ---
 
 # Especificação Técnica — Tags de vídeo

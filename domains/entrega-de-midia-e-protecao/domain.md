@@ -1,9 +1,9 @@
 ---
 tsg_artifact: domain
 product: code-4-coders
-version: 1.0
+version: 1.1
 status: approved
-updated: 2026-09-25
+updated: 2026-10-12
 sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4
 ---
 
@@ -14,7 +14,7 @@ sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4
 > `vision.md` ao iniciar um PRD de capacidade que toque este domínio.
 
 **Domínio:** Entrega de Mídia e Proteção
-**Capacidades atendidas:** `CAP-006`, `CAP-007`
+**Capacidades atendidas:** `CAP-006`, `CAP-007`, `CAP-032`
 **Restrições arquiteturais pertinentes:** BA07, BA08, BA09, BA14, BA15, BA16 · G06, G07, G08, G10, G11, G21, G22, G23, G24, G26
 
 ---
@@ -58,8 +58,12 @@ comercial.
   vive no catálogo de lá (RN-M03).
 - **Detectar e tratar caso individual de compartilhamento de conta** → `CAP-029` (G25). Este domínio
   só produz o fato bruto do qual a medição agregada deriva (BA16).
-- **Produzir ou editar vídeo** — cortar, legendar, compor. A preparação faz só o necessário para a
-  entrega (visão, "o que não fará").
+- **Produzir ou editar vídeo** — cortar, compor, legendar de forma autoral. A preparação faz só o
+  necessário para a entrega (visão, "o que não fará"). A transcrição automática (`CAP-032`) não
+  entra aqui: é texto derivado da fala, não altera o vídeo e não é edição.
+- **Reconhecer a fala** — o reconhecimento é de um serviço de transcrição próprio, fora deste
+  domínio (§5). O domínio pede, acompanha, guarda e entrega o resultado; não transcreve.
+- **Corrigir ou editar o texto da transcrição, traduzir, resumir, gerar capítulos** — fora, por decisão de 2026-10-12 (QM-11).
 - **DRM, trava de concorrência, sessão única, limite por IP** — rejeitados (BA15, BA16, G24, G26).
 - **Registro de auditoria do envio** — enviar ou preparar ativo não é ato administrativo com efeito
   sobre aluno ou dinheiro; não gera evento para Auditoria e Conformidade.
@@ -70,13 +74,14 @@ comercial.
 
 | Perfil (Role) | O que faz neste domínio | Frequência de uso |
 |---|---|---|
-| Professor | Envia vídeo e material, acompanha a preparação até ficar pronto ou falhar | Semanal, em ciclos de produção de curso |
-| Aluno | Reproduz a aula e baixa material pelo player, sem perceber o domínio | Diária |
+| Professor | Envia vídeo e material, acompanha a preparação até ficar pronto ou falhar; acompanha a transcrição e pede para transcrever ou refazer | Semanal, em ciclos de produção de curso |
+| Aluno | Reproduz a aula e baixa material pelo player, sem perceber o domínio; liga a legenda e pesquisa a transcrição na página da aula | Diária |
 | Conteúdo e Currículo (domínio) | Consulta se um ativo está pronto antes de vinculá-lo; informa quais ativos cada conteúdo publicado usa | A cada vínculo e a cada publicação |
 | Aprendizagem e Progresso (domínio) | Recebe o avanço da reprodução | Contínua durante a reprodução |
 
 A ação mais crítica do professor é **enviar e saber se ficou pronto**; a do aluno é **apertar play e
-o vídeo começar** — é o caminho crítico (b) do baseline.
+o vídeo começar** — é o caminho crítico (b) do baseline. A transcrição é complemento: nunca está
+no caminho crítico (RN-M19).
 
 ---
 
@@ -90,6 +95,9 @@ o vídeo começar** — é o caminho crítico (b) do baseline.
 | Versão de Reprodução | A forma entregável da Mídia: segmentada e cifrada, **única para todos os alunos**, com uma Chave de Cifra por Mídia | qualidades disponíveis, chave de cifra | pertence a: Mídia |
 | Referência de Uso | Registro **opaco** de que um conteúdo publicado usa um ativo. O domínio não sabe o que o identificador significa, só que foi informado por Conteúdo e Currículo | identificador opaco do conteúdo, ativo, escola | liga: Ativo Protegido ↔ conteúdo (externo) |
 | Sessão de Reprodução | Autorização temporária e individual para um aluno reproduzir **um** ativo no contexto de **um** conteúdo | aluno, ativo, referência de uso, validade | concedida após: decisão de Matrícula · compõe: Marca d'Água |
+| Transcrição | O texto da fala de uma Mídia pronta, dividido em Trechos, em português do Brasil. **Uma vigente por Mídia, igual para todos os alunos.** Estados: não solicitada, em andamento, pronta, falhou | estado, idioma, duração coberta, momento em que ficou pronta, motivo da falha | derivada de: Mídia · composta por: Trecho · exibida como: Legenda e como texto da aula |
+| Trecho | Um pedaço contíguo da Transcrição, com início, fim e texto. É a unidade da legenda, da busca e do clique que leva o vídeo ao tempo | início, fim, texto | pertence a: Transcrição |
+| Legenda | A apresentação dos Trechos sobre o vídeo no player, ligada e desligada pelo aluno. **Não é um artefato separado**: sai da mesma Transcrição | ligada ou desligada (preferência do aluno, no cliente) | derivada de: Transcrição |
 | Marca d'Água | A identificação do aluno sobreposta ao vídeo durante a reprodução, com posição variável, composta no cliente a partir da sessão | conteúdo exibido (e-mail do aluno), regra de variação | pertence a: Sessão de Reprodução |
 
 ---
@@ -103,8 +111,10 @@ o vídeo começar** — é o caminho crítico (b) do baseline.
 |---|---|---|
 | `CAP-006` | Receber o vídeo, preparar a Versão de Reprodução, expor o estado a quem enviou e deixar a Mídia pronta consultável para vínculo | Não iniciada — fatia do primeiro PRD em OD29 |
 | `CAP-007` | Abrir Sessão de Reprodução após a decisão de acesso, entregar segmentos e chave por acesso de vida curta, fornecer ao player o necessário para a Marca d'Água e informar o avanço | Não iniciada |
+| `CAP-032` | Transcrever a Mídia pronta, guardar a Transcrição, expor o estado ao professor e entregar Legenda e Trechos ao aluno sob a mesma decisão de acesso da reprodução | Não iniciada — PRD em `tasks/prd-transcricao-legenda-aula/` |
 
-Ambas derivam de `C04` na visão.
+As três derivam de `C04` na visão. `CAP-032` não está na visão; nasceu de decisão do negócio em
+2026-10-12, é pós-MVP e está posicionada na Fase 3 do backlog.
 
 **Material** é entidade deste domínio (Domain Map: "vídeo e materiais pesados"), mas nenhuma das
 duas capacidades o nomeia; `CAP-005` é quem anexa material à aula. Qual PRD entrega o ciclo de
@@ -154,6 +164,12 @@ domínio**, e Conteúdo só referencia uma Mídia que já está pronta. A junta 
 - **Descartado:** confiar no conteúdo informado pelo BFF (brecha acima); consultar Conteúdo na
   abertura da sessão (G08).
 
+**Junta da Transcrição com Conteúdo e Matrícula (`CAP-032`).** A Transcrição é da Mídia, não da
+aula. O aluno a obtém **pelo mesmo caminho da reprodução**: a página da aula informa a Mídia e o
+conteúdo, o domínio confere a Referência de Uso e Matrícula decide (RN-M10, RN-M21). Conteúdo e
+Currículo não guarda texto de transcrição; nada muda no vínculo aula–vídeo, na publicação nem na
+Referência de Uso. Uma Mídia usada em duas aulas tem uma só Transcrição.
+
 O texto da linha do Domain Map ("solicitar a preparação") fica como lacuna de redação para a
 próxima revisão do mapa (QM-06). A fronteira não muda.
 
@@ -172,10 +188,17 @@ próxima revisão do mapa (QM-06). A fronteira não muda.
 |---|---|---|
 | AWS S3 | Guardar o arquivo enviado e a Versão de Reprodução, sem nenhum objeto público | Saída |
 | AWS CloudFront | Distribuir os segmentos por URL assinada de vida curta | Saída |
+| Serviço de transcrição próprio (repositório separado, mesma rede privada) | Reconhecer a fala de um áudio e devolver o texto com tempos, em português do Brasil. Recebe o pedido, avisa ao terminar e entrega o resultado por tempo limitado (24 h após o término) | Saída (pedido e consulta) · Entrada (aviso de término) |
 
 Os dois ficam atrás de camada anticorrupção (baseline, regra 8): nenhum nome de bucket, distribuição
 ou conceito do provedor aparece em contrato ou em outro domínio. A preparação roda com ffmpeg
 dentro do serviço (OD28): é ferramenta interna, não integração externa.
+
+O serviço de transcrição também fica atrás de camada anticorrupção: nenhum nome, estado, limite ou
+formato dele aparece em contrato ou em outro domínio. Ele é infraestrutura própria na rede privada,
+**não** um terceiro que recebe o conteúdo (decisão de 2026-10-12): a fala dos vídeos não sai da
+operação da escola. O aviso de término não carrega texto; o resultado é buscado e copiado para
+guarda própria (RN-M23).
 
 ---
 
@@ -200,6 +223,16 @@ dentro do serviço (OD28): é ferramenta interna, não integração externa.
 | RN-M15 | **A proteção é dissuasão declarada.** Nenhum texto de produto, PRD ou TechSpec apresenta o conteúdo como protegido contra cópia ou como exclusividade garantida | BA15 · R8 |
 | RN-M16 | **Material** é Ativo Protegido: não é público, não é preparado, e é entregue por acesso individual de vida curta depois da mesma decisão de RN-M10. RN-M07 e RN-M08 (versão e chave) não se aplicam a ele | OD31 · Domain Map |
 | RN-M17 | **O custo de armazenamento e distribuição por aluno ativo é sinal obrigatório** emitido por este domínio desde a primeira capacidade entregue | R10 · baseline (sinais obrigatórios) |
+| RN-M18 | **A Transcrição é derivada de uma Mídia pronta e há uma só vigente por Mídia.** Mídia que não ficou pronta não é transcrita. Estado da Transcrição: não solicitada → em andamento → pronta, ou → falhou. Refazer mantém a vigente visível até a nova ficar pronta; só então a substitui, e uma refeita que falha não derruba a vigente | `CAP-032` · decisão de 2026-10-12 |
+| RN-M19 | **A Transcrição nunca atrasa nem impede a Mídia.** Ela só começa depois que a Mídia ficou pronta; sua falha, demora ou a indisponibilidade do serviço de transcrição não muda o estado da Mídia (RN-M05), não bloqueia vínculo, publicação nem reprodução. Aula sem Transcrição pronta toca normalmente, sem Legenda | `CAP-032` · analogia com DE06 |
+| RN-M20 | **Disparo.** Automático quando a Mídia fica pronta. Manual, por ator interno com a permissão `midia.enviar`, para transcrever Mídia pronta que não tem Transcrição e para refazer a vigente. Disparar de novo enquanto uma está em andamento não cria duas Transcrições | `CAP-032` · decisão de 2026-10-12 · RN-M03 |
+| RN-M21 | **A Transcrição é Ativo Protegido derivado.** Legenda e Trechos só saem do domínio para quem passa pela mesma verificação de RN-M10 (Referência de Uso e decisão de Matrícula **agora**, falha fechada), nunca por endereço estável, público ou em cache compartilhado. Perdeu o direito, deixa de receber. A proteção é dissuasão: o texto completo é mais fácil de copiar que o vídeo, e nenhuma peça o apresenta como protegido contra cópia (RN-M15) | `CAP-032` · BA07 · G11 · G21 · R8 |
+| RN-M22 | **A Transcrição é única e igual para todos os alunos**, nunca derivada por aluno, e não carrega e-mail nem dado do aluno. A preferência de ligar a Legenda é do aluno e vive no cliente | `CAP-032` · G22 · G23 |
+| RN-M23 | **O texto pronto fica sob guarda do domínio**, sem depender de quanto tempo o serviço de transcrição o retém. Todo material intermediário produzido só para transcrever (por exemplo, o áudio) é apagado ao fim, com sucesso ou falha, e nunca é acessível ao aluno | `CAP-032` · G21 |
+| RN-M24 | **Toda Mídia pronta é transcritível, inclusive as que ficaram prontas antes da capacidade existir**, e a transcrição não depende de o arquivo original ter sido guardado. Mídia fora dos limites do serviço (duração, tamanho) falha com motivo em linguagem de professor, sem nova tentativa automática | `CAP-032` · a preparação descarta o original |
+| RN-M25 | **Idioma: português do Brasil.** Mídia em outro idioma é transcrita assim mesmo, com qualidade que o domínio não garante; não há seleção de idioma nem tradução | `CAP-032` · decisão de 2026-10-12 |
+| RN-M27 | **O ator interno com `midia.enviar` lê a Transcrição da Mídia da sua escola, somente leitura, no backoffice**, para avaliar a qualidade. Não é reprodução: não abre Sessão de Reprodução nem consulta Matrícula. Não há edição. Ator sem a permissão, ou de outra escola, não lê | `CAP-032` · decisão de 2026-10-12 · RN-M03 · G07 |
+| RN-M26 | **Sinais obrigatórios da transcrição:** tempo entre a Mídia ficar pronta e a Transcrição ficar pronta, taxa de falha por motivo, duração transcrita e fila de pedidos em espera, sem texto nem dado pessoal | `CAP-032` · RN-M17 · baseline (observabilidade) |
 
 ---
 
@@ -212,6 +245,10 @@ dentro do serviço (OD28): é ferramenta interna, não integração externa.
 
 - `midia.ativo-pronto` — a Mídia tem Versão de Reprodução e pode ser vinculada e reproduzida
 - `midia.preparacao-falhou` — a preparação esgotou as tentativas; o ativo não ficará pronto
+- Nenhum evento novo para outros domínios com `CAP-032`. O estado da Transcrição é lido pelo
+  professor na tela Vídeos e pelo aluno na página da aula, ambos por consulta a este domínio. Se
+  Conteúdo ou Aprendizagem vierem a precisar reagir a "Transcrição pronta", nasce
+  `midia.transcricao-pronta` (e `midia.transcricao-falhou`) numa revisão deste documento.
 - `midia.reproducao-avancou` — fato bruto de avanço de uma sessão, com a Referência de Uso,
   consumido por Aprendizagem e Progresso. Não carrega e-mail nem dado pessoal além do identificador
   opaco do aluno
@@ -234,6 +271,11 @@ dentro do serviço (OD28): é ferramenta interna, não integração externa.
 | RF-M04 | **A Sessão de Reprodução virar um direito de acesso paralelo** — sessão longa ou renovada sem nova decisão continua tocando depois de uma revogação | Média | Alto | RN-M10 e RN-M11: validade curta e renovação com nova decisão |
 | RF-M05 | **O provedor vazar pela fronteira** — nome de bucket, distribuição ou URL do provedor em contrato ou em outro domínio, travando uma futura troca | Média | Médio | Camada anticorrupção; portas neutras já existentes em `src/media` |
 | RF-M06 | **A preparação disputar recurso com a entrega** no mesmo serviço — o ffmpeg consome CPU em rajada; a entrega precisa de latência baixa | Média | Médio | A preparação é assíncrona e isolada do caminho de entrega; a forma de isolar é da TechSpec de `CAP-006` (OD28) |
+| RF-M08 | **A Transcrição virar rota paralela ao conteúdo protegido**: texto completo servido sem a verificação do vídeo, em endereço estável ou em cache compartilhado | Média | Alto | RN-M21: mesma verificação de RN-M10, falha fechada |
+| RF-M12 | **O texto completo facilitar a cópia do conteúdo** (selecionável, pesquisável, sem marca d'água). **Risco aceito pelo produto em 2026-10-12** em favor da feature | Alta | Médio | Aceito. Mitigação parcial: RN-M21 (só quem tem direito), sem download nem exportação, RN-M15 (nunca prometer proteção) |
+| RF-M09 | **O serviço de transcrição atrasar ou cair e contaminar a Mídia**: vídeo "preparando" à espera de transcrição, ou aula sem vídeo por transcrição falha | Média | Alto | RN-M19: a Transcrição só começa depois da Mídia pronta e nunca altera o estado dela |
+| RF-M10 | **O resultado expirar no serviço antes de ser guardado** (retenção de 24 h) e a Transcrição se perder | Média | Médio | RN-M23: cópia própria; a conciliação além do aviso de término é da TechSpec |
+| RF-M11 | **O vocabulário do serviço de transcrição vazar** para contratos e outros domínios, travando uma troca de modelo ou de serviço | Média | Médio | Camada anticorrupção (§5) |
 | RF-M07 | **O e-mail do aluno vazar pelo caminho legítimo da Marca d'Água** — parâmetro de URL, nome de objeto, log do player | Média | Alto | RN-M12; G23 |
 
 ---
@@ -257,6 +299,12 @@ dentro do serviço (OD28): é ferramenta interna, não integração externa.
       lacuna de redação, não de fronteira. → próxima revisão do Domain Map.
 - [ ] **QM-07 — Validade da sessão e do acesso de vida curta, e cadência do avanço.** → PRD de
       `CAP-007`.
+- [x] **QM-11 — Edição e correção do texto pelo professor. Fechada em 2026-10-12:** sem edição
+      neste corte; a Transcrição sai como o serviço a produziu. O professor só lê (RN-M27).
+- [x] **QM-12 — `CAP-032` entra no MVP ou é pós-MVP. Fechada em 2026-10-12:** pós-MVP; o backlog a
+      posiciona na Fase 3 (lote L12).
+- [x] **QM-13 — Mídia acima do limite do serviço (2 h). Fechada em 2026-10-12:** falha com motivo
+      claro ao professor (RN-M24); a limitação é aceita e não se divide o vídeo.
 - [x] **QM-08 — Onde roda a preparação. Fechada em 2026-09-25 (OD28):** ffmpeg dentro do serviço;
       S3 + CloudFront só guardam e distribuem. Descartado: transcodificação gerenciada da AWS.
 - [x] **QM-09 — Como Mídia confere a que conteúdo um ativo pertence. Fechada em 2026-09-25
@@ -271,6 +319,7 @@ dentro do serviço (OD28): é ferramenta interna, não integração externa.
 
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
+| 1.1 | 2026-10-12 | Tasso Gomes | **Aprovado em 2026-10-12.** Acrescenta `CAP-032`: entidades Transcrição, Trecho e Legenda; integração com o serviço de transcrição próprio; RN-M18 a RN-M27 (leitura somente leitura pelo professor); riscos RF-M08 a RF-M11; questões QM-11 a QM-13, já fechadas em 2026-10-12; ajusta o "fora do escopo" sobre legendar. Nenhuma regra de RN-M01 a RN-M17 foi alterada |
 | 1.0 | 2026-09-25 | Tasso Gomes | Criação: bounded context, juntas com Matrícula, Identidade e Conteúdo (Referência de Uso), regras RN-M01 a RN-M17 |
 
 *Domain Doc gerado com a skill `tsg-flow-domain-creator`. Para criar o PRD de uma capacidade que

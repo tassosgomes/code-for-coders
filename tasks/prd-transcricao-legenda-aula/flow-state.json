@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "branch": "feature/cap-032-transcricao-legenda",
+  "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
+  "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
+  "target_ref": null,
+  "last_checkpoint": null,
+  "phase": "validate",
+  "active_task": "3.0",
+  "attempt": 1,
+  "max_attempts": 3,
+  "full_attempt": 0,
+  "transport_retries": 0,
+  "specs": [
+    "techspec.md"
+  ],
+  "delivery": "pr",
+  "validated_commit": null,
+  "validated_tree": null,
+  "last_result": {
+    "task": "3.0",
+    "outcome": "implementation_complete",
+    "run": "run.TNpha7tx"
+  },
+  "history": [
+    {
+      "at": "2026-10-12",
+      "event": "plano aprovado pelo responsavel; transporte herdr; entrega pr"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "prepare-prd-branch run.OR1fUgtF integration_blocked (flow-state.json raiz: OD92 colidiu com #221); orquestrador renumerou CAP-032 para OD93..OD100; run.vKI0kbGO branch_ready"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "ordem de execucao: 1.0 (rascunho ASCII, aprovacao humana) e em seguida o caminho sem tela 3.0, 4.0, 6.0, 7.0, 12.0, 13.0 enquanto o design aguarda; telas apos 2.0"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "1.0 run.UKFpWAOx: rascunho ASCII em docs/design/wireframes-transcricao.md; task_blocked aguardando aprovacao humana (envelope result_invalid porque o contexto mandou rodar o gate; nao consome tentativa). Decisoes D-01..D-06 levadas ao responsavel"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "3.0 run.X7DtJfNl task_blocked (preflight): 3_task.md citava POST .../transcription; orquestrador alinhou a task ao contrato aprovado (T-04: POST /videos/{videoId}/transcription-requests). Testes de integracao usam Testcontainers como o projeto ja faz. Sem consumo de tentativa"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "responsavel aprovou o ASCII (D-01..D-06 nas recomendacoes); cabecalho e secao 9 registrados; gate 1.0 exit 0. 1.0 aguarda validator focused + checkpoint depois do ciclo da 3.0 (uma delegacao por vez)"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "3.0 run.TNpha7tx implementation_complete gate passed (41 testes) + checks; -> validator focused"
+    }
+  ],
+  "tasks": {
+    "1.0": {
+      "status": "in_progress",
+      "attempts": 1,
+      "gate": "passed",
+      "next": "validator focused"
+    },
+    "3.0": {
+      "status": "validating",
+      "attempts": 1,
+      "impl_run": "run.TNpha7tx"
+    }
+  }
+}
