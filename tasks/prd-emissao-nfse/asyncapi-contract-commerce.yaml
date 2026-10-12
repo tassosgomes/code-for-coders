@@ -1,0 +1,174 @@
+asyncapi: 3.0.0
+info:
+  title: Commerce — compra concluída com o título do curso
+  version: 1.3.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/commerce/asyncapi.yaml` 1.2.0 no payload de `vendas.compra-concluida.v1`.
+
+    Acrescenta `courseTitle`, opcional para os fatos já publicados (não está em `required`).
+    Quem publica a partir desta versão sempre envia o título congelado no pedido.
+    Fiscal não abre documento quando o campo falta: é o corte de DP-06 para fato anterior à emissão.
+    Matrícula ignora o campo. Nenhum outro canal de `commerce` muda.
+
+    Consumidores do validador 1.2.0 com `additionalProperties: false` rejeitam a mensagem nova.
+    O único consumidor atual é Matrícula, no mesmo deploy do publicador. `billing` só consome depois dessa versão.
+id: urn:code-4-coders:commerce
+defaultContentType: application/json
+servers:
+  rabbitmq:
+    host: '{host}'
+    protocol: amqp
+    description: RabbitMQ do baseline. Topologia física é configuração de implantação.
+    variables:
+      host:
+        default: localhost
+channels:
+  compraConcluida:
+    address: vendas.compra-concluida.v1
+    description: O pedido passou a pago. Um fato por pedido (RN-V09).
+    messages:
+      compraConcluida:
+        $ref: '#/components/messages/CompraConcluida'
+operations:
+  publicarCompraConcluida:
+    action: send
+    summary: Publicar a compra concluída com o título congelado.
+    channel:
+      $ref: '#/channels/compraConcluida'
+    messages:
+      - $ref: '#/channels/compraConcluida/messages/compraConcluida'
+    description: |
+      Mesmas garantias da 1.2.0: outbox na transação que marca o pedido `paid`, um fato por pedido, ao menos uma vez.
+      Consumidores: Matrícula (`commerce`) e, a partir desta versão, Fiscal (`billing`).
+      O título não contém e-mail nem documento do aluno.
+components:
+  messages:
+    CompraConcluida:
+      name: CompraConcluida
+      title: Compra concluída
+      contentType: application/json
+      correlationId:
+        location: $message.header#/correlationId
+      headers:
+        $ref: '#/components/schemas/Cabecalho'
+      payload:
+        $ref: '#/components/schemas/CompraConcluidaPayload'
+      examples:
+        - name: comTitulo
+          headers:
+            correlationId: 00-b2c3d4e5f60718293a4b5c6d7e8f9001-b2c3d4e5f6071829-01
+          payload:
+            eventId: 1b2c3d4e-5f60-4718-892a-3b4c5d6e7f80
+            tenantId: a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d
+            orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+            orderNumber: '000123'
+            studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+            courseId: 6f1e2d3c-4b5a-4c69-8d7e-1f2a3b4c5d6e
+            courseTitle: .NET do zero à API
+            offerId: 7c8d9e0f-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+            priceCents: 49700
+            paidAmountCents: 49700
+            currency: BRL
+            accessPeriod:
+              type: months
+              months: 12
+            paymentMethod: card
+            paidAt: '2026-10-05T14:21:02Z'
+            occurredAt: '2026-10-05T14:21:03Z'
+  schemas:
+    Cabecalho:
+      type: object
+      additionalProperties: false
+      required: [correlationId]
+      properties:
+        correlationId:
+          type: string
+          description: traceparent. Sem dado pessoal.
+    Vigencia:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [type, months]
+          properties:
+            type:
+              const: months
+            months:
+              type: integer
+              minimum: 1
+              maximum: 60
+        - type: object
+          additionalProperties: false
+          required: [type]
+          properties:
+            type:
+              const: lifetime
+    CompraConcluidaPayload:
+      type: object
+      additionalProperties: false
+      required:
+        - eventId
+        - tenantId
+        - orderId
+        - orderNumber
+        - studentId
+        - courseId
+        - offerId
+        - priceCents
+        - paidAmountCents
+        - currency
+        - accessPeriod
+        - paymentMethod
+        - paidAt
+        - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          pattern: '^[0-9]{6,}$'
+        studentId:
+          type: string
+          format: uuid
+        courseId:
+          type: string
+          format: uuid
+        courseTitle:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: |
+            Título do curso congelado no pedido. Ausente nos fatos anteriores a 1.3.0.
+            Fiscal não abre documento se faltar. Matrícula ignora.
+        offerId:
+          type: string
+          format: uuid
+        priceCents:
+          type: integer
+          minimum: 1
+          description: Preço congelado, em centavos. É o valor da nota (RN-F04).
+        paidAmountCents:
+          type: integer
+          minimum: 1
+        currency:
+          type: string
+          const: BRL
+        accessPeriod:
+          $ref: '#/components/schemas/Vigencia'
+        paymentMethod:
+          type: string
+          enum: [card, pix, boleto]
+        paidAt:
+          type: string
+          format: date-time
+          description: Confirmação do pagamento. A competência da nota é o mês civil de Brasília desta data (RN-F06).
+        occurredAt:
+          type: string
+          format: date-time

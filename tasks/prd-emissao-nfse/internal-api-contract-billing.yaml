@@ -1,0 +1,665 @@
+openapi: 3.1.0
+info:
+  title: Billing — documento fiscal (API interna)
+  version: 1.1.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/billing/openapi-internal.yaml` 1.0.0 de forma **aditiva**. `ensurePaymentSessionInternal` não muda e não está aqui.
+
+    Fiscal é módulo de `billing` (baseline BA11). Estas rotas são a borda síncrona do módulo para os BFFs. O fato gerador não entra por aqui: entra por `vendas.compra-concluida.v1` (`asyncapi-contract-billing.yaml`). A autorização do emissor entra por `webhook-contract-notaas.yaml`.
+
+    Cadeia síncrona: o BFF chama `billing` e para (BA08). `billing` não chama `commerce` nesta leitura. A leitura do tomador em Identity acontece no worker, fora da requisição do browser.
+
+    **Um documento por pedido** (RN-F02). Prioridade quando falta mais de um pré-requisito: sem documento válido do tomador → `awaiting-holder`, mesmo que o prestador também falte. Com tomador e sem prestador utilizável → `awaiting-provider`. Com os dois → `queued` até autorização e arquivos.
+
+    Tentativas no mesmo documento (RN-F11): ausência de resposta e emissor indisponível contam até três; a terceira leva a `failed`. Código de serviço recusado, chave recusada e cota esgotada vão a `failed` na hora, sem tentativa automática. Nova tentativa do financeiro incrementa a submissão ao emissor e volta o mesmo documento para `queued`. No máximo uma submissão em aberto. Webhook de submissão abandonada que chegue a autorizar não é adotado: não nasce segunda nota.
+
+    A visão do aluno (`issuing`) é calculada aqui, para o BFF só repassar.
+  contact:
+    name: Time de Cobrança
+servers:
+  - url: /internal/v1
+    description: Rota privada de Billing, inacessível ao navegador
+tags:
+  - name: Documento fiscal
+    description: NFS-e da compra avulsa
+  - name: Prestador
+    description: Configuração do emissor da escola
+paths:
+  /my-fiscal-documents/by-order/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: Nota do pedido para o aluno dono
+      description: |
+        O aluno é `sub` do JWT de audiência `billing` e escopo `fiscal-document:own`. Token de ator (claim `permissions`) → 403 `ACTOR_NOT_ALLOWED`.
+        Pedido de outro aluno ou sem documento → 404. Mapeamento: `awaiting-provider` e `queued` viram `issuing`. Não devolve `reason` nem valor.
+      operationId: getMyFiscalDocumentInternal
+      security:
+        - StudentUserToken: []
+      responses:
+        '200':
+          description: Visão do aluno.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentFiscalDocument'
+              examples:
+                emEmissao:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    status: issuing
+                    studyDocument: false
+                    downloadsReady: false
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/ActorNotAllowed'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+  /fiscal-documents/by-order/{orderId}:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: Nota do pedido para o financeiro
+      description: |
+        Exige JWT de ator com audiência `billing` e permissão `financeiro.ler`. A escola é o `tenantId`.
+        Token de aluno → 403. Sem documento nesta escola → 404.
+      operationId: getFinanceFiscalDocumentInternal
+      security:
+        - StaffUserToken: []
+      responses:
+        '200':
+          description: Documento canônico.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceFiscalDocument'
+              examples:
+                emitida:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    fiscalDocumentId: 8f3e2d1c-0b9a-4c8d-9e7f-6a5b4c3d2e1f
+                    status: issued
+                    reason: null
+                    amountCents: 49700
+                    serviceDescription: Acesso ao curso .NET do zero à API
+                    competence: 2026-10
+                    studyDocument: true
+                    downloadsReady: true
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+  /fiscal-document-lookups:
+    post:
+      tags: [Documento fiscal]
+      summary: Notas de uma página de pedidos
+      description: |
+        Até 50 pedidos da escola do `tenantId`. Quem não tem documento é omitido.
+        Exige `financeiro.ler`. Teto fixo, sem paginação (a página já veio da lista de pedidos).
+      operationId: lookupFiscalDocumentsInternal
+      security:
+        - StaffUserToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalDocumentLookupInput'
+            examples:
+              pagina:
+                value:
+                  orderIds:
+                    - 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+      responses:
+        '200':
+          description: Notas encontradas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalDocumentLookup'
+              examples:
+                uma:
+                  value:
+                    data:
+                      - orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                        fiscalDocumentId: 8f3e2d1c-0b9a-4c8d-9e7f-6a5b4c3d2e1f
+                        status: queued
+                        reason: null
+                        amountCents: 49700
+                        serviceDescription: Acesso ao curso .NET do zero à API
+                        competence: 2026-10
+                        studyDocument: false
+                        downloadsReady: false
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+  /fiscal-documents/by-order/{orderId}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: PDF da nota emitida
+      description: |
+        Aluno (`fiscal-document:own`, pedido do `sub`) ou ator com `financeiro.ler`, mesma escola.
+        Nota não `issued` ou pedido alheio → 404. Arquivo do emissor, sem reescrita. `studyDocument` não é um cabeçalho: já está no arquivo e na leitura JSON.
+      operationId: getFiscalDocumentPdfInternal
+      security:
+        - StudentUserToken: []
+        - StaffUserToken: []
+      responses:
+        '200':
+          description: PDF.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+            Content-Disposition:
+              description: Anexo com o número do pedido.
+              schema:
+                type: string
+                examples:
+                  - attachment; filename="nfse-000123.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                contentMediaType: application/pdf
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+  /fiscal-documents/by-order/{orderId}/xml:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    get:
+      tags: [Documento fiscal]
+      summary: XML da nota emitida
+      description: Mesmas regras do PDF. Sem XML de cancelamento nesta fatia.
+      operationId: getFiscalDocumentXmlInternal
+      security:
+        - StudentUserToken: []
+        - StaffUserToken: []
+      responses:
+        '200':
+          description: XML.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+            Content-Disposition:
+              description: Anexo com o número do pedido.
+              schema:
+                type: string
+                examples:
+                  - attachment; filename="nfse-000123.xml"
+          content:
+            application/xml:
+              schema:
+                type: string
+                contentMediaType: application/xml
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+  /fiscal-documents/by-order/{orderId}/retries:
+    parameters:
+      - $ref: '#/components/parameters/OrderId'
+    post:
+      tags: [Documento fiscal]
+      summary: Nova tentativa do mesmo documento
+      description: |
+        Exige `fiscal.gerir` e `Idempotency-Key`. Só `failed` → `queued`, no mesmo `fiscalDocumentId`.
+        A submissão anterior, se tinha sido aceita e recusada, não é reaproveitada: a próxima chamada ao emissor usa outra `Idempotency-Key` (`{orderId}-{n}`, caracteres permitidos pelo emissor).
+        Outra situação → 422 `FISCAL_DOCUMENT_NOT_RETRYABLE`.
+      operationId: retryFiscalDocumentInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Documento de novo na fila.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinanceFiscalDocument'
+              examples:
+                fila:
+                  value:
+                    orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+                    fiscalDocumentId: 8f3e2d1c-0b9a-4c8d-9e7f-6a5b4c3d2e1f
+                    status: queued
+                    reason: null
+                    amountCents: 49700
+                    serviceDescription: Acesso ao curso .NET do zero à API
+                    competence: 2026-10
+                    studyDocument: false
+                    downloadsReady: false
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/FiscalDocumentNotFound'
+        '422':
+          $ref: '#/components/responses/NotRetryable'
+  /service-provider:
+    get:
+      tags: [Prestador]
+      summary: Ler o prestador sem a chave
+      description: Exige `financeiro.ler`. A chave do emissor não sai.
+      operationId: getServiceProviderInternal
+      security:
+        - StaffUserToken: []
+      responses:
+        '200':
+          description: Prestador.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceProvider'
+              examples:
+                vazio:
+                  value:
+                    connected: false
+                    serviceCode: null
+                    issRate: null
+                    usable: false
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+    put:
+      tags: [Prestador]
+      summary: Gravar emissor, código de serviço e alíquota
+      description: |
+        Exige `fiscal.gerir` e `Idempotency-Key`. `apiKey` ausente conserva a chave atual; sem chave prévia → 422 `PROVIDER_KEY_REQUIRED`.
+        Alíquota fora de 0 a 100 ou código vazio → 422 `PROVIDER_INVALID`.
+        Ao ficar utilizável, documentos em `awaiting-provider` que já têm tomador passam a `queued` e `releasedCount` conta essa passagem.
+      operationId: putServiceProviderInternal
+      security:
+        - StaffUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceProviderInput'
+            examples:
+              conectar:
+                value:
+                  apiKey: ntaas_escola_estudo_7f3a
+                  serviceCode: '010700'
+                  issRate: '2'
+      responses:
+        '200':
+          description: Prestador gravado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceProviderUpdate'
+              examples:
+                ok:
+                  value:
+                    connected: true
+                    serviceCode: '010700'
+                    issRate: '2'
+                    usable: true
+                    releasedCount: 1
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '422':
+          $ref: '#/components/responses/ProviderInvalid'
+components:
+  securitySchemes:
+    StudentUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT de aluno emitido por Identity, audiência `billing`, escopo `fiscal-document:own`, sem `email` e sem `permissions`.
+        `billing` valida pelo JWKS (ADR-0013 estendida; ADR própria na TechSpec, no precedente da ADR-0016). O aluno é `sub`.
+    StaffUserToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT de ator com audiência `billing` (ADR-0005). Leitura exige `financeiro.ler`. Escrita exige `fiscal.gerir`.
+        A escola é `tenantId`. Token de aluno nesta rota é recusado.
+  parameters:
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Pedido da plataforma, não o id da nota no emissor.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        pedido:
+          value: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Mesma chave e mesmo efeito não se repetem (G09).
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+  responses:
+    TokenInvalid:
+      description: Token ausente ou inválido. code `TOKEN_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            token:
+              value:
+                type: about:blank
+                title: Token inválido.
+                status: 401
+                code: TOKEN_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    PermissionDenied:
+      description: Token sem a permissão da rota. code `PERMISSION_DENIED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            permissao:
+              value:
+                type: about:blank
+                title: Sem permissão.
+                status: 403
+                code: PERMISSION_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ActorNotAllowed:
+      description: Token de ator numa rota de aluno. code `ACTOR_NOT_ALLOWED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            ator:
+              value:
+                type: about:blank
+                title: Ator interno não consulta a nota do aluno por esta rota.
+                status: 403
+                code: ACTOR_NOT_ALLOWED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    InvalidRequest:
+      description: JSON ou lista inválida. code `INVALID_REQUEST`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    FiscalDocumentNotFound:
+      description: Sem documento visível para este token. code `FISCAL_DOCUMENT_NOT_FOUND`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            ausente:
+              value:
+                type: about:blank
+                title: Nota não encontrada.
+                status: 404
+                code: FISCAL_DOCUMENT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    NotRetryable:
+      description: Situação diferente de `failed`. code `FISCAL_DOCUMENT_NOT_RETRYABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            situacao:
+              value:
+                type: about:blank
+                title: Esta nota não aceita nova tentativa.
+                status: 422
+                code: FISCAL_DOCUMENT_NOT_RETRYABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    ProviderInvalid:
+      description: Chave ausente na primeira gravação ou alíquota/código inválidos. code `PROVIDER_KEY_REQUIRED` ou `PROVIDER_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            chave:
+              value:
+                type: about:blank
+                title: Falta a chave do emissor.
+                status: 422
+                code: PROVIDER_KEY_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    StudentFiscalDocument:
+      type: object
+      additionalProperties: false
+      required: [orderId, status, studyDocument, downloadsReady]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [awaiting-holder, issuing, issued, failed]
+        studyDocument:
+          type: boolean
+        downloadsReady:
+          type: boolean
+      examples:
+        - orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          status: issuing
+          studyDocument: false
+          downloadsReady: false
+    FinanceFiscalDocument:
+      type: object
+      additionalProperties: false
+      required: [orderId, fiscalDocumentId, status, reason, amountCents, serviceDescription, competence, studyDocument, downloadsReady]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        fiscalDocumentId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [awaiting-provider, awaiting-holder, queued, issued, failed]
+        reason:
+          type: [string, 'null']
+        amountCents:
+          type: integer
+          minimum: 1
+          maximum: 9999999
+        serviceDescription:
+          type: string
+          maxLength: 220
+        competence:
+          type: string
+          pattern: '^[0-9]{4}-(?:0[1-9]|1[0-2])$'
+        studyDocument:
+          type: boolean
+        downloadsReady:
+          type: boolean
+      examples:
+        - orderId: 1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81
+          fiscalDocumentId: 8f3e2d1c-0b9a-4c8d-9e7f-6a5b4c3d2e1f
+          status: queued
+          reason: null
+          amountCents: 49700
+          serviceDescription: Acesso ao curso .NET do zero à API
+          competence: 2026-10
+          studyDocument: false
+          downloadsReady: false
+    FiscalDocumentLookupInput:
+      type: object
+      additionalProperties: false
+      required: [orderIds]
+      properties:
+        orderIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+      examples:
+        - orderIds: [1b2c3d4e-5f60-4718-9a2b-3c4d5e6f7a81]
+    FiscalDocumentLookup:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/FinanceFiscalDocument'
+      examples:
+        - data: []
+    IssRate:
+      type: string
+      pattern: '^(?:100(?:\.0{1,2})?|[0-9]{1,2}(?:\.[0-9]{1,2})?)$'
+      examples: ['2']
+    ServiceProvider:
+      type: object
+      additionalProperties: false
+      required: [connected, serviceCode, issRate, usable]
+      properties:
+        connected:
+          type: boolean
+        serviceCode:
+          type: [string, 'null']
+        issRate:
+          oneOf:
+            - $ref: '#/components/schemas/IssRate'
+            - type: 'null'
+        usable:
+          type: boolean
+      examples:
+        - connected: false
+          serviceCode: null
+          issRate: null
+          usable: false
+    ServiceProviderInput:
+      type: object
+      additionalProperties: false
+      required: [serviceCode, issRate]
+      properties:
+        apiKey:
+          type: string
+          minLength: 8
+          maxLength: 200
+          writeOnly: true
+        serviceCode:
+          type: string
+          minLength: 1
+          maxLength: 20
+        issRate:
+          $ref: '#/components/schemas/IssRate'
+      examples:
+        - apiKey: ntaas_escola_estudo_7f3a
+          serviceCode: '010700'
+          issRate: '2'
+    ServiceProviderUpdate:
+      type: object
+      additionalProperties: false
+      required: [connected, serviceCode, issRate, usable, releasedCount]
+      properties:
+        connected:
+          type: boolean
+        serviceCode:
+          type: [string, 'null']
+        issRate:
+          oneOf:
+            - $ref: '#/components/schemas/IssRate'
+            - type: 'null'
+        usable:
+          type: boolean
+        releasedCount:
+          type: integer
+          minimum: 0
+      examples:
+        - connected: true
+          serviceCode: '010700'
+          issRate: '2'
+          usable: true
+          releasedCount: 1

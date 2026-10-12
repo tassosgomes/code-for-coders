@@ -1,0 +1,254 @@
+openapi: 3.1.0
+info:
+  title: Identity — documento do tomador na conta do aluno
+  version: 1.3.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/identity/openapi-internal-student.yaml` 1.2.0 de forma **aditiva**.
+
+    Duas operações novas, chamadas pelo `bff-student` com asserção de serviço. A conta é a da `sessionId`, nunca um id escolhido pelo browser.
+
+    Não redefine `validateStudentSessionInternal`. Acrescenta a audiência autorizada `billing`, com `scope: fiscal-document:own`, sem claim `email` e sem `permissions` (C-04; estende ADR-0013 no precedente da ADR-0016). Audiência não autorizada continua 403.
+
+    A leitura por `studentId` para o módulo fiscal está em `internal-api-contract-identity.yaml` (`getStudentTaxDocumentInternal`), não aqui.
+  contact:
+    name: Time de Identidade
+servers:
+  - url: /internal/v1
+    description: Rota privada de Identity
+tags:
+  - name: Tomador
+    description: Documento fiscal da conta, pela sessão do aluno
+paths:
+  /student-tax-document-reads:
+    post:
+      tags: [Tomador]
+      summary: Ler o documento do tomador da sessão
+      description: |
+        Sem efeito. Sessão inválida → 401. Conta sem documento → 200 com `taxDocument: null`.
+        `Cache-Control: no-store`. O valor não vai para log.
+      operationId: readStudentTaxDocumentInternal
+      security:
+        - BffServiceAssertion: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionRead'
+            examples:
+              sessao:
+                value:
+                  sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+      responses:
+        '200':
+          description: Documento da conta ou ausência.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxDocumentState'
+              examples:
+                cpf:
+                  value:
+                    taxDocument:
+                      kind: cpf
+                      value: '52998224725'
+                ausente:
+                  value:
+                    taxDocument: null
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /student-tax-documents:
+    put:
+      tags: [Tomador]
+      summary: Gravar o documento do tomador da sessão
+      description: |
+        Exige `Idempotency-Key`. CPF e CNPJ são só dígitos, com verificador válido. NIF é texto não vazio até 40 caracteres, sem espaço nas pontas.
+        Dígito inválido → 422 `TAX_DOCUMENT_INVALID` e nada é gravado.
+        O mesmo valor já armazenado → 200 sem fato novo. Valor diferente → 200 e, na mesma transação, o fato `identidade.identificacao-fiscal-informada.v1` (sem o documento no payload).
+      operationId: putStudentTaxDocumentInternal
+      security:
+        - BffServiceAssertion: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxDocumentWrite'
+            examples:
+              cpf:
+                value:
+                  sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+                  taxDocument:
+                    kind: cpf
+                    value: '52998224725'
+      responses:
+        '200':
+          description: Documento gravado.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxDocumentState'
+              examples:
+                gravado:
+                  value:
+                    taxDocument:
+                      kind: cpf
+                      value: '52998224725'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/TaxDocumentInvalid'
+components:
+  securitySchemes:
+    BffServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Asserção de serviço do `bff-student` (ADR-0009). Identity valida assinatura, emissor, audiência, escopo, tenant e `jti`.
+        Não é JWT de aluno. Escopo desta fatia: `student-tax-document:write` na gravação e `student-tax-document:read` na leitura da sessão.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Mesma chave e mesmo corpo devolvem o mesmo resultado. Corpo diferente → 422 `IDEMPOTENCY_KEY_REUSED`.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+  responses:
+    BadRequest:
+      description: JSON inválido. code `INVALID_REQUEST`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalido:
+              value:
+                type: about:blank
+                title: Requisição inválida.
+                status: 400
+                code: INVALID_REQUEST
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    Unauthorized:
+      description: Asserção ou sessão inválida. code `UNAUTHORIZED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessao:
+              value:
+                type: about:blank
+                title: Sessão ou asserção inválida.
+                status: 401
+                code: UNAUTHORIZED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TaxDocumentInvalid:
+      description: Dígito inválido ou NIF vazio. code `TAX_DOCUMENT_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            digito:
+              value:
+                type: about:blank
+                title: Documento do tomador inválido.
+                status: 422
+                code: TAX_DOCUMENT_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    SessionRead:
+      type: object
+      additionalProperties: false
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+      examples:
+        - sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+    TaxDocument:
+      type: object
+      additionalProperties: false
+      required: [kind, value]
+      properties:
+        kind:
+          type: string
+          enum: [cpf, cnpj, nif]
+        value:
+          type: string
+          minLength: 1
+          maxLength: 40
+          description: CPF 11 dígitos, CNPJ 14 dígitos, ou NIF até 40 caracteres já sem espaço nas pontas.
+      examples:
+        - kind: cpf
+          value: '52998224725'
+    TaxDocumentWrite:
+      type: object
+      additionalProperties: false
+      required: [sessionId, taxDocument]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        taxDocument:
+          $ref: '#/components/schemas/TaxDocument'
+      examples:
+        - sessionId: 8a9b0c1d-2e3f-4a5b-8c6d-7e8f9a0b1c2d
+          taxDocument:
+            kind: cpf
+            value: '52998224725'
+    TaxDocumentState:
+      type: object
+      additionalProperties: false
+      required: [taxDocument]
+      properties:
+        taxDocument:
+          oneOf:
+            - $ref: '#/components/schemas/TaxDocument'
+            - type: 'null'
+      examples:
+        - taxDocument: null

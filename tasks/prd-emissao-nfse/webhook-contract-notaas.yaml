@@ -1,0 +1,241 @@
+openapi: 3.1.0
+info:
+  title: Billing — webhook do emissor de NFS-e
+  version: 1.0.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11. Contrato **novo**.
+
+    Fronteira: emissor de NFS-e (Notaas em produção, fake-nfe em dev e homologação, OD89) → `billing`.
+    Ponto dedicado, fora do BFF, no mesmo desenho de `contracts/billing/openapi-webhook.yaml` (baseline: confirmação externa autenticada e idempotente).
+
+    O corpo é o do emissor, no recorte consultado em `github.com/tassosgomes/fake-nfe` `ac5306e68a8c5b10651a8cceaab691a975109c4a` (2026-10-07). Este documento fixa o que `billing` exige e como responde. Código municipal não sai daqui para pedido, concessão ou para o BFF.
+
+    Tradução nesta fatia:
+    - `nfse.issued` e `nfse.documents_ready`, os dois, para a submissão corrente → documento `issued`, com `studyDocument` quando o corpo traz `aviso` de sem valor fiscal ou o emissor se identifica como estudo.
+    - `nfse.error` com código de serviço recusado (E001 na bancada), chave recusada ou cota (E004) → `failed` na hora.
+    - `nfse.error` de timeout ou indisponibilidade (E002, E003) conta ausência; a terceira seguida → `failed`.
+    - `nfse.cancelled`, evento de teste (`teste: true`) e nota que não é a submissão corrente → 200 e nenhum efeito na situação.
+    - Evento desconhecido → 200 e ignorado, para o emissor não insistir.
+
+    `issued` sem os arquivos ainda não é nota disponível. `documents_ready` sem autorização também não.
+  contact:
+    name: Time de Cobrança
+servers:
+  - url: /webhooks/v1
+    description: Rota pública de Billing, cadastrada no emissor. O endereço completo é configuração de implantação.
+tags:
+  - name: Emissor
+    description: Avisos de NFS-e
+paths:
+  /notaas/events:
+    post:
+      tags: [Emissor]
+      summary: Receber um aviso do emissor
+      description: |
+        - **Autenticidade.** `X-Notaas-Signature` é `sha256=` mais o HMAC-SHA256 hexadecimal do corpo cru, com o segredo do endpoint. Ausente ou diferente → 400 `SIGNATURE_INVALID` e nada muda.
+        - **Idempotência.** O mesmo `X-Notaas-Delivery` responde 200 sem segundo efeito (G09).
+        - **Registro antes do 200.** Falha antes de gravar → 503, e o emissor reenvia.
+        - O cabeçalho `X-Notaas-Event` precisa ser igual a `evento`. Divergência → 400 `SIGNATURE_INVALID` (pedido rejeitado, sem efeito).
+      operationId: receiveNfseProviderEvent
+      security:
+        - NotaasSignature: []
+      parameters:
+        - $ref: '#/components/parameters/NotaasEvent'
+        - $ref: '#/components/parameters/NotaasDelivery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderEvent'
+            examples:
+              autorizada:
+                value:
+                  evento: nfse.issued
+                  timestamp: '2026-10-11T18:04:00Z'
+                  aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+                  dados:
+                    id: inv_01J9STUDYNOTE
+                    numero: '000042'
+                    status: issued
+                    chNFSe: ESTUDO-000042
+                    valorTotal: 497
+              arquivos:
+                value:
+                  evento: nfse.documents_ready
+                  timestamp: '2026-10-11T18:04:01Z'
+                  aviso: Ambiente de estudo. Nenhum documento foi transmitido à SEFAZ ou a uma prefeitura. Sem valor fiscal.
+                  dados:
+                    id: inv_01J9STUDYNOTE
+                    numero: '000042'
+                    status: issued
+                    chNFSe: ESTUDO-000042
+                    valorTotal: 497
+                    documentStatus: complete
+              recusa:
+                value:
+                  evento: nfse.error
+                  timestamp: '2026-10-11T18:04:02Z'
+                  dados:
+                    id: inv_01J9STUDYNOTE
+                    status: error
+                    errorCode: E001
+                    errorMessage: Rejeição municipal simulada.
+      responses:
+        '200':
+          description: Evento gravado, repetido ou ignorado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+              examples:
+                aceito:
+                  value:
+                    accepted: true
+        '400':
+          $ref: '#/components/responses/SignatureInvalid'
+        '503':
+          $ref: '#/components/responses/TemporarilyUnavailable'
+components:
+  securitySchemes:
+    NotaasSignature:
+      type: apiKey
+      in: header
+      name: X-Notaas-Signature
+      description: |
+        HMAC-SHA256 do corpo cru, hexadecimal, prefixo `sha256=`. O segredo é o do endpoint cadastrado no emissor, por escola.
+        Nunca vai para log.
+  parameters:
+    NotaasEvent:
+      name: X-Notaas-Event
+      in: header
+      required: true
+      description: Nome do evento. Tem de coincidir com `evento` no corpo.
+      schema:
+        type: string
+        examples: [nfse.issued]
+    NotaasDelivery:
+      name: X-Notaas-Delivery
+      in: header
+      required: true
+      description: Identificador da entrega. Chave de idempotência.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 80
+        examples: [del_01J9DELIVERY]
+  responses:
+    SignatureInvalid:
+      description: Assinatura ausente ou inválida, ou evento do cabeçalho diferente do corpo. code `SIGNATURE_INVALID`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            assinatura:
+              value:
+                type: about:blank
+                title: Assinatura inválida.
+                status: 400
+                code: SIGNATURE_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TemporarilyUnavailable:
+      description: Falha antes de gravar. O emissor reenvia. code `TEMPORARILY_UNAVAILABLE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Indisponível no momento.
+                status: 503
+                code: TEMPORARILY_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    Accepted:
+      type: object
+      additionalProperties: false
+      required: [accepted]
+      properties:
+        accepted:
+          type: boolean
+          const: true
+      examples:
+        - accepted: true
+    ProviderEvent:
+      type: object
+      additionalProperties: true
+      required: [evento, timestamp, dados]
+      description: |
+        Campos desconhecidos são ignorados. `additionalProperties` fica aberto porque o emissor pode acrescentar campo sem ser uma nota nova.
+      properties:
+        evento:
+          type: string
+          description: Nesta fatia, `nfse.issued`, `nfse.error`, `nfse.documents_ready` e `nfse.cancelled`. Outro valor é aceito e ignorado.
+          examples: [nfse.issued]
+        timestamp:
+          type: string
+          format: date-time
+        aviso:
+          type: string
+          description: 'Presente na bancada de estudo. Quando declara sem valor fiscal, a nota emitida fica com `studyDocument: true`.'
+        teste:
+          type: boolean
+          description: Verdadeiro no evento de teste do painel. 200 sem efeito.
+        dados:
+          $ref: '#/components/schemas/ProviderEventData'
+      examples:
+        - evento: nfse.issued
+          timestamp: '2026-10-11T18:04:00Z'
+          dados:
+            id: inv_01J9STUDYNOTE
+            status: issued
+    ProviderEventData:
+      type: object
+      additionalProperties: true
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          description: Identificador da nota no emissor. Correlaciona com a submissão corrente do documento.
+        status:
+          type: string
+        numero:
+          type: string
+        chNFSe:
+          type: string
+        valorTotal:
+          type: number
+          description: Valor que o emissor devolve, em reais. Não substitui o preço congelado do pedido.
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+          description: Não é exibido ao aluno nem ao financeiro. O financeiro vê a razão já traduzida.
+        documentStatus:
+          type: string
+      examples:
+        - id: inv_01J9STUDYNOTE
+          status: issued

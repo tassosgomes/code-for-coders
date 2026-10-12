@@ -1,0 +1,197 @@
+openapi: 3.1.0
+info:
+  title: Identity — leitura do tomador para o fiscal
+  version: 1.6.0
+  description: |
+    Recorte de `CAP-016`, `tasks/prd-emissao-nfse/prd.md` v1.0, aprovado em 2026-10-11.
+    Evolui `contracts/identity/openapi-internal.yaml` 1.5.0 de forma **aditiva** com uma leitura.
+    `getStudentContactInternal` não muda: Notificação continua sem ver CPF, CNPJ ou NIF.
+
+    Quem chama é `billing` (módulo fiscal), no worker, quando vai submeter a nota. Não é caminho de browser.
+    A resposta leva nome, e-mail e o documento. É a exposição necessária para o emissor; não volta ao broker (C-05).
+    `Cache-Control: no-store`. Conta desativada ainda devolve o documento: a nota da compra já feita não depende da conta seguir ativa.
+
+    A permissão `fiscal.gerir` entra no catálogo de `Permission` do papel financeiro, ao lado de `financeiro.ler`.
+    O enum vigente já manda o cliente ignorar valor desconhecido. Produtor (Identity) passa a emiti-la para o papel financeiro. Professor e suporte não recebem.
+  contact:
+    name: Time de Identidade
+servers:
+  - url: /internal/v1
+    description: Rota privada de Identity
+tags:
+  - name: Tomador
+    description: Dados que o fiscal congela na nota
+paths:
+  /student-accounts/{studentId}/tax-document:
+    parameters:
+      - name: studentId
+        in: path
+        required: true
+        description: Conta de aluno, por referência.
+        schema:
+          type: string
+          format: uuid
+        examples:
+          aluno:
+            value: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+    get:
+      tags: [Tomador]
+      summary: Ler nome, e-mail e documento do tomador
+      description: |
+        Exige asserção de `billing` com escopo `student-tax-document:read` (ADR própria na TechSpec, estende ADR-0004, precedente ADR-0018).
+        Conta inexistente, de outro tenant ou interna → 404. Sem documento → 200 e `taxDocument: null`.
+      operationId: getStudentTaxDocumentInternal
+      security:
+        - BillingServiceAssertion: []
+      responses:
+        '200':
+          description: Tomador da conta no momento da leitura.
+          headers:
+            Cache-Control:
+              description: '`no-store`.'
+              schema:
+                type: string
+                examples: [no-store]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentTaxProfile'
+              examples:
+                comCpf:
+                  value:
+                    studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    name: Ana Souza
+                    email: ana.souza@example.com
+                    status: active
+                    taxDocument:
+                      kind: cpf
+                      value: '52998224725'
+                semDocumento:
+                  value:
+                    studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+                    name: Ana Souza
+                    email: ana.souza@example.com
+                    status: active
+                    taxDocument: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  securitySchemes:
+    BillingServiceAssertion:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Asserção de serviço de `billing`, audiência `identity`, escopo `student-tax-document:read`.
+        Identity valida assinatura, `kid`, emissor, audiência, escopo, `tenantId` e `jti`.
+  responses:
+    Unauthorized:
+      description: Asserção ausente ou inválida. code `UNAUTHORIZED`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            token:
+              value:
+                type: about:blank
+                title: Asserção inválida.
+                status: 401
+                code: UNAUTHORIZED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    Forbidden:
+      description: Escopo diferente de `student-tax-document:read`. code `FORBIDDEN`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            escopo:
+              value:
+                type: about:blank
+                title: Escopo insuficiente.
+                status: 403
+                code: FORBIDDEN
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    NotFound:
+      description: Conta inexistente neste tenant. code `STUDENT_ACCOUNT_NOT_FOUND`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            conta:
+              value:
+                type: about:blank
+                title: Conta não encontrada.
+                status: 404
+                code: STUDENT_ACCOUNT_NOT_FOUND
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, traceId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        traceId:
+          type: string
+        instance:
+          type: string
+    TaxDocument:
+      type: object
+      additionalProperties: false
+      required: [kind, value]
+      properties:
+        kind:
+          type: string
+          enum: [cpf, cnpj, nif]
+        value:
+          type: string
+          minLength: 1
+          maxLength: 40
+      examples:
+        - kind: cpf
+          value: '52998224725'
+    StudentTaxProfile:
+      type: object
+      additionalProperties: false
+      required: [studentId, name, email, status, taxDocument]
+      properties:
+        studentId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+          description: Exposição para o emissor, no worker. Não segue para o broker.
+        status:
+          type: string
+          enum: [active, disabled]
+        taxDocument:
+          oneOf:
+            - $ref: '#/components/schemas/TaxDocument'
+            - type: 'null'
+      examples:
+        - studentId: 9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a
+          name: Ana Souza
+          email: ana.souza@example.com
+          status: active
+          taxDocument: null

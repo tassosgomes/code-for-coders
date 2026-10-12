@@ -1,0 +1,32 @@
+# Ruleset deste recorte. Estende o ruleset da skill e abre exceção só para o download
+# de PDF e XML da NFS-e (C-08 deste PRD). O pedido e a resposta JSON continuam na norma.
+# A exceção de HLS em `contracts/.spectral-exception.yaml` não se aplica aqui e não é repetida.
+extends:
+  - ../../.agents/skills/tsg-flow-contract-creator/rulesets/openapi.yaml
+rules:
+  tsg-content-type-json-only:
+    description: Corpos de requisição só JSON. PDF e XML são resposta, não pedido.
+    severity: error
+    given:
+      - $.paths[*][*].requestBody.content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+  tsg-content-type-json-only-response:
+    description: Respostas em JSON, problem+json ou, no download da NFS-e, PDF e XML.
+    severity: error
+    given:
+      - $.paths[*][*].responses[*].content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+          - application/pdf
+          - application/xml
