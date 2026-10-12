@@ -2,7 +2,7 @@
 
 > **Gerado a partir de:** `tasks/prd-emissao-nfse/prd.md`  
 > **Data:** 2026-10-11  
-> **Status:** Em Revisão  
+> **Status:** Aprovado para implementação  
 > **Versão do contrato:** 1.6.0 de Identity interno  
 > **Fonte técnica:** [internal-api-contract-identity.yaml](internal-api-contract-identity.yaml)
 

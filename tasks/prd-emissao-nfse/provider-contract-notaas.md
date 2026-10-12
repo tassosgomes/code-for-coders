@@ -2,7 +2,7 @@
 
 > **Consultado em:** `github.com/tassosgomes/fake-nfe` `ac5306e68a8c5b10651a8cceaab691a975109c4a` (2026-10-07)  
 > **Data:** 2026-10-11  
-> **Status:** Em Revisão  
+> **Status:** Aprovado para implementação  
 > **Versão do recorte:** 1.0.0  
 > **Fonte técnica:** [provider-contract-notaas.yaml](provider-contract-notaas.yaml)
 

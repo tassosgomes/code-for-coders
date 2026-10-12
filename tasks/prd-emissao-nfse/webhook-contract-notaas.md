@@ -2,7 +2,7 @@
 
 > **Gerado a partir de:** `tasks/prd-emissao-nfse/prd.md` e do fake-nfe `ac5306e`  
 > **Data:** 2026-10-11  
-> **Status:** Em Revisão  
+> **Status:** Aprovado para implementação  
 > **Versão do contrato:** 1.0.0  
 > **Fonte técnica:** [webhook-contract-notaas.yaml](webhook-contract-notaas.yaml)
 
