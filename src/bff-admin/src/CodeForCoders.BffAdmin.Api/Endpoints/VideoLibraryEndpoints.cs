@@ -11,6 +11,19 @@ public static class VideoLibraryEndpoints
 
     public static void MapVideoLibraryEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapPost("/api/v1/videos/{videoId:guid}/transcription-requests", RequestVideoTranscriptionAsync)
+            .WithName("RequestVideoTranscription")
+            .WithTags("Videos")
+            .Produces<VideoResponse>(StatusCodes.Status202Accepted)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status504GatewayTimeout);
+
         endpoints.MapGet("/api/v1/video-tags", ListVideoTagsAsync)
             .WithName("ListVideoTags")
             .WithTags("Videos")
@@ -59,6 +72,20 @@ public static class VideoLibraryEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status502BadGateway);
+    }
+
+    private static async Task<IResult> RequestVideoTranscriptionAsync(
+        Guid videoId, HttpContext httpContext, IStaffSessionIdentityClient identityClient,
+        IVideoLibraryClient mediaClient, CancellationToken cancellationToken)
+    {
+        var access = await GetMediaAccessAsync(httpContext, identityClient, cancellationToken);
+        if (access.Problem is not null) return access.Problem;
+        var key = httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(key) || key.Length > 128)
+            return Problem(httpContext, StatusCodes.Status400BadRequest, "INVALID_REQUEST", "A valid idempotency key is required.");
+        var result = await mediaClient.RequestVideoTranscriptionAsync(videoId, key, access.AccessToken!, cancellationToken);
+        return result.StatusCode == HttpStatusCode.Accepted && result.Video is not null
+            ? Results.Accepted($"/api/v1/videos/{videoId:D}", result.Video) : MediaProblem(httpContext, result);
     }
 
     private static async Task<IResult> ListVideoTagsAsync(
@@ -240,6 +267,9 @@ public static class VideoLibraryEndpoints
         {
             return Problem(httpContext, StatusCodes.Status422UnprocessableEntity, result.Code, "The video could not be updated.");
         }
+
+        if (result.StatusCode == HttpStatusCode.Conflict && result.Code is "VIDEO_NOT_READY" or "TRANSCRIPTION_NOT_RETRYABLE")
+            return Problem(httpContext, StatusCodes.Status409Conflict, result.Code, "The video cannot be transcribed.");
 
         if (result.StatusCode == HttpStatusCode.BadRequest)
         {

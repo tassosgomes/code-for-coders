@@ -6,7 +6,8 @@ using CodeForCoders.Media.Application.UseCases;
 
 namespace CodeForCoders.Media.Application.UseCases.Videos.ListVideos;
 
-public sealed class ListVideos(IVideoQueries videoQueries, IVideoTagRepository videoTags, IValidator<ListVideosInput> validator) : IListVideos
+public sealed class ListVideos(IVideoQueries videoQueries, IVideoTagRepository videoTags,
+    IVideoTranscriptionRepository transcriptions, IValidator<ListVideosInput> validator) : IListVideos
 {
     public async Task<VideoPageOutput> ExecuteAsync(ListVideosInput input, CancellationToken cancellationToken)
     {
@@ -19,6 +20,7 @@ public sealed class ListVideos(IVideoQueries videoQueries, IVideoTagRepository v
             new KeyValuePair<string, object?>("tag_filter", input.Tags?.Count > 0 ? input.TagMatch : "none"),
             new KeyValuePair<string, object?>("ready_only", input.Statuses.Count == 1 && input.Statuses[0] == "ready"));
         var tags = await videoTags.GetAsync(snapshot.Data.Select(video => video.VideoId).ToArray(), cancellationToken);
+        var states = await transcriptions.GetAsync(snapshot.Data, cancellationToken);
         var data = snapshot.Data.Select(video => new VideoOutput(
             video.VideoId,
             video.Title,
@@ -26,7 +28,7 @@ public sealed class ListVideos(IVideoQueries videoQueries, IVideoTagRepository v
             new VideoUploaderOutput(video.UploadedByAccountId, video.UploadedByName),
             video.UploadedAt,
             video.DurationSeconds,
-            video.FailureReason, tags.GetValueOrDefault(video.VideoId, []))).ToArray();
+            video.FailureReason, tags.GetValueOrDefault(video.VideoId, []), VideoTranscriptionOutput.FromState(states[video.VideoId]))).ToArray();
         var totalPages = snapshot.Total == 0 ? 0 : (snapshot.Total + input.Size - 1) / input.Size;
 
         return new VideoPageOutput(

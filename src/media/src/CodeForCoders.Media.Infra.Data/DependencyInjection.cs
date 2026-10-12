@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Infra.Data.Adapters;
 using CodeForCoders.Media.Infra.Data.Configuration;
@@ -34,6 +35,8 @@ public static class DependencyInjection
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
+        services.AddOptions<TranscriptionOptions>().Bind(configuration.GetSection(TranscriptionOptions.SectionName)).ValidateOnStart();
+        services.AddScoped<IVideoTranscriptionRepository, Transcriptions.VideoTranscriptionRepository>();
         services.AddScoped<IVideoQueries, VideoQueries>();
         services.AddScoped<IVideoTagRepository, VideoTagRepository>();
         services.AddScoped<IPlaybackRepository, PlaybackSessions.PlaybackRepository>();

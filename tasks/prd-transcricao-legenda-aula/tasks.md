@@ -109,7 +109,7 @@ sequencial e ambas tocam o `media`.
 
 - [ ] 1.0 Wireframe ASCII da transcrição (tela Vídeos e página da aula) aprovado
 - [ ] 2.0 Figma da transcrição (tela Vídeos e página da aula) aprovado
-- [ ] 3.0 O professor pede a transcrição de um vídeo pronto e o estado aparece no vídeo
+- [x] 3.0 O professor pede a transcrição de um vídeo pronto e o estado aparece no vídeo
 - [ ] 4.0 O worker leva a transcrição da fila ao texto pronto, a partir do vídeo cifrado
 - [ ] 5.0 A tela Vídeos mostra o estado da transcrição e o professor transcreve, com atualização automática
 - [ ] 6.0 Todo vídeo novo é transcrito sem ação de ninguém

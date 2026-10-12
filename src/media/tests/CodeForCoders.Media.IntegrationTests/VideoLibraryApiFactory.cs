@@ -46,6 +46,7 @@ public sealed class VideoLibraryApiFactory : WebApplicationFactory<Program>, IAs
         builder.UseEnvironment("IntegrationTest");
         builder.UseSetting("ConnectionStrings:DefaultConnection", infrastructure.PostgreSql.GetConnectionString());
         builder.UseSetting("Media:Role", "api");
+        builder.UseSetting("Transcription:Enabled", "true");
         builder.UseSetting("Preparation:MasterKey", PlaybackMasterKey);
         builder.UseSetting("Preparation:MasterKeyId", "playback-test");
         builder.UseSetting("Playback:Delivery:SharedSecret", "development-test-secret");

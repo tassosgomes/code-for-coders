@@ -26,9 +26,17 @@ public sealed class MediaDbContext(
 
     public DbSet<OperationIdempotencyRecord> OperationIdempotencyRecords => Set<OperationIdempotencyRecord>();
 
+    public DbSet<Transcription> Transcriptions => Set<Transcription>();
+    public DbSet<TranscriptionContent> TranscriptionContents => Set<TranscriptionContent>();
+    public DbSet<TranscriptionEvent> TranscriptionEvents => Set<TranscriptionEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(MediaSchema.Name);
+        modelBuilder.Entity<Transcription>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<TranscriptionContent>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<TranscriptionEvent>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+
         modelBuilder.Entity<PlaybackSession>().HasQueryFilter(session => tenantContext.TenantId.HasValue && session.TenantId == tenantContext.TenantId.Value);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MediaDbContext).Assembly);
         modelBuilder.Entity<CourseReferences.CourseReferenceVersion>().HasQueryFilter(reference => tenantContext.TenantId.HasValue && reference.TenantId == tenantContext.TenantId.Value);

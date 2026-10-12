@@ -47,6 +47,11 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         => SendAsync($"internal/v1/videos/{videoId:D}/tags", accessToken, VideoLibraryResponseKind.Video, cancellationToken,
             HttpMethod.Put, new ReplaceVideoTagsRequest(tags), idempotencyKey);
 
+    public Task<VideoLibraryResult> RequestVideoTranscriptionAsync(
+        Guid videoId, string idempotencyKey, string accessToken, CancellationToken cancellationToken)
+        => SendAsync($"internal/v1/videos/{videoId:D}/transcription-requests", accessToken, VideoLibraryResponseKind.Video,
+            cancellationToken, HttpMethod.Post, idempotencyKey: idempotencyKey);
+
     private async Task<VideoLibraryResult> SendAsync(
         string path,
         string accessToken,
@@ -61,7 +66,7 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         if (idempotencyKey is not null)
         {
             request.Headers.Add("Idempotency-Key", idempotencyKey);
-            request.Content = JsonContent.Create(body);
+            if (body is not null) request.Content = JsonContent.Create(body);
         }
 
         try
@@ -92,7 +97,7 @@ public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryCli
         VideoLibraryResponseKind kind,
         CancellationToken cancellationToken)
     {
-        if (response.StatusCode == HttpStatusCode.OK)
+        if (response.StatusCode is HttpStatusCode.OK or HttpStatusCode.Accepted)
         {
             try
             {

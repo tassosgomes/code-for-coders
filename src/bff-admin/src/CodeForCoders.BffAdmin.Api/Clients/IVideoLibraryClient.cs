@@ -10,6 +10,8 @@ public interface IVideoLibraryClient
         string accessToken,
         CancellationToken cancellationToken);
 
+    Task<VideoLibraryResult> RequestVideoTranscriptionAsync(Guid videoId, string idempotencyKey, string accessToken, CancellationToken cancellationToken);
+
     Task<VideoLibraryResult> ListVideoTagsAsync(string? query, string accessToken, CancellationToken cancellationToken);
 
     Task<VideoLibraryResult> GetVideoAsync(Guid videoId, string accessToken, CancellationToken cancellationToken);

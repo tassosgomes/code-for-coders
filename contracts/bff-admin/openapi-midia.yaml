@@ -20,6 +20,9 @@ tags:
   description: Envio em partes, retomável por 24 horas (RF-02, RF-03)
 - name: Vídeos
   description: Biblioteca de vídeos da escola, estado e título (RF-05 a RF-08)
+- name: Transcrição
+  description: Pedido e estado da transcrição de vídeos.
+
 paths:
   /video-uploads:
     post:
@@ -402,6 +405,12 @@ paths:
                       durationSeconds: 2415
                       failureReason: null
                       tags: []
+                      transcription:
+                        status: not-requested
+                        readable: false
+                        readyAt: null
+                        failureReason: null
+                        canStart: true
                     - videoId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
                       title: Aula 4 — Testes de integração
                       status: failed
@@ -412,6 +421,12 @@ paths:
                       durationSeconds: null
                       failureReason: unreadable-file
                       tags: []
+                      transcription:
+                        status: not-requested
+                        readable: false
+                        readyAt: null
+                        failureReason: null
+                        canStart: false
                     pagination:
                       page: 1
                       size: 10
@@ -622,6 +637,108 @@ paths:
           $ref: '#/components/responses/SessionRequired'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
+  /videos/{videoId}/transcription-requests:
+    post:
+      tags:
+      - Transcrição
+      summary: Pedir a transcrição de um vídeo (Transcrever ou Refazer)
+      description: |
+        Ação **Transcrever** (vídeo pronto sem transcrição) e **Refazer** (com transcrição pronta, ou cuja última tentativa falhou) da tela Vídeos (RF-02, RN-M20). Uma só operação: o serviço decide pelo estado. Qualquer ator com `midia.enviar` pede para qualquer vídeo da escola, de qualquer autor (RN-M03, RN-M04). Sem corpo.
+
+        O pedido apenas **registra a intenção** e responde 202 com o vídeo em `transcription.status: in-progress`; o disparo ao serviço de transcrição acontece depois, de forma assíncrona. Indisponibilidade desse serviço **não** falha o pedido nem muda o estado do vídeo (RN-M19). Pedir enquanto já há uma tentativa em andamento não cria outra: devolve 202 com o estado real (RN-M20, sem erro). Refazer mantém a transcrição vigente visível ao aluno até a nova ficar pronta (RN-M18, RN-TL07).
+
+        Recusas de regra: vídeo que não está `ready` → 409 `VIDEO_NOT_READY` (também para vídeo que falhou na preparação); última tentativa falhou por `duration-limit` ou `size-limit` → 409 `TRANSCRIPTION_NOT_RETRYABLE` (RN-M24). Vídeo de outra escola responde o mesmo 404 de vídeo inexistente (G07). Não publica fato `midia.*` (domínio de Mídia, §7).
+      operationId: requestVideoTranscription
+      security:
+      - StaffSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        '202':
+          description: Pedido aceito (ou já havia uma tentativa em andamento); o vídeo no estado real depois do
+            pedido.
+          headers:
+            Location:
+              description: Caminho do vídeo, `/videos/{videoId}`.
+              schema:
+                type: string
+                examples:
+                - /videos/0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                transcrevendo:
+                  $ref: '#/components/examples/VideoTranscribing'
+                refazendo:
+                  value:
+                    videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                    title: Aula 3 — Injeção de dependência
+                    status: ready
+                    uploadedBy:
+                      accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                      name: Marina Alves
+                    uploadedAt: '2026-09-26T09:40:00Z'
+                    durationSeconds: 2415
+                    failureReason: null
+                    tags:
+                    - Docker
+                    transcription:
+                      status: in-progress
+                      readable: true
+                      readyAt: '2026-10-14T10:12:00Z'
+                      failureReason: null
+                      canStart: false
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionOrCsrfDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '409':
+          description: O vídeo não está pronto, ou a última tentativa falhou por um motivo que refazer não resolve.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                naoPronto:
+                  value:
+                    type: about:blank
+                    title: Só vídeo pronto pode ser transcrito.
+                    status: 409
+                    code: VIDEO_NOT_READY
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                naoRefazivel:
+                  value:
+                    type: about:blank
+                    title: Este vídeo ultrapassa o limite da transcrição.
+                    status: 409
+                    code: TRANSCRIPTION_NOT_RETRYABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: Chave de idempotência reutilizada em outro vídeo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                chaveReutilizada:
+                  value:
+                    type: about:blank
+                    title: Chave de idempotência já usada em outro pedido.
+                    status: 422
+                    code: IDEMPOTENCY_KEY_REUSED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
         '502':
           $ref: '#/components/responses/MediaUnavailable'
         '504':
@@ -914,6 +1031,12 @@ components:
         durationSeconds: null
         failureReason: null
         tags: []
+        transcription:
+          status: not-requested
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: false
     VideoReady:
       value:
         videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
@@ -926,6 +1049,12 @@ components:
         durationSeconds: 2415
         failureReason: null
         tags: []
+        transcription:
+          status: not-requested
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: true
     TagInvalid:
       value:
         type: about:blank
@@ -953,6 +1082,31 @@ components:
         uploadedAt: '2026-09-26T09:40:00Z'
         durationSeconds: 2415
         failureReason: null
+        transcription:
+          status: not-requested
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: true
+    VideoTranscribing:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        status: ready
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: 2415
+        failureReason: null
+        tags:
+        - Docker
+        transcription:
+          status: in-progress
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: false
   schemas:
     TagMatch:
       type: string
@@ -1180,6 +1334,7 @@ components:
       - durationSeconds
       - failureReason
       - tags
+      - transcription
       properties:
         videoId:
           type: string
@@ -1206,6 +1361,8 @@ components:
           description: Preenchido só em `failed`.
         tags:
           $ref: '#/components/schemas/TagList'
+        transcription:
+          $ref: "#/components/schemas/VideoTranscription"
     VideoPage:
       type: object
       additionalProperties: false
@@ -1307,3 +1464,63 @@ components:
             $ref: '#/components/schemas/Tag'
           description: |
             Até 20 tags da escola que contêm `q`: primeiro as que começam por ele, depois as demais, cada grupo em ordem alfabética. `[]` quando nenhuma. Coleção de teto fixo, sem paginação (C-04).
+    TranscriptionStatus:
+      type: string
+      enum:
+      - not-requested
+      - in-progress
+      - ready
+      - failed
+      description: 'Estado da **última tentativa** de transcrição do vídeo, na linguagem do professor (RN-TL06): `not-requested`
+        sem transcrição; `in-progress` transcrevendo; `ready` pronta; `failed` falhou. Vídeo que não está `ready` (RN-M05)
+        é sempre `not-requested`. Refazer mantém a transcrição vigente legível enquanto a nova roda (`status: in-progress`,
+        `readable: true`) e depois que a nova falha (`status: failed`, `readable: true`): ver `readable` (RN-M18, RN-TL07).'
+    TranscriptionFailureReason:
+      type: string
+      enum:
+      - duration-limit
+      - size-limit
+      - service-unavailable
+      - processing-failed
+      - timed-out
+      description: 'Categoria do motivo da falha, em termos do produto; nenhum código, estado ou limite do serviço de
+        transcrição aparece aqui (camada anticorrupção). O SPA mostra o texto do PRD: `duration-limit` "vídeo mais longo
+        que o limite de 2 horas"; `size-limit` "vídeo maior que o tamanho aceito para transcrição"; `service-unavailable`
+        "serviço de transcrição indisponível no momento"; `processing-failed` "não foi possível transcrever este vídeo";
+        `timed-out` "a transcrição demorou mais que o limite". `duration-limit` e `size-limit` não se resolvem refazendo
+        (RN-M24): `canStart` é `false`. Clientes devem tolerar valor novo.'
+    VideoTranscription:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      - readable
+      - readyAt
+      - failureReason
+      - canStart
+      description: 'Estado da transcrição do vídeo para a tela Vídeos (RF-02, RF-08). Sempre presente; para vídeo que
+        não está pronto vale `not-requested`, `readable: false`, `canStart: false`.'
+      properties:
+        status:
+          $ref: '#/components/schemas/TranscriptionStatus'
+        readable:
+          type: boolean
+          description: Existe uma transcrição vigente pronta que o professor pode abrir em `getVideoTranscription` e
+            que o aluno recebe (RN-M18, RN-M27). Pode ser `true` com `status` `in-progress` ou `failed` (refazer em
+            andamento ou que falhou).
+        readyAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Quando a transcrição **vigente** ficou pronta; `null` se não há vigente.
+        failureReason:
+          oneOf:
+          - $ref: '#/components/schemas/TranscriptionFailureReason'
+          - type: 'null'
+          description: 'Preenchido só com `status: failed` (motivo da última tentativa).'
+        canStart:
+          type: boolean
+          description: 'Se `requestVideoTranscription` seria aceita agora: vídeo `ready`, nenhuma tentativa em andamento
+            e, se a última falhou, o motivo não é `duration-limit` nem `size-limit`. Dirige a ação **Transcrever** (`status:
+            not-requested`) ou **Refazer** (`ready` ou `failed`) (RF-02).'

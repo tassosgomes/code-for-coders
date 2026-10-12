@@ -17,10 +17,12 @@ services:
 
   media:
     environment:
+      Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
       ASPNETCORE_ENVIRONMENT: Production
 
   media-worker:
     environment:
+      Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
       ASPNETCORE_ENVIRONMENT: Production
 
   commerce:

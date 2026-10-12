@@ -267,6 +267,7 @@ services:
       dockerfile: src/media/Dockerfile
     container_name: code-for-coders-media
     environment:
+      Transcription__Enabled: "false"
       AccessDecision__BaseAddress: http://commerce:8080/
       AccessDecision__SigningKeyId: local-media-commerce-1
       AccessDecision__SigningKeyBase64: ${MEDIA_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
@@ -305,6 +306,7 @@ services:
       dockerfile: src/media/Dockerfile
     container_name: code-for-coders-media-worker
     environment:
+      Transcription__Enabled: "false"
       <<: *api-environment
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=code-for-coders-local
       Media__Role: worker

@@ -135,6 +135,178 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                     b.ToTable("playback_sessions", "media_access");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Transcription", b =>
+                {
+                    b.Property<Guid>("TranscriptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("transcription_id");
+
+                    b.Property<DateTimeOffset?>("AudioDeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audio_deleted_at");
+
+                    b.Property<DateTimeOffset?>("DeadlineAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deadline_at");
+
+                    b.Property<long?>("DurationMs")
+                        .HasColumnType("bigint")
+                        .HasColumnName("duration_ms");
+
+                    b.Property<int>("ExtractionAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("extraction_attempts");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_current");
+
+                    b.Property<Guid?>("LeaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lease_id");
+
+                    b.Property<DateTimeOffset?>("LeaseUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lease_until");
+
+                    b.Property<DateTimeOffset>("NextActionAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_action_at");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("origin");
+
+                    b.Property<DateTimeOffset?>("ReadyAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ready_at");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<Guid?>("RequestedByAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by_account_id");
+
+                    b.Property<int?>("SegmentCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("segment_count");
+
+                    b.Property<DateTimeOffset?>("SignaledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("signaled_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("SubmissionFailures")
+                        .HasColumnType("integer")
+                        .HasColumnName("submission_failures");
+
+                    b.Property<int>("Submissions")
+                        .HasColumnType("integer")
+                        .HasColumnName("submissions");
+
+                    b.Property<DateTimeOffset?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.Property<string>("WhisperJobId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("whisper_job_id");
+
+                    b.HasKey("TranscriptionId");
+
+                    b.HasIndex("VideoId");
+
+                    b.HasIndex("Status", "NextActionAt")
+                        .HasDatabaseName("ix_video_transcriptions_claim");
+
+                    b.HasIndex(new[] { "TenantId", "VideoId" }, "current")
+                        .IsUnique()
+                        .HasDatabaseName("ux_video_transcriptions_current")
+                        .HasFilter("is_current");
+
+                    b.HasIndex(new[] { "TenantId", "VideoId" }, "ongoing")
+                        .IsUnique()
+                        .HasDatabaseName("ux_video_transcriptions_ongoing")
+                        .HasFilter("status IN ('queued', 'working', 'waiting')");
+
+                    b.ToTable("video_transcriptions", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.TranscriptionContent", b =>
+                {
+                    b.Property<Guid>("TranscriptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("transcription_id");
+
+                    b.Property<long>("DurationMs")
+                        .HasColumnType("bigint")
+                        .HasColumnName("duration_ms");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("language");
+
+                    b.Property<string>("SegmentsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("segments");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("TranscriptionId");
+
+                    b.ToTable("video_transcription_contents", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.TranscriptionEvent", b =>
+                {
+                    b.Property<string>("EventId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("EventId");
+
+                    b.HasIndex("ReceivedAt");
+
+                    b.ToTable("video_transcription_events", "media_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Video", b =>
                 {
                     b.Property<Guid>("VideoId")
@@ -523,6 +695,24 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                         .HasDatabaseName("ix_outbox_messages_tenant_id");
 
                     b.ToTable("outbox_messages", "media_access");
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Transcription", b =>
+                {
+                    b.HasOne("CodeForCoders.Media.Domain.Entities.Video", null)
+                        .WithMany()
+                        .HasForeignKey("VideoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.TranscriptionContent", b =>
+                {
+                    b.HasOne("CodeForCoders.Media.Domain.Entities.Transcription", null)
+                        .WithOne()
+                        .HasForeignKey("CodeForCoders.Media.Domain.Entities.TranscriptionContent", "TranscriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.VideoTagLink", b =>

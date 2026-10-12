@@ -57,12 +57,13 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
                 {
                     videoId = Guid.CreateVersion7(),
                     title = "Aula 1",
-                    status = "received",
+                    status = StatusCode == HttpStatusCode.Accepted ? "ready" : "received",
                     uploadedBy = new { accountId = Guid.CreateVersion7(), name = "Marina Alves" },
                     uploadedAt = DateTimeOffset.UtcNow,
                     durationSeconds = (int?)null,
                     failureReason = (string?)null,
                     tags = Tags,
+                    transcription = new { status = StatusCode == HttpStatusCode.Accepted ? "in-progress" : "not-requested", readable = false, readyAt = (DateTimeOffset?)null, failureReason = (string?)null, canStart = false },
                 }),
             };
         }

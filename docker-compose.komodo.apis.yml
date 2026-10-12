@@ -172,6 +172,7 @@ services:
     expose:
       - "8080"
     environment:
+      Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
       AccessDecision__BaseAddress: http://commerce:8080/
       AccessDecision__SigningKeyId: local-media-commerce-1
       AccessDecision__SigningKeyBase64: ${MEDIA_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
@@ -222,6 +223,7 @@ services:
     expose:
       - "8080"
     environment:
+      Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
