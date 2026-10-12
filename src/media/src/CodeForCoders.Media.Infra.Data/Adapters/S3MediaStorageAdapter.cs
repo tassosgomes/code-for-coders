@@ -262,17 +262,17 @@ public sealed class S3MediaStorageAdapter(
         {
             throw new MultipartUploadNotFoundException();
         }
-        catch (AmazonServiceException)
+        catch (AmazonServiceException exception)
         {
-            throw new StorageUnavailableException();
+            throw Unavailable(exception);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
-            throw new StorageUnavailableException();
+            throw new StorageUnavailableException("S3 request failed", exception);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new StorageUnavailableException();
+            throw new StorageUnavailableException("S3 request timed out", exception);
         }
     }
 
@@ -287,19 +287,23 @@ public sealed class S3MediaStorageAdapter(
         {
             throw new MultipartUploadNotFoundException();
         }
-        catch (AmazonServiceException)
+        catch (AmazonServiceException exception)
         {
-            throw new StorageUnavailableException();
+            throw Unavailable(exception);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
-            throw new StorageUnavailableException();
+            throw new StorageUnavailableException("S3 request failed", exception);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
-            throw new StorageUnavailableException();
+            throw new StorageUnavailableException("S3 request timed out", exception);
         }
     }
+
+    // The status and error code tell a rejected credential (403 SignatureDoesNotMatch) apart from an outage.
+    private static StorageUnavailableException Unavailable(AmazonServiceException exception)
+        => new($"S3 {(int)exception.StatusCode} {exception.ErrorCode ?? "unknown error"}", exception);
 
     private CancellationTokenSource CreateTimeoutToken(CancellationToken cancellationToken)
     {
