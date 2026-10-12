@@ -261,3 +261,7 @@
   .authoring-page .course-version-audience { padding: 16px; }
   .authoring-page .course-version-module .course-lesson-details { flex-basis: 100%; }
 }
+/* Etiquetas dos cartões do seletor (A6.f): Tag Chip sem ✕, 6 px entre elas. */
+.authoring-page .course-ready-video-sheet .single-choice-content > .course-ready-tags { gap: 6px; }
+.authoring-page .course-ready-video-sheet .single-choice-content .course-ready-tags .video-tag-chip { color: var(--accent-subtle-foreground); font-size: 12px; font-weight: 500; line-height: 16px; }
+.authoring-page .course-video-filters .video-tag-match .video-filter-options { overflow: visible; }

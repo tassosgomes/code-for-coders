@@ -27,9 +27,11 @@ export const CourseVideoPicker = ({ lesson, busy, error, renderTagFilter, onClos
     <label className="course-video-search"><span className="sr-only">Buscar título</span><Search size={16} /><input placeholder="Buscar título" autoFocus type="search" value={query} disabled={busy} onChange={(event) => { setQuery(event.target.value); setPage(1); }} /></label>
     <div className="course-video-filters">
       {renderTagFilter({ tags, disabled: busy, onChange: changeTags })}
-      {tags.length >= 2 ? <div aria-label="Combinar tags" className="video-filter-options" role="group">
-        <button aria-pressed={tagMatch === 'all'} className={tagMatch === 'all' ? 'video-filter-active' : ''} disabled={busy} onClick={() => changeTagMatch('all')} type="button">E</button>
-        <button aria-pressed={tagMatch === 'any'} className={tagMatch === 'any' ? 'video-filter-active' : ''} disabled={busy} onClick={() => changeTagMatch('any')} type="button">OU</button>
+      {tags.length >= 2 ? <div className="video-tag-match"><span id="course-video-tag-match-label">Combinar tags</span>
+        <div aria-labelledby="course-video-tag-match-label" className="video-filter-options" role="group">
+          <button aria-pressed={tagMatch === 'all'} className={tagMatch === 'all' ? 'video-filter-active' : ''} disabled={busy} onClick={() => changeTagMatch('all')} type="button">E</button>
+          <button aria-pressed={tagMatch === 'any'} className={tagMatch === 'any' ? 'video-filter-active' : ''} disabled={busy} onClick={() => changeTagMatch('any')} type="button">OU</button>
+        </div>
       </div> : null}
     </div>
     {videos.isPending ? <p role="status">Carregando vídeos…</p> : null}

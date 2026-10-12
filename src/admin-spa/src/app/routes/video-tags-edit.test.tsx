@@ -95,6 +95,8 @@ describe('video-tags-edit', () => {
     }));
     renderRoute(); const user = await openDialog(); await user.type(screen.getByRole('combobox', { name: 'Tags' }), 'Docker{Enter}');
     await user.click(screen.getByRole('button', { name: 'Salvar' })); await screen.findByText('Não foi possível salvar as tags. Tente de novo.');
+    const form = screen.getByRole('dialog').querySelector('form');
+    expect(form?.firstElementChild).toHaveAttribute('role', 'alert');
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
     await waitFor(() => expect(keys).toHaveLength(2)); expect(keys[1]).toBe(keys[0]);
     await user.type(screen.getByRole('combobox', { name: 'Tags' }), 'React{Enter}');

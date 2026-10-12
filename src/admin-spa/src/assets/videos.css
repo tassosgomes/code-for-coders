@@ -57,42 +57,85 @@
 .dialog-card.video-upload-dialog .video-selected-file > span { font-weight: 500; }
 .dialog-card.video-upload-dialog .video-selected-file .video-link-button { font-weight: 500; }
 
-/* Tags stay inside the row's content area and wrap independently of its actions. */
-.video-row-actions { display: flex; gap: 4px; grid-column: 5; grid-row: 1; }
-.video-row-tags { grid-column: 1; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.video-row-tags:empty { display: none; }
-.video-tag-chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 3px 8px; background: var(--surface-subtle); color: var(--foreground-secondary); font-size: 12px; overflow-wrap: anywhere; }
-.video-tag-chip button { display: inline-flex; border: 0; background: transparent; color: inherit; padding: 2px; cursor: pointer; }
-.video-tag-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-.video-tag-field input { width: 100%; box-sizing: border-box; margin-top: 6px; }
-.video-tags-dialog .dialog-card { max-width: 480px; }
+/* Tags de vídeo conforme o adendo do Figma (319:2437 em Vídeos, 324:40939 em Autoria). */
+
+/* Tag Chip (319:4637): pílula; com ✕ de 12 px só onde dá para remover. */
+.video-tag-chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; box-sizing: border-box; border-radius: 9999px; padding: 3px 10px; background: var(--accent-subtle); color: var(--accent-subtle-foreground); font-size: 12px; font-weight: 500; line-height: 16px; overflow-wrap: anywhere; }
+.video-tag-chip.is-removable { padding-right: 6px; }
+.video-tag-chip button { display: inline-flex; border: 0; border-radius: 9999px; background: transparent; color: var(--foreground); padding: 0; cursor: pointer; }
+.video-tag-chip.video-tag-duplicate { border: 2px solid var(--primary); padding: 1px 4px 1px 8px; }
+.video-tag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Tag Field (320:2474): rótulo, campo, etiquetas, sugestões e ajuda, 8 px entre eles. */
+.video-tag-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.video-tag-field > label { color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
+.dialog-card .video-tag-field input[role="combobox"] { width: 100%; height: 40px; min-height: 40px; box-sizing: border-box; margin: 0; padding: 0 12px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--input); color: var(--foreground); font-size: 14px; line-height: 20px; }
+.video-tag-field input::placeholder { color: var(--muted); }
+.dialog-card .video-tag-field input[role="combobox"][aria-invalid="true"] { border-color: var(--danger); }
+.video-tag-help { margin: 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+.video-tag-error { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--danger); font-size: 12px; line-height: 16px; }
+.video-tag-error > svg { flex: none; }
+
+/* Sugestões: contagem, painel com cantos de 10 e sombra MD; item ativo em accent com ponto de 6 px. */
+.video-tag-suggestions { display: flex; flex-direction: column; gap: 2px; padding: 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: 0 2px 4px rgb(var(--shadow-rgb) / 0.04), 0 4px 12px rgb(var(--shadow-rgb) / 0.08); }
+.video-tag-suggestions[hidden] { display: none; }
+.video-tag-suggestions > p { margin: 0; padding: 4px 8px; color: var(--muted); font-size: 12px; line-height: 16px; }
+.video-tag-suggestions ul { display: flex; flex-direction: column; gap: 2px; max-height: 180px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.video-tag-suggestions li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; color: var(--foreground); font-size: 14px; line-height: 20px; cursor: pointer; }
+.video-tag-suggestions li:hover { background: var(--surface-muted); }
+.video-tag-suggestions li[aria-selected="true"] { background: var(--accent); color: var(--accent-foreground); }
+.video-tag-suggestions li[aria-selected="true"]::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Filtro por tags (V1.i, A6.f): rótulo muted, lupa e placeholder "Filtrar por tag". */
+.video-tag-field.is-filter > label { color: var(--muted); }
+.video-tag-input { position: relative; display: flex; align-items: center; min-width: 0; }
+.video-tag-input > svg { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+.video-tag-field.is-filter .video-tag-input input { width: 100%; height: 40px; box-sizing: border-box; margin: 0; padding: 0 12px 0 36px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--input); color: var(--foreground); font-size: 14px; line-height: 20px; }
+.video-tag-match { display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--muted); font-size: 14px; font-weight: 500; line-height: 20px; }
+.video-tag-match .video-filter-options button { height: 32px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); padding: 6px 12px; font-size: 14px; font-weight: 500; line-height: 20px; }
+.video-tag-match .video-filter-options button:hover { color: var(--foreground); }
+.video-tag-match .video-filter-options button.video-filter-active { background: var(--surface); color: var(--foreground); box-shadow: 0 1px 1px rgb(var(--shadow-rgb) / 0.04), 0 1px 2px rgb(var(--shadow-rgb) / 0.08); }
+
+/* Vídeos: rótulo, etiquetas e campo de 240 px na mesma linha; "Combinar tags" logo abaixo. */
+.video-library-tag-controls { display: flex; flex-direction: column; gap: 8px; }
+.video-library-tag-controls .video-tag-field { display: grid; grid-template-columns: auto auto 240px; justify-content: start; align-items: center; gap: 8px 10px; }
+.video-library-tag-controls .video-tag-field > label { grid-column: 1; grid-row: 1; }
+.video-library-tag-controls .video-tag-input { grid-column: 3; grid-row: 1; }
+.video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-input { grid-column: 2 / 4; width: 240px; }
+.video-library-tag-controls .video-tag-chips { grid-column: 2; grid-row: 1; }
+.video-library-tag-controls .video-tag-suggestions { grid-column: 3; width: 240px; box-sizing: border-box; }
+.video-library-tag-controls .video-tag-error { grid-column: 1 / -1; }
+
+/* Linha da tabela (V1.g): etiquetas na coluna do título, 6 px abaixo dele; ações no topo. */
+.videos-page .videos-table-row { align-items: start; }
+.videos-page .videos-table-row .video-title-cell { display: flex; flex-direction: column; gap: 6px; }
+.videos-page .videos-table-row .video-title-cell > strong { font-weight: 500; }
+.video-row-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.video-row-actions { display: flex; gap: 16px; grid-column: 5; grid-row: 1; }
+
 @media (max-width: 767px) {
+  /* Cartão (V1.h): título e ações, estado, etiquetas e autor. */
+  .videos-page .videos-table-row .video-title-cell { display: contents; }
+  .videos-page .videos-table-row .video-title-cell > strong { grid-column: 1; grid-row: 1; }
+  .videos-page .videos-table-row .video-row-tags { grid-column: 1 / -1; grid-row: 3; }
   .videos-page .videos-table-row .video-meta { grid-row: 4; }
   .video-row-actions { grid-column: 2; grid-row: 1; }
-  .videos-page .videos-table-row .video-row-tags { grid-column: 1 / -1; grid-row: 3; }
+  .video-library-tag-controls .video-tag-field { grid-template-columns: minmax(0, 1fr); }
+  .video-library-tag-controls .video-tag-field > label,
+  .video-library-tag-controls .video-tag-chips,
+  .video-library-tag-controls .video-tag-input,
+  .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-input,
+  .video-library-tag-controls .video-tag-suggestions { grid-column: 1; grid-row: auto; width: auto; }
 }
 
 .video-tag-duplicate { animation: video-tag-highlight 0.8s ease-out; }
-@keyframes video-tag-highlight { from { background: var(--accent); } to { background: var(--surface-subtle); } }
-@media (prefers-reduced-motion: reduce) { .video-tag-duplicate { animation: none; outline: 1px solid currentColor; } }
+@keyframes video-tag-highlight { from { background: var(--accent); } to { background: var(--accent-subtle); } }
+@media (prefers-reduced-motion: reduce) { .video-tag-duplicate { animation: none; } }
 
-.video-tag-suggestions { list-style: none; padding: 4px; margin: 4px 0 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); max-height: 180px; overflow-y: auto; }
-.video-tag-suggestions li { padding: 6px 8px; cursor: pointer; border-radius: 4px; }
-.video-tag-suggestions li:hover, .video-tag-suggestions li[aria-selected="true"] { background: var(--surface-subtle); outline: 1px solid var(--foreground-secondary); }
-
-.video-library-tag-controls { display: grid; gap: 12px; margin: 12px 0 20px; }
-.video-library-tag-controls .video-tag-field { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(180px, 300px); align-items: center; gap: 8px 12px; min-width: 0; }
-.video-library-tag-controls .video-tag-field > label { grid-column: 1; grid-row: 1; }
-.video-library-tag-controls .video-tag-chips { grid-column: 2; grid-row: 1; margin-top: 0; }
-.video-library-tag-controls .video-tag-field > input { grid-column: 3; grid-row: 1; margin-top: 0; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); padding: 8px 12px; }
-.video-library-tag-controls .video-tag-suggestions { grid-column: 2 / -1; }
-.video-library-tag-controls .video-title-hint,
-.video-library-tag-controls .field-error { grid-column: 1 / -1; margin: 0; }
-@media (max-width: 767px) {
-  .video-library-tag-controls .video-tag-field { grid-template-columns: minmax(0, 1fr); }
-  .video-library-tag-controls .video-tag-field > label,
-  .video-library-tag-controls .video-tag-field > input,
-  .video-library-tag-controls .video-tag-chips { grid-column: 1; grid-row: auto; }
-  .video-library-tag-controls .video-tag-suggestions { grid-column: 1; }
-}
-.video-library-tag-controls .video-filter-options { justify-self: start; max-width: 100%; overflow-x: auto; }
+/* Editar tags (V8): 520 px; falha de serviço como Alert danger no topo. */
+.video-tags-dialog .dialog-card { width: min(520px, 100%); max-width: 520px; }
+.video-tags-dialog form { display: grid; gap: 20px; }
+.video-tags-alert { display: grid; gap: 4px; padding: 16px; border: 1px solid var(--danger); border-radius: 12px; background: var(--surface); color: var(--danger); font-size: 14px; line-height: 20px; }
+.video-tags-alert > p { display: flex; align-items: center; gap: 12px; margin: 0; font-weight: 500; }
+.video-tags-alert > p > svg { flex: none; }
+.video-tags-alert .video-link-button { justify-self: start; margin-left: 28px; font-size: 14px; font-weight: 500; }
