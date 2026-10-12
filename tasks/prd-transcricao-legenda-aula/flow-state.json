@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": null,
-  "phase": "validate",
-  "active_task": "3.0",
+  "last_checkpoint": "34df380",
+  "phase": "checkpoint",
+  "active_task": "1.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,9 +18,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "3.0",
-    "outcome": "implementation_complete",
-    "run": "run.TNpha7tx"
+    "task": "1.0",
+    "outcome": "checkpoint_ok",
+    "run": "run.cFGJ8obB"
   },
   "history": [
     {
@@ -50,19 +50,34 @@
     {
       "at": "2026-10-12",
       "event": "3.0 run.TNpha7tx implementation_complete gate passed (41 testes) + checks; -> validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "3.0 validator run.4ErmWub9 approved (2 recomendacoes); checkpoint run.oXp0AKrK: d666aa5 (planejamento) + 34df380 (3.0). -> 1.0 validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "1.0 validator run.y4sr5fbD approved (2 recomendacoes); orquestrador registrou D-01 nas decisoes fechadas de 11_task.md (rec. 1); rec. 2 levada ao contexto da 11.0. -> checkpoint 1.0"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "1.0 checkpoint run.cFGJ8obB: wireframe ASCII aprovado, 1_task.md done, checkbox 1.0 marcado; D-01 em 11_task.md"
     }
   ],
   "tasks": {
     "1.0": {
-      "status": "in_progress",
+      "status": "done",
       "attempts": 1,
       "gate": "passed",
       "next": "validator focused"
     },
     "3.0": {
-      "status": "validating",
+      "status": "done",
       "attempts": 1,
-      "impl_run": "run.TNpha7tx"
+      "checkpoint": "34df380"
     }
+  },
+  "pending_context": {
+    "11.0": "legenda para quando a sessao deixa de valer (A1.n); 'nada na tela muda' vale so para renovacao bem-sucedida (review 1.0 rec. 2)"
   }
 }

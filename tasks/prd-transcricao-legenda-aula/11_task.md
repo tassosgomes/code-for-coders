@@ -47,6 +47,8 @@ sobreposição); duração mínima de 500 ms; cobre emoji, cue de 3 minutos e te
 
 ## Decisões fechadas
 
+- **D-01 (ASCII aprovado em 2026-10-12, `docs/design/wireframes-transcricao.md` §5.4):** a legenda é uma **camada própria** sobre o contêiner do player, numa faixa fixa acima da faixa da marca d'água, alimentada pelo mesmo WebVTT (faixa de texto em modo oculto + troca de trecho). A menção à "faixa de texto do elemento de vídeo" no Comportamento descreve a fonte dos trechos, não a renderização nativa. A legenda para junto com a reprodução quando a sessão deixa de valer (decisão negada ou indisponível).
+
 - WebVTT por sessão (decisão do responsável, Q-02); sem texto em URL estável.
 - Preferência de legenda é do dispositivo e não é dado do domínio (RN-TL04).
 - Sem transcrição pronta não há controle e o player funciona como hoje (RN-TL05).

@@ -107,7 +107,7 @@ sequencial e ambas tocam o `media`.
 
 ## Tasks
 
-- [ ] 1.0 Wireframe ASCII da transcrição (tela Vídeos e página da aula) aprovado
+- [x] 1.0 Wireframe ASCII da transcrição (tela Vídeos e página da aula) aprovado
 - [ ] 2.0 Figma da transcrição (tela Vídeos e página da aula) aprovado
 - [x] 3.0 O professor pede a transcrição de um vídeo pronto e o estado aparece no vídeo
 - [ ] 4.0 O worker leva a transcrição da fila ao texto pronto, a partir do vídeo cifrado
