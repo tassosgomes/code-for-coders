@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["1.0"]
 gate: 'rg -q "^> \*\*Status:\*\* aprovado \(ASCII e Figma\) em [0-9]{4}-[0-9]{2}-[0-9]{2}" docs/design/wireframes-transcricao.md'

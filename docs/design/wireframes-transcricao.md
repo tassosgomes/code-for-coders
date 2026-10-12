@@ -1,6 +1,7 @@
 # Wireframes ASCII — Transcrição e legenda de aula (CAP-032) · proposta para aprovação
 
-> **Status:** aprovado (ASCII) em 2026-10-12 · Figma (2.0) não iniciado
+> **Status:** aprovado (ASCII e Figma) em 2026-10-12 · implementação não iniciada
+> **Figma:** [Índice](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=347-922) · frames por tela na [seção 8](#8-handoff-do-figma--aprovado) · arquivo Code4Coders — Design System, página `Screens — Transcrição`.
 > **Objetivo:** desenhar, antes de qualquer código, o estado e as ações da transcrição na tela **Vídeos** do
 > `admin-spa` (incluindo a leitura somente leitura) e o **painel de transcrição, a busca e a legenda** na
 > página da aula do `student-spa`. Aprovado este ASCII → desenho no Figma (task 2.0) → aprovação →
@@ -658,29 +659,114 @@ a mesma nas duas: o WebVTT da sessão.
 
 ---
 
-## 8. Handoff para o Figma (task 2.0)
+## 8. Handoff do Figma — aprovado
 
-Desenhar sobre o arquivo **Code4Coders — Design System** (páginas *Screens — Vídeos* e *Screens — Aula do aluno*),
-clonando os frames aprovados de V1, A1.a, A1.b e A1.c, e acrescentando apenas o que este documento descreve.
+O desenho foi materializado no arquivo **Code4Coders — Design System** em 2026-10-12, na página `Screens — Transcrição` ([337:2](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=337-2)), sobre o ASCII aprovado (seções 1 a 7), sem reabrir fluxo nem textos. Os frames aprovados de Vídeos (V1.g, V1.h) e de Aula (A1.a, A1.b) foram **clonados**, não alterados. O [índice de revisão](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=347-922).
 
-| Frame | Conteúdo | Tamanhos |
+> **Aprovação do Figma:** aprovado pelo responsável em 2026-10-12, com a divergência F-02 ajustada (seção 8.10). Os frames abaixo são a referência de tela das tasks seguintes.
+
+Tamanhos: desktop em 1440 de largura (altura do conteúdo quando passa de 900); mobile em 390; painéis de estado em 360 × 640; diálogos conforme D-05 (720) e 520. Claro em todas as telas; Dark em TA1.a e TA4.b. Os dados são ilustrativos e o desenho não executa transcrição, busca nem reprodução.
+
+### 8.1 TV1 · Vídeos — coluna e estados da transcrição (`admin-spa`) — [seção 338:9](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-9)
+
+| Tela / estado | Dimensão | Link e `node-id` |
 |---|---|---|
-| TV1.a | Tabela com a coluna Transcrição (seis linhas de estado) | 1440 × 900 |
-| TV1.b/c | Motivos de falha e casos com a anterior vigente | 1440 × 900 |
-| TV1.f | VideoCard com bloco Transcrição | 390 × 844 |
-| TV2.a | Confirmação de Refazer | 520 × ~300 |
-| TV3.a–e | Leitura (lida, com nova em andamento, carregando, sem transcrição pronta, erro) | 720 × 640; 390 × 844 |
-| TV4 | Alertas de recusa e falha do pedido | 520 × ~200 |
-| TA1.a/b | Página da aula com abas Transcrição/Aulas, trecho atual | 1440 × 900; 390 × 844 |
-| TA1.c–i | Acompanhamento pausado; carregando; indisponível; 403; 503; erro; direito encerrado | 360 × 640 |
-| TA2.a–g | Busca: vazia, resultados, ocorrência atual, introdução, nenhum, só espaços, mobile | 360 × 640; 390 × 844 |
-| TA4.a | Botão de legenda desligado, ligado, com foco | 480 × 64 |
-| TA4.b/c | Legenda em desktop e em tela cheia, com a marca d'água na zona 1, 2, 3 e 4 | 1440 × 810 |
-| TA4.d | Legenda no celular, abaixo da imagem | 390 × 844 |
-| Dark | TA1.a e TA4.b | 1440 × 900 |
+| TV1.a · Tabela com a coluna Transcrição (oito linhas de estado) | 1440 × 1144 | [338:17](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-17) |
+| TV1.b–e · Motivos de falha, casos com a anterior vigente, sem ação e atualização automática | 1440 × 2461 | [339:157](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=339-157) |
+| TV1.f · VideoCard com bloco Transcrição — Mobile | 390 × 1404 | [339:41463](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=339-41463) |
 
-Reusar `Badge`, `Button`, `Alert`, `AlertDialog`, `Dialog`, `Tabs`, `Input`, `Skeleton`, `Toast` e `EmptyState`.
-`TranscriptionBadge`, `TranscriptSegment`, `CaptionToggle` e `CaptionLayer` são composições propostas.
+### 8.2 TV2 · Refazer — AlertDialog — [seção 338:10](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-10)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TV2.a · Confirmar Refazer | 520 × 246 | [341:353](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=341-353) |
+| TV2.b · Pedindo… | 520 × 294 | [341:368](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=341-368) |
+
+### 8.3 TV3 · Ler a transcrição — Dialog somente leitura — [seção 338:11](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-11)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TV3.a · Lida | 720 × 640 | [342:475](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=342-475) |
+| TV3.b · Lida, com nova em andamento | 720 × 640 | [342:518](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=342-518) |
+| TV3.c · Carregando | 720 × 640 | [342:567](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=342-567) |
+| TV3.d · Ainda não há transcrição pronta | 720 × 640 | [342:606](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=342-606) |
+| TV3.e · Erro de carga | 720 × 640 | [342:626](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=342-626) |
+| TV3.f · Lida — Mobile (tela cheia) | 390 × 844 | [342:649](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=342-649) |
+
+### 8.4 TV4 · Recusas e falhas do pedido — [seção 338:12](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-12)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TV4 · Alertas 409, 403, 404 e 502/504 | 520 × 718 | [341:385](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=341-385) |
+
+### 8.5 TA1 · Painel de transcrição na página da aula (`student-spa`) — [seção 338:13](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-13)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TA1.a · Pronta, trecho atual acompanhado — Desktop Light | 1440 × 900 | [343:368](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=343-368) |
+| TA1.b · Pronta — Mobile Light | 390 × 1101 | [343:683](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=343-683) |
+| TA1.c · Acompanhamento pausado pela rolagem manual | 360 × 640 | [344:495](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-495) |
+| TA1.d · Carregando | 360 × 640 | [344:544](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-544) |
+| TA1.e · Indisponível (em andamento, falhou ou não pedida) | 360 × 640 | [344:577](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-577) |
+| TA1.f · 403 | 360 × 640 | [344:587](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-587) |
+| TA1.g · 503 | 360 × 640 | [344:596](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-596) |
+| TA1.h · Outro erro de carga | 360 × 640 | [344:609](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-609) |
+| TA1.i · Direito encerrado (só a lista de aulas) | 360 × 640 | [344:621](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-621) |
+
+### 8.6 TA2 · Busca — [seção 338:14](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-14)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TA2.a · Vazia | 360 × 640 | [344:686](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-686) |
+| TA2.b · “docker” — 2 resultados | 360 × 640 | [344:730](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-730) |
+| TA2.c · Depois de Próxima — 1 de 2, ocorrência atual | 360 × 640 | [344:785](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-785) |
+| TA2.d · “introducao” acha “Introdução” | 360 × 640 | [344:842](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-842) |
+| TA2.e · Nenhum resultado | 360 × 640 | [344:885](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-885) |
+| TA2.f · Só espaços = busca vazia | 360 × 640 | [344:907](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-907) |
+| TA2.g · Busca — Mobile | 390 × 844 | [344:955](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=344-955) |
+
+### 8.7 TA4 · Legenda no player — [seção 338:15](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-15)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TA4.a · Botão de legenda: desligado, ligado, com foco | 998 × 188 | [345:608](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-608) |
+| TA4.b · Legenda ligada · marca na zona 1 (superior esquerda) | 1440 × 810 | [345:636](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-636) |
+| TA4.b · Legenda ligada · marca na zona 2 (superior direita) | 1440 × 810 | [345:710](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-710) |
+| TA4.b · Legenda ligada · marca na zona 3 (inferior esquerda) | 1440 × 810 | [345:774](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-774) |
+| TA4.b · Legenda ligada · marca na zona 4 (inferior direita) | 1440 × 810 | [345:838](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-838) |
+| TA4.c · Tela cheia — legenda e marca d’água juntas (zona 3) | 1440 × 810 | [345:902](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-902) |
+| TA4.d · Legenda abaixo da imagem — Mobile | 390 × 1091 | [346:773](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=346-773) |
+| TA4.e · Falha ao carregar a legenda | 888 × 600 | [345:978](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=345-978) |
+
+### 8.8 Dark mode — validação de tokens — [seção 338:16](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=338-16)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TA1.a · Painel de transcrição — Dark | 1440 × 900 | [346:967](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=346-967) |
+| TA4.b · Legenda ligada, zona 2 — Dark | 1440 × 810 | [346:1043](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=346-1043) |
+
+### 8.9 🧩 Composições propostas — [seção 346:770](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=346-770)
+
+| Tela / estado | Dimensão | Link e `node-id` |
+|---|---|---|
+| TranscriptionBadge — status: none · processing · ready · failed | — | [337:23](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=337-23) |
+| TranscriptSegment — state: repouso · atual · achado · achado-atual | — | [337:64](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=337-64) |
+| CaptionToggle — state: off · on · focus | — | [337:39](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=337-39) |
+| CaptionLayer — layout: desktop · tela-cheia · mobile | — | [346:769](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=346-769) |
+
+### 8.10 Divergências em relação ao ASCII — decididas pelo responsável em 2026-10-12
+
+Nenhuma muda fluxo, regra, contrato nem texto fixado em 1.0. Decisão do responsável: F-01, F-03, F-04, F-05, F-06 e F-07 **mantidas como estão**; F-02 **ajustada**.
+
+| # | Ponto | O que o Figma mostra | Decisão |
+|---|---|---|---|
+| F-01 | Aba ativa do painel | `Tab` do DS (pílula clara), não texto com sublinhado como no ASCII; a aba ativa continua distinta por fundo e texto, e leva `aria-selected` | **Mantida:** `Tab` do DS; vale o mesmo padrão dos filtros de Vídeos |
+| F-02 | Selo *Sem transcrição* | `secondary` do DS é lavanda e, ao lado de *Recebido* (também lavanda), os dois se parecem em Vídeos | **Ajustada:** o selo passa a `outline` neutro do DS (fundo `card`, borda `border`, texto e ícone `muted-foreground`), distinto de *Recebido*. Componente `TranscriptionBadge`, variante `status=none` ([337:3](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=337-3)); vale em todos os frames que o usam (TV1.a, TV1.b–e e TV1.f) |
+| F-03 | Tela cheia do desktop (TA4.b) | O frame mostra o player em 16:9 (1440 × 810) com as quatro zonas da marca, sem a página ao redor; o ASCII desenhava o player dentro da página | **Mantida:** a página já está em TA1.a e o que importa aqui é a posição da legenda × marca × controles |
+| F-04 | Mark da busca | O destaque é fundo `warning-soft` + sublinhado por palavra (o Figma não tem fundo de texto contínuo); a ocorrência atual ganha contorno `ring` e negrito | **Mantida;** no código o `mark` cobre só o trecho achado |
+| F-05 | Rótulo do campo de busca | "Buscar na aula" aparece como rótulo acima do campo e o placeholder é "Palavra ou trecho"; o ASCII só mostrava o rótulo dentro do campo | **Mantida:** cumpre o rótulo visível exigido na seção 6 |
+| F-06 | Botão de legenda ligado | Fundo `primary` + sublinhado do ícone (o ASCII dizia "realce + sublinhado") | **Mantida** |
+| F-07 | Altura de TV1.a | A tabela com oito linhas passa de 900; o frame cresce com o conteúdo (1144) | **Mantida** |
 
 ---
 
@@ -690,3 +776,5 @@ Reusar `Badge`, `Button`, `Alert`, `AlertDialog`, `Dialog`, `Tabs`, `Input`, `Sk
 recomendadas: D-01 (b) camada própria de legenda acima da faixa da marca d'água; D-02 (b) Refazer confirma só com
 transcrição vigente; D-03 (b) aba *Transcrição* abre primeiro quando há transcrição pronta; D-04 (a) abas na coluna
 direita; D-05 (a) Dialog 720; D-06 (a) "Transcrição indisponível neste ambiente.". A task 2.0 (Figma) está liberada.
+
+**Figma aprovado pelo responsável em 2026-10-12** (task 2.0). Decisões sobre as divergências da seção 8.10: F-01, F-03, F-04, F-05, F-06 e F-07 aceitas como estão; F-02 ajustada, e o selo *Sem transcrição* passou a `outline` neutro do DS (`TranscriptionBadge`, variante `status=none`, [337:3](https://www.figma.com/design/kKNfxTqSFT5IfQHcoTh5gn/Code4Coders-%E2%80%94-Design-System?node-id=337-3)), distinto de *Recebido* em Vídeos. A aprovação do Figma foi decisão separada da do ASCII. O código de tela das tasks seguintes está liberado.

@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "37bfc3b",
+  "last_checkpoint": "eb71e2d",
   "phase": "checkpoint",
-  "active_task": "4.0",
+  "active_task": "2.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,9 +18,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "4.0",
+    "task": "2.0",
     "outcome": "checkpoint_ok",
-    "run": "run.qOMnx41I"
+    "run": "run.unoxCz0Y"
   },
   "history": [
     {
@@ -89,11 +89,27 @@
     },
     {
       "at": "2026-10-12",
-      "event":     "4.0 revalidation run.4bAMl3xO approved; -> checkpoint"
+      "event": "4.0 revalidation run.4bAMl3xO approved; -> checkpoint"
     },
     {
       "at": "2026-10-12",
       "event": "4.0 checkpoint run.qOMnx41I: worker da fila ao texto pronto, 4_task.md done, checkbox 4.0 marcado"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "checkpoint 4.0 run.qOMnx41I: eb71e2d. -> 2.0 fix F-02 (Figma)"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "2.0 fix run.ywCGoU0C (F-02 neutro) implementation_complete static_passed; -> validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "2.0 validator run.5IMwIYqW approved (3 rec. editoriais, nao aplicadas); rec.3 -> contexto 11.0. -> checkpoint 2.0"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "2.0 checkpoint run.unoxCz0Y: Figma aprovado, 2_task.md done, checkbox 2.0 marcado"
     }
   ],
   "tasks": {
@@ -108,19 +124,18 @@
       "checkpoint": "34df380"
     },
     "2.0": {
-      "status": "blocked",
+      "status": "done",
       "attempts": 0,
-      "reason": "aprovado com ajuste F-02 pendente",
       "run": "run.BnsBqWuj"
     },
     "4.0": {
       "status": "done",
       "attempts": 1,
-      "impl_run": "run.YpGqVvhy"
+      "checkpoint": "eb71e2d"
     }
   },
   "pending_context": {
-    "11.0": "legenda para quando a sessao deixa de valer (A1.n); 'nada na tela muda' vale so para renovacao bem-sucedida (review 1.0 rec. 2)",
+    "11.0": "legenda para quando a sessao deixa de valer (A1.n); 'nada na tela muda' vale so para renovacao bem-sucedida (review 1.0 rec. 2); frame TA4.d 346:773 mostra LessonList antiga sem abas: a composicao mobile vale a de TA1.b 343:683 com abas (review 2.0 rec.3)",
     "13.0": "reavaliar AttemptTimeout de GetResultAsync com o primeiro resultado real (review 4.0 rec.2)",
     "8.0": "PollAsync trata 404 do status como processing-failed imediato; a politica por situacao (job expirado no servico, nova submissao) deve cobrir esse caso (review 4.0 rec.3)"
   }
