@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { requireStudentSession } from '@/app/routes/dashboard-route';
 import { StudentLoginRoute } from '@/app/routes/student-login-route';
@@ -28,6 +28,15 @@ const renderRoute = (entry = paths.studentPurchase.getHref(purchaseOfferId, purc
   ], { initialEntries: [entry] });
   renderWithProviders(<RouterProvider router={router} />); return router;
 };
+const paymentEndpoint = `${env.API_URL}/api/v1/orders/:orderId/payment-session`;
+const paymentUrl = 'https://checkout.stripe.com/c/pay/cs_test_summary_1';
+const paymentSession = () => HttpResponse.json({ orderId: purchaseOrderId, kind: 'checkout', paymentUrl, expiresAt: '2026-10-06T15:00:00Z' });
+const originalLocation = window.location;
+const mockAssign = () => {
+  const assign = vi.fn();
+  Object.defineProperty(window, 'location', { configurable: true, writable: true, value: { ...originalLocation, assign } });
+  return assign;
+};
 const enter = async () => {
   await userEvent.type(await screen.findByLabelText('E-mail'), 'ana@example.com');
   await userEvent.type(screen.getByLabelText('Senha'), 'SecurePassword1!');
@@ -41,6 +50,7 @@ describe('student-purchase-summary', () => {
       http.get(`${env.API_URL}/api/v1/orders/:orderId`, () => HttpResponse.json(purchaseOrder)),
       http.get(`${env.API_URL}/api/v1/showcase/courses/:courseId`, () => HttpResponse.json(purchaseShowcaseCourse)));
   });
+  afterEach(() => { Object.defineProperty(window, 'location', { configurable: true, writable: true, value: originalLocation }); });
   it('visitor buys an option, enters and returns to the same summary with only a temporary purchase stored', async () => {
     let loggedIn = false;
     server.use(http.get(`${env.API_URL}/api/v1/student-sessions/current`, () => loggedIn ? HttpResponse.json(session) : HttpResponse.json({ code: 'SESSION_REQUIRED' }, { status: 401 })),
@@ -65,16 +75,32 @@ describe('student-purchase-summary', () => {
   it('shows courtesy as information without preventing confirmation', async () => {
     server.use(http.get(summaryEndpoint, () => HttpResponse.json({ ...purchaseSummary, existingAccess: { origin: 'courtesy', validity: { type: 'until', endsOn: '2026-11-30' } } })));
     renderRoute(); expect(await screen.findByText('Você já tem acesso a este curso até 30/11/2026 (cortesia).')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled();
-    expect(screen.getByText('Acesso por 12 meses, contados a partir da liberação')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ir para o pagamento' })).toBeEnabled();
+    expect(screen.getByText('Acesso por 12 meses, contados a partir da liberação do acesso')).toBeInTheDocument();
   });
-  it('confirmation sends only offerId with csrf and one key then displays frozen awaiting order', async () => {
-    let received: Request | undefined; let input: unknown;
-    server.use(http.post(`${env.API_URL}/api/v1/orders`, async ({ request }) => { received = request; input = await request.json(); return HttpResponse.json(purchaseOrder, { status: 201 }); }));
-    const router = renderRoute(); await userEvent.click(await screen.findByRole('button', { name: 'Confirmar compra' }));
-    expect(await screen.findByRole('heading', { name: 'Pedido nº 000123' })).toBeInTheDocument(); expect(screen.getByText('Aguardando pagamento')).toBeInTheDocument();
+  it('going to payment creates the order with only offerId, csrf and one key and opens the gateway page', async () => {
+    let received: Request | undefined; let input: unknown; let paymentOrder: string | undefined;
+    const assign = mockAssign();
+    server.use(http.post(`${env.API_URL}/api/v1/orders`, async ({ request }) => { received = request; input = await request.json(); return HttpResponse.json(purchaseOrder, { status: 201 }); }),
+      http.post(paymentEndpoint, ({ params }) => { paymentOrder = String(params.orderId); return paymentSession(); }));
+    const router = renderRoute(); await userEvent.click(await screen.findByRole('button', { name: 'Ir para o pagamento' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith(paymentUrl));
     expect(input).toEqual({ offerId: purchaseOfferId }); expect(received?.headers.get('X-CSRF-Token')).toBe('csrf'); expect(received?.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/u);
-    expect(router.state.location.pathname).toBe(paths.studentOrder.getHref(purchaseOrderId)); expect(screen.getByRole('button', { name: 'Ir para o pagamento' })).toBeEnabled();
+    expect(paymentOrder).toBe(purchaseOrderId); expect(router.state.location.pathname).toBe(paths.studentPurchase.getHref(purchaseOfferId));
+    expect(screen.getByRole('button', { name: 'Abrindo o pagamento…' })).toBeDisabled();
+  });
+  it('payment unavailable keeps the created order, retries the same order and links to it', async () => {
+    let creates = 0; let payments = 0;
+    const assign = mockAssign();
+    server.use(http.post(`${env.API_URL}/api/v1/orders`, () => { creates++; return HttpResponse.json(purchaseOrder, { status: 201 }); }),
+      http.post(paymentEndpoint, () => { payments++; return payments === 1 ? HttpResponse.json({ code: 'PAYMENT_PROVIDER_UNAVAILABLE' }, { status: 503 }) : paymentSession(); }));
+    renderRoute(); await userEvent.click(await screen.findByRole('button', { name: 'Ir para o pagamento' }));
+    expect(await screen.findByText('Não foi possível abrir o pagamento agora.')).toBeInTheDocument();
+    expect(screen.getByText(/Seu pedido foi criado e continua aguardando pagamento/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver meu pedido' })).toHaveAttribute('href', paths.studentOrder.getHref(purchaseOrderId));
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith(paymentUrl));
+    expect(creates).toBe(1); expect(payments).toBe(2);
   });
   it('pending offer links to the existing order without showing current conditions or creating another', async () => {
     let creates = 0;
@@ -86,13 +112,15 @@ describe('student-purchase-summary', () => {
   it('retry after an uncertain creation reuses the confirmation key', async () => {
     const keys: string[] = [];
     server.use(http.post(`${env.API_URL}/api/v1/orders`, ({ request }) => { keys.push(request.headers.get('Idempotency-Key') ?? ''); return keys.length === 1 ? HttpResponse.json({ code: 'COMMERCE_UNAVAILABLE' }, { status: 502 }) : HttpResponse.json(purchaseOrder, { status: 201 }); }));
-    renderRoute(); await userEvent.click(await screen.findByRole('button', { name: 'Confirmar compra' }));
-    await screen.findByText('Não foi possível confirmar a compra agora. Tente de novo.'); await userEvent.click(screen.getByRole('button', { name: 'Confirmar compra' }));
-    await screen.findByRole('heading', { name: 'Pedido nº 000123' }); expect(keys).toHaveLength(2); expect(keys[0]).toBe(keys[1]);
+    const assign = mockAssign(); server.use(http.post(paymentEndpoint, paymentSession));
+    renderRoute(); await userEvent.click(await screen.findByRole('button', { name: 'Ir para o pagamento' }));
+    await screen.findByText('Não foi possível confirmar a compra agora. Tente de novo.'); await userEvent.click(screen.getByRole('button', { name: 'Ir para o pagamento' }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith(paymentUrl)); expect(keys).toHaveLength(2); expect(keys[0]).toBe(keys[1]);
   });
   it('unavailable offer explains no charge and no order', async () => {
     server.use(http.get(summaryEndpoint, () => HttpResponse.json({ code: 'OFFER_NOT_AVAILABLE' }, { status: 404 })));
-    renderRoute(); expect(await screen.findByText('Esta opção não está mais disponível')).toBeInTheDocument(); expect(screen.getByText('Nenhum pedido foi criado e você não foi cobrado.')).toBeInTheDocument();
+    renderRoute(); expect(await screen.findByText('Esta opção não está mais disponível')).toBeInTheDocument(); expect(screen.getByText(/Nenhum pedido foi criado e você não foi cobrado\./)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver todos os cursos' })).toBeInTheDocument(); expect(screen.getByRole('button', { name: 'Voltar' })).toBeInTheDocument();
   });
   it('expired stored purchase is cleared and does not divert login', async () => {
     window.localStorage.setItem('student-pending-purchase', JSON.stringify({ offerId: purchaseOfferId, courseId: purchaseCourseId, savedAt: Date.now() - 24 * 60 * 60 * 1000 }));
