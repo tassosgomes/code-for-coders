@@ -382,6 +382,22 @@
     {
       "at": "2026-10-13",
       "event": "reopen 10.0 run.4pL2QCTM: B-2 atribuido a 10.0; checkbox desmarcado, status in_progress; codigo preservado. -> fix attempt 2/3"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "10.0: fix attempt 2/3"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "10.0: fix ok run.c1EAnFig; revalidation"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "10.0: reval approved; checkpoint"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "10.0 checkpoint run.MLe5stca: o aluno le, pesquisa e clica na transcricao (fix B-2 fallback Cache-Control), 10_task.md done, checkbox 10.0 marcado"
     }
   ],
   "tasks": {
@@ -426,7 +442,7 @@
       "checkpoint": "62e7bc7"
     },
     "10.0": {
-      "status": "in_progress",
+      "status": "done",
       "checkpoint": "24f33de"
     },
     "11.0": {

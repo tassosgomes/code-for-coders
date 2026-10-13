@@ -45,6 +45,17 @@ public sealed class LessonTranscriptionTests(BffStudentApiFactory factory)
         Assert.Equal(HttpMethod.Get, boundary.Method);
     }
 
+    [Fact(DisplayName = nameof(AppliesPrivateNoStoreWhenUpstreamOmitsCacheControl))]
+    public async Task AppliesPrivateNoStoreWhenUpstreamOmitsCacheControl()
+    {
+        var boundary = new Boundary { Body = JsonSerializer.SerializeToUtf8Bytes(new { lessonId = lesson, status = "unavailable", revision = (string?)null, language = (string?)null, durationMs = (int?)null, segments = Array.Empty<object>() }), SendCacheControl = false };
+        using var host = Host(boundary); using var client = await ClientAsync(host);
+        using var response = await client.GetAsync(Path, TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl!.Private); Assert.True(response.Headers.CacheControl.NoStore);
+        Assert.Null(response.Headers.CacheControl.MaxAge);
+    }
+
     [Fact(DisplayName = nameof(VisitorCannotReachMedia))]
     public async Task VisitorCannotReachMedia()
     {
@@ -119,6 +130,7 @@ public sealed class LessonTranscriptionTests(BffStudentApiFactory factory)
         public byte[] Body { get; init; } = [];
         public int Status { get; init; } = 200;
         public bool UnknownLength { get; init; }
+        public bool SendCacheControl { get; init; } = true;
         public string? Token { get; private set; }
         public string? Path { get; private set; }
         public HttpMethod? Method { get; private set; }
@@ -128,7 +140,7 @@ public sealed class LessonTranscriptionTests(BffStudentApiFactory factory)
             HttpContent content = UnknownLength ? new UnknownLengthContent(Body) : new ByteArrayContent(Body);
             content.Headers.ContentType = new("application/json") { CharSet = "utf-8" };
             var response = new HttpResponseMessage((HttpStatusCode)Status) { Content = content };
-            response.Headers.TryAddWithoutValidation("Cache-Control", "private, no-store");
+            if (SendCacheControl) response.Headers.TryAddWithoutValidation("Cache-Control", "private, no-store");
             return Task.FromResult(response);
         }
     }

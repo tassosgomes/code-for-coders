@@ -1,5 +1,5 @@
 ---
-status: in_progress
+status: done
 task_kind: vertical
 blocked_by: ["2.0", "4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.LessonTranscriptionTests --minimum-expected-tests 11 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.LessonTranscriptionTests --minimum-expected-tests 5 && npm --prefix src/student-spa run test -- lesson-transcription'
