@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "bd111dd",
-  "phase": "checkpoint",
-  "active_task": "14.0",
+  "last_checkpoint": "5a88beb",
+  "phase": "integration",
+  "active_task": null,
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -330,6 +330,14 @@
     {
       "at": "2026-10-13",
       "event": "14.0 checkpoint run.qEzBnFsR: contratos de transcricao consolidados em contracts/, 14_task.md done, checkbox 14.0 marcado"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "14.0: checkpoint checkpoint_ok 5a88beb"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "14.0 5a88beb done. -> prepare-integration"
     }
   ],
   "tasks": {
@@ -392,7 +400,8 @@
       "partial_checkpoint": "bbf598a"
     },
     "14.0": {
-      "status": "done"
+      "status": "done",
+      "checkpoint": "5a88beb"
     }
   },
   "pending_context": {
