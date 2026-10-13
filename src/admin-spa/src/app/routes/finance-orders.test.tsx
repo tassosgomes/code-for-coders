@@ -25,7 +25,8 @@ describe('Finance orders', () => {
     expect(screen.getByRole('link', { name: 'Pedido #000123' })).toBeInTheDocument();
     expect(screen.getByText('Cartão de crédito')).toBeInTheDocument();
     expect(screen.getByText('Pago', { selector: '.finance-status' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Próxima' }));
+    expect(screen.getByRole('button', { name: 'Página 1' })).toHaveAttribute('aria-current', 'page'); expect(screen.getByText('20 por página')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Próxima página' }));
     expect(await screen.findByText('Página 2 de 2')).toBeInTheDocument();
     expect(router.state.location.search).toContain('_page=2');
   });
@@ -73,7 +74,8 @@ describe('Finance orders', () => {
     await user.click(screen.getByRole('link', { name: 'Pedido #000123' }));
     expect(await screen.findByRole('heading', { name: 'Pedido #000123' })).toBeInTheDocument();
     expect(screen.getByText('pi_3Q2w3E4r5T6y7U8i0')).toBeInTheDocument(); expect(screen.getByText('R$ 397,00')).toBeInTheDocument();
-    expect(screen.getByText(financeDetailFixture.grantId)).toBeInTheDocument(); expect(screen.getByText(/contados a partir da liberação/)).toBeInTheDocument();
+    expect(screen.getByText('Existe')).toBeInTheDocument(); expect(screen.getByText('05/10/2026 às 11:19')).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Caminho' })).toHaveTextContent('Financeiro/Pedidos/#000123'); expect(screen.getByText(/contados a partir da liberação/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Cancelar|Estornar|Reenviar|Conceder/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole('link', { name: 'Voltar para Pedidos' })); await screen.findByRole('heading', { name: 'Pedidos' });
     expect(router.state.location.pathname + router.state.location.search).toBe(entry);
@@ -98,12 +100,29 @@ describe('Finance orders', () => {
     await user.click(screen.getAllByRole('button', { name: 'Limpar filtros' }).at(-1)!);
     expect(await screen.findByText(/Ainda não há pedidos/)).toBeInTheDocument(); expect(router.state.location.search).toBe('');
   });
+  it('shows the student not-found message under the field and the unavailable alert with retry', async () => {
+    const { user } = setup(); await screen.findByText('Ana Souza'); let calls = 0;
+    server.use(http.post(`${env.API_URL}/api/v1/student-account-lookups`, () => { calls += 1; return HttpResponse.json({ code: 'IDENTITY_UNAVAILABLE' }, { status: 502 }); }));
+    await user.type(screen.getByLabelText('E-mail do aluno'), 'ana@example.com'); await user.click(screen.getByRole('button', { name: 'Localizar' }));
+    expect(await screen.findByText('Não foi possível localizar agora.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Tentar de novo' })); await waitFor(() => expect(calls).toBe(2));
+  });
+  it('shows the empty list without filters and the awaiting order without a grant', async () => {
+    const { router } = setup();
+    server.use(http.get(`${env.API_URL}/api/v1/finance/orders`, () => HttpResponse.json({ data: [], pagination: { page: 1, size: 20, total: 0, totalPages: 0 } })));
+    expect(await screen.findByRole('heading', { name: 'Ainda não há pedidos' })).toBeInTheDocument();
+    server.use(http.get(`${env.API_URL}/api/v1/finance/orders/:orderId`, () => HttpResponse.json({ ...financeDetailFixture, status: 'awaiting-payment', paymentMethod: null, paymentReference: null, paidAmountCents: null, paidAt: null, grantId: null, accessGrantedAt: null, paymentPageExpiresAt: '2026-10-06T17:19:00Z' })));
+    await router.navigate(`/financeiro/pedidos/${financeOrderId}`);
+    expect(await screen.findByText('— Sem concessão: pedido não pago')).toBeInTheDocument();
+    expect(screen.getByText('válida até 06/10/2026 às 14:19')).toBeInTheDocument(); expect(screen.getByText('Ainda não escolhido')).toBeInTheDocument();
+    expect(screen.queryByText('Pago em')).not.toBeInTheDocument();
+  });
   it('shows missing detail and paid order awaiting its grant', async () => {
     const { router } = setup(`/financeiro/pedidos/${financeOrderId}`);
     server.use(http.get(`${env.API_URL}/api/v1/finance/orders/:orderId`, () => HttpResponse.json({ code: 'ORDER_NOT_FOUND' }, { status: 404 })));
     expect(await screen.findByText('Este pedido não existe ou não pertence a esta escola.')).toBeInTheDocument();
     server.use(http.get(`${env.API_URL}/api/v1/finance/orders/:orderId`, () => HttpResponse.json({ ...financeDetailFixture, grantId: null, accessGrantedAt: null, accessPeriod: { type: 'lifetime' } })));
     await router.navigate('/financeiro'); await screen.findByText('Ana Souza'); await router.navigate(`/financeiro/pedidos/${financeOrderId}`);
-    expect(await screen.findByText('O acesso é liberado sozinho; atualize em alguns instantes.')).toBeInTheDocument(); expect(screen.getByText('Acesso vitalício')).toBeInTheDocument();
+    expect(await screen.findByText('O acesso é liberado sozinho; atualize em alguns instantes.')).toBeInTheDocument(); expect(screen.getByText('Ainda não existe')).toBeInTheDocument(); expect(screen.getByText('Acesso vitalício')).toBeInTheDocument();
   });
 });

@@ -1,12 +1,16 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { ArrowLeft, Check, CircleAlert, Search } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
 
 import { paths } from '@/config/paths';
 import { useFinanceOrder } from '@/features/finance-area/api/get-finance-order';
 import { FinanceAreaScreen } from '@/features/finance-area/components/finance-area-screen';
 import { FinanceOrderStatus } from '@/features/finance-area/components/finance-order-status';
-import { financeMoney, financeMoment, financePaymentMethod } from '@/features/finance-area/utils/finance-order-format';
+import { financeAccessPeriod, financeMoney, financeMoment, financePaymentMethod } from '@/features/finance-area/utils/finance-order-format';
+
+const Row = ({ label, children }: { label: string; children: ReactNode }) => <div className="finance-detail-row"><dt>{label}</dt><dd>{children}</dd></div>;
+const Card = ({ title, children, note }: { title: string; children: ReactNode; note?: ReactNode }) => <section className="finance-card finance-detail-card" aria-label={title}><h2>{title}</h2><dl>{children}</dl>{note}</section>;
 
 type FinanceOrderDetailScreenProps = { orderId: string };
 export const FinanceOrderDetailScreen = ({ orderId }: FinanceOrderDetailScreenProps) => {
@@ -17,17 +21,59 @@ export const FinanceOrderDetailScreen = ({ orderId }: FinanceOrderDetailScreenPr
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   if (axios.isAxiosError(query.error) && query.error.response?.status === 403) return <FinanceAreaScreen />;
-  const back = <Link className="outline-button" to={returnTo}>Voltar para Pedidos</Link>;
-  if (query.isPending) return <main className="page-shell"><div role="status" className="finance-skeleton">Carregando pedido…{Array.from({ length: 4 }, (_, index) => <div key={index} />)}</div></main>;
-  if (query.isError) return <main className="page-shell">{axios.isAxiosError(query.error) && query.error.response?.status === 404 ? <><h1>Pedido não encontrado</h1><p>Este pedido não existe ou não pertence a esta escola.</p></> : <div role="alert" className="inline-alert">Não foi possível carregar o pedido agora. <button type="button" className="outline-button" onClick={() => void query.refetch()}>Tentar de novo</button></div>}{back}</main>;
+  const back = <Link className="finance-back-link" to={returnTo}><ArrowLeft aria-hidden="true" size={16} />Voltar para Pedidos</Link>;
+  if (query.isPending) {
+    return <main className="page-shell finance-page"><div role="status" aria-label="Carregando pedido" className="finance-detail">
+      <span className="finance-skeleton-bar finance-skeleton-title" />
+      {[1, 2, 3, 4].map((card) => <div key={card} className="finance-card finance-skeleton"><span /><span /><span /></div>)}
+    </div></main>;
+  }
+  if (query.isError) {
+    return <main className="page-shell finance-page">{axios.isAxiosError(query.error) && query.error.response?.status === 404
+      ? <section className="finance-card finance-empty finance-not-found"><span className="finance-empty-tile"><Search aria-hidden="true" size={24} /></span>
+        <h1>Pedido não encontrado</h1><p>Este pedido não existe ou não pertence a esta escola.</p>
+        <Link className="primary-button" to={returnTo}>Voltar para Pedidos</Link></section>
+      : <div className="finance-detail"><div role="alert" className="finance-alert"><CircleAlert aria-hidden="true" size={16} /><div><strong>Não foi possível carregar o pedido agora.</strong>
+        <button type="button" className="outline-button finance-alert-action" onClick={() => void query.refetch()}>Tentar de novo</button></div></div>{back}</div>}
+    </main>;
+  }
   const order = query.data;
-  const moments = [['Criado em', order.createdAt], ['Página de pagamento válida até', order.paymentPageExpiresAt], ['Pago em', order.paidAt], ['Expirado em', order.expiredAt], ['Cancelado em', order.cancelledAt]];
-  return <main className="page-shell finance-page"><nav aria-label="Caminho"><Link to={returnTo}>Financeiro / Pedidos</Link> / #{order.number}</nav><header className="finance-detail-heading"><h1>Pedido #{order.number}</h1><FinanceOrderStatus status={order.status} /></header>
-    <div className="finance-detail-cards">
-      <section className="catalog-record-card"><h2>Pedido</h2><dl><dt>Aluno</dt><dd>{order.student.name}<small>{order.student.email}</small></dd><dt>Curso</dt><dd>{order.courseTitle}</dd><dt>Opção</dt><dd>{order.offerName}</dd><dt>Valor</dt><dd>{financeMoney(order.priceCents)}</dd><dt>Vigência prometida</dt><dd>{order.accessPeriod.type === 'lifetime' ? 'Acesso vitalício' : `Acesso por ${order.accessPeriod.months} meses, contados a partir da liberação do acesso`}</dd></dl></section>
-      <section className="catalog-record-card"><h2>Pagamento</h2><dl><dt>Meio</dt><dd>{order.paymentMethod ? financePaymentMethod(order.paymentMethod) : 'Ainda não escolhido'}</dd><dt>Valor recebido</dt><dd>{order.paidAmountCents ? financeMoney(order.paidAmountCents) : 'Ainda não confirmado'}</dd><dt>Referência do pagamento no gateway</dt><dd>{order.paymentReference ?? 'Ainda não disponível'}{order.paymentReference ? <><button type="button" className="outline-button" onClick={async () => { try { await navigator.clipboard.writeText(order.paymentReference!); setCopied(true); setCopyFailed(false); } catch { setCopyFailed(true); } }}>{copied ? 'Copiado' : 'Copiar'}</button><small>Para localizar o pagamento no painel do gateway.</small>{copyFailed ? <p role="alert">Não foi possível copiar. Selecione a referência.</p> : null}</> : null}</dd></dl></section>
-      <section className="catalog-record-card"><h2>Momentos</h2><dl>{moments.filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{financeMoment(value!)}</dd></div>)}</dl></section>
-      <section className="catalog-record-card"><h2>Acesso</h2><dl><dt>Concessão</dt><dd>{order.grantId ? <>✓ Existe<small>{order.grantId}</small></> : order.status === 'paid' ? '◷ Ainda não existe' : 'Sem concessão'}</dd>{order.accessGrantedAt ? <><dt>Acesso liberado em</dt><dd>{financeMoment(order.accessGrantedAt)}</dd></> : null}</dl>{order.status === 'paid' && !order.grantId ? <><p>O acesso é liberado sozinho; atualize em alguns instantes.</p><button type="button" className="outline-button" onClick={() => void query.refetch()}>Atualizar</button></> : null}</section>
-    </div>{back}
-  </main>;
+  // F3.b: cada momento só aparece quando existe; Expirado e Cancelado vêm antes do Pago (RN-V08).
+  const moments: [string, string][] = [['Criado em', financeMoment(order.createdAt)]];
+  if (order.paymentPageExpiresAt) moments.push(['Página de pagamento', `válida até ${financeMoment(order.paymentPageExpiresAt)}`]);
+  if (order.expiredAt) moments.push(['Expirado em', financeMoment(order.expiredAt)]);
+  if (order.cancelledAt) moments.push(['Cancelado em', financeMoment(order.cancelledAt)]);
+  if (order.paidAt) moments.push(['Pago em', financeMoment(order.paidAt)]);
+  const grant = order.grantId
+    ? <span className="finance-badge finance-badge-success"><Check aria-hidden="true" size={12} />Existe</span>
+    : order.status === 'paid'
+      ? <span className="finance-badge finance-badge-warning">Ainda não existe</span>
+      : <span className="finance-badge finance-badge-neutral">— Sem concessão{order.status === 'awaiting-payment' ? ': pedido não pago' : ''}</span>;
+  return <main className="page-shell finance-page"><div className="finance-detail">
+    <nav aria-label="Caminho" className="finance-breadcrumb"><Link to={paths.staffFinance.getHref()}>Financeiro</Link><span aria-hidden="true">/</span><Link to={returnTo}>Pedidos</Link><span aria-hidden="true">/</span><span aria-current="page">#{order.number}</span></nav>
+    <header className="finance-detail-heading"><h1>Pedido #{order.number}</h1><FinanceOrderStatus status={order.status} /></header>
+    <Card title="Pedido">
+      <Row label="Aluno">{order.student.name} · {order.student.email}</Row>
+      <Row label="Curso">{order.courseTitle}</Row>
+      <Row label="Opção">{order.offerName}</Row>
+      <Row label="Valor">{financeMoney(order.priceCents)}</Row>
+      <Row label="Vigência prometida">{financeAccessPeriod(order.accessPeriod)}</Row>
+    </Card>
+    <Card title="Pagamento">
+      <Row label="Meio">{order.paymentMethod ? financePaymentMethod(order.paymentMethod) : 'Ainda não escolhido'}</Row>
+      {order.paidAmountCents ? <Row label="Valor recebido">{financeMoney(order.paidAmountCents)}</Row> : null}
+      {order.paymentReference ? <Row label="Referência do pagamento no gateway">
+        <span className="finance-reference"><code>{order.paymentReference}</code>
+          <button type="button" className="outline-button finance-copy-button" onClick={async () => { try { await navigator.clipboard.writeText(order.paymentReference!); setCopied(true); setCopyFailed(false); } catch { setCopyFailed(true); } }}>{copied ? 'Copiado' : 'Copiar'}</button></span>
+        <small>Para localizar o pagamento no painel do gateway.</small>
+        {copyFailed ? <span role="alert" className="field-error">Não foi possível copiar. Selecione a referência.</span> : null}
+      </Row> : null}
+    </Card>
+    <Card title="Momentos">{moments.map(([label, value]) => <Row key={label} label={label}>{value}</Row>)}</Card>
+    <Card title="Acesso" note={order.status === 'paid' && !order.grantId ? <p className="finance-detail-note">O acesso é liberado sozinho; atualize em alguns instantes.</p> : null}>
+      <Row label="Concessão">{grant}</Row>
+      {order.accessGrantedAt ? <Row label="Acesso liberado em">{financeMoment(order.accessGrantedAt)}</Row> : null}
+    </Card>
+    {back}
+  </div></main>;
 };
