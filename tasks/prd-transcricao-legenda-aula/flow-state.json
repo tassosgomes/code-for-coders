@@ -18,9 +18,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "9.0",
+    "task": "7.0",
     "outcome": "checkpoint_ok",
-    "run": "run.zolRbLHB"
+    "run": "run.VbHqgEgI"
   },
   "history": [
     {
@@ -350,6 +350,22 @@
     {
       "at": "2026-10-13",
       "event": "reopen 7.0 run.OhGazu5j: B-1 atribuido a 7.0; checkbox desmarcado, status in_progress; codigo preservado. -> fix attempt 2/3"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "7.0: fix attempt 2/3"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "7.0: fix ok run.wf7XPNXv; revalidation"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "7.0: reval approved; checkpoint"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "7.0 checkpoint run.VbHqgEgI: aviso do servico acelera o resultado (fix B-1 isolamento), 7_task.md done, checkbox 7.0 marcado"
     }
   ],
   "tasks": {
@@ -382,7 +398,7 @@
       "checkpoint": "d2b0d06"
     },
     "7.0": {
-      "status": "in_progress",
+      "status": "done",
       "checkpoint": "b3a2d3f"
     },
     "8.0": {

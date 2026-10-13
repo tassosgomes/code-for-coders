@@ -199,7 +199,7 @@ public sealed class TranscriptionEventReceiverTests(VideoLibraryApiFactory facto
         using var response = await PostEventAsync(host, id, status: "completed");
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Equal("waiting", (await AttemptAsync(host, id)).Status);
-        await using var scope = Scope(host); Assert.Empty(await Db(scope).TranscriptionContents.IgnoreQueryFilters().ToArrayAsync(Token));
+        await using var scope = Scope(host); Assert.Empty(await Db(scope).TranscriptionContents.IgnoreQueryFilters().Where(row => row.TranscriptionId == id).ToArrayAsync(Token));
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public sealed class TranscriptionEventReceiverTests(VideoLibraryApiFactory facto
         Assert.True(await ExecuteAsync(worker));
         var attempt = await AttemptAsync(host, id);
         Assert.Equal("waiting", attempt.Status); Assert.Null(attempt.SignaledAt); Assert.True(attempt.NextActionAt > DateTimeOffset.UtcNow.AddSeconds(10));
-        await using var scope = Scope(host); Assert.Empty(await Db(scope).TranscriptionContents.IgnoreQueryFilters().ToArrayAsync(Token));
+        await using var scope = Scope(host); Assert.Empty(await Db(scope).TranscriptionContents.IgnoreQueryFilters().Where(row => row.TranscriptionId == id).ToArrayAsync(Token));
     }
 
     [Fact]
