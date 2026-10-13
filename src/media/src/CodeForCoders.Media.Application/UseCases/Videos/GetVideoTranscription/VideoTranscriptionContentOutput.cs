@@ -1,3 +1,5 @@
+using CodeForCoders.Media.Application.UseCases.Transcriptions.Common;
+
 namespace CodeForCoders.Media.Application.UseCases.Videos.GetVideoTranscription;
 
 public sealed record VideoTranscriptionContentOutput(

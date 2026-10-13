@@ -1152,6 +1152,86 @@ paths:
                     status: 409
                     code: TRANSCRIPTION_NOT_READY
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  /lessons/{lessonId}/transcription:
+    get:
+      tags:
+      - Transcrição
+      summary: Obter a transcrição da aula
+      description: 'Transcrição da Mídia vinculada à aula na versão vigente do curso,
+        para a página da aula (RF-04, RF-05, RN-TL03). O aluno **não informa vídeo**:
+        informa a aula, e Mídia resolve o vídeo pela Referência de Uso. Não exige Sessão
+        de Reprodução aberta: a página mostra o texto antes de o aluno apertar play
+        (RN-TL02).
+
+
+        Mesma verificação da reprodução, nesta ordem (RN-M21, RN-M10 passos 1 e 2):
+        (1) a aula está entre as Referências de Uso de um vídeo da escola do aluno (404
+        `LESSON_NOT_AVAILABLE`, **antes** de consultar Matrícula); (2) Matrícula responde
+        que o aluno pode acessar o curso **agora** (403 `ACCESS_DENIED`; sem resposta,
+        503 `ACCESS_DECISION_UNAVAILABLE`, falha fechada, nunca "sem acesso"); a resposta
+        pode ser reaproveitada por até 30 s, como na sessão. Só depois se lê o estado
+        da transcrição.
+
+
+        Depois da decisão positiva, vídeo sem transcrição pronta (não pronto, em andamento
+        ou falhou) responde **200** com `status: unavailable`, sem texto e sem motivo
+        técnico (RN-TL05); a aula continua reproduzível. Refazer troca o texto na próxima
+        leitura, sem republicar o curso (DP-09). Não há endereço estável, público ou
+        em cache compartilhado (`Cache-Control: private, no-store`); o texto não tem
+        dado do aluno (RN-M22) e não vai a log, métrica nem URL (RN-M26).
+
+        '
+      operationId: getLessonTranscriptionInternal
+      security:
+      - StudentUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/LessonId'
+      responses:
+        '200':
+          description: Transcrição pronta, ou ausência dela em linguagem neutra.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache
+                compartilhado nem do navegador (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonTranscription'
+              examples:
+                pronta:
+                  value:
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    status: ready
+                    revision: tr_7d2a91c4
+                    language: pt-BR
+                    durationMs: 2415000
+                    segments:
+                    - startMs: 1240
+                      endMs: 4100
+                      text: Hoje vamos ver o docker compose.
+                    - startMs: 4100
+                      endMs: 7900
+                      text: Ele descreve vários containers em um só arquivo.
+                indisponivel:
+                  value:
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    status: unavailable
+                    revision: null
+                    language: null
+                    durationMs: null
+                    segments: []
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/LessonNotAvailable'
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
 components:
   securitySchemes:
     StaffUserToken:
@@ -1605,6 +1685,61 @@ components:
           failureReason: null
           canStart: false
   schemas:
+    LessonTranscription:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - status
+      - revision
+      - language
+      - durationMs
+      - segments
+      description: 'Transcrição da aula para o aluno com direito a ela (RF-04). É a da
+        Mídia vinculada na versão vigente do curso (RN-TL03). `unavailable` cobre "ainda
+        não pronta", "em andamento" e "falhou" sem distinguir (RN-TL05): não é erro nem
+        falta de acesso, e o player toca normalmente.'
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ready
+          - unavailable
+          description: '`ready` com `segments`; `unavailable` sem texto.'
+        revision:
+          oneOf:
+          - type: string
+            minLength: 1
+            maxLength: 64
+            description: Identificador opaco da transcrição vigente; muda quando uma refeita
+              a substitui (DP-09). Igual para todos os alunos e sem dado pessoal (RN-M22).
+              Serve para o cliente saber se o texto que tem ainda é o vigente.
+            examples:
+            - tr_7d2a91c4
+          - type: 'null'
+          description: Preenchida só em `ready`.
+        language:
+          type:
+          - string
+          - 'null'
+          enum:
+          - pt-BR
+          - null
+          description: '`pt-BR` em `ready`; `null` em `unavailable`.'
+        durationMs:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Preenchida só em `ready`.
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+          description: Trechos em ordem crescente de `startMs`; `[]` em `unavailable`.
     TagMatch:
       type: string
       enum:

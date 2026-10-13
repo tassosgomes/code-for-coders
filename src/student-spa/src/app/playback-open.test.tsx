@@ -97,6 +97,35 @@ describe('Playback opening', () => {
     expect(request).toHaveBeenCalledOnce(); expect(container).toContainElement(screen.getByTestId('video-watermark'));
   });
 
+  it('seeks to the selected transcript time and plays without opening another session', async () => {
+    let requests = 0;
+    server.use(http.post(endpoint, () => { requests++; return HttpResponse.json(playbackData(), { status: 201 }); }));
+    const { container, rerender } = renderWithProviders(<ProtectedVideoPlayer lessonId={lessonId} csrfToken="csrf-proof" />);
+    await started();
+    rerender(<ProtectedVideoPlayer lessonId={lessonId} csrfToken="csrf-proof" seekRequest={{ seconds: 20, sequence: 1 }} />);
+    await waitFor(() => expect(container.querySelector('video')?.currentTime).toBe(20));
+    expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+    expect(requests).toBe(1);
+  });
+
+  it('keeps a transcript click made while opening and plays that time after metadata arrives', async () => {
+    let release: (() => void) | undefined;
+    let requests = 0;
+    server.use(http.post(endpoint, async () => {
+      requests++; await new Promise<void>((resolve) => { release = resolve; });
+      return HttpResponse.json(playbackData(), { status: 201 });
+    }));
+    const { container, rerender } = renderWithProviders(<ProtectedVideoPlayer lessonId={lessonId} csrfToken="csrf-proof" />);
+    await waitFor(() => expect(release).toBeDefined());
+    rerender(<ProtectedVideoPlayer lessonId={lessonId} csrfToken="csrf-proof" seekRequest={{ seconds: 25, sequence: 1 }} />);
+    release?.(); await started();
+    const video = container.querySelector('video')!;
+    fireEvent.loadedMetadata(video);
+    expect(video.currentTime).toBe(25);
+    expect(video.play).toHaveBeenCalled();
+    expect(requests).toBe(1);
+  });
+
   it.each(['playlist', 'variants/480p', 'key'])('keeps segment credentials away from BFF %s', (resource) => {
     const xhr = { open: vi.fn(), withCredentials: false } as unknown as XMLHttpRequest;
     setupPlaybackRequest(xhr, window.location.origin + '/api/v1/playback-sessions/id/' + resource, 'opaque-secret=value');

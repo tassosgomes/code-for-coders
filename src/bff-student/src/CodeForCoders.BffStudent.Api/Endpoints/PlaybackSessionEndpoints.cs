@@ -8,6 +8,7 @@ public static class PlaybackSessionEndpoints
     public static void MapPlaybackSessionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/api/v1/lessons/{lessonId:guid}/playback-sessions", OpenAsync);
+        endpoints.MapGet("/api/v1/lessons/{lessonId:guid}/transcription", TranscriptionAsync);
         endpoints.MapPost("/api/v1/playback-sessions/{sessionId:guid}/renewals", RenewAsync);
         endpoints.MapPost("/api/v1/playback-sessions/{sessionId:guid}/progress", ProgressAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/playlist", PlaylistAsync);
@@ -17,6 +18,8 @@ public static class PlaybackSessionEndpoints
 
     private static Task<IResult> OpenAsync(Guid lessonId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Post, $"lessons/{lessonId:D}/playback-sessions", context, client, cancellationToken);
+    private static Task<IResult> TranscriptionAsync(Guid lessonId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
+        => ProxyAsync(HttpMethod.Get, $"lessons/{lessonId:D}/transcription", context, client, cancellationToken);
     private static Task<IResult> RenewAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Post, $"playback-sessions/{sessionId:D}/renewals", context, client, cancellationToken);
     private static async Task<IResult> ProgressAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
@@ -57,6 +60,8 @@ public static class PlaybackSessionEndpoints
     {
         context.Response.Headers.CacheControl = "no-store";
         var result = await client.SendAsync(method, path, BffSessionContext.GetAccessToken(context)!, cancellationToken);
+        if (path.EndsWith("/transcription", StringComparison.Ordinal))
+            context.Response.Headers.CacheControl = result.CacheControl ?? "private, no-store";
         if (result.StatusCode is 200 or 201)
         {
             context.Response.StatusCode = result.StatusCode;

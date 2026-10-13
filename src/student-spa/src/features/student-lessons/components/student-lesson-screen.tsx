@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Tabs } from 'radix-ui';
 import axios from 'axios';
 import { Link, useLocation } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +8,7 @@ import * as z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import { env } from '@/config/env';
 import { paths } from '@/config/paths';
 import { ProtectedVideoPlayer } from '@/features/student-lessons/components/protected-video-player';
@@ -23,6 +25,8 @@ import {
 } from '@/features/student-lessons/utils/known-course-store';
 import { useLessonResumeProgress } from '@/features/student-lessons/hooks/use-lesson-resume-progress';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { useLessonTranscription } from '@/features/student-lessons/api/get-lesson-transcription';
+import { LessonTranscriptPanel } from '@/features/student-lessons/components/lesson-transcript-panel';
 
 const problemSchema = z.object({
   code: z.string(),
@@ -41,6 +45,12 @@ export const StudentLessonScreen = ({ lessonId, csrfToken }: StudentLessonScreen
   const location = useLocation();
   const navState = location.state as NavigationState;
   const query = useStudentLesson(lessonId);
+  const [accessBlocked, setAccessBlocked] = useState(false);
+  const transcription = useLessonTranscription(lessonId, !accessBlocked);
+  const [seconds, setSeconds] = useState(0);
+  const [seekRequest, setSeekRequest] = useState<{ seconds: number; sequence: number }>();
+  const [selectedTab, setSelectedTab] = useState<string>();
+  const seek = useCallback((target: number) => setSeekRequest((previous) => ({ seconds: target, sequence: (previous?.sequence ?? 0) + 1 })), []);
   const courseId = query.data?.course.courseId ?? navState?.course?.courseId ?? findKnownCourseId(lessonId);
   const resume = useLessonResumeProgress(lessonId, courseId, query.data?.course.versionNumber);
 
@@ -170,12 +180,38 @@ export const StudentLessonScreen = ({ lessonId, csrfToken }: StudentLessonScreen
         <h1 className="typo-h3 mb-4">{lesson.title}</h1>
         {csrfToken ? (
           <ProtectedVideoPlayer lessonId={lessonId} csrfToken={csrfToken} initialPosition={resume.initialPosition}
-            waitForProgress onProgressRefresh={resume.refresh} />
+            waitForProgress onProgressRefresh={resume.refresh} seekRequest={seekRequest}
+            onTimeChange={setSeconds} onAccessBlocked={setAccessBlocked} />
         ) : (
           <div role="status">Carregando vídeo…</div>
         )}
       </section>
-      <StudentLessonNav course={course} currentLessonId={lesson.lessonId} progress={resume.progress} />
+      <Tabs.Root value={accessBlocked ? 'lessons' : selectedTab ?? (transcription.data?.status === 'ready' ? 'transcription' : 'lessons')}
+        onValueChange={setSelectedTab} className="min-w-0">
+        <Tabs.List aria-label="Conteúdo da aula" className="mb-4 flex border-b">
+          {!accessBlocked ? <Tabs.Trigger value="transcription" className="min-h-11 flex-1 border-b-2 border-transparent p-3 data-[state=active]:border-primary">Transcrição</Tabs.Trigger> : null}
+          <Tabs.Trigger value="lessons" className="min-h-11 flex-1 border-b-2 border-transparent p-3 data-[state=active]:border-primary">Aulas do curso</Tabs.Trigger>
+        </Tabs.List>
+        {!accessBlocked ? <Tabs.Content value="transcription">
+          {transcription.isPending ? <div role="status" className="space-y-3">
+            <Input type="search" aria-label="Buscar na aula" placeholder="Buscar na aula" disabled />
+            <p>Carregando a transcrição…</p>
+            {[0, 1, 2, 3].map((row) => <Skeleton key={row} className="h-16 w-full" />)}
+          </div>
+            : transcription.isError ? <Alert>
+              <AlertTitle>{axios.isAxiosError(transcription.error) && transcription.error.response?.status === 403
+                ? 'Você não tem acesso a este curso.' : axios.isAxiosError(transcription.error) && transcription.error.response?.status === 503
+                  ? 'Não foi possível confirmar seu acesso agora.' : 'Não foi possível carregar a transcrição agora.'}</AlertTitle>
+              {!(axios.isAxiosError(transcription.error) && transcription.error.response?.status === 403)
+                ? <AlertDescription><Button onClick={() => void transcription.refetch()}>Tentar de novo</Button></AlertDescription> : null}
+            </Alert> : transcription.data?.status === 'ready'
+              ? <LessonTranscriptPanel segments={transcription.data.segments} seconds={seconds} onSeek={seek} />
+              : <p>A transcrição desta aula ainda não está disponível. O vídeo toca normalmente.</p>}
+        </Tabs.Content> : null}
+        <Tabs.Content value="lessons">
+          <StudentLessonNav course={course} currentLessonId={lesson.lessonId} progress={resume.progress} />
+        </Tabs.Content>
+      </Tabs.Root>
     </div>
   );
 };

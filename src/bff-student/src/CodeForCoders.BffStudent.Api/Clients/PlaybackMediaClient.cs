@@ -4,6 +4,7 @@ namespace CodeForCoders.BffStudent.Api.Clients;
 
 public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClient
 {
+    private const int MaximumTranscriptionResponseBytes = 8 * 1024 * 1024;
     private static readonly HashSet<(int, string)> KnownErrors =
     [
         (400, "VALIDATION_ERROR"),
@@ -27,12 +28,16 @@ public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClien
 
         try
         {
-            using var response = await client.SendAsync(request, effectiveToken);
-            var body = await response.Content.ReadAsByteArrayAsync(effectiveToken);
+            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, effectiveToken);
+            var body = path.EndsWith("/transcription", StringComparison.Ordinal)
+                ? await ReadLimitedBodyAsync(response.Content, effectiveToken)
+                : await response.Content.ReadAsByteArrayAsync(effectiveToken);
+            if (body is null) return new(502, Code: "UPSTREAM_UNAVAILABLE");
             var status = (int)response.StatusCode;
             var contentType = response.Content.Headers.ContentType?.ToString();
             if (status is 200 or 201)
-                return new(status, body, contentType ?? "application/octet-stream");
+                return new(status, body, contentType ?? "application/octet-stream", CacheControl:
+                    response.Headers.TryGetValues("Cache-Control", out var values) ? string.Join(", ", values) : null);
             using var document = JsonDocument.Parse(body);
             if (document.RootElement.ValueKind != JsonValueKind.Object) return new(502, Code: "UPSTREAM_UNAVAILABLE");
             var code = document.RootElement.TryGetProperty("code", out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
@@ -44,7 +49,25 @@ public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClien
                         && ended.TryGetDateTimeOffset(out var date) ? date : null) : new(502, Code: "UPSTREAM_UNAVAILABLE");
         }
         catch (HttpRequestException) { return new(502, Code: "UPSTREAM_UNAVAILABLE"); }
+        catch (IOException) { return new(502, Code: "UPSTREAM_UNAVAILABLE"); }
+        catch (Polly.Timeout.TimeoutRejectedException) { return new(504, Code: "UPSTREAM_TIMEOUT"); }
+        catch (Polly.ExecutionRejectedException) { return new(502, Code: "UPSTREAM_UNAVAILABLE"); }
         catch (JsonException) { return new(502, Code: "UPSTREAM_UNAVAILABLE"); }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { return new(504, Code: "UPSTREAM_TIMEOUT"); }
+    }
+
+    private static async Task<byte[]?> ReadLimitedBodyAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        if (content.Headers.ContentLength > MaximumTranscriptionResponseBytes) return null;
+        await using var source = await content.ReadAsStreamAsync(cancellationToken);
+        using var destination = new MemoryStream();
+        var buffer = new byte[16 * 1024];
+        int read;
+        while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            if (destination.Length + read > MaximumTranscriptionResponseBytes) return null;
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+        }
+        return destination.ToArray();
     }
 }

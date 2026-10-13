@@ -89,8 +89,9 @@ public sealed class BffSecurityMiddleware(
 
         var audience = settings.RouteAudiences.OrderByDescending(route => route.Key.Length)
             .FirstOrDefault(route => context.Request.Path.StartsWithSegments(route.Key, StringComparison.OrdinalIgnoreCase)).Value;
-        if (HttpMethods.IsPost(context.Request.Method) && context.Request.Path.StartsWithSegments("/api/v1/lessons")
-            && context.Request.Path.Value!.EndsWith("/playback-sessions", StringComparison.Ordinal)) audience = "media";
+        if (context.Request.Path.StartsWithSegments("/api/v1/lessons")
+            && ((HttpMethods.IsPost(context.Request.Method) && context.Request.Path.Value!.EndsWith("/playback-sessions", StringComparison.Ordinal))
+                || (HttpMethods.IsGet(context.Request.Method) && context.Request.Path.Value!.EndsWith("/transcription", StringComparison.Ordinal)))) audience = "media";
         if (audience is null && context.Request.Path.StartsWithSegments("/proxy")) audience = settings.ProxyAudience;
         var validation = await identityClient.ValidateSessionAsync(
             session.StudentSessionId,

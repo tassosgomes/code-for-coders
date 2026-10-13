@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,17 +16,24 @@ const speeds = [0.5, 1, 1.25, 1.5, 2];
 
 type ProtectedVideoPlayerProps = {
   lessonId: string; csrfToken: string; initialPosition?: number; waitForProgress?: boolean; onProgressRefresh?: () => void;
+  seekRequest?: { seconds: number; sequence: number };
+  onTimeChange?: (seconds: number) => void;
+  onAccessBlocked?: (blocked: boolean) => void;
 };
 
-export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, waitForProgress = false, onProgressRefresh }: ProtectedVideoPlayerProps) => {
+export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, waitForProgress = false, onProgressRefresh,
+  seekRequest, onTimeChange, onAccessBlocked }: ProtectedVideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { restart, status, watermark, zone, playing, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
+  const { restart, status, watermark, zone, playing, accessBlocked, seekAndPlay, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
     useProtectedPlayback({ lessonId, csrfToken, videoRef, initialPosition, enabled: !waitForProgress || initialPosition !== undefined, onProgressRefresh });
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
   const [volume, setVolume] = useState(1);
   const [speed, setSpeed] = useState(1);
+  useEffect(() => { if (seekRequest) seekAndPlay(seekRequest.seconds); }, [seekRequest, seekAndPlay]);
+  useEffect(() => { onTimeChange?.(position); }, [position, onTimeChange]);
+  useEffect(() => { onAccessBlocked?.(accessBlocked); }, [accessBlocked, onAccessBlocked]);
 
   const seek = (seconds: number) => {
     const video = videoRef.current;

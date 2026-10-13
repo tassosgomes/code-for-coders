@@ -3,6 +3,7 @@ using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
 using Microsoft.Extensions.Options;
+using CodeForCoders.Media.Application.UseCases.Transcriptions.Common;
 
 namespace CodeForCoders.Media.Application.UseCases.Videos.GetVideoTranscription;
 

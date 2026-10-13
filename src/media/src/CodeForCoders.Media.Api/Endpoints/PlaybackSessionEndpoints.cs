@@ -5,6 +5,7 @@ using CodeForCoders.Media.Api.Security;
 using CodeForCoders.Media.Application.UseCases.PlaybackSessions.OpenPlaybackSession;
 using CodeForCoders.Media.Application.UseCases.PlaybackSessions.GetPlaybackResource;
 using CodeForCoders.Media.Application.UseCases.PlaybackSessions.RecordPlaybackProgress;
+using CodeForCoders.Media.Application.UseCases.PlaybackSessions.GetLessonTranscription;
 
 namespace CodeForCoders.Media.Api.Endpoints;
 
@@ -14,12 +15,21 @@ public static class PlaybackSessionEndpoints
     {
         var lessons = endpoints.MapGroup("/internal/v1/lessons").RequireAuthorization(MediaAuthorization.PlaybackPolicyName);
         lessons.MapPost("/{lessonId:guid}/playback-sessions", OpenAsync);
+        lessons.MapGet("/{lessonId:guid}/transcription", TranscriptionAsync);
         var sessions = endpoints.MapGroup("/internal/v1/playback-sessions").RequireAuthorization(MediaAuthorization.PlaybackPolicyName);
         sessions.MapPost("/{sessionId:guid}/renewals", RenewAsync);
         sessions.MapPost("/{sessionId:guid}/progress", ProgressAsync);
         sessions.MapGet("/{sessionId:guid}/playlist", PlaylistAsync);
         sessions.MapGet("/{sessionId:guid}/variants/{quality}", VariantAsync);
         sessions.MapGet("/{sessionId:guid}/key", KeyAsync);
+    }
+
+    private static async Task<IResult> TranscriptionAsync(Guid lessonId, HttpContext context, IGetLessonTranscription useCase, CancellationToken cancellationToken)
+    {
+        context.Response.Headers.CacheControl = "private, no-store";
+        return Results.Ok(await useCase.ExecuteAsync(new(
+            Guid.Parse(context.User.FindFirstValue("tenantId")!),
+            Guid.Parse(context.User.FindFirstValue("sub")!), lessonId), cancellationToken));
     }
 
     private static async Task<IResult> OpenAsync(Guid lessonId, HttpContext context, IOpenPlaybackSession useCase, CancellationToken cancellationToken)
