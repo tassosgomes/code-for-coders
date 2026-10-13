@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:42'
-updated_date: '2026-10-13 21:19'
+updated_date: '2026-10-13 21:30'
 labels:
   - frontend
 dependencies: []
@@ -51,4 +51,8 @@ Meus pedidos monta um card por linha, mostra a situação sem badge e usa pagina
 
 <!-- SECTION:NOTES:BEGIN -->
 Implementado: PendingOrderCard (borda primary de 2, '#N · curso · opção', 'valor · data · meio', 'Pague até …', badge e Retomar pagamento à direita; mobile como no M5: '#N · data', curso, opção, 'valor · meio', badge, prazo e botão em largura cheia) e MyOrderRow (mesmo DOM reorganizado por CSS: card no mobile com '#N · data' e 'valor · meio'; linha da tabela no desktop com colunas 96/flex/110/104/140/190, número em primary, curso Inter 14 medium com a opção em 12 muted, OrderStatusBadge e ação Ir para o curso outline sm, Retomar pagamento outline sm ou Ver pedido link). Lista num card com cabeçalho em overline sobre muted e divisórias; a linha da opção passa a mostrar só o nome da opção (sem a vigência), como no Figma. Paginação compacta ‹ 1 2 › (atual em outline, aria-current) com anúncio 'Página X de Y' só para leitor de tela. Vazio (M2) em EmptyState com receipt, carregando (M3) em dois cartões de skeleton, erro (M4) em alerta destrutivo com Tentar de novo. Título da página passa a h1. Testes de my-orders ajustados (Próxima página, aria-current, Ver pedido). Lint, tsc, build e vitest (34 arquivos, 231 testes) passam. Prévia local 1180 e 390: tabela e cartão pendente como no M1; cartões do mobile como no M5, sem rolagem horizontal.
+
+PR #234 aberta (branch fix/compra-meus-pedidos-figma). Conferência em dev pendente após o deploy.
+
+PR #234 mergeada em 2026-10-13.
 <!-- SECTION:NOTES:END -->
