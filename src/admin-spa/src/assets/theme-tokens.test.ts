@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const readStyle = (name: string) => readFileSync(new URL(name, import.meta.url), 'utf8');
 const withoutComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+// Escalas de fonte e sombra (--font-*, --shadow-*) ficam só em :root; a sombra herda --shadow-rgb de cada tema.
 // Sombras usam os canais de --shadow-rgb e overlays usam --overlay: não são cores literais.
 const withoutTokenColors = (css: string) => css.replace(/rgb\(var\(--shadow-rgb\)[^)]*\)/g, '');
 const colorLiteral = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/;
@@ -33,7 +34,7 @@ describe('tokens de tema', () => {
   });
 
   it('o tema escuro redefine todo token de interface definido no claro', () => {
-    const light = [...tokenNames(lightBlock)].filter((name) => !name.startsWith('--code-'));
+    const light = [...tokenNames(lightBlock)].filter((name) => !/^--(code-|font-|shadow-(?!rgb))/.test(name));
     const dark = tokenNames(darkBlock);
 
     expect(light.filter((name) => !dark.has(name))).toEqual([]);

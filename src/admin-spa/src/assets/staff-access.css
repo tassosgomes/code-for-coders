@@ -9,7 +9,7 @@
 .staff-access-page .staff-name > span:last-child { display: grid; gap: 2px; justify-items: start; }
 .staff-access-page .self-badge { border: 1px solid var(--border); background: transparent; color: var(--muted); }
 
-.staff-access-page .row-menu { top: 36px; width: 200px; padding: 4px; border-radius: 12px; box-shadow: 0 12px 32px rgb(var(--shadow-rgb) / .14); }
+.staff-access-page .row-menu { top: 36px; width: 200px; padding: 4px; border-radius: 12px; box-shadow: var(--shadow-overlay); }
 .staff-access-page .row-menu button { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; font-size: 14px; line-height: 20px; color: var(--foreground); }
 .staff-access-page .row-menu button svg { flex: none; }
 .staff-access-page .row-menu button:hover,
@@ -19,7 +19,7 @@
 
 .staff-access-page .dialog-card.staff-dialog { display: grid; gap: 16px; align-content: start; width: min(520px, calc(100% - 32px)); padding: 24px; border-radius: 16px; }
 .staff-access-page .staff-dialog-header { display: grid; gap: 4px; margin-right: 32px; }
-.staff-access-page .dialog-card h2 { margin: 0; font-family: var(--font-heading, inherit); font-size: 20px; line-height: 28px; font-weight: 600; }
+.staff-access-page .dialog-card h2 { margin: 0; font-family: var(--font-heading); font-size: 20px; line-height: 28px; font-weight: 600; }
 .staff-access-page .staff-dialog-header p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
 .staff-access-page .dialog-card .dialog-close { right: 24px; top: 24px; display: grid; place-items: center; padding: 0; }
 .staff-access-page .dialog-card form { display: grid; gap: 16px; }

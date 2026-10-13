@@ -15,12 +15,25 @@
   --surface-subtle: #faf9fc;
   --surface-muted: #f5f3f8;
   --input: #ffffff;
-  --input-border: #e4e1ef;
+  --input-border: #9a94ae;
   --border: #e4e1ef;
   --border-subtle: #f0eef5;
   --border-strong: #d8d3e5;
   --overlay: rgb(13 11 20 / 0.5);
   --shadow-rgb: 22 19 31;
+
+  /* Tipografia: famílias carregadas em index.html. */
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Escala de sombras (usa os canais de --shadow-rgb de cada tema). */
+  --shadow-xs: 0 1px 2px rgb(var(--shadow-rgb) / 0.06);
+  --shadow-sm: 0 1px 1px rgb(var(--shadow-rgb) / 0.04), 0 1px 2px rgb(var(--shadow-rgb) / 0.08);
+  --shadow-md: 0 8px 20px rgb(var(--shadow-rgb) / 0.12);
+  --shadow-overlay: 0 12px 32px rgb(var(--shadow-rgb) / 0.12);
+  --shadow-dialog: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1);
+  --shadow-sheet: 0 -8px 32px rgb(var(--shadow-rgb) / 0.1);
 
   --foreground: #16131f;
   --foreground-secondary: #3a354c;
@@ -56,9 +69,9 @@
   --info-text: #1e3a8a;
   --info-border: #bfdbfe;
 
-  --status-success: #039855;
-  --status-danger: #d92d20;
-  --status-neutral: #98a2b3;
+  --status-success: #059669;
+  --status-danger: #dc2626;
+  --status-neutral: #6e6883;
 
   /* Painel de código da tela de acesso: decorativo, igual nos dois temas. */
   --code-surface: #0d0b14;
@@ -83,10 +96,10 @@
   --surface-subtle: #1c1829;
   --surface-muted: #1f1b2d;
   --input: #0d0b14;
-  --input-border: #3a354c;
-  --border: #242033;
+  --input-border: #6e6883;
+  --border: #3a354c;
   --border-subtle: #1f1b2c;
-  --border-strong: #3a354c;
+  --border-strong: #4b4560;
   --overlay: rgb(0 0 0 / 0.6);
   --shadow-rgb: 0 0 0;
 
@@ -126,5 +139,5 @@
 
   --status-success: #34d399;
   --status-danger: #f87171;
-  --status-neutral: #667085;
+  --status-neutral: #9a94ae;
 }

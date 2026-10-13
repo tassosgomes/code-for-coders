@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700&display=swap');
 @import './theme.css';
 @import './authoring.css';
 @import './courtesies-flow.css';
@@ -11,7 +10,7 @@
 @import './finance.css';
 @import './catalog.css';
 :root {
-  font-family:Inter,system-ui,sans-serif;
+  font-family:var(--font-sans);
   font-synthesis:none;
   text-rendering:optimizeLegibility
 }
@@ -50,7 +49,7 @@ h1,h2,h3,p {
 }
 
 h1,h2,h3 {
-  font-family:'Plus Jakarta Sans',sans-serif
+  font-family:var(--font-heading)
 }
 
 h1 {
@@ -166,7 +165,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   display:flex;
   align-items:center;
   gap:10px;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:var(--font-heading);
   font-size:16px;
   font-weight:600;
   white-space:nowrap
@@ -183,7 +182,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 }
 
 .brand-badge,.self-badge {
-  font:500 12px/16px Inter,sans-serif;
+  font:500 12px/16px var(--font-sans);
   border:1px solid var(--border);
   border-radius:999px;
   padding:2px 10px
@@ -253,7 +252,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   border:1px solid var(--code-border);
   border-radius:16px;
   overflow:hidden;
-  box-shadow:0 12px 32px rgb(var(--shadow-rgb) / 0.20)
+  box-shadow: var(--shadow-overlay)
 }
 
 .code-title {
@@ -263,7 +262,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   align-items:center;
   gap:8px;
   color:var(--code-muted);
-  font:500 12px/16px 'JetBrains Mono',monospace
+  font:500 12px/16px var(--font-mono)
 }
 
 .code-title>span:last-child {
@@ -295,7 +294,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   margin:0;
   padding:20px;
   color:var(--code-text);
-  font:14px/22px 'JetBrains Mono',monospace;
+  font:14px/22px var(--font-mono);
   white-space:pre-wrap
 }
 
@@ -374,7 +373,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .password-reset-card input,.dialog-card input:not([type=radio]),.dialog-card select,.dialog-card textarea {
   width:100%;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:10px;
   min-height:40px;
   padding:9px 12px;
@@ -552,7 +551,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:12px;
-  box-shadow:0 12px 32px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-overlay);
   padding:12px;
   display:grid;
   gap:10px;
@@ -593,7 +592,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:12px;
-  box-shadow:0 12px 32px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-overlay);
   padding:8px;
   display:grid;
   gap:2px;
@@ -761,7 +760,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .access-tabs button.active {
   background:var(--surface);
   color:var(--foreground);
-  box-shadow:0 1px 2px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-xs);
   font-weight:600
 }
 
@@ -857,7 +856,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:10px;
-  box-shadow:0 12px 32px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-overlay);
   width:180px;
   padding:6px
 }
@@ -897,7 +896,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:16px;
-  box-shadow:0 12px 32px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-overlay);
   padding:24px
 }
 
@@ -952,7 +951,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   align-items:flex-start;
   gap:12px;
   padding:10px 12px;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:10px;
   cursor:pointer
 }
@@ -1027,7 +1026,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     left:0;
     transform:translateX(-100%);
     transition:transform .2s;
-    box-shadow:0 12px 32px rgb(var(--shadow-rgb) / 0.10)
+    box-shadow: var(--shadow-overlay)
   }
 
   .app-sidebar.is-open {
@@ -1252,7 +1251,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .audit-field input,.audit-field select {
   width:100%;
   min-height:40px;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:9px;
   background:var(--input);
   padding:8px 10px;
@@ -1315,7 +1314,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .audit-tabs button.is-selected {
   background:var(--input);
   color:var(--foreground);
-  box-shadow:0 1px 2px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-xs);
   font-weight:600;
 }
 
@@ -1552,7 +1551,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .audit-pagination button[aria-current="page"] {
   background:var(--surface);
   color:var(--primary);
-  box-shadow:0 1px 2px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-xs);
   font-weight:600;
 }
 
@@ -1713,7 +1712,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .audit-detail-card-heading h2 {
   margin:0;
   color:var(--foreground-secondary);
-  font-family:Inter,system-ui,sans-serif;
+  font-family:var(--font-sans);
   font-size:12px;
   line-height:16px;
   font-weight:400;
@@ -1783,7 +1782,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   border-radius:5px;
   background:var(--surface-muted);
   padding:2px 5px;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:var(--font-mono);
   overflow-wrap:anywhere;
 }
 
@@ -1837,7 +1836,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .audit-complements-summary h2 span {
   color:var(--muted);
-  font-family:Inter,system-ui,sans-serif;
+  font-family:var(--font-sans);
   font-size:14px;
   font-weight:400;
 }
@@ -1990,7 +1989,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   grid-column:1 / -1;
   width:100%;
   min-height:88px;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:10px;
   background:var(--input);
   color:var(--foreground);
@@ -2278,7 +2277,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     border-bottom:0;
     border-radius:16px 16px 0 0;
     background:var(--surface);
-    box-shadow:0 -8px 32px rgb(var(--shadow-rgb) / 0.10);
+    box-shadow: var(--shadow-sheet);
     padding:16px 16px max(16px, env(safe-area-inset-bottom));
   }
 
@@ -2423,7 +2422,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-library-controls input {
   min-width:220px;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:8px;
   padding:8px 12px
 }
@@ -2768,7 +2767,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .videos-page .video-filter-options button.video-filter-active {
   background:var(--surface);
   color:var(--foreground);
-  box-shadow:0 1px 1px rgb(var(--shadow-rgb) / 0.04),0 1px 2px rgb(var(--shadow-rgb) / 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .video-search-control {
@@ -2778,7 +2777,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   align-items:center;
   gap:8px;
   padding:0 12px;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:10px;
   background:var(--input);
   color:var(--muted);
@@ -2906,7 +2905,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   border:1px solid var(--border);
   border-radius:12px;
   background:var(--surface);
-  box-shadow:0 1px 2px rgb(var(--shadow-rgb) / 0.04);
+  box-shadow: var(--shadow-xs);
 }
 
 .video-transfer-details {
@@ -3170,7 +3169,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 .video-duration {
   color:var(--muted);
-  font:400 12px/18px 'JetBrains Mono',monospace;
+  font:400 12px/18px var(--font-mono);
   white-space:nowrap;
 }
 
@@ -3595,7 +3594,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   width:100%;
   min-height:40px;
   padding:8px 12px;
-  border:1px solid var(--border);
+  border:1px solid var(--input-border);
   border-radius:10px;
   background:var(--input);
   color:var(--foreground);
@@ -3744,7 +3743,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     align-items:center;
     gap:10px;
     margin-right:auto;
-    font-family:'Plus Jakarta Sans',sans-serif;
+    font-family:var(--font-heading);
     font-size:16px;
     font-weight:600;
     white-space:nowrap;
@@ -3755,7 +3754,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   }
 
   .mobile-backoffice-brand .brand-badge {
-    font-family:Inter,system-ui,sans-serif;
+    font-family:var(--font-sans);
   }
 }
 
@@ -4040,7 +4039,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-page-heading .page-subtitle { margin-top: 8px; }
 .course-filters { display: flex; gap: 4px; align-items: center; }
 .course-filters button, .course-draft-tab { padding: 6px 12px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; }
-.course-filters button[aria-pressed=true], .course-filters button[aria-selected=true], .course-draft-tab { background: var(--surface); color: inherit; box-shadow:0 1px 3px rgb(var(--shadow-rgb) / 8%); }
+.course-filters button[aria-pressed=true], .course-filters button[aria-selected=true], .course-draft-tab { background: var(--surface); color: inherit; box-shadow: var(--shadow-sm); }
 .course-table-wrap { overflow-x: auto; }
 .course-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .course-table th { text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); padding: 16px; }
@@ -4062,7 +4061,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-dialog-heading p { font-size: 14px; color: var(--muted); margin: 0; }
 .text-details-form { display: grid; gap: 12px; }
 .text-details-form label { font-size: 14px; }
-.text-details-form input, .text-details-form textarea { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: inherit; background: var(--surface); font: inherit; }
+.text-details-form input, .text-details-form textarea { width: 100%; border: 1px solid var(--input-border); border-radius: 10px; padding: 10px 12px; color: inherit; background: var(--surface); font: inherit; }
 .text-details-form textarea { resize: vertical; }
 .text-details-form small { color: var(--muted); font-size: 12px; }
 .course-breadcrumb { display: flex; gap: 8px; color: var(--muted); font-size: 12px; }
@@ -4099,12 +4098,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-drag-handle { padding: 6px; background: transparent; color: inherit; border: 0; cursor: grab; flex-shrink: 0; }
 .course-item-actions { position: relative; flex-shrink: 0; }
 .course-action-trigger { border: 0; color: inherit; background: transparent; cursor: pointer; padding: 4px 12px; font-size: 24px; }
-.course-action-menu { position: absolute; right: 0; top: 100%; z-index: 3; min-width: 210px; display: grid; gap: 4px; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow:0 8px 20px rgb(var(--shadow-rgb) / 0.13); }
+.course-action-menu { position: absolute; right: 0; top: 100%; z-index: 3; min-width: 210px; display: grid; gap: 4px; padding: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-md); }
 .course-action-menu button, .course-action-menu > span { padding: 8px 12px; text-align: left; background: transparent; color: inherit; border: 0; border-radius: 6px; }
 .course-action-menu button { cursor: pointer; }
 .course-action-menu button:hover { background: var(--border); }
 .course-action-menu button:disabled { opacity: .5; cursor: default; }
-.course-module:focus, .course-lesson:focus { outline: 2px solid var(--primary); outline-offset: 3px; }
+.course-module:focus-visible, .course-lesson:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 @media (max-width: 640px) { .course-module-heading, .course-lesson { gap: 8px; padding: 12px; } .course-module-heading > span { font-size: 12px; } }
 
 .course-delete-dialog .dialog-card { max-width: 560px; white-space: normal; }
@@ -4116,7 +4115,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-audience { margin: 24px 0; padding: 24px; border: 1px solid var(--border); border-radius: 12px; }
 .course-recommended-list, .course-recommendation-results { list-style: none; padding: 0; display: grid; gap: 12px; }
 .course-recommended-list li, .course-recommendation-results li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 12px; flex-wrap: wrap; }
-.course-recommended-list li:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+.course-recommended-list li:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .course-recommended-list li > div { display: flex; gap: 8px; }
 .course-recommendation-results small { display: block; color: var(--muted); }
 .course-audience .single-choice-options { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -4130,9 +4129,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .course-video-sheet { justify-content: flex-end; align-items: stretch; }
 .course-video-sheet .dialog-card { width: min(38rem, 100%); max-height: 100dvh; margin: 0; border-radius: 0; overflow-y: auto; }
 .course-video-search { display: grid; gap: .5rem; }
-.course-video-search input { width: 100%; padding: .75rem; background: var(--surface); color: inherit; border: 1px solid var(--border); border-radius: .5rem; }
+.course-video-search input { width: 100%; padding: .75rem; background: var(--surface); color: inherit; border: 1px solid var(--input-border); border-radius: .5rem; }
 .single-choice-options { border: 0; padding: 1rem 0; display: grid; gap: .75rem; }
-.single-choice-option { display: flex; gap: .75rem; align-items: center; padding: 1rem; border: 1px solid var(--border); border-radius: .75rem; cursor: pointer; }
+.single-choice-option { display: flex; gap: .75rem; align-items: center; padding: 1rem; border: 1px solid var(--input-border); border-radius: .75rem; cursor: pointer; }
 .single-choice-option > span { display: grid; gap: .4rem; }
 .course-video-pagination { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
 @media (max-width: 640px) {
@@ -4169,7 +4168,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .courtesy-stepper li[aria-current] > span:first-child { background: var(--primary); color:var(--primary-foreground); border-color: var(--primary); }
 .courtesy-lookup-card { margin-top: 0; display: grid; gap: 16px; padding: 24px; }
 .courtesy-step-heading, .courtesy-student-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
-.courtesy-lookup-card .courtesy-step-heading h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 1.2px; font: 600 12px/16px Inter, sans-serif; }
+.courtesy-lookup-card .courtesy-step-heading h2 { color: var(--primary); text-transform: uppercase; letter-spacing: 1.2px; font: 600 12px/16px var(--font-sans); }
 .courtesy-step-heading > span { font-size: 12px; color: var(--muted); }
 .courtesy-actions { display: flex; justify-content: end; }
 .courtesy-student-card { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--border); border-radius: 12px; }
@@ -4194,7 +4193,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 @media (max-width: 600px) { .courtesy-course-row { align-items: start; flex-direction: column; } }
 
 .courtesy-lookup-card textarea, .courtesy-lookup-card input[type=number] {
-  border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+  border: 1px solid var(--input-border); border-radius: 10px; padding: 10px 12px;
   color: inherit; background: var(--surface); font: inherit;
 }
 .courtesy-lookup-card textarea { resize: vertical; }
@@ -4212,7 +4211,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .courtesy-access-grant-row .status-badge:last-child:not(.status-active) { color: var(--primary); background: var(--accent-subtle); border: 0; }
 .courtesy-lifetime-confirm { display: flex; align-items: start; gap: 12px; padding: 14px 16px; border: 1px solid var(--warning-border); border-radius: 12px; color: var(--warning-soft-foreground); background: var(--warning-soft); font-size: 14px; font-weight: 500; line-height: 20px; }
 .courtesy-lifetime-checkbox { position: relative; flex-shrink: 0; width: 20px; height: 20px; }
-.courtesy-lifetime-checkbox input { appearance: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; }
+.courtesy-lifetime-checkbox input { appearance: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--input-border); border-radius: 8px; background: var(--surface); cursor: pointer; }
 .courtesy-lifetime-checkbox input:checked { background: var(--primary); border-color: var(--primary); }
 .courtesy-lifetime-checkbox input:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .courtesy-lifetime-checkbox svg { position: absolute; inset: 3px; color:var(--primary-foreground); pointer-events: none; display: none; }
@@ -4226,3 +4225,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   .courtesy-access-grant-row > span:nth-child(4) { font-size: 12px; line-height: 16px; }
 }
 @media (max-width: 600px) { .courtesy-actions { flex-wrap: wrap; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .audit-skeleton-row,
+  .audit-detail-skeleton-lines span,
+  .audit-detail-skeleton-complement { animation: none; }
+}

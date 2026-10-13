@@ -1,5 +1,5 @@
 import axios from 'axios';
-import Hls from 'hls.js';
+import type Hls from 'hls.js';
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 import { env } from '@/config/env';
@@ -246,7 +246,20 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
     window.addEventListener('pagehide', onPageHide);
 
     const start = async () => {
-      if (!Hls.isSupported()) {
+      // hls.js só é baixado quando a aula realmente toca.
+      let HlsModule: typeof Hls;
+      try {
+        HlsModule = (await import('hls.js')).default;
+      } catch (error) {
+        // Falha de rede ou chunk antigo após deploy: não é falta de suporte do navegador.
+        if (!controller.signal.aborted) {
+          timing.fail(error);
+          setStatus('Não foi possível iniciar a aula.');
+        }
+        return;
+      }
+      if (controller.signal.aborted) return;
+      if (!HlsModule.isSupported()) {
         timing.fail(new Error('HLS not supported'));
         setStatus(supportMessage);
         return;
@@ -257,9 +270,9 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
         if (controller.signal.aborted || !videoRef.current) return;
         adopt(session);
         setStatus('');
-        hls = new Hls({ startLevel: -1, startPosition: requestedPositionRef.current ?? positionRef.current,
+        hls = new HlsModule({ startLevel: -1, startPosition: requestedPositionRef.current ?? positionRef.current,
           xhrSetup: (xhr, url) => setupPlaybackRequest(xhr, url, sessionRef.current?.segmentAccess.query ?? '') });
-        hls.on(Hls.Events.ERROR, (_event, data) => {
+        hls.on(HlsModule.Events.ERROR, (_event, data) => {
           if (data.fatal) {
             timing.fail(data);
             stop('Não foi possível iniciar a aula.');

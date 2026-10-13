@@ -11,7 +11,7 @@
 .finance-filter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .finance-filter-fields label, .finance-email-field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500; line-height: 20px; color: var(--foreground); }
 .finance-field-label { font-size: 14px; font-weight: 500; line-height: 20px; }
-.finance-filter-fields input, .finance-filter-fields select { width: 100%; height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--surface); color: var(--foreground); font: 400 14px/20px Inter, system-ui, sans-serif; }
+.finance-filter-fields input, .finance-filter-fields select { width: 100%; height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--surface); color: var(--foreground); font: 400 14px/20px var(--font-sans); }
 .finance-filter-fields input::placeholder { color: var(--muted); }
 .finance-filter-fields input[aria-invalid='true'] { border-color: var(--danger); }
 .finance-filter-fields .field-error { color: var(--danger-text); font-size: 12px; font-weight: 400; line-height: 16px; }
@@ -23,7 +23,7 @@
 .finance-student-chip { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; margin: 0; padding: 6px 12px; border-radius: 9999px; background: var(--accent-subtle); color: var(--foreground); font-size: 14px; font-weight: 400; line-height: 20px; }
 .finance-student-chip button { display: inline-grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--foreground); cursor: pointer; }
 .finance-filter-actions { display: flex; gap: 16px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
-.finance-link-button { min-height: 40px; padding: 0; border: 0; background: transparent; color: var(--primary); font: 600 14px/20px Inter, system-ui, sans-serif; cursor: pointer; }
+.finance-link-button { min-height: 40px; padding: 0; border: 0; background: transparent; color: var(--primary); font: 600 14px/20px var(--font-sans); cursor: pointer; }
 .finance-link-button:hover { text-decoration: underline; }
 .finance-page .finance-mobile-filter-button { display: none; }
 
@@ -67,8 +67,8 @@
 /* Paginação: "20 por página ‹ 1 2 ›" */
 .finance-pagination { display: flex; gap: 4px; align-items: center; justify-content: flex-end; }
 .finance-pagination > span:first-child { margin-right: 8px; color: var(--muted); font-size: 14px; line-height: 20px; }
-.finance-pagination button { min-width: 32px; height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--foreground); font: 500 12px/16px Inter, system-ui, sans-serif; cursor: pointer; }
-.finance-pagination button[aria-current='page'] { border-color: var(--input-border); background: var(--surface); }
+.finance-pagination button { min-width: 32px; height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--foreground); font: 500 12px/16px var(--font-sans); cursor: pointer; }
+.finance-pagination button[aria-current='page'] { border-color: var(--border); background: var(--surface); }
 .finance-pagination button:disabled { opacity: 0.5; cursor: default; }
 
 /* Estados: carregando (skeleton), vazio (EmptyState) */
@@ -98,7 +98,7 @@
 .finance-detail-row dd { flex: 1; min-width: 0; margin: 0; color: var(--foreground); font-weight: 500; overflow-wrap: anywhere; }
 .finance-detail-row dd small { margin-top: 4px; font-weight: 400; }
 .finance-reference { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.finance-reference code { font: 400 12px/18px 'JetBrains Mono', monospace; color: var(--foreground); }
+.finance-reference code { font: 400 12px/18px var(--font-mono); color: var(--foreground); }
 .finance-copy-button.outline-button { min-height: 32px; padding: 0 12px; font-size: 12px; font-weight: 500; line-height: 16px; }
 .finance-detail-note { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
 .finance-back-link { display: inline-flex; align-self: flex-start; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px; border-radius: 10px; color: var(--foreground); font-size: 14px; font-weight: 600; text-decoration: none; }
@@ -143,4 +143,12 @@
   .finance-detail-row { flex-direction: column; gap: 2px; font-size: 16px; line-height: 24px; }
   .finance-detail-row dt { width: auto; font-size: 12px; line-height: 16px; }
   .finance-detail-row dd { font-weight: 400; }
+}
+
+/* Alvos de toque de 44px no mobile (desktop mantém os tamanhos do Figma). */
+@media (max-width: 767px) {
+  .finance-pagination button { min-width: 44px; height: 44px; }
+  .finance-copy-button.outline-button, .finance-alert-action.outline-button { min-height: 44px; }
+  .finance-icon-button { width: 44px; height: 44px; }
+  .finance-student-chip button { min-width: 44px; min-height: 44px; margin: -12px -12px -12px -4px; }
 }
