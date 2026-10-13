@@ -1,28 +1,76 @@
 import axios from 'axios';
-import { AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Check, Clock, LoaderCircle, Search, TimerOff, X, type LucideIcon } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { paths } from '@/config/paths';
 import { useCancelOrder } from '@/features/student-purchase/api/cancel-order';
 import { useOrder } from '@/features/student-purchase/api/get-order';
 import { useStartOrderPayment } from '@/features/student-purchase/api/start-order-payment';
-import { formatPendingPaymentDeadline, purchasePeriod, purchasePrice } from '@/features/student-purchase/utils/purchase-labels';
+import { CancelOrderConfirm } from '@/features/student-purchase/components/cancel-order-confirm';
+import { OrderStatusBadge } from '@/features/student-purchase/components/order-status-badge';
+import { AlertActions, ErrorAlert, InfoAlert } from '@/features/student-purchase/components/purchase-alert';
+import { formatPendingPaymentDeadline, purchaseDay, purchasePeriod, purchasePrice } from '@/features/student-purchase/utils/purchase-labels';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { cn } from 'cn';
+
+const cardClassName = 'flex w-full flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:p-6';
+const panelTextClassName = 'text-base text-muted-foreground';
+const actionsClassName = 'flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3';
+const actionClassName = 'w-full sm:w-auto';
+const paymentMethods: Record<string, string> = { card: 'Cartão de crédito', pix: 'PIX', boleto: 'Boleto' };
+const paidElsewhereNotice = 'Se você pagou este pedido e o pagamento ainda não foi compensado, o acesso é liberado sozinho quando ele chegar.';
+
+type Tone = 'progress' | 'waiting' | 'success' | 'expired' | 'cancelled';
+const tones: Record<Tone, { icon: LucideIcon; className: string }> = {
+  progress: { icon: LoaderCircle, className: 'bg-accent text-primary [&>svg]:motion-safe:animate-spin' },
+  waiting: { icon: Clock, className: 'bg-warning-soft text-warning-soft-foreground' },
+  success: { icon: Check, className: 'bg-success-soft text-success-soft-foreground' },
+  expired: { icon: TimerOff, className: 'bg-destructive/10 text-destructive' },
+  cancelled: { icon: X, className: 'bg-secondary text-primary' },
+};
+
+/** OrderStatePanel: o título anuncia a troca de estado (aria-live), o resto acompanha. */
+const OrderStatePanel = ({ tone, title, children }: { tone: Tone; title: string; children?: ReactNode }) => {
+  const { icon: Icon, className } = tones[tone];
+  return (
+    <section aria-label="Situação do pedido" className={cardClassName}>
+      <div role="status" aria-live="polite" aria-atomic="true" className="flex items-center gap-3">
+        <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-lg', className)}><Icon aria-hidden="true" className="size-5" /></span>
+        <h2 className="typo-h4 min-w-0 flex-1 text-foreground sm:typo-h3">{title}</h2>
+      </div>
+      {children}
+    </section>
+  );
+};
+
+const SummaryRow = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div className="flex gap-4 text-sm leading-5">
+    <dt className="w-24 shrink-0 text-muted-foreground sm:w-30">{label}</dt>
+    <dd className="min-w-0 flex-1 font-medium text-foreground">{children}</dd>
+  </div>
+);
+
+const OrderLoading = () => (
+  <div aria-label="Carregando pedido" aria-busy="true" className="flex w-full max-w-190 flex-col gap-6">
+    <div className="flex flex-col gap-2">
+      <Skeleton className="h-3.5 w-30 rounded-lg bg-secondary" />
+      <Skeleton className="h-8 w-90 max-w-full rounded-lg bg-secondary" />
+      <Skeleton className="h-4 w-75 max-w-full rounded-lg bg-secondary" />
+    </div>
+    <div className={cardClassName}>
+      <Skeleton className="h-7 w-70 max-w-full rounded-lg bg-secondary" />
+      {[1, 2].map((line) => <Skeleton key={line} className="h-4 w-full rounded-lg bg-secondary" />)}
+    </div>
+    <div className={cardClassName}>
+      <Skeleton className="h-5 w-50 max-w-full rounded-lg bg-secondary" />
+      {[1, 2, 3].map((line) => <Skeleton key={line} className="h-4 w-full rounded-lg bg-secondary" />)}
+    </div>
+  </div>
+);
 
 type StudentOrderScreenProps = {
   orderId: string;
@@ -45,17 +93,22 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
     if (confirmed && result === 'concluido') courseLink.current?.focus();
   }, [confirmed, result]);
 
-  if (!order.data && order.isPending) return <Skeleton aria-label="Carregando pedido" className="h-64 max-w-[640px]" />;
+  if (!order.data && order.isPending) return <OrderLoading />;
   if (!order.data) {
+    if (axios.isAxiosError(order.error) && order.error.response?.status === 404) {
+      return (
+        <div className="flex w-full max-w-160 flex-col items-center gap-4 rounded-xl border border-border bg-card px-8 py-10 text-center">
+          <span className="flex size-12 items-center justify-center rounded-lg bg-secondary text-primary"><Search aria-hidden="true" className="size-6" /></span>
+          <h1 className="typo-h4 text-foreground">Pedido não encontrado</h1>
+          <p className="text-sm text-muted-foreground">Este pedido não existe ou não é seu. Confira o endereço ou veja a lista dos seus pedidos.</p>
+          <Button asChild><Link to={paths.studentMyOrders.getHref()}>Ver meus pedidos</Link></Button>
+        </div>
+      );
+    }
     return (
-      <Alert variant="destructive">
-        <AlertTitle>
-          {axios.isAxiosError(order.error) && order.error.response?.status === 404
-            ? 'Pedido não encontrado.'
-            : 'Não foi possível carregar o pedido agora.'}
-        </AlertTitle>
-        <Button onClick={() => void order.refetch()}>Tentar de novo</Button>
-      </Alert>
+      <ErrorAlert className="max-w-190" title="Não foi possível carregar o pedido agora.">
+        <AlertActions><Button size="sm" variant="outline" className="text-xs text-foreground" onClick={() => void order.refetch()}>Tentar de novo</Button></AlertActions>
+      </ErrorAlert>
     );
   }
 
@@ -63,189 +116,126 @@ export const StudentOrderScreen = ({ orderId, order, result, delayed, lessonId, 
   const isPaymentExpired = axios.isAxiosError(payment.error) &&
     (payment.error.response?.data as { code?: string } | undefined)?.code === 'ORDER_NOT_PAYABLE';
   const isCancelled = data.status === 'cancelled';
-  const isExpired = data.status === 'expired' || isPaymentExpired;
+  const isExpired = !isCancelled && (data.status === 'expired' || isPaymentExpired);
+  const awaiting = !isCancelled && !isExpired && data.status === 'awaiting-payment';
   const following = result === 'concluido' && !confirmed;
-  const pendingPayment = data.status === 'awaiting-payment' ? data.pendingPayment : null;
+  const pendingPayment = awaiting ? data.pendingPayment : null;
+  // Depois de obter o endereço a página sai para o gateway; o botão fica desabilitado até lá.
+  const opening = payment.isPending || payment.isSuccess;
+  const startPayment = () => payment.mutate({ orderId, csrfToken });
 
-  const status = confirmed
-    ? 'Compra confirmada'
-    : isCancelled
-      ? 'Pedido cancelado'
-      : isExpired
-        ? 'Pedido expirado'
-        : data.status === 'paid'
-          ? 'Liberando seu acesso'
-          : following
-            ? 'Confirmando pagamento'
-            : pendingPayment?.method === 'pix'
-              ? 'Aguardando pagamento do PIX'
-              : pendingPayment?.method === 'boleto'
-                ? 'Aguardando pagamento do boleto'
-                : 'Aguardando pagamento';
+  const openCancelDialog = (open: boolean) => {
+    if (open) cancel.reset();
+    setCancelDialogOpen(open);
+  };
+  const confirmCancel = () => cancel.mutate({ orderId, csrfToken }, {
+    onSuccess: () => { setCancelDialogOpen(false); toast.success('Pedido cancelado.'); },
+    onError: (error) => {
+      // Pedido que já não está aguardando: fecha e mostra a situação atual.
+      if (axios.isAxiosError(error) && error.response?.status === 422) { setCancelDialogOpen(false); void order.refetch(); }
+    },
+  });
+  const cancelFailed = cancel.isError && !(axios.isAxiosError(cancel.error) && cancel.error.response?.status === 422);
 
-  const paymentMethodLabel = data.paymentMethod === 'card'
-    ? 'Cartão de crédito'
-    : data.paymentMethod === 'pix'
-      ? 'PIX'
-      : data.paymentMethod === 'boleto'
-        ? 'Boleto'
-        : data.paymentMethod;
-
-  const actionButtonText = payment.isError
-    ? 'Tentar de novo'
-    : pendingPayment?.method === 'pix'
-      ? 'Ver código PIX'
-      : pendingPayment?.method === 'boleto'
-        ? 'Ver boleto'
-        : result === 'saiu'
-          ? 'Continuar pagamento'
-          : 'Ir para o pagamento';
-
-  const cancelLabel = pendingPayment
-    ? 'Desistir e pagar de outra forma'
-    : 'Desistir do pedido';
-
-  const paymentActions = (
-    <>
-      {payment.isError && <p role="alert">Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.</p>}
-      {cancel.isError && <p role="alert">Não foi possível cancelar o pedido agora.</p>}
-      <div className="flex flex-wrap gap-3">
-        <Button disabled={payment.isPending || !csrfToken} onClick={() => payment.mutate({ orderId, csrfToken })}>
-          {actionButtonText}
-        </Button>
-        <Button
-          variant="outline"
-          disabled={cancel.isPending || !csrfToken}
-          onClick={() => setCancelDialogOpen(true)}
-        >
-          {cancelLabel}
-        </Button>
-      </div>
-    </>
+  const delayNotice = <InfoAlert>
+    <p>A confirmação pode demorar. Seu acesso será liberado sozinho assim que o pagamento for confirmado e você receberá o comprovante por e-mail. Você pode sair desta página: acompanhe em <Link className="underline underline-offset-4" to={paths.studentMyOrders.getHref()}>Meus pedidos</Link>.</p>
+  </InfoAlert>;
+  const refreshNotice = order.isRefetchError ? <InfoAlert>Não conseguimos atualizar agora. Tentaremos de novo.</InfoAlert> : null;
+  const paymentError = (description: string) => payment.isError && !isPaymentExpired
+    ? <ErrorAlert title="Não foi possível abrir o pagamento agora.">
+      <p>{description}</p>
+      <AlertActions><Button size="sm" variant="outline" className="text-xs text-foreground" disabled={opening || !csrfToken} onClick={startPayment}>Tentar de novo</Button></AlertActions>
+    </ErrorAlert>
+    : null;
+  const paymentActions = (primary: string, openingLabel: string, cancelLabel: string) => (
+    <div className={actionsClassName}>
+      <Button className={actionClassName} disabled={opening || !csrfToken} onClick={startPayment}>
+        {opening ? <><LoaderCircle aria-hidden="true" className="animate-spin" />{openingLabel}</> : primary}
+      </Button>
+      <Button className={actionClassName} variant="outline" disabled={cancel.isPending || !csrfToken} onClick={() => openCancelDialog(true)}>{cancelLabel}</Button>
+    </div>
   );
+  const buyAgain = <div className={actionsClassName}>
+    <Button asChild className={actionClassName}><Link to={paths.studentPurchase.getHref(data.offer.offerId, data.course.courseId)}>Comprar de novo</Link></Button>
+  </div>;
+
+  let panel: ReactNode;
+  if (confirmed && lessonId) {
+    panel = <OrderStatePanel tone="success" title="Compra confirmada">
+      <p className={panelTextClassName}>Seu acesso a {data.course.title} está liberado. {purchasePeriod(data.accessPeriod)}.</p>
+      {result === 'concluido' ? <p className="text-sm text-muted-foreground">Você receberá o comprovante por e-mail.</p> : null}
+      <div className={actionsClassName}>
+        <Button asChild className={actionClassName}><Link ref={courseLink} to={paths.studentLesson.getHref(lessonId)}>Ir para o curso</Link></Button>
+      </div>
+    </OrderStatePanel>;
+  } else if (isCancelled) {
+    panel = <OrderStatePanel tone="cancelled" title="Pedido cancelado">
+      <p className={panelTextClassName}>Você desistiu deste pedido{data.cancelledAt ? ` em ${purchaseDay(data.cancelledAt)}` : ''}. Nenhum acesso foi liberado. Se quiser comprar de novo, a nova compra segue as condições vigentes da opção.</p>
+      <InfoAlert>{paidElsewhereNotice}</InfoAlert>
+      {buyAgain}
+    </OrderStatePanel>;
+  } else if (isExpired) {
+    panel = <OrderStatePanel tone="expired" title="Pedido expirado">
+      <p className={panelTextClassName}>O prazo para pagar este pedido venceu{data.expiredAt ? ` em ${purchaseDay(data.expiredAt)}` : ''} e o acesso não foi liberado. Se você ainda quiser o curso, faça uma nova compra.</p>
+      <InfoAlert>{paidElsewhereNotice}</InfoAlert>
+      {buyAgain}
+    </OrderStatePanel>;
+  } else if (data.status === 'paid' || following) {
+    const releasing = data.status === 'paid';
+    panel = <OrderStatePanel tone="progress" title={releasing ? 'Liberando seu acesso' : 'Confirmando pagamento'}>
+      {delayed ? delayNotice : <p className={panelTextClassName}>{releasing
+        ? 'Seu pagamento foi confirmado. Estamos liberando o curso: isso leva alguns segundos. Esta página atualiza sozinha.'
+        : 'Recebemos a sua volta do pagamento e estamos aguardando a confirmação. Esta página atualiza sozinha: você não precisa recarregar.'}</p>}
+      {refreshNotice}
+    </OrderStatePanel>;
+  } else if (pendingPayment) {
+    const pix = pendingPayment.method === 'pix';
+    panel = <OrderStatePanel tone="waiting" title={pix ? 'Aguardando pagamento do PIX' : 'Aguardando pagamento do boleto'}>
+      <p className={panelTextClassName}>{pix
+        ? `Pague o PIX até ${formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso será liberado sozinho assim que o pagamento for confirmado. O curso ainda não está liberado.`
+        : `Pague o boleto até ${formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso a ${data.course.title} será liberado sozinho quando o pagamento for compensado, o que pode levar até 3 dias úteis. O curso ainda não está liberado.`}</p>
+      {paymentError('Seu pedido continua aguardando pagamento. Tente de novo em instantes.')}
+      {paymentActions(pix ? 'Ver código PIX' : 'Ver boleto', pix ? 'Ver código PIX' : 'Ver boleto', 'Desistir e pagar de outra forma')}
+    </OrderStatePanel>;
+  } else {
+    const resumed = !!data.paymentPageExpiresAt || result === 'saiu';
+    panel = <OrderStatePanel tone="waiting" title="Aguardando pagamento">
+      <p className={panelTextClassName}>{data.paymentPageExpiresAt
+        ? `Você saiu do pagamento antes de escolher como pagar. Seu pedido continua aguardando e vale até ${formatPendingPaymentDeadline(data.paymentPageExpiresAt)}.`
+        : 'Seu pedido continua aguardando pagamento. Cartão, PIX ou boleto são escolhidos no ambiente seguro de pagamento.'}</p>
+      {paymentError('Seu pedido continua aguardando.')}
+      {paymentActions(resumed ? 'Continuar pagamento' : 'Ir para o pagamento', 'Abrindo o pagamento…', 'Desistir')}
+    </OrderStatePanel>;
+  }
 
   return (
-    <div className="grid max-w-[640px] gap-6">
-      <p className="text-sm text-muted-foreground">PEDIDO #{data.number}</p>
-      <h1 className="typo-h2">Pedido nº {data.number}</h1>
-      <h2 className="typo-h3">{data.course.title}</h2>
-      <div role="status" aria-live="polite" aria-atomic="true">
-        <Alert>
-          {confirmed ? (
-            <CheckCircle aria-hidden="true" />
-          ) : isCancelled ? (
-            <XCircle aria-hidden="true" />
-          ) : isExpired ? (
-            <AlertCircle aria-hidden="true" />
-          ) : (
-            <Clock aria-hidden="true" />
-          )}
-          <AlertTitle>{status}</AlertTitle>
-        </Alert>
-      </div>
+    <div className="flex w-full max-w-190 flex-col gap-6">
+      <header className="flex flex-col gap-1">
+        <p className="typo-overline text-primary">Pedido #{data.number}</p>
+        <h1 className="typo-h3 text-foreground sm:typo-h2">{data.course.title}</h1>
+        <p className="text-base text-muted-foreground">{data.offer.name} · {purchasePrice(data.priceCents)} · criado em {purchaseDay(data.createdAt)}</p>
+      </header>
 
-      {following && delayed && (
-        <p role="status">
-          A confirmação está demorando um pouco. Você pode voltar a este pedido depois; continuamos acompanhando por aqui.
-        </p>
-      )}
-      {confirmed && result === 'concluido' && <p>Você receberá o comprovante por e-mail.</p>}
-      {confirmed && lessonId && (
-        <Button asChild>
-          <Link ref={courseLink} to={paths.studentLesson.getHref(lessonId)}>
-            Ir para o curso
-          </Link>
-        </Button>
-      )}
+      {panel}
 
-      {isCancelled && (
-        <div className="grid gap-3">
-          <p>Este pedido foi cancelado. Você pode realizar uma nova compra pelas condições vigentes da oferta.</p>
-          <Button asChild>
-            <Link to={paths.studentPurchase.getHref(data.offer.offerId, data.course.courseId)}>
-              Comprar de novo
-            </Link>
-          </Button>
-        </div>
-      )}
+      <section aria-labelledby="order-summary-title" className={cardClassName}>
+        <h2 id="order-summary-title" className="typo-h5 text-foreground">Resumo do pedido</h2>
+        <dl className="flex flex-col gap-4">
+          <SummaryRow label="Curso">{data.course.title}</SummaryRow>
+          <SummaryRow label="Opção">{data.offer.name}</SummaryRow>
+          <SummaryRow label="Vigência">{purchasePeriod(data.accessPeriod)}</SummaryRow>
+          <SummaryRow label="Valor">{purchasePrice(data.priceCents)}</SummaryRow>
+          <SummaryRow label="Meio">{data.paymentMethod ? paymentMethods[data.paymentMethod] ?? data.paymentMethod : 'Ainda não escolhido'}</SummaryRow>
+          <SummaryRow label="Situação"><OrderStatusBadge status={isPaymentExpired && data.status === 'awaiting-payment' ? 'expired' : data.status} /></SummaryRow>
+        </dl>
+      </section>
 
-      {isExpired && !isCancelled && (
-        <div className="grid gap-3">
-          <p>O prazo de pagamento deste pedido venceu. Você pode comprar de novo pelas condições vigentes da oferta.</p>
-          <Button asChild>
-            <Link to={paths.studentPurchase.getHref(data.offer.offerId, data.course.courseId)}>
-              Comprar de novo
-            </Link>
-          </Button>
-        </div>
-      )}
+      <Button asChild variant="ghost" className="self-start">
+        <Link to={paths.studentMyOrders.getHref()}><ArrowLeft aria-hidden="true" />Meus pedidos</Link>
+      </Button>
 
-      {!isCancelled && !isExpired && pendingPayment && !following && (
-        <div className="grid gap-3">
-          {pendingPayment.method === 'pix' && (
-            <p>
-              Pague o PIX até {formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso será liberado sozinho assim que o pagamento for confirmado. O curso ainda não está liberado.
-            </p>
-          )}
-          {pendingPayment.method === 'boleto' && (
-            <p>
-              Pague o boleto até {formatPendingPaymentDeadline(pendingPayment.expiresAt)}. O acesso a {data.course.title} será liberado sozinho quando o pagamento for compensado, o que pode levar até 3 dias úteis. O curso ainda não está liberado.
-            </p>
-          )}
-          {paymentActions}
-        </div>
-      )}
-
-      {!isCancelled && !isExpired && data.status === 'awaiting-payment' && !pendingPayment && !following && (
-        <div className="grid gap-3">
-          {paymentActions}
-        </div>
-      )}
-
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Desistir do pedido?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Seu pedido atual será cancelado e você poderá escolher outro meio de pagamento ou realizar uma nova compra na oferta.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                cancel.mutate({ orderId, csrfToken });
-              }}
-            >
-              Sim, desistir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Resumo do pedido</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <p>{data.course.title}</p>
-          <p>{data.offer.name}</p>
-          <p>{purchasePeriod(data.accessPeriod)}</p>
-          <p className="text-xl font-semibold">{purchasePrice(data.priceCents)}</p>
-          {data.paymentMethod && <p>Meio de pagamento: {paymentMethodLabel}</p>}
-          <p>
-            Situação:{' '}
-            {data.status === 'paid'
-              ? 'Pago'
-              : data.status === 'cancelled'
-                ? 'Cancelado'
-                : data.status === 'expired'
-                  ? 'Expirado'
-                  : 'Aguardando pagamento'}
-          </p>
-        </CardContent>
-      </Card>
-      <Link className="text-sm underline underline-offset-4" to={paths.studentMyOrders.getHref()}>← Meus pedidos</Link>
+      <CancelOrderConfirm open={cancelDialogOpen} onOpenChange={openCancelDialog} number={data.number}
+        pending={cancel.isPending} failed={cancelFailed} onConfirm={confirmCancel} />
     </div>
   );
 };

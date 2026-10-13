@@ -7,7 +7,7 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:41'
-updated_date: '2026-10-13 20:47'
+updated_date: '2026-10-13 20:51'
 labels:
   - frontend
 dependencies: []
@@ -55,4 +55,8 @@ O resumo mostra 'Confirmar compra', cria o pedido e para na página do pedido, o
 
 <!-- SECTION:NOTES:BEGIN -->
 Implementado: cabeçalho COMPRA/H2; cartão de 640 (p-6; p-5 no mobile) com overline Curso, título H3 (H4 no mobile), dl entre divisórias com rótulos de 140 (84 no mobile) e preço H5; alertas info com ícone info, título semibold e texto muted; ações '← Voltar ao curso' (ghost) e 'Ir para o pagamento' lado a lado (no mobile o primário fica em cima, em largura cheia). Fluxo G6: o clique cria o pedido (mesma Idempotency-Key em nova tentativa) e chama a sessão de pagamento; botão desabilitado com spinner 'Abrindo o pagamento…'; se o pagamento falha, alerta C1.e com Tentar de novo (reabre o pagamento do mesmo pedido, sem criar outro) e Ver meu pedido. Estados C1.c, C1.d (EmptyState com tile, Ver todos os cursos e Voltar pelo histórico), C1.f (skeleton) e C1.g (alerta destrutivo com Tentar de novo outline sm). Vigência do aluno passa a 'contados a partir da liberação do acesso' (G4), o que vale também no Pedido e em Meus pedidos; a página do curso (P2) mantém o texto dela. Decisão: o cartão do C1.d fica alinhado ao cabeçalho, sem o recuo de 24 do frame do Figma. Lint, tsc, build e vitest (33 arquivos, 224 testes) passam. Prévia local (DOM renderizado + CSS do build): cartão 640x518, padding 24, raio 16, rótulos 140, título 24/30, preço 16/24 semibold, alertas padding 16 raio 12, botões 40; mobile 390 com cartão 358, padding 20, rótulos 84, título 20, botões de 316 com o primário em cima e sem rolagem horizontal.
+
+PR #232 aberta (branch fix/compra-resumo-figma). Conferência em dev com pedido de teste no sandbox do Stripe pendente após o deploy.
+
+PR #232 mergeada em 2026-10-13.
 <!-- SECTION:NOTES:END -->

@@ -1,6 +1,7 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { installStudentOrderRoute, renderStudentOrderRoute } from './student-order-route.test-utils';
@@ -24,15 +25,19 @@ const stubCancellation = (onCancel: () => void) =>
 
 const confirmCancellation = async (buttonName: string, wasCancelled: () => boolean) => {
   await userEvent.click(await screen.findByRole('button', { name: buttonName }));
-  expect(await screen.findByText('Desistir do pedido?')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Sim, desistir' }));
+  const dialog = await screen.findByRole('alertdialog', { name: 'Desistir deste pedido?' });
+  expect(within(dialog).getByText(/O pedido #000123 será cancelado e o pagamento pendente, também/u)).toBeInTheDocument();
+  expect(within(dialog).getByRole('button', { name: 'Manter pedido' })).toHaveFocus();
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Desistir do pedido' }));
   await waitFor(() => expect(wasCancelled()).toBe(true));
-  expect(await screen.findByText('Pedido cancelado')).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { name: 'Pedido cancelado' })).toBeInTheDocument();
+  expect(toast.success).toHaveBeenCalledWith('Pedido cancelado.');
 };
 
 describe('order-cancel', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(toast, 'success');
     installStudentOrderRoute();
   });
 
@@ -57,7 +62,7 @@ describe('order-cancel', () => {
 
     expect(await screen.findByText('Aguardando pagamento do boleto')).toBeInTheDocument();
     await confirmCancellation('Desistir e pagar de outra forma', () => cancelCalled);
-    expect(screen.getByText(/Este pedido foi cancelado/)).toBeInTheDocument();
+    expect(screen.getByText(/Você desistiu deste pedido em 06\/10\/2026\. Nenhum acesso foi liberado\./u)).toBeInTheDocument();
 
     const buyAgain = screen.getByRole('link', { name: 'Comprar de novo' });
     expect(buyAgain).toHaveAttribute('href', paths.studentPurchase.getHref(purchaseOfferId, purchaseCourseId));
@@ -78,8 +83,8 @@ describe('order-cancel', () => {
 
     renderStudentOrderRoute(paths.studentOrder.getHref(purchaseOrderId));
 
-    expect(await screen.findByText('Aguardando pagamento')).toBeInTheDocument();
-    await confirmCancellation('Desistir do pedido', () => cancelCalled);
+    expect(await screen.findByRole('heading', { name: 'Aguardando pagamento' })).toBeInTheDocument();
+    await confirmCancellation('Desistir', () => cancelCalled);
   });
 
   it('modal can be dismissed without cancelling the order', async () => {
@@ -97,18 +102,19 @@ describe('order-cancel', () => {
 
     renderStudentOrderRoute(paths.studentOrder.getHref(purchaseOrderId));
 
-    const cancelBtn = await screen.findByRole('button', { name: 'Desistir do pedido' });
+    const cancelBtn = await screen.findByRole('button', { name: 'Desistir' });
     await userEvent.click(cancelBtn);
 
-    expect(await screen.findByText('Desistir do pedido?')).toBeInTheDocument();
-    const dismissBtn = screen.getByRole('button', { name: 'Voltar' });
-    await userEvent.click(dismissBtn);
+    await screen.findByRole('alertdialog', { name: 'Desistir deste pedido?' });
+    await userEvent.click(screen.getByRole('button', { name: 'Manter pedido' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
 
-    await waitFor(() => {
-      expect(screen.queryByText('Desistir do pedido?')).not.toBeInTheDocument();
-    });
+    await userEvent.click(cancelBtn);
+    await screen.findByRole('alertdialog', { name: 'Desistir deste pedido?' });
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(cancelCalled).toBe(false);
-    expect(screen.getByText('Aguardando pagamento')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Aguardando pagamento' })).toBeInTheDocument();
   });
 
   it('renders Pedido expirado with Comprar de novo button when order status is expired', async () => {
@@ -123,7 +129,8 @@ describe('order-cancel', () => {
     renderStudentOrderRoute(paths.studentOrder.getHref(purchaseOrderId));
 
     expect(await screen.findByText('Pedido expirado')).toBeInTheDocument();
-    expect(screen.getByText(/O prazo de pagamento deste pedido venceu/)).toBeInTheDocument();
+    expect(screen.getByText(/O prazo para pagar este pedido venceu em 06\/10\/2026 e o acesso não foi liberado/u)).toBeInTheDocument();
+    expect(screen.getByText(/Se você pagou este pedido e o pagamento ainda não foi compensado/u)).toBeInTheDocument();
 
     const buyAgain = screen.getByRole('link', { name: 'Comprar de novo' });
     expect(buyAgain).toHaveAttribute('href', paths.studentPurchase.getHref(purchaseOfferId, purchaseCourseId));
@@ -147,16 +154,29 @@ describe('order-cancel', () => {
     await userEvent.click(payBtn);
 
     expect(await screen.findByText('Pedido expirado')).toBeInTheDocument();
-    expect(screen.getByText(/O prazo de pagamento deste pedido venceu/)).toBeInTheDocument();
+    expect(screen.getByText(/O prazo para pagar este pedido venceu e o acesso não foi liberado/u)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Comprar de novo' })).toBeInTheDocument();
   });
 
-  it('shows error notice when cancellation fails', async () => {
+  it('keeps the dialog open with Nada mudou when cancellation fails', async () => {
     server.use(
-      http.get(`${env.API_URL}/api/v1/orders/:orderId`, () => HttpResponse.json({
-        ...purchaseOrder,
-        status: 'awaiting-payment',
-      })),
+      http.get(`${env.API_URL}/api/v1/orders/:orderId`, () => HttpResponse.json({ ...purchaseOrder, status: 'awaiting-payment' })),
+      http.post(`${env.API_URL}/api/v1/orders/:orderId/cancellation`, () => HttpResponse.json({ code: 'COMMERCE_UNAVAILABLE' }, { status: 502 })),
+    );
+
+    renderStudentOrderRoute(paths.studentOrder.getHref(purchaseOrderId));
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Desistir' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Desistir deste pedido?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Desistir do pedido' }));
+    expect(await within(dialog).findByText('Nada mudou. Tente de novo.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Aguardando pagamento' })).toBeInTheDocument();
+  });
+
+  it('closes the dialog and shows the current situation when the order is no longer cancellable', async () => {
+    let reads = 0;
+    server.use(
+      http.get(`${env.API_URL}/api/v1/orders/:orderId`, () => { reads++; return HttpResponse.json(reads === 1 ? { ...purchaseOrder, status: 'awaiting-payment' } : { ...purchaseOrder, status: 'expired', expiredAt: '2026-10-06T12:00:00Z' }); }),
       http.post(`${env.API_URL}/api/v1/orders/:orderId/cancellation`, () => HttpResponse.json(
         { code: 'ORDER_NOT_CANCELLABLE' },
         { status: 422 },
@@ -165,12 +185,11 @@ describe('order-cancel', () => {
 
     renderStudentOrderRoute(paths.studentOrder.getHref(purchaseOrderId));
 
-    const cancelBtn = await screen.findByRole('button', { name: 'Desistir do pedido' });
-    await userEvent.click(cancelBtn);
+    await userEvent.click(await screen.findByRole('button', { name: 'Desistir' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Desistir deste pedido?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Desistir do pedido' }));
 
-    const confirmBtn = await screen.findByRole('button', { name: 'Sim, desistir' });
-    await userEvent.click(confirmBtn);
-
-    expect(await screen.findByText('Não foi possível cancelar o pedido agora.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(await screen.findByRole('heading', { name: 'Pedido expirado' })).toBeInTheDocument();
   });
 });

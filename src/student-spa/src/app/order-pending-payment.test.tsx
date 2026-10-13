@@ -64,9 +64,8 @@ describe('order-pending-payment', () => {
     const pixButton = await screen.findByRole('button', { name: 'Ver código PIX' });
     await userEvent.click(pixButton);
 
-    expect(await screen.findByText(
-      'Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.',
-    )).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível abrir o pagamento agora.')).toBeInTheDocument();
+    expect(screen.getByText(/Seu pedido continua aguardando/u, { selector: '[data-slot=alert-description] p' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument();
   });
 });
