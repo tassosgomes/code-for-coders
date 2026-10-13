@@ -19,6 +19,12 @@
       "skillPath": "skills/react/SKILL.md",
       "computedHash": "e1e14c6c4914349cbd0c3d9fd270284da129572933a90111d400c6bcbb003183"
     },
+    "security-audit": {
+      "source": "cloudflare/security-audit-skill",
+      "sourceType": "github",
+      "skillPath": "skills/security-audit/SKILL.md",
+      "computedHash": "98b97aad2873b3b9a8e064007c25e7827b493ba27fda8bfbdb41dab586767973"
+    },
     "tsg-flow-architecture-baseline": {
       "source": "tassosgomes/my-skills",
       "sourceType": "github",

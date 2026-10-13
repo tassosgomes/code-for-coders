@@ -2,7 +2,7 @@
 # cloudflared-billing-webhook do docker-compose.komodo.apis.yml.
 # Expõe somente o webhook do Stripe do billing; qualquer outro caminho responde 404.
 # As credenciais do tunnel são fornecidas pelo ambiente de execução em TUNNEL_CRED_CONTENTS.
-tunnel: 0a5d533d-77d2-4df9-ab7c-3c02cf95f87f
+tunnel: 9e0b7c67-7c3b-4fc9-844b-f6e00242f69a
 ingress:
   - hostname: billing-webhook.tasso.dev.br
     path: ^/webhooks/v1/stripe/events$

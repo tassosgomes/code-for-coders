@@ -32,11 +32,11 @@ public static class StripeEventTranslator
             string? method = null;
             string? reason = null;
 
-            // The session only echoes the allowed types; the chosen method lives on the PaymentIntent and is resolved by the
-            // use case. Among card/pix/boleto only card settles synchronously, so a session completed as paid was paid by card.
+            // The session does not say which method the payer used (card, pix or boleto can all complete it), so the method is
+            // left null and the use case resolves it from the PaymentIntent, as it does for the async events.
             if (type == "checkout.session.completed")
             {
-                if (Text(item, "payment_status") == "paid") { outcome = "confirmed"; method = "card"; }
+                if (Text(item, "payment_status") == "paid") outcome = "confirmed";
                 else outcome = "awaiting";
             }
             else if (type == "checkout.session.async_payment_succeeded") outcome = "confirmed";

@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:42'
-updated_date: '2026-10-13 21:50'
+updated_date: '2026-10-13 21:59'
 labels:
   - frontend
 dependencies: []
@@ -63,4 +63,8 @@ A lista e o detalhe de pedidos do backoffice seguem a estrutura do Figma, mas o 
 
 <!-- SECTION:NOTES:BEGIN -->
 Implementado: regras do Financeiro saem de app.css para assets/finance.css. Lista: cabeçalho FINANCEIRO/Pedidos/subtítulo; FinanceFilterBar em card (padding 20, raio 16, rótulos 14 medium, controles de 40 com raio 10); campo Curso volta a ser um select só (sai 'Buscar curso' e a paginação de cursos, que não existem no Figma); e-mail com Localizar ao lado, chip 'Nome · e-mail' com ✕ quando localizado, erro sob o campo quando não achado e alerta destrutivo com Tentar de novo quando a busca está indisponível (F2.b); Limpar filtros como link e Filtrar primário; tabela num card com cabeçalho em overline sobre surface-muted, número em primary, aluno e curso com segunda linha em 12 muted, OrderStatusBadge com ícones lucide (relógio, check, relógio riscado em vermelho sólido, X em accent); paginação '20 por página ‹ 1 2 ›' com a atual em outline; carregando em card com 5 barras; vazio com filtros (F1.d: lupa, 'Ajuste a situação…', Limpar filtros primário) e sem pedidos (F1.e: receipt); erro em alerta destrutivo com Tentar de novo. Mobile: botão Filtros (N) em largura cheia, Sheet com alça, título Filtros e ✕ 'Fechar filtros', pedidos em cards ('#N · data', aluno, e-mail, curso, opção, 'valor · meio', badge). Detalhe: trilha com links Financeiro / Pedidos / #N, H2 com badge, cards com overline e linhas de 180 (rótulo em cima no mobile), Aluno 'Nome · e-mail', referência em JetBrains Mono com Copiar outline sm, momentos 'DD/MM/AAAA às HH:MM' no fuso da escola (America/Sao_Paulo, como no SPA do aluno) e 'válida até …', concessão em badge (✓ Existe, Ainda não existe, — Sem concessão[: pedido não pago]), o id da concessão deixa de aparecer e o botão Atualizar sai (o Figma F3.b2 só tem o texto); não encontrado em EmptyState com Voltar para Pedidos primário; carregando em skeleton de título e quatro cards; erro em alerta com Tentar de novo. Fora de escopo: 'Pague até' do F3.b1 (o contrato do detalhe no backoffice não traz o prazo do PIX/boleto) e o ícone do tema sobreposto ao selo Backoffice no topo do mobile (shell). Testes de finance-orders ajustados e dois novos (busca indisponível com Tentar de novo; lista vazia e pedido aguardando sem concessão). Lint, tsc, build e vitest do admin-spa (60 arquivos, 396 testes) passam. Prévia local: card de filtros com 328 de altura como no Figma, select 40/raio 10, cabeçalho da tabela 12 semibold uppercase, badge 12 medium com padding 2/12; detalhe como F3.a e F3.b1; mobile 390 como F1.i e F3.g, sem rolagem horizontal.
+
+PR #235 aberta (branch fix/compra-financeiro-figma). Conferência em dev pendente após o deploy, com conta de financeiro.
+
+PR #235 mergeada em 2026-10-13.
 <!-- SECTION:NOTES:END -->

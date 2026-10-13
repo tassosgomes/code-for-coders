@@ -2,15 +2,15 @@
 
 set -Eeuo pipefail
 
-readonly script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly repository_root="$(cd -- "$script_directory/.." && pwd)"
+script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+repository_root="$(cd -- "$script_directory/.." && pwd)"
+readonly script_directory repository_root
 readonly env_file="${REMOTE_INFRA_ENV_FILE:-$repository_root/.env}"
 readonly database_bootstrap="$script_directory/init-local-databases.sql"
 
 readonly rabbitmq_vhost=code-for-coders
 readonly rabbitmq_user=code_for_coders
 readonly bff_admin_rabbitmq_user=code_for_coders_bff_admin
-readonly s3_bucket=code-for-coders-media
 readonly s3_user=code_for_coders_media
 readonly s3_mc_image=ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
 # service|Infra.Data project|database|migration role|design-time connection variable
@@ -52,6 +52,8 @@ Environment (read from .env, all optional):
   REMOTE_INFRA_HOST      Infra server address (default 192.168.0.5)
   REMOTE_INFRA_SSH       SSH host alias used by provision (default desenv-server)
   REMOTE_VALKEY_DATABASE Valkey logical database for this project (default 1)
+  AWS_MEDIA_BUCKET      Bucket shared with deployed Media (provision defaults to code4coders-midia)
+  AWS_MEDIA_OBJECT_PREFIX Object prefix shared with deployed Media (default media)
 EOF
 }
 
@@ -99,6 +101,8 @@ provision() {
   if [[ ! -f "$env_file" ]]; then
     "$script_directory/generate-local-env.sh"
   fi
+
+  set_env_if_missing AWS_MEDIA_BUCKET "${AWS_MEDIA_BUCKET:-code4coders-midia}"
 
   remote true || die "Cannot reach $(infra_ssh) over SSH."
 
@@ -215,7 +219,9 @@ minio_user_exists() {
 }
 
 provision_s3() {
-  local secret_key=$1 mc_host policy_file
+  local secret_key=$1 mc_host policy_file s3_bucket
+  s3_bucket="${AWS_MEDIA_BUCKET:-$(require_value AWS_MEDIA_BUCKET)}"
+  [[ "$s3_bucket" =~ ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$ ]] || die "AWS_MEDIA_BUCKET is not a valid bucket name."
   command -v docker >/dev/null 2>&1 || die "Docker is required to provision MinIO."
   mc_host="$(minio_root_host)"
 
@@ -314,7 +320,17 @@ check() {
     check_port Valkey 6379 || failed=1
   fi
 
-  check_port "MinIO (S3)" 9000 || failed=1
+  local s3_bucket
+  s3_bucket="${AWS_MEDIA_BUCKET:-$(require_value AWS_MEDIA_BUCKET)}"
+  if curl --fail --silent --output /dev/null --max-time 5 --head \
+    --aws-sigv4 'aws:amz:us-east-1:s3' \
+    --user "$s3_user:$(require_value REMOTE_S3_SECRET_KEY)" \
+    "http://$host:9000/$s3_bucket"; then
+    log "OK    MinIO authenticated access to bucket $s3_bucket"
+  else
+    log "FAIL  MinIO authenticated access to bucket $s3_bucket"
+    failed=1
+  fi
   check_port "OTel Collector (gRPC)" 4317 || failed=1
   check_port "smtp4dev (SMTP)" 25 || failed=1
 

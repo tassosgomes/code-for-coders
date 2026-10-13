@@ -4,7 +4,7 @@
 # infrastructure on 192.168.0.5 (PostgreSQL, RabbitMQ, Valkey, OTel Collector, smtp4dev).
 # Provision dependencies with scripts/remote-infra.sh provision; credentials are supplied per target.
 # The PostgreSQL server is shared (max_connections=200), so every pool is capped via
-# REMOTE_DB_MAX_POOL_SIZE (default 10) and idle connections are released after 60 s.
+# REMOTE_DB_MAX_POOL_SIZE (default 3). Idle connections return to the pool and are pruned after 60 s.
 # The external c4c-shared network (pre-created on the server) carries DNS between this
 # resource and the frontend resource (bff-admin/bff-student resolve identity/learning/...).
 
@@ -53,7 +53,7 @@ services:
       StudentSessionTokens__EmailAudiences__0: media
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_identity;Username=code_for_coders_identity;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=identity
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
@@ -141,7 +141,7 @@ services:
       AccessDecision__CacheSeconds: "30"
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_learning;Username=code_for_coders_learning;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=learning
       LearningTokens__Issuer: identity
       LearningTokens__Audience: learning
       LearningTokens__JwksUrl: http://identity:8080/internal/v1/jwks
@@ -185,7 +185,7 @@ services:
       Preparation__MasterKeyId: ${MEDIA_PREPARATION_MASTER_KEY_ID:-local-v1}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=media-api
       Media__Role: api
       RabbitMq__ManagementUri: ${RABBITMQ_MANAGEMENT_URI:-https://rabbit.tasso.dev.br}
       MediaTokens__Issuer: identity
@@ -239,7 +239,7 @@ services:
       Transcription__MinimumFreeDiskBytes: ${TRANSCRIPTION_MINIMUM_FREE_DISK_BYTES:-2147483648}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=media-worker
       Media__Role: worker
       RabbitMq__LearningExchange: learning.events
       RabbitMq__CoursePublicationsQueue: media.course-publications
@@ -293,7 +293,7 @@ services:
       BillingClient__SigningKeyId: local-commerce-billing-1
       BillingClient__SigningKeyBase64: ${COMMERCE_BILLING_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       StudentApp__PublicBaseUrl: https://dev-code4coders.tasso.dev.br/students
-      RabbitMq__BillingExchange: billing.events
+      RabbitMq__BillingExchange: billing.events.${BILLING_NAMESPACE:-default}
       RabbitMq__SalesPaymentsQueue: commerce.sales-payments
       RabbitMq__EntitlementPurchasesQueue: commerce.entitlement-purchases
       RabbitMq__SalesAccessGrantedQueue: commerce.sales-access-granted
@@ -306,7 +306,7 @@ services:
       ServiceAssertions__Issuers__learning__AllowedTenantIds__0: ${STUDENT_TENANT_ID:-00000000-0000-7000-8000-000000000001}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_commerce;Username=code_for_coders_commerce;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=commerce
       FinanceAreaTokens__Issuer: identity
       FinanceAreaTokens__Audience: commerce
       StudentAccountIdentity__BaseAddress: http://identity:8080/
@@ -361,7 +361,7 @@ services:
       Email__SchoolTimeZone: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_notification;Username=code_for_coders_notification;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=notification
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
       RabbitMq__Password: ${REMOTE_RABBITMQ_PASSWORD:?set in the target environment}
@@ -397,7 +397,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_billing;Username=code_for_coders_billing;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=billing
       Billing__Namespace: ${BILLING_NAMESPACE:-default}
       RabbitMq__Host: ${REMOTE_INFRA_HOST:-192.168.0.5}
       RabbitMq__Username: code_for_coders
@@ -450,7 +450,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60
+      ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_audit;Username=code_for_coders_audit_runtime;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-3};Connection Idle Lifetime=60;Connection Pruning Interval=10;Application Name=audit
       AuditTokens__MetadataAddress: http://identity:8080/.well-known/openid-configuration
       AuditTokens__Issuer: identity
       AuditTokens__Audience: audit

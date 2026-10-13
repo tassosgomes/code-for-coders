@@ -10,6 +10,7 @@ using CodeForCoders.Billing.Domain.Entities;
 using CodeForCoders.Billing.Infra.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 namespace CodeForCoders.Billing.IntegrationTests;
@@ -66,9 +67,12 @@ public sealed class GatewayWebhookTests(BillingIntegrationFixture fixture) : IAs
         Assert.Equal(0, count);
     }
 
-    [Fact(DisplayName = nameof(ValidSignatureRecordsEventInInboxAndReturns200))]
-    public async Task ValidSignatureRecordsEventInInboxAndReturns200()
+    [Theory(DisplayName = nameof(ValidSignatureRecordsEventInInboxAndReturns200))]
+    [InlineData("card")]
+    [InlineData("pix")]
+    public async Task ValidSignatureRecordsEventInInboxAndReturns200(string paymentMethod)
     {
+        app.GatewayMock.Setup(g => g.GetPaymentMethodAsync("pi_valid_1", It.IsAny<CancellationToken>())).ReturnsAsync(paymentMethod);
         using var client = app.CreateClient();
         var eventId = $"evt_valid_{Guid.CreateVersion7():N}";
         var body = JsonSerializer.Serialize(new
@@ -110,7 +114,7 @@ public sealed class GatewayWebhookTests(BillingIntegrationFixture fixture) : IAs
         Assert.Equal("cs_valid_1", entry.SessionReference);
         Assert.Equal("pi_valid_1", entry.PaymentReference);
         Assert.Equal("confirmed", entry.Outcome);
-        Assert.Equal("card", entry.Method);
+        Assert.Equal(paymentMethod, entry.Method);
         Assert.Equal(49700, entry.AmountCents);
     }
 

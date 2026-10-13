@@ -64,9 +64,16 @@ API settings; `scripts/remote-infra.sh` prepares the server and requires SSH acc
 
 `provision` and `migrate` are idempotent; run `migrate` again whenever a branch adds migrations.
 `scripts/remote-infra.sh check` verifies connectivity. The project uses the RabbitMQ vhost
-`code-for-coders`, Valkey database `1` (`REMOTE_VALKEY_DATABASE`), and the MinIO bucket
-`code-for-coders-media` with a bucket-scoped user. Emails land in the shared
+`code-for-coders`, Valkey database `1` (`REMOTE_VALKEY_DATABASE`), and the MinIO bucket selected by
+`AWS_MEDIA_BUCKET` (provision defaults to `code4coders-midia`) with a bucket-scoped user.
+Set `AWS_MEDIA_BUCKET`, `AWS_MEDIA_OBJECT_PREFIX` (default `media`), and the media preparation master
+key to the same values as the deployed Media service: local and deployed workers consume the same
+database queue. A different bucket causes a worker to fail preparation of another stack's videos.
+The connectivity check authenticates against the selected bucket. Emails land in the shared
 smtp4dev at <https://smtp.tasso.dev.br> and telemetry in Kibana at <https://kibana.tasso.dev.br>.
+
+Run `python3 scripts/tests/remote-media-config.test.py` to check storage consistency across Compose
+configurations without starting containers.
 
 ### Deployed environments
 

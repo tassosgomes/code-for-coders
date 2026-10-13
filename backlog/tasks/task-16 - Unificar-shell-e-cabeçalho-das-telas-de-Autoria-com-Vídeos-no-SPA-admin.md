@@ -1,10 +1,10 @@
 ---
 id: TASK-16
 title: Unificar shell e cabeçalho das telas de Autoria com Vídeos no SPA admin
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-10-10 19:20'
-updated_date: '2026-10-10 19:23'
+updated_date: '2026-10-10 19:39'
 labels:
   - frontend
   - bug
@@ -21,9 +21,9 @@ Ao navegar entre Vídeos e Autoria no SPA admin, a casca muda: o alinhamento do 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Sidebar, logo e início têm o mesmo alinhamento e espaçamento em Vídeos e Autoria (desktop e mobile)
+- [x] #1 Sidebar, logo e início têm o mesmo alinhamento e espaçamento em Vídeos e Autoria (desktop e mobile)
 - [x] #2 A ordem de Vídeos e Autoria na sidebar é a mesma em todas as telas
-- [ ] #3 O botão '+ Novo curso' fica alinhado à direita e na mesma linha do bloco de título, como 'Enviar vídeo' em Vídeos
+- [x] #3 O botão '+ Novo curso' fica alinhado à direita e na mesma linha do bloco de título, como 'Enviar vídeo' em Vídeos
 - [x] #4 Lint, build e testes do admin-spa passam
 <!-- AC:END -->
 
@@ -45,4 +45,12 @@ Mudanças: removidas as regras de shell de Autoria; ordem da sidebar fixa pela o
 Teste novo: admin-layout-route.test.tsx verifica Vídeos antes de Autoria em / e /autoria.
 Validação: lint e typecheck sem erros; build ok; vitest 254 testes passando (47 arquivos).
 Pendente: AC 1 e 3 são visuais. Não foi possível subir a stack completa aqui (gateway em 8080 fora do ar; 8081 serve bundle antigo do container). Conferir Vídeos e Autoria em desktop e mobile antes de concluir.
+
+Conferência visual confirmada pelo responsável: sidebar, logo e início alinhados e botão '+ Novo curso' à direita, como Vídeos. PR #205 mergeada em main (150c4b7).
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Unificado o shell de Autoria com Vídeos: removidas as regras de casca exclusivas de Autoria em authoring.css, a ordenação condicional da sidebar (agora Vídeos, depois Autoria, em todas as telas), o rótulo mobile de Autoria no topo, e o limite de 990px do cabeçalho com alinhamento centralizado. Verificado com lint, typecheck, build, 254 testes (incluindo teste novo de ordem na sidebar) e conferência visual em desktop e mobile. Entregue pela PR #205.
+<!-- SECTION:FINAL_SUMMARY:END -->
