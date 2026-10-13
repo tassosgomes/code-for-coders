@@ -1,30 +1,19 @@
 import { useRef, useState, type ReactNode } from 'react';
 import axios from 'axios';
-import { ArrowLeft, CircleAlert, Info, LoaderCircle } from 'lucide-react';
+import { ArrowLeft, CircleAlert, LoaderCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { paths } from '@/config/paths';
 import { useCreateOrder } from '@/features/student-purchase/api/create-order';
 import { usePurchaseSummary } from '@/features/student-purchase/api/get-purchase-summary';
 import { useStartOrderPayment } from '@/features/student-purchase/api/start-order-payment';
+import { AlertActions, ErrorAlert, InfoAlert } from '@/features/student-purchase/components/purchase-alert';
 import { purchaseDate, purchasePeriod, purchasePrice } from '@/features/student-purchase/utils/purchase-labels';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const cardClassName = 'flex w-full max-w-160 flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:p-6';
-const infoAlertClassName = 'gap-y-1 p-4';
-const destructiveAlertClassName = 'gap-y-1 border-destructive bg-destructive/5 p-4';
-const alertTitleClassName = 'line-clamp-none font-semibold leading-5 tracking-normal';
-
-const InfoAlert = ({ title, children }: { title?: string; children?: ReactNode }) => (
-  <Alert className={infoAlertClassName}>
-    <Info aria-hidden="true" className="text-info!" />
-    {title ? <AlertTitle className={alertTitleClassName}>{title}</AlertTitle> : null}
-    {children ? <AlertDescription className="leading-5">{children}</AlertDescription> : null}
-  </Alert>
-);
 
 const SummaryRow = ({ label, children, price = false }: { label: string; children: ReactNode; price?: boolean }) => (
   <div className="flex gap-4 text-sm leading-5">
@@ -85,11 +74,9 @@ export const PurchaseSummaryScreen = ({ offerId, csrfToken }: PurchaseSummaryScr
       </div>
     </div>;
   } else if (summary.isError) {
-    body = <Alert variant="destructive" className={`max-w-160 ${destructiveAlertClassName}`}>
-      <CircleAlert aria-hidden="true" />
-      <AlertTitle className={alertTitleClassName}>Não foi possível carregar o resumo agora.</AlertTitle>
-      <AlertDescription><Button size="sm" variant="outline" className="mt-1 text-xs text-foreground" onClick={() => void summary.refetch()}>Tentar de novo</Button></AlertDescription>
-    </Alert>;
+    body = <ErrorAlert className="max-w-160" title="Não foi possível carregar o resumo agora.">
+      <AlertActions><Button size="sm" variant="outline" className="text-xs text-foreground" onClick={() => void summary.refetch()}>Tentar de novo</Button></AlertActions>
+    </ErrorAlert>;
   } else if (data?.pendingOrderId) {
     body = <section aria-label="Resumo da compra" className={cardClassName}>
       <h2 className="typo-h4 text-foreground sm:typo-h3">{data.course.title}</h2>
@@ -111,21 +98,14 @@ export const PurchaseSummaryScreen = ({ offerId, csrfToken }: PurchaseSummaryScr
       {access ? <InfoAlert title={access.validity.type === 'lifetime' ? `Você já tem acesso vitalício a este curso (${origin}).` : `Você já tem acesso a este curso até ${purchaseDate(access.validity.endsOn)} (${origin}).`}>
         Você pode comprar mesmo assim: a nova compra não altera o acesso que você tem.
       </InfoAlert> : null}
-      {order.isError ? <Alert variant="destructive" className={destructiveAlertClassName}>
-        <CircleAlert aria-hidden="true" />
-        <AlertTitle className={alertTitleClassName}>Não foi possível confirmar a compra agora. Tente de novo.</AlertTitle>
-      </Alert> : null}
-      {payment.isError && orderId ? <Alert variant="destructive" className={destructiveAlertClassName}>
-        <CircleAlert aria-hidden="true" />
-        <AlertTitle className={alertTitleClassName}>Não foi possível abrir o pagamento agora.</AlertTitle>
-        <AlertDescription className="leading-5">
-          <p>Seu pedido foi criado e continua aguardando pagamento. Você pode tentar de novo ou voltar mais tarde em Meus pedidos.</p>
-          <div className="mt-1 flex flex-wrap items-center gap-3">
-            <Button size="sm" variant="outline" className="text-xs text-foreground" disabled={opening} onClick={() => void goToPayment()}>Tentar de novo</Button>
-            <Button asChild size="sm" variant="link" className="px-0 text-xs"><Link to={paths.studentOrder.getHref(orderId)}>Ver meu pedido</Link></Button>
-          </div>
-        </AlertDescription>
-      </Alert> : null}
+      {order.isError ? <ErrorAlert title="Não foi possível confirmar a compra agora. Tente de novo." /> : null}
+      {payment.isError && orderId ? <ErrorAlert title="Não foi possível abrir o pagamento agora.">
+        <p>Seu pedido foi criado e continua aguardando pagamento. Você pode tentar de novo ou voltar mais tarde em Meus pedidos.</p>
+        <AlertActions>
+          <Button size="sm" variant="outline" className="text-xs text-foreground" disabled={opening} onClick={() => void goToPayment()}>Tentar de novo</Button>
+          <Button asChild size="sm" variant="link" className="px-0 text-xs"><Link to={paths.studentOrder.getHref(orderId)}>Ver meu pedido</Link></Button>
+        </AlertActions>
+      </ErrorAlert> : null}
       <InfoAlert>Você será levado ao ambiente seguro de pagamento. Cartão, PIX ou boleto são escolhidos lá.</InfoAlert>
       <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
         {backToCourse}

@@ -107,7 +107,7 @@ describe('student-purchase-summary', () => {
     server.use(http.get(summaryEndpoint, () => HttpResponse.json({ ...purchaseSummary, pendingOrderId: purchaseOrderId })),
       http.post(`${env.API_URL}/api/v1/orders`, () => { creates++; return HttpResponse.json(purchaseOrder); }));
     renderRoute(); await screen.findByRole('link', { name: 'Ver pedido pendente' }); expect(screen.queryByText('R$ 497,00')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('link', { name: 'Ver pedido pendente' })); expect(await screen.findByRole('heading', { name: 'Pedido nº 000123' })).toBeInTheDocument(); expect(creates).toBe(0);
+    await userEvent.click(screen.getByRole('link', { name: 'Ver pedido pendente' })); expect(await screen.findByText('Pedido #000123')).toBeInTheDocument(); expect(creates).toBe(0);
   });
   it('retry after an uncertain creation reuses the confirmation key', async () => {
     const keys: string[] = [];

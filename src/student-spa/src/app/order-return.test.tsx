@@ -124,7 +124,8 @@ describe('order-return', () => {
     const payButton = await screen.findByRole('button', { name: 'Ir para o pagamento' });
     await userEvent.click(payButton);
 
-    expect(await screen.findByText('Não foi possível abrir o pagamento agora. Seu pedido continua aguardando.')).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível abrir o pagamento agora.')).toBeInTheDocument();
+    expect(screen.getByText(/Seu pedido continua aguardando/u, { selector: '[data-slot=alert-description] p' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument();
   });
 });

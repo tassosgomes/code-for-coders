@@ -18,3 +18,5 @@ export const formatPendingPaymentDeadline = (isoString: string) => {
   });
   return `${dateFormatter.format(date)} às ${timeFormatter.format(date)}`;
 };
+/** Dia (DD/MM/AAAA) de um momento, no fuso da escola. */
+export const purchaseDay = (isoString: string) => new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: env.SCHOOL_TIME_ZONE }).format(new Date(isoString));

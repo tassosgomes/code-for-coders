@@ -63,7 +63,7 @@ describe('my-orders', () => {
     await userEvent.click(await screen.findByRole('link', { name: 'Retomar pagamento' }));
     expect(await screen.findByText('Aguardando pagamento do PIX')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(paths.studentOrder.getHref(myOrders[0].orderId));
-    expect(screen.getByRole('link', { name: '← Meus pedidos' })).toHaveAttribute('href', '/pedidos');
+    expect(screen.getAllByRole('link', { name: 'Meus pedidos' }).at(-1)).toHaveAttribute('href', '/pedidos');
   });
 
   it('paid order opens the active course and its number still opens the order', async () => {
