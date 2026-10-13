@@ -44,6 +44,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
   const [zone, setZone] = useState(0);
   const [status, setStatus] = useState('Carregando vídeo…');
   const [playing, setPlaying] = useState(false);
+  const [captionSession, setCaptionSession] = useState<{ lessonId: string; sessionId: string }>();
   const [accessBlocked, setAccessBlocked] = useState(false);
   const openingRef = useRef(false);
   const seekAndPlayRef = useRef<(seconds: number) => void>(() => undefined);
@@ -144,6 +145,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
 
     const stop = (message: string) => {
       stopped = true;
+      setCaptionSession(undefined);
       clearTimeout(renewal);
       clearTimeout(expiration);
       clearInterval(progressInterval); clearInterval(progressRefreshInterval);
@@ -163,6 +165,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
       const isNewSession = sessionRef.current?.sessionId !== session.sessionId;
       sessionRef.current = session;
       if (isNewSession) {
+        setCaptionSession({ lessonId, sessionId: session.sessionId });
         sequenceRef.current = 0;
         endedRef.current = false;
         hasLeftRef.current = false;
@@ -281,7 +284,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
       if (openingRef.current) return;
       const session = sessionRef.current;
       if (!session || Date.now() >= Date.parse(session.expiresAt) || stopped) {
-        setStatus('Carregando vídeo…'); setWatermark(''); setAttempt((value) => value + 1);
+        setCaptionSession(undefined); setStatus('Carregando vídeo…'); setWatermark(''); setAttempt((value) => value + 1);
         return;
       }
       if (videoRef.current) {
@@ -315,7 +318,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
     positionRef.current = videoRef.current?.currentTime ?? positionRef.current;
     resumeRef.current = resume;
     playingRef.current = false; setPlaying(false);
-    setStatus('Carregando vídeo…'); setWatermark(''); setAttempt((value) => value + 1);
+    setCaptionSession(undefined); setStatus('Carregando vídeo…'); setWatermark(''); setAttempt((value) => value + 1);
   };
   const togglePlayback = () => {
     const video = videoRef.current;
@@ -339,6 +342,7 @@ export const useProtectedPlayback = ({ lessonId, csrfToken, videoRef, initialPos
     void videoRef.current.play().catch(() => setStatus('Não foi possível iniciar a aula.'));
   };
   return { restart, status, watermark, zone, playing, accessBlocked,
+    captionSessionId: !status && captionSession?.lessonId === lessonId ? captionSession.sessionId : undefined,
     seekAndPlay, togglePlayback, retry: () => retry(true), loadedMetadata,
     onPlay: () => playRef.current(), onPause: () => pauseRef.current(), onEnded: () => endRef.current() };
 };

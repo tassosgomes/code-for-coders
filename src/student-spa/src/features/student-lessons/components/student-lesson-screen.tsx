@@ -181,7 +181,7 @@ export const StudentLessonScreen = ({ lessonId, csrfToken }: StudentLessonScreen
         {csrfToken ? (
           <ProtectedVideoPlayer lessonId={lessonId} csrfToken={csrfToken} initialPosition={resume.initialPosition}
             waitForProgress onProgressRefresh={resume.refresh} seekRequest={seekRequest}
-            onTimeChange={setSeconds} onAccessBlocked={setAccessBlocked} />
+            onTimeChange={setSeconds} onAccessBlocked={setAccessBlocked} captionsAvailable={!accessBlocked && transcription.data?.status === 'ready'} />
         ) : (
           <div role="status">Carregando vídeo…</div>
         )}

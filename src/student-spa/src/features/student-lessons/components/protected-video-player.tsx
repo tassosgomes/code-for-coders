@@ -8,24 +8,27 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PlayerCaptions } from '@/features/student-lessons/components/player-captions';
 import { ResumeNotice } from '@/features/student-lessons/components/resume-notice';
 import { supportMessage, useProtectedPlayback } from '@/features/student-lessons/hooks/use-protected-playback';
 
-const zones = ['left-4 top-4', 'right-4 top-4', 'left-4 top-1/2', 'right-4 top-1/2'];
+const zones = ['left-4 top-4', 'right-4 top-4', 'left-4 bottom-4', 'right-4 bottom-4'];
 const speeds = [0.5, 1, 1.25, 1.5, 2];
 
 type ProtectedVideoPlayerProps = {
   lessonId: string; csrfToken: string; initialPosition?: number; waitForProgress?: boolean; onProgressRefresh?: () => void;
+  captionsAvailable?: boolean;
   seekRequest?: { seconds: number; sequence: number };
   onTimeChange?: (seconds: number) => void;
   onAccessBlocked?: (blocked: boolean) => void;
 };
 
 export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, waitForProgress = false, onProgressRefresh,
-  seekRequest, onTimeChange, onAccessBlocked }: ProtectedVideoPlayerProps) => {
+  seekRequest, onTimeChange, onAccessBlocked, captionsAvailable = false }: ProtectedVideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [captionContainer, setCaptionContainer] = useState<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { restart, status, watermark, zone, playing, accessBlocked, seekAndPlay, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
+  const { restart, status, watermark, zone, playing, accessBlocked, captionSessionId, seekAndPlay, togglePlayback, retry, loadedMetadata, onPlay, onPause, onEnded } =
     useProtectedPlayback({ lessonId, csrfToken, videoRef, initialPosition, enabled: !waitForProgress || initialPosition !== undefined, onProgressRefresh });
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
@@ -57,6 +60,8 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, wai
         if (event.key === 'ArrowLeft') { event.preventDefault(); seek(position - 10); }
         if (event.key === 'f') fullscreen();
       }}>
+      <div ref={setCaptionContainer} className="player-media relative min-h-0">
+      <div className="player-picture relative">
       <video ref={videoRef} className="aspect-video w-full" playsInline disablePictureInPicture
         onPlay={onPlay} onPause={onPause} onEnded={onEnded}
         onLoadedMetadata={() => {
@@ -69,7 +74,9 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, wai
       {watermark ? <span aria-hidden="true" data-testid="video-watermark"
         className={'pointer-events-none absolute z-10 break-all rounded bg-black/60 px-2 py-1 text-xs text-white ' + zones[zone]}>{watermark}</span> : null}
       {status ? <div role="status" className="absolute inset-x-4 top-1/3 bg-black/80 p-4">{status}</div> : null}
-      <div className="relative z-20 flex flex-wrap items-center gap-3 bg-black p-3">
+      </div>
+      </div>
+      <div className="player-controls z-20 flex flex-wrap items-center gap-3 bg-black p-3">
         <Button aria-label={playing ? 'Pausar' : 'Reproduzir'} disabled={Boolean(status)} onClick={togglePlayback}>{playing ? 'Pausar' : 'Reproduzir'}</Button>
         <input aria-label="Posição do vídeo" type="range" min={0} max={Number.isFinite(duration) ? duration : 0}
           value={position} step={1} onChange={(event) => seek(Number(event.target.value))}
@@ -101,6 +108,7 @@ export const ProtectedVideoPlayer = ({ lessonId, csrfToken, initialPosition, wai
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+        {captionsAvailable && captionSessionId ? <PlayerCaptions key={captionSessionId} videoRef={videoRef} sessionId={captionSessionId} captionContainer={captionContainer} /> : null}
         <Button aria-label="Tela cheia" onClick={fullscreen}>Tela cheia</Button>
       </div>
     </div>

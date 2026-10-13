@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0", "10.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj -- --filter-class CodeForCoders.Media.UnitTests.WebVttBuilderTests --minimum-expected-tests 9 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.PlaybackCaptionsTests --minimum-expected-tests 8 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.PlaybackCaptionsTests --minimum-expected-tests 4 && npm --prefix src/student-spa run test -- playback-captions'
@@ -47,6 +47,17 @@ sobreposição); duração mínima de 500 ms; cobre emoji, cue de 3 minutos e te
 
 ## Decisões fechadas
 
+- **Precedência temporal do WebVTT (orquestrador, 2026-10-13, a confirmar pelo responsável na PR; bloqueio de run.lo9yZH1j):**
+  (1) a sincronização vence: o cue começa no início recebido do trecho (ou da fração, ao dividir); (2) sem sobreposição: o
+  fim de um cue nunca passa do início do seguinte — trechos sobrepostos têm o fim cortado no início do próximo;
+  (3) os 500 ms são **alvo**: o fim é estendido até `min(início + 500 ms, início do próximo)` quando o trecho é mais
+  curto; se a janela disponível for menor que 500 ms, o cue fica com a janela disponível; (4) divisão de trecho longo:
+  `partes = max(1, min(ceil(caracteres / limite), floor(janela / 500 ms)))`, tempos proporcionais aos caracteres; com
+  uma parte só, o texto inteiro vai no cue (quebra de linha visual pela camada); (5) trechos com o mesmo início
+  (inclusive duração zero) são fundidos num único cue, textos unidos por espaço, na ordem recebida; (6) nenhum texto é
+  descartado. A validação de resultado (`TranscriptionResultValidation`) não muda nesta task. Os testes do gerador
+  cobrem cada regra, incluindo os contraexemplos `[0,200]`+`[200,1000]` e 168 caracteres em `[0,600]`.
+
 - **D-01 (ASCII aprovado em 2026-10-12, `docs/design/wireframes-transcricao.md` §5.4):** a legenda é uma **camada própria** sobre o contêiner do player, numa faixa fixa acima da faixa da marca d'água, alimentada pelo mesmo WebVTT (faixa de texto em modo oculto + troca de trecho). A menção à "faixa de texto do elemento de vídeo" no Comportamento descreve a fonte dos trechos, não a renderização nativa. A legenda para junto com a reprodução quando a sessão deixa de valer (decisão negada ou indisponível).
 
 - WebVTT por sessão (decisão do responsável, Q-02); sem texto em URL estável.
@@ -77,9 +88,9 @@ sobreposição); duração mínima de 500 ms; cobre emoji, cue de 3 minutos e te
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] Sessão de outro aluno → 404; vencida → 410; sem transcrição → 404 `CAPTIONS_NOT_AVAILABLE`; `text/vtt` com `Cache-Control: private, no-store`.
-- [ ] O gerador escapa `&`, `<`, `>`, remove `-->`, divide cue longo e não sobrepõe cues.
-- [ ] Ligar a legenda mostra o texto sincronizado; a renovação não pisca; renovação negada para a legenda.
-- [ ] A preferência persiste no mesmo dispositivo e o controle some sem transcrição pronta.
+- [x] Gate focalizado passa (exit 0).
+- [x] Sessão de outro aluno → 404; vencida → 410; sem transcrição → 404 `CAPTIONS_NOT_AVAILABLE`; `text/vtt` com `Cache-Control: private, no-store`.
+- [x] O gerador escapa `&`, `<`, `>`, remove `-->`, divide cue longo e não sobrepõe cues.
+- [x] Ligar a legenda mostra o texto sincronizado; a renovação não pisca; renovação negada para a legenda.
+- [x] A preferência persiste no mesmo dispositivo e o controle some sem transcrição pronta.
 - [ ] Em dev, verificação manual em tela cheia nos navegadores da matriz do player.

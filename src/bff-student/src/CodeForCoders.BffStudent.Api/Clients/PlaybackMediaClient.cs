@@ -10,7 +10,7 @@ public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClien
         (400, "VALIDATION_ERROR"),
         (404, "LESSON_NOT_AVAILABLE"), (409, "MEDIA_NOT_READY"), (403, "ACCESS_DENIED"),
         (503, "ACCESS_DECISION_UNAVAILABLE"), (422, "WATERMARK_UNAVAILABLE"),
-        (404, "PLAYBACK_SESSION_NOT_FOUND"), (410, "PLAYBACK_SESSION_EXPIRED"),
+        (404, "CAPTIONS_NOT_AVAILABLE"), (404, "PLAYBACK_SESSION_NOT_FOUND"), (410, "PLAYBACK_SESSION_EXPIRED"),
     ];
 
     public Task<PlaybackProxyResult> SendAsync(HttpMethod method, string path, string accessToken, CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ public sealed class PlaybackMediaClient(HttpClient client) : IPlaybackMediaClien
         try
         {
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, effectiveToken);
-            var body = path.EndsWith("/transcription", StringComparison.Ordinal)
+            var body = (path.EndsWith("/transcription", StringComparison.Ordinal) || path.EndsWith("/captions", StringComparison.Ordinal))
                 ? await ReadLimitedBodyAsync(response.Content, effectiveToken)
                 : await response.Content.ReadAsByteArrayAsync(effectiveToken);
             if (body is null) return new(502, Code: "UPSTREAM_UNAVAILABLE");

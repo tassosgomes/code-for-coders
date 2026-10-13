@@ -14,6 +14,7 @@ public static class PlaybackSessionEndpoints
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/playlist", PlaylistAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/variants/{quality}", VariantAsync);
         endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/key", KeyAsync);
+        endpoints.MapGet("/api/v1/playback-sessions/{sessionId:guid}/captions", CaptionsAsync);
     }
 
     private static Task<IResult> OpenAsync(Guid lessonId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
@@ -53,6 +54,8 @@ public static class PlaybackSessionEndpoints
         => ProxyAsync(HttpMethod.Get, $"playback-sessions/{sessionId:D}/playlist", context, client, cancellationToken);
     private static Task<IResult> VariantAsync(Guid sessionId, string quality, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Get, $"playback-sessions/{sessionId:D}/variants/{Uri.EscapeDataString(quality)}", context, client, cancellationToken);
+    private static Task<IResult> CaptionsAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
+        => ProxyAsync(HttpMethod.Get, $"playback-sessions/{sessionId:D}/captions", context, client, cancellationToken);
     private static Task<IResult> KeyAsync(Guid sessionId, HttpContext context, IPlaybackMediaClient client, CancellationToken cancellationToken)
         => ProxyAsync(HttpMethod.Get, $"playback-sessions/{sessionId:D}/key", context, client, cancellationToken);
 
@@ -60,7 +63,7 @@ public static class PlaybackSessionEndpoints
     {
         context.Response.Headers.CacheControl = "no-store";
         var result = await client.SendAsync(method, path, BffSessionContext.GetAccessToken(context)!, cancellationToken);
-        if (path.EndsWith("/transcription", StringComparison.Ordinal))
+        if (path.EndsWith("/transcription", StringComparison.Ordinal) || path.EndsWith("/captions", StringComparison.Ordinal))
             context.Response.Headers.CacheControl = result.CacheControl ?? "private, no-store";
         if (result.StatusCode is 200 or 201)
         {

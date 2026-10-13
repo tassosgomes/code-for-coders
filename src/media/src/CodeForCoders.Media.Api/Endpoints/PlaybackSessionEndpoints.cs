@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.UseCases.PlaybackSessions.GetPlaybackCaptions;
 using System.Security.Claims;
 using System.Text.Json;
 using CodeForCoders.Media.Application.UseCases.PlaybackSessions.RenewPlaybackSession;
@@ -22,6 +23,15 @@ public static class PlaybackSessionEndpoints
         sessions.MapGet("/{sessionId:guid}/playlist", PlaylistAsync);
         sessions.MapGet("/{sessionId:guid}/variants/{quality}", VariantAsync);
         sessions.MapGet("/{sessionId:guid}/key", KeyAsync);
+        sessions.MapGet("/{sessionId:guid}/captions", CaptionsAsync);
+    }
+
+    private static async Task<IResult> CaptionsAsync(Guid sessionId, HttpContext context, IGetPlaybackCaptions useCase, CancellationToken cancellationToken)
+    {
+        context.Response.Headers.CacheControl = "private, no-store";
+        var output = await useCase.ExecuteAsync(new(Guid.Parse(context.User.FindFirstValue("tenantId")!),
+            Guid.Parse(context.User.FindFirstValue("sub")!), sessionId), cancellationToken);
+        return Results.Text(output.Body, "text/vtt; charset=utf-8", System.Text.Encoding.UTF8);
     }
 
     private static async Task<IResult> TranscriptionAsync(Guid lessonId, HttpContext context, IGetLessonTranscription useCase, CancellationToken cancellationToken)

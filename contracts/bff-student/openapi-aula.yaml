@@ -703,6 +703,75 @@ paths:
           $ref: '#/components/responses/UpstreamUnavailable'
         '504':
           $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/captions:
+    get:
+      tags:
+        - Transcrição
+      summary: Obter a legenda da sessão (WebVTT)
+      description: |
+        Legenda do vídeo da Sessão de Reprodução, em WebVTT, para o player (RF-03). Sai da **mesma** Transcrição, não é artefato separado (domínio de Mídia). Vale enquanto a sessão for válida e do aluno; a sessão já passou por Referência de Uso e Matrícula ao abrir ou renovar (RN-M10, RN-M11), então **não** consulta Matrícula de novo: perdido o direito, a legenda para no máximo na renovação, quando a sessão deixa de se estender e o texto novo não é entregue (RN-M21). Sessão de outro aluno ou de outra escola responde o mesmo 404 de sessão desconhecida.
+
+        Formato: `text/vtt` em UTF-8, cabeçalho `WEBVTT`, um *cue* por Trecho, tempos `hh:mm:ss.mmm`, sem identificação do aluno, sem marcação além do texto escapado (formato exato e escape: TechSpec). Sem transcrição pronta, 404 `CAPTIONS_NOT_AVAILABLE`: o player não mostra o controle de legenda (RN-TL05). Exceção ao gate HTTP (T-08, no molde de C-08 da entrega HLS): corpo `text/vtt`, não JSON. `Cache-Control: private, no-store`.
+      operationId: getPlaybackCaptions
+      security:
+        - StudentSessionCookie: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Legenda em WebVTT.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache compartilhado nem do navegador (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                  - private, no-store
+          content:
+            text/vtt:
+              schema:
+                type: string
+              examples:
+                legenda:
+                  value: |
+                    WEBVTT
+
+                    1
+                    00:00:01.240 --> 00:00:04.100
+                    Hoje vamos ver o docker compose.
+
+                    2
+                    00:00:04.100 --> 00:00:07.900
+                    Ele descreve vários containers em um só arquivo.
+        '404':
+          description: Sessão desconhecida, de outro aluno ou de outra escola (`PLAYBACK_SESSION_NOT_FOUND`), ou o vídeo não tem transcrição pronta (`CAPTIONS_NOT_AVAILABLE`). O cliente trata o `code`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                sessaoNaoEncontrada:
+                  value:
+                    type: about:blank
+                    title: Sessão de reprodução não encontrada.
+                    status: 404
+                    code: PLAYBACK_SESSION_NOT_FOUND
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                semLegenda:
+                  value:
+                    type: about:blank
+                    title: Este vídeo não tem legenda disponível.
+                    status: 404
+                    code: CAPTIONS_NOT_AVAILABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
 components:
   securitySchemes:
     StudentSessionCookie:

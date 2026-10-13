@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "62e7bc7",
+  "last_checkpoint": "24f33de",
   "phase": "checkpoint",
-  "active_task": "10.0",
+  "active_task": "11.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -242,6 +242,38 @@
     {
       "at": "2026-10-12",
       "event": "10.0: val approved run.FGYNxVLJ; checkpoint"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "10.0: checkpoint checkpoint_ok 24f33de"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "11.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "11.0: impl task_blocked run.lo9yZH1j"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "9.0 62e7bc7, 10.0 24f33de done. 11.0 run.lo9yZH1j task_blocked (conflito temporal WebVTT); orquestrador registrou precedencia em 11_task.md (a confirmar pelo responsavel na PR). Retomada 11.0-13.0"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "11.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "11.0: impl ok run.IIH9afCW; validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "11.0: val approved run.Rb4xhya2; checkpoint"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "11.0 checkpoint run.fasr6IR9: o aluno liga a legenda no player, 11_task.md done, checkbox 11.0 marcado"
     }
   ],
   "tasks": {
@@ -286,6 +318,10 @@
       "checkpoint": "62e7bc7"
     },
     "10.0": {
+      "status": "done",
+      "checkpoint": "24f33de"
+    },
+    "11.0": {
       "status": "done"
     }
   },
@@ -293,5 +329,8 @@
     "11.0": "legenda para quando a sessao deixa de valer (A1.n); 'nada na tela muda' vale so para renovacao bem-sucedida (review 1.0 rec. 2); frame TA4.d 346:773 mostra LessonList antiga sem abas: a composicao mobile vale a de TA1.b 343:683 com abas (review 2.0 rec.3)",
     "13.0": "reavaliar AttemptTimeout de GetResultAsync com o primeiro resultado real (review 4.0 rec.2)",
     "8.0": "PollAsync trata 404 do status como processing-failed imediato; a politica por situacao (job expirado no servico, nova submissao) deve cobrir esse caso (review 4.0 rec.3)"
-  }
+  },
+  "open_for_owner": [
+    "11.0 precedencia temporal do WebVTT decidida pelo orquestrador"
+  ]
 }
