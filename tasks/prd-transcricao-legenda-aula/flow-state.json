@@ -5,18 +5,18 @@
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "last_checkpoint": "5a88beb",
-  "phase": "full",
+  "phase": "deliver",
   "active_task": "10.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 2,
+  "full_attempt": 3,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
   ],
   "delivery": "pr",
-  "validated_commit": null,
-  "validated_tree": null,
+  "validated_commit": "85d3a590fc6a5d6a982b7fbae3e0594bdf7c7971",
+  "validated_tree": "6f5d9450ce44c95c0131df55b3484fa52fdada5d",
   "last_result": {
     "task": "7.0",
     "outcome": "checkpoint_ok",
@@ -398,6 +398,18 @@
     {
       "at": "2026-10-13",
       "event": "10.0 checkpoint run.MLe5stca: o aluno le, pesquisa e clica na transcricao (fix B-2 fallback Cache-Control), 10_task.md done, checkbox 10.0 marcado"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "10.0: checkpoint 85d3a59"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "10.0 fix run.c1EAnFig, reval run.w7BFvMcB approved, checkpoint 85d3a59. -> full 3 (ultima)"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "full 3 run.fmQPTY6o APROVADA (0 bloqueantes, 9 rec.). validated 85d3a59 / tree 6f5d945. -> complete-prd delivery=pr (excecao: 13.0 blocked por EN-02; PRD nao arquivado)"
     }
   ],
   "tasks": {
