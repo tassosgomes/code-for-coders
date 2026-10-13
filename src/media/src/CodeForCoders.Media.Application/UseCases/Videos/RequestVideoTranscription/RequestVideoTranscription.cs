@@ -23,6 +23,7 @@ public sealed class RequestVideoTranscription(
         var now = timeProvider.GetUtcNow();
         var hash = VideoUploadUseCaseHelpers.HashRequest(new { input.VideoId });
         VideoOutput? output = null;
+        var enqueued = false;
         var found = await transcriptions.WithRequestAsync(new(input.VideoId, actorAccountId, input.IdempotencyKey), async (video, token) =>
         {
             var existing = await idempotencyRecords.GetAsync("requestVideoTranscription", tenantId, actorAccountId, input.IdempotencyKey, token);
@@ -36,7 +37,7 @@ public sealed class RequestVideoTranscription(
             var states = await transcriptions.GetAsync([video], token);
             if (states[video.VideoId].Status != "in-progress" && !states[video.VideoId].CanStart)
                 throw new MediaApiException(409, "TRANSCRIPTION_NOT_RETRYABLE", "This video cannot be transcribed again.");
-            await transcriptions.EnqueueAsync(Transcription.Create(new(tenantId, video.VideoId, "requested", actorAccountId, now)), token);
+            enqueued = await transcriptions.EnqueueAsync(Transcription.Create(new(tenantId, video.VideoId, "requested", actorAccountId, now)), token);
             states = await transcriptions.GetAsync([video], token);
             var tags = await videoTags.GetAsync([video.VideoId], token);
             output = new(video.VideoId, video.Title, video.Status,
@@ -49,6 +50,7 @@ public sealed class RequestVideoTranscription(
             await unitOfWork.CommitAsync(token);
         }, cancellationToken);
         if (!found) throw new MediaApiException(404, "VIDEO_NOT_FOUND", "The requested video was not found.");
+        if (enqueued) MediaTelemetry.RecordTranscriptionRequested("requested");
         return output!;
     }
 }

@@ -22,9 +22,10 @@ public sealed class VideoTranscriptionRepository(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         const string savepoint = "automatic_transcription";
         await transaction.CreateSavepointAsync(savepoint, cancellationToken);
+        var enqueued = false;
         try
         {
-            await EnqueueAsync(attempt, cancellationToken);
+            enqueued = await EnqueueAsync(attempt, cancellationToken);
         }
         catch (DbException)
         {
@@ -35,6 +36,7 @@ public sealed class VideoTranscriptionRepository(
 
         await commitPreparation(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        if (enqueued) MediaTelemetry.RecordTranscriptionRequested(attempt.Origin);
     }
 
     public async Task<IReadOnlyDictionary<Guid, TranscriptionState>> GetAsync(IReadOnlyList<Video> videos, CancellationToken cancellationToken)
@@ -61,7 +63,7 @@ public sealed class VideoTranscriptionRepository(
         return true;
     }
 
-    public async Task EnqueueAsync(Transcription attempt, CancellationToken cancellationToken)
+    public async Task<bool> EnqueueAsync(Transcription attempt, CancellationToken cancellationToken)
     {
         var inserted = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO media_access.video_transcriptions
@@ -84,5 +86,6 @@ public sealed class VideoTranscriptionRepository(
                 SELECT transcription_id, tenant_id, video_id, requested_at FROM removed WHERE audio_deleted_at IS NULL
                 ON CONFLICT (transcription_id) DO NOTHING
                 """, cancellationToken);
+        return inserted == 1;
     }
 }

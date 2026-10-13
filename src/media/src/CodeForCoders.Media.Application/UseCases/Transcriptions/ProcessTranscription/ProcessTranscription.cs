@@ -134,7 +134,7 @@ public sealed class ProcessTranscription(
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Submission failures follow the retry policy; exception payloads are deliberately excluded from telemetry.")]
     private async Task SubmitAsync(TranscriptionWorkItem work, CancellationToken cancellationToken)
     {
-        using var activity = MediaTelemetry.ActivitySource.StartActivity("media.transcription.submit");
+        using var activity = MediaTelemetry.BeginTranscriptionStage("submit", work.Video.VideoId, work.Attempt.TranscriptionId);
         var source = await storage.CreateTranscriptionReadUriAsync(work.AudioObjectKey,
             clock.GetUtcNow().AddMinutes(options.Value.SourceUrlLifetimeMinutes), cancellationToken);
         string jobId;
@@ -183,7 +183,7 @@ public sealed class ProcessTranscription(
         TranscriptionJob? job;
         try
         {
-            using (MediaTelemetry.ActivitySource.StartActivity("media.transcription.poll"))
+            using (MediaTelemetry.BeginTranscriptionStage("poll", work.Video.VideoId, work.Attempt.TranscriptionId))
                 job = await service.GetJobAsync(work.Attempt.WhisperJobId!, cancellationToken);
         }
         catch (Exception error) when (IsTransient(error, cancellationToken))
@@ -275,7 +275,7 @@ public sealed class ProcessTranscription(
     private async Task CompleteAsync(TranscriptionWorkItem work, bool audioDeleted, CancellationToken cancellationToken)
     {
         TranscriptionContent content;
-        using (MediaTelemetry.ActivitySource.StartActivity("media.transcription.fetch-result"))
+        using (MediaTelemetry.BeginTranscriptionStage("fetch-result", work.Video.VideoId, work.Attempt.TranscriptionId))
         {
             byte[]? result;
             try { result = await service.GetResultAsync(work.Attempt.WhisperJobId!, cancellationToken); }
@@ -293,12 +293,19 @@ public sealed class ProcessTranscription(
             content = TranscriptionResultValidation.Validate(work.Attempt.TranscriptionId, work.Attempt.TenantId, result);
         }
         if (!audioDeleted) await storage.DeleteObjectAsync(work.AudioObjectKey, cancellationToken);
-        await ChangeAsync(work, async (attempt, token) =>
+        var readyAt = clock.GetUtcNow();
+        var changed = await ChangeAsync(work, async (attempt, token) =>
         {
             await repository.ReplaceContentAsync(content, token);
             attempt.MarkAudioDeleted(clock.GetUtcNow());
-            attempt.MarkReady(content, clock.GetUtcNow());
+            attempt.MarkReady(content, readyAt);
         }, cancellationToken);
+        if (!changed) return;
+        MediaTelemetry.RecordTranscriptionResult("ready");
+        MediaTelemetry.RecordTranscriptionReconciled(work.WasSignaled);
+        MediaTelemetry.TranscriptionTimeToReady.Record(Math.Max(0, (readyAt - work.Attempt.RequestedAt).TotalSeconds),
+            new KeyValuePair<string, object?>("origin", work.Attempt.Origin));
+        MediaTelemetry.TranscriptionDuration.Record(content.DurationMs / 1000.0);
     }
 
     private async Task FailAsync(TranscriptionWorkItem work, string reason, CancellationToken cancellationToken)
@@ -309,6 +316,8 @@ public sealed class ProcessTranscription(
             return Task.CompletedTask;
         }, cancellationToken);
         if (!changed) return;
+        MediaTelemetry.RecordTranscriptionResult(reason);
+        if (work.Attempt.WhisperJobId is not null) MediaTelemetry.RecordTranscriptionReconciled(work.WasSignaled);
         await storage.DeleteObjectAsync(work.AudioObjectKey, cancellationToken);
         await repository.MarkCleanupAsync(work.Attempt.TranscriptionId, clock.GetUtcNow(), cancellationToken);
     }

@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "24f33de",
+  "last_checkpoint": "7290643",
   "phase": "checkpoint",
-  "active_task": "11.0",
+  "active_task": "12.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -274,6 +274,26 @@
     {
       "at": "2026-10-13",
       "event": "11.0 checkpoint run.fasr6IR9: o aluno liga a legenda no player, 11_task.md done, checkbox 11.0 marcado"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "11.0: checkpoint checkpoint_ok 7290643"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "12.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "12.0: impl ok run.9iBgyFJt; validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "12.0: val approved run.TqIqyGvM; checkpoint"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "12.0 checkpoint run.c1CsW8Ux: a operacao enxerga os sinais da transcricao no painel de midia, 12_task.md done, checkbox 12.0 marcado"
     }
   ],
   "tasks": {
@@ -322,6 +342,10 @@
       "checkpoint": "24f33de"
     },
     "11.0": {
+      "status": "done",
+      "checkpoint": "7290643"
+    },
+    "12.0": {
       "status": "done"
     }
   },

@@ -25,7 +25,7 @@ public sealed partial class FfmpegTranscriptionAudioExtractor(
             Directory.CreateDirectory(directory);
             if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(directory, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
             var prefix = $"{work.Attempt.TenantId:D}/{work.Attempt.VideoId:D}/hls";
-            using (MediaTelemetry.ActivitySource.StartActivity("media.transcription.extract-audio"))
+            using (MediaTelemetry.BeginTranscriptionStage("extract-audio", work.Video.VideoId, work.Attempt.TranscriptionId))
             {
                 var master = await playlists.ReadPlaylistAsync(prefix + "/master.m3u8", cancellationToken);
                 var variant = SelectVariant(master);
@@ -47,7 +47,7 @@ public sealed partial class FfmpegTranscriptionAudioExtractor(
                 Directory.CreateDirectory(outputDirectory);
                 await RunFfmpegAsync(playlistPath, Path.Combine(outputDirectory, "audio.m4a"), cancellationToken);
             }
-            using (MediaTelemetry.ActivitySource.StartActivity("media.transcription.upload-audio"))
+            using (MediaTelemetry.BeginTranscriptionStage("upload-audio", work.Video.VideoId, work.Attempt.TranscriptionId))
                 await storage.UploadDirectoryAsync(Path.Combine(directory, "audio"), work.AudioObjectKey[..work.AudioObjectKey.LastIndexOf('/')], cancellationToken);
         }
         finally

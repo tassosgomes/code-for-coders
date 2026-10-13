@@ -29,7 +29,7 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
         var video = await dbContext.Videos.IgnoreQueryFilters().AsNoTracking()
             .SingleAsync(row => row.VideoId == attempt.VideoId && row.TenantId == attempt.TenantId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new(attempt, video);
+        return new(attempt, video) { WasSignaled = candidates[0].SignaledAt is not null };
     }
 
     public async Task<bool> WithLeaseAsync(TranscriptionWorkItem work, Func<Transcription, CancellationToken, Task> change, CancellationToken cancellationToken)

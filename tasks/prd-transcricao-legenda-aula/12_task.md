@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.MediaTranscriptionMetricsTests --minimum-expected-tests 7 && python3 scripts/kibana/import_observabilidade.py --verify-only'
@@ -54,6 +54,6 @@ duração transcrita e fila em espera por estado com a idade da mais antiga.
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] Os instrumentos listados são emitidos com os rótulos esperados e nenhum atributo contém URL assinada, texto ou dado pessoal.
-- [ ] O NDJSON versionado inclui as visualizações e os alertas da transcrição e a verificação estrutural passa.
+- [x] Gate focalizado passa (exit 0).
+- [x] Os instrumentos listados são emitidos com os rótulos esperados e nenhum atributo contém URL assinada, texto ou dado pessoal.
+- [x] O NDJSON versionado inclui as visualizações e os alertas da transcrição e a verificação estrutural passa.
