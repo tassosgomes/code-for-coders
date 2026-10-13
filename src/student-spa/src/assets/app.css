@@ -18,9 +18,134 @@
   }
 }
 
+/* TASK-31.1: player da aula conforme o Figma (LessonPlayer 256:535, PlayerControls 255:202, TA4). */
+.protected-video-player {
+  --player-bar: 56px;
+  --player-zone: 12px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--code);
+  color: var(--code-foreground);
+}
+.protected-video-player:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.player-media { position: relative; min-height: 0; }
+.player-picture { position: relative; cursor: pointer; }
+.player-picture video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--code); object-fit: contain; }
+.player-status { position: absolute; inset-inline: 16px; top: 33%; padding: 16px; background: rgb(0 0 0 / 80%); cursor: default; }
+
+/* Marca d'água: 4 zonas fixas, fora da faixa dos controles. */
+.player-watermark {
+  position: absolute;
+  z-index: 10;
+  max-width: calc(100% - 2 * var(--player-zone));
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--code) 60%, transparent);
+  color: var(--code-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.player-watermark-zone-0 { top: var(--player-zone); left: var(--player-zone); }
+.player-watermark-zone-1 { top: var(--player-zone); right: var(--player-zone); }
+.player-watermark-zone-2 { bottom: var(--player-zone); left: var(--player-zone); }
+.player-watermark-zone-3 { bottom: var(--player-zone); right: var(--player-zone); }
+
+/* Barra de controles: no celular fica abaixo da imagem, em duas linhas. */
+.player-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--code);
+}
+.player-controls-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.player-controls-spacer { flex: 1; }
+.player-controls .player-control {
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  color: var(--code-foreground);
+  background: transparent;
+}
+.player-controls .player-control:hover:not(:disabled) { background: rgb(255 255 255 / 12%); color: var(--code-foreground); }
+.player-controls .player-control:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.player-controls .player-control svg { width: 20px; height: 20px; }
+.player-controls .player-speed { gap: 4px; padding: 0 8px; font-family: var(--font-jetbrains), ui-monospace, monospace; font-size: 12px; font-weight: 500; line-height: 16px; }
+.player-controls .player-speed svg { width: 16px; height: 16px; }
+.player-controls .player-exit-fullscreen { gap: 8px; padding: 0 12px; font-size: 14px; font-weight: 500; line-height: 20px; }
+.player-caption-toggle { flex-direction: column; gap: 2px; padding: 6px 8px 4px; }
+.player-caption-underline { width: 16px; height: 2px; border-radius: 1px; }
+.player-controls .player-caption-toggle[aria-pressed="true"],
+.player-controls .player-caption-toggle[aria-pressed="true"]:hover { background: var(--primary); color: var(--primary-foreground); }
+.player-caption-toggle[aria-pressed="true"] .player-caption-underline { background: var(--inverse-foreground); }
+.player-caption-status { font-size: 12px; line-height: 16px; }
+.player-time { flex: none; font-family: var(--font-jetbrains), ui-monospace, monospace; font-size: 12px; line-height: 18px; white-space: nowrap; }
+
+/* Linha do tempo e volume: trilha de 4 px, parte assistida em primary e marcador de 12 px. */
+.player-range {
+  --player-range-fill: 0%;
+  flex: 1;
+  min-width: 48px;
+  height: 40px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+.player-range:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; border-radius: 4px; }
+.player-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, var(--primary) var(--player-range-fill), var(--code-foreground) var(--player-range-fill));
+}
+.player-range::-moz-range-track { height: 4px; border-radius: 9999px; background: var(--code-foreground); }
+.player-range::-moz-range-progress { height: 4px; border-radius: 9999px; background: var(--primary); }
+.player-range::-webkit-slider-thumb { width: 12px; height: 12px; margin-top: -4px; border: 0; border-radius: 9999px; background: var(--code-foreground); appearance: none; }
+.player-range::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 9999px; background: var(--code-foreground); }
+
+/* Volume: em repouso só o ícone (Figma); o controle deslizante abre com o ponteiro ou o foco. */
+.player-volume { display: flex; flex: none; align-items: center; }
+.player-volume-range { flex: none; width: 0; min-width: 0; opacity: 0; transition: width 150ms ease, opacity 150ms ease; }
+.player-volume:hover .player-volume-range,
+.player-volume:focus-within .player-volume-range { width: 72px; margin-left: 4px; opacity: 1; }
+
+/* Aviso de uso pessoal (PersonalUseNotice 255:236). */
+.personal-use-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 20px;
+}
+.personal-use-notice svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+
+/* Desktop e tela cheia: barra de 56 px sobre a base da imagem; a marca fica 24 px longe das bordas e da barra. */
+@media (min-width: 640px) {
+  .protected-video-player { --player-zone: 24px; }
+  .player-controls { position: absolute; inset: auto 0 0; z-index: 20; flex-direction: row; align-items: center; gap: 12px; padding: 8px 16px; }
+  .player-controls-row { display: contents; }
+  .player-controls-spacer { display: none; }
+  .player-watermark-zone-2, .player-watermark-zone-3 { bottom: calc(var(--player-bar) + var(--player-zone)); }
+}
+
+/* Desktop: o player inteiro cabe na altura visível (cabeçalho, link, título e margens somam ~220 px). */
+@media (min-width: 1024px) {
+  .player-picture video { max-height: calc(100svh - 220px); }
+}
+
 .protected-video-player:fullscreen {
   display: flex;
   flex-direction: column;
+  border-radius: 0;
 }
 .protected-video-player:fullscreen .player-media {
   flex: 1;
@@ -31,17 +156,16 @@
 .protected-video-player:fullscreen video {
   width: 100%;
   height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
   object-fit: contain;
 }
+.protected-video-player:fullscreen .player-controls { position: absolute; inset: auto 0 0; flex-direction: row; align-items: center; gap: 12px; padding: 8px 32px; }
+.protected-video-player:fullscreen .player-controls-row { display: contents; }
+.protected-video-player:fullscreen .player-controls-spacer { display: none; }
+.protected-video-player:fullscreen .player-watermark-zone-2,
+.protected-video-player:fullscreen .player-watermark-zone-3 { bottom: calc(var(--player-bar) + var(--player-zone)); }
 
-.player-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: black;
-}
 .player-caption-layer {
   text-align: center;
   white-space: pre-wrap;
@@ -72,3 +196,84 @@
   font-size: 20px;
 }
 .protected-video-player:fullscreen .player-picture { height: 100%; }
+
+/* TASK-31.2: coluna da aula, painel com abas, lista de aulas e transcrição conforme o Figma (A1, A1.P, TA1). */
+.lesson-layout { display: grid; gap: 16px; }
+.lesson-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.lesson-column .personal-use-notice { margin-top: 16px; }
+.lesson-back-link { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--primary); font-size: 14px; font-weight: 500; line-height: 20px; }
+.lesson-back-link:hover { text-decoration: underline; }
+.lesson-back-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
+.lesson-back-link svg { width: 16px; height: 16px; }
+
+.lesson-panel-slot { position: relative; min-width: 0; }
+.lesson-panel { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.lesson-panel-tabs { display: flex; gap: 4px; }
+.lesson-panel-tabs [role="tab"] { min-height: 32px; padding: 6px 12px; border-radius: 10px; color: var(--muted-foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
+.lesson-panel-tabs [role="tab"][data-state="active"] { background: var(--background); color: var(--foreground); box-shadow: 0 1px 3px rgb(22 19 31 / 8%), 0 1px 2px rgb(22 19 31 / 4%); }
+.lesson-panel-tabs [role="tab"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.lesson-panel-content { min-height: 0; }
+.lesson-panel-content:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* Desktop: lista à direita (360) e painel com a altura da coluna da aula; o conteúdo rola dentro dele. */
+@media (min-width: 1024px) {
+  .lesson-layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; }
+  .lesson-panel-slot .lesson-panel { position: absolute; inset: 0; min-height: 360px; }
+  .lesson-panel-content[data-state="active"] { display: flex; flex: 1; flex-direction: column; overflow-y: auto; }
+}
+
+/* Lista de aulas (LessonList+Progress 273:36456). */
+.lesson-nav { display: flex; flex-direction: column; gap: 12px; }
+.lesson-nav-framed { padding: 20px 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+.lesson-nav-progress { display: flex; flex-direction: column; gap: 12px; }
+.lesson-nav-progress p { color: var(--muted-foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
+.lesson-nav-progress-track { height: 8px; overflow: hidden; border-radius: 20px; background: var(--secondary); }
+.lesson-nav-progress-track > div { height: 100%; }
+.lesson-nav-modules { display: flex; flex-direction: column; gap: 12px; }
+.lesson-nav-modules > li { display: flex; flex-direction: column; gap: 4px; }
+.lesson-nav-module { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px; border-radius: 10px; color: var(--foreground); font-size: 14px; font-weight: 600; line-height: 20px; text-align: left; }
+.lesson-nav-module:hover { background: var(--muted); }
+.lesson-nav-module:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.lesson-nav-module svg { flex: none; width: 16px; height: 16px; color: var(--muted-foreground); transition: transform 150ms ease; }
+.lesson-nav-module[data-state="closed"] svg { transform: rotate(-90deg); }
+.lesson-nav-lessons { display: flex; flex-direction: column; gap: 4px; }
+.lesson-nav-item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 12px; border-radius: 10px; color: var(--foreground); }
+.lesson-nav-item:hover { background: var(--muted); }
+.lesson-nav-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 0; }
+.lesson-nav-item[aria-current="page"] { background: var(--secondary); }
+.lesson-nav-marker { display: flex; flex: none; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 9999px; color: var(--success-soft-foreground); font-size: 14px; font-weight: 600; line-height: 20px; }
+.lesson-nav-item:has(.lesson-nav-badge) .lesson-nav-marker { background: var(--success-soft); }
+.lesson-nav-item[aria-current="page"] .lesson-nav-marker { background: var(--primary); color: var(--primary-foreground); }
+.lesson-nav-marker svg { width: 14px; height: 14px; }
+.lesson-nav-number { flex: none; padding-top: 2px; color: var(--muted-foreground); font-family: var(--font-jetbrains), ui-monospace, monospace; font-size: 12px; font-weight: 500; line-height: 16px; }
+.lesson-nav-text { display: flex; flex: 1; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.lesson-nav-title { font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+.lesson-nav-item[aria-current="page"] .lesson-nav-text { color: var(--secondary-foreground); }
+.lesson-nav-item[aria-current="page"] .lesson-nav-title { font-weight: 600; }
+.lesson-nav-current { font-size: 12px; font-weight: 500; line-height: 16px; }
+.lesson-nav-badge { padding: 2px 10px; border-radius: 9999px; background: var(--success-soft); color: var(--success-soft-foreground); font-size: 12px; font-weight: 500; line-height: 16px; }
+
+/* Transcrição (TA1.a 343:631 e TranscriptSegment 337:64). */
+.transcript-panel { position: relative; display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; }
+.transcript-search { display: flex; flex-direction: column; gap: 6px; }
+.transcript-search label { color: var(--foreground); font-size: 12px; font-weight: 500; line-height: 16px; }
+.transcript-search-field { position: relative; display: flex; align-items: center; gap: 8px; }
+.transcript-search-field > svg { position: absolute; left: 12px; width: 16px; height: 16px; color: var(--muted-foreground); pointer-events: none; }
+.transcript-search-field input { height: 40px; padding-left: 36px; border-radius: 8px; }
+.transcript-list { display: flex; flex-direction: column; gap: 2px; height: 360px; overflow-y: auto; }
+.transcript-list:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 8px; }
+.transcript-segment { display: flex; flex: none; align-items: flex-start; gap: 8px; width: 100%; padding: 8px 12px 8px 0; border-radius: 8px; color: var(--foreground); text-align: left; }
+.transcript-segment:hover { background: var(--muted); }
+.transcript-segment:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.transcript-segment[aria-current="true"] { background: var(--secondary); }
+.transcript-segment-bar { flex: none; width: 3px; height: 24px; border-radius: 2px; }
+.transcript-segment[aria-current="true"] .transcript-segment-bar { background: var(--primary); }
+.transcript-segment-marker { display: flex; flex: none; width: 12px; height: 20px; align-items: center; color: var(--primary); }
+.transcript-segment-marker svg { width: 12px; height: 12px; }
+.transcript-segment-time { flex: none; width: 42px; color: var(--muted-foreground); font-family: var(--font-jetbrains), ui-monospace, monospace; font-size: 12px; line-height: 18px; }
+.transcript-segment[aria-current="true"] .transcript-segment-time { color: var(--primary); }
+.transcript-segment-text { flex: 1; min-width: 0; font-size: 14px; line-height: 20px; }
+.transcript-segment[aria-current="true"] .transcript-segment-text { font-weight: 500; }
+@media (min-width: 1024px) {
+  .transcript-list { flex: 1; height: auto; min-height: 0; }
+}

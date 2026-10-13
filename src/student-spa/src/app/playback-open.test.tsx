@@ -97,6 +97,23 @@ describe('Playback opening', () => {
     expect(request).toHaveBeenCalledOnce(); expect(container).toContainElement(screen.getByTestId('video-watermark'));
   });
 
+  it('toggles playback on a click over the picture and fullscreen on a double click', async () => {
+    const { container } = renderPlayer(); await started();
+    const video = container.querySelector('video')!;
+    const player = screen.getByLabelText('Player da aula'); const request = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(player, 'requestFullscreen', { value: request, configurable: true });
+    const picture = screen.getByTestId('player-picture');
+
+    fireEvent.click(picture);
+    await waitFor(() => expect(video.play).toHaveBeenCalledOnce());
+    vi.mocked(video.play).mockClear();
+
+    fireEvent.click(picture); fireEvent.click(picture); fireEvent.doubleClick(picture);
+    expect(request).toHaveBeenCalledOnce();
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(video.play).not.toHaveBeenCalled(); expect(video.pause).not.toHaveBeenCalled();
+  });
+
   it('seeks to the selected transcript time and plays without opening another session', async () => {
     let requests = 0;
     server.use(http.post(endpoint, () => { requests++; return HttpResponse.json(playbackData(), { status: 201 }); }));

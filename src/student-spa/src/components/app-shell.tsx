@@ -56,7 +56,7 @@ export const AppShell = ({ accountMenu, children }: AppShellProps) => {
 
   return (
     <SidebarProvider style={sidebarStyle}>
-      <Sidebar className="hidden shrink-0 md:flex" collapsible="none" variant="sidebar">
+      <Sidebar className="hidden h-auto shrink-0 self-stretch md:flex" collapsible="none" variant="sidebar">
         <SidebarHeader className="p-6">
           <Link aria-label="Code4Coders — início" className="w-fit" to={paths.home.getHref()}>
             <BrandLogo />
