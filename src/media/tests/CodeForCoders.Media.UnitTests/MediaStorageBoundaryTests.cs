@@ -1,3 +1,7 @@
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using CodeForCoders.Media.Application.Exceptions;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data.Adapters;
@@ -64,5 +68,57 @@ public sealed class MediaStorageBoundaryTests
         Assert.DoesNotContain("nome-de-pessoa", upload.ObjectKey, StringComparison.Ordinal);
         Assert.DoesNotContain("Aula de introdução", upload.ObjectKey, StringComparison.Ordinal);
         Assert.DoesNotContain("Nome da pessoa", upload.ObjectKey, StringComparison.Ordinal);
+    }
+
+    [Fact(DisplayName = nameof(S3AdapterKeepsRejectedCredentialCauseWhenStorageIsUnavailable))]
+    [Trait("Layer", "Media storage boundary - Unit")]
+    public async Task S3AdapterKeepsRejectedCredentialCauseWhenStorageIsUnavailable()
+    {
+        var port = GetFreePort();
+        using var listener = new HttpListener();
+        listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+        listener.Start();
+        var server = RespondSignatureDoesNotMatchAsync(listener);
+        var options = Options.Create(new AwsMediaOptions
+        {
+            Region = "us-east-1",
+            BucketName = "foundation-media",
+            ObjectKeyPrefix = "objects",
+            EndpointInternal = $"http://127.0.0.1:{port}",
+            EndpointPublic = "http://localhost:9000",
+            AccessKeyId = "test-access",
+            SecretAccessKey = "test-secret-key",
+            ForcePathStyle = true,
+        });
+        using var clients = new S3MediaClientPair(options);
+        var storage = new S3MediaStorageAdapter(clients, options);
+
+        var exception = await Assert.ThrowsAsync<StorageUnavailableException>(
+            () => storage.ReadPlaylistAsync("tenant/video/hls/master.m3u8", TestContext.Current.CancellationToken));
+        await server;
+
+        Assert.Contains("S3 403 SignatureDoesNotMatch", exception.Message, StringComparison.Ordinal);
+        Assert.NotNull(exception.InnerException);
+        Assert.DoesNotContain("test-secret-key", exception.ToString(), StringComparison.Ordinal);
+    }
+
+    private static int GetFreePort()
+    {
+        using var socket = new TcpListener(IPAddress.Loopback, 0);
+        socket.Start();
+        return ((IPEndPoint)socket.LocalEndpoint).Port;
+    }
+
+    private static async Task RespondSignatureDoesNotMatchAsync(HttpListener listener)
+    {
+        var context = await listener.GetContextAsync();
+        var body = Encoding.UTF8.GetBytes(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>SignatureDoesNotMatch</Code>"
+            + "<Message>The request signature we calculated does not match the signature you provided.</Message></Error>");
+        context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+        context.Response.ContentType = "application/xml";
+        context.Response.ContentLength64 = body.Length;
+        await context.Response.OutputStream.WriteAsync(body);
+        context.Response.Close();
     }
 }

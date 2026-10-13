@@ -92,7 +92,7 @@ describe('video-tag-suggestions', () => {
     setup(['Docker']); const { user, input } = await openEditor(); await user.type(input, 'docker');
     await screen.findByRole('option', { name: 'Docker' }); await user.keyboard('{Enter}');
     expect(screen.getAllByRole('button', { name: /Remover tag/ })).toHaveLength(1);
-    expect(within(screen.getByRole('dialog')).getByRole('status')).toHaveTextContent('Docker já incluída');
+    expect(within(screen.getByRole('dialog')).getByRole('status')).toHaveTextContent('Docker já incluída. Nenhuma etiqueta nova.');
   });
 
   it('selects a suggestion by click while retaining input focus', async () => {
@@ -102,7 +102,7 @@ describe('video-tag-suggestions', () => {
   });
 
   it('suggestion-only mode rejects new text and permits selecting an existing tag', async () => {
-    setup(); renderWithProviders(<FilterField />); const user = userEvent.setup(); const input = screen.getByRole('combobox', { name: 'Tags' });
+    setup(); renderWithProviders(<FilterField />); const user = userEvent.setup(); const input = screen.getByRole('combobox', { name: 'Filtrar por Tags' });
     await user.type(input, 'New tag{Enter}'); expect(screen.queryByRole('button', { name: /Remover tag/ })).not.toBeInTheDocument();
     await user.clear(input); await user.type(input, 'introducao'); await screen.findByRole('option', { name: 'Introdução' });
     await user.keyboard('{ArrowUp}{Enter}'); expect(screen.getByRole('button', { name: 'Remover tag Introdução' })).toBeInTheDocument();

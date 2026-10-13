@@ -42,7 +42,8 @@ Usage: scripts/remote-infra.sh <provision|migrate|check>
 Commands:
   provision  Create the PostgreSQL roles/databases, the RabbitMQ vhost/user, the MinIO bucket and
              bucket-scoped user, and store the generated credentials in .env (idempotent;
-             requires SSH to the infra server).
+             requires SSH to the infra server). Refuses to run when .env lacks the secret of a
+             user that already exists on the server: copy it from the main checkout's .env.
   migrate    Apply the EF Core migrations of every service to the remote databases.
   check      Verify that PostgreSQL, RabbitMQ, Valkey, MinIO, OTel, and SMTP accept connections.
 
@@ -101,6 +102,8 @@ provision() {
 
   remote true || die "Cannot reach $(infra_ssh) over SSH."
 
+  refuse_to_rotate_shared_credentials
+
   # Hex keeps the secrets safe inside connection strings and remote shell commands.
   set_env_if_missing REMOTE_DB_PASSWORD "$(openssl rand -hex 24)"
   set_env_if_missing REMOTE_RABBITMQ_PASSWORD "$(openssl rand -hex 24)"
@@ -157,16 +160,64 @@ EOF
   log "Remote infrastructure is provisioned. Next: scripts/remote-infra.sh migrate"
 }
 
-provision_s3() {
-  local secret_key=$1 root_credentials root_user root_password policy_file
-  command -v docker >/dev/null 2>&1 || die "Docker is required to provision MinIO."
+# The users below are shared by every checkout and by the deployed stack. A checkout whose .env lacks
+# their secret must copy it, not generate one: provision would rotate the credential for everyone else.
+refuse_to_rotate_shared_credentials() {
+  local existing=()
 
-  # The root credentials stay in this process: they are never written to .env or to disk.
+  local database_roles="" rabbitmq_users=""
+  if [[ -z "$(env_value REMOTE_DB_PASSWORD)" ]]; then
+    database_roles="$(remote "docker exec infra-postgres psql -U postgres -d postgres -tAc \"SELECT 1 FROM pg_roles WHERE rolname LIKE 'code\\_for\\_coders\\_%' LIMIT 1\"")" \
+      || die "Could not list the PostgreSQL roles."
+    [[ -n "$database_roles" ]] && existing+=("REMOTE_DB_PASSWORD (PostgreSQL roles code_for_coders_*)")
+  fi
+
+  if [[ -z "$(env_value REMOTE_RABBITMQ_PASSWORD)" || -z "$(env_value BFF_ADMIN_RABBITMQ_PASSWORD)" ]]; then
+    rabbitmq_users="$(remote "docker exec infra-rabbitmq rabbitmqctl --quiet list_users")" \
+      || die "Could not list the RabbitMQ users."
+    rabbitmq_users="$(awk '{print $1}' <<<"$rabbitmq_users")"
+  fi
+  if [[ -z "$(env_value REMOTE_RABBITMQ_PASSWORD)" ]] && grep -qx "$rabbitmq_user" <<<"$rabbitmq_users"; then
+    existing+=("REMOTE_RABBITMQ_PASSWORD (RabbitMQ user $rabbitmq_user)")
+  fi
+  if [[ -z "$(env_value BFF_ADMIN_RABBITMQ_PASSWORD)" ]] && grep -qx "$bff_admin_rabbitmq_user" <<<"$rabbitmq_users"; then
+    existing+=("BFF_ADMIN_RABBITMQ_PASSWORD (RabbitMQ user $bff_admin_rabbitmq_user)")
+  fi
+
+  if [[ -z "$(env_value REMOTE_S3_SECRET_KEY)" ]] && minio_user_exists; then
+    existing+=("REMOTE_S3_SECRET_KEY (MinIO user $s3_user)")
+  fi
+
+  ((${#existing[@]} == 0)) && return 0
+  log "These credentials already exist on $(infra_ssh) but are missing from $env_file:" >&2
+  printf '[remote-infra]   %s\n' "${existing[@]}" >&2
+  die "Copy them from the .env that provisioned the server (the main checkout) and rerun. Generating new values would rotate credentials used by the deployed stack and every other checkout."
+}
+
+# Prints MC_HOST_infra for the MinIO root user. The root credentials stay in this process: they are
+# never written to .env or to disk.
+minio_root_host() {
+  local root_credentials root_user root_password
   root_credentials="$(remote "grep -E '^MINIO_ROOT_(USER|PASSWORD)=' ~/infra/.env")"
   root_user="$(sed -n 's/^MINIO_ROOT_USER=//p' <<<"$root_credentials" | tr -d "'\"")"
   root_password="$(sed -n 's/^MINIO_ROOT_PASSWORD=//p' <<<"$root_credentials" | tr -d "'\"")"
   [[ -n "$root_user" && -n "$root_password" ]] || die "MINIO_ROOT_USER/PASSWORD not found in ~/infra/.env on the server."
   [[ "$root_user$root_password" =~ ^[A-Za-z0-9_]+$ ]] || die "The MinIO root credentials contain characters that break the mc alias URL."
+  printf 'http://%s:%s@%s:9000' "$root_user" "$root_password" "$(infra_host)"
+}
+
+minio_user_exists() {
+  local mc_host
+  command -v docker >/dev/null 2>&1 || die "Docker is required to provision MinIO."
+  mc_host="$(minio_root_host)"
+  MC_HOST_infra="$mc_host" docker run --rm --pull missing -e MC_HOST_infra --entrypoint mc "$s3_mc_image" \
+    admin user info infra "$s3_user" >/dev/null 2>&1
+}
+
+provision_s3() {
+  local secret_key=$1 mc_host policy_file
+  command -v docker >/dev/null 2>&1 || die "Docker is required to provision MinIO."
+  mc_host="$(minio_root_host)"
 
   policy_file="$(mktemp)"
   cat >"$policy_file" <<EOF
@@ -181,7 +232,7 @@ EOF
   chmod 644 "$policy_file"
 
   log "Provisioning MinIO bucket '$s3_bucket' and user '$s3_user'..."
-  MC_HOST_infra="http://$root_user:$root_password@$(infra_host):9000" \
+  MC_HOST_infra="$mc_host" \
     docker run --rm --pull missing -e MC_HOST_infra --entrypoint /bin/sh \
     -v "$policy_file:/policy.json:ro" "$s3_mc_image" -c "
       set -e

@@ -1,4 +1,4 @@
-import { CircleAlert, Clapperboard, Pencil, Search, Tags } from 'lucide-react';
+import { CircleAlert, Clapperboard, Pencil, Search, Tag } from 'lucide-react';
 import { useState } from 'react';
 
 import { ForbiddenScreen } from '@/components/forbidden-screen';
@@ -174,13 +174,16 @@ export const VideosAreaScreen = ({
     </div> : null}
 
     {showControls && onTagsChange ? <div className="video-library-tag-controls">
-      <VideoTagField autoFocus={false} label="Filtrar por tag" tags={tags} disabled={false} mode="suggestion-only"
+      <VideoTagField autoFocus={false} tags={tags} disabled={false} mode="suggestion-only"
         onChange={onTagsChange} onDraftChange={() => undefined} />
-      {tags.length >= 2 ? <div aria-label="Combinar tags" className="video-filter-options" role="group">
-        <button aria-pressed={tagMatch === 'all'} className={tagMatch === 'all' ? 'video-filter-active' : ''}
-          onClick={() => onTagMatchChange?.('all')} type="button">E</button>
-        <button aria-pressed={tagMatch === 'any'} className={tagMatch === 'any' ? 'video-filter-active' : ''}
-          onClick={() => onTagMatchChange?.('any')} type="button">OU</button>
+      {tags.length >= 2 ? <div className="video-tag-match">
+        <span id="video-tag-match-label">Combinar tags</span>
+        <div aria-labelledby="video-tag-match-label" className="video-filter-options" role="group">
+          <button aria-pressed={tagMatch === 'all'} className={tagMatch === 'all' ? 'video-filter-active' : ''}
+            onClick={() => onTagMatchChange?.('all')} type="button">E</button>
+          <button aria-pressed={tagMatch === 'any'} className={tagMatch === 'any' ? 'video-filter-active' : ''}
+            onClick={() => onTagMatchChange?.('any')} type="button">OU</button>
+        </div>
       </div> : null}
     </div> : null}
 
@@ -210,7 +213,9 @@ export const VideosAreaScreen = ({
       <p aria-atomic="true" aria-live="polite" className="visually-hidden" role="status">{statusAnnouncement}</p>
       <div className="videos-table-header"><span>Título</span><span>Estado</span><span>Autor</span><span>Enviado</span><span>Ações</span></div>
       {videos?.data.map((video) => <div className="videos-table-row" key={video.videoId}>
-        <div className="video-title-cell"><strong>{video.title}</strong></div>
+        <div className="video-title-cell"><strong>{video.title}</strong>
+          {video.tags.length ? <div className="video-row-tags" aria-label={`Tags de ${video.title}`}>{video.tags.map((tag) => <span className="video-tag-chip" key={tag}>{tag}</span>)}</div> : null}
+        </div>
         <div className={`video-status-cell ${video.status}`}>
           <div className="video-status-content">
             <VideoStatusBadge status={video.status} />
@@ -233,10 +238,9 @@ export const VideosAreaScreen = ({
           <span aria-hidden="true" className="video-meta-separator">·</span>
           <time className="video-date" dateTime={video.uploadedAt}>{formatDate(video.uploadedAt)}</time>
         </div>
-        <div className="video-row-tags" aria-label={`Tags de ${video.title}`}>{video.tags.map((tag) => <span className="video-tag-chip" key={tag}>{tag}</span>)}</div>
         <div className="video-row-actions">
         {onEditTitle ? <button aria-label={`Editar título de ${video.title}`} className="video-edit-title" onClick={() => onEditTitle(video)} type="button"><Pencil aria-hidden="true" size={16} /></button> : <span className="video-edit-placeholder" />}
-        {onEditTags ? <button aria-label={`Editar tags de ${video.title}`} className="video-edit-title" onClick={() => onEditTags(video)} type="button"><Tags aria-hidden="true" size={16} /></button> : null}
+        {onEditTags ? <button aria-label={`Editar tags de ${video.title}`} className="video-edit-title" onClick={() => onEditTags(video)} type="button"><Tag aria-hidden="true" size={16} /></button> : null}
         </div>
       </div>)}
       </section>
