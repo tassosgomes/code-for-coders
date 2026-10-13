@@ -71,6 +71,7 @@ describe('video-transcription-reader', () => {
     const dialog = await openReader(user);
     expect(within(dialog).getByRole('status', { name: 'Carregando transcrição' })).toHaveAttribute('aria-busy', 'true');
     expect(dialog.querySelectorAll('.video-transcription-skeleton')).toHaveLength(8);
+    expect(within(dialog).getByText('Carregando a transcrição…')).toBeVisible();
     await user.click(within(dialog).getAllByRole('button', { name: 'Fechar' })[0]!);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
@@ -99,6 +100,7 @@ describe('video-transcription-reader', () => {
     renderRoute(); const dialog = await openReader(user);
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Não foi possível abrir a transcrição agora.');
     expect(within(dialog).queryByText('Private error details')).not.toBeInTheDocument();
+    expect(within(within(dialog).getByRole('alert')).getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Tentar de novo' }));
     expect(await within(dialog).findByText(videoTranscriptionContentFixture.segments[0]!.text)).toBeInTheDocument();
     expect(reads).toBe(2);

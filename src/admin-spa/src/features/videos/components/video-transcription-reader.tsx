@@ -1,5 +1,6 @@
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
+import { CircleAlert, FileMinus, Info } from 'lucide-react';
 
 import { Dialog } from '@/components/ui/dialog';
 import { useVideoTranscription } from '@/features/videos/api/get-video-transcription';
@@ -25,12 +26,16 @@ export const VideoTranscriptionReader = ({ video, onClose }: VideoTranscriptionR
   return <Dialog busy={false} className="video-transcription-reader-dialog" description={video.title} onClose={onClose} title="Transcrição">
     {transcription.isPending ? <div aria-label="Carregando transcrição" aria-busy="true" className="video-transcription-reader-loading" role="status">
       {Array.from({ length: 8 }, (_, index) => <div aria-hidden="true" className="video-transcription-skeleton" key={index}><span /><span /></div>)}
-    </div> : transcription.isError ? <div className="video-transcription-reader-message" role="alert">
-      <p>{notReady ? 'Ainda não há transcrição pronta para este vídeo.' : 'Não foi possível abrir a transcrição agora.'}</p>
-      {!notReady ? <button className="outline-button" onClick={() => void transcription.refetch()} type="button">Tentar de novo</button> : null}
+      <p>Carregando a transcrição…</p>
+    </div> : notReady ? <div className="video-transcription-reader-empty" role="alert">
+      <span aria-hidden="true"><FileMinus size={24} /></span><p>Ainda não há transcrição pronta para este vídeo.</p>
+    </div> : transcription.isError ? <div className="video-transcription-reader-alert" role="alert">
+      <CircleAlert aria-hidden="true" size={16} /><p>Não foi possível abrir a transcrição agora.</p>
+      <button className="outline-button" onClick={() => void transcription.refetch()} type="button">Tentar de novo</button>
     </div> : <>
       <p className="video-transcription-reader-meta">Pronta em {formatReadyAt(transcription.data.readyAt)} · somente leitura</p>
-      {restartingAtOpen ? <p className="video-transcription-reader-notice" role="status">Há uma transcrição nova em andamento. Você está lendo a atual, que os alunos continuam vendo.</p> : null}
+      {restartingAtOpen ? <div className="video-transcription-reader-notice" role="status"><Info aria-hidden="true" size={16} />
+        <p>Há uma transcrição nova em andamento. Você está lendo a atual, que os alunos continuam vendo.</p></div> : null}
       <div aria-label="Texto da transcrição" className="video-transcription-reader-text" role="region" tabIndex={0}>
         <ol>{transcription.data.segments.map((segment, index) => <li key={`${segment.startMs}-${index}`}>
           <span className="video-transcription-reader-time">{formatTime(segment.startMs)}</span><span>{segment.text}</span>
