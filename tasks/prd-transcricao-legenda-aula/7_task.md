@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.UnitTests/CodeForCoders.Media.UnitTests.csproj -- --filter-class CodeForCoders.Media.UnitTests.TranscriptionWebhookSignatureTests --minimum-expected-tests 7 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.TranscriptionEventReceiverTests --minimum-expected-tests 12'
@@ -62,8 +62,8 @@ para a consolidação (14.0).
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] Assinatura válida (com o segredo atual e com o anterior), inválida, ausente e fora de ±300 s tratadas como no contrato (204 ou 401).
-- [ ] Duplicata, job desconhecido e tentativa encerrada → 204 sem efeito; falha de gravação → 503; nenhum 410.
-- [ ] O aviso marca a tentativa e o worker consulta antes da próxima cadência; um aviso nunca altera o texto.
-- [ ] Sem segredo configurado a rota não existe.
+- [x] Gate focalizado passa (exit 0).
+- [x] Assinatura válida (com o segredo atual e com o anterior), inválida, ausente e fora de ±300 s tratadas como no contrato (204 ou 401).
+- [x] Duplicata, job desconhecido e tentativa encerrada → 204 sem efeito; falha de gravação → 503; nenhum 410.
+- [x] O aviso marca a tentativa e o worker consulta antes da próxima cadência; um aviso nunca altera o texto.
+- [x] Sem segredo configurado a rota não existe.

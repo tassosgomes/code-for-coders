@@ -12,7 +12,7 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var candidates = await dbContext.Transcriptions.FromSqlInterpolated($"""
             SELECT * FROM media_access.video_transcriptions
-            WHERE status IN ('queued', 'waiting') AND next_action_at <= {claim.Now}
+            WHERE status IN ('queued', 'waiting') AND (next_action_at <= {claim.Now} OR signaled_at IS NOT NULL)
                 AND ({claim.CanExtract} OR whisper_job_id IS NOT NULL)
             ORDER BY requested_at, transcription_id LIMIT 1 FOR UPDATE SKIP LOCKED
             """).IgnoreQueryFilters().AsNoTracking().ToArrayAsync(cancellationToken);
@@ -20,7 +20,7 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
         var id = candidates[0].TranscriptionId;
         await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             UPDATE media_access.video_transcriptions
-            SET status = 'working', lease_id = {leaseId}, lease_until = {claim.Now.Add(claim.LeaseDuration)},
+            SET status = 'working', signaled_at = NULL, lease_id = {leaseId}, lease_until = {claim.Now.Add(claim.LeaseDuration)},
                 extraction_attempts = extraction_attempts + CASE WHEN whisper_job_id IS NULL THEN 1 ELSE 0 END
             WHERE transcription_id = {id}
             """, cancellationToken);
@@ -58,6 +58,10 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
             UPDATE media_access.video_transcriptions SET audio_deleted_at = {now}
             WHERE transcription_id = {transcriptionId} AND status IN ('ready', 'failed')
             """, cancellationToken);
+
+    public async Task DeleteOldEventsAsync(DateTimeOffset cutoff, CancellationToken cancellationToken)
+        => await dbContext.TranscriptionEvents.IgnoreQueryFilters().Where(row => row.ReceivedAt < cutoff)
+            .ExecuteDeleteAsync(cancellationToken);
 
     public async Task ReplaceContentAsync(TranscriptionContent content, CancellationToken cancellationToken)
     {

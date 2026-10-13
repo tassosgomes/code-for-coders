@@ -1,4 +1,6 @@
 using CodeForCoders.Media.Api.Endpoints;
+using CodeForCoders.Media.Application.Common;
+using Microsoft.Extensions.Options;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 
 namespace CodeForCoders.Media.Api.Extensions;
@@ -16,5 +18,7 @@ public static class EndpointExtensions
         app.MapVideoEndpoints();
         app.MapPlaybackSessionEndpoints();
         app.MapVideoUploadEndpoints();
+        if (app.Services.GetRequiredService<IOptions<TranscriptionWebhookOptions>>().Value.IsConfigured)
+            app.MapTranscriptionEventEndpoints();
     }
 }

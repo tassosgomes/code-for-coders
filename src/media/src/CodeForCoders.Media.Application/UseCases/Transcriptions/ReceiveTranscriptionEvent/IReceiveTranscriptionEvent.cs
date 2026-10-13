@@ -1,0 +1,3 @@
+namespace CodeForCoders.Media.Application.UseCases.Transcriptions.ReceiveTranscriptionEvent;
+
+public interface IReceiveTranscriptionEvent : IUseCase<ReceiveTranscriptionEventInput>;

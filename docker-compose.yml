@@ -268,6 +268,8 @@ services:
     container_name: code-for-coders-media
     environment:
       Transcription__Enabled: "false"
+      Transcription__Webhook__Secrets__0: ${TRANSCRIPTION_WEBHOOK_SECRET:-}
+      Transcription__Webhook__Secrets__1: ${TRANSCRIPTION_WEBHOOK_SECRET_PREVIOUS:-}
       Transcription__Service__BaseAddress: ${WHISPER_BASE_ADDRESS:-https://whisper.lab.tasso.dev.br/v1}
       Transcription__Service__ApiKey: ${WHISPER_API_KEY:-}
       AwsMedia__EndpointTranscription: ${AWS_S3_TRANSCRIPTION_ENDPOINT:-http://minio:9000}

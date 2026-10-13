@@ -36,6 +36,9 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
         services.AddOptions<TranscriptionOptions>().Bind(configuration.GetSection(TranscriptionOptions.SectionName)).ValidateOnStart();
+        services.AddOptions<TranscriptionWebhookOptions>().Bind(configuration.GetSection(TranscriptionWebhookOptions.SectionName))
+            .Validate(options => options.HasValidSecrets(), "Configure at most two valid transcription webhook secrets.").ValidateOnStart();
+        services.AddScoped<ITranscriptionEventRepository, Transcriptions.TranscriptionEventRepository>();
         services.AddScoped<ITranscriptionWorkerRepository, Transcriptions.TranscriptionWorkerRepository>();
         services.AddScoped<IVideoTranscriptionRepository, Transcriptions.VideoTranscriptionRepository>();
         services.AddScoped<IVideoQueries, VideoQueries>();

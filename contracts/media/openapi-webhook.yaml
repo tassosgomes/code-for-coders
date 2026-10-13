@@ -1,0 +1,201 @@
+openapi: 3.1.0
+info:
+  title: Media — aviso de término da transcrição (webhook)
+  version: 1.0.0
+  description: |-
+    Contrato **vigente**. Fronteira: serviço de transcrição próprio → `media`. Mudanças entram por PR neste arquivo; o recorte do PRD (`tasks/prd-transcricao-legenda-aula/webhook-contract-media.yaml` 1.0.0) é a origem.
+
+    Recorte de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. **Contrato novo.** Fronteira: serviço de transcrição próprio → `media`. É o único ponto de entrada de `media` para esse serviço; segue o padrão do endpoint dedicado de webhook já adotado em `contracts/billing/openapi-webhook.yaml` (assinatura, idempotência, registro antes de responder).
+
+    O corpo é o aviso **do serviço de transcrição**, no formato dele (Standard Webhooks v1); este contrato não o redefine, só fixa o que `media` exige e como responde. A tradução para o vocabulário da plataforma acontece dentro de `media` (camada anticorrupção). Nenhum fato novo sai para outros domínios (domínio de Mídia, §7).
+  contact:
+    name: Time de Entrega de Mídia
+servers:
+- url: /webhooks/v1
+  description: Rota privada de Media, exposta só ao serviço de transcrição; o endereço completo é cadastrado pelo
+    operador no serviço
+tags:
+- name: Serviço de transcrição
+  description: Aviso de término de transcrição
+paths:
+  /transcription-events:
+    post:
+      tags:
+      - Serviço de transcrição
+      summary: Receber o aviso de término de uma transcrição
+      description: |
+        Receptor do aviso terminal do serviço de transcrição próprio (dependência consumida, repositório separado; contrato dele: `tassosgomes/whisper-api`, `tasks/prd-api-transcricao-assincrona/api-contract.yaml` 1.0.0). O serviço envia **depois** que o trabalho termina com sucesso ou falha, ao destino cadastrado pelo operador. O aviso é só um **gatilho**: não carrega texto nem motivo; `media` confirma o desfecho consultando o serviço e, se pronto, copia o texto para guarda própria (RN-M23).
+
+        Garantias observáveis (mecanismo na TechSpec):
+
+        - **Autenticidade** (Standard Webhooks v1): `webhook-signature` contém uma ou mais assinaturas `v1,<base64>` separadas por espaço (duas durante rotação planejada de segredo); vale se **alguma** confere com `HMAC-SHA256(segredo, webhook-id + "." + webhook-timestamp + "." + corpo bruto)` sobre os bytes exatos recebidos, comparada em tempo constante. `webhook-timestamp` (segundos Unix) fora de ±300 s da hora do servidor também é recusado. Assinatura ausente, inválida ou fora da tolerância → 401, nada muda. O segredo é exclusivo deste destino, independente da chave de API do serviço, é configuração de implantação, nunca de código, e nunca vai para log.
+        - **Idempotência**: a entrega é ao menos uma vez; `webhook-id` (igual ao `eventId`) é estável entre tentativas. Evento já tratado responde 204 sem segundo efeito, durante toda a janela de reenvio de 72 h.
+        - **Registro antes de responder**: 204 só depois de o evento estar gravado; a consulta ao serviço e a cópia do texto podem ocorrer depois, sem depender de nova entrega (RF-07).
+        - **Não faz acusar o remetente**: aviso de job desconhecido, de tentativa já encerrada ou sem `clientReference` responde 204 e é ignorado, para o serviço não insistir por 72 h. Este receptor **nunca** responde 410 (o serviço desativa o destino ao receber 410) nem 3xx.
+        - **Falha transitória** de `media` antes de gravar → 503 e o serviço reenvia pela política dele.
+
+        `clientReference` é a referência opaca que `media` enviou ao criar o pedido: o identificador da **tentativa de transcrição** de `media` (nunca o título, o texto, o e-mail ou o identificador de pessoa). É por ela que `media` acha o vídeo e a escola; o aviso não informa escola. O serviço não interpreta a referência.
+
+        Endpoint dedicado, sem sessão de usuário e sem BFF: o chamador é o serviço de transcrição. Exposto só na rede privada, ao serviço de transcrição (a liberação do destino privado do lado dele é a pendência externa `whisper-api#2`).
+      operationId: receiveTranscriptionEvent
+      security:
+      - WebhookSignature: []
+      parameters:
+      - name: webhook-id
+        in: header
+        required: true
+        description: Identificador estável do evento; igual em todas as tentativas. Chave de deduplicação.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+        examples:
+          evento:
+            value: evt_01J9M2YB8K4W6N7P3Q5R1S0ABC
+      - name: webhook-timestamp
+        in: header
+        required: true
+        description: Horário Unix, em segundos, da tentativa atual; muda a cada reenvio. Tolerância de ±300 s.
+        schema:
+          type: string
+          pattern: ^[0-9]{10,}$
+        examples:
+          agora:
+            value: '1791295200'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranscriptionEvent'
+            examples:
+              concluida:
+                value:
+                  eventId: evt_01J9M2YB8K4W6N7P3Q5R1S0ABC
+                  jobId: trn_01J9M2YB8K4W6N7P3Q5R1S0ABC
+                  status: completed
+                  clientReference: 5b1f7e0a-3c2d-4a98-8e65-1d0c9b7a6f42
+              falhou:
+                value:
+                  eventId: evt_01J9M2YB8K4W6N7P3Q5R1S0ABD
+                  jobId: trn_01J9M2YB8K4W6N7P3Q5R1S0ABD
+                  status: failed
+                  clientReference: 8c4d2b6e-9f10-4e37-a5b8-7c6d5e4f3a21
+      responses:
+        '204':
+          description: 'Evento aceito: novo, repetido, de job desconhecido ou de tentativa já encerrada.'
+        '400':
+          description: Corpo que não é JSON ou sem `eventId`, `jobId` ou `status`. O corpo de erro não ecoa o evento.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                invalido:
+                  value:
+                    type: about:blank
+                    title: Evento inválido.
+                    status: 400
+                    code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '401':
+          description: Assinatura ausente, inválida ou fora da tolerância de horário; nada muda. O corpo de erro
+            não ecoa o evento.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                assinatura:
+                  value:
+                    type: about:blank
+                    title: Assinatura inválida.
+                    status: 401
+                    code: SIGNATURE_INVALID
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '503':
+          description: Falha transitória de `media` antes de gravar o evento; o serviço de transcrição reenvia.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                indisponivel:
+                  value:
+                    type: about:blank
+                    title: Indisponível no momento.
+                    status: 503
+                    code: TEMPORARILY_UNAVAILABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+components:
+  securitySchemes:
+    WebhookSignature:
+      type: apiKey
+      in: header
+      name: webhook-signature
+      description: Assinatura Standard Webhooks v1 (`v1,<base64(HMAC-SHA256)>`, uma ou duas separadas por espaço)
+        sobre `webhook-id`, `webhook-timestamp` e o corpo bruto, com o segredo exclusivo deste destino. Os cabeçalhos
+        `webhook-id` e `webhook-timestamp` fazem parte da verificação.
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+    TranscriptionEvent:
+      type: object
+      additionalProperties: true
+      required:
+      - eventId
+      - jobId
+      - status
+      description: Aviso mínimo de estado terminal; sem mídia, texto nem motivo da falha. Campos desconhecidos são
+        tolerados (leitor tolerante).
+      properties:
+        eventId:
+          type: string
+          minLength: 1
+          description: Identificador estável entre as tentativas; igual a `webhook-id`.
+          examples:
+          - evt_01J9M2YB8K4W6N7P3Q5R1S0ABC
+        jobId:
+          type: string
+          minLength: 1
+          description: Identificador opaco do trabalho no serviço de transcrição.
+          examples:
+          - trn_01J9M2YB8K4W6N7P3Q5R1S0ABC
+        status:
+          type: string
+          enum:
+          - completed
+          - failed
+          description: Desfecho terminal. O motivo da falha é obtido por consulta ao serviço, não deste aviso.
+          examples:
+          - completed
+        clientReference:
+          type: string
+          description: Referência enviada por `media` ao criar o pedido (id da tentativa de transcrição). Ausente
+            se o serviço não a devolver.
+          examples:
+          - 5b1f7e0a-3c2d-4a98-8e65-1d0c9b7a6f42

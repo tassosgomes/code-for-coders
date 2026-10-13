@@ -41,6 +41,7 @@ public sealed class ProcessTranscription(
     public async Task MaintainAsync(string workDirectory, CancellationToken cancellationToken)
     {
         var now = clock.GetUtcNow();
+        await repository.DeleteOldEventsAsync(now.AddDays(-7), cancellationToken);
         foreach (var work in await repository.GetExpiredAsync(now, cancellationToken))
         {
             var recovered = false;

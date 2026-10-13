@@ -18,6 +18,8 @@ services:
   media:
     environment:
       Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
+      Transcription__Webhook__Secrets__0: ${TRANSCRIPTION_WEBHOOK_SECRET:-}
+      Transcription__Webhook__Secrets__1: ${TRANSCRIPTION_WEBHOOK_SECRET_PREVIOUS:-}
       ASPNETCORE_ENVIRONMENT: Production
 
   media-worker:

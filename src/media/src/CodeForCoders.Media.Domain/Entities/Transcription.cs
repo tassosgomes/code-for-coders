@@ -64,10 +64,17 @@ public sealed class Transcription
     {
         if (Status != "working") throw new EntityValidationException("The transcription poll transition is invalid.");
         Status = "waiting";
-        NextActionAt = nextActionAt;
-        SignaledAt = null;
+        NextActionAt = SignaledAt is { } signal && signal < nextActionAt ? signal : nextActionAt;
         LeaseId = null;
         LeaseUntil = null;
+    }
+
+    public void Signal(string jobId, DateTimeOffset now)
+    {
+        if (Status is not ("queued" or "working" or "waiting")
+            || (WhisperJobId is not null && WhisperJobId != jobId)) return;
+        SignaledAt = now;
+        NextActionAt = now;
     }
 
     public void MarkReady(TranscriptionContent content, DateTimeOffset now)

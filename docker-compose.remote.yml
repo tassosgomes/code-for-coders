@@ -63,6 +63,8 @@ services:
   media:
     environment:
       Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
+      Transcription__Webhook__Secrets__0: ${TRANSCRIPTION_WEBHOOK_SECRET:-}
+      Transcription__Webhook__Secrets__1: ${TRANSCRIPTION_WEBHOOK_SECRET_PREVIOUS:-}
       AccessDecision__BaseAddress: http://commerce:8080/
       AccessDecision__SigningKeyId: local-media-commerce-1
       AccessDecision__SigningKeyBase64: ${MEDIA_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
