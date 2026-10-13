@@ -1,11 +1,11 @@
 ---
 id: TASK-32
 title: Alinhar as telas da compra avulsa às divergências da auditoria com o Figma
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:41'
-updated_date: '2026-10-13 20:42'
+updated_date: '2026-10-13 22:21'
 labels:
   - frontend
 dependencies: []
@@ -26,5 +26,17 @@ Auditoria de 2026-10-13 comparou o código com o Figma Screens — Compra (node 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 As subtasks do Resumo da compra, Pedido, Meus pedidos e Financeiro estão concluídas
+- [x] #1 As subtasks do Resumo da compra, Pedido, Meus pedidos e Financeiro estão concluídas
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Subtasks 32.1 a 32.4 concluídas (PRs #232 a #235, mergeadas em 2026-10-13) e conferidas em dev em 2026-10-13 com o pedido de teste #000023 no sandbox do Stripe.
+<!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Telas da compra avulsa alinhadas ao Figma Screens — Compra: Resumo (com o fluxo G6 de abrir o pagamento direto), Pedido, Meus pedidos e Financeiro do backoffice. Verificado com lint, build e testes do student-spa e do admin-spa, prévias locais e conferência em dev com pedido de teste no sandbox do Stripe.
+<!-- SECTION:FINAL_SUMMARY:END -->
