@@ -128,7 +128,9 @@ public sealed class TranscriptionPipelineTests(VideoLibraryApiFactory factory)
         var (video, id) = await EnqueuePreparedAsync(context);
         var playlist = $"#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI=\"c4c-key:{video.VideoId:D}\"\n#EXTINF:1,\n{resource}\n#EXT-X-ENDLIST\n";
         await context.UploadOriginalBytesAsync($"{video.TenantId:D}/{video.VideoId:D}/hls/480p.m3u8", Encoding.UTF8.GetBytes(playlist), Token);
-        await ExecuteAsync(context); Assert.Equal("failed", (await AttemptAsync(context, id)).Status);
+        await ExecuteAsync(context); Assert.Equal("queued", (await AttemptAsync(context, id)).Status);
+        for (var retry = 0; retry < 2; retry++) { await MakeEligibleAsync(context, id); await ExecuteAsync(context); }
+        Assert.Equal("failed", (await AttemptAsync(context, id)).Status);
         Assert.Empty(server.Submissions); await AssertCleanAsync(context, video);
     }
 
@@ -137,6 +139,7 @@ public sealed class TranscriptionPipelineTests(VideoLibraryApiFactory factory)
     {
         await using var server = await TranscriptionHttpSimulator.StartAsync(Token); await using var context = await CreateContextAsync(server, includeAudio: false);
         var (video, id) = await EnqueuePreparedAsync(context); await ExecuteAsync(context);
+        for (var retry = 0; retry < 2; retry++) { await MakeEligibleAsync(context, id); await ExecuteAsync(context); }
         Assert.Equal("processing-failed", (await AttemptAsync(context, id)).FailureReason);
         Assert.Empty(server.Submissions); await AssertCleanAsync(context, video);
     }

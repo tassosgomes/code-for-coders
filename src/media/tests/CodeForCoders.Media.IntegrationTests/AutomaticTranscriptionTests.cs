@@ -110,7 +110,8 @@ public sealed class AutomaticTranscriptionTests(VideoLibraryApiFactory factory)
         Assert.True(await context.WithScopeAsync(provider => provider.GetRequiredService<ITranscriptionWorkflow>()
             .ExecuteNextAsync(new(context.WorkDirectory, long.MaxValue / 4), Token)));
         Assert.Single(server.Submissions);
-        Assert.Equal("failed", Assert.Single(await AttemptsAsync(context)).Status);
+        var refused = Assert.Single(await AttemptsAsync(context));
+        Assert.Equal("queued", refused.Status); Assert.Equal(1, refused.SubmissionFailures);
         await AssertReadyAsync(context, video);
         Assert.Equal(preparationDuration, Assert.Single(timeToReady));
     }

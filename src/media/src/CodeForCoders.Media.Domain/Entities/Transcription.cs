@@ -104,6 +104,46 @@ public sealed class Transcription
         LeaseUntil = null;
     }
 
+    /// <summary>The audio extraction failed before a job existed; the attempt waits in the queue for another extraction.</summary>
+    public void RetryExtraction(DateTimeOffset nextActionAt)
+    {
+        if (Status != "working" || WhisperJobId is not null)
+            throw new EntityValidationException("The transcription extraction retry transition is invalid.");
+        Requeue(nextActionAt);
+    }
+
+    /// <summary>The service did not take the audio; extraction counts restart because the audio is already extracted.</summary>
+    public void RetrySubmission(DateTimeOffset nextActionAt)
+    {
+        if (Status != "working" || WhisperJobId is not null)
+            throw new EntityValidationException("The transcription submission retry transition is invalid.");
+        SubmissionFailures++;
+        ExtractionAttempts = 0;
+        Requeue(nextActionAt);
+    }
+
+    /// <summary>The accepted job is gone or lost its source; a new extraction and submission follow.</summary>
+    public void Resubmit(DateTimeOffset nextActionAt)
+    {
+        if (Status != "working" || WhisperJobId is null)
+            throw new EntityValidationException("The transcription resubmission transition is invalid.");
+        WhisperJobId = null;
+        SubmittedAt = null;
+        DeadlineAt = null;
+        AudioDeletedAt = null;
+        ExtractionAttempts = 0;
+        Requeue(nextActionAt);
+    }
+
+    private void Requeue(DateTimeOffset nextActionAt)
+    {
+        Status = "queued";
+        NextActionAt = nextActionAt;
+        SignaledAt = null;
+        LeaseId = null;
+        LeaseUntil = null;
+    }
+
     public void MarkFailed(string reason)
     {
         if (Status is not ("queued" or "working" or "waiting")

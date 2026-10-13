@@ -9,6 +9,7 @@ import { PendingVideoUploadsAlert } from '@/features/videos/components/pending-v
 import { VideoTagField } from '@/features/videos/components/video-tag-field';
 import { VideoStatusBadge, transcriptionStatusLabels } from '@/features/videos/components/video-status-badge';
 import { VideoTranscriptionStatus } from '@/features/videos/components/video-transcription-status';
+import { getVideoTranscriptionFailureMessage } from '@/features/videos/utils/video-transcription';
 import { VideoTransferPanel, type VideoTransferView } from '@/features/videos/components/video-transfer-panel';
 
 type VideosAreaScreenProps = {
@@ -82,7 +83,9 @@ const describeStatusChanges = (previous: readonly VideoSummary[], current: reado
       const changes = [];
       if (before.status !== video.status) changes.push(statusLabels[video.status]);
       if (before.transcription.status !== video.transcription.status) {
-        changes.push(`transcrição ${transcriptionStatusLabels[video.transcription.status].toLocaleLowerCase('pt-BR')}`);
+        changes.push(video.transcription.status === 'failed'
+          ? `a transcrição falhou. ${getVideoTranscriptionFailureMessage(video.transcription.failureReason)}`
+          : `transcrição ${transcriptionStatusLabels[video.transcription.status].toLocaleLowerCase('pt-BR')}`);
       }
       return changes.length ? [`${video.title}: ${changes.join(', ')}`] : [];
     })

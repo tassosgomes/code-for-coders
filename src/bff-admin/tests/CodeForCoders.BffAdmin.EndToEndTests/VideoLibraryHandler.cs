@@ -23,6 +23,8 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
 
     public string[] Tags { get; set; } = [];
 
+    public object? TranscriptionState { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
@@ -63,7 +65,7 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
                     durationSeconds = (int?)null,
                     failureReason = (string?)null,
                     tags = Tags,
-                    transcription = new { status = StatusCode == HttpStatusCode.Accepted ? "in-progress" : "not-requested", readable = false, readyAt = (DateTimeOffset?)null, failureReason = (string?)null, canStart = false },
+                    transcription = TranscriptionState ?? new { status = StatusCode == HttpStatusCode.Accepted ? "in-progress" : "not-requested", readable = false, readyAt = (DateTimeOffset?)null, failureReason = (string?)null, canStart = false },
                 }),
             };
         }
@@ -86,6 +88,7 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
         StatusCode = HttpStatusCode.OK;
         LastBody = null;
         Tags = [];
+        TranscriptionState = null;
         ProblemCode = null;
         RequestCount = 0;
         LastAccessToken = null;

@@ -34,6 +34,8 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
 
     public async Task<bool> WithLeaseAsync(TranscriptionWorkItem work, Func<Transcription, CancellationToken, Task> change, CancellationToken cancellationToken)
     {
+        // A previous change that failed on commit must not leave pending rows to be saved with the next one.
+        dbContext.ChangeTracker.Clear();
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var rows = await dbContext.Transcriptions.FromSqlInterpolated($"""
             SELECT * FROM media_access.video_transcriptions
@@ -54,10 +56,14 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
             """, cancellationToken) == 1;
 
     public async Task MarkCleanupAsync(Guid transcriptionId, DateTimeOffset now, CancellationToken cancellationToken)
-        => await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+    {
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             UPDATE media_access.video_transcriptions SET audio_deleted_at = {now}
             WHERE transcription_id = {transcriptionId} AND status IN ('ready', 'failed')
             """, cancellationToken);
+        await dbContext.TranscriptionAudioCleanups.IgnoreQueryFilters().Where(row => row.TranscriptionId == transcriptionId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
 
     public async Task DeleteOldEventsAsync(DateTimeOffset cutoff, CancellationToken cancellationToken)
         => await dbContext.TranscriptionEvents.IgnoreQueryFilters().Where(row => row.ReceivedAt < cutoff)
@@ -86,6 +92,13 @@ public sealed class TranscriptionWorkerRepository(MediaDbContext dbContext) : IT
     public async Task<IReadOnlyList<TranscriptionWorkItem>> GetAudioCleanupAsync(CancellationToken cancellationToken)
         => await ReadWorkAsync(dbContext.Transcriptions.IgnoreQueryFilters().AsNoTracking()
             .Where(row => row.AudioDeletedAt == null && (row.Status == "ready" || row.Status == "failed")), cancellationToken);
+
+    public async Task<IReadOnlyList<TranscriptionAudioCleanupItem>> GetPendingAudioCleanupAsync(CancellationToken cancellationToken)
+        => await dbContext.TranscriptionAudioCleanups.IgnoreQueryFilters().AsNoTracking()
+            .OrderBy(row => row.RequestedAt).ThenBy(row => row.TranscriptionId).Take(100)
+            .Select(row => new TranscriptionAudioCleanupItem(row.TranscriptionId,
+                $"{row.TenantId:D}/{row.VideoId:D}/transcription/{row.TranscriptionId:D}/audio.m4a"))
+            .ToArrayAsync(cancellationToken);
 
     private async Task<IReadOnlyList<TranscriptionWorkItem>> ReadWorkAsync(IQueryable<Transcription> query, CancellationToken cancellationToken)
         => await query.OrderBy(row => row.RequestedAt).Take(100)

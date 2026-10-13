@@ -53,7 +53,7 @@ describe('video-transcription-status', () => {
     expect(within(transcriptionCell('Concluída')).getByText(/^Pronta em /)).toBeInTheDocument();
     expect(screen.getAllByText('Pronto')).toHaveLength(3);
     expect(screen.getByLabelText('Tags de Sem pedido')).toHaveTextContent('Docker');
-    expect(screen.queryByRole('button', { name: /Ler|Refazer/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ler/ })).not.toBeInTheDocument();
   });
 
   it('requests without a body, sends CSRF and idempotency, and uses the accepted server row without reloading', async () => {
@@ -113,13 +113,15 @@ describe('video-transcription-status', () => {
     expect(screen.queryByRole('button', { name: /^Transcrever / })).not.toBeInTheDocument();
   });
 
-  it('shows a failed transcription without reasons or Refazer in this slice', async () => {
+  it('shows a failed transcription with a generic reason for a value the screen does not know, hiding the code', async () => {
     listVideos(() => [readyVideo({ ...videoTranscriptionFixtures.failed, failureReason: 'future-service-reason' })]);
     renderRoute();
     expect(await screen.findByText('Aula de exemplo')).toBeInTheDocument();
     expect(within(transcriptionCell()).getByText('Falhou')).toBeInTheDocument();
+    expect(within(transcriptionCell()).getByText('Não foi possível transcrever este vídeo.')).toBeInTheDocument();
     expect(screen.queryByText('future-service-reason')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Transcrever|Refazer|Ler/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refazer Aula de exemplo' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Transcrever|Ler/ })).not.toBeInTheDocument();
   });
 
   it('polls after an accepted request until ready, announces completion, and stops', async () => {

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0", "5.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.TranscriptionFailurePolicyTests --minimum-expected-tests 14 && dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.TranscriptionRestartTests --minimum-expected-tests 8 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/CodeForCoders.BffAdmin.EndToEndTests.csproj -- --filter-class CodeForCoders.BffAdmin.EndToEndTests.VideoTranscriptionRestartTests --minimum-expected-tests 4 && npm --prefix src/admin-spa run test -- video-transcription-restart'
@@ -81,8 +81,8 @@ passa a produzir.
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] Cada linha da política de erro (inclusive resultado expirado e `schemaVersion` desconhecida) termina no estado e no motivo previstos.
-- [ ] Dois pedidos simultâneos de Refazer resultam em uma tentativa; falha no meio da troca mantém a vigente.
-- [ ] Refazer mantém `readable: true`; refeita que falha deixa `failed` com a vigente intacta.
-- [ ] `duration-limit` e `size-limit` mostram o motivo, não oferecem Refazer e o POST responde 409 `TRANSCRIPTION_NOT_RETRYABLE`.
+- [x] Gate focalizado passa (exit 0).
+- [x] Cada linha da política de erro (inclusive resultado expirado e `schemaVersion` desconhecida) termina no estado e no motivo previstos.
+- [x] Dois pedidos simultâneos de Refazer resultam em uma tentativa; falha no meio da troca mantém a vigente.
+- [x] Refazer mantém `readable: true`; refeita que falha deixa `failed` com a vigente intacta.
+- [x] `duration-limit` e `size-limit` mostram o motivo, não oferecem Refazer e o POST responde 409 `TRANSCRIPTION_NOT_RETRYABLE`.

@@ -22,14 +22,18 @@ public sealed class TranscriptionServiceClient(HttpClient httpClient, IOptions<T
         return document.RootElement.GetProperty("jobId").GetString() ?? throw new EntityValidationException("The transcription job identifier is absent.");
     }
 
-    public async Task<string?> GetStatusAsync(string jobId, CancellationToken cancellationToken)
+    public async Task<TranscriptionJob?> GetJobAsync(string jobId, CancellationToken cancellationToken)
     {
         using var request = Request(HttpMethod.Get, $"transcriptions/{Uri.EscapeDataString(jobId)}");
         using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound) return null;
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(await ReadBoundedAsync(response, cancellationToken));
-        return document.RootElement.GetProperty("status").GetString();
+        var root = document.RootElement;
+        var status = root.GetProperty("status").GetString() ?? throw new EntityValidationException("The transcription job status is absent.");
+        var code = root.TryGetProperty("failure", out var failure) && failure.ValueKind == JsonValueKind.Object
+            && failure.TryGetProperty("code", out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        return new(status, code);
     }
 
     public async Task<byte[]?> GetResultAsync(string jobId, CancellationToken cancellationToken)

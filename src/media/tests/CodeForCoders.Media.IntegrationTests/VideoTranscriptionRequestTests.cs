@@ -115,7 +115,9 @@ public sealed class VideoTranscriptionRequestTests(VideoLibraryApiFactory factor
     {
         var video = await SeedAsync(); await SeedFailureAsync(video, "processing-failed"); using var response = await PostAsync(video);
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
-        await using var scope = Scope(video.TenantId); Assert.Equal(2, await Db(scope).Transcriptions.CountAsync(TestContext.Current.CancellationToken));
+        await using var scope = Scope(video.TenantId);
+        var attempt = await Db(scope).Transcriptions.SingleAsync(TestContext.Current.CancellationToken);
+        Assert.Equal("queued", attempt.Status);
     }
 
     [Fact]

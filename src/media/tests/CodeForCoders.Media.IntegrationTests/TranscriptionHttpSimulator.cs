@@ -17,6 +17,9 @@ internal sealed class TranscriptionHttpSimulator : IAsyncDisposable
     public string Status { get; set; } = "downloading";
     public string Result { get; set; } = DefaultResult;
     public bool ExpiredResult { get; set; }
+    public bool JobExpired { get; set; }
+    public string? FailureCode { get; set; }
+    public int StatusStatusCode { get; set; } = 200;
     public bool FetchAudio { get; set; }
     public byte[]? Audio { get; private set; }
     public int SubmitStatusCode { get; set; } = 202;
@@ -54,7 +57,12 @@ internal sealed class TranscriptionHttpSimulator : IAsyncDisposable
                 statusUrl = "/v1/transcriptions/trn_test"
             }, statusCode: server.SubmitStatusCode);
         });
-        app.MapGet("/v1/transcriptions/{jobId}", (string jobId) => Results.Json(new { jobId, status = server.Status }));
+        app.MapGet("/v1/transcriptions/{jobId}", (string jobId) =>
+        {
+            if (server.JobExpired) return Results.NotFound();
+            if (server.StatusStatusCode != 200) return Results.StatusCode(server.StatusStatusCode);
+            return Results.Json(new { jobId, status = server.Status, failure = server.FailureCode is null ? null : new { code = server.FailureCode, message = "private detail" } });
+        });
         app.MapGet("/v1/transcriptions/{jobId}/result", () => server.ExpiredResult ? Results.NotFound()
             : Results.Text(server.Result, "application/json"));
         await app.StartAsync(cancellationToken);

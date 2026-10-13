@@ -10,6 +10,8 @@ export const videoTranscriptionFixtures = {
   'in-progress': { status: 'in-progress', readable: false, readyAt: null, failureReason: null, canStart: false },
   ready: { status: 'ready', readable: true, readyAt: '2026-10-12T14:30:00Z', failureReason: null, canStart: true },
   failed: { status: 'failed', readable: false, readyAt: null, failureReason: 'processing-failed', canStart: true },
+  restarting: { status: 'in-progress', readable: true, readyAt: '2026-10-12T14:30:00Z', failureReason: null, canStart: false },
+  restartFailed: { status: 'failed', readable: true, readyAt: '2026-10-12T14:30:00Z', failureReason: 'service-unavailable', canStart: true },
 } satisfies Record<string, VideoTranscription>;
 
 export const videoStatusFixtures = {

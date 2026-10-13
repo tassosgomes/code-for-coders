@@ -697,6 +697,32 @@ namespace CodeForCoders.Media.Infra.Data.Migrations
                     b.ToTable("outbox_messages", "media_access");
                 });
 
+            modelBuilder.Entity("CodeForCoders.Media.Infra.Data.Transcriptions.TranscriptionAudioCleanup", b =>
+                {
+                    b.Property<Guid>("TranscriptionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("transcription_id");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("VideoId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("video_id");
+
+                    b.HasKey("TranscriptionId");
+
+                    b.HasIndex("RequestedAt", "TranscriptionId")
+                        .HasDatabaseName("ix_transcription_audio_cleanups_requested_at_transcription_id");
+
+                    b.ToTable("transcription_audio_cleanups", "media_access");
+                });
+
             modelBuilder.Entity("CodeForCoders.Media.Domain.Entities.Transcription", b =>
                 {
                     b.HasOne("CodeForCoders.Media.Domain.Entities.Video", null)

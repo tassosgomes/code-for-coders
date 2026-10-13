@@ -63,7 +63,7 @@ public sealed class VideoTranscriptionRepository(
 
     public async Task EnqueueAsync(Transcription attempt, CancellationToken cancellationToken)
     {
-        await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+        var inserted = await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO media_access.video_transcriptions
                 (transcription_id, tenant_id, video_id, origin, requested_by_account_id, status, is_current,
                  extraction_attempts, submissions, submission_failures, requested_at, next_action_at)
@@ -71,5 +71,18 @@ public sealed class VideoTranscriptionRepository(
                 {attempt.RequestedByAccountId}, {attempt.Status}, false, 0, 0, 0, {attempt.RequestedAt}, {attempt.NextActionAt})
             ON CONFLICT (tenant_id, video_id) WHERE status IN ('queued', 'working', 'waiting') DO NOTHING
             """, cancellationToken);
+        // A new attempt replaces the earlier failed one; the current transcript is never touched here (RN-TL07).
+        if (inserted == 1)
+            await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+                WITH removed AS (
+                    DELETE FROM media_access.video_transcriptions
+                    WHERE tenant_id = {attempt.TenantId} AND video_id = {attempt.VideoId}
+                        AND status = 'failed' AND NOT is_current AND transcription_id <> {attempt.TranscriptionId}
+                    RETURNING transcription_id, tenant_id, video_id, requested_at, audio_deleted_at
+                )
+                INSERT INTO media_access.transcription_audio_cleanups (transcription_id, tenant_id, video_id, requested_at)
+                SELECT transcription_id, tenant_id, video_id, requested_at FROM removed WHERE audio_deleted_at IS NULL
+                ON CONFLICT (transcription_id) DO NOTHING
+                """, cancellationToken);
     }
 }

@@ -12,4 +12,5 @@ public interface ITranscriptionWorkerRepository
     Task ReplaceContentAsync(TranscriptionContent content, CancellationToken cancellationToken);
     Task<IReadOnlyList<TranscriptionWorkItem>> GetExpiredAsync(DateTimeOffset now, CancellationToken cancellationToken);
     Task<IReadOnlyList<TranscriptionWorkItem>> GetAudioCleanupAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<TranscriptionAudioCleanupItem>> GetPendingAudioCleanupAsync(CancellationToken cancellationToken);
 }

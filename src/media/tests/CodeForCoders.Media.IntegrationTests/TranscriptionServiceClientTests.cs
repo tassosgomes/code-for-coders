@@ -38,7 +38,7 @@ public sealed class TranscriptionServiceClientTests
     {
         await using var server = await TranscriptionHttpSimulator.StartAsync(Token); server.Status = "processing";
         using var http = new HttpClient();
-        Assert.Equal("processing", await Client(http, server).GetStatusAsync("trn_test", Token));
+        Assert.Equal(new TranscriptionJob("processing", null), await Client(http, server).GetJobAsync("trn_test", Token));
     }
 
     [Fact]
@@ -46,7 +46,17 @@ public sealed class TranscriptionServiceClientTests
     {
         await using var server = await TranscriptionHttpSimulator.StartAsync(Token); server.Status = "future-state";
         using var http = new HttpClient();
-        Assert.Equal("future-state", await Client(http, server).GetStatusAsync("trn_test", Token));
+        Assert.Equal(new TranscriptionJob("future-state", null), await Client(http, server).GetJobAsync("trn_test", Token));
+    }
+
+    [Fact]
+    public async Task ReadsFailureCodeAndReportsUnknownJobAsNull()
+    {
+        await using var server = await TranscriptionHttpSimulator.StartAsync(Token); server.Status = "failed"; server.FailureCode = "SOURCE_UNAVAILABLE";
+        using var http = new HttpClient();
+        Assert.Equal(new TranscriptionJob("failed", "SOURCE_UNAVAILABLE"), await Client(http, server).GetJobAsync("trn_test", Token));
+        server.JobExpired = true;
+        Assert.Null(await Client(http, server).GetJobAsync("trn_test", Token));
     }
 
     [Fact]
@@ -79,7 +89,7 @@ public sealed class TranscriptionServiceClientTests
         await using var server = await TranscriptionHttpSimulator.StartAsync(Token);
         using var http = new HttpClient();
         var client = new TranscriptionServiceClient(http, Options.Create(new TranscriptionServiceOptions { BaseAddress = server.BaseAddress, ApiKey = "wrong-key" }));
-        var error = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetStatusAsync("trn_test", Token));
+        var error = await Assert.ThrowsAsync<HttpRequestException>(() => client.GetJobAsync("trn_test", Token));
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, error.StatusCode);
         Assert.DoesNotContain("wrong-key", error.Message);
     }

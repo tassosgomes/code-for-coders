@@ -10,3 +10,18 @@ export const getVideoTranscriptionErrorMessage = (error: unknown): string => {
     default: return 'Não foi possível pedir a transcrição agora. Tente de novo.';
   }
 };
+
+const genericFailureMessage = 'Não foi possível transcrever este vídeo.';
+const failureMessages: Record<string, string> = {
+  'duration-limit': 'Vídeo mais longo que o limite de 2 horas. Refazer não resolve: envie um vídeo mais curto.',
+  'size-limit': 'Vídeo maior que o tamanho aceito para transcrição. Refazer não resolve: envie um vídeo menor.',
+  'service-unavailable': 'Serviço de transcrição indisponível no momento.',
+  'processing-failed': genericFailureMessage,
+  'timed-out': 'A transcrição demorou mais que o limite.',
+};
+
+// A reason the screen does not know (a value added later) reads as the generic failure; the code itself is never shown.
+export const getVideoTranscriptionFailureMessage = (reason: string | null): string =>
+  (reason === null ? undefined : failureMessages[reason]) ?? genericFailureMessage;
+
+export const currentTranscriptionRemainsMessage = 'A anterior continua valendo para os alunos.';

@@ -114,7 +114,7 @@ sequencial e ambas tocam o `media`.
 - [x] 5.0 A tela Vídeos mostra o estado da transcrição e o professor transcreve, com atualização automática
 - [x] 6.0 Todo vídeo novo é transcrito sem ação de ninguém
 - [x] 7.0 O aviso do serviço acelera o resultado sem ser necessário
-- [ ] 8.0 Falhas aparecem com motivo e o professor refaz sem perder a transcrição vigente
+- [x] 8.0 Falhas aparecem com motivo e o professor refaz sem perder a transcrição vigente
 - [ ] 9.0 O professor lê a transcrição pronta na tela Vídeos, somente leitura
 - [ ] 10.0 O aluno lê, pesquisa e clica na transcrição da aula
 - [ ] 11.0 O aluno liga a legenda no player

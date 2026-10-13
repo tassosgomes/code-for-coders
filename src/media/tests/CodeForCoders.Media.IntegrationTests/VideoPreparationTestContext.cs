@@ -72,6 +72,9 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
 
     public int DownloadAttemptCount => storageFailures.DownloadAttemptCount;
 
+    public void FailNextStorageDelete(bool afterDeletion = false)
+        => storageFailures.FailNextDelete(afterDeletion);
+
     public AsyncServiceScope CreateScope()
         => services.CreateAsyncScope();
 
@@ -721,6 +724,12 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
     {
         private int failuresRemaining = remainingFailures;
         private int downloadAttemptCount;
+        private int deleteFailure;
+
+        public void FailNextDelete(bool afterDeletion)
+            => Interlocked.Exchange(ref deleteFailure, afterDeletion ? 2 : 1);
+
+        public int TakeDeleteFailure() => Interlocked.Exchange(ref deleteFailure, 0);
 
         public int DownloadAttemptCount => Volatile.Read(ref downloadAttemptCount);
 
@@ -799,8 +808,13 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         public Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken)
         => inner.CreateTranscriptionReadUriAsync(objectKey, expiresAt, cancellationToken);
 
-        public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
-                => inner.DeleteObjectAsync(objectKey, cancellationToken);
+        public async Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
+        {
+            var failure = failures.TakeDeleteFailure();
+            if (failure == 1) throw new StorageUnavailableException();
+            await inner.DeleteObjectAsync(objectKey, cancellationToken);
+            if (failure == 2) throw new StorageUnavailableException();
+        }
 
         public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken)
             => inner.DeletePrefixAsync(objectPrefix, cancellationToken);
