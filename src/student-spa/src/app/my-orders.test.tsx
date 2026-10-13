@@ -53,6 +53,7 @@ describe('my-orders', () => {
     expect(within(paid).getByText('Cartão de crédito')).toBeInTheDocument();
     expect(within(paid).getByText('Acesso por 12 meses')).toBeInTheDocument();
     expect(screen.getByText('Expirado')).toBeInTheDocument();
+    expect(within(screen.getByRole('article', { name: 'Pedido #000118' })).getByRole('link', { name: 'Ver pedido' })).toHaveAttribute('href', paths.studentOrder.getHref(myOrders[2].orderId));
     expect(screen.getByText('Ainda não escolhido')).toBeInTheDocument();
     expect(within(paid).getByRole('link', { name: '#000123' })).toHaveAttribute('href', paths.studentOrder.getHref(myOrders[1].orderId));
     expect(screen.getByRole('link', { name: 'Meus pedidos' })).toHaveAttribute('aria-current', 'page');
@@ -108,13 +109,15 @@ describe('my-orders', () => {
       return HttpResponse.json({ data: page === 1 ? myOrders : [myOrders[0]], pagination: { page, size: 10, total: 11, totalPages: 2 } });
     }));
     const router = renderRoute();
-    await userEvent.click(await screen.findByRole('button', { name: 'Próxima' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Próxima página' }));
     await waitFor(() => expect(screen.getByText('Página 2 de 2')).toBeInTheDocument());
     expect(router.state.location.search).toBe('?_page=2');
+    expect(screen.getByRole('button', { name: 'Página 2' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Página 1' })).not.toHaveAttribute('aria-current');
     expect(requests).toContain('?_page=2&_size=10');
     expect(screen.getByRole('article', { name: 'Pedido #000124' })).not.toHaveClass('border-primary');
     expect(screen.getAllByRole('article')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Próxima página' })).toBeDisabled();
   });
 
   it('account menu also links to Meus pedidos', async () => {
