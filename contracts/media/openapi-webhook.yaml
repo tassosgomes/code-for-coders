@@ -3,9 +3,9 @@ info:
   title: Media — aviso de término da transcrição (webhook)
   version: 1.0.0
   description: |-
-    Contrato **vigente**. Fronteira: serviço de transcrição próprio → `media`. Mudanças entram por PR neste arquivo; o recorte do PRD (`tasks/prd-transcricao-legenda-aula/webhook-contract-media.yaml` 1.0.0) é a origem.
+    Contrato **vigente**. Fronteira: serviço de transcrição próprio → `media`. Mudanças entram por PR neste arquivo; o recorte do PRD (`tasks/archive/prd-transcricao-legenda-aula/webhook-contract-media.yaml` 1.0.0) é a origem.
 
-    Recorte de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. **Contrato novo.** Fronteira: serviço de transcrição próprio → `media`. É o único ponto de entrada de `media` para esse serviço; segue o padrão do endpoint dedicado de webhook já adotado em `contracts/billing/openapi-webhook.yaml` (assinatura, idempotência, registro antes de responder).
+    Recorte de `CAP-032`, `tasks/archive/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. **Contrato novo.** Fronteira: serviço de transcrição próprio → `media`. É o único ponto de entrada de `media` para esse serviço; segue o padrão do endpoint dedicado de webhook já adotado em `contracts/billing/openapi-webhook.yaml` (assinatura, idempotência, registro antes de responder).
 
     O corpo é o aviso **do serviço de transcrição**, no formato dele (Standard Webhooks v1); este contrato não o redefine, só fixa o que `media` exige e como responde. A tradução para o vocabulário da plataforma acontece dentro de `media` (camada anticorrupção). Nenhum fato novo sai para outros domínios (domínio de Mídia, §7).
   contact:
