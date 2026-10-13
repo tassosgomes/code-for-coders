@@ -98,12 +98,14 @@
 
 /* Vídeos: rótulo, etiquetas e campo de 240 px na mesma linha; "Combinar tags" logo abaixo. */
 .video-library-tag-controls { display: flex; flex-direction: column; gap: 8px; }
-.video-library-tag-controls .video-tag-field { display: grid; grid-template-columns: auto auto 240px; justify-content: start; align-items: center; gap: 8px 10px; }
+.video-library-tag-controls .video-tag-field { position: relative; display: grid; grid-template-columns: auto auto 240px; justify-content: start; align-items: center; gap: 8px 10px; }
 .video-library-tag-controls .video-tag-field > label { grid-column: 1; grid-row: 1; }
 .video-library-tag-controls .video-tag-input { grid-column: 3; grid-row: 1; }
 .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-input { grid-column: 2 / 4; width: 240px; }
 .video-library-tag-controls .video-tag-chips { grid-column: 2; grid-row: 1; }
-.video-library-tag-controls .video-tag-suggestions { grid-column: 3; width: 240px; box-sizing: border-box; }
+/* Popover sobre a tabela, alinhado ao campo (a área da linha 1 é o bloco de contenção). */
+.video-library-tag-controls .video-tag-suggestions { position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; grid-column: 3; grid-row: 1; width: 240px; box-sizing: border-box; }
+.video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-suggestions { grid-column: 2 / 4; }
 .video-library-tag-controls .video-tag-error { grid-column: 1 / -1; }
 
 /* Linha da tabela (V1.g): etiquetas na coluna do título, 6 px abaixo dele; ações no topo. */
@@ -203,7 +205,9 @@
   .video-library-tag-controls .video-tag-chips,
   .video-library-tag-controls .video-tag-input,
   .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-input,
-  .video-library-tag-controls .video-tag-suggestions { grid-column: 1; grid-row: auto; width: auto; }
+  .video-library-tag-controls .video-tag-suggestions,
+  .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-suggestions { grid-column: 1; grid-row: auto; width: auto; }
+  .video-library-tag-controls .video-tag-suggestions { right: 0; }
 }
 
 .video-tag-duplicate { animation: video-tag-highlight 0.8s ease-out; }
