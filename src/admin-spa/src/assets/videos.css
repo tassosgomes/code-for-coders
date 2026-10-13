@@ -98,17 +98,19 @@
 
 /* Vídeos: rótulo, etiquetas e campo de 240 px na mesma linha; "Combinar tags" logo abaixo. */
 .video-library-tag-controls { display: flex; flex-direction: column; gap: 8px; }
-.video-library-tag-controls .video-tag-field { display: grid; grid-template-columns: auto auto 240px; justify-content: start; align-items: center; gap: 8px 10px; }
+.video-library-tag-controls .video-tag-field { position: relative; display: grid; grid-template-columns: auto auto 240px; justify-content: start; align-items: center; gap: 8px 10px; }
 .video-library-tag-controls .video-tag-field > label { grid-column: 1; grid-row: 1; }
 .video-library-tag-controls .video-tag-input { grid-column: 3; grid-row: 1; }
 .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-input { grid-column: 2 / 4; width: 240px; }
 .video-library-tag-controls .video-tag-chips { grid-column: 2; grid-row: 1; }
-.video-library-tag-controls .video-tag-suggestions { grid-column: 3; width: 240px; box-sizing: border-box; }
+/* Popover sobre a tabela, alinhado ao campo (a área da linha 1 é o bloco de contenção). */
+.video-library-tag-controls .video-tag-suggestions { position: absolute; top: calc(100% + 4px); left: 0; z-index: 20; grid-column: 3; grid-row: 1; width: 240px; box-sizing: border-box; }
+.video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-suggestions { grid-column: 2 / 4; }
 .video-library-tag-controls .video-tag-error { grid-column: 1 / -1; }
 
 /* Linha da tabela (V1.g): etiquetas na coluna do título, 6 px abaixo dele; ações no topo. */
 .videos-page .videos-table-row { align-items: start; }
-.videos-page .videos-table-row .video-title-cell { display: flex; flex-direction: column; gap: 6px; }
+.videos-page .videos-table-row .video-title-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .videos-page .videos-table-row .video-title-cell > strong { font-weight: 500; }
 .video-row-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .video-row-actions { display: flex; gap: 16px; grid-column: 6; grid-row: 1; }
@@ -119,13 +121,20 @@
 .videos-page .video-status-content { flex-wrap: wrap; }
 .video-transcription-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
 .video-transcription-heading { display: none; }
-.video-transcription-cell small { color: var(--muted); font-size: 12px; line-height: 18px; }
+.video-transcription-cell small { color: var(--muted); font-size: 12px; line-height: 16px; }
+.video-transcription-cell small.is-danger { color: var(--danger); }
 .video-transcription-state { max-width: 100%; border-radius: 6px; }
 .video-transcription-state:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-.videos-page .video-transcription-badge { max-width: 100%; width: auto; white-space: normal; }
+/* TranscriptionBadge (337:3–337:22): ícone de 12 px, padding 2/8; Transcrevendo como o "Em preparação" do vídeo. */
+.videos-page .video-transcription-badge { max-width: 100%; width: auto; padding: 2px 8px; white-space: normal; }
+.videos-page .video-transcription-badge.ready { padding: 2px 8px; }
 .video-transcription-badge.not-requested { border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
-.video-transcription-badge.in-progress { border: 1px solid var(--info-border); background: var(--info-soft); color: var(--info-text); }
-.video-transcription-cell .video-transcription-action { min-height: 44px; }
+.video-transcription-badge.in-progress { border: 1px solid var(--info); background: var(--surface); color: var(--info); }
+/* Ações (TV1.a): Button sm em linha; no cartão mobile (TV1.f), Button lg. */
+.video-transcription-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.video-transcription-cell .video-transcription-action { min-height: 32px; padding: 0 12px; font-size: 12px; font-weight: 500; line-height: 16px; }
+.video-transcription-cell .outline-button.video-transcription-action { color: var(--foreground); }
+.video-transcription-cell .primary-button.video-transcription-action { box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
 .video-transcription-error { margin: 0; padding: 8px; border: 1px solid var(--danger); border-radius: 8px; color: var(--danger); font-size: 12px; line-height: 18px; }
 
 /* TV3: Dialog 720 × 80% da altura; cabeçalho do vídeo (nome + meta), região com borda e rolagem própria. */
@@ -183,7 +192,8 @@
 @media (max-width: 767px) {
   .videos-page .videos-table .videos-table-row { grid-template-columns: minmax(0, 1fr) 72px; }
   .videos-page .videos-table-row .video-transcription-cell { grid-column: 1 / -1; grid-row: 5; padding-top: 12px; border-top: 1px solid var(--border); }
-  .video-transcription-heading { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .video-transcription-heading { display: block; color: var(--muted); font-size: 12px; font-weight: 500; line-height: 16px; }
+  .video-transcription-cell .video-transcription-action { min-height: 48px; padding: 0 24px; font-size: 16px; line-height: 24px; }
   /* Cartão (V1.h): título e ações, estado, etiquetas e autor. */
   .videos-page .videos-table-row .video-title-cell { display: contents; }
   .videos-page .videos-table-row .video-title-cell > strong { grid-column: 1; grid-row: 1; }
@@ -195,7 +205,9 @@
   .video-library-tag-controls .video-tag-chips,
   .video-library-tag-controls .video-tag-input,
   .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-input,
-  .video-library-tag-controls .video-tag-suggestions { grid-column: 1; grid-row: auto; width: auto; }
+  .video-library-tag-controls .video-tag-suggestions,
+  .video-library-tag-controls .video-tag-field:not(:has(.video-tag-chips)) .video-tag-suggestions { grid-column: 1; grid-row: auto; width: auto; }
+  .video-library-tag-controls .video-tag-suggestions { right: 0; }
 }
 
 .video-tag-duplicate { animation: video-tag-highlight 0.8s ease-out; }
