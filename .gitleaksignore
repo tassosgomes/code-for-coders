@@ -62,3 +62,4 @@ src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/OrderPaymentTests.cs:
 src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseGrantTests.cs:generic-api-key:111
 src/commerce/tests/CodeForCoders.Commerce.IntegrationTests/PurchaseGrantTests.cs:generic-api-key:164
 src/media/tests/CodeForCoders.Media.IntegrationTests/PlaybackProgressTests.cs:generic-api-key:327
+src/media/tests/CodeForCoders.Media.IntegrationTests/AutomaticTranscriptionTests.cs:generic-api-key:208
