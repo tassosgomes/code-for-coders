@@ -3,13 +3,13 @@
   "branch": "feature/cap-032-transcricao-legenda",
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
-  "target_ref": null,
+  "target_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "last_checkpoint": "5a88beb",
-  "phase": "integration",
-  "active_task": null,
+  "phase": "full",
+  "active_task": "7.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 0,
+  "full_attempt": 1,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
@@ -338,6 +338,18 @@
     {
       "at": "2026-10-13",
       "event": "14.0 5a88beb done. -> prepare-integration"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "prepare-integration run.AP0GUyfo integration_ready target=0ac6bf4 (main sem avanço); HEAD 21d3ec8. -> validator full 1"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "full 1 run.dGgYmYs6 rejected: B-1 teste da 7.0 (TranscriptionEventReceiverTests:202) depende de ordem na suite completa do media; 9 recomendacoes. -> reopen 7.0, fix 2/3, revalidation, checkpoint, full 2"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "reopen 7.0 run.OhGazu5j: B-1 atribuido a 7.0; checkbox desmarcado, status in_progress; codigo preservado. -> fix attempt 2/3"
     }
   ],
   "tasks": {
@@ -370,7 +382,7 @@
       "checkpoint": "d2b0d06"
     },
     "7.0": {
-      "status": "done",
+      "status": "in_progress",
       "checkpoint": "b3a2d3f"
     },
     "8.0": {
