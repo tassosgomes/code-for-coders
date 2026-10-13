@@ -155,15 +155,18 @@
 .authoring-page .course-video-filters { display: grid; gap: 8px; min-width: 0; }
 .authoring-page .course-video-filters .video-filter-options { justify-self: start; max-width: 100%; overflow-x: auto; }
 .authoring-page .course-ready-video-sheet .single-choice-content > .course-ready-tags { display: flex; flex-wrap: wrap; gap: 4px; }
-.authoring-page .course-ready-video-sheet .single-choice-options { gap: 16px; margin: 0; padding: 0; }
+/* VideoOption (A6.f, 324:41056): a lista é um fieldset em grid de altura fixa; sem max-content o Chrome espreme as linhas
+   até o min-height e a caixa interna vaza a folga do cartão. */
+.authoring-page .course-ready-video-sheet .single-choice-options { grid-auto-rows: max-content; gap: 16px; margin: 0; padding: 0; }
 .authoring-page .course-ready-video-sheet .single-choice-options legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .authoring-page .course-ready-video-sheet .single-choice-option { position: relative; margin: 0; min-height: 94px; padding: 16px; background: var(--surface); border-radius: 16px; }
-.authoring-page .course-ready-video-sheet .single-choice-content { display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0; margin-right: 68px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; }
-.authoring-page .course-ready-video-sheet .single-choice-content > span { display: grid; gap: 4px; min-width: 0; font-size: 14px; line-height: 20px; }
+.authoring-page .course-ready-video-sheet .single-choice-content { display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 0; margin-right: 68px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }
+.authoring-page .course-ready-video-sheet .single-choice-content > span { display: grid; gap: 6px; min-width: 0; font-size: 14px; line-height: 20px; }
 .authoring-page .course-ready-video-sheet .single-choice-option:has(input:checked) { background: var(--surface); border-color: var(--border); }
 .authoring-page .course-ready-video-sheet .single-choice-option:has(input:checked) .single-choice-content { background: var(--accent); border-color: var(--primary); }
 .authoring-page .course-ready-video-sheet .single-choice-content > span > span:not(.course-ready-badge) { font-size: 12px; color: var(--muted); line-height: 16px; }
-.authoring-page .course-ready-video-sheet .single-choice-content strong { font-weight: 400; }
+.authoring-page .course-ready-video-sheet .single-choice-content strong { font-weight: 500; }
+.authoring-page .course-ready-video-sheet .single-choice-content > input { flex: none; margin: 2px 0 0; }
 .authoring-page .course-ready-badge,
 .authoring-page .course-current-badge { width: fit-content; padding: 2px 10px; border-radius: 999px; background: var(--success-soft); color: var(--success-soft-foreground); font-size: 12px; line-height: 16px; }
 .authoring-page .course-ready-badge { position: absolute; top: 16px; right: 16px; }
