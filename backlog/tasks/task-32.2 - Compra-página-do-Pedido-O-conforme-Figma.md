@@ -5,7 +5,7 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:41'
-updated_date: '2026-10-13 21:08'
+updated_date: '2026-10-13 21:12'
 labels:
   - frontend
 dependencies: []
@@ -68,4 +68,8 @@ A página /pedidos/:orderId repete o número do pedido como título, usa um Aler
 
 <!-- SECTION:NOTES:BEGIN -->
 Implementado: OrderStatusBadge e alertas compartilhados (o Resumo passa a usá-los); página do Pedido com cabeçalho (overline PEDIDO #N, curso em H2/H3 no mobile, linha 'opção · valor · criado em'), OrderStatePanel com tile de 40 (progresso, aguardando, sucesso, expirado, cancelado) e título H3/H4 anunciado por aria-live, para O1 a O10 e O12.c; O2 troca o texto pelo aviso de demora (com link para Meus pedidos); O5.b e O7.b com alerta destrutivo e Tentar de novo; O9 e O10 com data e o aviso 'Se você pagou…'; Resumo do pedido com linhas de 120 (96 no mobile) e badge; O11 em EmptyState com Ver meus pedidos; O12.a em skeleton; O12.b em alerta com Tentar de novo. Desistência: AlertDialog de 440 com ✕, Manter pedido (foco inicial) e Desistir do pedido (destrutivo, 'Cancelando…'), toast 'Pedido cancelado.', erro 'Nada mudou. Tente de novo.' dentro do diálogo e 422 fechando e recarregando o pedido; no mobile (<768) Sheet inferior com alça e ações em largura cheia. Mudança de comportamento: pedido pago sem concessão (O4) passa a ser acompanhado mesmo sem ?resultado=concluido (antes ficava parado em Liberando seu acesso). Decisões: O7 sem página de pagamento aberta (pedido criado mas pagamento não aberto) usa 'Seu pedido continua aguardando pagamento. Cartão, PIX ou boleto são escolhidos no ambiente seguro de pagamento.' e o botão 'Ir para o pagamento'; botões PIX/boleto mostram spinner com o mesmo rótulo. Testes: order-cancel, order-pending-payment, order-return, my-orders e student-purchase-summary ajustados; novo order-states (cabeçalho e resumo, O7 com prazo, O11, O12.b, O12.c, O4 sem resultado). Lint, tsc, build e vitest (34 arquivos, 231 testes) passam. Prévia local: diálogo 440x300, padding 24, raio 16, título 20/28, botões 40; mobile 390 com painel padding 20, título 24, rótulos 96, ações de 316 empilhadas, Sheet de 390 com padding 20 e botões de 350, sem rolagem horizontal.
+
+PR #233 aberta (branch fix/compra-pedido-figma). Conferência em dev com pedido de teste no sandbox do Stripe pendente após o deploy.
+
+PR #233 mergeada em 2026-10-13.
 <!-- SECTION:NOTES:END -->
