@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "7290643",
+  "last_checkpoint": "bd111dd",
   "phase": "checkpoint",
-  "active_task": "12.0",
+  "active_task": "13.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -294,6 +294,22 @@
     {
       "at": "2026-10-13",
       "event": "12.0 checkpoint run.c1CsW8Ux: a operacao enxerga os sinais da transcricao no painel de midia, 12_task.md done, checkbox 12.0 marcado"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "12.0: checkpoint checkpoint_ok bd111dd"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "13.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "13.0: impl task_blocked run.CdBDi9BG"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "11.0 7290643, 12.0 bd111dd done. 13.0 run.CdBDi9BG task_blocked: EN-02 externo (orquestrador confirmou via ssh que TRUSTED_PRIVATE_SOURCES/WEBHOOKS nao estao no deploy do Whisper). Intervencao: revisar o codigo do smoke e commitar como parcial (13.0 segue blocked, sem checkbox); 14.0 prossegue com 13.0 pendente operacional"
     }
   ],
   "tasks": {
@@ -346,7 +362,13 @@
       "checkpoint": "7290643"
     },
     "12.0": {
-      "status": "done"
+      "status": "done",
+      "checkpoint": "bd111dd"
+    },
+    "13.0": {
+      "status": "blocked",
+      "reason": "EN-02: allowlist/segredos no deploy do Whisper; banco exclusivo do smoke; MP4 com fala",
+      "run": "run.CdBDi9BG"
     }
   },
   "pending_context": {
@@ -355,6 +377,7 @@
     "8.0": "PollAsync trata 404 do status como processing-failed imediato; a politica por situacao (job expirado no servico, nova submissao) deve cobrir esse caso (review 4.0 rec.3)"
   },
   "open_for_owner": [
-    "11.0 precedencia temporal do WebVTT decidida pelo orquestrador"
+    "11.0 precedencia temporal do WebVTT decidida pelo orquestrador",
+    "13.0 smoke real pendente de EN-02 (Whisper TRUSTED_PRIVATE_SOURCES=http://192.168.0.5:9000,http://192.168.0.11:9000)"
   ]
 }
