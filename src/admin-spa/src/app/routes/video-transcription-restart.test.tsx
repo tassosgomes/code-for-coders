@@ -107,7 +107,8 @@ describe('video-transcription-restart', () => {
     renderRoute();
     expect(await within(await screen.findByRole('group', { name: 'Transcrição de Aula de exemplo' })).findByText(/^Vídeo mais longo que o limite de 2 horas/)).toBeInTheDocument();
     expect(within(cell()).getByText('A anterior continua valendo para os alunos.')).toBeInTheDocument();
-    expect(within(cell()).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(cell()).queryByRole('button', { name: /Refazer/ })).not.toBeInTheDocument();
+    expect(within(cell()).getByRole('button', { name: 'Ler transcrição de Aula de exemplo' })).toBeInTheDocument();
   });
 
   it('closes the confirmation on a refusal, shows the message in the cell and keeps the earlier state', async () => {

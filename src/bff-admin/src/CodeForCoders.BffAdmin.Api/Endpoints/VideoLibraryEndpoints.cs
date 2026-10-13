@@ -11,6 +11,16 @@ public static class VideoLibraryEndpoints
 
     public static void MapVideoLibraryEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/v1/videos/{videoId:guid}/transcription", GetVideoTranscriptionAsync)
+            .WithName("GetVideoTranscription")
+            .WithTags("Videos")
+            .Produces<VideoTranscriptionContentResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status504GatewayTimeout);
         endpoints.MapPost("/api/v1/videos/{videoId:guid}/transcription-requests", RequestVideoTranscriptionAsync)
             .WithName("RequestVideoTranscription")
             .WithTags("Videos")
@@ -72,6 +82,20 @@ public static class VideoLibraryEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
             .ProducesProblem(StatusCodes.Status502BadGateway);
+    }
+
+    private static async Task<IResult> GetVideoTranscriptionAsync(
+        Guid videoId, HttpContext httpContext, IStaffSessionIdentityClient identityClient,
+        IVideoLibraryClient mediaClient, CancellationToken cancellationToken)
+    {
+        httpContext.Response.Headers.CacheControl = "private, no-store";
+        var access = await GetMediaAccessAsync(httpContext, identityClient, cancellationToken);
+        if (access.Problem is not null) return access.Problem;
+        var result = await mediaClient.GetVideoTranscriptionAsync(videoId, access.AccessToken!, cancellationToken);
+        if (result.StatusCode != HttpStatusCode.OK || result.Body is null)
+            return MediaProblem(httpContext, new(result.StatusCode, result.Code, null, null));
+        httpContext.Response.Headers.CacheControl = result.CacheControl;
+        return Results.Bytes(result.Body, result.ContentType ?? "application/json");
     }
 
     private static async Task<IResult> RequestVideoTranscriptionAsync(
@@ -268,7 +292,7 @@ public static class VideoLibraryEndpoints
             return Problem(httpContext, StatusCodes.Status422UnprocessableEntity, result.Code, "The video could not be updated.");
         }
 
-        if (result.StatusCode == HttpStatusCode.Conflict && result.Code is "VIDEO_NOT_READY" or "TRANSCRIPTION_NOT_RETRYABLE")
+        if (result.StatusCode == HttpStatusCode.Conflict && result.Code is "VIDEO_NOT_READY" or "TRANSCRIPTION_NOT_RETRYABLE" or "TRANSCRIPTION_NOT_READY")
             return Problem(httpContext, StatusCodes.Status409Conflict, result.Code, "The video cannot be transcribed.");
 
         if (result.StatusCode == HttpStatusCode.BadRequest)

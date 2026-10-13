@@ -53,7 +53,7 @@ describe('video-transcription-status', () => {
     expect(within(transcriptionCell('Concluída')).getByText(/^Pronta em /)).toBeInTheDocument();
     expect(screen.getAllByText('Pronto')).toHaveLength(3);
     expect(screen.getByLabelText('Tags de Sem pedido')).toHaveTextContent('Docker');
-    expect(screen.queryByRole('button', { name: /Ler/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ler transcrição de Concluída' })).toBeInTheDocument();
   });
 
   it('requests without a body, sends CSRF and idempotency, and uses the accepted server row without reloading', async () => {

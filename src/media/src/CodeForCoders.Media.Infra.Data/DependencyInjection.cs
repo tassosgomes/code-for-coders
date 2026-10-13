@@ -41,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<ITranscriptionEventRepository, Transcriptions.TranscriptionEventRepository>();
         services.AddScoped<ITranscriptionWorkerRepository, Transcriptions.TranscriptionWorkerRepository>();
         services.AddScoped<IVideoTranscriptionRepository, Transcriptions.VideoTranscriptionRepository>();
+        services.AddScoped<ITranscriptionQueries, Transcriptions.TranscriptionQueries>();
         services.AddScoped<IVideoQueries, VideoQueries>();
         services.AddScoped<IVideoTagRepository, VideoTagRepository>();
         services.AddScoped<IPlaybackRepository, PlaybackSessions.PlaybackRepository>();

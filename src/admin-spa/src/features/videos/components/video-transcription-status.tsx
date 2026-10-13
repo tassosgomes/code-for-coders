@@ -5,6 +5,7 @@ import { Dialog } from '@/components/ui/dialog';
 import type { VideoPage } from '@/features/videos/api/get-videos';
 import { useRequestVideoTranscription } from '@/features/videos/api/request-video-transcription';
 import { VideoTranscriptionStatusBadge } from '@/features/videos/components/video-status-badge';
+import { VideoTranscriptionReader } from '@/features/videos/components/video-transcription-reader';
 import {
   currentTranscriptionRemainsMessage, getVideoTranscriptionErrorMessage, getVideoTranscriptionFailureMessage,
 } from '@/features/videos/utils/video-transcription';
@@ -23,6 +24,7 @@ export const VideoTranscriptionStatus = ({ video }: VideoTranscriptionStatusProp
   const focusStatusAfterRequest = useRef(false);
   const replacesCurrentText = useRef(false);
   const [confirming, setConfirming] = useState(false);
+  const [reading, setReading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const request = useRequestVideoTranscription({ onSuccess: () => {
     idempotencyKey.current = null;
@@ -75,6 +77,8 @@ export const VideoTranscriptionStatus = ({ video }: VideoTranscriptionStatusProp
     {ready && transcription.status === 'failed' ? <small>{getVideoTranscriptionFailureMessage(transcription.failureReason)}</small> : null}
     {ready && transcription.status === 'failed' && transcription.readable ? <small>{currentTranscriptionRemainsMessage}</small> : null}
     {request.isError ? <p className="video-transcription-error" role="alert">{getVideoTranscriptionErrorMessage(request.error)}</p> : null}
+    {ready && transcription.readable ? <button aria-label={`Ler transcrição de ${video.title}`} className="video-link-button video-transcription-action" onClick={() => setReading(true)} type="button">Ler</button> : null}
+    {reading ? <VideoTranscriptionReader onClose={() => setReading(false)} video={video} /> : null}
     {canTranscribe || canRestart ? <button
       aria-label={`${request.isError ? 'Tentar de novo a transcrição de' : canRestart ? 'Refazer' : 'Transcrever'} ${video.title}`}
       className="video-link-button video-transcription-action" disabled={request.isPending} onClick={canRestart ? askToRestart : start} ref={requestButton} type="button"

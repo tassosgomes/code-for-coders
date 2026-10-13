@@ -7,6 +7,7 @@ using CodeForCoders.Media.Application.UseCases.Videos.ListVideos;
 using CodeForCoders.Media.Application.UseCases.Videos;
 using CodeForCoders.Media.Application.UseCases.Videos.UpdateVideoTitle;
 using CodeForCoders.Media.Api.ApiModels;
+using CodeForCoders.Media.Application.UseCases.Videos.GetVideoTranscription;
 
 namespace CodeForCoders.Media.Api.Endpoints;
 
@@ -17,6 +18,14 @@ public static class VideoEndpoints
         var group = endpoints.MapGroup("/internal/v1")
             .RequireAuthorization(MediaAuthorization.PolicyName)
             .WithTags("Videos");
+
+        group.MapGet("/videos/{videoId:guid}/transcription", GetVideoTranscriptionAsync)
+            .WithName("GetVideoTranscriptionInternal")
+            .Produces<VideoTranscriptionContentOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
 
         group.MapPost("/videos/{videoId:guid}/transcription-requests", RequestVideoTranscriptionAsync)
             .WithName("RequestVideoTranscriptionInternal")
@@ -61,6 +70,13 @@ public static class VideoEndpoints
             .Produces<VideoOutput>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    private static async Task<IResult> GetVideoTranscriptionAsync(
+        Guid videoId, HttpContext httpContext, IGetVideoTranscription useCase, CancellationToken cancellationToken)
+    {
+        httpContext.Response.Headers.CacheControl = "private, no-store";
+        return Results.Ok(await useCase.ExecuteAsync(new(videoId), cancellationToken));
     }
 
     private static async Task<IResult> RequestVideoTranscriptionAsync(

@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "b3a2d3f",
+  "last_checkpoint": "3a188f6",
   "phase": "checkpoint",
-  "active_task": "8.0",
+  "active_task": "9.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,9 +18,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "8.0",
+    "task": "9.0",
     "outcome": "checkpoint_ok",
-    "run": "run.ny8kOqr7"
+    "run": "run.zolRbLHB"
   },
   "history": [
     {
@@ -206,6 +206,26 @@
     {
       "at": "2026-10-13",
       "event": "8.0 checkpoint run.ny8kOqr7: falhas com motivo e Refazer sem perder a vigente, 8_task.md done, checkbox 8.0 marcado"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "8.0: checkpoint 3a188f6"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "9.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "9.0: impl ok run.HqVEJZ3L; validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "9.0: val approved run.DNf4wMRS; checkpoint"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "9.0 checkpoint run.zolRbLHB: professor le a transcricao pronta somente leitura, 9_task.md done, checkbox 9.0 marcado"
     }
   ],
   "tasks": {
@@ -242,6 +262,10 @@
       "checkpoint": "b3a2d3f"
     },
     "8.0": {
+      "status": "done",
+      "checkpoint": "3a188f6"
+    },
+    "9.0": {
       "status": "done"
     }
   },

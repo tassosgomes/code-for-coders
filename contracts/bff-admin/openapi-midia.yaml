@@ -784,6 +784,75 @@ paths:
           $ref: '#/components/responses/MediaUnavailable'
         '504':
           $ref: '#/components/responses/MediaTimeout'
+  /videos/{videoId}/transcription:
+    get:
+      tags:
+      - Transcrição
+      summary: Ler a transcrição vigente de um vídeo (professor)
+      description: |
+        Texto completo da transcrição **vigente**, em ordem, com o tempo de cada trecho, para o professor avaliar a qualidade (RF-08, RN-M27). Somente leitura. **Não é reprodução**: não abre Sessão de Reprodução, não consulta Matrícula e não traz marca d'água (RN-TL08). Exige `midia.enviar`; vídeo de outra escola responde o mesmo 404 de vídeo inexistente (G07).
+
+        Só existe quando `transcription.readable` é `true`; senão 409 `TRANSCRIPTION_NOT_READY` e o professor vê o estado (RF-02). Com refeita em andamento, devolve a vigente. Resposta `Cache-Control: private, no-store`. O texto não aparece em log nem em URL (RN-M26).
+      operationId: getVideoTranscription
+      security:
+      - StaffSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      responses:
+        '200':
+          description: Transcrição vigente.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache compartilhado nem do navegador
+                (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoTranscriptionContent'
+              examples:
+                vigente:
+                  value:
+                    videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                    revision: tr_7d2a91c4
+                    language: pt-BR
+                    durationMs: 2415000
+                    readyAt: '2026-10-14T10:12:00Z'
+                    segments:
+                    - startMs: 1240
+                      endMs: 4100
+                      text: Hoje vamos ver o docker compose.
+                    - startMs: 4100
+                      endMs: 7900
+                      text: Ele descreve vários containers em um só arquivo.
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '409':
+          description: O vídeo não tem transcrição pronta (sem transcrição, transcrevendo pela primeira vez ou falhou
+            sem vigente).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                naoPronta:
+                  value:
+                    type: about:blank
+                    title: Este vídeo ainda não tem transcrição pronta.
+                    status: 409
+                    code: TRANSCRIPTION_NOT_READY
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '502':
+          $ref: '#/components/responses/MediaUnavailable'
+        '504':
+          $ref: '#/components/responses/MediaTimeout'
 components:
   securitySchemes:
     StaffSessionCookie:
@@ -1565,3 +1634,76 @@ components:
           description: 'Se `requestVideoTranscription` seria aceita agora: vídeo `ready`, nenhuma tentativa em andamento
             e, se a última falhou, o motivo não é `duration-limit` nem `size-limit`. Dirige a ação **Transcrever** (`status:
             not-requested`) ou **Refazer** (`ready` ou `failed`) (RF-02).'
+    TranscriptSegment:
+      type: object
+      additionalProperties: false
+      required:
+      - startMs
+      - endMs
+      - text
+      description: 'Trecho: unidade da legenda, da busca e do clique que leva o vídeo ao tempo (domínio de Mídia).
+        Tempos desde o início do vídeo.'
+      properties:
+        startMs:
+          type: integer
+          minimum: 0
+          description: Início do trecho, em milissegundos.
+          examples:
+          - 1240
+        endMs:
+          type: integer
+          minimum: 0
+          description: Fim do trecho, em milissegundos; nunca antes de `startMs`.
+          examples:
+          - 4100
+        text:
+          type: string
+          description: Texto da fala, em português do Brasil, como o serviço de transcrição o produziu (DP-07).
+            Sem dado do aluno (RN-M22).
+          examples:
+          - Hoje vamos ver o docker compose.
+    VideoTranscriptionContent:
+      type: object
+      additionalProperties: false
+      required:
+      - videoId
+      - revision
+      - language
+      - durationMs
+      - readyAt
+      - segments
+      description: 'Transcrição vigente de um vídeo, para leitura do professor no backoffice (RF-08, RN-M27). Somente
+        leitura: não há operação de edição (DP-07).'
+      properties:
+        videoId:
+          type: string
+          format: uuid
+        revision:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Identificador opaco da transcrição vigente; muda quando uma refeita a substitui (DP-09).
+            Igual para todos os alunos e sem dado pessoal (RN-M22). Serve para o cliente saber se o texto que tem
+            ainda é o vigente.
+          examples:
+          - tr_7d2a91c4
+        language:
+          type: string
+          const: pt-BR
+          description: Idioma fixo neste corte (RN-M25).
+        durationMs:
+          type: integer
+          minimum: 0
+          description: Duração coberta pela transcrição, em milissegundos.
+          examples:
+          - 2415000
+        readyAt:
+          type: string
+          format: date-time
+          description: Quando esta transcrição ficou pronta.
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+          description: 'Trechos em ordem crescente de `startMs`. Resposta única, sem paginação: uma aula de 2 horas
+            tem alguns milhares de trechos (a busca roda no cliente, RF-05). Limites exatos de tamanho: TechSpec.'

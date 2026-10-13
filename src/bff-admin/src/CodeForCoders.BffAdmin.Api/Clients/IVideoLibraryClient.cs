@@ -5,6 +5,8 @@ namespace CodeForCoders.BffAdmin.Api.Clients;
 
 public interface IVideoLibraryClient
 {
+    Task<VideoTranscriptionReadResult> GetVideoTranscriptionAsync(Guid videoId, string accessToken, CancellationToken cancellationToken);
+
     Task<VideoLibraryResult> ListVideosAsync(
         VideoLibraryListRequest filters,
         string accessToken,

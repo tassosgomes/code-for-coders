@@ -115,7 +115,7 @@ sequencial e ambas tocam o `media`.
 - [x] 6.0 Todo vídeo novo é transcrito sem ação de ninguém
 - [x] 7.0 O aviso do serviço acelera o resultado sem ser necessário
 - [x] 8.0 Falhas aparecem com motivo e o professor refaz sem perder a transcrição vigente
-- [ ] 9.0 O professor lê a transcrição pronta na tela Vídeos, somente leitura
+- [x] 9.0 O professor lê a transcrição pronta na tela Vídeos, somente leitura
 - [ ] 10.0 O aluno lê, pesquisa e clica na transcrição da aula
 - [ ] 11.0 O aluno liga a legenda no player
 - [ ] 12.0 A operação enxerga os sinais da transcrição no painel de mídia

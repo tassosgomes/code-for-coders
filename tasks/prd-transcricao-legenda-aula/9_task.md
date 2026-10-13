@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["2.0", "5.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.VideoTranscriptionReadTests --minimum-expected-tests 7 && dotnet test --project src/bff-admin/tests/CodeForCoders.BffAdmin.EndToEndTests/CodeForCoders.BffAdmin.EndToEndTests.csproj -- --filter-class CodeForCoders.BffAdmin.EndToEndTests.VideoTranscriptionReadTests --minimum-expected-tests 4 && npm --prefix src/admin-spa run test -- video-transcription-reader'
@@ -66,8 +66,8 @@ trecho e transcrição aos dois contratos.
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] Com transcrição pronta, o professor abre e lê os trechos com tempo; não há como editar, buscar ou clicar para o vídeo.
-- [ ] Sem vigente → 409 `TRANSCRIPTION_NOT_READY`; sem permissão → 403; outra escola → 404.
-- [ ] Durante o Refazer o painel mostra a vigente e o aviso de refeita em andamento.
-- [ ] Nenhum texto em log ou URL nos testes (inspeção do log do teste).
+- [x] Gate focalizado passa (exit 0).
+- [x] Com transcrição pronta, o professor abre e lê os trechos com tempo; não há como editar, buscar ou clicar para o vídeo.
+- [x] Sem vigente → 409 `TRANSCRIPTION_NOT_READY`; sem permissão → 403; outra escola → 404.
+- [x] Durante o Refazer o painel mostra a vigente e o aviso de refeita em andamento.
+- [x] Nenhum texto em log ou URL nos testes (inspeção do log do teste).

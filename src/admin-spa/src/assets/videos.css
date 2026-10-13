@@ -127,6 +127,23 @@
 .video-transcription-badge.in-progress { border: 1px solid var(--info-border); background: var(--info-soft); color: var(--info-text); }
 .video-transcription-cell .video-transcription-action { min-height: 44px; }
 .video-transcription-error { margin: 0; padding: 8px; border: 1px solid var(--danger); border-radius: 8px; color: var(--danger); font-size: 12px; line-height: 18px; }
+
+.video-transcription-reader-dialog .dialog-card { display: flex; flex-direction: column; width: min(720px, 100%); max-width: 720px; height: 80dvh; max-height: 80dvh; overflow: hidden; white-space: normal; }
+.video-transcription-reader-meta { margin: 0; color: var(--muted); font-size: 12px; }
+.video-transcription-reader-notice { margin: 0; padding: 12px; border: 1px solid var(--info-border); border-radius: 8px; background: var(--info-soft); color: var(--info-text); font-size: 14px; }
+.video-transcription-reader-text { flex: 1; min-height: 0; overflow-y: auto; border-radius: 8px; user-select: text; }
+.video-transcription-reader-text:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.video-transcription-reader-text ol { margin: 0; padding: 0; list-style: none; }
+.video-transcription-reader-text li { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.video-transcription-reader-time { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.video-transcription-reader-loading, .video-transcription-reader-message { flex: 1; min-height: 0; overflow-y: auto; }
+.video-transcription-skeleton { display: grid; grid-template-columns: 56px 1fr; gap: 24px; padding: 18px 0; }
+.video-transcription-skeleton span { height: 16px; border-radius: 4px; background: var(--border); }
+@media (max-width: 640px) {
+  .video-transcription-reader-dialog { padding: 0; }
+  .video-transcription-reader-dialog .dialog-card { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .video-transcription-reader-text li { grid-template-columns: 1fr; gap: 4px; }
+}
 .videos-page .videos-loading .videos-skeleton-row .skeleton-transcription { width: 240px; flex-shrink: 1; }
 
 @media (max-width: 767px) {

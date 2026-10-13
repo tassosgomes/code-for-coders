@@ -75,9 +75,21 @@ export const videoStatusFixtures = {
 
 const uploadTags = new Map<string, string[]>();
 
+export const videoTranscriptionContentFixture = {
+  videoId: videoStatusFixtures.ready.videoId, revision: 'tr_7d2a91c4', language: 'pt-BR',
+  durationMs: 20_000, readyAt: videoTranscriptionFixtures.ready.readyAt,
+  segments: [
+    { startMs: 0, endMs: 4100, text: 'Hoje vamos ver o docker compose.' },
+    { startMs: 4100, endMs: 7900, text: 'Ele descreve vários containers em um só arquivo.' },
+  ],
+};
+
 export const handlers = [
   ...courtesyCourseHandlers,
   ...courtesyGrantHandlers,
+  http.get(`${env.API_URL}/api/v1/videos/:videoId/transcription`, ({ params }) => HttpResponse.json({
+    ...videoTranscriptionContentFixture, videoId: params.videoId,
+  })),
   http.post(`${env.API_URL}/api/v1/staff-sessions`, () =>
     HttpResponse.json({
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',

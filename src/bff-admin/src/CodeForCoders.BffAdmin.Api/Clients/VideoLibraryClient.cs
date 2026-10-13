@@ -10,6 +10,54 @@ namespace CodeForCoders.BffAdmin.Api.Clients;
 public sealed class VideoLibraryClient(HttpClient httpClient) : IVideoLibraryClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private const int MaximumTranscriptionResponseBytes = 8 * 1024 * 1024;
+
+    public async Task<VideoTranscriptionReadResult> GetVideoTranscriptionAsync(
+        Guid videoId, string accessToken, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"internal/v1/videos/{videoId:D}/transcription");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        try
+        {
+            using var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var body = await ReadLimitedBodyAsync(response.Content, cancellationToken);
+            if (body is null) return TranscriptionUnavailable(HttpStatusCode.BadGateway);
+            if (response.StatusCode == HttpStatusCode.OK)
+                return new(response.StatusCode, null, body, response.Content.Headers.ContentType?.ToString(),
+                    response.Headers.TryGetValues("Cache-Control", out var values) ? string.Join(", ", values) : "private, no-store");
+            if ((int)response.StatusCode >= 500)
+                return TranscriptionUnavailable(response.StatusCode == HttpStatusCode.GatewayTimeout
+                    ? HttpStatusCode.GatewayTimeout : HttpStatusCode.BadGateway);
+            using var problem = JsonDocument.Parse(body);
+            return new(response.StatusCode,
+                problem.RootElement.TryGetProperty("code", out var code) ? code.GetString() : null, null, null, null);
+        }
+        catch (TimeoutRejectedException) { return TranscriptionUnavailable(HttpStatusCode.GatewayTimeout); }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        { return TranscriptionUnavailable(HttpStatusCode.GatewayTimeout); }
+        catch (HttpRequestException) { return TranscriptionUnavailable(HttpStatusCode.BadGateway); }
+        catch (IOException) { return TranscriptionUnavailable(HttpStatusCode.BadGateway); }
+        catch (JsonException) { return TranscriptionUnavailable(HttpStatusCode.BadGateway); }
+        catch (Polly.ExecutionRejectedException) { return TranscriptionUnavailable(HttpStatusCode.BadGateway); }
+    }
+
+    private static async Task<byte[]?> ReadLimitedBodyAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        if (content.Headers.ContentLength > MaximumTranscriptionResponseBytes) return null;
+        await using var source = await content.ReadAsStreamAsync(cancellationToken);
+        using var destination = new MemoryStream();
+        var buffer = new byte[16 * 1024];
+        int read;
+        while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            if (destination.Length + read > MaximumTranscriptionResponseBytes) return null;
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+        }
+        return destination.ToArray();
+    }
+
+    private static VideoTranscriptionReadResult TranscriptionUnavailable(HttpStatusCode statusCode)
+        => new(statusCode, "MEDIA_UNAVAILABLE", null, null, null);
 
     public Task<VideoLibraryResult> ListVideosAsync(
         VideoLibraryListRequest filters,
