@@ -172,6 +172,9 @@ services:
     expose:
       - "8080"
     environment:
+      Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
+      Transcription__Webhook__Secrets__0: ${TRANSCRIPTION_WEBHOOK_SECRET:-}
+      Transcription__Webhook__Secrets__1: ${TRANSCRIPTION_WEBHOOK_SECRET_PREVIOUS:-}
       AccessDecision__BaseAddress: http://commerce:8080/
       AccessDecision__SigningKeyId: local-media-commerce-1
       AccessDecision__SigningKeyBase64: ${MEDIA_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
@@ -222,6 +225,18 @@ services:
     expose:
       - "8080"
     environment:
+      Transcription__Enabled: ${TRANSCRIPTION_ENABLED:-false}
+      Transcription__Service__BaseAddress: ${WHISPER_BASE_ADDRESS:-https://whisper.lab.tasso.dev.br/v1}
+      Transcription__Service__ApiKey: ${WHISPER_API_KEY:-}
+      AwsMedia__EndpointTranscription: ${AWS_S3_TRANSCRIPTION_ENDPOINT:-http://192.168.0.5:9000}
+      Transcription__SourceUrlLifetimeMinutes: ${TRANSCRIPTION_SOURCE_URL_LIFETIME_MINUTES:-90}
+      Transcription__MaxWaitHours: ${TRANSCRIPTION_MAX_WAIT_HOURS:-30}
+      Transcription__MaxConcurrency: ${TRANSCRIPTION_MAX_CONCURRENCY:-1}
+      Transcription__MaxSubmissions: ${TRANSCRIPTION_MAX_SUBMISSIONS:-3}
+      Transcription__InitialPollSeconds: ${TRANSCRIPTION_INITIAL_POLL_SECONDS:-60}
+      Transcription__IntermediatePollSeconds: ${TRANSCRIPTION_INTERMEDIATE_POLL_SECONDS:-300}
+      Transcription__LongPollSeconds: ${TRANSCRIPTION_LONG_POLL_SECONDS:-900}
+      Transcription__MinimumFreeDiskBytes: ${TRANSCRIPTION_MINIMUM_FREE_DISK_BYTES:-2147483648}
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__DefaultConnection: Host=${REMOTE_INFRA_HOST:-192.168.0.5};Port=5432;Database=code_for_coders_media;Username=code_for_coders_media;Password=${REMOTE_DB_PASSWORD:?set in the target environment};Maximum Pool Size=${REMOTE_DB_MAX_POOL_SIZE:-10};Connection Idle Lifetime=60

@@ -1,7 +1,7 @@
 {
   "schema": "tsg-flow-state/1",
   "product": "code-4-coders",
-  "updated": "2026-10-11",
+  "updated": "2026-10-13",
   "nota": "Indice e progresso do fluxo. Versao, status e origem de cada artefato vivem no frontmatter do proprio arquivo. Os artefatos prd/contract/techspec da primeira fatia de CAP-030 ficam no indice geral para que a capacidade aponte para o PRD mais recente sem perder a procedencia historica. CAP-006 ganhou segunda fatia (tasks/archive/prd-observabilidade-midia): o ciclo anterior completo vive em tasks/archive/prd-ingestao-midia, fora do indice por colisao de chave unica. PRDs concluidos ficam arquivados em tasks/archive/ (so historico, nao sao fonte da verdade). O contrato vigente de cada fronteira vive em contracts/ (artifacts.contracts); novos PRDs continuam em tasks/prd-[slug]/ e promovem o recorte para contracts/ ao concluir.",
   "artifacts": {
     "vision": "vision.md",
@@ -11,7 +11,6 @@
     "prd": "tasks/archive/prd-trilha-auditoria/prd.md",
     "contract": "tasks/archive/prd-trilha-auditoria/contracts.md",
     "techspec": "tasks/archive/prd-trilha-auditoria/techspec.md",
-    "CAP-006-ingestao:prd": "tasks/archive/prd-ingestao-midia/prd.md",
     "contracts": "contracts/README.md"
   },
   "capability_stages": [
@@ -101,16 +100,13 @@
       "id": "CAP-007",
       "stage": "done",
       "artifacts": {
-        "domain": "domains/entrega-de-midia-e-protecao/domain.md",
-        "prd": "tasks/archive/prd-reproducao-protegida/prd.md",
-        "contract": "tasks/archive/prd-reproducao-protegida/contracts.md",
-        "techspec": "tasks/archive/prd-reproducao-protegida/techspec.md",
-        "tasks": "tasks/archive/prd-reproducao-protegida/tasks.md"
+        "domain": "domains/entrega-de-midia-e-protecao/domain.md"
       },
       "mvp_order": 7,
       "delivered": [
         "tasks/archive/prd-reproducao-protegida (1o PRD, done, PR #152; contratos promovidos em df1fbb3)"
-      ]
+      ],
+      "nota": "Artefatos do PRD em tasks/archive/prd-reproducao-protegida/ (historico; fora do indice desde 2026-10-12 porque citam entrega-de-midia@1.0, superado pela v1.1 aditiva)."
     },
     {
       "id": "CAP-008",
@@ -186,16 +182,12 @@
     {
       "id": "CAP-017",
       "stage": "done",
-      "artifacts": {
-        "prd": "tasks/archive/prd-progresso-aluno/prd.md",
-        "contract": "tasks/archive/prd-progresso-aluno/contracts.md",
-        "techspec": "tasks/archive/prd-progresso-aluno/techspec.md",
-        "tasks": "tasks/archive/prd-progresso-aluno/tasks.md"
-      },
+      "artifacts": {},
       "mvp_order": 7,
       "delivered": [
         "tasks/archive/prd-progresso-aluno (1o PRD, done, PR #153; contratos promovidos em contracts/ em 2026-10-04)"
-      ]
+      ],
+      "nota": "Artefatos do PRD em tasks/archive/prd-progresso-aluno/ (historico; fora do indice desde 2026-10-12 porque citam entrega-de-midia@1.0, superado pela v1.1 aditiva)."
     },
     {
       "id": "CAP-018",
@@ -275,6 +267,21 @@
       "id": "CAP-031",
       "stage": "backlog",
       "artifacts": {}
+    },
+    {
+      "id": "CAP-032",
+      "stage": "done",
+      "artifacts": {
+        "domain": "domains/entrega-de-midia-e-protecao/domain.md",
+        "prd": "tasks/archive/prd-transcricao-legenda-aula/prd.md",
+        "contract": "tasks/archive/prd-transcricao-legenda-aula/contracts.md",
+        "techspec": "tasks/archive/prd-transcricao-legenda-aula/techspec.md",
+        "tasks": "tasks/archive/prd-transcricao-legenda-aula/tasks.md"
+      },
+      "delivered": [
+        "tasks/archive/prd-transcricao-legenda-aula (1o PRD, done, PR #225; contratos consolidados em contracts/ em 2026-10-13; verificado ponta a ponta em dev contra o servico de transcricao real)"
+      ],
+      "nota": "Pendentes operacionais fora do PRD: aviso (webhook) sem TRUSTED_PRIVATE_WEBHOOKS/destino/segredo; smoke explicito TranscriptionRealServiceSmokeTests nao executado; recomendacoes nao bloqueantes da revisao full em tasks/archive/prd-transcricao-legenda-aula/prd_review.md."
     }
   ],
   "next_actions": [
@@ -1102,6 +1109,59 @@
       "owner": "tasso",
       "decided_at": "2026-10-12",
       "decision": "TechSpec 1.0 aprovada. ADR-0020 e ADR-0021 aceitas. Fiscal em billing, nota fora do JSON do pedido, guarda de um ano, emissor so na bancada. Proximo passo: tsg-flow-task-creator."
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md DP-01",
+      "what": "Como transcrever a fala dos videos (CAP-032)",
+      "decision": "Servico de transcricao proprio (Whisper, repositorio separado, ja na rede privada), pt-BR. Contrato: POST /v1/transcriptions com X-API-Key e Idempotency-Key, sourceUrl pre-assinada GET (>=60 min), webhook terminal Standard Webhooks v1 sem texto, GET /v1/transcriptions/{id}/result (schemaVersion 1, segments startMs/endMs/text) por 24 h, limites 5 GiB e 2 h. Allowlist de destinos privados (TRUSTED_PRIVATE_SOURCES/WEBHOOKS) em implementacao no Whisper. Descartado: API de terceiro (conteudo sai do controle proprio e custo por minuto).",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD94",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md DP-02",
+      "what": "Finalidade da transcricao",
+      "decision": "(1) legenda no player; (2) transcricao inteira na pagina da aula, pesquisavel pelo aluno, com clique no trecho levando o video ao tempo. Descartado: so legenda (nao acha ponto sem assistir).",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD95",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md DP-03",
+      "what": "Disparo da transcricao",
+      "decision": "Automatico quando o video fica pronto, mais botao na tela Videos (admin) para transcrever video sem transcricao e refazer. Direcao tecnica proposta (a validar na TechSpec): worker do media, dono da chave AES (ADR-0006), extrai audio m4a mono 16 kHz da propria Versao de Reproducao porque o original e apagado apos ready/failed (PrepareVideo.CleanupFinalArtifactsAsync); assina GET, envia ao Whisper, copia o resultado para guarda propria antes de 24 h, concilia por polling alem do webhook e apaga o audio. Descartado: so automatico (videos antigos e falhas sem saida) e so manual.",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD96",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md DP-04",
+      "what": "Protecao da transcricao e da legenda",
+      "decision": "Conteudo protegido: so quem tem direito a aula agora recebe, pela mesma regra da reproducao (Referencia de Uso + decisao de Matricula, falha fechada). Descartado: transcricao publica ou so exigir login.",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD97",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md (QA-01)",
+      "what": "CAP-032 entra no MVP ou e pos-MVP?",
+      "decision": "Pos-MVP (o MVP ja esta fechado). Posicionada na Fase 3, lote L12 Aprofundar (passo 22a), ao lado de CAP-019: a Fase 2 (receita recorrente) nao tem relacao com a capacidade e a Fase 3 tem o lote com as mesmas premissas (CAP-017/CAP-007), independente e adiavel. A fase exata e recomendacao de sequenciamento, o negocio pode move-la. backlog/capabilities.md fica na v1.4 com adendo, sem subir para 1.5, para nao invalidar a procedencia dos demais documentos. Descartado: Fase 2 (so nominal).",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD98",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md (QA-02, DP-07)",
+      "what": "Edicao do texto da transcricao pelo professor",
+      "decision": "Sem edicao neste corte; a transcricao sai como o servico a produziu. Descartado: editor de texto (tela, versao do texto, permissao).",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD99",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md (QA-03, QA-04, QA-06; DP-08 a DP-10)",
+      "what": "Risco do texto completo, leitura pelo professor, video acima de 2 h e efeito de Refazer",
+      "decision": "(a) Risco aceito pelo produto: o texto completo facilita copiar o conteudo, em prol da feature. (b) Professor le a transcricao no admin, somente leitura, sem passar por Matricula (RF-08, RN-M27). (c) Video acima de 2 h falha com motivo claro ao professor; limitacao aceita, sem dividir o video. (d) Refazer troca o texto para o aluno ao ficar pronto, sem republicar o curso. DP-05 a DP-07 confirmados: legenda desligada por padrao, busca so na aula aberta, sem edicao.",
+      "decided_at": "2026-10-12"
+    },
+    {
+      "id": "OD100",
+      "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md (QA-05)",
+      "what": "Dependencias externas do Whisper para CAP-032",
+      "decision": "Registradas como dependencia externa em andamento, nao como questao: (1) allowlist de destinos privados implementada em tassosgomes/whisper-api#2 (em aprovacao; ADR-003 do Whisper; TRUSTED_PRIVATE_SOURCES e TRUSTED_PRIVATE_WEBHOOKS); (2) o deploy atual do Whisper tem bug de PyAV que faz todo job falhar, fix em tassosgomes/whisper-api#3, pre-requisito do piloto.",
+      "decided_at": "2026-10-12"
     }
   ]
 }

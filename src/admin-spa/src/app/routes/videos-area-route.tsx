@@ -424,7 +424,7 @@ const VideosAreaContent = ({ session }: { session: StaffSession }) => {
 
   const state = videos.isPending
     ? 'loading'
-    : videos.isError
+    : videos.isError && !videos.data
       ? 'unavailable'
       : videos.data.data.length === 0
         ? 'empty'

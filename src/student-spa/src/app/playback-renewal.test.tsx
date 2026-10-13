@@ -12,6 +12,7 @@ import { playbackData } from '@/testing/playback-data';
 import { simulateVideo } from '@/testing/playback-simulator';
 import { server } from '@/testing/server';
 import { lessonId } from '@/testing/student-lesson-data';
+import { ProtectedVideoPlayer } from '@/features/student-lessons/components/protected-video-player';
 import { renderWithProviders } from '@/testing/test-utils';
 
 const hls = vi.hoisted(() => ({ loadSource: vi.fn(), attachMedia: vi.fn(), destroy: vi.fn(), stopLoad: vi.fn(),
@@ -68,6 +69,17 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('Playback renewal', () => {
+  it('opens a fresh session at the selected transcript time after the session expires', async () => {
+    const view = renderWithProviders(<ProtectedVideoPlayer lessonId={lessonId} csrfToken="student-session-csrf" />);
+    for (let i = 0; i < 30 && !hls.loadSource.mock.calls.length; i++) await settle();
+    const video = view.container.querySelector('video')!;
+    video.currentTime = 42;
+    await advance(301_000);
+    view.rerender(<ProtectedVideoPlayer lessonId={lessonId} csrfToken="student-session-csrf" seekRequest={{ seconds: 12, sequence: 1 }} />);
+    await settle(); await settle();
+    act(() => video.dispatchEvent(new Event('loadedmetadata')));
+    expect(openingCount).toBe(2); expect(video.currentTime).toBe(12); expect(playing()).toBeEnabled();
+  });
   it('renews while playing and switches the segment credential without reloading', async () => {
     await start(); await click(screen.getByRole('button', { name: 'Reproduzir' }));
     await advance(209_000); expect(renewed).toHaveLength(0);

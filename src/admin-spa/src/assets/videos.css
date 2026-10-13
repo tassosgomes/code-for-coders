@@ -5,7 +5,7 @@
 .videos-page .video-status-badge.ready { border: 0; padding: 2px 10px 2px 8px; }
 
 /* Ponto de "Atualizando automaticamente". */
-.videos-page .video-refresh-status { gap: 6px; }
+.videos-page .video-refresh-status { display: flex; gap: 6px; }
 .videos-page .video-refresh-status > span { width: 8px; height: 8px; }
 
 /* Busca sem resultado (V1.c). */
@@ -111,9 +111,79 @@
 .videos-page .videos-table-row .video-title-cell { display: flex; flex-direction: column; gap: 6px; }
 .videos-page .videos-table-row .video-title-cell > strong { font-weight: 500; }
 .video-row-tags { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.video-row-actions { display: flex; gap: 16px; grid-column: 5; grid-row: 1; }
+.video-row-actions { display: flex; gap: 16px; grid-column: 6; grid-row: 1; }
+
+/* TV1: a transcrição ocupa sua própria coluna e não trunca o texto. */
+.videos-page .videos-table .videos-table-header,
+.videos-page .videos-table .videos-table-row { grid-template-columns: minmax(0, 260fr) minmax(0, 140fr) minmax(0, 280fr) minmax(0, 120fr) minmax(0, 90fr) 80px; align-items: start; }
+.videos-page .video-status-content { flex-wrap: wrap; }
+.video-transcription-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+.video-transcription-heading { display: none; }
+.video-transcription-cell small { color: var(--muted); font-size: 12px; line-height: 18px; }
+.video-transcription-state { max-width: 100%; border-radius: 6px; }
+.video-transcription-state:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.videos-page .video-transcription-badge { max-width: 100%; width: auto; white-space: normal; }
+.video-transcription-badge.not-requested { border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+.video-transcription-badge.in-progress { border: 1px solid var(--info-border); background: var(--info-soft); color: var(--info-text); }
+.video-transcription-cell .video-transcription-action { min-height: 44px; }
+.video-transcription-error { margin: 0; padding: 8px; border: 1px solid var(--danger); border-radius: 8px; color: var(--danger); font-size: 12px; line-height: 18px; }
+
+/* TV3: Dialog 720 × 80% da altura; cabeçalho do vídeo (nome + meta), região com borda e rolagem própria. */
+.video-transcription-reader-dialog .dialog-card { display: flex; flex-direction: column; gap: 16px; width: min(720px, 100%); max-width: 720px; height: 80dvh; max-height: 80dvh; overflow: hidden; white-space: normal; box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); }
+.video-transcription-reader-dialog .course-dialog-heading { margin: 0; }
+.video-transcription-reader-dialog .course-dialog-heading h2 { margin: 0 0 16px; line-height: 28px; letter-spacing: -0.25px; }
+.video-transcription-reader-dialog .course-dialog-heading p { color: var(--foreground); font-weight: 500; line-height: 20px; }
+.video-transcription-reader-dialog .dialog-close svg { width: 20px; height: 20px; }
+.video-transcription-reader-dialog .video-transcription-reader-meta { margin: -14px 0 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+.video-transcription-reader-dialog .dialog-actions { margin-top: auto; }
+.video-transcription-reader-notice,
+.video-transcription-reader-alert { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; line-height: 20px; }
+.video-transcription-reader-notice { background: var(--accent-subtle); color: var(--foreground); }
+.video-transcription-reader-notice > svg { flex: none; margin-top: 2px; color: var(--info); }
+.video-transcription-reader-notice p, .video-transcription-reader-alert p { flex: 1; min-width: 0; margin: 0; }
+.video-transcription-reader-alert { border-color: var(--danger); background: var(--surface); color: var(--danger); }
+.video-transcription-reader-alert > svg { flex: none; margin-top: 2px; }
+.video-transcription-reader-alert .outline-button { flex: none; min-height: 32px; padding: 0 12px; color: var(--foreground); font-size: 12px; font-weight: 500; line-height: 16px; }
+.video-transcription-reader-text, .video-transcription-reader-loading { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.video-transcription-reader-text { padding: 4px; user-select: text; }
+.video-transcription-reader-text:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.video-transcription-reader-text ol { margin: 0; padding: 0; list-style: none; }
+.video-transcription-reader-text li { display: flex; align-items: flex-start; gap: 16px; padding: 10px 12px; color: var(--foreground); font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+.video-transcription-reader-text li > span:last-child { flex: 1; min-width: 0; }
+.video-transcription-reader-time { flex: none; width: 64px; padding-top: 1px; color: var(--muted); font: 400 12px/18px 'JetBrains Mono', monospace; }
+.video-transcription-reader-loading { padding: 12px 4px; }
+.video-transcription-reader-loading > p { margin: 0; color: var(--muted); font-size: 12px; line-height: 16px; }
+.video-transcription-skeleton { display: flex; align-items: center; gap: 16px; padding: 12px; }
+.video-transcription-skeleton span { flex: none; max-width: 100%; height: 14px; border-radius: 4px; background: var(--surface-muted); }
+.video-transcription-skeleton span:first-child { width: 48px; }
+.video-transcription-skeleton span:last-child { flex-shrink: 1; width: 520px; }
+.video-transcription-skeleton:nth-child(2) span:last-child { width: 440px; }
+.video-transcription-skeleton:nth-child(3) span:last-child { width: 560px; }
+.video-transcription-skeleton:nth-child(4) span:last-child { width: 380px; }
+.video-transcription-skeleton:nth-child(5) span:last-child { width: 500px; }
+.video-transcription-skeleton:nth-child(6) span:last-child { width: 460px; }
+.video-transcription-skeleton:nth-child(7) span:last-child { width: 540px; }
+.video-transcription-skeleton:nth-child(8) span:last-child { width: 300px; }
+.video-transcription-reader-empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 0; padding: 24px; color: var(--muted); text-align: center; }
+.video-transcription-reader-empty > span { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--surface-muted); color: var(--foreground-secondary); }
+.video-transcription-reader-empty p { margin: 0; font-size: 14px; line-height: 20px; }
+@media (max-width: 640px) {
+  .video-transcription-reader-dialog { padding: 0; }
+  .video-transcription-reader-dialog .dialog-card { gap: 12px; width: 100%; height: 100dvh; max-height: 100dvh; padding: 16px; border: 0; border-radius: 0; box-shadow: none; }
+  .video-transcription-reader-dialog .course-dialog-heading h2 { margin-bottom: 12px; }
+  .video-transcription-reader-dialog .dialog-close { top: 16px; right: 16px; }
+  .video-transcription-reader-dialog .dialog-close svg { width: 24px; height: 24px; }
+  .video-transcription-reader-dialog .video-transcription-reader-meta { margin-top: -10px; }
+  .video-transcription-reader-text li { flex-direction: column; gap: 4px; font-size: 16px; line-height: 24px; }
+  .video-transcription-reader-time { width: auto; padding-top: 0; }
+  .video-transcription-reader-dialog .dialog-actions .outline-button { flex: 1; min-height: 48px; padding: 0 24px; font-size: 16px; font-weight: 500; line-height: 24px; }
+}
+.videos-page .videos-loading .videos-skeleton-row .skeleton-transcription { width: 240px; flex-shrink: 1; }
 
 @media (max-width: 767px) {
+  .videos-page .videos-table .videos-table-row { grid-template-columns: minmax(0, 1fr) 72px; }
+  .videos-page .videos-table-row .video-transcription-cell { grid-column: 1 / -1; grid-row: 5; padding-top: 12px; border-top: 1px solid var(--border); }
+  .video-transcription-heading { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
   /* Cartão (V1.h): título e ações, estado, etiquetas e autor. */
   .videos-page .videos-table-row .video-title-cell { display: contents; }
   .videos-page .videos-table-row .video-title-cell > strong { grid-column: 1; grid-row: 1; }

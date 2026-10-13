@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { VideosAreaRoute } from '@/app/routes/videos-area-route';
 import { env } from '@/config/env';
+import { videoTranscriptionFixtures } from '@/testing/handlers';
 import { server } from '@/testing/server';
 import { renderWithProviders } from '@/testing/test-utils';
 
@@ -17,6 +18,7 @@ const video = {
   videoId,
   title: 'Aula de exemplo',
   status: 'received',
+  transcription: { ...videoTranscriptionFixtures['not-requested'], canStart: false },
   uploadedBy: {
     accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
     name: 'Marina Alves',

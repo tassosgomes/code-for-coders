@@ -15,11 +15,13 @@ namespace CodeForCoders.Media.Infra.Messaging;
 public sealed class MediaVolumeMetricsWorker : BackgroundService
 {
     private static readonly string[] KnownStatuses = ["received", "preparing", "ready", "failed"];
+    private static readonly string[] TranscriptionStatuses = ["queued", "working", "waiting"];
+    private static readonly TimeSpan TranscriptionProgressLimit = TimeSpan.FromMinutes(30);
     private readonly IServiceScopeFactory scopeFactory;
     private readonly TimeProvider timeProvider;
     private readonly ILogger<MediaVolumeMetricsWorker> logger;
     private readonly int outboxMaxAttempts;
-    private MetricsSnapshot snapshot = new(0, 0, [], 0, 0, 0, 0, 0, 0);
+    private MetricsSnapshot snapshot = new(0, 0, [], 0, 0, 0, 0, 0, 0, [], [], 0);
 
     public MediaVolumeMetricsWorker(
         IServiceScopeFactory scopeFactory,
@@ -40,6 +42,9 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         MediaTelemetry.Meter.CreateObservableGauge("media.outbox.oldest_pending", () => Volatile.Read(ref snapshot).OldestPendingOutboxSeconds, unit: "s");
         MediaTelemetry.Meter.CreateObservableGauge("media.outbox.exhausted", () => Volatile.Read(ref snapshot).ExhaustedOutboxMessages, unit: "{message}");
         MediaTelemetry.Meter.CreateObservableGauge("media.students.active", () => Volatile.Read(ref snapshot).ActiveStudents, unit: "{student}");
+        MediaTelemetry.Meter.CreateObservableGauge("media.transcription.pending", () => Volatile.Read(ref snapshot).TranscriptionCounts, unit: "{attempt}");
+        MediaTelemetry.Meter.CreateObservableGauge("media.transcription.oldest_waiting", () => Volatile.Read(ref snapshot).TranscriptionAges, unit: "s");
+        MediaTelemetry.Meter.CreateObservableGauge("media.transcription.stuck", () => Volatile.Read(ref snapshot).StuckTranscriptions, unit: "{attempt}");
     }
 
     public async Task RefreshAsync(CancellationToken cancellationToken)
@@ -56,6 +61,21 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
             .Where(video => video.Status == "received")
             .MinAsync(video => (DateTimeOffset?)video.UploadedAt, cancellationToken);
         var now = timeProvider.GetUtcNow();
+        var transcriptionRows = await dbContext.Transcriptions.IgnoreQueryFilters().AsNoTracking()
+            .Where(attempt => TranscriptionStatuses.Contains(attempt.Status))
+            .GroupBy(attempt => attempt.Status)
+            .Select(group => new { Status = group.Key, Count = group.LongCount(), Oldest = group.Min(attempt => attempt.RequestedAt) })
+            .ToDictionaryAsync(row => row.Status, cancellationToken);
+        var transcriptionCounts = TranscriptionStatuses.Select(status => new Measurement<long>(
+            transcriptionRows.GetValueOrDefault(status)?.Count ?? 0,
+            new KeyValuePair<string, object?>("status", status))).ToArray();
+        var transcriptionAges = TranscriptionStatuses.Select(status => new Measurement<double>(
+            transcriptionRows.TryGetValue(status, out var row) ? Math.Max(0, (now - row.Oldest).TotalSeconds) : 0,
+            new KeyValuePair<string, object?>("status", status))).ToArray();
+        var progressCutoff = now - TranscriptionProgressLimit;
+        var stuckTranscriptions = await dbContext.Transcriptions.IgnoreQueryFilters().AsNoTracking()
+            .LongCountAsync(attempt => (attempt.Status == "working" && attempt.LeaseUntil < progressCutoff)
+                || ((attempt.Status == "queued" || attempt.Status == "waiting") && attempt.NextActionAt < progressCutoff), cancellationToken);
         var oldestWaitingSeconds = oldestWaiting is null
             ? 0
             : Math.Max(0, (now - oldestWaiting.Value).TotalSeconds);
@@ -97,7 +117,10 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
             pendingOutboxMessages,
             oldestPendingOutboxSeconds,
             exhaustedOutboxMessages,
-            activeStudents));
+            activeStudents,
+            transcriptionCounts,
+            transcriptionAges,
+            stuckTranscriptions));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -136,5 +159,8 @@ public sealed class MediaVolumeMetricsWorker : BackgroundService
         long PendingOutboxMessages,
         double OldestPendingOutboxSeconds,
         long ExhaustedOutboxMessages,
-        long ActiveStudents);
+        long ActiveStudents,
+        Measurement<long>[] TranscriptionCounts,
+        Measurement<double>[] TranscriptionAges,
+        long StuckTranscriptions);
 }

@@ -5,7 +5,7 @@ capability: CAP-006
 version: 1.0
 status: approved
 updated: 2026-10-11
-sources: tasks/prd-tags-video/prd.md@1.0, domains/entrega-de-midia-e-protecao/domain.md@1.0, domains/conteudo-e-curriculo/domain.md@1.1, contracts/bff-admin/openapi-midia.yaml@1.1.1, contracts/media/openapi-internal.yaml@1.1.0, contracts/media/asyncapi.yaml@1.3.0
+sources: tasks/prd-tags-video/prd.md@1.0, domains/entrega-de-midia-e-protecao/domain.md@1.1, domains/conteudo-e-curriculo/domain.md@1.1, contracts/bff-admin/openapi-midia.yaml@1.1.1, contracts/media/openapi-internal.yaml@1.1.0, contracts/media/asyncapi.yaml@1.3.0
 ---
 
 # Contratos de integração — tags de vídeo

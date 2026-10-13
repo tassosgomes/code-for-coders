@@ -29,6 +29,18 @@ TIME_FIELD = "@timestamp"
 # The instrument names are the TechSpec contract. Elastic's OTel mapping stores
 # each numeric point at metrics.<instrument name> in metrics-generic*.
 INSTRUMENT_FIELDS = {
+    "media.transcription.requested": "metrics.media.transcription.requested",
+    "media.transcription.results": "metrics.media.transcription.results",
+    "media.transcription.time_to_ready": "metrics.media.transcription.time_to_ready",
+    "media.transcription.duration": "metrics.media.transcription.duration",
+    "media.transcription.stage_duration": "metrics.media.transcription.stage_duration",
+    "media.transcription.webhook_received": "metrics.media.transcription.webhook_received",
+    "media.transcription.reconciled": "metrics.media.transcription.reconciled",
+    "media.transcription.integration_rejected": "metrics.media.transcription.integration_rejected",
+    "media.transcription.pending": "metrics.media.transcription.pending",
+    "media.transcription.oldest_waiting": "metrics.media.transcription.oldest_waiting",
+    "media.transcription.stuck": "metrics.media.transcription.stuck",
+
     "learning.playback_progress.consumed": "metrics.learning.playback_progress.consumed",
     "learning.playback_progress.dead_lettered": "metrics.learning.playback_progress.dead_lettered",
     "learning.playback_progress.lag": "metrics.learning.playback_progress.lag",
@@ -74,6 +86,17 @@ PLATFORM_PROVIDED_INSTRUMENTS = {
 }
 
 PANEL_TITLES = {
+    "transcription-requests": "Transcrição · Pedidos por origem",
+    "transcription-results": "Transcrição · Taxa de falha por motivo na janela",
+    "transcription-ready": "Transcrição · Tempo da tentativa até pronta por origem (s)",
+    "transcription-duration": "Transcrição · Duração transcrita (s)",
+    "transcription-stages": "Transcrição · Duração por estágio (s)",
+    "transcription-webhook": "Transcrição · Desfechos do receptor",
+    "transcription-reconciled": "Transcrição · Conciliações por consulta e aviso",
+    "transcription-integration": "Transcrição · Integração recusada",
+    "transcription-queue": "Transcrição · Fila e idade mais antiga por estado",
+    "transcription-stuck": "Transcrição · Tentativas sem avanço",
+
     "progress-consumption": "Progresso · Fatos consumidos e enviados à fila de erro",
     "progress-lag": "Progresso · Atraso p50 e p95 (s)",
     "videos-by-state": "Fila · Profundidade por estado",
@@ -102,6 +125,17 @@ PANEL_TITLES = {
     "distribution-cache-hit-rate": "Distribuição · Taxa de acerto de cache",
 }
 PANEL_VISUALIZATIONS = {
+    "transcription-requests": "lnsDatatable",
+    "transcription-results": "lnsDatatable",
+    "transcription-ready": "lnsDatatable",
+    "transcription-duration": "lnsDatatable",
+    "transcription-stages": "lnsDatatable",
+    "transcription-webhook": "lnsDatatable",
+    "transcription-reconciled": "lnsDatatable",
+    "transcription-integration": "lnsDatatable",
+    "transcription-queue": "lnsDatatable",
+    "transcription-stuck": "lnsDatatable",
+
     "progress-consumption": "lnsDatatable",
     "progress-lag": "lnsDatatable",
     "videos-by-state": "lnsDatatable",
@@ -138,6 +172,12 @@ REFRESH_INTERVAL_MS = 60_000
 # Lens para que o baseline permaneça acessível, mas usam os limites do seletor
 # do dashboard (?_tstart/?_tend) na própria query.
 COUNTER_PANEL_FIELDS = {
+    "transcription-requests": ("media.transcription.requested",),
+    "transcription-results": ("media.transcription.results",),
+    "transcription-webhook": ("media.transcription.webhook_received",),
+    "transcription-reconciled": ("media.transcription.reconciled",),
+    "transcription-integration": ("media.transcription.integration_rejected",),
+
     "progress-consumption": ("learning.playback_progress.consumed", "learning.playback_progress.dead_lettered"),
     "upload-funnel": (
         "media.upload.created",
@@ -152,6 +192,12 @@ COUNTER_PANEL_FIELDS = {
     "decision-unavailable": ("media.decision.failed",),
 }
 COUNTER_PANEL_DIMENSION = {
+    "transcription-requests": 'origin',
+    "transcription-results": 'reason',
+    "transcription-webhook": 'outcome',
+    "transcription-reconciled": 'source',
+    "transcription-integration": None,
+
     "progress-consumption": None,
     "upload-funnel": None,
     "queue-claims": None,
@@ -357,7 +403,19 @@ def verify_counter_panel_semantics() -> None:
     ]
     if counter_window_totals("outbox-publishes", outbox_window, outbox_baseline)["ativo-pronto"]["published"] != 5:
         raise ValueError("outbox: incrementos de api e worker devem somar cinco por evento")
-    print("Painéis de counters: baseline, primeiro snapshot e produtores api/worker verificados offline.")
+    for key, dimension in (("transcription-requests", "origin"), ("transcription-results", "reason"),
+                           ("transcription-webhook", "outcome"), ("transcription-reconciled", "source")):
+        name = COUNTER_PANEL_FIELDS[key][0]
+        label = {"origin": "requested", "reason": "service-unavailable", "outcome": "signaled", "source": "webhook"}[dimension]
+        baseline = [{"service": "media", "instance": "one", dimension: label, name: 100},
+                    {"service": "media", "instance": "two", dimension: label, name: 20}]
+        window = [{"service": "media", "instance": "one", dimension: label, name: 102},
+                  {"service": "media", "instance": "two", dimension: label, name: 1}]
+        if counter_window_totals(key, window, baseline)[label][_counter_alias(name)] != 3:
+            raise ValueError(f"{key}: reset e múltiplos produtores devem contar três eventos")
+        if counter_window_totals(key, baseline, baseline)[label][_counter_alias(name)] != 0:
+            raise ValueError(f"{key}: snapshots estáveis não podem gerar eventos nem disparar alertas")
+    print("Painéis de counters: baseline, primeiro snapshot, reset e produtores api/worker verificados offline, incluindo transcrição.")
 
 # Alert rules A1–A5 (TechSpec § Infraestrutura de visualização, tabela contratual).
 # Threshold rules over metrics-generic*, evaluated every 1 min on a 15 min window,
@@ -508,6 +566,86 @@ ALERT_RULES = {
         ),
     },
 }
+# Suggested pilot thresholds; calibrate after 30 days of actual traffic.
+TRANSCRIPTION_ALERTS = {
+    "midia-t1-transcricao-fila": ("T1", "Idade da fila acima de 30 min", "oldest_waiting", "oldest_seconds", "oldest_seconds > 1800"),
+    "midia-t3-transcricao-sem-avanco": ("T3", "Tentativa sem avanço por 30 min", "stuck", "stuck", "stuck > 0"),
+}
+for rule_id, (code, name, instrument, alias, threshold) in TRANSCRIPTION_ALERTS.items():
+    ALERT_RULES[rule_id] = {
+        "code": code,
+        "name": f"[Mídia] {code} · Transcrição · {name} (piloto)",
+        "instruments": (f"media.transcription.{instrument}",),
+        "threshold_markers": (threshold,),
+        "esql": (
+            f"FROM metrics-generic* | WHERE @timestamp >= NOW() - 15 minutes"
+            f" AND metrics.media.transcription.{instrument} IS NOT NULL"
+            f" | STATS value = LAST(metrics.media.transcription.{instrument}, @timestamp)"
+            f" BY service = resource.attributes.service.name, instance = resource.attributes.service.instance.id, status = attributes.status"
+            f" | STATS {alias} = MAX(value) | WHERE {threshold}"
+        ),
+    }
+
+
+def transcription_failure_query() -> str:
+    return (counter_increment_query("transcription-results")
+            + ' | INLINE STATS total = SUM(results)'
+            + ' | EVAL failure_rate = CASE(total > 0, results * 1.0 / total, 0.0)'
+            + ' | WHERE reason != "ready" | KEEP reason, results, total, failure_rate')
+
+
+ALERT_RULES["midia-t2-transcricao-indisponivel"] = {
+    "code": "T2",
+    "name": "[Mídia] T2 · Transcrição · Service-unavailable acima de 10% (piloto)",
+    "window_minutes": 16,
+    "instruments": ("media.transcription.results",),
+    "threshold_markers": ('reason == "service-unavailable"', "total >= 4", "failure_rate > 0.10"),
+    "esql": transcription_failure_query().replace("@timestamp <= ?_tend", "@timestamp >= NOW() - 16 minutes")
+        .replace("@timestamp >= ?_tstart", "@timestamp >= NOW() - 15 minutes")
+        + ' | WHERE reason == "service-unavailable" AND total >= 4 AND failure_rate > 0.10',
+}
+
+
+def transcription_panel_definitions() -> list[tuple]:
+    definitions = []
+    for key, (name, dimension) in (
+        ("transcription-ready", ("time_to_ready", "origin")),
+        ("transcription-duration", ("duration", None)),
+        ("transcription-stages", ("stage_duration", "stage")),
+    ):
+        field = INSTRUMENT_FIELDS[f"media.transcription.{name}"]
+        query = (f"FROM metrics-generic* | WHERE {field} IS NOT NULL"
+                 f" | STATS p50_seconds = PERCENTILE(TO_TDIGEST({field}), 50),"
+                 f" p95_seconds = PERCENTILE(TO_TDIGEST({field}), 95)")
+        columns = [("p50_seconds", "number"), ("p95_seconds", "number")]
+        if dimension:
+            query += f" BY {dimension} = attributes.{dimension} | SORT {dimension} ASC"
+            columns.insert(0, (dimension, "string"))
+        definitions.append((key, query, columns))
+    for key in ("transcription-requests", "transcription-results", "transcription-webhook", "transcription-reconciled", "transcription-integration"):
+        dimension = COUNTER_PANEL_DIMENSION[key]
+        columns = [(_counter_alias(name), "number") for name in COUNTER_PANEL_FIELDS[key]]
+        if dimension:
+            columns.insert(0, (dimension, "string"))
+        query = transcription_failure_query() if key == "transcription-results" else counter_increment_query(key)
+        if key == "transcription-results":
+            columns += [("total", "number"), ("failure_rate", "number")]
+        definitions.append((key, query, columns))
+    definitions.append(("transcription-queue",
+        "FROM metrics-generic* | WHERE metrics.media.transcription.pending IS NOT NULL OR metrics.media.transcription.oldest_waiting IS NOT NULL"
+        " | STATS pending_last = LAST(metrics.media.transcription.pending, @timestamp), oldest_last = LAST(metrics.media.transcription.oldest_waiting, @timestamp)"
+        " BY service = resource.attributes.service.name, instance = resource.attributes.service.instance.id, status = attributes.status"
+        " | STATS pending = SUM(pending_last), oldest_seconds = MAX(oldest_last) BY status | SORT status ASC",
+        [("status", "string"), ("pending", "number"), ("oldest_seconds", "number")]))
+    definitions.append(("transcription-stuck",
+        "FROM metrics-generic* | WHERE metrics.media.transcription.stuck IS NOT NULL"
+        " | STATS stuck_last = LAST(metrics.media.transcription.stuck, @timestamp)"
+        " BY service = resource.attributes.service.name, instance = resource.attributes.service.instance.id"
+        " | STATS stuck = SUM(stuck_last)", [("stuck", "number")]))
+    return [(key, query, columns, (index % 2) * 24, 150 + (index // 2) * 12)
+            for index, (key, query, columns) in enumerate(definitions)]
+
+
 ALERT_CORE_MIGRATION_VERSION = "8.8.0"
 ALERT_TYPE_MIGRATION_VERSION = "10.14.0"
 
@@ -848,7 +986,7 @@ def verify_a2_counter_semantics() -> None:
 
 
 def verify_alert_rules(by_type_and_id: dict) -> None:
-    """Validate the five A1–A5 rules against the TechSpec contract."""
+    """Validate the versioned rules and suggested transcription pilot thresholds."""
     allowed_fields = set(INSTRUMENT_FIELDS.values())
     for rule_id, rule in ALERT_RULES.items():
         saved_object = by_type_and_id.get(("alert", rule_id))
@@ -901,7 +1039,7 @@ def verify_alert_rules(by_type_and_id: dict) -> None:
 
     alert_ids = {key[1] for key in by_type_and_id if key[0] == "alert"}
     if alert_ids != set(ALERT_RULES):
-        raise ValueError("o NDJSON deve conter exatamente as regras A1–A5 com IDs estáveis")
+        raise ValueError("o NDJSON deve conter exatamente as regras versionadas com IDs estáveis")
     verify_a2_counter_semantics()
 
 
@@ -998,7 +1136,7 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
     } | {("alert", rule_id) for rule_id in ALERT_RULES}
     if set(by_type_and_id) != expected_objects:
         raise ValueError(
-            "o NDJSON deve conter o data view, o dashboard e as regras A1–A5 com IDs estáveis"
+            "o NDJSON deve conter o data view, o dashboard e as regras versionadas com IDs estáveis"
         )
 
     data_view = by_type_and_id[("index-pattern", DATA_VIEW_ID)]
@@ -1262,6 +1400,15 @@ def verify_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> tuple[list[dict], d
 
     if summary.get("exportedCount") != len(saved_objects):
         raise ValueError("exportedCount não corresponde à quantidade de saved objects")
+    for key, query, _, _, _ in transcription_panel_definitions():
+        panel = panels_by_id[stable_id(key)]
+        if panel_query(panel) != query:
+            raise ValueError(f"painel de transcrição divergente: {key}")
+        if key in COUNTER_PANEL_FIELDS:
+            verify_counter_increment_shape(query, key, PANEL_TITLES[key])
+    for rule_id, rule in ALERT_RULES.items():
+        if "transcricao" in rule_id and by_type_and_id[("alert", rule_id)]["attributes"]["params"]["esqlQuery"]["esql"] != rule["esql"]:
+            raise ValueError(f"alerta de transcrição divergente da consulta versionada: {rule_id}")
     verify_no_counter_sum(query_text)
     verify_esql_type_casts(nested_strings(saved_objects))
     verify_counter_panel_semantics()
@@ -1500,6 +1647,7 @@ def generate_saved_objects(path: Path = SAVED_OBJECTS_PATH) -> int:
             124,
         ),
     ]
+    panel_definitions.extend(transcription_panel_definitions())
     # Counter panels owned by earlier slices (funnel, claims) are rewritten in
     # place with the canonical increment query, preserving their grid position.
     counter_rewrites = {
@@ -1982,7 +2130,7 @@ def main() -> int:
             "Verificação estrutural passou: data view metrics-generic* e dashboard "
             f"{DASHBOARD_TITLE!r} com IDs estáveis; métricas verificadas contra o manifesto "
             f"({', '.join(INSTRUMENT_FIELDS)}); painéis de envio, fila, preparação e outbox/DLQ presentes; "
-            "regras A1–A5 presentes com IDs estáveis, cada uma referencia só instrumentos da tabela "
+            "regras versionadas presentes com IDs estáveis, incluindo T1–T3 da transcrição (limites de piloto); cada uma referencia só instrumentos da tabela "
             "da TechSpec, thresholds iguais aos da spec, nenhuma com conector de notificação. "
             "A2 calcula incrementos de counters cumulativos na janela (valor final "
             "na janela − baseline imediatamente anterior à janela, por série "

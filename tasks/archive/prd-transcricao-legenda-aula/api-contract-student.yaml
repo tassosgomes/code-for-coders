@@ -1,0 +1,421 @@
+openapi: 3.1.0
+info:
+  title: BFF do aluno — transcrição e legenda da aula, recorte de CAP-032
+  version: 1.2.0
+  description: |-
+    Recorte de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Interface `student-spa` → `bff-student`: a **transcrição** pesquisável na página da aula e a **legenda** no player (RF-03 a RF-06).
+
+    Evolui de forma **aditiva** `contracts/bff-student/openapi-aula.yaml` 1.1.0 → 1.2.0: duas leituras novas, nenhuma operação existente muda (`getStudentLesson` e as demais de `CAP-007` e `CAP-017` seguem como estão). O BFF não decide nada: valida a sessão em Identity (ADR-0003), obtém o JWT de aluno com a audiência `media` e repassa; leituras, sem CSRF. As respostas não são guardadas em cache nem registradas (RN-M21, RN-M26). Espelha `internal-api-contract-media.yaml`.
+
+    A preferência de ligar a legenda é do aluno e vive no dispositivo (RN-TL04): não há operação que a leia ou grave. A busca é local, sobre os trechos recebidos (RN-TL01, RF-05): não há operação de busca.
+  contact:
+    name: Time de Entrega de Mídia
+servers:
+- url: /api/v1
+  description: URL pública versionada do BFF do aluno
+tags:
+- name: Transcrição
+  description: Transcrição na página da aula e legenda no player (RF-03 a RF-06)
+paths:
+  /lessons/{lessonId}/transcription:
+    get:
+      tags:
+      - Transcrição
+      summary: Obter a transcrição da aula
+      description: |
+        Transcrição da Mídia vinculada à aula na versão vigente do curso, para a página da aula (RF-04, RF-05, RN-TL03). O aluno **não informa vídeo**: informa a aula, e Mídia resolve o vídeo pela Referência de Uso. Não exige Sessão de Reprodução aberta: a página mostra o texto antes de o aluno apertar play (RN-TL02).
+
+        Mesma verificação da reprodução, nesta ordem (RN-M21, RN-M10 passos 1 e 2): (1) a aula está entre as Referências de Uso de um vídeo da escola do aluno (404 `LESSON_NOT_AVAILABLE`, **antes** de consultar Matrícula); (2) Matrícula responde que o aluno pode acessar o curso **agora** (403 `ACCESS_DENIED`; sem resposta, 503 `ACCESS_DECISION_UNAVAILABLE`, falha fechada, nunca "sem acesso"); a resposta pode ser reaproveitada por até 30 s, como na sessão. Só depois se lê o estado da transcrição.
+
+        Depois da decisão positiva, vídeo sem transcrição pronta (não pronto, em andamento ou falhou) responde **200** com `status: unavailable`, sem texto e sem motivo técnico (RN-TL05); a aula continua reproduzível. Refazer troca o texto na próxima leitura, sem republicar o curso (DP-09). Não há endereço estável, público ou em cache compartilhado (`Cache-Control: private, no-store`); o texto não tem dado do aluno (RN-M22) e não vai a log, métrica nem URL (RN-M26).
+      operationId: getLessonTranscription
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/LessonId'
+      responses:
+        '200':
+          description: Transcrição pronta, ou ausência dela em linguagem neutra.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache compartilhado nem do navegador
+                (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonTranscription'
+              examples:
+                pronta:
+                  value:
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    status: ready
+                    revision: tr_7d2a91c4
+                    language: pt-BR
+                    durationMs: 2415000
+                    segments:
+                    - startMs: 1240
+                      endMs: 4100
+                      text: Hoje vamos ver o docker compose.
+                    - startMs: 4100
+                      endMs: 7900
+                      text: Ele descreve vários containers em um só arquivo.
+                indisponivel:
+                  value:
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    status: unavailable
+                    revision: null
+                    language: null
+                    durationMs: null
+                    segments: []
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/LessonNotAvailable'
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+  /playback-sessions/{sessionId}/captions:
+    get:
+      tags:
+      - Transcrição
+      summary: Obter a legenda da sessão (WebVTT)
+      description: |
+        Legenda do vídeo da Sessão de Reprodução, em WebVTT, para o player (RF-03). Sai da **mesma** Transcrição, não é artefato separado (domínio de Mídia). Vale enquanto a sessão for válida e do aluno; a sessão já passou por Referência de Uso e Matrícula ao abrir ou renovar (RN-M10, RN-M11), então **não** consulta Matrícula de novo: perdido o direito, a legenda para no máximo na renovação, quando a sessão deixa de se estender e o texto novo não é entregue (RN-M21). Sessão de outro aluno ou de outra escola responde o mesmo 404 de sessão desconhecida.
+
+        Formato: `text/vtt` em UTF-8, cabeçalho `WEBVTT`, um *cue* por Trecho, tempos `hh:mm:ss.mmm`, sem identificação do aluno, sem marcação além do texto escapado (formato exato e escape: TechSpec). Sem transcrição pronta, 404 `CAPTIONS_NOT_AVAILABLE`: o player não mostra o controle de legenda (RN-TL05). Exceção ao gate HTTP (T-08, no molde de C-08 da entrega HLS): corpo `text/vtt`, não JSON. `Cache-Control: private, no-store`.
+      operationId: getPlaybackCaptions
+      security:
+      - StudentSessionCookie: []
+      parameters:
+      - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Legenda em WebVTT.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache compartilhado nem do navegador
+                (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            text/vtt:
+              schema:
+                type: string
+              examples:
+                legenda:
+                  value: |
+                    WEBVTT
+
+                    1
+                    00:00:01.240 --> 00:00:04.100
+                    Hoje vamos ver o docker compose.
+
+                    2
+                    00:00:04.100 --> 00:00:07.900
+                    Ele descreve vários containers em um só arquivo.
+        '404':
+          description: Sessão desconhecida, de outro aluno ou de outra escola (`PLAYBACK_SESSION_NOT_FOUND`), ou
+            o vídeo não tem transcrição pronta (`CAPTIONS_NOT_AVAILABLE`). O cliente trata o `code`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                sessaoNaoEncontrada:
+                  value:
+                    type: about:blank
+                    title: Sessão de reprodução não encontrada.
+                    status: 404
+                    code: PLAYBACK_SESSION_NOT_FOUND
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                semLegenda:
+                  value:
+                    type: about:blank
+                    title: Este vídeo não tem legenda disponível.
+                    status: 404
+                    code: CAPTIONS_NOT_AVAILABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '401':
+          $ref: '#/components/responses/SessionRequired'
+        '502':
+          $ref: '#/components/responses/UpstreamUnavailable'
+        '504':
+          $ref: '#/components/responses/UpstreamTimeout'
+components:
+  securitySchemes:
+    StudentSessionCookie:
+      type: apiKey
+      in: cookie
+      name: student_session
+      description: Cookie opaco de sessão do aluno, HttpOnly, Secure e SameSite (CAP-001). O BFF valida a sessão
+        em Identity a cada ação protegida (ADR-0003). Nenhum bearer token chega ao navegador. Como no contrato vigente.
+  parameters:
+    LessonId:
+      name: lessonId
+      in: path
+      required: true
+      description: Identidade estável da aula (RN-C07). Opaca para quem a recebe.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        lessonId:
+          value: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      description: Identificador da Sessão de Reprodução.
+      schema:
+        type: string
+        format: uuid
+      examples:
+        sessionId:
+          value: e4b8c6a2-1d3f-4957-b0a8-6c2d4e8f1a73
+  responses:
+    LessonNotAvailable:
+      description: Aula inexistente, de outra escola, de curso não publicado ou removida da versão vigente. A resposta
+        **não distingue** o motivo (RN-R07).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Esta aula não está disponível.
+                status: 404
+                code: LESSON_NOT_AVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AccessDecisionUnavailable:
+      description: 'Matrícula não respondeu a tempo ou respondeu com erro. **Não é negação** (RN-R02): nenhum texto
+        é entregue. O cliente oferece *Tentar de novo*.'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Não foi possível confirmar seu acesso agora.
+                status: 503
+                code: ACCESS_DECISION_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    SessionExpired:
+      description: A validade da sessão terminou sem renovação. O player abre uma sessão nova; nenhum texto novo
+        é entregue (RN-M21).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            expirada:
+              value:
+                type: about:blank
+                title: A sessão de reprodução terminou.
+                status: 410
+                code: PLAYBACK_SESSION_EXPIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    AccessDenied:
+      description: Matrícula respondeu que o aluno não pode acessar o curso agora. `reason` distingue nunca ter
+        tido de ter vencido; nada do conteúdo do curso é revelado.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            semAcesso:
+              value:
+                type: about:blank
+                title: Você não tem acesso a este curso.
+                status: 403
+                code: ACCESS_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                reason: no-grant
+            vencido:
+              value:
+                type: about:blank
+                title: Seu acesso a este curso terminou.
+                status: 403
+                code: ACCESS_DENIED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                reason: grant-ended
+                accessEndedAt: '2026-10-04T03:00:00Z'
+    SessionRequired:
+      description: Sessão do aluno ausente, expirada ou revogada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            sessaoAusente:
+              value:
+                type: about:blank
+                title: Sessão ausente, expirada ou revogada.
+                status: 401
+                code: SESSION_REQUIRED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamUnavailable:
+      description: '`media` ou `identity` não respondeu ou falhou. Nenhum texto é entregue; a tela mostra indisponibilidade,
+        nunca "sem acesso" (RN-R02).'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            indisponivel:
+              value:
+                type: about:blank
+                title: Serviço temporariamente indisponível.
+                status: 502
+                code: UPSTREAM_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    UpstreamTimeout:
+      description: O serviço não respondeu no tempo limite.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            tempo:
+              value:
+                type: about:blank
+                title: O serviço demorou a responder.
+                status: 504
+                code: UPSTREAM_TIMEOUT
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - title
+      - status
+      - code
+      - traceId
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: Código estável para tratamento no cliente.
+        traceId:
+          type: string
+        reason:
+          type: string
+          enum:
+          - no-grant
+          - grant-ended
+          description: 'Só em `ACCESS_DENIED`: `no-grant` (nunca teve acesso ao curso) ou `grant-ended` (já teve,
+            nenhuma concessão está ativa). Clientes devem tolerar valor novo.'
+        accessEndedAt:
+          type: string
+          format: date-time
+          description: 'Só em `ACCESS_DENIED` com `reason: grant-ended`: término (exclusivo, UTC) da última concessão.'
+    TranscriptSegment:
+      type: object
+      additionalProperties: false
+      required:
+      - startMs
+      - endMs
+      - text
+      description: 'Trecho: unidade da legenda, da busca e do clique que leva o vídeo ao tempo (domínio de Mídia).
+        Tempos desde o início do vídeo.'
+      properties:
+        startMs:
+          type: integer
+          minimum: 0
+          description: Início do trecho, em milissegundos.
+          examples:
+          - 1240
+        endMs:
+          type: integer
+          minimum: 0
+          description: Fim do trecho, em milissegundos; nunca antes de `startMs`.
+          examples:
+          - 4100
+        text:
+          type: string
+          description: Texto da fala, em português do Brasil, como o serviço de transcrição o produziu (DP-07).
+            Sem dado do aluno (RN-M22).
+          examples:
+          - Hoje vamos ver o docker compose.
+    LessonTranscription:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - status
+      - revision
+      - language
+      - durationMs
+      - segments
+      description: 'Transcrição da aula para o aluno com direito a ela (RF-04). É a da Mídia vinculada na versão
+        vigente do curso (RN-TL03). `unavailable` cobre "ainda não pronta", "em andamento" e "falhou" sem distinguir
+        (RN-TL05): não é erro nem falta de acesso, e o player toca normalmente.'
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ready
+          - unavailable
+          description: '`ready` com `segments`; `unavailable` sem texto.'
+        revision:
+          oneOf:
+          - type: string
+            minLength: 1
+            maxLength: 64
+            description: Identificador opaco da transcrição vigente; muda quando uma refeita a substitui (DP-09).
+              Igual para todos os alunos e sem dado pessoal (RN-M22). Serve para o cliente saber se o texto que
+              tem ainda é o vigente.
+            examples:
+            - tr_7d2a91c4
+          - type: 'null'
+          description: Preenchida só em `ready`.
+        language:
+          type:
+          - string
+          - 'null'
+          enum:
+          - pt-BR
+          - null
+          description: '`pt-BR` em `ready`; `null` em `unavailable`.'
+        durationMs:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Preenchida só em `ready`.
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+          description: Trechos em ordem crescente de `startMs`; `[]` em `unavailable`.

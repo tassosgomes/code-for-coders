@@ -5,10 +5,14 @@ namespace CodeForCoders.BffAdmin.Api.Clients;
 
 public interface IVideoLibraryClient
 {
+    Task<VideoTranscriptionReadResult> GetVideoTranscriptionAsync(Guid videoId, string accessToken, CancellationToken cancellationToken);
+
     Task<VideoLibraryResult> ListVideosAsync(
         VideoLibraryListRequest filters,
         string accessToken,
         CancellationToken cancellationToken);
+
+    Task<VideoLibraryResult> RequestVideoTranscriptionAsync(Guid videoId, string idempotencyKey, string accessToken, CancellationToken cancellationToken);
 
     Task<VideoLibraryResult> ListVideoTagsAsync(string? query, string accessToken, CancellationToken cancellationToken);
 

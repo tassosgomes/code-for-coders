@@ -5,6 +5,16 @@ import { apiClient } from '@/lib/api-client';
 
 const videoStatusSchema = z.enum(['received', 'preparing', 'ready', 'failed']);
 
+export const videoTranscriptionSchema = z.object({
+  status: z.enum(['not-requested', 'in-progress', 'ready', 'failed']),
+  readable: z.boolean(),
+  readyAt: z.string().datetime({ offset: true }).nullable(),
+  failureReason: z.string().nullable(),
+  canStart: z.boolean(),
+}).strict();
+
+export type VideoTranscription = z.infer<typeof videoTranscriptionSchema>;
+
 export const videoSchema = z.object({
   videoId: z.string().uuid(),
   title: z.string(),
@@ -17,6 +27,7 @@ export const videoSchema = z.object({
   durationSeconds: z.number().int().nullable(),
   failureReason: z.string().nullable(),
   tags: z.array(z.string()),
+  transcription: videoTranscriptionSchema,
 }).strict();
 
 export const videoPageSchema = z.object({
@@ -61,7 +72,7 @@ export const getVideosQueryOptions = ({ page = 1, size = 20, statuses = [], quer
 export const useVideos = (filters: VideoListFilters = {}) => useQuery({
   ...getVideosQueryOptions(filters),
   refetchInterval: (query) => query.state.data?.data.some((video) =>
-    video.status === 'received' || video.status === 'preparing',
+    video.status === 'received' || video.status === 'preparing' || video.transcription.status === 'in-progress',
   ) ? 10_000 : false,
   refetchIntervalInBackground: false,
 });

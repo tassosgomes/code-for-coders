@@ -61,6 +61,7 @@ public sealed class VideoUploadHandler : HttpMessageHandler
                     videoId = Guid.CreateVersion7(),
                     title = "Aula de teste",
                     status = "received",
+                    transcription = new { status = "not-requested", readable = false, readyAt = (DateTimeOffset?)null, failureReason = (string?)null, canStart = false },
                     uploadedBy = new { accountId = Guid.CreateVersion7(), name = "Marina Alves" },
                     uploadedAt = DateTimeOffset.UtcNow,
                     durationSeconds = (int?)null,

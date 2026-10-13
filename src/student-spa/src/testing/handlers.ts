@@ -15,6 +15,9 @@ export const handlers = [
   http.get("*/api/v1/playback-sessions/:sessionId/variants/:quality", () => HttpResponse.text("#EXTM3U")),
   http.get("*/api/v1/playback-sessions/:sessionId/key", () => new HttpResponse(new Uint8Array(16))),
   http.get(`${env.API_URL}/api/v1/lessons/:lessonId`, () => HttpResponse.json(studentLessonData)),
+  http.get(`${env.API_URL}/api/v1/lessons/:lessonId/transcription`, ({ params }) => HttpResponse.json({
+    lessonId: params.lessonId, status: 'unavailable', revision: null, language: null, durationMs: null, segments: [],
+  })),
   http.get(`${env.API_URL}/api/v1/student-sessions/current`, () =>
     HttpResponse.json({
       accountId: '00000000-0000-4000-8000-000000000001',

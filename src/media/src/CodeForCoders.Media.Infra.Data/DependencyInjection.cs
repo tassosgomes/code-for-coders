@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Infra.Data.Adapters;
 using CodeForCoders.Media.Infra.Data.Configuration;
@@ -34,6 +35,13 @@ public static class DependencyInjection
         });
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
+        services.AddOptions<TranscriptionOptions>().Bind(configuration.GetSection(TranscriptionOptions.SectionName)).ValidateOnStart();
+        services.AddOptions<TranscriptionWebhookOptions>().Bind(configuration.GetSection(TranscriptionWebhookOptions.SectionName))
+            .Validate(options => options.HasValidSecrets(), "Configure at most two valid transcription webhook secrets.").ValidateOnStart();
+        services.AddScoped<ITranscriptionEventRepository, Transcriptions.TranscriptionEventRepository>();
+        services.AddScoped<ITranscriptionWorkerRepository, Transcriptions.TranscriptionWorkerRepository>();
+        services.AddScoped<IVideoTranscriptionRepository, Transcriptions.VideoTranscriptionRepository>();
+        services.AddScoped<ITranscriptionQueries, Transcriptions.TranscriptionQueries>();
         services.AddScoped<IVideoQueries, VideoQueries>();
         services.AddScoped<IVideoTagRepository, VideoTagRepository>();
         services.AddScoped<IPlaybackRepository, PlaybackSessions.PlaybackRepository>();
@@ -47,7 +55,7 @@ public static class DependencyInjection
             .Validate(options => !string.IsNullOrWhiteSpace(options.BucketName), "S3 bucket name is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.ObjectKeyPrefix), "Media object key prefix is required.")
             .Validate(options => string.IsNullOrWhiteSpace(options.EndpointInternal) == string.IsNullOrWhiteSpace(options.EndpointPublic), "Both S3 endpoints must be configured together.")
-            .Validate(options => IsHttpEndpoint(options.EndpointInternal) && IsHttpEndpoint(options.EndpointPublic), "S3 endpoints must be absolute HTTP(S) URLs.")
+            .Validate(options => IsHttpEndpoint(options.EndpointInternal) && IsHttpEndpoint(options.EndpointPublic) && IsHttpEndpoint(options.EndpointTranscription), "S3 endpoints must be absolute HTTP(S) URLs.")
             .Validate(options => string.IsNullOrWhiteSpace(options.AccessKeyId) == string.IsNullOrWhiteSpace(options.SecretAccessKey), "S3 access key and secret must be configured together.")
             .ValidateOnStart();
         services.AddSingleton<S3MediaClientPair>();

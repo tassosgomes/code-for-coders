@@ -16,6 +16,9 @@ public static class DependencyInjection
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<IExpirePendingVideoUploads, ExpirePendingVideoUploads>();
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<TranscriptionWebhookSignature>();
+        services.AddScoped<UseCases.Transcriptions.ReceiveTranscriptionEvent.IReceiveTranscriptionEvent,
+            UseCases.Transcriptions.ReceiveTranscriptionEvent.ReceiveTranscriptionEvent>();
         services.Scan(scan => scan.FromAssemblyOf<RecordPlatformHeartbeatInputValidator>()
             .AddClasses(classes => classes.AssignableTo(typeof(IValidator<>)))
             .AsImplementedInterfaces().WithScopedLifetime());
@@ -31,6 +34,11 @@ public static class DependencyInjection
     public static IServiceCollection AddVideoPreparationConfiguration(this IServiceCollection services)
     {
         services.AddScoped<IVideoPreparationWorkflow, PrepareVideo>();
+        return services;
+    }
+    public static IServiceCollection AddTranscriptionConfiguration(this IServiceCollection services)
+    {
+        services.AddScoped<ITranscriptionWorkflow, UseCases.Transcriptions.ProcessTranscription.ProcessTranscription>();
         return services;
     }
 }

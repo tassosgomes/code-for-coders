@@ -284,6 +284,9 @@ public sealed class VideoUploadTagTests(VideoLibraryApiFactory factory)
         public Task AbortMultipartUploadAsync(string objectKey, string storageUploadId, CancellationToken cancellationToken) => Task.CompletedTask;
         public Task DownloadObjectAsync(string objectKey, string destinationPath, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
         public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task DeletePrefixAsync(string objectPrefix, CancellationToken cancellationToken) => throw new NotSupportedException();
     }

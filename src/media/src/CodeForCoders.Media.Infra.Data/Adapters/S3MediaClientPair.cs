@@ -23,7 +23,13 @@ public sealed class S3MediaClientPair : IDisposable
         Public = string.Equals(settings.EndpointInternal, settings.EndpointPublic, StringComparison.Ordinal)
             ? Internal
             : CreateClient(settings.EndpointPublic, settings, credentials);
+        var transcriptionEndpoint = string.IsNullOrWhiteSpace(settings.EndpointTranscription) ? settings.EndpointPublic : settings.EndpointTranscription;
+        Transcription = string.Equals(transcriptionEndpoint, settings.EndpointPublic, StringComparison.Ordinal)
+            ? Public : string.Equals(transcriptionEndpoint, settings.EndpointInternal, StringComparison.Ordinal)
+            ? Internal : CreateClient(transcriptionEndpoint, settings, credentials);
     }
+
+    public IAmazonS3 Transcription { get; }
 
     public IAmazonS3 Internal { get; }
 
@@ -31,6 +37,7 @@ public sealed class S3MediaClientPair : IDisposable
 
     public void Dispose()
     {
+        if (!ReferenceEquals(Transcription, Internal) && !ReferenceEquals(Transcription, Public)) Transcription.Dispose();
         Internal.Dispose();
         if (!ReferenceEquals(Public, Internal))
         {

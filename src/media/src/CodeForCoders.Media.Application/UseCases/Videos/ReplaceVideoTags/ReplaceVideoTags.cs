@@ -10,6 +10,7 @@ namespace CodeForCoders.Media.Application.UseCases.Videos.ReplaceVideoTags;
 public sealed class ReplaceVideoTags(
     ITenantContext tenantContext,
     IVideoTagRepository videoTags,
+    IVideoTranscriptionRepository transcriptions,
     IOperationIdempotencyRepository idempotencyRecords,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : IReplaceVideoTags
@@ -34,9 +35,10 @@ public sealed class ReplaceVideoTags(
                 return;
             }
             var canonical = await videoTags.ReplaceAsync(video.VideoId, tags, token);
+            var states = await transcriptions.GetAsync([video], token);
             output = new VideoOutput(video.VideoId, video.Title, video.Status,
                 new VideoUploaderOutput(video.UploadedByAccountId, video.UploadedByName), video.UploadedAt,
-                video.DurationSeconds, video.FailureReason, canonical);
+                video.DurationSeconds, video.FailureReason, canonical, VideoTranscriptionOutput.FromState(states[video.VideoId]));
             var record = VideoUploadUseCaseHelpers.CreateOrReuseIdempotencyRecord(existing, tenantId, actorAccountId,
                 "replaceVideoTags", input.IdempotencyKey, requestHash, now);
             record.SetResponse(200, JsonSerializer.Serialize(output), now.AddHours(24));

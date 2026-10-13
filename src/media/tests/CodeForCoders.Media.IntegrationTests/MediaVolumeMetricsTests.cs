@@ -82,6 +82,8 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
                 "media.outbox.pending",
                 "media.storage.used",
                 "media.students.active",
+                "media.transcription.pending",
+                "media.transcription.stuck",
                 "media.uploads.pending",
                 "media.videos.count",
                 "media.videos.stuck",
@@ -89,10 +91,10 @@ public sealed class MediaVolumeMetricsTests(MediaIntegrationFixture fixture)
             names);
         Assert.All(values, value => Assert.All(value.Tags, tag => Assert.Equal("status", tag.Key)));
         Assert.All(
-            values.Where(value => value.Name == "media.videos.count"),
+            values.Where(value => value.Name is "media.videos.count" or "media.transcription.pending"),
             value => Assert.Equal("status", Assert.Single(value.Tags).Key));
         Assert.All(
-            values.Where(value => value.Name != "media.videos.count"),
+            values.Where(value => value.Name is not ("media.videos.count" or "media.transcription.pending")),
             value => Assert.Empty(value.Tags));
     }
 

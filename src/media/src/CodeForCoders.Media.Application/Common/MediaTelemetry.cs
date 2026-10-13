@@ -11,12 +11,37 @@ public static class MediaTelemetry
 
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
+    public static readonly Counter<long> TranscriptionRequests = Meter.CreateCounter<long>("media.transcription.requested", unit: "{attempt}");
+    public static readonly Counter<long> TranscriptionResults = Meter.CreateCounter<long>("media.transcription.results", unit: "{attempt}");
+    public static readonly Histogram<double> TranscriptionTimeToReady = Meter.CreateHistogram<double>("media.transcription.time_to_ready", unit: "s");
+    public static readonly Histogram<double> TranscriptionDuration = Meter.CreateHistogram<double>("media.transcription.duration", unit: "s");
+    public static readonly Histogram<double> TranscriptionStageDuration = Meter.CreateHistogram<double>("media.transcription.stage_duration", unit: "s");
+    public static readonly Counter<long> TranscriptionWebhookReceived = Meter.CreateCounter<long>("media.transcription.webhook_received", unit: "{request}");
+    public static readonly Counter<long> TranscriptionReconciled = Meter.CreateCounter<long>("media.transcription.reconciled", unit: "{attempt}");
+
+    public static TranscriptionStage BeginTranscriptionStage(string stage, Guid? videoId = null, Guid? transcriptionId = null)
+        => new(stage, videoId, transcriptionId);
+
+    public static void RecordTranscriptionRequested(string origin)
+        => TranscriptionRequests.Add(1, new KeyValuePair<string, object?>("origin", origin));
+
+    public static void RecordTranscriptionResult(string reason)
+        => TranscriptionResults.Add(1, new KeyValuePair<string, object?>("reason", reason));
+
+    public static void RecordTranscriptionReconciled(bool wasSignaled)
+        => TranscriptionReconciled.Add(1, new KeyValuePair<string, object?>("source", wasSignaled ? "webhook" : "poll"));
+
+    public static void RecordTranscriptionWebhook(string outcome)
+        => TranscriptionWebhookReceived.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
     public static readonly Counter<long> HeartbeatsRecorded = Meter.CreateCounter<long>(
         "media.platform.heartbeat.recorded",
         unit: "{heartbeat}");
     public static readonly Counter<long> HeartbeatsConsumed = Meter.CreateCounter<long>(
         "media.platform.heartbeat.consumed",
         unit: "{heartbeat}");
+    public static readonly Counter<long> TranscriptionIntegrationRejected = Meter.CreateCounter<long>(
+        "media.transcription.integration_rejected",
+        unit: "{request}");
     public static readonly Counter<long> VideosListed = Meter.CreateCounter<long>("media.videos.listed", unit: "{list}");
     public static readonly Counter<long> VideoTagsAssigned = Meter.CreateCounter<long>("media.video_tags.assigned", unit: "{tag}");
     public static readonly Counter<long> UploadsCreated = Meter.CreateCounter<long>(

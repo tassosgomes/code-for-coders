@@ -1,0 +1,22 @@
+# Ruleset de validação dos recortes deste PRD: o ruleset vigente do projeto (que já traz a exceção C-08
+# da entrega HLS) mais o media type `text/vtt` da legenda (getPlaybackCaptions, getPlaybackCaptionsInternal).
+# Nenhuma outra regra muda. Na promoção para contracts/, a exceção C-08 de contracts/.spectral-exception.yaml
+# precisa acrescentar `text/vtt` à lista de respostas aceitas.
+extends:
+  - ../../contracts/.spectral-exception.yaml
+rules:
+  tsg-content-type-json-only-response:
+    description: Respostas em JSON, problem+json, entrega HLS (C-08) e legenda WebVTT desta entrega.
+    severity: error
+    given:
+      - $.paths[*][*].responses[*].content
+    then:
+      function: enumeration
+      field: "@key"
+      functionOptions:
+        values:
+          - application/json
+          - application/problem+json
+          - application/vnd.apple.mpegurl
+          - application/octet-stream
+          - text/vtt

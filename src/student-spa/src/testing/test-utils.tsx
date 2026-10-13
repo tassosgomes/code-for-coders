@@ -20,8 +20,11 @@ export const renderWithProviders = (
 ) => {
   const queryClient = createTestQueryClient();
 
-  return render(
+  const view = render(
     <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
     options,
   );
+  return { ...view, rerender: (next: ReactElement) => view.rerender(
+    <QueryClientProvider client={queryClient}>{next}</QueryClientProvider>,
+  ) };
 };
