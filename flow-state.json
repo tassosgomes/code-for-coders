@@ -175,7 +175,8 @@
       "stage": "prd",
       "artifacts": {
         "prd": "tasks/prd-emissao-nfse/prd.md",
-        "contract": "tasks/prd-emissao-nfse/contracts.md"
+        "contract": "tasks/prd-emissao-nfse/contracts.md",
+        "techspec": "tasks/prd-emissao-nfse/techspec.md"
       }
     },
     {
@@ -286,8 +287,8 @@
   "next_actions": [
     {
       "id": "NA25",
-      "what": "CAP-016: contratos aprovados em 2026-10-12 (tasks/prd-emissao-nfse/contracts.md, C-01 a C-13). Proximo: tsg-flow-techspec-creator. QA-01, QA-02 e QA-03 seguem abertas; QA-03 bloqueia nota valida em producao. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
-      "skill": "tsg-flow-techspec-creator",
+      "what": "CAP-016: techspec aprovada em 2026-10-12 (tasks/prd-emissao-nfse/techspec.md, OD94). ADR-0020 e ADR-0021 aceitas. QA-01, QA-02 e QA-03 fechadas em OD93. Proximo: tsg-flow-task-creator. Ao entrar CAP-009: o cliente de meus cursos em learning precisa tolerar curso encerrado sem endedAt",
+      "skill": "tsg-flow-task-creator",
       "blocked_by": []
     }
   ],
@@ -1095,6 +1096,19 @@
     },
     {
       "id": "OD93",
+      "ref": "tasks/prd-emissao-nfse/prd.md",
+      "what": "QA-01, QA-02 e QA-03 de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-12",
+      "decision": "QA-01: guarda de um ano. No aniversario UTC de issued saem PDF, XML e a copia do tomador; a linha do documento fica para nao emitir outra nota. O documento na conta sai um ano apos a ultima gravacao valida. A nota nao se apaga com a conta antes disso. QA-02: codigo de servico e aliquota sao os que o financeiro informar, sem valor fixo. QA-03: esta fatia usa so a bancada (fake-nfe). Sem conta de producao da Notaas e sem certificado A1. O PDF da bancada nao e documento fiscal valido."
+    },
+    {
+      "id": "OD94",
+      "ref": "tasks/prd-emissao-nfse/techspec.md",
+      "what": "TechSpec de CAP-016",
+      "owner": "tasso",
+      "decided_at": "2026-10-12",
+      "decision": "TechSpec 1.0 aprovada. ADR-0020 e ADR-0021 aceitas. Fiscal em billing, nota fora do JSON do pedido, guarda de um ano, emissor so na bancada. Proximo passo: tsg-flow-task-creator."
       "ref": "tasks/archive/prd-transcricao-legenda-aula/prd.md DP-01",
       "what": "Como transcrever a fala dos videos (CAP-032)",
       "decision": "Servico de transcricao proprio (Whisper, repositorio separado, ja na rede privada), pt-BR. Contrato: POST /v1/transcriptions com X-API-Key e Idempotency-Key, sourceUrl pre-assinada GET (>=60 min), webhook terminal Standard Webhooks v1 sem texto, GET /v1/transcriptions/{id}/result (schemaVersion 1, segments startMs/endMs/text) por 24 h, limites 5 GiB e 2 h. Allowlist de destinos privados (TRUSTED_PRIVATE_SOURCES/WEBHOOKS) em implementacao no Whisper. Descartado: API de terceiro (conteudo sai do controle proprio e custo por minuto).",

@@ -4,7 +4,7 @@ product: code-4-coders
 capability: CAP-016
 version: 1.0
 status: approved
-updated: 2026-10-11
+updated: 2026-10-12
 sources: backlog/capabilities.md@1.4, vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline.md@1.2, domains/identidade-e-acesso/domain.md@1.1, domains/catalogo-e-oferta/domain.md@1.1
 ---
 
@@ -408,16 +408,15 @@ dígito é texto, não apenas borda vermelha. Identidade visual não é definida
 ## Restrições Técnicas de Alto Nível
 
 - O emissor desta fatia fala o contrato da Notaas no recorte já implementado pela bancada
-  (OD89): aceite em fila, autorização depois, PDF, XML e aviso de falha. Dev e homologação usam
-  essa bancada. Produção usa a Notaas atrás da mesma fronteira. Conta de produção e certificado
-  A1 não são requisito para construir a fatia (QA-03).
+  (OD89): aceite em fila, autorização depois, PDF, XML e aviso de falha. Esta fatia usa só a
+  bancada. Conta de produção da Notaas e certificado A1 ficam de fora (QA-03, 2026-10-12).
 - Regra municipal, código de retorno do emissor e formato oficial do XML não aparecem em pedido,
   concessão, aula nem progresso. O financeiro vê o motivo da falha em linguagem da situação
   (*Falha* e a razão), não uma tela de prefeitura.
 - CPF, CNPJ, NIF e e-mail não aparecem em URL, log, cache nem routing key. O aviso de nota
   disponível referencia a conta e o pedido.
-- A nota emitida é registro fiscal: não se apaga junto com um pedido de exclusão de conta. O
-  prazo exato de guarda está em QA-01.
+- A nota emitida é registro fiscal: não se apaga junto com um pedido de exclusão de conta. A
+  guarda é de um ano a partir da emissão; o registro do documento permanece (QA-01, 2026-10-12).
 
 ---
 
@@ -471,8 +470,8 @@ dígito é texto, não apenas borda vermelha. Identidade visual não é definida
   PRD.
 - **Aluno nunca informa o documento.** A nota permanece *Aguardando tomador* e o financeiro vê o
   motivo. Mitigação: o pedido mostra o pedido de CPF/CNPJ/NIF; o acesso não é moeda de troca.
-- **Emissor de produção ainda sem conta ou certificado** (QA-03). Mitigação: a fatia se prova na
-  bancada de estudo; a marca "sem valor fiscal" impede tratar esse PDF como nota da escola.
+- **Emissor de produção ainda sem conta ou certificado** (QA-03, decidida). Esta fatia usa só a
+  bancada. A marca "sem valor fiscal" impede tratar esse PDF como nota da escola.
 - **Reembolso no gateway não cancela a nota**, pelo mesmo limite já aceito em `CAP-011` até
   `CAP-015`. Mitigação: declarada; o financeiro não ganha um botão que a plataforma não honra no
   acesso.
@@ -507,13 +506,14 @@ dígito é texto, não apenas borda vermelha. Identidade visual não é definida
 
 ## Questões em Aberto
 
-- **QA-01 — Prazo de guarda da nota emitida e do documento do tomador.** Dono: encarregado de
-  dados. A nota emitida não se apaga com a conta; falta o número de anos. Recomendação a validar:
-  o prazo legal do documento fiscal municipal, da ordem de cinco anos, e não o prazo curto de log
-  de e-mail (OD11). Se ficar em aberto, a implementação guarda a nota emitida por tempo
-  indeterminado e não bloqueia a fatia.
-- **QA-02 — Código de serviço e alíquota reais da escola.** Dono: financeiro. São valores de
-  configuração, não de comportamento. A fatia funciona na bancada com os valores que o financeiro
-  informar.
-- **QA-03 — Conta de produção da Notaas e certificado A1.** Dono: negócio. Não bloqueia o PRD nem
-  a prova na bancada. Bloqueia tratar a nota como documento fiscal válido fora do estudo.
+Não há questão aberta. As três abaixo foram fechadas pelo responsável em 2026-10-12.
+
+- **QA-01 — Prazo de guarda da nota emitida e do documento do tomador.** Decidido: um ano. A nota
+  emitida não se apaga com a conta. No aniversário de um ano da emissão saem o arquivo e a cópia
+  do tomador; o registro do documento permanece, para o pedido não ganhar outra nota. O documento
+  na conta sai um ano depois da última gravação válida. A recomendação de cerca de cinco anos não
+  foi adotada.
+- **QA-02 — Código de serviço e alíquota reais da escola.** Decidido: continuam sendo o que o
+  financeiro informar. A fatia não traz valor fixo.
+- **QA-03 — Conta de produção da Notaas e certificado A1.** Decidido: esta fatia usa só a bancada.
+  O PDF não é documento fiscal válido fora do estudo.
