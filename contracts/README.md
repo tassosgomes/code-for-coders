@@ -27,7 +27,7 @@ Testes de contrato leem os arquivos daqui, nunca de `tasks/` (ver "Conformidade 
 | Arquivo | Versão | Fronteira | Origem (`tasks/archive/`) |
 |---|---|---|---|
 | `bff-admin/openapi-acesso-interno.yaml` | 1.4.0 | `admin-spa` → `bff-admin`: sessão, convite, papéis, área financeira | `prd-acesso-interno/api-contract.yaml` 1.4.0 |
-| `bff-admin/openapi-midia.yaml` | 1.1.1 | `admin-spa` → `bff-admin`: vídeos | `prd-ingestao-midia/api-contract.yaml` 1.1.1 |
+| `bff-admin/openapi-midia.yaml` | 1.3.0 | `admin-spa` → `bff-admin`: vídeos | `prd-ingestao-midia/api-contract.yaml` 1.1.1 + `prd-transcricao-legenda-aula/api-contract.yaml` 1.3.0 |
 | `bff-admin/openapi-auditoria.yaml` | 1.2.0 | `admin-spa` → `bff-admin`: trilha de auditoria | `prd-consulta-trilha-auditoria/api-contract.yaml` 1.2.0 |
 | `bff-admin/openapi-autoria.yaml` | 1.1.0 | `admin-spa` → `bff-admin`: autoria, nível e pré-requisito | `prd-autoria-curso/api-contract.yaml` 1.0.0 + `prd-nivel-prerequisito-curso/api-contract.yaml` 1.1.0 |
 | `bff-admin/openapi-catalogo.yaml` | 1.0.0 | `admin-spa` → `bff-admin`: fichas e ofertas | `prd-vitrine-oferta/api-contract.yaml` 1.0.0 |
@@ -36,14 +36,15 @@ Testes de contrato leem os arquivos daqui, nunca de `tasks/` (ver "Conformidade 
 | `bff-student/openapi-conta.yaml` | 1.0.0 | `student-spa` → `bff-student`: conta e sessão | `prd-conta-aluno/api-contract.yaml` 1.0.0 |
 | `bff-student/openapi-vitrine.yaml` | 1.1.0 | `student-spa` → `bff-student`: vitrine | `prd-vitrine-oferta/api-contract-student.yaml` 1.0.0 + `prd-compra-avulsa/api-contract-vitrine.yaml` 1.1.0 |
 | `bff-student/openapi-compra.yaml` | 1.0.0 | `student-spa` → `bff-student`: compra e pedidos do aluno | `prd-compra-avulsa/api-contract.yaml` 1.0.0 |
-| `bff-student/openapi-aula.yaml` | 1.1.0 | `student-spa` → `bff-student`: tela da aula, reprodução protegida, progresso e meus cursos | `prd-reproducao-protegida/api-contract.yaml` 1.0.0 + `prd-progresso-aluno/api-contract.yaml` 1.1.0 |
+| `bff-student/openapi-aula.yaml` | 1.2.0 | `student-spa` → `bff-student`: tela da aula, reprodução protegida, progresso e meus cursos | `prd-reproducao-protegida/api-contract.yaml` 1.0.0 + `prd-progresso-aluno/api-contract.yaml` 1.1.0 + `prd-transcricao-legenda-aula/api-contract-student.yaml` 1.2.0 |
 | `identity/openapi-internal.yaml` | 1.5.0 | `bff-admin`/`commerce`/`notification` → `identity` | `prd-acesso-interno/internal-api-contract.yaml` 1.4.0 + `prd-consulta-trilha-auditoria/internal-api-contract-identity.yaml` 1.1.0 + `prd-concessao-acesso/internal-api-contract-identity.yaml` 1.4.0 + `prd-compra-avulsa/internal-api-contract-identity.yaml` 1.5.0 |
 | `identity/openapi-internal-student.yaml` | 1.2.0 | `bff-student` → `identity` | `prd-conta-aluno/internal-api-contract.yaml` 1.0.0 + `prd-reproducao-protegida/internal-api-contract-identity.yaml` 1.1.0 + `prd-compra-avulsa/internal-api-contract-identity-student.yaml` 1.2.0 |
 | `commerce/openapi-internal.yaml` | 1.4.0 | `bff-admin`/`bff-student`/serviços → `commerce` | `prd-acesso-interno/internal-api-contract-commerce.yaml` 1.0.0 + `prd-vitrine-oferta/internal-api-contract-commerce.yaml` 1.1.0 + `prd-concessao-acesso/internal-api-contract-commerce.yaml` 1.2.0 + `prd-progresso-aluno/internal-api-contract-commerce.yaml` 1.3.0 + `prd-compra-avulsa/internal-api-contract-commerce.yaml` 1.4.0 |
 | `billing/openapi-internal.yaml` | 1.0.0 | `commerce` → `billing` | `prd-compra-avulsa/internal-api-contract-billing.yaml` 1.0.0 |
 | `billing/openapi-webhook.yaml` | 1.0.0 | gateway de pagamento (Stripe) → `billing` | `prd-compra-avulsa/webhook-contract-billing.yaml` 1.0.0 |
 | `learning/openapi-internal.yaml` | 1.3.0 | `bff-admin`/`bff-student`/serviços → `learning` | `prd-autoria-curso/internal-api-contract-learning.yaml` 1.0.0 + `prd-nivel-prerequisito-curso/internal-api-contract-learning.yaml` 1.1.0 + `prd-reproducao-protegida/internal-api-contract-learning.yaml` 1.1.0 + `prd-progresso-aluno/internal-api-contract-learning.yaml` 1.3.0 |
-| `media/openapi-internal.yaml` | 1.1.0 | `bff-admin`/`bff-student` → `media` | `prd-ingestao-midia/internal-api-contract.yaml` 1.0.1 + `prd-reproducao-protegida/internal-api-contract-media.yaml` 1.1.0 |
+| `media/openapi-internal.yaml` | 1.3.0 | `bff-admin`/`bff-student` → `media` | `prd-ingestao-midia/internal-api-contract.yaml` 1.0.1 + `prd-reproducao-protegida/internal-api-contract-media.yaml` 1.1.0 + `prd-transcricao-legenda-aula/internal-api-contract-media.yaml` 1.3.0 |
+| `media/openapi-webhook.yaml` | 1.0.0 | serviço de transcrição próprio → `media`: aviso de término da transcrição | `prd-transcricao-legenda-aula/webhook-contract-media.yaml` 1.0.0 |
 | `audit/openapi-internal.yaml` | 1.2.0 | `bff-admin` → `audit` | `prd-consulta-trilha-auditoria/internal-api-contract-audit.yaml` 1.2.0 |
 | `identity/asyncapi.yaml` | 1.1.0 | aplicação `identity` | `prd-conta-aluno/asyncapi-contract.yaml` 1.0.0 + `prd-acesso-interno/asyncapi-contract.yaml` 1.1.0 |
 | `notification/asyncapi.yaml` | 1.2.0 | aplicação `notification` | `prd-notificacao-transacional/asyncapi-contract.yaml` 1.0.0 + `prd-acesso-interno/asyncapi-contract-notification.yaml` 1.1.0 + `prd-compra-avulsa/asyncapi-contract-notification.yaml` 1.2.0 |
@@ -58,6 +59,14 @@ interface nova).
 
 Um AsyncAPI referencia a mensagem de outra aplicação pelo arquivo dela aqui (por exemplo,
 `commerce/asyncapi.yaml` → `../learning/asyncapi.yaml#/components/messages/VersaoPublicada`).
+
+## Consolidação de 2026-10-13 (CAP-032)
+
+- Promovidos os contratos de `tasks/prd-transcricao-legenda-aula` (transcrição e legenda de aula): `bff-admin/openapi-midia.yaml` 1.3.0 (estado da transcrição em `Video`, `requestVideoTranscription`, `getVideoTranscription`); `media/openapi-internal.yaml` 1.3.0 (idem, mais `getLessonTranscriptionInternal` e `getPlaybackCaptionsInternal`); `bff-student/openapi-aula.yaml` 1.2.0 (`getLessonTranscription`, `getPlaybackCaptions`); novo `media/openapi-webhook.yaml` 1.0.0 (`receiveTranscriptionEvent`). Todas as mudanças são aditivas; nenhuma operação vigente muda.
+- A numeração 1.2.0 → 1.3.0 parte dos recortes de tags de vídeo (`tasks/prd-tags-video/api-contract.yaml` e `internal-api-contract.yaml` 1.2.0, promovidos aditivamente com consolidação própria pendente no PRD dele); este encerramento consolida só as origens de CAP-032.
+- Exceção Spectral C-08 estendida com `text/vtt` (legenda WebVTT por sessão, `Cache-Control: private, no-store`), conforme o recorte aprovado.
+- Os dois avisos `tsg-collection-pagination-params` das rotas novas de legenda (`.../captions` em `bff-student/openapi-aula.yaml` e `media/openapi-internal.yaml`) são da mesma natureza da exceção C-05 (recurso único — a legenda de uma sessão — não coleção).
+- O promovido coincide com o implementado e validado nas tasks 3.0 a 12.0 (operações, schemas e códigos conferidos contra os recortes); o contrato do serviço de transcrição continua fora de `contracts/` (dependência consumida, camada anticorrupção).
 
 ## Consolidação de 2026-10-06 (CAP-011)
 

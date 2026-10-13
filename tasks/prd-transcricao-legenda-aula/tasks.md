@@ -120,7 +120,7 @@ sequencial e ambas tocam o `media`.
 - [x] 11.0 O aluno liga a legenda no player
 - [x] 12.0 A operação enxerga os sinais da transcrição no painel de mídia
 - [ ] 13.0 Uma aula real é transcrita ponta a ponta contra o serviço de transcrição
-- [ ] 14.0 Contratos de transcrição consolidados em contracts/
+- [x] 14.0 Contratos de transcrição consolidados em contracts/
 
 ## Verificação herdada
 

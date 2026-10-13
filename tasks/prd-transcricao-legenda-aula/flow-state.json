@@ -6,7 +6,7 @@
   "target_ref": null,
   "last_checkpoint": "bd111dd",
   "phase": "checkpoint",
-  "active_task": "13.0",
+  "active_task": "14.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -310,6 +310,26 @@
     {
       "at": "2026-10-13",
       "event": "11.0 7290643, 12.0 bd111dd done. 13.0 run.CdBDi9BG task_blocked: EN-02 externo (orquestrador confirmou via ssh que TRUSTED_PRIVATE_SOURCES/WEBHOOKS nao estao no deploy do Whisper). Intervencao: revisar o codigo do smoke e commitar como parcial (13.0 segue blocked, sem checkbox); 14.0 prossegue com 13.0 pendente operacional"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "13.0 codigo do smoke aprovado run.91kPOiEQ; checkpoint parcial run.SxPCqGEX bbf598a (task segue blocked). -> 14.0"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "14.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "14.0: impl ok run.mMg8jBER; validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "14.0: val approved run.DXPdrvlC; checkpoint"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "14.0 checkpoint run.qEzBnFsR: contratos de transcricao consolidados em contracts/, 14_task.md done, checkbox 14.0 marcado"
     }
   ],
   "tasks": {
@@ -368,7 +388,11 @@
     "13.0": {
       "status": "blocked",
       "reason": "EN-02: allowlist/segredos no deploy do Whisper; banco exclusivo do smoke; MP4 com fala",
-      "run": "run.CdBDi9BG"
+      "run": "run.CdBDi9BG",
+      "partial_checkpoint": "bbf598a"
+    },
+    "14.0": {
+      "status": "done"
     }
   },
   "pending_context": {

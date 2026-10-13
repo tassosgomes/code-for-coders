@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Media — vídeos do backoffice e reprodução protegida (interno)
-  version: 1.1.0
+  version: 1.3.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `bff-admin` → `media` e `bff-student` → `media`.
 
@@ -9,10 +9,13 @@ info:
 
     - `tasks/archive/prd-ingestao-midia/internal-api-contract.yaml` 1.0.1
     - `tasks/archive/prd-reproducao-protegida/internal-api-contract-media.yaml` 1.1.0
+    - `tasks/prd-transcricao-legenda-aula/internal-api-contract-media.yaml` 1.3.0
 
     **Notas de prd-ingestao-midia (1.0.1):** Recorte interno de CAP-006, PRD `tasks/archive/prd-ingestao-midia/prd.md` v1.0. Consumidor único conhecido: `bff-admin`. `media` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `media`, validade) e exige `midia.enviar` no claim `permissions`, sem consultar Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações espelham 1:1 o contrato público do BFF (`api-contract.yaml` 1.1.1); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, e `uploaderName` no início do envio.
 
     **Notas de prd-reproducao-protegida (1.1.0):** Recorte interno de `CAP-007`, `tasks/archive/prd-reproducao-protegida/prd.md` v1.0. Acrescenta ao contrato interno de Media a entrega ao aluno. Consumidor único conhecido: `bff-student`. `media` valida localmente o JWT de aluno emitido por Identity com audiência `media` (ADR-0003), que carrega a claim `email` só para esta audiência (C-04); aluno = `sub`, escola = `tenantId`. As operações espelham 1:1 o contrato público (`api-contract.yaml` 1.0.0); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, sem 502/504, e a abertura não recebe a aula por URL pública. `media` consulta a decisão de acesso em `commerce` com a asserção de serviço de `media` (escopo `access-decision:read`, ADR-0011) e confere a Referência de Uso antes (RN-M10). As operações de autoria de CAP-006 não mudam.
+
+    **Notas de prd-transcricao-legenda-aula (1.3.0):** Recorte interno de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Evolui de forma aditiva com o estado da transcrição em `Video` e as operações `requestVideoTranscriptionInternal`, `getVideoTranscriptionInternal`, `getLessonTranscriptionInternal` e `getPlaybackCaptionsInternal`. A numeração 1.2.0 → 1.3.0 parte do recorte de tags de vídeo (`tasks/prd-tags-video/internal-api-contract.yaml` 1.2.0, promovido aditivamente e com consolidação própria pendente no PRD dele). O serviço de transcrição não aparece neste contrato (camada anticorrupção); o aviso dele é recebido em `contracts/media/openapi-webhook.yaml`.
   contact:
     name: Time de Entrega de Mídia
 servers:

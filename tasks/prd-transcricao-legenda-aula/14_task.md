@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: enabling
 blocked_by: ["3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0", "11.0", "12.0", "13.0"]
 gate: 'npx --yes @stoplight/spectral-cli lint contracts/bff-admin/openapi-midia.yaml contracts/media/openapi-internal.yaml contracts/bff-student/openapi-aula.yaml contracts/media/openapi-webhook.yaml --ruleset contracts/.spectral-exception.yaml --fail-severity=error'
@@ -49,6 +49,6 @@ a regra do repositório a exige no fim, e nenhuma fatia pode fechá-la antes das
 
 ## Pronto quando
 
-- [ ] Gate passa (exit 0).
-- [ ] As versões e as linhas de origem estão consolidadas e a tabela do README lista os quatro arquivos.
-- [ ] A exceção `text/vtt` está registrada e o Spectral não aponta erro.
+- [x] Gate passa (exit 0).
+- [x] As versões e as linhas de origem estão consolidadas e a tabela do README lista os quatro arquivos.
+- [x] A exceção `text/vtt` está registrada e o Spectral não aponta erro.
