@@ -5,6 +5,7 @@ status: In Progress
 assignee:
   - '@claude'
 created_date: '2026-10-13 19:54'
+updated_date: '2026-10-13 20:25'
 labels:
   - frontend
 dependencies: []
@@ -35,3 +36,11 @@ Auditoria da tela da aula (student-spa) contra o Figma: A1 (255:3), progresso A1
 - [ ] #1 Subtasks de player e de layout (lista, painel e casca) concluídas
 - [ ] #2 Lint, build e testes do student-spa passam; conferência em dev
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+PR #231 aberta com as subtasks 31.1 e 31.2.
+
+PR #231 mergeada em 2026-10-13 (726be03). Conferência em dev pendente.
+<!-- SECTION:NOTES:END -->
