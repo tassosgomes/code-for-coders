@@ -4,9 +4,9 @@
   "original_base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "base_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "target_ref": null,
-  "last_checkpoint": "ee63cd5",
+  "last_checkpoint": "6df7f71",
   "phase": "checkpoint",
-  "active_task": "5.0",
+  "active_task": "6.0",
   "attempt": 1,
   "max_attempts": 3,
   "full_attempt": 0,
@@ -18,9 +18,9 @@
   "validated_commit": null,
   "validated_tree": null,
   "last_result": {
-    "task": "5.0",
+    "task": "6.0",
     "outcome": "checkpoint_ok",
-    "run": "run.8HzoaIb0"
+    "run": "run.zE7PbpZB"
   },
   "history": [
     {
@@ -126,6 +126,26 @@
     {
       "at": "2026-10-12",
       "event": "5.0 checkpoint run.8HzoaIb0: tela Videos mostra estado da transcricao e transcreve com atualizacao automatica, 5_task.md done, checkbox 5.0 marcado"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "5.0: checkpoint checkpoint_ok 6df7f71"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "6.0: implement"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "6.0: impl ok run.FzBHTVMd; validator focused"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "6.0: val approved run.ceCFDoCR; checkpoint"
+    },
+    {
+      "at": "2026-10-12",
+      "event": "6.0 checkpoint run.zE7PbpZB: video novo transcrito sem acao de ninguem, 6_task.md done, checkbox 6.0 marcado"
     }
   ],
   "tasks": {
@@ -151,8 +171,10 @@
     },
     "5.0": {
       "status": "done",
-      "attempts": 1,
-      "impl_run": "run.Yjme68tZ"
+      "checkpoint": "6df7f71"
+    },
+    "6.0": {
+      "status": "done"
     }
   },
   "pending_context": {

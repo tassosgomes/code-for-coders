@@ -258,13 +258,16 @@ public sealed class TranscriptionPipelineTests(VideoLibraryApiFactory factory)
     }
 
     private Task<VideoPreparationTestContext> CreateContextAsync(TranscriptionHttpSimulator server, bool includeAudio = true)
-        => VideoPreparationTestContext.CreateAsync(factory, Token, new(IncludeAudio: includeAudio, TranscriptionServiceAddress: server.BaseAddress));
+        => VideoPreparationTestContext.CreateAsync(factory, Token, new(IncludeAudio: includeAudio, TranscriptionServiceAddress: server.BaseAddress, TranscriptionEnabled: true));
 
     private static async Task<(VideoPreparationTestContext.TestVideo Video, Guid Id)> EnqueuePreparedAsync(VideoPreparationTestContext context)
     {
         var video = await context.CreateQueuedVideoAsync(640, 480, 1, Token);
         Assert.True(await context.ExecuteNextAsync(long.MaxValue / 4, Token));
-        return (video, await EnqueueAsync(context, video));
+        var id = await context.WithScopeAsync(provider => provider.GetRequiredService<MediaDbContext>()
+            .Transcriptions.IgnoreQueryFilters().Where(row => row.VideoId == video.VideoId)
+            .Select(row => row.TranscriptionId).SingleAsync(Token));
+        return (video, id);
     }
 
     private static Task<Guid> EnqueueAsync(VideoPreparationTestContext context, VideoPreparationTestContext.TestVideo video)

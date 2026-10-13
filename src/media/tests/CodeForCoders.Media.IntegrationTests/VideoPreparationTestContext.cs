@@ -107,6 +107,8 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         services.AddScoped<IVideoPreparationRepository, VideoPreparationRepository>();
         services.AddScoped<IUnitOfWork, MediaUnitOfWork>();
         services.AddScoped<IOutboxMessageWriter, OutboxMessageWriter>();
+        services.AddScoped<IVideoTranscriptionRepository, CodeForCoders.Media.Infra.Data.Transcriptions.VideoTranscriptionRepository>();
+        services.Configure<TranscriptionOptions>(settings => settings.Enabled = overrides.TranscriptionEnabled);
         services.AddScoped<S3MediaStorageAdapter>();
         services.AddScoped<IMediaStoragePort>(provider => new FaultInjectingMediaStoragePort(
             provider.GetRequiredService<S3MediaStorageAdapter>(),
@@ -154,7 +156,6 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
             services.AddScoped<ITranscriptionAudioExtractor, FfmpegTranscriptionAudioExtractor>();
             services.AddScoped<ITranscriptionWorkflow, CodeForCoders.Media.Application.UseCases.Transcriptions.ProcessTranscription.ProcessTranscription>();
             services.AddHttpClient<ITranscriptionServiceClient, TranscriptionServiceClient>().RemoveAllLoggers();
-            services.Configure<CodeForCoders.Media.Application.Common.TranscriptionOptions>(settings => settings.Enabled = true);
             services.Configure<TranscriptionServiceOptions>(settings =>
             {
                 settings.BaseAddress = overrides.TranscriptionServiceAddress;
@@ -713,7 +714,8 @@ internal sealed class VideoPreparationTestContext : IAsyncDisposable
         int Threads = 2,
         bool CaptureFfmpegArguments = false,
         bool IncludeAudio = false,
-        string? TranscriptionServiceAddress = null);
+        string? TranscriptionServiceAddress = null,
+        bool TranscriptionEnabled = false);
 
     private sealed class StorageFailureController(int remainingFailures)
     {

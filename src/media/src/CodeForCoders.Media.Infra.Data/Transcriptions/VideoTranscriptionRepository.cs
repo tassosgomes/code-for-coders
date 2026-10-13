@@ -1,13 +1,42 @@
+using System.Data.Common;
 using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace CodeForCoders.Media.Infra.Data.Transcriptions;
 
-public sealed class VideoTranscriptionRepository(MediaDbContext dbContext, ITenantContext tenantContext, IOptions<TranscriptionOptions> options) : IVideoTranscriptionRepository
+public sealed class VideoTranscriptionRepository(
+    MediaDbContext dbContext,
+    ITenantContext tenantContext,
+    IOptions<TranscriptionOptions> options,
+    ILogger<VideoTranscriptionRepository> logger) : IVideoTranscriptionRepository
 {
+    public async Task WithAutomaticEnqueueAsync(
+        Transcription attempt,
+        Func<CancellationToken, Task> commitPreparation,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        const string savepoint = "automatic_transcription";
+        await transaction.CreateSavepointAsync(savepoint, cancellationToken);
+        try
+        {
+            await EnqueueAsync(attempt, cancellationToken);
+        }
+        catch (DbException)
+        {
+            // PostgreSQL aborts a transaction on statement failure; preserve the ready/outbox commit.
+            await transaction.RollbackToSavepointAsync(savepoint, cancellationToken);
+            logger.LogWarning("Automatic transcription could not be queued; video preparation will still complete.");
+        }
+
+        await commitPreparation(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyDictionary<Guid, TranscriptionState>> GetAsync(IReadOnlyList<Video> videos, CancellationToken cancellationToken)
     {
         var ids = videos.Select(video => video.VideoId).ToArray();

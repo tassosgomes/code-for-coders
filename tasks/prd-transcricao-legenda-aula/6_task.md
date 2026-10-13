@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 task_kind: vertical
 blocked_by: ["4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.AutomaticTranscriptionTests --minimum-expected-tests 6'
@@ -55,8 +55,8 @@ A tela Vídeos já mostra "transcrevendo" por causa de 5.0, sem mudança de cód
 
 ## Pronto quando
 
-- [ ] Gate focalizado passa (exit 0).
-- [ ] Preparação bem-sucedida deixa o vídeo `ready` e exatamente uma tentativa `queued` automática.
-- [ ] Reentrega do mesmo fato não duplica a tentativa; preparação que falha não cria tentativa.
-- [ ] Com o serviço simulado indisponível, `Video.Status` permanece `ready`.
-- [ ] Com o recurso desligado não há linha nova.
+- [x] Gate focalizado passa (exit 0).
+- [x] Preparação bem-sucedida deixa o vídeo `ready` e exatamente uma tentativa `queued` automática.
+- [x] Reentrega do mesmo fato não duplica a tentativa; preparação que falha não cria tentativa.
+- [x] Com o serviço simulado indisponível, `Video.Status` permanece `ready`.
+- [x] Com o recurso desligado não há linha nova.
