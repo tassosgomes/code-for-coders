@@ -1,5 +1,5 @@
 ---
-status: done
+status: in_progress
 task_kind: vertical
 blocked_by: ["2.0", "4.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.LessonTranscriptionTests --minimum-expected-tests 11 && dotnet test --project src/bff-student/tests/CodeForCoders.BffStudent.EndToEndTests/CodeForCoders.BffStudent.EndToEndTests.csproj -- --filter-class CodeForCoders.BffStudent.EndToEndTests.LessonTranscriptionTests --minimum-expected-tests 5 && npm --prefix src/student-spa run test -- lesson-transcription'
@@ -79,9 +79,9 @@ mostra o texto do vídeo novo. O `bff-student` repassa corpo, `Content-Type` e `
 
 ## Pronto quando
 
-- [x] Gate focalizado passa (exit 0).
-- [x] Visitante → 401; sem direito → 403; sem resposta de Matrícula → 503; aula fora das Referências de Uso → 404 antes de consultar Matrícula; em nenhum desses casos há texto na resposta.
-- [x] Em andamento, falha ou desligada → 200 `unavailable` com a mensagem neutra, e o player continua normal.
-- [x] A busca por "introducao" acha "Introdução"; texto só com espaços não busca; anterior/próxima é circular; 3.000 trechos sem atraso perceptível.
-- [x] O clique num trecho leva o vídeo àquele tempo e toca, inclusive antes de a sessão estar ativa.
-- [x] Os testes `playback-*.test.tsx` seguem passando.
+- [ ] Gate focalizado passa (exit 0).
+- [ ] Visitante → 401; sem direito → 403; sem resposta de Matrícula → 503; aula fora das Referências de Uso → 404 antes de consultar Matrícula; em nenhum desses casos há texto na resposta.
+- [ ] Em andamento, falha ou desligada → 200 `unavailable` com a mensagem neutra, e o player continua normal.
+- [ ] A busca por "introducao" acha "Introdução"; texto só com espaços não busca; anterior/próxima é circular; 3.000 trechos sem atraso perceptível.
+- [ ] O clique num trecho leva o vídeo àquele tempo e toca, inclusive antes de a sessão estar ativa.
+- [ ] Os testes `playback-*.test.tsx` seguem passando.

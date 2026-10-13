@@ -1,77 +1,91 @@
 # Revisão full — CAP-032 Transcrição e legenda de aula
 
-Run: run.dGgYmYs6
-Tentativa: 1/3
+Run: run.qN9J8Zzy
+Tentativa: 2/3
 Modo: full
-Veredito: **FULL VALIDATION REPROVADA** (1 bloqueante, 9 recomendações)
+Veredito: **FULL VALIDATION REPROVADA** (1 bloqueante do sensor, 9 recomendações)
 
 - base_ref: `0ac6bf407b87c24b9d219cc3f8549b05005d9211`
-- validated_commit: `21d3ec8d932b4f62333e10f67e4bac6acaffd7d2`
-- validated_tree: `13d88635929164223766a2695c97653add454872`
-- Branch: `feature/cap-032-transcricao-legenda` (16 commits sobre a base; base é ancestral de HEAD).
-- Estabilidade: HEAD, árvore e `git status --porcelain` (só `flow-state.json`, operacional) iguais no início e no fim.
-- Escopo: 243 arquivos. Componentes: `media`, `bff-admin`, `bff-student`, `admin-spa`, `student-spa`, contratos, Kibana, compose.
+- validated_commit: `b29519fcfc3d5c2d16de0ef5f07c9e53adf8ad95`
+- validated_tree: `f36b02b8d5aed1a5513d9c754e5b51f6c73d04b6`
+- Branch: `feature/cap-032-transcricao-legenda`. Base inalterada e ancestral de HEAD.
+- Estabilidade: HEAD, árvore e `git status --porcelain` (só `flow-state.json`, operacional) iguais no início e no fim; worktree do sensor removido e linha de base conferida.
+- Diff desde a full anterior (run.dGgYmYs6, `21d3ec8`): só `TranscriptionEventReceiverTests.cs` (media) e documentos de task/estado. Nada compartilhado (`Directory.*`, `global.json`, `contracts/`, compose, `.github/`) mudou.
 - Pendência operacional (não reprova): 13.0 sem o smoke real (EN-02 ausente), como combinado no contexto da chamada.
 
-## Bloqueante
+## B-1 anterior (isolamento do teste de 7.0): resolvido
 
-### B-1. Teste do media depende de ordem e quebra a suíte completa (CI `media` reprova)
+`TranscriptionEventReceiverTests.cs:202` e `:232` agora restringem o assert ao `TranscriptionId` da tentativa semeada e mantêm o assert de `waiting`. A suíte completa do media saiu com **exit 0** (abaixo).
 
-- `src/media/tests/CodeForCoders.Media.IntegrationTests/TranscriptionEventReceiverTests.cs:202` (`CompletedNoticeNeverTurnsTheAttemptIntoReadyOrWritesText`).
-- O teste faz `Assert.Empty(Db(scope).TranscriptionContents.IgnoreQueryFilters().ToArrayAsync(...))`, isto é, exige a **tabela inteira** vazia. A coleção `VideoLibraryApiCollection` compartilha um único PostgreSQL entre as classes, e `InitializeAsync` da classe só trunca `video_transcription_events`.
-- Classes que gravam conteúdo e não limpam (ex.: `PlaybackCaptionsTests.cs:112`, texto "Introduction & <script>") deixam linhas que o assert enxerga.
-- Evidência: `dotnet test` da suíte completa do media saiu com exit 2 em duas execuções (537 testes: 535 ok, 1 falho, 1 explícito não rodado; e 409 na repetição só do projeto de integração: 1 falho). O mesmo teste, rodando a classe sozinha (`--filter-class *TranscriptionEventReceiverTests`), passou 28/28, exit 0. O erro: `Assert.Empty() Failure: Collection was not empty` com `TranscriptionContent` de outros testes.
-- O gate por task não pegou porque cada task roda só os seus testes (7.0 foi aprovada antes de 9.0/10.0/11.0 escreverem conteúdo na mesma base).
-- Correção esperada (no teste, sem enfraquecê-lo): restringir o assert ao `TranscriptionId` da tentativa semeada (`.Where(c => c.TranscriptionId == id)`) ou truncar `video_transcription_contents` no `InitializeAsync`. Manter o assert que a tentativa continua `waiting`.
-- Cada execução custa ~7 min; revalidar rodando o projeto de integração completo.
+## Bloqueante (sensor de discriminação)
 
-## Matriz de CI (fonte: workflows `.github/workflows/*.yml` + reutilizáveis `ci-dotnet.yml@v1`/`ci-react-ts.yml@v1`, lidos via `gh api`)
+### B-2. Fallback `Cache-Control: private, no-store` do bff-student não é exercitado por nenhum teste
 
-Passos reproduzidos: restore, `dotnet format --verify-no-changes`, `dotnet test --configuration Debug --coverage` (Microsoft.Testing.Platform), cobertura mesclada por união de linhas (script do CI reproduzido; limite 70%), `dotnet publish -c Release`; SPAs: `npm ci`, lint, `tsc --noEmit`, `npm test` (vitest + cobertura), cobertura `lines.pct`, `vite build --base=...`. Não reproduzíveis aqui: build/push de imagem Docker, SAST/secret/dependency scan (`security-mode: observe`, não reprova), upload de artifact.
+- `src/bff-student/src/CodeForCoders.BffStudent.Api/Endpoints/PlaybackSessionEndpoints.cs` (linha do `context.Response.Headers.CacheControl = result.CacheControl ?? "private, no-store"`, nos caminhos `/transcription` e `/captions`).
+- Mutação: `?? "private, no-store"` → `?? "public, max-age=60"`. **Sobreviveu**: `LessonTranscriptionTests` 9/9 e `PlaybackCaptionsTests` 8/8, exit 0.
+- Critério: texto da aula não pode ser cacheado (PRD: nenhum texto de aula em cache; contrato exige `private, no-store`). O BFF é quem garante isso quando o upstream não manda o cabeçalho.
+- Por que escapa: o simulador de mídia dos dois testes (`LessonTranscriptionTests.cs:131`, `PlaybackCaptionsTests.cs:117`) sempre devolve `Cache-Control: private, no-store`, então o ramo do fallback nunca roda; os asserts das linhas 40–41 e 27 passam com o valor repassado.
+- Correção esperada (no teste, sem enfraquecer): um caso por rota (`transcription` e `captions`) em que o simulador **não** envia `Cache-Control` e o teste exige `private` + `no-store` na resposta do BFF. Rodar os dois com `--filter-class`; revalidar o sensor só nesta mutação.
 
-| Componente | Disparo | Format/lint | Typecheck | Testes | Cobertura (≥70%) | Build/publish | Resultado |
+## Matriz de CI
+
+Fonte: `.github/workflows/*.yml` + reutilizáveis `ci-dotnet.yml@v1`/`ci-react-ts.yml@v1` (como na full anterior). Não reproduzíveis aqui: build/push de imagem Docker, SAST/secret/dependency scan (`security-mode: observe`), upload de artifact.
+
+| Componente | Origem | Format/lint | Typecheck | Testes | Cobertura (≥70%) | Build/publish | Resultado |
 |---|---|---|---|---|---|---|---|
-| media | alterado | exit 0 | — | **exit 2**: 537 total, 535 ok, 1 falho, 1 skip (smoke explícito) | 94,01% (medida em execução com falha) | publish exit 0 | **REPROVA** (B-1) |
-| bff-admin | alterado | exit 0 | — | exit 0: 299/299 | 84,84% | publish exit 0 | ok |
-| bff-student | alterado | exit 0 | — | exit 0: 286/286 | 86,88% | publish exit 0 | ok |
-| admin-spa | alterado | lint 0 | 0 | exit 0: 394/394 (60 arquivos) | 92,51% | build 0 | ok |
-| student-spa | alterado | lint 0 | 0 | exit 0: 222/222 (33 arquivos) | 91,57% | build 0 | ok |
-| identity, learning, billing, commerce | `contracts/**` (sem diff próprio) | exit 0 | — | exit 0: 182, 245, 86, 491 | não medida (sem diff do componente) | — | ok |
-| notification | `contracts/**` (sem diff próprio) | exit 0 | — | 1ª execução, em paralelo com outras suítes: exit 2, 36/65 falhos por `Could not find resource 'DockerContainer'` na fixture (Testcontainers, ambiente). Isolada: exit 0, 65/65 | — | — | ok (falha de ambiente sob concorrência, confirmada isolada) |
+| media | **executado agora** (alterado, `b29519f`) | `dotnet format --verify-no-changes` exit 0 | — | `dotnet test --configuration Debug --coverage`: **exit 0**, 537 total, 536 ok, 0 falho, 1 skip (smoke explícito) | 93,94% (união de linhas dos 4 projetos) | `dotnet publish -c Release` da Api exit 0 | ok |
+| bff-admin | **reaproveitada** de run.dGgYmYs6 @ `21d3ec8` | exit 0 | — | exit 0: 299/299 | 84,84% | publish exit 0 | ok |
+| bff-student | **reaproveitada** de run.dGgYmYs6 @ `21d3ec8` | exit 0 | — | exit 0: 286/286 | 86,88% | publish exit 0 | ok |
+| admin-spa | **reaproveitada** de run.dGgYmYs6 @ `21d3ec8` | lint 0 | 0 | exit 0: 394/394 | 92,51% | build 0 | ok |
+| student-spa | **reaproveitada** de run.dGgYmYs6 @ `21d3ec8` | lint 0 | 0 | exit 0: 222/222 | 91,57% | build 0 | ok |
+| identity, learning, billing, commerce, notification | **reaproveitada** de run.dGgYmYs6 @ `21d3ec8` | exit 0 | — | exit 0: 182, 245, 86, 491, 65 | não medida | — | ok |
+| Spectral (`contracts/**/openapi*.yaml`) | **reaproveitada** (contracts/ inalterado) | — | — | exit 0, 0 erros, 7 avisos C-05 | — | — | ok |
+| Kibana `--verify-only` | **reaproveitada** | — | — | exit 0 | — | — | ok |
+| Migrations media | **reaproveitada** (sem diff em Infra/Domain) | — | — | `has-pending-model-changes` exit 0 | — | — | ok |
 
-Demais passos:
+Limites: o media foi rodado inteiro (Testcontainers) uma vez, em primeiro plano, sem outra suíte em paralelo; o `TestResults` antigo em `src/media/TestResults` não foi usado (resultados em diretório próprio).
 
-- Spectral 6.17.0 com `contracts/.spectral-exception.yaml`, `--fail-severity=error` em `contracts/**/openapi*.yaml`: exit 0, 0 erros, 7 avisos de paginação (C-05).
-- `python3 scripts/kibana/import_observabilidade.py --verify-only`: exit 0 (12 saved objects; instrumentos e regras T1–T3 da transcrição conferidos).
-- `dotnet ef migrations has-pending-model-changes` (media): exit 0, sem pendência. As duas migrations (`AddVideoTranscriptions`, `AddTranscriptionAudioCleanups`) batem com as configurações e o snapshot.
-- Os 5 contratos da capacidade em `contracts/` batem com os recortes aprovados e com as rotas do código.
-- Limites: TestResults antigos podem existir nos diretórios `bff-*`; usei só relatórios gerados nesta execução (conferidos por horário).
+## Sensor de discriminação (executado)
 
-## Sensor de discriminação
+Worktree temporário `--detach` em HEAD; cada mutação aplicada, suíte focalizada rodada, `git checkout -- .` entre elas; worktree removido e baseline (HEAD + `git status`) conferida. Todas as mutações compilaram (uma tentativa com erro de compilação `CS9113` foi descartada e refeita).
 
-**Não executado.** Pré-condição não atendida: um check obrigatório (media) já reprova. Declarado como limitação, não como executado. Na revalidação (tentativa 2), rodar uma mutação por fatia (pedido/estado, pipeline, disparo automático, webhook, falhas/Refazer, leitura do professor, transcrição do aluno, legenda WebVTT, métricas) e reaproveitar a matriz dos componentes não alterados.
+| Id | Fatia | Mutação (arquivo) | Suíte | Resultado |
+|---|---|---|---|---|
+| M1 | pedido/estado | guarda `in-progress`/`CanStart` invertida (`RequestVideoTranscription.cs`) | VideoTranscriptionRequest 4 falhas; Restart 3 | morta |
+| M2 | webhook HMAC | tolerância de timestamp ×1000 (`TranscriptionWebhookSignature.cs`) | unit 1 falha; EventReceiver 1 falha | morta |
+| M3 | webhook/sinal | `Signal` aceita `jobId` de outro job (`Transcription.cs`) | unit 0; EventReceiver 1 falha | morta |
+| M4 | legenda WebVTT | sem escape de `&` (`WebVttBuilder.cs`) | unit 1; PlaybackCaptions 1 | morta |
+| M5 | aluno/acesso | decisão `denied` não gera 403 (`GetLessonTranscription.cs`) | LessonTranscription 2 falhas | morta |
+| M6 | professor | `video.Status == "ready"` relaxado (`GetVideoTranscription.cs`) | 11/11 passam | **equivalente** (ver abaixo) |
+| M6b | professor/desligada | `Enabled` ignorado (`GetVideoTranscription.cs`) | VideoTranscriptionRead 1 falha | morta |
+| M7 | pipeline | limite 7200 s → 72000 s (`ProcessTranscription.cs`) | FailurePolicy 1; Pipeline 1 | morta |
+| M8 | disparo automático | `PrepareVideo` nunca enfileira (`PrepareVideo.cs`) | Automatic 3 falhas | morta |
+| M9 | Refazer/vigente | exclusão do Refazer atinge a vigente (`VideoTranscriptionRepository.cs`) | Restart 11 falhas | morta |
+| M10 | métricas | atributo `outcome` → `result` (`MediaTelemetry.cs`) | Metrics 2 falhas | morta |
+| M11 | falhas | `size-limit` ↔ `duration-limit` (`ProcessTranscription.cs`) | FailurePolicy 1 falha (Pipeline 0) | morta |
+| B1 | bff-student | fallback `Cache-Control` público (`PlaybackSessionEndpoints.cs`) | Lesson 0 falha; Captions 0 falha | **SOBREVIVEU → B-2** |
+| B2 | bff-admin | `Idempotency-Key` ausente aceita (`VideoLibraryEndpoints.cs`) | VideoTranscription 1 falha | morta |
+| F1 | admin-spa | mensagem de `duration-limit` trocada (`video-transcription.ts`) | vitest 2 falhas | morta |
+| F2 | student-spa | busca diferencia maiúsculas (`transcript-search.ts`) | vitest 5 falhas | morta |
+
+M6 (equivalente, não bloqueia): `Video.Status` só sai de `ready` por nenhuma transição (`Video.cs`: `ready` é terminal; `SchedulePreparationRetry` parte de `preparing`) e a tentativa só nasce de vídeo `ready`; a guarda é defensiva e inalcançável. A parte testável da condição (`Enabled`) foi mutada em M6b e morreu.
 
 ## Revisão independente (dimensões)
 
-Segurança, contratos×código e rastreabilidade/arquitetura revisadas por subagentes; achados conferidos por mim nos pontos que viram bloqueante ou recomendação alta.
+Herdada da full anterior, válida porque o diff novo é só teste: segurança (texto/URL/chave AES/segredo fora de log, span, métrica e cache persistente; 403 `ACCESS_DENIED` com decisão fresca; HMAC com `FixedTimeEquals`, janela ±300 s, idempotência por `event_id`), contratos×código (9 operações conferidas), rastreabilidade (RF/RN/US com código e teste) e arquitetura (sem pressão concreta para padrão de projeto). O B-2 acima é lacuna de teste, não de implementação: o código está correto.
 
-- **Segurança:** sem bloqueante. Texto, URL assinada, chave AES e segredos fora de log/span/métrica e de cache persistente (`gcTime: 0`; só um booleano em `localStorage`); 404/403 `ACCESS_DENIED` do aluno com decisão fresca e `Cache-Control: private, no-store`; HMAC com `FixedTimeEquals`, janela ±300 s, idempotência por `event_id`; chave AES em arquivo 0600 apagado em `finally`; ffmpeg por `ArgumentList` com `protocol_whitelist`.
-- **Contratos×código:** 9 operações novas conferem (rota, status, códigos de erro, enums), migrations coerentes, compose replicado.
-- **Rastreabilidade:** todo RF/RN/US tem código e teste; nenhum `Skip` nos arquivos da capacidade. Decisões do orquestrador (precedência temporal do WebVTT; `WHISPER_API_KEY` opcional em stable/komodo com validação na partida) sem problema concreto; seguem para confirmação do responsável na PR.
-- Padrões de projeto: sem pressão concreta que justifique refatoração.
+## Recomendações (não bloqueiam; as mesmas da tentativa 1)
 
-## Recomendações (não bloqueiam)
-
-1. `docker-compose.remote.yml:87`: `${WHISPER_API_KEY:?...}` incondicional faz `scripts/apps.sh start --remote` abortar sem a chave, mesmo com `TRANSCRIPTION_ENABLED=false`; nenhum script gera a variável. A TechSpec (linha 172) pede `:?`, por isso não reprovo. Sugestão: `:-` como nos demais compose (a validação na partida cobre `Enabled=true` sem chave). Decisão do responsável.
-2. `HttpClient` do serviço de transcrição segue redirecionamentos (`X-API-Key` custom iria ao destino): `AllowAutoRedirect = false`.
-3. `TranscriptionServiceOptions.IsValid` aceita `http://` para o serviço; exigir `https` fora de Development.
-4. Mensagem de partida inválida não diz qual chave falta (sem mostrar valor).
-5. `Enabled=true` com configuração inválida derruba o host do worker inteiro, inclusive a preparação de vídeo (tensão com RN-M19); degradar só a transcrição ou documentar.
-6. Falha transitória de storage/banco fora dos estágios HTTP (ex.: `DeleteObjectAsync`, `ProcessTranscription.cs:203`) vira `processing-failed` definitivo; tratar como transitória.
-7. `language`: contrato fixa `pt-BR`, mas o media guarda o que o serviço enviar e o schema do student-spa (`z.literal('pt-BR')`) rejeitaria outro valor; normalizar/validar no media ou afrouxar o schema. `revision` no admin-spa usa regex `^tr_[a-f0-9]{8}$` apesar de o contrato dizer "opaco".
-8. `docker-compose.yml`: variáveis `Transcription__Service__*`/`AwsMedia__EndpointTranscription` estão no serviço `media` (API) e não no `media-worker`; com `--remote` a API herda `http://minio:9000`.
-9. Testes sem cobertura: clique no trecho com sessão vencida/parada (RN-TL02, ramo de reabertura em `use-protected-playback.ts`); idioma pt-BR (RN-M25); verificação manual em tela cheia da 11.0 pendente. Spectral avisa paginação em `GET .../captions` (falso positivo; registrar exceção).
+1. `docker-compose.remote.yml:87`: `${WHISPER_API_KEY:?...}` incondicional impede `apps.sh start --remote` sem a chave mesmo com `TRANSCRIPTION_ENABLED=false`; `:-` como nos demais (decisão do responsável).
+2. `HttpClient` do serviço de transcrição segue redirecionamentos (`X-API-Key` iria ao destino): `AllowAutoRedirect = false`.
+3. `TranscriptionServiceOptions.IsValid` aceita `http://`; exigir `https` fora de Development.
+4. A mensagem de partida inválida não diz qual chave falta (sem mostrar valor).
+5. `Enabled=true` com configuração inválida derruba o host do worker inteiro, inclusive a preparação de vídeo (tensão com RN-M19).
+6. Falha transitória de storage/banco fora dos estágios HTTP (ex.: `DeleteObjectAsync`, `ProcessTranscription.cs:203`) vira `processing-failed` definitivo.
+7. `language`: contrato fixa `pt-BR`, mas o media guarda o que o serviço enviar e o schema do student-spa rejeitaria outro valor; `revision` no admin-spa usa regex apesar de "opaco".
+8. `docker-compose.yml`: variáveis `Transcription__Service__*`/`AwsMedia__EndpointTranscription` estão no serviço `media` e não no `media-worker`.
+9. Testes sem cobertura: clique no trecho com sessão vencida (RN-TL02), idioma pt-BR (RN-M25), verificação manual da 11.0 em tela cheia; Spectral avisa paginação em `GET .../captions` (registrar exceção).
 
 ## Resultado
 
-Reprovada por B-1 (1 bloqueante). Os demais componentes passam. Voltar ao implementer para corrigir o isolamento do teste, rodar a suíte completa do media (exit 0) e pedir nova full (tentativa 2: reaproveitar componentes não alterados, rodar media inteiro e o sensor).
+Reprovada por B-2 (mutante sobrevivente no bff-student). B-1 está corrigido e o media inteiro passa. Voltar ao implementer para acrescentar os dois casos de teste sem `Cache-Control` no upstream (bff-student), rodar a suíte do bff-student (exit 0) e pedir a full 3/3: só bff-student muda, então reaproveitar os demais componentes e repetir o sensor apenas em B1.

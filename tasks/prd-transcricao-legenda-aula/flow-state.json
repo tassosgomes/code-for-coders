@@ -6,10 +6,10 @@
   "target_ref": "0ac6bf407b87c24b9d219cc3f8549b05005d9211",
   "last_checkpoint": "5a88beb",
   "phase": "full",
-  "active_task": "7.0",
+  "active_task": "10.0",
   "attempt": 1,
   "max_attempts": 3,
-  "full_attempt": 1,
+  "full_attempt": 2,
   "transport_retries": 0,
   "specs": [
     "techspec.md"
@@ -366,6 +366,22 @@
     {
       "at": "2026-10-13",
       "event": "7.0 checkpoint run.VbHqgEgI: aviso do servico acelera o resultado (fix B-1 isolamento), 7_task.md done, checkbox 7.0 marcado"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "7.0: checkpoint b29519f"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "7.0 fix run.wf7XPNXv, reval run.nDj7J2ZL approved, checkpoint b29519f. main sem avanco. -> full 2"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "full 2 run.qN9J8Zzy rejected: B-2 sensor - fallback Cache-Control private,no-store do bff-student (/transcription e /captions) sem teste. Atribuido a 10.0 (cobrir as duas rotas). -> reopen 10.0, fix, reval, checkpoint, full 3 (ultima)"
+    },
+    {
+      "at": "2026-10-13",
+      "event": "reopen 10.0 run.4pL2QCTM: B-2 atribuido a 10.0; checkbox desmarcado, status in_progress; codigo preservado. -> fix attempt 2/3"
     }
   ],
   "tasks": {
@@ -410,7 +426,7 @@
       "checkpoint": "62e7bc7"
     },
     "10.0": {
-      "status": "done",
+      "status": "in_progress",
       "checkpoint": "24f33de"
     },
     "11.0": {
