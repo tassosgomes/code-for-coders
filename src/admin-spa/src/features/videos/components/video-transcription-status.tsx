@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { LoaderCircle } from 'lucide-react';
 
 import { Toast } from '@/components/toast';
 import { Dialog } from '@/components/ui/dialog';
@@ -74,20 +75,23 @@ export const VideoTranscriptionStatus = ({ video }: VideoTranscriptionStatusProp
     {ready && transcription.status === 'in-progress' && !transcription.readable ? <small>Pode levar um tempo. Você não precisa ficar nesta tela.</small> : null}
     {ready && transcription.status === 'in-progress' && transcription.readable ? <small>{currentTranscriptionRemainsMessage}</small> : null}
     {ready && transcription.status === 'ready' && transcription.readyAt ? <small>Pronta em {formatReadyAt(transcription.readyAt)}</small> : null}
-    {ready && transcription.status === 'failed' ? <small>{getVideoTranscriptionFailureMessage(transcription.failureReason)}</small> : null}
+    {ready && transcription.status === 'failed' ? <small className="is-danger">{getVideoTranscriptionFailureMessage(transcription.failureReason)}</small> : null}
     {ready && transcription.status === 'failed' && transcription.readable ? <small>{currentTranscriptionRemainsMessage}</small> : null}
     {request.isError ? <p className="video-transcription-error" role="alert">{getVideoTranscriptionErrorMessage(request.error)}</p> : null}
-    {ready && transcription.readable ? <button aria-label={`Ler transcrição de ${video.title}`} className="video-link-button video-transcription-action" onClick={() => setReading(true)} type="button">Ler</button> : null}
+    {(ready && transcription.readable) || canTranscribe || canRestart ? <div className="video-transcription-actions">
+      {ready && transcription.readable ? <button aria-label={`Ler transcrição de ${video.title}`} className="outline-button video-transcription-action" onClick={() => setReading(true)} type="button">Ler</button> : null}
+      {canTranscribe || canRestart ? <button
+        aria-label={`${request.isError ? 'Tentar de novo a transcrição de' : canRestart ? 'Refazer' : 'Transcrever'} ${video.title}`}
+        className={`${canTranscribe && !request.isError ? 'primary-button' : 'outline-button'} video-transcription-action`}
+        disabled={request.isPending} onClick={canRestart ? askToRestart : start} ref={requestButton} type="button"
+      >{request.isError ? 'Tentar de novo' : canRestart ? 'Refazer' : 'Transcrever'}</button> : null}
+    </div> : null}
     {reading ? <VideoTranscriptionReader onClose={() => setReading(false)} video={video} /> : null}
-    {canTranscribe || canRestart ? <button
-      aria-label={`${request.isError ? 'Tentar de novo a transcrição de' : canRestart ? 'Refazer' : 'Transcrever'} ${video.title}`}
-      className="video-link-button video-transcription-action" disabled={request.isPending} onClick={canRestart ? askToRestart : start} ref={requestButton} type="button"
-    >{request.isError ? 'Tentar de novo' : canRestart ? 'Refazer' : 'Transcrever'}</button> : null}
     {confirming ? <Dialog busy={request.isPending} description={video.title} onClose={() => setConfirming(false)} role="alertdialog" title="Refazer a transcrição?">
       <p>Os alunos continuam vendo a transcrição atual até a nova ficar pronta. Quando ficar, ela substitui a atual na aula, sem precisar publicar o curso de novo.</p>
       <div className="dialog-actions">
         <button className="outline-button" disabled={request.isPending} onClick={() => setConfirming(false)} type="button">Cancelar</button>
-        <button className="primary-button" disabled={request.isPending} onClick={start} type="button">{request.isPending ? 'Pedindo…' : 'Refazer'}</button>
+        <button className="primary-button" disabled={request.isPending} onClick={start} type="button">{request.isPending ? <><LoaderCircle aria-hidden="true" className="video-status-spinner" size={16} />Pedindo…</> : 'Refazer'}</button>
       </div>
     </Dialog> : null}
     {toast ? <Toast message={toast} /> : null}
