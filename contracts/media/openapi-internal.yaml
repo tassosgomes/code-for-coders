@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Media — vídeos do backoffice e reprodução protegida (interno)
-  version: 1.1.0
+  version: 1.3.0
   description: |
     Contrato **vigente** consolidado. Fronteira: `bff-admin` → `media` e `bff-student` → `media`.
 
@@ -9,10 +9,13 @@ info:
 
     - `tasks/archive/prd-ingestao-midia/internal-api-contract.yaml` 1.0.1
     - `tasks/archive/prd-reproducao-protegida/internal-api-contract-media.yaml` 1.1.0
+    - `tasks/prd-transcricao-legenda-aula/internal-api-contract-media.yaml` 1.3.0
 
     **Notas de prd-ingestao-midia (1.0.1):** Recorte interno de CAP-006, PRD `tasks/archive/prd-ingestao-midia/prd.md` v1.0. Consumidor único conhecido: `bff-admin`. `media` valida localmente o JWT de ator interno emitido por Identity (assinatura pelo JWKS de Identity, emissor `identity`, audiência `media`, validade) e exige `midia.enviar` no claim `permissions`, sem consultar Identity e sem confiar no BFF (ADR-0005). Ator = `sub`, escola = `tenantId` do token. As operações espelham 1:1 o contrato público do BFF (`api-contract.yaml` 1.1.1); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, e `uploaderName` no início do envio.
 
     **Notas de prd-reproducao-protegida (1.1.0):** Recorte interno de `CAP-007`, `tasks/archive/prd-reproducao-protegida/prd.md` v1.0. Acrescenta ao contrato interno de Media a entrega ao aluno. Consumidor único conhecido: `bff-student`. `media` valida localmente o JWT de aluno emitido por Identity com audiência `media` (ADR-0003), que carrega a claim `email` só para esta audiência (C-04); aluno = `sub`, escola = `tenantId`. As operações espelham 1:1 o contrato público (`api-contract.yaml` 1.0.0); diferenças: sem cookie nem CSRF, 401 `TOKEN_INVALID` em vez de `SESSION_REQUIRED`, sem 502/504, e a abertura não recebe a aula por URL pública. `media` consulta a decisão de acesso em `commerce` com a asserção de serviço de `media` (escopo `access-decision:read`, ADR-0011) e confere a Referência de Uso antes (RN-M10). As operações de autoria de CAP-006 não mudam.
+
+    **Notas de prd-transcricao-legenda-aula (1.3.0):** Recorte interno de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Evolui de forma aditiva com o estado da transcrição em `Video` e as operações `requestVideoTranscriptionInternal`, `getVideoTranscriptionInternal`, `getLessonTranscriptionInternal` e `getPlaybackCaptionsInternal`. A numeração 1.2.0 → 1.3.0 parte do recorte de tags de vídeo (`tasks/prd-tags-video/internal-api-contract.yaml` 1.2.0, promovido aditivamente e com consolidação própria pendente no PRD dele). O serviço de transcrição não aparece neste contrato (camada anticorrupção); o aviso dele é recebido em `contracts/media/openapi-webhook.yaml`.
   contact:
     name: Time de Entrega de Mídia
 servers:
@@ -27,6 +30,9 @@ tags:
   description: Sessão, renovação e avanço
 - name: Entrega
   description: Playlist, variantes e chave
+- name: Transcrição
+  description: Pedido e estado da transcrição de vídeos.
+
 paths:
   /video-uploads:
     post:
@@ -393,6 +399,12 @@ paths:
                       durationSeconds: 2415
                       failureReason: null
                       tags: []
+                      transcription:
+                        status: not-requested
+                        readable: false
+                        readyAt: null
+                        failureReason: null
+                        canStart: true
                     - videoId: 5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b
                       title: Aula 4 — Testes de integração
                       status: failed
@@ -403,6 +415,53 @@ paths:
                       durationSeconds: null
                       failureReason: unreadable-file
                       tags: []
+                      transcription:
+                        status: not-requested
+                        readable: false
+                        readyAt: null
+                        failureReason: null
+                        canStart: false
+                    pagination:
+                      page: 1
+                      size: 10
+                      total: 2
+                      totalPages: 1
+                refeitaQueFalhou:
+                  summary: Refazer que falhou mantém a transcrição vigente legível; limite não oferece refazer
+                  value:
+                    data:
+                    - videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                      title: Aula 3 — Injeção de dependência
+                      status: ready
+                      uploadedBy:
+                        accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                        name: Marina Alves
+                      uploadedAt: '2026-09-26T09:40:00Z'
+                      durationSeconds: 2415
+                      failureReason: null
+                      tags: []
+                      transcription:
+                        status: failed
+                        readable: true
+                        readyAt: '2026-10-14T10:12:00Z'
+                        failureReason: service-unavailable
+                        canStart: true
+                    - videoId: 9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d
+                      title: Aula 9 — Workshop gravado
+                      status: ready
+                      uploadedBy:
+                        accountId: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        name: Rafael Costa
+                      uploadedAt: '2026-10-09T15:32:00Z'
+                      durationSeconds: 9000
+                      failureReason: null
+                      tags: []
+                      transcription:
+                        status: failed
+                        readable: false
+                        readyAt: null
+                        failureReason: duration-limit
+                        canStart: false
                     pagination:
                       page: 1
                       size: 10
@@ -934,6 +993,313 @@ paths:
           $ref: '#/components/responses/TokenInvalid'
         '403':
           $ref: '#/components/responses/PermissionDenied'
+  /videos/{videoId}/transcription-requests:
+    post:
+      tags:
+      - Transcrição
+      summary: Pedir a transcrição de um vídeo (Transcrever ou Refazer)
+      description: |
+        Ação **Transcrever** (vídeo pronto sem transcrição) e **Refazer** (com transcrição pronta, ou cuja última tentativa falhou) da tela Vídeos (RF-02, RN-M20). Uma só operação: o serviço decide pelo estado. Qualquer ator com `midia.enviar` pede para qualquer vídeo da escola, de qualquer autor (RN-M03, RN-M04). Sem corpo.
+
+        O pedido apenas **registra a intenção** e responde 202 com o vídeo em `transcription.status: in-progress`; o disparo ao serviço de transcrição acontece depois, de forma assíncrona. Indisponibilidade desse serviço **não** falha o pedido nem muda o estado do vídeo (RN-M19). Pedir enquanto já há uma tentativa em andamento não cria outra: devolve 202 com o estado real (RN-M20, sem erro). Refazer mantém a transcrição vigente visível ao aluno até a nova ficar pronta (RN-M18, RN-TL07).
+
+        Recusas de regra: vídeo que não está `ready` → 409 `VIDEO_NOT_READY` (também para vídeo que falhou na preparação); última tentativa falhou por `duration-limit` ou `size-limit` → 409 `TRANSCRIPTION_NOT_RETRYABLE` (RN-M24). Vídeo de outra escola responde o mesmo 404 de vídeo inexistente (G07). Não publica fato `midia.*` (domínio de Mídia, §7).
+      operationId: requestVideoTranscriptionInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Pedido aceito (ou já havia uma tentativa em andamento); o vídeo no estado real depois do
+            pedido.
+          headers:
+            Location:
+              description: Caminho do vídeo, `/videos/{videoId}`.
+              schema:
+                type: string
+                examples:
+                - /videos/0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+              examples:
+                transcrevendo:
+                  $ref: '#/components/examples/VideoTranscribing'
+                refazendo:
+                  value:
+                    videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                    title: Aula 3 — Injeção de dependência
+                    status: ready
+                    uploadedBy:
+                      accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+                      name: Marina Alves
+                    uploadedAt: '2026-09-26T09:40:00Z'
+                    durationSeconds: 2415
+                    failureReason: null
+                    tags:
+                    - Docker
+                    transcription:
+                      status: in-progress
+                      readable: true
+                      readyAt: '2026-10-14T10:12:00Z'
+                      failureReason: null
+                      canStart: false
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '409':
+          description: O vídeo não está pronto, ou a última tentativa falhou por um motivo que refazer não resolve.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                naoPronto:
+                  value:
+                    type: about:blank
+                    title: Só vídeo pronto pode ser transcrito.
+                    status: 409
+                    code: VIDEO_NOT_READY
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                naoRefazivel:
+                  value:
+                    type: about:blank
+                    title: Este vídeo ultrapassa o limite da transcrição.
+                    status: 409
+                    code: TRANSCRIPTION_NOT_RETRYABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '422':
+          description: Chave de idempotência reutilizada em outro vídeo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                chaveReutilizada:
+                  value:
+                    type: about:blank
+                    title: Chave de idempotência já usada em outro pedido.
+                    status: 422
+                    code: IDEMPOTENCY_KEY_REUSED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+  /videos/{videoId}/transcription:
+    get:
+      tags:
+      - Transcrição
+      summary: Ler a transcrição vigente de um vídeo (professor)
+      description: |
+        Texto completo da transcrição **vigente**, em ordem, com o tempo de cada trecho, para o professor avaliar a qualidade (RF-08, RN-M27). Somente leitura. **Não é reprodução**: não abre Sessão de Reprodução, não consulta Matrícula e não traz marca d'água (RN-TL08). Exige `midia.enviar`; vídeo de outra escola responde o mesmo 404 de vídeo inexistente (G07).
+
+        Só existe quando `transcription.readable` é `true`; senão 409 `TRANSCRIPTION_NOT_READY` e o professor vê o estado (RF-02). Com refeita em andamento, devolve a vigente. Resposta `Cache-Control: private, no-store`. O texto não aparece em log nem em URL (RN-M26).
+      operationId: getVideoTranscriptionInternal
+      security:
+      - StaffUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/VideoId'
+      responses:
+        '200':
+          description: Transcrição vigente.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache compartilhado nem do navegador
+                (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoTranscriptionContent'
+              examples:
+                vigente:
+                  value:
+                    videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+                    revision: tr_7d2a91c4
+                    language: pt-BR
+                    durationMs: 2415000
+                    readyAt: '2026-10-14T10:12:00Z'
+                    segments:
+                    - startMs: 1240
+                      endMs: 4100
+                      text: Hoje vamos ver o docker compose.
+                    - startMs: 4100
+                      endMs: 7900
+                      text: Ele descreve vários containers em um só arquivo.
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/PermissionDenied'
+        '404':
+          $ref: '#/components/responses/VideoNotFound'
+        '409':
+          description: O vídeo não tem transcrição pronta (sem transcrição, transcrevendo pela primeira vez ou falhou
+            sem vigente).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                naoPronta:
+                  value:
+                    type: about:blank
+                    title: Este vídeo ainda não tem transcrição pronta.
+                    status: 409
+                    code: TRANSCRIPTION_NOT_READY
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+  /lessons/{lessonId}/transcription:
+    get:
+      tags:
+      - Transcrição
+      summary: Obter a transcrição da aula
+      description: 'Transcrição da Mídia vinculada à aula na versão vigente do curso,
+        para a página da aula (RF-04, RF-05, RN-TL03). O aluno **não informa vídeo**:
+        informa a aula, e Mídia resolve o vídeo pela Referência de Uso. Não exige Sessão
+        de Reprodução aberta: a página mostra o texto antes de o aluno apertar play
+        (RN-TL02).
+
+
+        Mesma verificação da reprodução, nesta ordem (RN-M21, RN-M10 passos 1 e 2):
+        (1) a aula está entre as Referências de Uso de um vídeo da escola do aluno (404
+        `LESSON_NOT_AVAILABLE`, **antes** de consultar Matrícula); (2) Matrícula responde
+        que o aluno pode acessar o curso **agora** (403 `ACCESS_DENIED`; sem resposta,
+        503 `ACCESS_DECISION_UNAVAILABLE`, falha fechada, nunca "sem acesso"); a resposta
+        pode ser reaproveitada por até 30 s, como na sessão. Só depois se lê o estado
+        da transcrição.
+
+
+        Depois da decisão positiva, vídeo sem transcrição pronta (não pronto, em andamento
+        ou falhou) responde **200** com `status: unavailable`, sem texto e sem motivo
+        técnico (RN-TL05); a aula continua reproduzível. Refazer troca o texto na próxima
+        leitura, sem republicar o curso (DP-09). Não há endereço estável, público ou
+        em cache compartilhado (`Cache-Control: private, no-store`); o texto não tem
+        dado do aluno (RN-M22) e não vai a log, métrica nem URL (RN-M26).
+
+        '
+      operationId: getLessonTranscriptionInternal
+      security:
+      - StudentUserToken: []
+      parameters:
+      - $ref: '#/components/parameters/LessonId'
+      responses:
+        '200':
+          description: Transcrição pronta, ou ausência dela em linguagem neutra.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache
+                compartilhado nem do navegador (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                - private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonTranscription'
+              examples:
+                pronta:
+                  value:
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    status: ready
+                    revision: tr_7d2a91c4
+                    language: pt-BR
+                    durationMs: 2415000
+                    segments:
+                    - startMs: 1240
+                      endMs: 4100
+                      text: Hoje vamos ver o docker compose.
+                    - startMs: 4100
+                      endMs: 7900
+                      text: Ele descreve vários containers em um só arquivo.
+                indisponivel:
+                  value:
+                    lessonId: 3f6a1c52-7d84-4b0e-9a13-5c2e8f4d7b60
+                    status: unavailable
+                    revision: null
+                    language: null
+                    durationMs: null
+                    segments: []
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '404':
+          $ref: '#/components/responses/LessonNotAvailable'
+        '503':
+          $ref: '#/components/responses/AccessDecisionUnavailable'
+  /playback-sessions/{sessionId}/captions:
+    get:
+      tags:
+        - Transcrição
+      summary: Obter a legenda da sessão (WebVTT)
+      description: |
+        Legenda do vídeo da Sessão de Reprodução, em WebVTT, para o player (RF-03). Sai da **mesma** Transcrição, não é artefato separado (domínio de Mídia). Vale enquanto a sessão for válida e do aluno; a sessão já passou por Referência de Uso e Matrícula ao abrir ou renovar (RN-M10, RN-M11), então **não** consulta Matrícula de novo: perdido o direito, a legenda para no máximo na renovação, quando a sessão deixa de se estender e o texto novo não é entregue (RN-M21). Sessão de outro aluno ou de outra escola responde o mesmo 404 de sessão desconhecida.
+
+        Formato: `text/vtt` em UTF-8, cabeçalho `WEBVTT`, um *cue* por Trecho, tempos `hh:mm:ss.mmm`, sem identificação do aluno, sem marcação além do texto escapado (formato exato e escape: TechSpec). Sem transcrição pronta, 404 `CAPTIONS_NOT_AVAILABLE`: o player não mostra o controle de legenda (RN-TL05). Exceção ao gate HTTP (T-08, no molde de C-08 da entrega HLS): corpo `text/vtt`, não JSON. `Cache-Control: private, no-store`.
+      operationId: getPlaybackCaptionsInternal
+      security:
+        - StudentUserToken: []
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Legenda em WebVTT.
+          headers:
+            Cache-Control:
+              description: '`private, no-store`: o texto da aula nunca fica em cache compartilhado nem do navegador (RN-M21, G21).'
+              schema:
+                type: string
+                examples:
+                  - private, no-store
+          content:
+            text/vtt:
+              schema:
+                type: string
+              examples:
+                legenda:
+                  value: |
+                    WEBVTT
+
+                    1
+                    00:00:01.240 --> 00:00:04.100
+                    Hoje vamos ver o docker compose.
+
+                    2
+                    00:00:04.100 --> 00:00:07.900
+                    Ele descreve vários containers em um só arquivo.
+        '404':
+          description: Sessão desconhecida, de outro aluno ou de outra escola (`PLAYBACK_SESSION_NOT_FOUND`), ou o vídeo não tem transcrição pronta (`CAPTIONS_NOT_AVAILABLE`). O cliente trata o `code`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              examples:
+                sessaoNaoEncontrada:
+                  value:
+                    type: about:blank
+                    title: Sessão de reprodução não encontrada.
+                    status: 404
+                    code: PLAYBACK_SESSION_NOT_FOUND
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                semLegenda:
+                  value:
+                    type: about:blank
+                    title: Este vídeo não tem legenda disponível.
+                    status: 404
+                    code: CAPTIONS_NOT_AVAILABLE
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '410':
+          $ref: '#/components/responses/SessionExpired'
+        '401':
+          $ref: '#/components/responses/TokenInvalid'
 components:
   securitySchemes:
     StaffUserToken:
@@ -1310,6 +1676,12 @@ components:
         durationSeconds: null
         failureReason: null
         tags: []
+        transcription:
+          status: not-requested
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: false
     VideoReady:
       value:
         videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
@@ -1322,6 +1694,12 @@ components:
         durationSeconds: 2415
         failureReason: null
         tags: []
+        transcription:
+          status: not-requested
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: true
     TagInvalid:
       value:
         type: about:blank
@@ -1349,7 +1727,87 @@ components:
         uploadedAt: '2026-09-26T09:40:00Z'
         durationSeconds: 2415
         failureReason: null
+        transcription:
+          status: not-requested
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: true
+    VideoTranscribing:
+      value:
+        videoId: 0b1c2d3e-4f50-4a61-8b72-9c8d7e6f5a41
+        title: Aula 3 — Injeção de dependência
+        status: ready
+        uploadedBy:
+          accountId: 7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d
+          name: Marina Alves
+        uploadedAt: '2026-09-26T09:40:00Z'
+        durationSeconds: 2415
+        failureReason: null
+        tags:
+        - Docker
+        transcription:
+          status: in-progress
+          readable: false
+          readyAt: null
+          failureReason: null
+          canStart: false
   schemas:
+    LessonTranscription:
+      type: object
+      additionalProperties: false
+      required:
+      - lessonId
+      - status
+      - revision
+      - language
+      - durationMs
+      - segments
+      description: 'Transcrição da aula para o aluno com direito a ela (RF-04). É a da
+        Mídia vinculada na versão vigente do curso (RN-TL03). `unavailable` cobre "ainda
+        não pronta", "em andamento" e "falhou" sem distinguir (RN-TL05): não é erro nem
+        falta de acesso, e o player toca normalmente.'
+      properties:
+        lessonId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ready
+          - unavailable
+          description: '`ready` com `segments`; `unavailable` sem texto.'
+        revision:
+          oneOf:
+          - type: string
+            minLength: 1
+            maxLength: 64
+            description: Identificador opaco da transcrição vigente; muda quando uma refeita
+              a substitui (DP-09). Igual para todos os alunos e sem dado pessoal (RN-M22).
+              Serve para o cliente saber se o texto que tem ainda é o vigente.
+            examples:
+            - tr_7d2a91c4
+          - type: 'null'
+          description: Preenchida só em `ready`.
+        language:
+          type:
+          - string
+          - 'null'
+          enum:
+          - pt-BR
+          - null
+          description: '`pt-BR` em `ready`; `null` em `unavailable`.'
+        durationMs:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+          description: Preenchida só em `ready`.
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+          description: Trechos em ordem crescente de `startMs`; `[]` em `unavailable`.
     TagMatch:
       type: string
       enum:
@@ -1598,6 +2056,7 @@ components:
       - durationSeconds
       - failureReason
       - tags
+      - transcription
       properties:
         videoId:
           type: string
@@ -1624,6 +2083,8 @@ components:
           description: Preenchido só em `failed`.
         tags:
           $ref: '#/components/schemas/TagList'
+        transcription:
+          $ref: "#/components/schemas/VideoTranscription"
     VideoPage:
       type: object
       additionalProperties: false
@@ -1859,3 +2320,136 @@ components:
             $ref: '#/components/schemas/Tag'
           description: |
             Até 20 tags da escola que contêm `q`: primeiro as que começam por ele, depois as demais, cada grupo em ordem alfabética. `[]` quando nenhuma. Coleção de teto fixo, sem paginação (C-04).
+    TranscriptionStatus:
+      type: string
+      enum:
+      - not-requested
+      - in-progress
+      - ready
+      - failed
+      description: 'Estado da **última tentativa** de transcrição do vídeo, na linguagem do professor (RN-TL06): `not-requested`
+        sem transcrição; `in-progress` transcrevendo; `ready` pronta; `failed` falhou. Vídeo que não está `ready` (RN-M05)
+        é sempre `not-requested`. Refazer mantém a transcrição vigente legível enquanto a nova roda (`status: in-progress`,
+        `readable: true`) e depois que a nova falha (`status: failed`, `readable: true`): ver `readable` (RN-M18, RN-TL07).'
+    TranscriptionFailureReason:
+      type: string
+      enum:
+      - duration-limit
+      - size-limit
+      - service-unavailable
+      - processing-failed
+      - timed-out
+      description: 'Categoria do motivo da falha, em termos do produto; nenhum código, estado ou limite do serviço de
+        transcrição aparece aqui (camada anticorrupção). O SPA mostra o texto do PRD: `duration-limit` "vídeo mais longo
+        que o limite de 2 horas"; `size-limit` "vídeo maior que o tamanho aceito para transcrição"; `service-unavailable`
+        "serviço de transcrição indisponível no momento"; `processing-failed` "não foi possível transcrever este vídeo";
+        `timed-out` "a transcrição demorou mais que o limite". `duration-limit` e `size-limit` não se resolvem refazendo
+        (RN-M24): `canStart` é `false`. Clientes devem tolerar valor novo.'
+    VideoTranscription:
+      type: object
+      additionalProperties: false
+      required:
+      - status
+      - readable
+      - readyAt
+      - failureReason
+      - canStart
+      description: 'Estado da transcrição do vídeo para a tela Vídeos (RF-02, RF-08). Sempre presente; para vídeo que
+        não está pronto vale `not-requested`, `readable: false`, `canStart: false`.'
+      properties:
+        status:
+          $ref: '#/components/schemas/TranscriptionStatus'
+        readable:
+          type: boolean
+          description: Existe uma transcrição vigente pronta que o professor pode abrir em `getVideoTranscription` e
+            que o aluno recebe (RN-M18, RN-M27). Pode ser `true` com `status` `in-progress` ou `failed` (refazer em
+            andamento ou que falhou).
+        readyAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Quando a transcrição **vigente** ficou pronta; `null` se não há vigente.
+        failureReason:
+          oneOf:
+          - $ref: '#/components/schemas/TranscriptionFailureReason'
+          - type: 'null'
+          description: 'Preenchido só com `status: failed` (motivo da última tentativa).'
+        canStart:
+          type: boolean
+          description: 'Se `requestVideoTranscription` seria aceita agora: vídeo `ready`, nenhuma tentativa em andamento
+            e, se a última falhou, o motivo não é `duration-limit` nem `size-limit`. Dirige a ação **Transcrever** (`status:
+            not-requested`) ou **Refazer** (`ready` ou `failed`) (RF-02).'
+    TranscriptSegment:
+      type: object
+      additionalProperties: false
+      required:
+      - startMs
+      - endMs
+      - text
+      description: 'Trecho: unidade da legenda, da busca e do clique que leva o vídeo ao tempo (domínio de Mídia).
+        Tempos desde o início do vídeo.'
+      properties:
+        startMs:
+          type: integer
+          minimum: 0
+          description: Início do trecho, em milissegundos.
+          examples:
+          - 1240
+        endMs:
+          type: integer
+          minimum: 0
+          description: Fim do trecho, em milissegundos; nunca antes de `startMs`.
+          examples:
+          - 4100
+        text:
+          type: string
+          description: Texto da fala, em português do Brasil, como o serviço de transcrição o produziu (DP-07).
+            Sem dado do aluno (RN-M22).
+          examples:
+          - Hoje vamos ver o docker compose.
+    VideoTranscriptionContent:
+      type: object
+      additionalProperties: false
+      required:
+      - videoId
+      - revision
+      - language
+      - durationMs
+      - readyAt
+      - segments
+      description: 'Transcrição vigente de um vídeo, para leitura do professor no backoffice (RF-08, RN-M27). Somente
+        leitura: não há operação de edição (DP-07).'
+      properties:
+        videoId:
+          type: string
+          format: uuid
+        revision:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Identificador opaco da transcrição vigente; muda quando uma refeita a substitui (DP-09).
+            Igual para todos os alunos e sem dado pessoal (RN-M22). Serve para o cliente saber se o texto que tem
+            ainda é o vigente.
+          examples:
+          - tr_7d2a91c4
+        language:
+          type: string
+          const: pt-BR
+          description: Idioma fixo neste corte (RN-M25).
+        durationMs:
+          type: integer
+          minimum: 0
+          description: Duração coberta pela transcrição, em milissegundos.
+          examples:
+          - 2415000
+        readyAt:
+          type: string
+          format: date-time
+          description: Quando esta transcrição ficou pronta.
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+          description: 'Trechos em ordem crescente de `startMs`. Resposta única, sem paginação: uma aula de 2 horas
+            tem alguns milhares de trechos (a busca roda no cliente, RF-05). Limites exatos de tamanho: TechSpec.'

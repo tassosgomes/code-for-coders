@@ -503,6 +503,9 @@ public sealed class VideoUploadResumeTests
         public Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken)
             => Task.FromException(new NotSupportedException());
 
+        public Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
+
         public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
             => Task.FromException(new NotSupportedException());
 
@@ -532,6 +535,9 @@ public sealed class VideoUploadResumeTests
 
         public Task UploadDirectoryAsync(string sourceDirectory, string objectPrefix, CancellationToken cancellationToken)
             => Task.FromException(new StorageUnavailableException());
+
+        public Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+            => throw new NotSupportedException();
 
         public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
             => Task.FromException(new StorageUnavailableException());

@@ -1,0 +1,3 @@
+namespace CodeForCoders.Media.Application.UseCases.PlaybackSessions.GetLessonTranscription;
+
+public interface IGetLessonTranscription : IUseCase<GetLessonTranscriptionInput, LessonTranscriptionOutput>;

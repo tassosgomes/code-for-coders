@@ -14,7 +14,7 @@ sources: vision.md@1.2, context/domain-map.md@1.2, context/architecture-baseline
 > unidades de valor que podem originar um PRD independente. Não decide feature, tela, endpoint ou tabela:
 > isso é escopo do PRD e da TechSpec.
 
-**Versão:** 1.4 (aprovado) · **Data:** 2026-09-21 · **Produto:** code-4-coders · **Total:** 31 capacidades em 16 domínios · **MVP:** 11
+**Versão:** 1.4 (aprovado) · **Data:** 2026-09-21 · **Produto:** code-4-coders · **Total:** 32 capacidades em 16 domínios · **MVP:** 11
 
 Cada capacidade tem **ID estável** (`CAP-001`…). Domain Docs e PRDs referenciam o ID, nunca o título.
 IDs são preservados em atualizações deste documento; capacidade descartada fica registrada como
@@ -76,7 +76,7 @@ Mantidas as cinco fases da visão, com o conteúdo de cada uma expresso em capac
 |---|---|---|
 | MVP (Fase 1) | Vender e assistir | `CAP-001` `CAP-002` `CAP-003` `CAP-005` `CAP-006` `CAP-007` `CAP-008` `CAP-011` `CAP-017` `CAP-026` `CAP-030` |
 | Fase 2 | Receita recorrente | `CAP-004` `CAP-009` `CAP-013` `CAP-014` `CAP-015` `CAP-016` `CAP-029` |
-| Fase 3 | Aprendizagem comprovada | `CAP-018` `CAP-019` `CAP-020` `CAP-022` |
+| Fase 3 | Aprendizagem comprovada | `CAP-018` `CAP-019` `CAP-020` `CAP-022` `CAP-032` |
 | Fase 4 | Retenção e comunidade | `CAP-023` `CAP-024` `CAP-025` `CAP-027` |
 | Fase 5 | Escala e governança | `CAP-010` `CAP-012` `CAP-021` `CAP-028` `CAP-031` |
 
@@ -283,6 +283,7 @@ capacidade da Fase 2 começa antes disso.
 | 20 | L11 · Comprovar | `CAP-018` | `CAP-020` | A trilha passa a ser caminho, com a avaliação como porta |
 | 21 | L11 · Comprovar | `CAP-022` | `CAP-017`, `CAP-020` | Fecha o segundo fluxo de valor da visão |
 | 22 | L12 · Aprofundar | `CAP-019` | `CAP-017`, `CAP-007` | Independente das demais; pode ser adiada sem quebrar a fase |
+| 22a | L12 · Aprofundar | `CAP-032` | `CAP-006`, `CAP-007`, `CAP-002` | Pós-MVP por decisão do negócio. Mesmo lote e mesmas premissas de `CAP-019`: ajuda o aluno a revisitar e aprofundar a aula, não depende das demais da fase e pode ser adiada sem quebrar a fase |
 
 #### Fase 4 — Retenção e comunidade
 
@@ -432,6 +433,27 @@ aprovação, que é o risco de "revisão humana virar gargalo" se materializando
   renderizada no cliente (G22); e-mail fora de log, URL, chave de cache e routing key (G23); nenhuma trava
   de concorrência (BA16/G24). A proteção é **dissuasão declarada**, e nenhum PRD pode apresentá-la como
   garantia de exclusividade.
+
+#### CAP-032 — Transcrição e legenda de aula
+
+- **Objetivo:** gerar a transcrição de cada vídeo pronto e entregá-la ao aluno autorizado de duas formas: como
+  legenda no player e como texto completo, pesquisável, na página da aula.
+- **Valor de negócio:** o aluno encontra um ponto da aula sem assistir à aula inteira (clicar no trecho leva o
+  vídeo àquele tempo) e passa a poder assistir com legenda. Reduz o atrito de revisitar conteúdo longo, que é o
+  que mantém o aluno voltando ao curso.
+- **Resumo do fluxo:** o vídeo fica pronto → a plataforma o transcreve sozinha (ou o professor pede, ou refaz, na
+  tela Vídeos) → a transcrição fica guardada com o vídeo → o aluno com direito liga a legenda no player e pesquisa
+  o texto na página da aula.
+- **Dependências:** `CAP-006` (vídeo pronto a transcrever), `CAP-007` (player e a mesma decisão de acesso da
+  reprodução), `CAP-002` (permissão do professor para disparar e refazer).
+- **Origem na visão:** `C04`. A visão não prevê esta capacidade; ela nasce de decisão do negócio em 2026-10-12.
+  Não contradiz o "não fará" da visão (produção ou edição autoral de vídeo): a transcrição é texto derivado da
+  fala e não altera o vídeo.
+- **Prioridade:** Média · **Fase:** Fase 3 (pós-MVP, decidido pelo negócio em 2026-10-12; a fase exata é recomendação de sequenciamento, ver o adendo da v1.4 no histórico)
+- **Restrições herdadas:** o texto é conteúdo protegido e só vai a quem tem direito ao curso agora, com falha
+  fechada (BA07/G11); nada por aluno (G22); a proteção continua sendo dissuasão, e o texto completo é mais fácil de
+  copiar que o vídeo (R8: nenhuma peça pode prometer exclusividade); a transcrição nunca atrasa nem impede o
+  vídeo de ficar pronto ou de ser reproduzido.
 
 ### Domínio: Matrícula e Direito de Acesso
 
@@ -916,6 +938,7 @@ Dois **ciclos aparentes** foram resolvidos por direção de dependência, não p
 | Versão | Data | Autor | Alterações |
 |---|---|---|---|
 | 1.0 | 2026-09-20 | Tasso Gomes | Backlog inicial: 31 capacidades em 16 domínios, 11 no MVP. Em revisão — não integrado |
+| 1.4 (adendo) | 2026-10-12 | Tasso Gomes | Acrescentada `CAP-032` — Transcrição e legenda de aula (Entrega de Mídia e Proteção), pós-MVP por decisão do negócio (2026-10-12), posicionada na Fase 3 (lote L12, passo 22a). Nenhuma capacidade, dependência, fase ou ordem existente foi alterada. **Versão não incrementada de propósito**: subir para 1.5 invalidaria a procedência de todos os domain docs e PRDs que declaram `backlog/capabilities.md@1.4`. A revisão formal (1.5) fica para a próxima revisão do backlog. **Por que Fase 3 e não Fase 2:** a Fase 2 é 'Receita recorrente' (NFS-e, recorrência, inadimplência, reembolso) e `CAP-032` não toca nenhuma delas; entrar ali seria só nominal. A Fase 3 ('Aprendizagem comprovada') tem o lote L12 'Aprofundar', com `CAP-019` (notas no minuto da aula), que tem as mesmas premissas (`CAP-017`/`CAP-007`), é independente e pode ser adiada. A fase é recomendação de sequenciamento e o negócio pode movê-la |
 | 1.4 | 2026-09-21 | Tasso Gomes | Revalidado contra `vision.md` v1.2 e `context/domain-map.md` v1.2 após a restrição de AWS à mídia. Nenhuma capacidade, fase, dependência ou ordem foi alterada |
 | 1.3 | 2026-09-20 | Tasso Gomes | Revisitado contra `architecture-baseline.md` v1.2 (correção de BA15). Nenhuma capacidade, fase, dependência ou ordem foi alterada: a citação a BA15 neste backlog já descrevia a proteção sem trava de concorrência |
 | 1.2 | 2026-09-20 | Tasso Gomes | **Aprovado e integrado.** Acrescentado o rastro de origem na visão (`CAP-XXX ← CNN`) nas 31 capacidades e a tabela de reconciliação `C01`…`C16` → `CAP-XXX` com as três divergências de fase (R5, R9, R11). Nenhuma capacidade, dependência, fase ou ordem foi alterada |

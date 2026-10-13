@@ -17,6 +17,10 @@ public static class ServiceConfigurationExtensions
         if (MediaRoleOptions.ReadRole(builder.Configuration) == MediaServiceRole.Worker)
         {
             builder.Services.AddVideoPreparationConfiguration();
+            if (builder.Configuration.GetValue<bool>("Transcription:Enabled"))
+            {
+                builder.Services.AddTranscriptionConfiguration();
+            }
         }
 
         builder.Services.AddDataConfiguration(builder.Configuration, builder.Environment);

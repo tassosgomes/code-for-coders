@@ -10,6 +10,21 @@ x-logging: &logging
       max-size: "10m"
       max-file: "3"
 
+# Application-side settings for the media worker that consumes this shared S3 service.
+# Keep this template aligned with docker-compose.stable.yml; infrastructure does not run a worker.
+x-media-transcription-environment:
+  Transcription__Service__BaseAddress: ${WHISPER_BASE_ADDRESS:-https://whisper.lab.tasso.dev.br/v1}
+  Transcription__Service__ApiKey: ${WHISPER_API_KEY:-}
+  AwsMedia__EndpointTranscription: ${AWS_S3_TRANSCRIPTION_ENDPOINT:-http://192.168.0.11:9000}
+  Transcription__SourceUrlLifetimeMinutes: ${TRANSCRIPTION_SOURCE_URL_LIFETIME_MINUTES:-90}
+  Transcription__MaxWaitHours: ${TRANSCRIPTION_MAX_WAIT_HOURS:-30}
+  Transcription__MaxConcurrency: ${TRANSCRIPTION_MAX_CONCURRENCY:-1}
+  Transcription__MaxSubmissions: ${TRANSCRIPTION_MAX_SUBMISSIONS:-3}
+  Transcription__InitialPollSeconds: ${TRANSCRIPTION_INITIAL_POLL_SECONDS:-60}
+  Transcription__IntermediatePollSeconds: ${TRANSCRIPTION_INTERMEDIATE_POLL_SECONDS:-300}
+  Transcription__LongPollSeconds: ${TRANSCRIPTION_LONG_POLL_SECONDS:-900}
+  Transcription__MinimumFreeDiskBytes: ${TRANSCRIPTION_MINIMUM_FREE_DISK_BYTES:-2147483648}
+
 services:
   postgres:
     image: postgres:18

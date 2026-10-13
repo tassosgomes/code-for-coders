@@ -2,6 +2,7 @@ using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Domain.Entities;
 using CodeForCoders.Media.Infra.Data.Configuration;
 using CodeForCoders.Media.Infra.Data.Outbox;
+using CodeForCoders.Media.Infra.Data.Transcriptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeForCoders.Media.Infra.Data;
@@ -26,9 +27,19 @@ public sealed class MediaDbContext(
 
     public DbSet<OperationIdempotencyRecord> OperationIdempotencyRecords => Set<OperationIdempotencyRecord>();
 
+    public DbSet<Transcription> Transcriptions => Set<Transcription>();
+    public DbSet<TranscriptionContent> TranscriptionContents => Set<TranscriptionContent>();
+    public DbSet<TranscriptionEvent> TranscriptionEvents => Set<TranscriptionEvent>();
+    public DbSet<TranscriptionAudioCleanup> TranscriptionAudioCleanups => Set<TranscriptionAudioCleanup>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(MediaSchema.Name);
+        modelBuilder.Entity<Transcription>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<TranscriptionContent>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<TranscriptionEvent>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+        modelBuilder.Entity<TranscriptionAudioCleanup>().HasQueryFilter(row => tenantContext.TenantId.HasValue && row.TenantId == tenantContext.TenantId.Value);
+
         modelBuilder.Entity<PlaybackSession>().HasQueryFilter(session => tenantContext.TenantId.HasValue && session.TenantId == tenantContext.TenantId.Value);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(MediaDbContext).Assembly);
         modelBuilder.Entity<CourseReferences.CourseReferenceVersion>().HasQueryFilter(reference => tenantContext.TenantId.HasValue && reference.TenantId == tenantContext.TenantId.Value);

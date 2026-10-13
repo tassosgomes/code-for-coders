@@ -1,3 +1,4 @@
+using CodeForCoders.Media.Application.UseCases.Videos.RequestVideoTranscription;
 using CodeForCoders.Media.Application.UseCases.Videos.ListVideoTags;
 using CodeForCoders.Media.Application.UseCases.Videos.ReplaceVideoTags;
 using CodeForCoders.Media.Api.Security;
@@ -6,6 +7,7 @@ using CodeForCoders.Media.Application.UseCases.Videos.ListVideos;
 using CodeForCoders.Media.Application.UseCases.Videos;
 using CodeForCoders.Media.Application.UseCases.Videos.UpdateVideoTitle;
 using CodeForCoders.Media.Api.ApiModels;
+using CodeForCoders.Media.Application.UseCases.Videos.GetVideoTranscription;
 
 namespace CodeForCoders.Media.Api.Endpoints;
 
@@ -16,6 +18,24 @@ public static class VideoEndpoints
         var group = endpoints.MapGroup("/internal/v1")
             .RequireAuthorization(MediaAuthorization.PolicyName)
             .WithTags("Videos");
+
+        group.MapGet("/videos/{videoId:guid}/transcription", GetVideoTranscriptionAsync)
+            .WithName("GetVideoTranscriptionInternal")
+            .Produces<VideoTranscriptionContentOutput>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        group.MapPost("/videos/{videoId:guid}/transcription-requests", RequestVideoTranscriptionAsync)
+            .WithName("RequestVideoTranscriptionInternal")
+            .Produces<VideoOutput>(StatusCodes.Status202Accepted)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         group.MapGet("/video-tags", ListVideoTagsAsync)
             .WithName("ListVideoTagsInternal")
@@ -50,6 +70,20 @@ public static class VideoEndpoints
             .Produces<VideoOutput>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    private static async Task<IResult> GetVideoTranscriptionAsync(
+        Guid videoId, HttpContext httpContext, IGetVideoTranscription useCase, CancellationToken cancellationToken)
+    {
+        httpContext.Response.Headers.CacheControl = "private, no-store";
+        return Results.Ok(await useCase.ExecuteAsync(new(videoId), cancellationToken));
+    }
+
+    private static async Task<IResult> RequestVideoTranscriptionAsync(
+        Guid videoId, HttpContext httpContext, IRequestVideoTranscription useCase, CancellationToken cancellationToken)
+    {
+        var output = await useCase.ExecuteAsync(new(videoId, httpContext.Request.Headers["Idempotency-Key"].FirstOrDefault() ?? string.Empty), cancellationToken);
+        return Results.Accepted($"/internal/v1/videos/{videoId:D}", output);
     }
 
     private static async Task<IResult> ListVideoTagsAsync(

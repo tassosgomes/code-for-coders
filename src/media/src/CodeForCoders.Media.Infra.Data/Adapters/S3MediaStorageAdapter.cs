@@ -199,6 +199,25 @@ public sealed class S3MediaStorageAdapter(
         }
     }
 
+    public Task<Uri> CreateTranscriptionReadUriAsync(string objectKey, DateTimeOffset expiresAt, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        try
+        {
+            var endpoint = string.IsNullOrWhiteSpace(options.Value.EndpointTranscription) ? options.Value.EndpointPublic : options.Value.EndpointTranscription;
+            var url = clients.Transcription.GetPreSignedURL(new GetPreSignedUrlRequest
+            {
+                BucketName = options.Value.BucketName,
+                Key = GetKey(objectKey),
+                Verb = HttpVerb.GET,
+                Expires = expiresAt.UtcDateTime,
+                Protocol = Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) && uri.Scheme == "http" ? Protocol.HTTP : Protocol.HTTPS,
+            });
+            return Task.FromResult(new Uri(url, UriKind.Absolute));
+        }
+        catch (AmazonServiceException) { throw new StorageUnavailableException(); }
+    }
+
     public Task DeleteObjectAsync(string objectKey, CancellationToken cancellationToken)
         => ExecuteAsync(
             token => clients.Internal.DeleteObjectAsync(new DeleteObjectRequest

@@ -7,6 +7,7 @@ using CodeForCoders.Media.Application.Interfaces;
 using CodeForCoders.Media.Contracts;
 using CodeForCoders.Media.Domain.Entities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CodeForCoders.Media.Application.UseCases.Videos.PrepareVideo;
 
@@ -17,6 +18,8 @@ public sealed class PrepareVideo(
     IVideoKeyProtector keyProtector,
     IOutboxMessageWriter outbox,
     IUnitOfWork unitOfWork,
+    IVideoTranscriptionRepository transcriptions,
+    IOptions<TranscriptionOptions> transcriptionOptions,
     TimeProvider timeProvider,
     ILogger<PrepareVideo> logger) : IVideoPreparationWorkflow
 {
@@ -235,7 +238,15 @@ public sealed class PrepareVideo(
             cancellationToken);
         try
         {
-            await unitOfWork.CommitAsync(cancellationToken);
+            if (transcriptionOptions.Value.Enabled)
+            {
+                var attempt = Transcription.Create(new(video.TenantId, video.VideoId, "automatic", null, occurredAt));
+                await transcriptions.WithAutomaticEnqueueAsync(attempt, unitOfWork.CommitAsync, cancellationToken);
+            }
+            else
+            {
+                await unitOfWork.CommitAsync(cancellationToken);
+            }
         }
         catch (ConcurrencyConflictException)
         {

@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { env } from '@/config/env';
 import { courseSchema, type Course } from '@/features/course-authoring/types/course';
 import { structureCourseFixture } from '@/testing/authoring-structure-handlers';
+import { videoTranscriptionFixtures } from '@/testing/handlers';
 
 export const readyVideoFixtures = [
   { videoId: '0198dfac-674a-7000-8000-000000000051', title: 'Vídeo da colega', status: 'ready', tags: ['Docker', 'Módulo 2'], durationSeconds: 125, uploadedBy: { accountId: '0198dfac-674a-7000-8000-000000000031', name: 'Marina' } },
@@ -37,7 +38,9 @@ export const createAuthoringVideoHandlers = () => {
           .filter((video) => tags.length === 0 || (tagMatch === 'any'
             ? tags.some((tag) => hasTag(video, tag))
             : tags.every((tag) => hasTag(video, tag))));
-        const data = matches.map((video) => ({ ...video, status: unknownStatus ? 'preparing' : video.status }));
+        const data = matches.map((video) => ({ ...video, status: unknownStatus ? 'preparing' : video.status,
+          transcription: { ...videoTranscriptionFixtures['not-requested'], canStart: !unknownStatus && video.status === 'ready' },
+        }));
         return HttpResponse.json({ data, pagination: { page: 1, size: 20, total: data.length, totalPages: data.length ? 1 : 0 } });
       }),
       http.get(`${env.API_URL}/api/v1/video-tags`, ({ request }) => {

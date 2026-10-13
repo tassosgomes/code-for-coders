@@ -1,4 +1,5 @@
 using CodeForCoders.Media.Application.Interfaces;
+using CodeForCoders.Media.Application.Common;
 using CodeForCoders.Media.Infra.Data.Outbox;
 using CodeForCoders.Media.Infra.Messaging.Configuration;
 using CodeForCoders.Media.Infra.Messaging.Health;
@@ -50,6 +51,24 @@ public static class DependencyInjection
             services.AddHostedService<ExpiredVideoUploadWorker>();
             services.AddHostedService<ExpiredPlaybackSessionWorker>();
             services.AddHostedService<VideoPreparationWorker>();
+            if (configuration.GetValue<bool>("Transcription:Enabled"))
+            {
+                services.AddOptions<TranscriptionOptions>().Bind(configuration.GetSection(TranscriptionOptions.SectionName))
+                    .Validate(settings => settings.HasValidWorkerSettings(), "Transcription worker settings are invalid.").ValidateOnStart();
+                services.AddOptions<TranscriptionServiceOptions>().Bind(configuration.GetSection(TranscriptionServiceOptions.SectionName))
+                    .Validate(settings => settings.IsValid(), "Transcription service settings are invalid.").ValidateOnStart();
+                services.AddScoped<ITranscriptionAudioExtractor, FfmpegTranscriptionAudioExtractor>();
+                services.AddHttpClient<ITranscriptionServiceClient, TranscriptionServiceClient>()
+                    .RemoveAllLoggers()
+                    .AddStandardResilienceHandler(settings =>
+                    {
+                        settings.AttemptTimeout.Timeout = TimeSpan.FromSeconds(5);
+                        settings.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                        settings.Retry.MaxRetryAttempts = 3;
+                        settings.Retry.DisableForUnsafeHttpMethods();
+                    });
+                services.AddHostedService<TranscriptionWorker>();
+            }
             services.AddHostedService<MediaVolumeMetricsWorker>();
             services.AddHttpClient<RabbitMqManagementClient>()
                 .AddStandardResilienceHandler(options =>

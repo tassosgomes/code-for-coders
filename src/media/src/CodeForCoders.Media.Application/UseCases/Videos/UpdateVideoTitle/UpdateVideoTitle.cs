@@ -10,6 +10,7 @@ public sealed class UpdateVideoTitle(
     ITenantContext tenantContext,
     IVideoQueries videoQueries,
     IVideoTagRepository videoTags,
+    IVideoTranscriptionRepository transcriptions,
     IOperationIdempotencyRepository idempotencyRecords,
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : IUpdateVideoTitle
@@ -46,6 +47,7 @@ public sealed class UpdateVideoTitle(
             ?? throw new MediaApiException(404, "VIDEO_NOT_FOUND", "The requested video was not found.");
         video.UpdateTitle(input.Title);
         var tags = await videoTags.GetAsync([video.VideoId], cancellationToken);
+        var states = await transcriptions.GetAsync([video], cancellationToken);
         var output = new VideoOutput(
             video.VideoId,
             video.Title,
@@ -53,7 +55,7 @@ public sealed class UpdateVideoTitle(
             new VideoUploaderOutput(video.UploadedByAccountId, video.UploadedByName),
             video.UploadedAt,
             video.DurationSeconds,
-            video.FailureReason, tags.GetValueOrDefault(video.VideoId, []));
+            video.FailureReason, tags.GetValueOrDefault(video.VideoId, []), VideoTranscriptionOutput.FromState(states[video.VideoId]));
         var record = VideoUploadUseCaseHelpers.CreateOrReuseIdempotencyRecord(
             existing, tenantId, actorAccountId, "updateVideoTitle", input.IdempotencyKey, requestHash, now);
         record.SetResponse(200, JsonSerializer.Serialize(output), now.AddHours(24));

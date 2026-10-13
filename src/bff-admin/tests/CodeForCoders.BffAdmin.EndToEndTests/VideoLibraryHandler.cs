@@ -23,6 +23,10 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
 
     public string[] Tags { get; set; } = [];
 
+    public object? TranscriptionState { get; set; }
+    public Func<HttpContent>? TranscriptionContentFactory { get; set; }
+    public string TranscriptionCacheControl { get; set; } = "private, no-store";
+
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
@@ -33,6 +37,24 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
         LastPath = request.RequestUri?.PathAndQuery;
         LastMethod = request.Method;
         LastIdempotencyKey = request.Headers.TryGetValues("Idempotency-Key", out var keys) ? keys.FirstOrDefault() : null;
+
+        if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath.EndsWith("/transcription", StringComparison.Ordinal) == true)
+        {
+            var response = new HttpResponseMessage(StatusCode)
+            {
+                Content = TranscriptionContentFactory?.Invoke() ?? JsonContent.Create(new
+                {
+                    videoId = Guid.Parse(request.RequestUri.Segments[^2].TrimEnd('/')),
+                    revision = "tr_7d2a91c4",
+                    language = "pt-BR",
+                    durationMs = 10_000,
+                    readyAt = DateTimeOffset.UtcNow,
+                    segments = new[] { new { startMs = 0, endMs = 4100, text = "Private lesson text" } },
+                })
+            };
+            response.Headers.TryAddWithoutValidation("Cache-Control", TranscriptionCacheControl);
+            return response;
+        }
 
         if (StatusCode == HttpStatusCode.OK && request.RequestUri?.AbsolutePath == "/internal/v1/video-tags")
             return new HttpResponseMessage(StatusCode) { Content = JsonContent.Create(new { data = Tags }) };
@@ -57,12 +79,13 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
                 {
                     videoId = Guid.CreateVersion7(),
                     title = "Aula 1",
-                    status = "received",
+                    status = StatusCode == HttpStatusCode.Accepted ? "ready" : "received",
                     uploadedBy = new { accountId = Guid.CreateVersion7(), name = "Marina Alves" },
                     uploadedAt = DateTimeOffset.UtcNow,
                     durationSeconds = (int?)null,
                     failureReason = (string?)null,
                     tags = Tags,
+                    transcription = TranscriptionState ?? new { status = StatusCode == HttpStatusCode.Accepted ? "in-progress" : "not-requested", readable = false, readyAt = (DateTimeOffset?)null, failureReason = (string?)null, canStart = false },
                 }),
             };
         }
@@ -85,6 +108,9 @@ public sealed class VideoLibraryHandler : HttpMessageHandler
         StatusCode = HttpStatusCode.OK;
         LastBody = null;
         Tags = [];
+        TranscriptionState = null;
+        TranscriptionContentFactory = null;
+        TranscriptionCacheControl = "private, no-store";
         ProblemCode = null;
         RequestCount = 0;
         LastAccessToken = null;

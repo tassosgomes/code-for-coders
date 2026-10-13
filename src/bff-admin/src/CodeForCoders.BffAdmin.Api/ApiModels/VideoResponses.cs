@@ -10,8 +10,11 @@ public sealed record VideoResponse(
     DateTimeOffset UploadedAt,
     int? DurationSeconds,
     string? FailureReason,
-    IReadOnlyList<string>? Tags = null)
+    IReadOnlyList<string>? Tags = null,
+    VideoTranscriptionResponse? Transcription = null)
 {
+    public VideoTranscriptionResponse Transcription { get; init; } = Transcription ?? new("not-requested", false, null, null, false);
+
     public IReadOnlyList<string> Tags { get; init; } = Tags ?? [];
 }
 

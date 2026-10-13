@@ -1,10 +1,31 @@
-import { CircleCheck, Clock, LoaderCircle, TriangleAlert } from 'lucide-react';
+import { CircleCheck, Clock, FileMinus, LoaderCircle, TriangleAlert } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-import type { VideoStatus } from '@/features/videos/api/get-videos';
+import type { VideoStatus, VideoTranscription } from '@/features/videos/api/get-videos';
 
 type VideoStatusBadgeProps = {
   status: VideoStatus;
+};
+
+export const transcriptionStatusLabels: Record<VideoTranscription['status'], string> = {
+  'not-requested': 'Sem transcrição',
+  'in-progress': 'Transcrevendo',
+  ready: 'Pronta',
+  failed: 'Falhou',
+};
+
+const transcriptionIcons = {
+  'not-requested': FileMinus, 'in-progress': LoaderCircle, ready: CircleCheck, failed: TriangleAlert,
+};
+
+type VideoTranscriptionStatusBadgeProps = { status: VideoTranscription['status'] };
+
+export const VideoTranscriptionStatusBadge = ({ status }: VideoTranscriptionStatusBadgeProps) => {
+  const Icon = transcriptionIcons[status];
+  return <span className={`video-status-badge video-transcription-badge ${status}`}>
+    <Icon aria-hidden="true" className={status === 'in-progress' ? 'video-status-spinner' : undefined} size={14} />
+    {transcriptionStatusLabels[status]}
+  </span>;
 };
 
 const statusContent = {

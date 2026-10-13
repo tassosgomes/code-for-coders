@@ -19,6 +19,8 @@ public sealed class AwsMediaOptions
 
     public string? EndpointPublic { get; set; }
 
+    public string? EndpointTranscription { get; set; }
+
     public string? AccessKeyId { get; set; }
 
     public string? SecretAccessKey { get; set; }

@@ -4,7 +4,7 @@ product: code-4-coders
 version: 1.1
 status: approved
 updated: 2026-09-30
-sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4, context/architecture-baseline.md@1.2, domains/entrega-de-midia-e-protecao/domain.md@1.0, domains/auditoria-e-conformidade/domain.md@1.2, domains/identidade-e-acesso/domain.md@1.1
+sources: vision.md@1.2, context/domain-map.md@1.2, backlog/capabilities.md@1.4, context/architecture-baseline.md@1.2, domains/entrega-de-midia-e-protecao/domain.md@1.1, domains/auditoria-e-conformidade/domain.md@1.2, domains/identidade-e-acesso/domain.md@1.1
 ---
 
 # Domain Document — Conteúdo e Currículo
