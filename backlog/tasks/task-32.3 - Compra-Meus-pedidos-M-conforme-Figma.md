@@ -1,11 +1,11 @@
 ---
 id: TASK-32.3
 title: 'Compra: Meus pedidos (M) conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:42'
-updated_date: '2026-10-13 21:30'
+updated_date: '2026-10-13 22:14'
 labels:
   - frontend
 dependencies: []
@@ -32,11 +32,11 @@ Meus pedidos monta um card por linha, mostra a situação sem badge e usa pagina
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Pendente em card com borda de acento, badge, linha de prazo e Retomar pagamento à direita
-- [ ] #2 Histórico em tabela num card só, com cabeçalho em overline, OrderStatusBadge e ação Ir para o curso / Ver pedido
-- [ ] #3 Paginação compacta conforme o Figma
-- [ ] #4 Vazio, carregando, erro e mobile 390 (M2 a M5 e variantes .m) seguem o Figma sem rolagem horizontal
-- [ ] #5 Lint, build e testes do student-spa passam e a tela foi conferida em dev
+- [x] #1 Pendente em card com borda de acento, badge, linha de prazo e Retomar pagamento à direita
+- [x] #2 Histórico em tabela num card só, com cabeçalho em overline, OrderStatusBadge e ação Ir para o curso / Ver pedido
+- [x] #3 Paginação compacta conforme o Figma
+- [x] #4 Vazio, carregando, erro e mobile 390 (M2 a M5 e variantes .m) seguem o Figma sem rolagem horizontal
+- [x] #5 Lint, build e testes do student-spa passam e a tela foi conferida em dev
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -55,4 +55,12 @@ Implementado: PendingOrderCard (borda primary de 2, '#N · curso · opção', 'v
 PR #234 aberta (branch fix/compra-meus-pedidos-figma). Conferência em dev pendente após o deploy.
 
 PR #234 mergeada em 2026-10-13.
+
+Conferência em dev em 2026-10-13: pendente #000023 em destaque (borda de acento, 'R$ 397,00 · 13/10/2026 · Ainda não escolhido', 'Pague até 14/10/2026 às 19:12', badge e Retomar pagamento) e histórico em tabela com #000022 Pago e Ir para o curso (M1); janela de 500 (mínimo do Chrome) em cards como no M5, sem rolagem horizontal. Vazio, carregando e erro conferidos pela prévia local e pelos testes.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Meus pedidos alinhado ao Figma: pendente em destaque, histórico em tabela (cards no mobile) com OrderStatusBadge, paginação compacta e estados vazio, carregando e erro. Verificado com lint, build e testes do student-spa, prévia local e conferência em dev (M1, M5) (PR #234).
+<!-- SECTION:FINAL_SUMMARY:END -->

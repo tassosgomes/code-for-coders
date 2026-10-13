@@ -1,11 +1,11 @@
 ---
 id: TASK-32.4
 title: 'Compra: Financeiro do backoffice (F) conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:42'
-updated_date: '2026-10-13 21:59'
+updated_date: '2026-10-13 22:21'
 labels:
   - frontend
 dependencies: []
@@ -43,10 +43,10 @@ A lista e o detalhe de pedidos do backoffice seguem a estrutura do Figma, mas o 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Lista, filtros e estados F1.a a F1.f e F2 conferidos e alinhados ao Figma
-- [ ] #2 Detalhe com trilha Financeiro / Pedidos / #NNNNNN, badges de situação e concessão e referência do pagamento em mono com Copiar (F3)
-- [ ] #3 Estados F3.b1 a F3.e e mobile 390 seguem o Figma sem rolagem horizontal
-- [ ] #4 Lint, build e testes do admin-spa passam e as telas foram conferidas em dev
+- [x] #1 Lista, filtros e estados F1.a a F1.f e F2 conferidos e alinhados ao Figma
+- [x] #2 Detalhe com trilha Financeiro / Pedidos / #NNNNNN, badges de situação e concessão e referência do pagamento em mono com Copiar (F3)
+- [x] #3 Estados F3.b1 a F3.e e mobile 390 seguem o Figma sem rolagem horizontal
+- [x] #4 Lint, build e testes do admin-spa passam e as telas foram conferidas em dev
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -67,4 +67,12 @@ Implementado: regras do Financeiro saem de app.css para assets/finance.css. List
 PR #235 aberta (branch fix/compra-financeiro-figma). Conferência em dev pendente após o deploy, com conta de financeiro.
 
 PR #235 mergeada em 2026-10-13.
+
+Conferência em dev em 2026-10-13 (conta Financeiro, 1440): lista com filtros em card, '21 pedidos', tabela com cabeçalho em overline, badges Aguardando pagamento/Pago/Expirado (vermelho sólido)/Cancelado com ícones e paginação '20 por página ‹ 1 2 ›' (F1.b); detalhe #000018 pago igual ao F3.a (trilha, badge, cards, referência em mono com Copiar, momentos 'às', concessão ✓ Existe); detalhe #000023 aguardando igual ao F3.b1 com '— Sem concessão: pedido não pago' e 'válida até 14/10/2026 às 19:12' (sem o 'Pague até', fora de escopo pelo contrato). Janela de 500 (mínimo do Chrome): pedidos em cards como no F1.i, sem rolagem horizontal, e Sheet de filtros com alça, título e ✕ como no F2.a. Observação fora de escopo, já existente: ao abrir o detalhe a partir da lista rolada, a página mantém a rolagem em vez de voltar ao topo.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Financeiro do backoffice alinhado ao Figma: filtros, tabela com OrderStatusBadge, paginação e estados da lista; detalhe com trilha, cards, referência em mono e concessão em badge; mobile em cards e filtros em Sheet. Verificado com lint, build e testes do admin-spa, prévia local e conferência em dev com conta de financeiro (F1.b, F3.a, F3.b1, F1.i, F2.a) (PR #235).
+<!-- SECTION:FINAL_SUMMARY:END -->

@@ -1,11 +1,11 @@
 ---
 id: TASK-32.2
 title: 'Compra: página do Pedido (O) conforme Figma'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:41'
-updated_date: '2026-10-13 21:12'
+updated_date: '2026-10-13 22:14'
 labels:
   - frontend
 dependencies: []
@@ -47,12 +47,12 @@ A página /pedidos/:orderId repete o número do pedido como título, usa um Aler
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Cabeçalho com PEDIDO #NNNNNN em overline, curso em H2 e linha 'opção · valor · criado em DD/MM/AAAA'
-- [ ] #2 OrderStatePanel com ícone em quadrado colorido, título H3, texto e ações para O1 a O10 e O12.c
-- [ ] #3 Resumo do pedido com linhas rotuladas e a situação em OrderStatusBadge (ícone e texto, G10)
-- [ ] #4 Desistência em AlertDialog no desktop e Sheet inferior no mobile com os textos do Figma (O8, O8.b, O8.m)
-- [ ] #5 Não encontrado (O11), carregando (O12.a) e erro (O12.b) seguem o Figma; mobile 390 sem rolagem horizontal
-- [ ] #6 Lint, build e testes do student-spa passam e a tela foi conferida em dev
+- [x] #1 Cabeçalho com PEDIDO #NNNNNN em overline, curso em H2 e linha 'opção · valor · criado em DD/MM/AAAA'
+- [x] #2 OrderStatePanel com ícone em quadrado colorido, título H3, texto e ações para O1 a O10 e O12.c
+- [x] #3 Resumo do pedido com linhas rotuladas e a situação em OrderStatusBadge (ícone e texto, G10)
+- [x] #4 Desistência em AlertDialog no desktop e Sheet inferior no mobile com os textos do Figma (O8, O8.b, O8.m)
+- [x] #5 Não encontrado (O11), carregando (O12.a) e erro (O12.b) seguem o Figma; mobile 390 sem rolagem horizontal
+- [x] #6 Lint, build e testes do student-spa passam e a tela foi conferida em dev
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -72,4 +72,12 @@ Implementado: OrderStatusBadge e alertas compartilhados (o Resumo passa a usá-l
 PR #233 aberta (branch fix/compra-pedido-figma). Conferência em dev com pedido de teste no sandbox do Stripe pendente após o deploy.
 
 PR #233 mergeada em 2026-10-13.
+
+Conferência em dev em 2026-10-13: pedido pago #000022 igual ao O3.b (sem a linha do comprovante, aberto depois); voltando do Stripe com ?resultado=saiu, o #000023 ficou em 'Aguardando pagamento' com 'vale até 14/10/2026 às 19:12', Continuar pagamento e Desistir (O7); diálogo 'Desistir deste pedido?' com o número, Manter pedido e Desistir do pedido (O8), fechado sem cancelar. Demais estados conferidos pela prévia local e pelos testes.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Página do Pedido alinhada ao Figma: cabeçalho, OrderStatePanel para O1 a O12, resumo com OrderStatusBadge e desistência em AlertDialog/Sheet; pedido pago sem concessão passa a se atualizar sozinho. Verificado com lint, build e testes do student-spa, prévia local desktop e 390 e conferência em dev (O3.b, O7, O8) (PR #233).
+<!-- SECTION:FINAL_SUMMARY:END -->

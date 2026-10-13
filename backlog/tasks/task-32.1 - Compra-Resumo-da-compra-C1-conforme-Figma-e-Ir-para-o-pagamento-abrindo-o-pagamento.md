@@ -3,11 +3,11 @@ id: TASK-32.1
 title: >-
   Compra: Resumo da compra (C1) conforme Figma e Ir para o pagamento abrindo o
   pagamento
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-13 20:41'
-updated_date: '2026-10-13 20:51'
+updated_date: '2026-10-13 22:14'
 labels:
   - frontend
 dependencies: []
@@ -34,12 +34,12 @@ O resumo mostra 'Confirmar compra', cria o pedido e para na página do pedido, o
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Cartão de 640 com sobretítulo CURSO, título H3, linhas com rótulo de 140 entre divisórias, preço em H5 e ações '← Voltar ao curso' (ghost) e 'Ir para o pagamento' (primário) lado a lado (C1.a)
-- [ ] #2 'Ir para o pagamento' cria o pedido e abre o pagamento do gateway; durante a espera fica desabilitado com 'Abrindo o pagamento…'; clique repetido não cria outro pedido
-- [ ] #3 Pagamento indisponível depois de criar o pedido mostra o alerta do C1.e com Tentar de novo (mesmo pedido) e Ver meu pedido
-- [ ] #4 Aviso de acesso existente (C1.b), pedido pendente (C1.c), opção indisponível (C1.d), carregando (C1.f) e erro (C1.g) seguem o Figma
-- [ ] #5 Mobile 390 (C1.h) sem rolagem horizontal
-- [ ] #6 Lint, build e testes do student-spa passam e a tela foi conferida em dev
+- [x] #1 Cartão de 640 com sobretítulo CURSO, título H3, linhas com rótulo de 140 entre divisórias, preço em H5 e ações '← Voltar ao curso' (ghost) e 'Ir para o pagamento' (primário) lado a lado (C1.a)
+- [x] #2 'Ir para o pagamento' cria o pedido e abre o pagamento do gateway; durante a espera fica desabilitado com 'Abrindo o pagamento…'; clique repetido não cria outro pedido
+- [x] #3 Pagamento indisponível depois de criar o pedido mostra o alerta do C1.e com Tentar de novo (mesmo pedido) e Ver meu pedido
+- [x] #4 Aviso de acesso existente (C1.b), pedido pendente (C1.c), opção indisponível (C1.d), carregando (C1.f) e erro (C1.g) seguem o Figma
+- [x] #5 Mobile 390 (C1.h) sem rolagem horizontal
+- [x] #6 Lint, build e testes do student-spa passam e a tela foi conferida em dev
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -59,4 +59,12 @@ Implementado: cabeçalho COMPRA/H2; cartão de 640 (p-6; p-5 no mobile) com over
 PR #232 aberta (branch fix/compra-resumo-figma). Conferência em dev com pedido de teste no sandbox do Stripe pendente após o deploy.
 
 PR #232 mergeada em 2026-10-13.
+
+Conferência em dev em 2026-10-13 (aluno Tasso Silva Gomes, 1440): resumo do curso 'Fundamentos de Programação Orientada Objetos', opção 'Acesso por 12 meses', igual ao C1.a; 'Ir para o pagamento' mostrou 'Abrindo o pagamento…', criou o pedido #000023 (R$ 397,00) e abriu o checkout do Stripe sandbox (checkout.stripe.com, cs_test_…). Estados C1.b a C1.g conferidos pela prévia local e pelos testes. Fora de escopo, já existente: o cabeçalho do shell mostra 'Início' na rota /comprar.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Resumo da compra alinhado ao Figma (C1.a a C1.h) e ao fluxo aprovado G6: 'Ir para o pagamento' cria o pedido e abre o pagamento do gateway, com alerta de pagamento indisponível que reaproveita o mesmo pedido. Verificado com lint, build e testes do student-spa, prévia local desktop e 390 e conferência em dev com pedido de teste no sandbox do Stripe (PR #232).
+<!-- SECTION:FINAL_SUMMARY:END -->
