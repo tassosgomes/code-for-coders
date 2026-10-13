@@ -1,5 +1,5 @@
 ---
-status: blocked
+status: done
 task_kind: vertical
 blocked_by: ["4.0", "7.0"]
 gate: 'dotnet test --project src/media/tests/CodeForCoders.Media.IntegrationTests/CodeForCoders.Media.IntegrationTests.csproj -- --filter-class CodeForCoders.Media.IntegrationTests.TranscriptionRealServiceSmokeTests --minimum-expected-tests 1'
@@ -64,3 +64,22 @@ que a cadência de consulta; sem ele, fecha por consulta.
 - [ ] Vídeo curto real fica `ready` em dev, com texto legível na leitura do professor.
 - [ ] O prefixo `transcription/` do bucket está vazio ao fim.
 - [ ] `TRUSTED_PRIVATE_SOURCES` (e, onde houver receptor, `TRUSTED_PRIVATE_WEBHOOKS`) foram confirmados pelo operador para o ambiente testado.
+
+## Encerramento (2026-10-13)
+
+Concluída pelo responsável com verificação ponta a ponta no ambiente dev, depois do merge da PR #225:
+
+- Deploy em dev (`desenv-server`) com `TRANSCRIPTION_ENABLED=true` e as migrations `AddVideoTranscriptions` e
+  `AddTranscriptionAudioCleanups` aplicadas por `scripts/remote-infra.sh migrate`.
+- Serviço de transcrição (`192.168.0.11`, `/home/tsgomes/whisper-api/compose.yml`) com
+  `TRUSTED_PRIVATE_SOURCES=http://192.168.0.5:9000,http://192.168.0.11:9000` na api e no worker (EN-02, fontes).
+- Transcrição pedida pelo professor na tela Vídeos: envio aceito (202), job `completed`, tentativa `ready` com 20
+  trechos e 133.590 ms; áudio temporário apagado do bucket (RN-M23). O responsável conferiu a leitura do professor,
+  o painel do aluno (busca e clique) e a legenda no player.
+- Antes da allowlist, três envios receberam 422 do serviço e contaram como falhas de envio; a tentativa seguiu e
+  ficou pronta sem intervenção.
+
+Não executados: o teste explícito `TranscriptionRealServiceSmokeTests` (o gate desta task, que exige banco exclusivo
+e as variáveis descritas em `TRANSCRIPTION-SMOKE.md`) e o aviso (webhook), que segue sem `TRUSTED_PRIVATE_WEBHOOKS`,
+destino e segredo configurados; o resultado chegou pela consulta periódica, como a task autoriza. A reavaliação do
+`AttemptTimeout` de `GetResultAsync` (review 4.0, rec. 2) segue sem evidência de resultado grande.

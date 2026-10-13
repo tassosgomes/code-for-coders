@@ -8,11 +8,11 @@ info:
     Fonte da verdade do contrato desta fronteira. Mudanças entram por PR neste arquivo, promovidas a partir do recorte do PRD (ver `contracts/README.md`). Os documentos de origem, arquivados, são só histórico:
 
     - `tasks/archive/prd-ingestao-midia/api-contract.yaml` 1.1.1
-    - `tasks/prd-transcricao-legenda-aula/api-contract.yaml` 1.3.0
+    - `tasks/archive/prd-transcricao-legenda-aula/api-contract.yaml` 1.3.0
 
     **Notas de prd-ingestao-midia (1.1.1):** Recorte de CAP-006, PRD `tasks/archive/prd-ingestao-midia/prd.md` v1.0, aprovado em 2026-09-25. Interface `admin-spa` → `bff-admin`. Acrescenta as operações de vídeo ao BFF do backoffice descrito em `tasks/archive/prd-acesso-interno/api-contract.yaml` 1.0.0, sem alterar as operações de lá. Toda operação exige a permissão `midia.enviar` (RF-01): o BFF recusa antes, e o serviço de mídia recusa de novo (baseline, Autorização). O arquivo não passa pelo BFF: ele devolve URLs de parte assinadas, de vida curta e opacas, e o navegador envia cada parte direto ao armazenamento (C-11). O navegador nunca recebe nome de bucket, distribuição, chave de cifra nem endereço de leitura.
 
-    **Notas de prd-transcricao-legenda-aula (1.3.0):** Recorte de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Evolui de forma aditiva com o estado da transcrição em `Video` e as operações `requestVideoTranscription` e `getVideoTranscription` (RF-02, RF-08). A numeração 1.2.0 → 1.3.0 parte do recorte de tags de vídeo (`tasks/prd-tags-video/api-contract.yaml` 1.2.0, promovido aditivamente e com consolidação própria pendente no PRD dele).
+    **Notas de prd-transcricao-legenda-aula (1.3.0):** Recorte de `CAP-032`, `tasks/archive/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Evolui de forma aditiva com o estado da transcrição em `Video` e as operações `requestVideoTranscription` e `getVideoTranscription` (RF-02, RF-08). A numeração 1.2.0 → 1.3.0 parte do recorte de tags de vídeo (`tasks/prd-tags-video/api-contract.yaml` 1.2.0, promovido aditivamente e com consolidação própria pendente no PRD dele).
   contact:
     name: Time de Entrega de Mídia
 servers:

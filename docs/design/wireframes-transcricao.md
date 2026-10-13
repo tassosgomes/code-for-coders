@@ -6,7 +6,7 @@
 > `admin-spa` (incluindo a leitura somente leitura) e o **painel de transcrição, a busca e a legenda** na
 > página da aula do `student-spa`. Aprovado este ASCII → desenho no Figma (task 2.0) → aprovação →
 > código de tela (tasks 5.0, 8.0, 9.0, 10.0 e 11.0).
-> **Fontes:** `tasks/prd-transcricao-legenda-aula/prd.md` 1.1 (RF-02 a RF-08, RN-TL01 a RN-TL08, DP-01 a DP-10,
+> **Fontes:** `tasks/archive/prd-transcricao-legenda-aula/prd.md` 1.1 (RF-02 a RF-08, RN-TL01 a RN-TL08, DP-01 a DP-10,
 > Experiência do Usuário), `techspec.md` 1.0 (Bloco Frontend, Q-G), `api-contract.md` (vídeos, transcrição,
 > motivos de falha), `api-contract-student.md` (transcrição da aula, legenda), `docs/design/wireframes-videos.md`
 > (tela Vídeos aprovada, **não reaberta**), `docs/design/wireframes-aula.md` (página da aula aprovada, **não

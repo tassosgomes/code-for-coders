@@ -111,7 +111,7 @@ no caminho crítico (RN-M19).
 |---|---|---|
 | `CAP-006` | Receber o vídeo, preparar a Versão de Reprodução, expor o estado a quem enviou e deixar a Mídia pronta consultável para vínculo | Não iniciada — fatia do primeiro PRD em OD29 |
 | `CAP-007` | Abrir Sessão de Reprodução após a decisão de acesso, entregar segmentos e chave por acesso de vida curta, fornecer ao player o necessário para a Marca d'Água e informar o avanço | Não iniciada |
-| `CAP-032` | Transcrever a Mídia pronta, guardar a Transcrição, expor o estado ao professor e entregar Legenda e Trechos ao aluno sob a mesma decisão de acesso da reprodução | Não iniciada — PRD em `tasks/prd-transcricao-legenda-aula/` |
+| `CAP-032` | Transcrever a Mídia pronta, guardar a Transcrição, expor o estado ao professor e entregar Legenda e Trechos ao aluno sob a mesma decisão de acesso da reprodução | Não iniciada — PRD em `tasks/archive/prd-transcricao-legenda-aula/` |
 
 As três derivam de `C04` na visão. `CAP-032` não está na visão; nasceu de decisão do negócio em
 2026-10-12, é pós-MVP e está posicionada na Fase 3 do backlog.

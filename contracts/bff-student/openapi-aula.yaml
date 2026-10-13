@@ -9,13 +9,13 @@ info:
 
     - `tasks/archive/prd-reproducao-protegida/api-contract.yaml` 1.0.0
     - `tasks/archive/prd-progresso-aluno/api-contract.yaml` 1.1.0
-    - `tasks/prd-transcricao-legenda-aula/api-contract-student.yaml` 1.2.0
+    - `tasks/archive/prd-transcricao-legenda-aula/api-contract-student.yaml` 1.2.0
 
     **Notas de prd-reproducao-protegida (1.0.0):** Recorte de `CAP-007`, `tasks/archive/prd-reproducao-protegida/prd.md` v1.0 de 2026-10-03. Interface SPA → BFF do aluno para a tela da aula e a reprodução. O BFF não decide nada: valida a sessão em Identity (ADR-0003), obtém o JWT de aluno com a audiência do serviço dono (`learning` ou `media`) e repassa. Escritas exigem `X-CSRF-Token` (G18). As playlists e a chave passam pelo BFF (G15) e são repassadas sem alteração; os segmentos vêm direto da distribuição, por endereço sem credencial mais `segmentAccess.query` (C-01, C-06). Nenhuma operação de `CAP-001` a `CAP-008` muda.
 
     **Notas de prd-progresso-aluno (1.1.0):** Recorte de `CAP-017`, `tasks/archive/prd-progresso-aluno/prd.md` v1.0 de 2026-10-04. Evolui `contracts/bff-student/openapi-aula.yaml` 1.0.0 de forma aditiva com duas leituras: **meus cursos** (RF-04, RF-05) e o **progresso do curso** para a tela da aula (RF-05, RF-06). As sete operações de `CAP-007` não mudam.
 
-    **Notas de prd-transcricao-legenda-aula (1.2.0):** Recorte de `CAP-032`, `tasks/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Evolui de forma aditiva com duas leituras novas, `getLessonTranscription` e `getPlaybackCaptions` (legenda WebVTT, `text/vtt`); nenhuma operação existente muda.
+    **Notas de prd-transcricao-legenda-aula (1.2.0):** Recorte de `CAP-032`, `tasks/archive/prd-transcricao-legenda-aula/prd.md` v1.1, aprovado em 2026-10-12. Evolui de forma aditiva com duas leituras novas, `getLessonTranscription` e `getPlaybackCaptions` (legenda WebVTT, `text/vtt`); nenhuma operação existente muda.
   contact:
     name: Time de Entrega de Mídia e Proteção
 servers:

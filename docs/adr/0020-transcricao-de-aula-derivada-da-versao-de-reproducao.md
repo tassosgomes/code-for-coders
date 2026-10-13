@@ -8,7 +8,7 @@ Accepted
 
 - Caminho: `docs/adr/0020-transcricao-de-aula-derivada-da-versao-de-reproducao.md`
 - Domínios/componentes afetados: Entrega de Mídia e Proteção (`media` — API e worker), `bff-admin`, `bff-student`, `admin-spa`, `student-spa`; serviço de transcrição próprio (repositório `tassosgomes/whisper-api`, dependência externa)
-- Origem histórica: `tasks/prd-transcricao-legenda-aula`, CAP-032 (TechSpec de 2026-10-12)
+- Origem histórica: `tasks/archive/prd-transcricao-legenda-aula`, CAP-032 (TechSpec de 2026-10-12)
 - Substitui: Nenhuma. Conforma e estende a [ADR-0006](0006-preparacao-de-video-e-custodia-de-chave.md) (custódia da chave); complementa as [ADR-0014](0014-entrega-de-segmentos-por-credencial-opaca-e-porta-de-distribuicao.md) e [ADR-0019](0019-runtime-e-deploy-atual.md)
 
 ## Data
@@ -90,7 +90,7 @@ A capacidade CAP-032 transcreve a fala de cada vídeo pronto e entrega o texto a
 
 ## Notas de Implementação
 
-- Estados, tabelas, política de envio e nova tentativa, limites e sinais ficam na TechSpec `tasks/prd-transcricao-legenda-aula/techspec.md`; esta ADR registra só a decisão durável.
+- Estados, tabelas, política de envio e nova tentativa, limites e sinais ficam na TechSpec `tasks/archive/prd-transcricao-legenda-aula/techspec.md`; esta ADR registra só a decisão durável.
 - Evidência de viabilidade (2026-10-12): com ffmpeg 9.0.1, HLS AES-128 de 480p com marcador de chave `c4c-key:{videoId}` reescrito para um arquivo local foi decifrado e extraído em `.m4a` mono 16 kHz AAC (cerca de 6 KB/s, ou ~43 MB para 2 h). A imagem do `media` usa o ffmpeg do Debian; a primeira task confirma o mesmo comando na imagem real.
 - Configuração operacional do serviço (listas de destinos privados e credenciais por ambiente) fica na TechSpec; não é decisão arquitetural.
 
@@ -100,4 +100,4 @@ A capacidade CAP-032 transcreve a fala de cada vídeo pronto e entrega o texto a
 - [Baseline arquitetural](../../context/architecture-baseline.md): camada anticorrupção, webhook por endpoint dedicado e idempotente, G21, G22, G23.
 - [Domínio Entrega de Mídia e Proteção](../../domains/entrega-de-midia-e-protecao/domain.md): RN-M18 a RN-M27.
 - Contrato do serviço de transcrição: repositório `tassosgomes/whisper-api`, `tasks/prd-api-transcricao-assincrona/api-contract.yaml` 1.0.0 e ADR-003 dele (destinos privados).
-- Origem histórica: `tasks/prd-transcricao-legenda-aula`.
+- Origem histórica: `tasks/archive/prd-transcricao-legenda-aula`.
