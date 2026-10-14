@@ -1,11 +1,11 @@
 ---
 id: TASK-33
 title: Corrige os achados da auditoria técnica do frontend (Impeccable)
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-13 23:20'
-updated_date: '2026-10-13 23:41'
+updated_date: '2026-10-14 00:03'
 labels:
   - frontend
   - a11y
@@ -57,3 +57,9 @@ Orquestrado com 3 agentes Sonnet (rotas do aluno, rotas do admin, CSS do admin) 
 - Verificação: lint, tsc, vitest (aluno 231, admin 396, duas rodadas padrão) e build nos dois SPAs; detector do Impeccable só aponta a marca de citação de .audit-detail-reason (legítima). Conferência visual local dos logins nos dois temas.
 - Pendente fora do código: atualizar a variável input no Figma.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Corrigidos os achados da auditoria técnica do Impeccable nos dois SPAs (PR #237, mergeada em 2026-10-13): rotas sob demanda (entrada do aluno 497→174 KB gzip, admin 318→116 KB gzip, hls.js só na aula), fontes do admin via <link>, borda de input ink/400 no claro e ink/500 no escuro, tokens de sombra e fonte no admin, status na paleta, borda escura distinta do fundo, reduced-motion nos skeletons, :focus-visible, controles de 44 px no celular em Financeiro e Cortesias, @testing-library/dom em devDependencies e DESIGN.md §3.4 com os tokens do backoffice. Verificado com lint, tsc, vitest (231 e 396 testes, duas rodadas), build, detector do Impeccable e conferência local dos logins nos dois temas. Pendente fora do código: variável input no Figma.
+<!-- SECTION:FINAL_SUMMARY:END -->
