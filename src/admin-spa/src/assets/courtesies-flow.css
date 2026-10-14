@@ -71,3 +71,9 @@
   .courtesy-grants-table { border: 0; background: transparent; overflow: visible; }
   .courtesy-grants-footer { padding: 10px 0; border-top: 0; }
 }
+
+/* Alvos de toque de 44px no mobile. */
+@media (max-width: 767px) {
+  .courtesy-page .text-button { min-height: 44px; }
+  .courtesy-grants-pagination button { min-width: 44px; height: 44px; }
+}

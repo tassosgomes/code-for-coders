@@ -9,7 +9,7 @@
 
 /* Curso */
 .courtesy-search-row { display: flex; gap: 8px; align-items: center; }
-.courtesy-search-row input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: inherit; background: var(--surface); font: inherit; }
+.courtesy-search-row input { flex: 1; min-width: 0; border: 1px solid var(--input-border); border-radius: 10px; padding: 10px 12px; color: inherit; background: var(--surface); font: inherit; }
 .courtesy-course-table { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .courtesy-course-head, .courtesy-course-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px 110px; align-items: center; gap: 12px; }
 .courtesy-course-head { padding: 10px 16px; background: var(--surface-subtle); color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; }
@@ -71,7 +71,7 @@
 .courtesy-result-title { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; }
 .courtesy-result-title svg { color: var(--status-success); }
 .courtesy-result-summary { display: grid; gap: 6px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; }
-.courtesy-result-summary strong { font: 600 16px/24px 'Plus Jakarta Sans', sans-serif; }
+.courtesy-result-summary strong { font: 600 16px/24px var(--font-heading); }
 .courtesy-result-summary p { margin: 0; font-size: 14px; line-height: 20px; }
 .courtesy-result-summary p:not(.courtesy-hint) { font-weight: 500; }
 /* Figma T6.a: ação principal à esquerda, link ao lado. */
@@ -88,4 +88,9 @@
   .courtesy-period-options { grid-template-columns: 1fr; }
   .courtesy-review-row { grid-template-columns: 1fr auto; }
   .courtesy-review-row dt { grid-column: 1 / -1; }
+}
+
+/* Alvos de toque de 44px no mobile. */
+@media (max-width: 767px) {
+  .courtesy-pagination button { min-width: 44px; height: 44px; }
 }

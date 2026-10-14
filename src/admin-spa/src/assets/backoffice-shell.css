@@ -54,12 +54,12 @@
 
 .app-shell .app-sidebar .sidebar-heading {
   margin: 0;
-  font: 600 12px/16px Inter, system-ui, sans-serif;
+  font: 600 12px/16px var(--font-sans);
   letter-spacing: 1.2px;
 }
 
 .app-shell .app-nav a {
-  font: 500 14px/20px Inter, system-ui, sans-serif;
+  font: 500 14px/20px var(--font-sans);
   color: var(--foreground-secondary);
 }
 
@@ -73,12 +73,12 @@
 .app-shell .account-trigger {
   gap: 8px;
   padding: 4px 8px 4px 4px;
-  font: 500 14px/20px Inter, system-ui, sans-serif;
+  font: 500 14px/20px var(--font-sans);
   color: var(--foreground);
 }
 
 .app-shell .account-avatar {
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-sans);
   border: 2px solid var(--background);
   box-sizing: border-box;
 }
@@ -88,7 +88,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 4px;
-  box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.10);
+  box-shadow: var(--shadow-dialog);
 }
 
 .app-shell .account-menu-label {
@@ -98,12 +98,12 @@
 }
 
 .app-shell .account-menu-name {
-  font: 500 14px/20px Inter, system-ui, sans-serif;
+  font: 500 14px/20px var(--font-sans);
   color: var(--foreground);
 }
 
 .app-shell .account-menu-roles {
-  font: 400 12px/16px Inter, system-ui, sans-serif;
+  font: 400 12px/16px var(--font-sans);
   color: var(--muted);
 }
 
@@ -125,7 +125,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--foreground);
-  font: 400 14px/20px Inter, system-ui, sans-serif;
+  font: 400 14px/20px var(--font-sans);
   text-align: left;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .dashboard-page .dashboard-roles-label {
-  font: 400 14px/20px Inter, system-ui, sans-serif;
+  font: 400 14px/20px var(--font-sans);
   color: var(--muted);
 }
 
@@ -169,11 +169,11 @@
 }
 
 .dashboard-page.authoring-page .area-card h2 {
-  font: 600 16px/24px 'Plus Jakarta Sans', sans-serif;
+  font: 600 16px/24px var(--font-heading);
 }
 
 .dashboard-page.authoring-page .area-card p {
-  font: 400 14px/20px Inter, system-ui, sans-serif;
+  font: 400 14px/20px var(--font-sans);
   color: var(--muted);
 }
 
@@ -181,7 +181,7 @@
   min-height: 40px;
   padding: 0 16px;
   border-radius: 10px;
-  font: 600 14px/20px Inter, system-ui, sans-serif;
+  font: 600 14px/20px var(--font-sans);
 }
 
 /* Tela de sem permissão */
@@ -212,12 +212,12 @@
 
 .forbidden-page .forbidden-card h1 {
   margin: 0;
-  font: 600 20px/28px 'Plus Jakarta Sans', sans-serif;
+  font: 600 20px/28px var(--font-heading);
   letter-spacing: 0;
 }
 
 .forbidden-page .forbidden-card p {
   margin: 0;
-  font: 400 14px/20px Inter, system-ui, sans-serif;
+  font: 400 14px/20px var(--font-sans);
   color: var(--muted);
 }

@@ -33,7 +33,7 @@
 .catalog-alert .catalog-alert-action { justify-self: start; min-height: 32px; margin-left: 28px; padding: 0; border: 0; background: transparent; color: var(--primary); font-size: 12px; font-weight: 500; line-height: 16px; cursor: pointer; }
 
 /* Lista de cursos (C1.a) */
-.catalog-page .catalog-table-card { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+.catalog-page .catalog-table-card { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs); }
 .catalog-courses-table { width: 100%; border-collapse: collapse; }
 .catalog-courses-table th { padding: 12px 8px; background: var(--background); color: var(--muted); font-size: 14px; font-weight: 500; line-height: 20px; text-align: left; white-space: nowrap; }
 .catalog-courses-table td { padding: 16px 8px; border-top: 1px solid var(--border); font-size: 14px; line-height: 20px; }
@@ -70,11 +70,11 @@
 .catalog-pagination > span { margin-left: 4px; }
 
 /* Vazio com janela de código (C1.b) e vazio simples (C2.g) */
-.catalog-page .catalog-empty { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 48px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); text-align: center; }
+.catalog-page .catalog-empty { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 48px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs); text-align: center; }
 .catalog-page .catalog-empty.is-compact { gap: 16px; }
-.catalog-page .catalog-empty h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-page .catalog-empty h2 { margin: 0; font-family: var(--font-heading); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
 .catalog-page .catalog-empty p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
-.catalog-page .catalog-empty .code-window { width: min(540px, 100%); text-align: left; box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); }
+.catalog-page .catalog-empty .code-window { width: min(540px, 100%); text-align: left; box-shadow: var(--shadow-dialog); }
 .catalog-page .catalog-empty .code-window pre { color: var(--code-faint); }
 
 /* Ficha do curso (C2) */
@@ -85,9 +85,9 @@
 .catalog-page .catalog-record-header .catalog-heading h1 { overflow-wrap: anywhere; }
 .catalog-page .catalog-record-header > .catalog-badge-group { margin-bottom: 7px; }
 .catalog-page .catalog-record-body { display: grid; gap: 24px; margin-top: 24px; }
-.catalog-page .catalog-card { display: grid; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 1px rgb(var(--shadow-rgb) / 0.06); }
+.catalog-page .catalog-card { display: grid; gap: 16px; padding: 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs); }
 .catalog-page .catalog-card-header { display: flex; align-items: center; gap: 12px; }
-.catalog-page .catalog-card-header h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; }
+.catalog-page .catalog-card-header h2 { margin: 0; font-family: var(--font-heading); font-size: 16px; font-weight: 600; line-height: 24px; }
 .catalog-page .catalog-facts { display: grid; gap: 16px; margin: 0; }
 .catalog-page .catalog-facts > div { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: 16px; }
 .catalog-page .catalog-facts dt { color: var(--muted); font-size: 14px; line-height: 20px; }
@@ -111,8 +111,8 @@
 /* Ofertas (C2.a, C2.b, C2.d) */
 .catalog-page .catalog-offers { display: grid; gap: 24px; }
 .catalog-page .catalog-offers-header { display: flex; align-items: center; gap: 16px; }
-.catalog-page .catalog-offers-header h2 { flex: 1; margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
-.catalog-page .catalog-offer-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+.catalog-page .catalog-offers-header h2 { flex: 1; margin: 0; font-family: var(--font-heading); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-page .catalog-offer-list { margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs); }
 /* O Figma fixa a linha em 72 com o mesmo conteúdo de 46: 13 de espaço vertical. */
 .catalog-page .catalog-offer-row { display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 13px 20px; }
 .catalog-page .catalog-offer-row + .catalog-offer-row { border-top: 1px solid var(--border); }
@@ -123,7 +123,7 @@
 .catalog-page .catalog-offer-status { display: flex; flex: none; width: 150px; }
 .catalog-page .catalog-offer-action { display: flex; flex: none; justify-content: flex-end; width: 140px; }
 .catalog-page .catalog-offer-action button { min-height: 32px; padding: 0 12px; font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
-.catalog-page .catalog-offer-action .outline-button { border-color: var(--input-border); }
+.catalog-page .catalog-offer-action .outline-button { border-color: var(--border); }
 .catalog-page .catalog-offer-row .course-item-actions { flex: none; }
 .catalog-page .catalog-offer-row .course-action-trigger { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 10px; color: var(--foreground); }
 .catalog-page .catalog-offers-empty { padding: 32px; border: 1px dashed var(--border); border-radius: 16px; background: var(--surface); color: var(--muted); font-size: 14px; line-height: 20px; text-align: center; }
@@ -142,14 +142,14 @@
 .catalog-page .catalog-heading .catalog-skeleton-bar.is-title { width: 320px; max-width: 100%; height: 36px; }
 
 /* Diálogos de oferta (C3 a C7) */
-.catalog-dialog .dialog-card { display: grid; gap: 16px; border-radius: 16px; box-shadow: 0 4px 8px rgb(var(--shadow-rgb) / 0.04), 0 12px 32px rgb(var(--shadow-rgb) / 0.1); }
+.catalog-dialog .dialog-card { display: grid; gap: 16px; border-radius: 16px; box-shadow: var(--shadow-dialog); }
 .catalog-dialog.is-wide .dialog-card { width: min(560px, calc(100vw - 32px)); }
 .catalog-dialog .dialog-card[role='alertdialog'] { width: min(480px, calc(100vw - 32px)); }
 .catalog-dialog .dialog-card[role='alertdialog'] .dialog-close { display: none; }
 .catalog-dialog .dialog-card .course-dialog-heading { margin: 0; }
 .catalog-dialog .dialog-card .course-dialog-heading > div { display: grid; gap: 4px; }
 .catalog-dialog .dialog-card[role='alertdialog'] .course-dialog-heading > div { gap: 16px; }
-.catalog-dialog .dialog-card .course-dialog-heading h2 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-dialog .dialog-card .course-dialog-heading h2 { margin: 0; font-family: var(--font-heading); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
 .catalog-dialog .dialog-card .course-dialog-heading p { line-height: 20px; }
 .catalog-dialog .dialog-card .dialog-close { top: 25px; right: 25px; }
 .catalog-dialog .dialog-card form { display: grid; gap: 16px; }
@@ -173,7 +173,7 @@
 .catalog-dialog .dialog-card .catalog-period { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .catalog-dialog .dialog-card .catalog-period legend { margin: 0 0 8px; padding: 0; color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; }
 .catalog-dialog .catalog-period-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.catalog-dialog .dialog-card .catalog-period-option { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; cursor: pointer; }
+.catalog-dialog .dialog-card .catalog-period-option { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--input-border); border-radius: 10px; background: var(--surface); color: var(--foreground); font-size: 14px; font-weight: 500; line-height: 20px; cursor: pointer; }
 .catalog-dialog .catalog-period-option:has(input:checked) { border-color: var(--primary); background: var(--accent); }
 .catalog-dialog .catalog-period-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
 .catalog-dialog .catalog-period-option input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
@@ -181,14 +181,14 @@
 
 /* Prévia da opção (C4) e antes e depois (C5) */
 .catalog-dialog .offer-option { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
-.catalog-dialog .offer-option h3 { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; }
+.catalog-dialog .offer-option h3 { margin: 0; font-family: var(--font-heading); font-size: 16px; font-weight: 600; line-height: 24px; }
 .catalog-dialog .offer-option p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
-.catalog-dialog .offer-option strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-dialog .offer-option strong { font-family: var(--font-heading); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
 .catalog-dialog .offer-change-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .catalog-dialog .offer-change-side { display: grid; gap: 4px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .catalog-dialog .offer-change-side.is-after { border-color: var(--accent-border); background: var(--accent-subtle); }
 .catalog-dialog .offer-change-side h3 { margin: 0; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 16px; }
-.catalog-dialog .offer-change-side strong { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
+.catalog-dialog .offer-change-side strong { font-family: var(--font-heading); font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: -0.25px; }
 .catalog-dialog .offer-change-side p { margin: 0; color: var(--muted); font-size: 14px; line-height: 20px; }
 
 .catalog-mobile-only { display: none; }
@@ -202,7 +202,7 @@
   .catalog-courses-table,
   .catalog-courses-table tbody { display: block; }
   .catalog-courses-table tbody { display: grid; gap: 16px; }
-  .catalog-courses-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+  .catalog-courses-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 20px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs); }
   .catalog-courses-table td { display: block; width: auto; padding: 0; border: 0; }
   .catalog-courses-table td:first-child,
   .catalog-courses-table td:last-child { padding: 0; }
@@ -211,7 +211,7 @@
   .catalog-courses-table .catalog-col-open { flex-basis: 100%; }
   .catalog-page .catalog-open-link { margin-left: -12px; }
   .catalog-page .catalog-offer-list { display: grid; gap: 16px; border: 0; background: transparent; box-shadow: none; }
-  .catalog-page .catalog-offer-row { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(var(--shadow-rgb) / 0.06); }
+  .catalog-page .catalog-offer-row { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow-xs); }
   .catalog-page .catalog-offer-row + .catalog-offer-row { border-top: 1px solid var(--border); }
   .catalog-page .catalog-offers-header .primary-button { white-space: nowrap; }
   .catalog-page .catalog-record-header { flex-wrap: wrap; align-items: flex-start; }
