@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { FormTextField } from '@/components/ui/form';
+import { CaptchaField } from '@/components/captcha-field';
 import { PasswordField } from '@/components/ui/password-field';
 import { paths } from '@/config/paths';
 import {
@@ -28,7 +29,9 @@ import {
 } from '@/features/student-password-recovery/api/reset-student-password';
 import { useStudentPasswordResetForm } from '@/features/student-password-recovery/hooks/use-student-password-reset-form';
 import { useStudentPasswordResetRequestForm } from '@/features/student-password-recovery/hooks/use-student-password-reset-request-form';
+import { useCaptcha } from '@/hooks/use-captcha';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { getCaptchaErrorMessage } from '@/utils/captcha-error';
 
 const problemSchema = z.object({ code: z.string().optional() }).passthrough();
 
@@ -55,6 +58,7 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
   const requestForm = useStudentPasswordResetRequestForm();
   const resetForm = useStudentPasswordResetForm();
   const request = useRequestStudentPasswordReset();
+  const captcha = useCaptcha();
   const reset = useResetStudentPassword();
   const [initialToken] = useState(() => new URLSearchParams(location.search).get('token'));
   const resetTokenRef = useRef<string | null>(initialToken);
@@ -83,6 +87,10 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
   }, [initialToken, mode, navigate]);
 
   const submitResetRequest = async (input: StudentPasswordResetRequestInput) => {
+    if (!captcha.token) {
+      return;
+    }
+
     const fingerprint = JSON.stringify(input);
     const attempt = requestAttemptRef.current?.fingerprint === fingerprint
       ? requestAttemptRef.current
@@ -91,13 +99,15 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
     request.reset();
 
     try {
-      await request.mutateAsync({ input, idempotencyKey: attempt.key });
+      await request.mutateAsync({ input, idempotencyKey: attempt.key, captchaToken: captcha.token });
       requestAttemptRef.current = null;
       setSubmittedEmail(input.email);
       requestForm.reset();
       setState('request-sent');
     } catch {
       // Keep the submitted email in the form so a network failure is easy to retry.
+    } finally {
+      captcha.reset();
     }
   };
 
@@ -160,15 +170,17 @@ export const StudentPasswordRecoveryScreen = ({ mode }: StudentPasswordRecoveryS
                 name="email"
                 type="email"
               />
+              <CaptchaField captcha={captcha} />
               {request.isError ? (
                 <Alert variant="destructive">
                   <AlertTitle>Não foi possível enviar o pedido</AlertTitle>
                   <AlertDescription>
-                    Não conseguimos solicitar a recuperação agora. Tente novamente em instantes.
+                    {getCaptchaErrorMessage(request.error)
+                      ?? 'Não conseguimos solicitar a recuperação agora. Tente novamente em instantes.'}
                   </AlertDescription>
                 </Alert>
               ) : null}
-              <Button className="w-full" disabled={request.isPending} type="submit">
+              <Button className="w-full" disabled={request.isPending || !captcha.token} type="submit">
                 {request.isPending ? 'Enviando…' : 'Receber link de recuperação'}
               </Button>
             </form>

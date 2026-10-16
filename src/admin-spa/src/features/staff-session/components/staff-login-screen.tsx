@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
@@ -8,8 +8,10 @@ import axios from 'axios';
 
 import { paths } from '@/config/paths';
 import { AuthLayout } from '@/components/auth-layout';
+import { CaptchaField, type CaptchaFieldHandle } from '@/components/captcha-field';
 import { AuthNotice } from '@/components/auth-notice';
 import { Toast } from '@/components/toast';
+import { getCaptchaErrorMessage } from '@/lib/captcha';
 import { activeStaffSessionMarker, expiredStaffSessionMarker, loggedOutStaffSessionMarker } from '@/config/session-markers';
 import {
   staffSessionLoginSchema,
@@ -27,6 +29,9 @@ const readLoggedOutMarker = () => {
 
 export const StaffLoginScreen = () => {
   const [requestError, setRequestError] = useState<'credentials' | 'generic' | null>(null);
+  const [captchaMessage, setCaptchaMessage] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<CaptchaFieldHandle>(null);
   const [showSessionExpired, setShowSessionExpired] = useState(
     () => window.sessionStorage.getItem(expiredStaffSessionMarker) === 'true',
   );
@@ -54,14 +59,23 @@ export const StaffLoginScreen = () => {
   }, [showLoggedOut]);
 
   const submitCredentials = async (input: StaffSessionLoginInput) => {
+    if (!captchaToken) return;
     setRequestError(null);
+    setCaptchaMessage(null);
     try {
-      await createSession.mutateAsync(input);
+      await createSession.mutateAsync({ input, captchaToken });
       window.sessionStorage.setItem(activeStaffSessionMarker, 'true');
       window.sessionStorage.removeItem(expiredStaffSessionMarker);
       setShowSessionExpired(false);
       await navigate(paths.home.getHref(), { replace: true });
     } catch (error: unknown) {
+      // O token é de uso único: qualquer desfecho exige um novo.
+      captchaRef.current?.reset();
+      const message = getCaptchaErrorMessage(error);
+      if (message) {
+        setCaptchaMessage(message);
+        return;
+      }
       setRequestError(axios.isAxiosError(error) && error.response?.status === 401 ? 'credentials' : 'generic');
     }
   };
@@ -83,6 +97,7 @@ export const StaffLoginScreen = () => {
         {requestError === 'generic' ? (
           <AuthNotice role="alert" tone="danger">Não foi possível entrar agora. Tente novamente.</AuthNotice>
         ) : null}
+        {captchaMessage ? <AuthNotice role="alert" tone="danger">{captchaMessage}</AuthNotice> : null}
         <form noValidate onSubmit={(event) => void form.handleSubmit(submitCredentials)(event)}>
           <div className="auth-field">
             <label htmlFor="email">E-mail</label>
@@ -114,7 +129,8 @@ export const StaffLoginScreen = () => {
               <p id="password-error" role="alert">Informe sua senha.</p>
             ) : null}
           </div>
-          <button disabled={createSession.isPending} type="submit">
+          <CaptchaField onTokenChange={setCaptchaToken} ref={captchaRef} />
+          <button disabled={createSession.isPending || !captchaToken} type="submit">
             {createSession.isPending ? 'Entrando…' : 'Entrar'}
           </button>
         </form>

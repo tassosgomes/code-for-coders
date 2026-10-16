@@ -4,6 +4,12 @@ import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 import { server } from '@/testing/server';
+import { turnstileMock } from '@/testing/turnstile-mock';
+
+vi.mock('@marsidev/react-turnstile', async () => {
+  const { MockTurnstile } = await import('@/testing/turnstile-mock');
+  return { Turnstile: MockTurnstile };
+});
 
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
@@ -21,6 +27,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
+  turnstileMock.reset();
   cleanup();
   server.resetHandlers();
 });

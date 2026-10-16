@@ -1,5 +1,6 @@
 using CodeForCoders.BffAdmin.Application.Common;
 using CodeForCoders.BffAdmin.Application.Interfaces;
+using CodeForCoders.BffAdmin.Api.Captcha;
 using CodeForCoders.BffAdmin.Api.Clients;
 using CodeForCoders.BffAdmin.Contracts;
 using CodeForCoders.BffAdmin.Infra.Data;
@@ -39,9 +40,13 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
 
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
+    public FakeTurnstileHandler Turnstile { get; } = new();
+
     public CapturedLogProvider CapturedLogs { get; } = new();
 
     public string IdentityPublicKeyBase64 { get; private set; } = string.Empty;
+
+    private string signingKeyBase64 = string.Empty;
 
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_bff_admin")
@@ -77,17 +82,28 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
         builder.UseSetting("Media:BaseAddress", "http://media.test/");
         builder.UseSetting("Audit:BaseAddress", "http://audit.test/");
         builder.UseSetting("BffSecurity:AllowedOrigins:0", "http://localhost:8081");
-        using var rsa = RSA.Create(2048);
-        var privateKey = rsa.ExportPkcs8PrivateKey();
-        IdentityPublicKeyBase64 = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
-        builder.UseSetting("StaffIdentity:SigningKeyBase64", Convert.ToBase64String(privateKey));
+        // Generated once: WithWebHostBuilder re-runs this method and the public key must keep matching the signing key.
+        if (IdentityPublicKeyBase64.Length == 0)
+        {
+            using var rsa = RSA.Create(2048);
+            signingKeyBase64 = Convert.ToBase64String(rsa.ExportPkcs8PrivateKey());
+            IdentityPublicKeyBase64 = Convert.ToBase64String(rsa.ExportSubjectPublicKeyInfo());
+        }
+
+        builder.UseSetting("StaffIdentity:SigningKeyBase64", signingKeyBase64);
         builder.ConfigureLogging(logging =>
         {
             logging.AddProvider(CapturedLogs);
             logging.AddFilter<CapturedLogProvider>(null, LogLevel.Trace);
         });
+        builder.UseSetting("Turnstile:Enabled", "true");
+        builder.UseSetting("Turnstile:SecretKey", "test-secret");
+        // Existing suites log in dozens of times from one address; the limit has its own tests with a tiny budget.
+        builder.UseSetting("AnonymousRateLimit:PermitLimit", "100000");
         builder.ConfigureTestServices(services =>
         {
+            services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>()
+                .ConfigurePrimaryHttpMessageHandler(() => Turnstile);
             var hostedServices = services
                 .Where(descriptor => descriptor.ServiceType == typeof(IHostedService))
                 .ToList();
@@ -140,6 +156,13 @@ public sealed class BffAdminApiFactory : WebApplicationFactory<Program>, IAsyncL
                 .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
                     serviceProvider.GetRequiredService<VideoUploadHandler>());
         });
+    }
+
+    /// <summary>Every client sends a valid captcha token by default, so suites that are not about the captcha keep passing.</summary>
+    protected override void ConfigureClient(HttpClient client)
+    {
+        base.ConfigureClient(client);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("X-Captcha-Token", FakeTurnstileHandler.ValidToken);
     }
 
     public new async ValueTask DisposeAsync()

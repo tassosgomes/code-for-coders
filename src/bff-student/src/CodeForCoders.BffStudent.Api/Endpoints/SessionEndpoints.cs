@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text.Json;
+using CodeForCoders.BffStudent.Api.Captcha;
 using CodeForCoders.BffStudent.Api.Clients;
+using CodeForCoders.BffStudent.Api.Extensions;
 using CodeForCoders.BffStudent.Api.ApiModels;
 using CodeForCoders.BffStudent.Api.Security;
 using CodeForCoders.BffStudent.Application.Common;
@@ -19,6 +21,10 @@ public static class SessionEndpoints
     {
         endpoints.MapPost("/api/v1/student-sessions", CreateStudentSessionAsync)
             .WithName("CreateStudentSession")
+            .RequireAnonymousRateLimit()
+            .RequireCaptcha(CaptchaFailurePolicy.FailOpen)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .WithTags("Student")
             .Accepts<StudentSessionLoginV1>("application/json")
             .Produces<StudentSessionResponse>(StatusCodes.Status200OK)

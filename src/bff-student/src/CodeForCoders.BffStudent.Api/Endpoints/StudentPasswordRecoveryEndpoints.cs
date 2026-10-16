@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using CodeForCoders.BffStudent.Api.Captcha;
 using CodeForCoders.BffStudent.Api.Clients;
+using CodeForCoders.BffStudent.Api.Extensions;
 using CodeForCoders.BffStudent.Contracts;
 
 namespace CodeForCoders.BffStudent.Api.Endpoints;
@@ -13,6 +15,11 @@ public static class StudentPasswordRecoveryEndpoints
     {
         endpoints.MapPost("/api/v1/password-reset-requests", RequestStudentPasswordResetAsync)
             .WithName("RequestStudentPasswordReset")
+            .RequireAnonymousRateLimit()
+            .RequireCaptcha(CaptchaFailurePolicy.FailClosed)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
             .WithTags("Student")
             .Accepts<StudentPasswordResetRequestV1>("application/json")
             .Produces(StatusCodes.Status202Accepted)

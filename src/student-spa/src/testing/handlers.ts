@@ -5,6 +5,14 @@ import { courseProgressData } from '@/testing/course-progress-data';
 import { playbackData } from '@/testing/playback-data';
 import { studentLessonData } from '@/testing/student-lesson-data';
 
+export const captchaRequiredResponse = () =>
+  HttpResponse.json(
+    { type: 'about:blank', title: 'Captcha obrigatório.', status: 400, code: 'CAPTCHA_REQUIRED', traceId: 'test-trace' },
+    { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+  );
+
+export const hasCaptchaToken = (request: Request) => Boolean(request.headers.get('X-Captcha-Token'));
+
 export const handlers = [
   http.get(`${env.API_URL}/api/v1/my-courses`, () => HttpResponse.json({ progressAvailable: true, active: [], ended: [] })),
   http.get(`${env.API_URL}/api/v1/courses/:courseId/progress`, () => HttpResponse.json(courseProgressData)),
@@ -25,12 +33,20 @@ export const handlers = [
       csrfToken: 'student-session-csrf',
     }),
   ),
-  http.post(`${env.API_URL}/api/v1/student-sessions`, () =>
-    HttpResponse.json({
-      accountId: '00000000-0000-4000-8000-000000000001',
-      name: 'Ana Souza',
-      csrfToken: 'student-session-csrf',
-    }),
+  http.post(`${env.API_URL}/api/v1/student-sessions`, ({ request }) =>
+    hasCaptchaToken(request)
+      ? HttpResponse.json({
+        accountId: '00000000-0000-4000-8000-000000000001',
+        name: 'Ana Souza',
+        csrfToken: 'student-session-csrf',
+      })
+      : captchaRequiredResponse(),
+  ),
+  http.post(`${env.API_URL}/api/v1/student-accounts`, ({ request }) =>
+    hasCaptchaToken(request) ? new HttpResponse(null, { status: 202 }) : captchaRequiredResponse(),
+  ),
+  http.post(`${env.API_URL}/api/v1/password-reset-requests`, ({ request }) =>
+    hasCaptchaToken(request) ? new HttpResponse(null, { status: 202 }) : captchaRequiredResponse(),
   ),
   http.delete(`${env.API_URL}/api/v1/student-sessions/current`, () =>
     new HttpResponse(null, { status: 204 }),

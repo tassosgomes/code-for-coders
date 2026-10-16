@@ -12,6 +12,8 @@ public static class BffStudentTelemetry
     public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
     public static readonly Meter Meter = new(MeterName);
     public static readonly Counter<long> PurchaseIntentsRateLimited = Meter.CreateCounter<long>("bff_student.purchase_intent.rate_limited", "{click}");
+    public static readonly Counter<long> AnonymousRateLimited = Meter.CreateCounter<long>("bff_student.anonymous.rate_limited", "{request}");
+    public static readonly Counter<long> CaptchaVerifications = Meter.CreateCounter<long>("captcha.verifications", "{verification}");
     public static readonly Counter<long> HeartbeatsRecorded = Meter.CreateCounter<long>(
         "bff_student.platform.heartbeat.recorded",
         unit: "{heartbeat}");

@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { InfoIcon } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CaptchaField } from '@/components/captcha-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FormTextField } from '@/components/ui/form';
@@ -17,7 +18,9 @@ import {
   type CreateStudentSessionInput,
 } from '@/features/student-session/api/student-session';
 import { useStudentLoginForm } from '@/features/student-session/hooks/use-student-login-form';
+import { useCaptcha } from '@/hooks/use-captcha';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { getCaptchaErrorMessage } from '@/utils/captcha-error';
 
 const problemSchema = z.object({ code: z.string().optional() }).passthrough();
 
@@ -40,6 +43,7 @@ export const StudentLoginScreen = ({ returnTo, pendingPurchaseHref }: StudentLog
   useDocumentTitle('Entrar');
   const form = useStudentLoginForm();
   const login = useCreateStudentSession();
+  const captcha = useCaptcha();
   const navigate = useNavigate();
   const location = useLocation();
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
@@ -59,6 +63,10 @@ export const StudentLoginScreen = ({ returnTo, pendingPurchaseHref }: StudentLog
   };
 
   const submitLogin = async (input: CreateStudentSessionInput) => {
+    if (!captcha.token) {
+      return;
+    }
+
     const fingerprint = JSON.stringify(input);
     const attempt = attemptRef.current?.fingerprint === fingerprint
       ? attemptRef.current
@@ -68,7 +76,7 @@ export const StudentLoginScreen = ({ returnTo, pendingPurchaseHref }: StudentLog
     login.reset();
 
     try {
-      await login.mutateAsync({ input, idempotencyKey: attempt.key });
+      await login.mutateAsync({ input, idempotencyKey: attempt.key, captchaToken: captcha.token });
       window.localStorage.setItem(activeStudentSessionMarker, 'true');
       attemptRef.current = null;
       form.reset();
@@ -76,12 +84,15 @@ export const StudentLoginScreen = ({ returnTo, pendingPurchaseHref }: StudentLog
       await navigate(returnTo ?? pendingPurchaseHref ?? paths.home.getHref(), { replace: true });
     } catch (error) {
       setNotConfirmed(getLoginErrorCode(error) === 'EMAIL_NOT_CONFIRMED');
+    } finally {
+      captcha.reset();
     }
   };
 
-  const errorMessage = getLoginErrorCode(login.error) === 'INVALID_CREDENTIALS'
-    ? 'E-mail ou senha inválidos.'
-    : 'Não foi possível entrar agora. Tente novamente em instantes.';
+  const errorMessage = getCaptchaErrorMessage(login.error)
+    ?? (getLoginErrorCode(login.error) === 'INVALID_CREDENTIALS'
+      ? 'E-mail ou senha inválidos.'
+      : 'Não foi possível entrar agora. Tente novamente em instantes.');
 
   return (
     <Card>
@@ -125,13 +136,14 @@ export const StudentLoginScreen = ({ returnTo, pendingPurchaseHref }: StudentLog
                 label="Senha"
                 name="password"
               />
+              <CaptchaField captcha={captcha} />
               {login.isError ? (
                 <Alert variant="destructive">
                   <AlertTitle>Não foi possível entrar</AlertTitle>
                   <AlertDescription>{errorMessage}</AlertDescription>
                 </Alert>
               ) : null}
-              <Button className="w-full" disabled={login.isPending} type="submit">
+              <Button className="w-full" disabled={login.isPending || !captcha.token} type="submit">
                 {login.isPending ? 'Entrando…' : 'Entrar'}
               </Button>
             </form>

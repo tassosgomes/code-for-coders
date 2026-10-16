@@ -12,11 +12,12 @@ export type StudentPasswordResetRequestInput = z.infer<typeof studentPasswordRes
 export type StudentPasswordResetRequestCommand = {
   input: StudentPasswordResetRequestInput;
   idempotencyKey: string;
+  captchaToken: string;
 };
 
-export const requestStudentPasswordReset = async ({ input, idempotencyKey }: StudentPasswordResetRequestCommand) => {
+export const requestStudentPasswordReset = async ({ input, idempotencyKey, captchaToken }: StudentPasswordResetRequestCommand) => {
   await apiClient.post<void>('/api/v1/password-reset-requests', input, {
-    headers: { 'Idempotency-Key': idempotencyKey },
+    headers: { 'Idempotency-Key': idempotencyKey, 'X-Captcha-Token': captchaToken },
   });
 };
 

@@ -21,6 +21,7 @@ public sealed class CourtesyAuditBffApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTest");
+        builder.UseSetting("Turnstile:SecretKey", "test-secret");
         builder.UseSetting("RabbitMq:Username", "test");
         builder.UseSetting("RabbitMq:Password", "test");
         builder.UseSetting("StaffIdentity:BaseAddress", "http://identity.test/");

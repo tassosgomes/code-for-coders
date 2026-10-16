@@ -30,6 +30,7 @@ public sealed class CourseBffApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Learning:BaseAddress", "http://learning.test/");
         builder.UseSetting("Audit:BaseAddress", "http://audit.test/");
         Audit.CourseId = Learning.CourseId;
+        builder.UseSetting("Turnstile:SecretKey", "test-secret");
         builder.UseSetting("Commerce:BaseAddress", "http://commerce.test/");
         builder.UseSetting("Media:BaseAddress", "http://media.test/");
         builder.UseSetting("StaffIdentity:TenantId", "00000000-0000-7000-8000-000000000001");

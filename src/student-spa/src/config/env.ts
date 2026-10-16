@@ -6,6 +6,7 @@ const EnvSchema = z.object({
     try { new Intl.DateTimeFormat('pt-BR', { timeZone: value }); return true; } catch { return false; }
   }, 'Invalid school time zone'),
   OTEL_ENDPOINT: z.url().optional(),
+  TURNSTILE_SITE_KEY: z.string().min(1),
 });
 
 declare global {
@@ -16,7 +17,11 @@ declare global {
   }
 }
 
-const devFallbacks = import.meta.env.DEV ? { API_URL: 'http://localhost:5108' } : {};
+const devFallbacks = import.meta.env.DEV ? {
+  API_URL: 'http://localhost:5108',
+  // Cloudflare test sitekey: always passes (ADR-0023).
+  TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+} : {};
 
 const createEnv = () => {
   const raw = Object.fromEntries(

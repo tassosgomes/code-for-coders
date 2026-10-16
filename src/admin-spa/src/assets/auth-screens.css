@@ -30,6 +30,9 @@
 .auth-layout .auth-card .primary-link { margin-top: 0; font-weight: 600; line-height: 20px; }
 .auth-layout .auth-card .auth-footnote { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
 
+/* Widget Turnstile: reserva a altura para o formulário não saltar quando ele carrega */
+.auth-layout .auth-card .captcha-field { min-height: 65px; }
+
 /* Aviso (erro ou neutro) */
 .auth-layout .auth-notice {
   display: flex;

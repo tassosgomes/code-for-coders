@@ -32,7 +32,8 @@ public static class ServiceConfigurationExtensions
             .ValidateOnStart();
         builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
         builder.Services.AddSingleton<ServiceAssertionTokenFactory>();
-        builder.Services.AddPurchaseIntentRateLimit(builder.Configuration);
+        builder.Services.AddBffRateLimiting(builder.Configuration);
+        builder.Services.AddCaptchaConfiguration(builder.Configuration);
         builder.Services.AddCommerceClientConfiguration(builder.Configuration);
         builder.Services.AddLearningClientConfiguration(builder.Configuration);
         builder.Services.AddMediaClientConfiguration(builder.Configuration);

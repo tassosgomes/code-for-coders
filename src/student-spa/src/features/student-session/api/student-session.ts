@@ -21,6 +21,7 @@ export type CreateStudentSessionInput = z.infer<typeof createStudentSessionSchem
 export type CreateStudentSessionCommand = {
   input: CreateStudentSessionInput;
   idempotencyKey: string;
+  captchaToken: string;
 };
 
 export type EndStudentSessionCommand = {
@@ -30,9 +31,9 @@ export type EndStudentSessionCommand = {
 
 export const studentSessionQueryKey = ['student-session'] as const;
 
-export const createStudentSession = async ({ input, idempotencyKey }: CreateStudentSessionCommand) => {
+export const createStudentSession = async ({ input, idempotencyKey, captchaToken }: CreateStudentSessionCommand) => {
   const response = await apiClient.post<StudentSession>('/api/v1/student-sessions', input, {
-    headers: { 'Idempotency-Key': idempotencyKey },
+    headers: { 'Idempotency-Key': idempotencyKey, 'X-Captcha-Token': captchaToken },
   });
 
   return studentSessionSchema.parse(response);

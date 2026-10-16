@@ -91,6 +91,19 @@ Em caso de mudança na Caddy, o arquivo do host é montado como somente leitura 
 
 Verificação feita em 2026-10-10: abertura de sessão 201, playlist 200, variante 200, segmento pela borda pública 200, e upload com preflight 204, PUT 200 e `Access-Control-Allow-Origin` da origem do admin SPA.
 
+## Captcha (Turnstile) nos hosts
+
+O ADR-0023 exige uma sitekey e um secret reais do Cloudflare Turnstile por widget (aluno e admin). O `docker-compose.komodo.web.yml`, usado por dev e estável, falha ao subir se alguma faltar. Configure no `.env` de cada host (`desenv-server:/home/tsgomes/code-for-coders/.env` e `infra-server:/home/tsgomes/code-for-coders-stable/.env`); os valores ficam só no servidor:
+
+| Variável | Consumidor | Observação |
+| --- | --- | --- |
+| `TURNSTILE_STUDENT_SITE_KEY` | `student-spa` (`TURNSTILE_SITE_KEY`) | Sitekey pública do widget do aluno. O hostname do domínio do ambiente precisa estar na lista do widget. |
+| `TURNSTILE_STUDENT_SECRET_KEY` | `bff-student` (`Turnstile__SecretKey`) | Secret do mesmo widget. |
+| `TURNSTILE_ADMIN_SITE_KEY` | `admin-spa` (`TURNSTILE_SITE_KEY`) | Sitekey pública do widget do admin. |
+| `TURNSTILE_ADMIN_SECRET_KEY` | `bff-admin` (`Turnstile__SecretKey`) | Secret do mesmo widget. |
+
+Dev e estável usam domínios diferentes, então cada host recebe os valores do widget que cobre o seu hostname. A SPA lê a sitekey no runtime (`runtime-env.js`), então trocá-la não exige rebuild, só recriar o container. Os BFFs do dev rodam com `ASPNETCORE_ENVIRONMENT=Development`; a variável de ambiente prevalece sobre o `appsettings.Development.json`, que traz o secret de teste. Em local, as chaves de teste oficiais entram por padrão (compose e `scripts/generate-local-env.sh`).
+
 ## Projetos Compose
 
 | Ambiente | Host e diretório | Projeto de aplicação | Arquivos da aplicação |

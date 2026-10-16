@@ -1,3 +1,4 @@
+using CodeForCoders.BffStudent.Api.Captcha;
 using CodeForCoders.BffStudent.Api.Clients;
 using CodeForCoders.BffStudent.Application.Common;
 using System.Security.Cryptography;
@@ -29,6 +30,8 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
 
     public InMemoryBffSessionStore SessionStore { get; } = new();
 
+    public FakeTurnstileHandler Turnstile { get; } = new();
+
     public PostgreSqlContainer PostgreSql { get; } = new PostgreSqlBuilder("postgres:18")
         .WithDatabase("code_for_coders_bff_student")
         .WithUsername("code_for_coders_bff_student")
@@ -59,8 +62,14 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
         builder.UseSetting("Commerce:BaseAddress", "http://commerce.integration.test/");
         builder.UseSetting("Commerce:SigningKeyId", "test-commerce-key");
         builder.UseSetting("Commerce:SigningKeyBase64", Convert.ToBase64String(SigningKey.ExportPkcs8PrivateKey()));
+        builder.UseSetting("Turnstile:Enabled", "true");
+        builder.UseSetting("Turnstile:SecretKey", "test-secret");
+        // Existing suites log in dozens of times from one address; the limit has its own tests with a tiny budget.
+        builder.UseSetting("AnonymousRateLimit:PermitLimit", "100000");
         builder.ConfigureTestServices(services =>
         {
+            services.AddHttpClient<ITurnstileVerifier, TurnstileVerifier>()
+                .ConfigurePrimaryHttpMessageHandler(() => Turnstile);
             services.RemoveAll<IStudentRegistrationIdentityClient>();
             services.AddSingleton<IStudentRegistrationIdentityClient>(StudentRegistrationClient);
             services.RemoveAll<IStudentPasswordRecoveryIdentityClient>();
@@ -79,6 +88,13 @@ public sealed class BffStudentApiFactory : WebApplicationFactory<Program>, IAsyn
                 services.Remove(hostedService);
             }
         });
+    }
+
+    /// <summary>Every client sends a valid captcha token by default, so suites that are not about the captcha keep passing.</summary>
+    protected override void ConfigureClient(HttpClient client)
+    {
+        base.ConfigureClient(client);
+        client.DefaultRequestHeaders.TryAddWithoutValidation("X-Captcha-Token", FakeTurnstileHandler.ValidToken);
     }
 
     public new async ValueTask DisposeAsync()

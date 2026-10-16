@@ -36,6 +36,7 @@ services:
       CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-true}
       Audit__BaseAddress: http://audit:8080/
       Commerce__BaseAddress: http://commerce:8080/
+      Turnstile__SecretKey: ${TURNSTILE_ADMIN_SECRET_KEY:?set in the target environment}
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -81,6 +82,7 @@ services:
       Commerce__SigningKeyId: local-commerce-1
       Commerce__SigningKeyBase64: ${BFF_COMMERCE_PRIVATE_KEY_B64:?set in the target environment}
       Cors__AllowedOrigins__0: https://dev-code4coders.tasso.dev.br
+      Turnstile__SecretKey: ${TURNSTILE_STUDENT_SECRET_KEY:?set in the target environment}
     healthcheck:
       test: ["CMD-SHELL", "kill -0 1"]
       interval: 10s
@@ -101,6 +103,7 @@ services:
       - "8080"
     environment:
       API_URL: https://dev-code4coders.tasso.dev.br/admin
+      TURNSTILE_SITE_KEY: ${TURNSTILE_ADMIN_SITE_KEY:?set in the target environment}
     depends_on:
       bff-admin:
         condition: service_healthy
@@ -125,6 +128,7 @@ services:
     environment:
       SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       API_URL: https://dev-code4coders.tasso.dev.br/students
+      TURNSTILE_SITE_KEY: ${TURNSTILE_STUDENT_SITE_KEY:?set in the target environment}
     depends_on:
       bff-student:
         condition: service_healthy

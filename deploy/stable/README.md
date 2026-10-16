@@ -51,6 +51,8 @@ REMOTE_INFRA_ENV_FILE=/caminho/seguro/.env.stable scripts/remote-infra.sh provis
 REMOTE_INFRA_ENV_FILE=/caminho/seguro/.env.stable scripts/remote-infra.sh migrate
 ```
 
+Além disso, o `.env` do host estável precisa de `TURNSTILE_STUDENT_SITE_KEY`, `TURNSTILE_STUDENT_SECRET_KEY`, `TURNSTILE_ADMIN_SITE_KEY` e `TURNSTILE_ADMIN_SECRET_KEY` com as chaves reais do Cloudflare Turnstile (ADR-0023); sem elas o Compose se recusa a subir os BFFs e as SPAs. Detalhes em [Captcha (Turnstile) nos hosts](../topology.md#captcha-turnstile-nos-hosts).
+
 ## Entrada e DNS
 
 O registro DNS `code4coders.tasso.dev.br` segue o padrão dos demais hosts e aponta para

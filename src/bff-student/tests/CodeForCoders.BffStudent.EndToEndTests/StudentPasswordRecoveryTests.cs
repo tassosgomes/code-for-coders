@@ -18,6 +18,7 @@ public sealed class StudentPasswordRecoveryTests(BffStudentApiFactory factory)
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         factory.StudentPasswordRecoveryClient.RequestResult = new(StatusCodes.Status202Accepted, null);
+        var callsBefore = factory.StudentPasswordRecoveryClient.RequestCalls;
         using var client = factory.CreateClient();
         using var eligibleRequest = CreateRequest(
             "/api/v1/password-reset-requests",
@@ -37,7 +38,7 @@ public sealed class StudentPasswordRecoveryTests(BffStudentApiFactory factory)
         Assert.Equal(HttpStatusCode.Accepted, unknownResponse.StatusCode);
         Assert.Equal(eligibleBody, unknownBody);
         Assert.Empty(eligibleBody);
-        Assert.Equal(2, factory.StudentPasswordRecoveryClient.RequestCalls);
+        Assert.Equal(callsBefore + 2, factory.StudentPasswordRecoveryClient.RequestCalls);
         Assert.Equal(new StudentPasswordResetRequestV1("unknown@example.com"), factory.StudentPasswordRecoveryClient.Request);
         Assert.Equal("reset-request-unknown", factory.StudentPasswordRecoveryClient.RequestIdempotencyKey);
     }
