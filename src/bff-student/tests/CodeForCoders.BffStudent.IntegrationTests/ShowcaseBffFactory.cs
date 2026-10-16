@@ -33,6 +33,7 @@ public sealed class ShowcaseBffFactory(BffStudentIntegrationFixture fixture) : W
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("ShowcaseTest");
+        builder.UseSetting("Turnstile:SecretKey", "test-secret");
         builder.UseSetting("PurchaseIntentRateLimit:PermitLimit", PurchaseIntentPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.UseSetting("ConnectionStrings:DefaultConnection", fixture.PostgreSql.GetConnectionString());
         builder.UseSetting("Valkey:ConnectionString", fixture.ValkeyConnectionString);

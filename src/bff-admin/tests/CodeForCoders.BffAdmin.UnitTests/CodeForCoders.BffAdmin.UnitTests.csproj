@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../src/CodeForCoders.BffAdmin.Api/CodeForCoders.BffAdmin.Api.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.BffAdmin.Application/CodeForCoders.BffAdmin.Application.csproj" />
     <ProjectReference Include="../../src/CodeForCoders.BffAdmin.Domain/CodeForCoders.BffAdmin.Domain.csproj" />
     <ProjectReference Include="../CodeForCoders.BffAdmin.Tests.Common/CodeForCoders.BffAdmin.Tests.Common.csproj" />

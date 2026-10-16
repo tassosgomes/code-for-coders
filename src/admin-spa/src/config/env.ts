@@ -3,6 +3,7 @@ import * as z from 'zod';
 const EnvSchema = z.object({
   API_URL: z.url(),
   OTEL_ENDPOINT: z.url().optional(),
+  TURNSTILE_SITE_KEY: z.string().min(1),
 });
 
 declare global {
@@ -13,7 +14,11 @@ declare global {
   }
 }
 
-const devFallbacks = import.meta.env.DEV ? { API_URL: 'http://localhost:8080' } : {};
+const devFallbacks = import.meta.env.DEV ? {
+      API_URL: 'http://localhost:8080',
+      // Sitekey de teste oficial da Cloudflare: sempre aprova (ADR-0023).
+      TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+    } : {};
 
 const createEnv = () => {
   const raw = Object.fromEntries(

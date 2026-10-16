@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { apiClient, clearCsrfToken, setCsrfToken } from '@/lib/api-client';
+import { captchaHeaders } from '@/lib/captcha';
 
 export const staffSessionLoginSchema = z.object({
   email: z.email(),
@@ -19,10 +20,18 @@ export const staffSessionSchema = z.object({
 export type StaffSessionLoginInput = z.infer<typeof staffSessionLoginSchema>;
 export type StaffSession = z.infer<typeof staffSessionSchema>;
 
-export const createStaffSession = async (input: StaffSessionLoginInput): Promise<StaffSession> => {
+export type CreateStaffSessionVariables = {
+  input: StaffSessionLoginInput;
+  captchaToken: string;
+};
+
+export const createStaffSession = async (
+  input: StaffSessionLoginInput,
+  captchaToken: string,
+): Promise<StaffSession> => {
   const request = staffSessionLoginSchema.parse(input);
   const response = await apiClient.post<StaffSession>('/api/v1/staff-sessions', request, {
-    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    headers: { 'Idempotency-Key': crypto.randomUUID(), ...captchaHeaders(captchaToken) },
   });
   const session = staffSessionSchema.parse(response);
   setCsrfToken(session.csrfToken);
@@ -43,6 +52,8 @@ export const endCurrentStaffSession = async (): Promise<void> => {
   clearCsrfToken();
 };
 
-export const useCreateStaffSession = () => useMutation({ mutationFn: createStaffSession });
+export const useCreateStaffSession = () => useMutation({
+    mutationFn: ({ input, captchaToken }: CreateStaffSessionVariables) => createStaffSession(input, captchaToken),
+  });
 
 export const useEndCurrentStaffSession = () => useMutation({ mutationFn: endCurrentStaffSession });

@@ -84,14 +84,23 @@ export const videoTranscriptionContentFixture = {
   ],
 };
 
+// Os endpoints anônimos exigem X-Captcha-Token (ADR-0023); sem ele o BFF responde 400.
+const requireCaptchaToken = (request: Request) =>
+  request.headers.get('X-Captcha-Token')
+    ? null
+    : HttpResponse.json(
+      { type: 'about:blank', title: 'Captcha obrigatório.', status: 400, code: 'CAPTCHA_REQUIRED' },
+      { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+    );
+
 export const handlers = [
   ...courtesyCourseHandlers,
   ...courtesyGrantHandlers,
   http.get(`${env.API_URL}/api/v1/videos/:videoId/transcription`, ({ params }) => HttpResponse.json({
     ...videoTranscriptionContentFixture, videoId: params.videoId,
   })),
-  http.post(`${env.API_URL}/api/v1/staff-sessions`, () =>
-    HttpResponse.json({
+  http.post(`${env.API_URL}/api/v1/staff-sessions`, ({ request }) =>
+    requireCaptchaToken(request) ?? HttpResponse.json({
       accountId: '3e4f5a6b-7c8d-4e9f-8a0b-1c2d3e4f5a6b',
       name: 'Marina Alves',
       roles: ['administrador'],
@@ -201,7 +210,9 @@ export const handlers = [
     }),
   ),
   http.post(`${env.API_URL}/api/v1/staff-password-resets`, () => new HttpResponse(null, { status: 204 })),
-  http.post(`${env.API_URL}/api/v1/staff-password-reset-requests`, () => new HttpResponse(null, { status: 202 })),
+  http.post(`${env.API_URL}/api/v1/staff-password-reset-requests`, ({ request }) =>
+    requireCaptchaToken(request) ?? new HttpResponse(null, { status: 202 }),
+  ),
   http.post(`${env.API_URL}/api/v1/staff-invitation-lookups`, () => HttpResponse.json({
     offeredRole: 'professor',
     expiresAt: '2026-10-09T14:05:11Z',

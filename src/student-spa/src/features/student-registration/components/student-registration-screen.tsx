@@ -16,9 +16,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { FormTextField } from '@/components/ui/form';
+import { CaptchaField } from '@/components/captcha-field';
 import { PasswordField } from '@/components/ui/password-field';
 import { paths } from '@/config/paths';
+import { useCaptcha } from '@/hooks/use-captcha';
 import { useDocumentTitle } from '@/hooks/use-document-title';
+import { getCaptchaErrorMessage } from '@/utils/captcha-error';
 import {
   useRegisterStudent,
   type RegisterStudentInput,
@@ -35,6 +38,11 @@ const getRegistrationErrorCode = (error: unknown) => {
 };
 
 const getRegistrationErrorMessage = (error: unknown) => {
+  const captchaMessage = getCaptchaErrorMessage(error);
+  if (captchaMessage) {
+    return captchaMessage;
+  }
+
   switch (getRegistrationErrorCode(error)) {
     case 'PASSWORD_POLICY_VIOLATION':
       return 'A senha ainda não atende aos requisitos. Confira os itens e tente novamente.';
@@ -48,6 +56,7 @@ const getRegistrationErrorMessage = (error: unknown) => {
 export const StudentRegistrationScreen = () => {
   const form = useStudentRegistrationForm();
   const registration = useRegisterStudent();
+  const captcha = useCaptcha();
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const [registrationStarted, setRegistrationStarted] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
@@ -55,6 +64,10 @@ export const StudentRegistrationScreen = () => {
   useDocumentTitle(registrationStarted ? 'Confira seu e-mail' : 'Criar conta');
 
   const submitRegistration = async (input: RegisterStudentInput) => {
+    if (!captcha.token) {
+      return;
+    }
+
     const fingerprint = JSON.stringify(input);
     const attempt = attemptRef.current?.fingerprint === fingerprint
       ? attemptRef.current
@@ -63,13 +76,15 @@ export const StudentRegistrationScreen = () => {
     registration.reset();
 
     try {
-      await registration.mutateAsync({ input, idempotencyKey: attempt.key });
+      await registration.mutateAsync({ input, idempotencyKey: attempt.key, captchaToken: captcha.token });
       attemptRef.current = null;
       setSubmittedEmail(input.email);
       form.reset();
       setRegistrationStarted(true);
     } catch {
       setRegistrationStarted(false);
+    } finally {
+      captcha.reset();
     }
   };
 
@@ -156,13 +171,14 @@ export const StudentRegistrationScreen = () => {
               name="password"
               showRequirements
             />
+            <CaptchaField captcha={captcha} />
             {registration.isError && !accountAlreadyExists ? (
               <Alert variant="destructive">
                 <AlertTitle>Não foi possível criar a conta</AlertTitle>
                 <AlertDescription>{getRegistrationErrorMessage(registration.error)}</AlertDescription>
               </Alert>
             ) : null}
-            <Button className="w-full" disabled={registration.isPending} type="submit">
+            <Button className="w-full" disabled={registration.isPending || !captcha.token} type="submit">
               {registration.isPending ? 'Criando conta…' : 'Criar conta'}
             </Button>
           </form>

@@ -32,7 +32,7 @@ paths:
         '202':
           description: Operação concluída.
         '400':
-          description: JSON ou campos obrigatórios inválidos.
+          description: JSON ou campos obrigatórios inválidos, ou header `X-Captcha-Token` ausente.
           content:
             application/problem+json:
               schema:
@@ -44,6 +44,13 @@ paths:
                     title: JSON ou campos obrigatórios inválidos.
                     status: 400
                     code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                captchaObrigatorio:
+                  value:
+                    type: about:blank
+                    title: Captcha obrigatório.
+                    status: 400
+                    code: CAPTCHA_REQUIRED
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
         '422':
           description: E-mail já associado a conta não desativada.
@@ -59,6 +66,12 @@ paths:
                     status: 422
                     code: ACCOUNT_ALREADY_EXISTS
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '403':
+          $ref: '#/components/responses/CaptchaInvalid'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/CaptchaUnavailable'
       requestBody:
         required: true
         content:
@@ -170,6 +183,7 @@ paths:
         schema:
           type: string
           minLength: 1
+      - $ref: '#/components/parameters/CaptchaToken'
   /student-sessions:
     post:
       tags:
@@ -192,7 +206,7 @@ paths:
               schema:
                 type: string
         '400':
-          description: JSON ou campos obrigatórios inválidos.
+          description: JSON ou campos obrigatórios inválidos, ou header `X-Captcha-Token` ausente.
           content:
             application/problem+json:
               schema:
@@ -204,6 +218,13 @@ paths:
                     title: JSON ou campos obrigatórios inválidos.
                     status: 400
                     code: INVALID_REQUEST
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                captchaObrigatorio:
+                  value:
+                    type: about:blank
+                    title: Captcha obrigatório.
+                    status: 400
+                    code: CAPTCHA_REQUIRED
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
         '401':
           description: Credenciais inválidas ou conta desativada.
@@ -233,6 +254,10 @@ paths:
                     status: 422
                     code: EMAIL_NOT_CONFIRMED
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '403':
+          $ref: '#/components/responses/CaptchaInvalid'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
       requestBody:
         required: true
         content:
@@ -248,6 +273,7 @@ paths:
         schema:
           type: string
           minLength: 1
+      - $ref: '#/components/parameters/CaptchaToken'
   /student-sessions/current:
     get:
       tags:
@@ -338,7 +364,7 @@ paths:
         '202':
           description: Operação concluída.
         '400':
-          description: JSON ou e-mail obrigatório inválido.
+          description: JSON ou campos obrigatórios inválidos, ou header `X-Captcha-Token` ausente.
           content:
             application/problem+json:
               schema:
@@ -351,6 +377,19 @@ paths:
                     status: 400
                     code: INVALID_REQUEST
                     traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+                captchaObrigatorio:
+                  value:
+                    type: about:blank
+                    title: Captcha obrigatório.
+                    status: 400
+                    code: CAPTCHA_REQUIRED
+                    traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+        '403':
+          $ref: '#/components/responses/CaptchaInvalid'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/CaptchaUnavailable'
       requestBody:
         required: true
         content:
@@ -512,6 +551,7 @@ paths:
         schema:
           type: string
           minLength: 1
+      - $ref: '#/components/parameters/CaptchaToken'
 components:
   securitySchemes:
     StudentSessionCookie:
@@ -519,6 +559,65 @@ components:
       in: cookie
       name: student_session
       description: Cookie opaco de sessão, HttpOnly, Secure e SameSite. Clientes não devem ler seu valor.
+  parameters:
+    CaptchaToken:
+      name: X-Captcha-Token
+      in: header
+      required: true
+      description: |
+        Token de uso único (válido por 300 segundos) emitido pelo widget Cloudflare Turnstile do SPA e verificado pelo BFF na siteverify (ADR-0023). Ausente: 400 `CAPTCHA_REQUIRED`; reprovado: 403 `CAPTCHA_INVALID`.
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    CaptchaInvalid:
+      description: Captcha reprovado pela verificação da Cloudflare (token inválido, expirado ou já usado).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            captchaInvalido:
+              value:
+                type: about:blank
+                title: Verificação de captcha reprovada.
+                status: 403
+                code: CAPTCHA_INVALID
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    CaptchaUnavailable:
+      description: Verificação de captcha indisponível (siteverify fora do ar ou com timeout). Só nos endpoints fail-closed; nos logins a requisição passa e a falha é registrada (ADR-0023).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            captchaIndisponivel:
+              value:
+                type: about:blank
+                title: Verificação de captcha indisponível.
+                status: 503
+                code: CAPTCHA_UNAVAILABLE
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
+    TooManyRequests:
+      description: Limite de requisições por IP excedido.
+      headers:
+        Retry-After:
+          description: Segundos até poder repetir.
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            limite:
+              value:
+                type: about:blank
+                title: Muitas requisições.
+                status: 429
+                code: RATE_LIMITED
+                traceId: 00-9f2b5d6c4e7a8b90123456789abcdef0-0123456789abcdef-01
   schemas:
     Problem:
       type: object

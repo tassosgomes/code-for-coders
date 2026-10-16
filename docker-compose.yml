@@ -517,6 +517,10 @@ services:
       Media__BaseAddress: http://media:8080/
       Learning__BaseAddress: http://learning:8080/
       CourseAuthoring__Enabled: ${COURSE_AUTHORING_ENABLED:-true}
+      # Chave de teste oficial do Turnstile (sempre aprova); chave real so em deploy (ADR-0023).
+      Turnstile__SecretKey: ${TURNSTILE_ADMIN_SECRET_KEY:-1x0000000000000000000000000000000AA}
+      AnonymousRateLimit__PermitLimit: ${ANONYMOUS_RATE_LIMIT_PERMIT_LIMIT:-20}
+      AnonymousRateLimit__WindowSeconds: ${ANONYMOUS_RATE_LIMIT_WINDOW_SECONDS:-60}
     ports:
       - "5107:8080"
     depends_on:
@@ -558,6 +562,9 @@ services:
       Commerce__SigningKeyBase64: ${BFF_COMMERCE_PRIVATE_KEY_B64:?run scripts/generate-local-env.sh}
       Cors__AllowedOrigins__0: http://localhost:8082
       Cors__AllowedOrigins__1: http://localhost:5173
+      Turnstile__SecretKey: ${TURNSTILE_STUDENT_SECRET_KEY:-1x0000000000000000000000000000000AA}
+      AnonymousRateLimit__PermitLimit: ${ANONYMOUS_RATE_LIMIT_PERMIT_LIMIT:-20}
+      AnonymousRateLimit__WindowSeconds: ${ANONYMOUS_RATE_LIMIT_WINDOW_SECONDS:-60}
     ports:
       - "5108:8080"
     depends_on:
@@ -576,6 +583,7 @@ services:
     container_name: code-for-coders-admin-spa
     environment:
       API_URL: http://localhost:8081
+      TURNSTILE_SITE_KEY: ${TURNSTILE_ADMIN_SITE_KEY:-1x00000000000000000000AA}
     ports:
       - "8081:8080"
     depends_on:
@@ -592,6 +600,7 @@ services:
     environment:
       SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       API_URL: http://localhost:8082
+      TURNSTILE_SITE_KEY: ${TURNSTILE_STUDENT_SITE_KEY:-1x00000000000000000000AA}
     ports:
       - "8082:8080"
     depends_on:

@@ -16,12 +16,13 @@ export type RegisterStudentInput = z.infer<typeof registerStudentSchema>;
 
 export type RegisterStudentCommand = {
   idempotencyKey: string;
+  captchaToken: string;
   input: RegisterStudentInput;
 };
 
-export const registerStudent = async ({ input, idempotencyKey }: RegisterStudentCommand) => {
+export const registerStudent = async ({ input, idempotencyKey, captchaToken }: RegisterStudentCommand) => {
   await apiClient.post<void>('/api/v1/student-accounts', input, {
-    headers: { 'Idempotency-Key': idempotencyKey },
+    headers: { 'Idempotency-Key': idempotencyKey, 'X-Captcha-Token': captchaToken },
   });
 };
 

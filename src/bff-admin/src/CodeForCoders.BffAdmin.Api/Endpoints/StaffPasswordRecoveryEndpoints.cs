@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using CodeForCoders.BffAdmin.Api.Captcha;
 using CodeForCoders.BffAdmin.Api.Clients;
+using CodeForCoders.BffAdmin.Api.Extensions;
 using CodeForCoders.BffAdmin.Contracts;
 
 namespace CodeForCoders.BffAdmin.Api.Endpoints;
@@ -13,6 +15,11 @@ public static class StaffPasswordRecoveryEndpoints
     {
         app.MapPost("/api/v1/staff-password-reset-requests", RequestStaffPasswordResetAsync)
             .WithName("RequestStaffPasswordReset")
+            .RequireAnonymousRateLimit()
+            .RequireCaptcha(CaptchaFailurePolicy.FailClosed)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable)
             .WithTags("StaffCredential")
             .Accepts<StaffPasswordRecoveryRequestV1>("application/json")
             .Produces(StatusCodes.Status202Accepted)

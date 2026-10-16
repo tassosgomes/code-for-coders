@@ -15,6 +15,7 @@ public static class PipelineExtensions
         }
 
         app.UseRouting();
+        app.UseRateLimiter();
         app.UseBffSecurity();
         return app;
     }

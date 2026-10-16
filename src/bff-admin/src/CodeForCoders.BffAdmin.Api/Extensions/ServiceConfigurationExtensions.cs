@@ -36,6 +36,8 @@ public static class ServiceConfigurationExtensions
         builder.Services.AddHealthConfiguration();
         builder.Services.AddObservabilityConfiguration(builder.Configuration, builder.Environment);
         builder.Services.AddBffProxyConfiguration(builder.Configuration);
+        builder.Services.AddBffRateLimiting(builder.Configuration);
+        builder.Services.AddCaptchaConfiguration(builder.Configuration);
         builder.AddStaffIdentityConfiguration();
         builder.Services.AddOptions<AuditApiOptions>()
             .Bind(builder.Configuration.GetSection(AuditApiOptions.SectionName))

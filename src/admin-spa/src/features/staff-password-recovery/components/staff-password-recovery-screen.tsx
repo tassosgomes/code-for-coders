@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
@@ -7,8 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { paths } from '@/config/paths';
 import { AuthLayout } from '@/components/auth-layout';
+import { CaptchaField, type CaptchaFieldHandle } from '@/components/captcha-field';
 import { AuthNotice } from '@/components/auth-notice';
 import { AuthResultCard } from '@/components/auth-result-card';
+import { getCaptchaErrorMessage } from '@/lib/captcha';
 import {
   staffPasswordRecoveryRequestSchema,
   useRequestStaffPasswordReset,
@@ -17,6 +19,8 @@ import {
 
 export const StaffPasswordRecoveryScreen = () => {
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<CaptchaFieldHandle>(null);
   const requestPasswordReset = useRequestStaffPasswordReset();
   const form = useForm<StaffPasswordRecoveryRequest>({
     defaultValues: { email: '' },
@@ -24,11 +28,16 @@ export const StaffPasswordRecoveryScreen = () => {
   });
 
   const submitEmail = async (input: StaffPasswordRecoveryRequest) => {
+    if (!captchaToken) return;
     setRequestError(null);
     try {
-      await requestPasswordReset.mutateAsync(input);
-    } catch {
-      setRequestError('Não foi possível processar o pedido agora. Tente novamente.');
+      await requestPasswordReset.mutateAsync({ input, captchaToken });
+    } catch (error: unknown) {
+      // O token é de uso único: qualquer desfecho exige um novo.
+      captchaRef.current?.reset();
+      setRequestError(
+        getCaptchaErrorMessage(error) ?? 'Não foi possível processar o pedido agora. Tente novamente.',
+      );
     }
   };
 
@@ -74,7 +83,8 @@ export const StaffPasswordRecoveryScreen = () => {
               <p id="email-error" role="alert">{form.formState.errors.email.message}</p>
             ) : null}
           </div>
-          <button disabled={requestPasswordReset.isPending} type="submit">
+          <CaptchaField onTokenChange={setCaptchaToken} ref={captchaRef} />
+          <button disabled={requestPasswordReset.isPending || !captchaToken} type="submit">
             {requestPasswordReset.isPending ? 'Enviando…' : 'Receber link de recuperação'}
           </button>
         </form>

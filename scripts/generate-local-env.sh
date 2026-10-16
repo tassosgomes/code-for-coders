@@ -16,6 +16,19 @@ read_local_database_password() {
   printf '%s' "$password"
 }
 
+# Chaves de teste oficiais do Cloudflare Turnstile (sempre aprovam; ADR-0023).
+# Chaves reais so existem nos .env dos hosts de deploy.
+append_turnstile_test_keys() {
+  local target_file="$1"
+  {
+    printf '\n# Turnstile: chaves de teste oficiais do Cloudflare (sempre aprovam). Troque pelas reais so em deploy.\n'
+    printf 'TURNSTILE_STUDENT_SITE_KEY=1x00000000000000000000AA\n'
+    printf 'TURNSTILE_STUDENT_SECRET_KEY=1x0000000000000000000000000000000AA\n'
+    printf 'TURNSTILE_ADMIN_SITE_KEY=1x00000000000000000000AA\n'
+    printf 'TURNSTILE_ADMIN_SECRET_KEY=1x0000000000000000000000000000000AA\n'
+  } >> "$target_file"
+}
+
 ensure_lesson_keys() {
   umask 077
   if ! rg -q "^MEDIA_EDGE_SHARED_SECRET=" "$env_file"; then
@@ -125,6 +138,11 @@ if [[ -e "$env_file" ]]; then
     changed=true
   fi
 
+  if ! rg -q '^TURNSTILE_STUDENT_SECRET_KEY=' "$env_file"; then
+    append_turnstile_test_keys "$env_file"
+    changed=true
+  fi
+
   ensure_lesson_keys
   chmod 600 "$env_file"
   if [[ "$changed" == false ]]; then
@@ -220,6 +238,7 @@ bff_admin_outbox_key_b64="$(openssl rand -base64 32 | tr -d '\n')"
   printf '# Fill with the signing secret of the Stripe webhook endpoint (never commit a real secret).\n'
   printf '# STRIPE_WEBHOOK_SECRET=\n'
 } > "$env_temp_file"
+append_turnstile_test_keys "$env_temp_file"
 
 chmod 600 "$env_temp_file"
 mv -- "$env_temp_file" "$env_file"

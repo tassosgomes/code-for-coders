@@ -2,7 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text.Json;
 using CodeForCoders.BffAdmin.Api.ApiModels;
+using CodeForCoders.BffAdmin.Api.Captcha;
 using CodeForCoders.BffAdmin.Api.Clients;
+using CodeForCoders.BffAdmin.Api.Extensions;
 using CodeForCoders.BffAdmin.Api.Security;
 using CodeForCoders.BffAdmin.Application.Common;
 using CodeForCoders.BffAdmin.Application.Interfaces;
@@ -20,6 +22,10 @@ public static class SessionEndpoints
     {
         endpoints.MapPost("/api/v1/staff-sessions", CreateStaffSessionAsync)
             .WithName("CreateStaffSession")
+            .RequireAnonymousRateLimit()
+            .RequireCaptcha(CaptchaFailurePolicy.FailOpen)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status429TooManyRequests)
             .WithTags("StaffSession")
             .Accepts<StaffSessionLoginV1>("application/json")
             .Produces<StaffSessionResponse>(StatusCodes.Status200OK)
