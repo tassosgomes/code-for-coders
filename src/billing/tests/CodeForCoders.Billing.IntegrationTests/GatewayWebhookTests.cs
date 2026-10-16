@@ -220,6 +220,7 @@ public sealed class GatewayWebhookTests(BillingIntegrationFixture fixture) : IAs
         var studentId = Guid.CreateVersion7();
         var sessionRef = "cs_paid_flow_1";
         var paymentRef = "pi_paid_flow_1";
+        app.GatewayMock.Setup(g => g.GetPaymentMethodAsync(paymentRef, It.IsAny<CancellationToken>())).ReturnsAsync("card");
 
         // Seed payment aggregate in DB
         await using (var db = await app.CreateDbContextAsync(TenantId))
@@ -289,6 +290,7 @@ public sealed class GatewayWebhookTests(BillingIntegrationFixture fixture) : IAs
         var studentId = Guid.CreateVersion7();
         var sessionRef = "cs_contract_flow_1";
         var paymentRef = "pi_contract_flow_1";
+        app.GatewayMock.Setup(g => g.GetPaymentMethodAsync(paymentRef, It.IsAny<CancellationToken>())).ReturnsAsync("card");
 
         await using (var db = await app.CreateDbContextAsync(TenantId))
         {
@@ -347,6 +349,7 @@ public sealed class GatewayWebhookTests(BillingIntegrationFixture fixture) : IAs
         var orderId = Guid.CreateVersion7();
         var sessionRef = "cs_repeat_1";
         var paymentRef = "pi_repeat_1";
+        app.GatewayMock.Setup(g => g.GetPaymentMethodAsync(paymentRef, It.IsAny<CancellationToken>())).ReturnsAsync("card");
 
         await using (var db = await app.CreateDbContextAsync(TenantId))
         {

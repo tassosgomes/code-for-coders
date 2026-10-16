@@ -502,10 +502,11 @@ public sealed class PendingPaymentTests(BillingIntegrationFixture fixture) : IAs
         Assert.Equal("boleto", confirmed.GetProperty("method").GetString());
     }
 
-    [Fact(DisplayName = nameof(CardPaidSessionWithAllMethodsAllowedStaysCardWithoutAskingTheGateway))]
-    public async Task CardPaidSessionWithAllMethodsAllowedStaysCardWithoutAskingTheGateway()
+    [Fact(DisplayName = nameof(CardPaidSessionResolvesTheMethodFromThePaymentIntent))]
+    public async Task CardPaidSessionResolvesTheMethodFromThePaymentIntent()
     {
         var orderId = await SeedOpenPaymentAsync("cs_card_real_1");
+        app.GatewayMock.Setup(g => g.GetPaymentMethodAsync("pi_card_real_1", It.IsAny<CancellationToken>())).ReturnsAsync("card");
 
         Assert.Equal(HttpStatusCode.OK, (await PostSessionEventAsync("checkout.session.completed", "cs_card_real_1", "pi_card_real_1", orderId, "paid")).StatusCode);
         await ProcessAsync();
@@ -514,7 +515,7 @@ public sealed class PendingPaymentTests(BillingIntegrationFixture fixture) : IAs
         Assert.Equal("card", (await db.Payments.SingleAsync(p => p.OrderId == orderId, Cancellation)).Method);
         var confirmed = JsonDocument.Parse((await db.OutboxMessages.SingleAsync(m => m.RoutingKey == "cobranca.pagamento-confirmado.v1", Cancellation)).Payload).RootElement;
         Assert.Equal("card", confirmed.GetProperty("method").GetString());
-        app.GatewayMock.Verify(g => g.GetPaymentMethodAsync("pi_card_real_1", It.IsAny<CancellationToken>()), Times.Never);
+        app.GatewayMock.Verify(g => g.GetPaymentMethodAsync("pi_card_real_1", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact(DisplayName = nameof(AwaitingEventIsRefusedForRetryWhenGatewayCannotTellTheMethod))]
