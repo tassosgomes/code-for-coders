@@ -1,11 +1,11 @@
 ---
 id: TASK-37.5
 title: 'Captcha: configuração dos ambientes e smoke'
-status: In Progress
+status: Done
 assignee:
   - '@claude'
 created_date: '2026-10-16 20:44'
-updated_date: '2026-10-16 21:52'
+updated_date: '2026-10-16 23:36'
 labels:
   - security
   - infra
@@ -32,7 +32,7 @@ Os novos segredos e sitekeys precisam chegar a todos os modos de execução (loc
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 scripts/generate-local-env.sh, .env de exemplo, docker-compose.yml e docker-compose.remote.yml levam as variáveis novas, usando por padrão as chaves de teste oficiais do Turnstile
-- [ ] #2 A configuração de deploy recebe a sitekey e o secret reais de cada widget
+- [x] #2 A configuração de deploy recebe a sitekey e o secret reais de cada widget
 - [x] #3 Smoke local com scripts/apps.sh start --remote: login, cadastro e esqueci a senha funcionam nos dois SPAs com as chaves de teste, e uma chamada direta sem token aos BFFs recebe 400
 <!-- AC:END -->
 
@@ -49,3 +49,9 @@ Variáveis: TURNSTILE_{STUDENT,ADMIN}_{SITE,SECRET}_KEY. Local: default de teste
 
 Orquestrador: AC2 aguarda os widgets reais e as chaves no .env de desenv-server e infra-server; o compose já exige as variáveis sem default. Ajuste posterior: widget do student-spa com size flexible.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Variáveis TURNSTILE_* em compose local (chaves de teste), komodo.web (obrigatórias), gerador de .env e docs de deploy. Smoke local com curl e Playwright nas 5 telas; deploy em dev com as chaves reais confirmado pelo usuário em 2026-10-16 (widget visível e login ok).
+<!-- SECTION:FINAL_SUMMARY:END -->
