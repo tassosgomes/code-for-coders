@@ -598,6 +598,7 @@ services:
       dockerfile: Dockerfile
     container_name: code-for-coders-student-spa
     environment:
+      DIDACTIC_NOTICE_ENABLED: ${DIDACTIC_NOTICE_ENABLED:-true}
       SCHOOL_TIME_ZONE: ${SCHOOL_TIME_ZONE:-America/Sao_Paulo}
       API_URL: http://localhost:8082
       TURNSTILE_SITE_KEY: ${TURNSTILE_STUDENT_SITE_KEY:-1x00000000000000000000AA}

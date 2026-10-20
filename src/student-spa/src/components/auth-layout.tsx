@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, Outlet } from 'react-router';
 
+import { DidacticNotice } from '@/components/didactic-notice';
 import { BrandLogo } from '@/components/blocks/brand-logo';
 import { CodeWindow } from '@/components/blocks/code-window';
 import { paths } from '@/config/paths';
@@ -46,6 +47,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => (
       </header>
       <div className="flex flex-1 items-center justify-center px-6 py-8 sm:px-10">
         <div className="w-full max-w-md">
+          <DidacticNotice />
           {children ?? <Outlet />}
         </div>
       </div>
