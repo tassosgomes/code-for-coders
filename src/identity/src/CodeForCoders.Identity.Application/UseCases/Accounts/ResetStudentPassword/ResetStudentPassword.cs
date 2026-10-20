@@ -21,6 +21,7 @@ public sealed class ResetStudentPassword(
     public const string OperationId = "resetStudentPasswordInternal";
     private const string RejectedCode = "PASSWORD_RESET_REJECTED";
     private const string RejectedTitle = "The password reset link or new password is invalid.";
+    private const int MaxConcurrencyAttempts = 3;
     private static readonly TimeSpan IdempotencyWindow = TimeSpan.FromHours(24);
 
     public async Task<ResetStudentPasswordOutput> ExecuteAsync(
@@ -28,7 +29,14 @@ public sealed class ResetStudentPassword(
         CancellationToken cancellationToken)
     {
         await validator.ValidateAndThrowAsync(input, cancellationToken);
+        return await ResetAsync(input, 1, cancellationToken);
+    }
 
+    private async Task<ResetStudentPasswordOutput> ResetAsync(
+        ResetStudentPasswordInput input,
+        int attempt,
+        CancellationToken cancellationToken)
+    {
         var now = timeProvider.GetUtcNow();
         var values = new ResetValues(
             fingerprinter.HashKey(input.IdempotencyKey),
@@ -117,6 +125,14 @@ public sealed class ResetStudentPassword(
         {
             await unitOfWork.CommitAsync(cancellationToken);
             return new ResetStudentPasswordOutput(204);
+        }
+        catch (ConcurrentWriteException) when (attempt < MaxConcurrencyAttempts)
+        {
+            // A concurrent login re-stages the credential under its xmin token so it cannot mint a
+            // session from a superseded password; that conflicts with this write even when nothing
+            // competed with the reset itself. Re-read and re-apply: a real competing reset is then
+            // answered from the fresh state (consumed token or idempotent replay).
+            return await ResetAsync(input, attempt + 1, cancellationToken);
         }
         catch (ConcurrentWriteException)
         {

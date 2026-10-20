@@ -56,5 +56,12 @@ public interface IIdentitySessionStore
 
     void AddStaffSession(StaffSession session);
 
+    /// <summary>
+    /// Enlists the authenticated credential in the current unit of work under its optimistic
+    /// concurrency token, without changing its data, so a concurrent password reset/change that
+    /// bumped the credential makes this commit fail with a concurrency conflict (RACE #8).
+    /// </summary>
+    void TouchAuthenticatedCredential(Credential credential);
+
     void AddIdempotencyRecord(IdempotencyRecord record);
 }
