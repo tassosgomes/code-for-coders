@@ -98,7 +98,8 @@ de rede: a máquina precisa alcançar `192.168.0.5:4317` (gRPC OTLP) e o Kibana 
 
 - **Backup** diário 03:00: `pg_dumpall` (postgres + komodo-db) + definições RabbitMQ; retenção 7 dias em `~/infra/backups/daily`. ES/Kibana/smtp4dev ficam fora (dados efêmeros de dev).
 - **Segredos**: todos em `~/infra/.env` (chmod 600), interpolados pelo compose. Valores com `$` (ex.: bcrypt) devem ficar entre aspas simples.
-- **DNS**: registros A DNS-only no Cloudflare (`*.tasso.dev.br` → 192.168.0.5) via `~/infra/scripts/cloudflare-dns.sh`.
+- **DNS**: registros A DNS-only no Cloudflare (`*.tasso.dev.br` → 192.168.0.5) via `~/infra/scripts/cloudflare-dns.sh`. Exceções via tunnel: `billing-webhook.tasso.dev.br` e `dev-code4coders.tasso.dev.br` são CNAME proxied para o tunnel `c4c-billing-webhook` (ver `infra/cloudflared/billing-webhook.yml`).
+- **Tunnel**: o serviço `cloudflared-billing-webhook` (`docker-compose.komodo.apis.yml`, profile `stripe-webhook`) expõe o webhook Stripe e o frontend de dev para a internet. Após editar `infra/cloudflared/*.yml`, sincronize e recrie só o conector: `docker compose --profile stripe-webhook up -d --force-recreate cloudflared-billing-webhook` (o `scripts/update-containers.sh` não inclui esse profile no `up`).
 - **Consumo**: ~4.9 Gi usados de 15 Gi (novos serviços ~2.9 Gi).
 - **Paridade com o compose local do repo**: completa — Postgres, RabbitMQ, Valkey, OTel Collector e smtp4dev. Falta apenas repontear as apps (quando decidirmos migrar o runtime de dev).
 
