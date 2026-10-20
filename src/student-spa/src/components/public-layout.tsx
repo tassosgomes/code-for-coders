@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 
+import { DidacticNotice } from '@/components/didactic-notice';
 import { BrandLogo } from '@/components/blocks/brand-logo';
 import { ThemeMenu } from '@/components/theme-menu';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,7 @@ export const PublicLayout = ({ children }: PublicLayoutProps) => (
           </Sheet>
         </div>
       </div>
+      <DidacticNotice variant="banner" />
     </header>
     <main className="mx-auto w-full max-w-292 flex-1 px-4 py-8 sm:px-6 sm:py-12" id="conteudo" tabIndex={-1}>
       {children ?? <Outlet />}
