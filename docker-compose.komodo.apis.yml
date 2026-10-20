@@ -427,9 +427,11 @@ services:
     networks:
       - c4c-shared
 
-  # Conector do Cloudflare Tunnel "c4c-billing-webhook": é a única forma de a Stripe alcançar o billing.
+  # Conector do Cloudflare Tunnel "c4c-billing-webhook": é a única forma de a internet
+  # alcançar o billing (webhook Stripe) e o frontend de dev (dev-code4coders.tasso.dev.br).
   # Conexão de saída para a Cloudflare, sem portas publicadas no servidor. As regras de ingress
-  # (somente /webhooks/v1/stripe/events, resto 404) estão em infra/cloudflared/billing-webhook.yml.
+  # (webhook Stripe restrito ao próprio path/host + /admin, /students e /media do app, resto 404)
+  # estão em infra/cloudflared/billing-webhook.yml.
   cloudflared-billing-webhook:
     profiles: ["stripe-webhook"]
     image: cloudflare/cloudflared:2026.10.0
