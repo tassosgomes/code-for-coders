@@ -3,6 +3,9 @@ js_set $origin_date signing.date;
 js_set $origin_authorization signing.authorization;
 server {
     listen 8080;
+    # O Cloudflare Tunnel repassa /media/... sem remover o prefixo (o Caddy o remove).
+    # Sem flag, para os set abaixo ainda lerem o $uri reescrito.
+    rewrite ^/media(/.*)$ $1;
     set $origin_host "${MEDIA_EDGE_S3_HOST}";
     set $origin_access_key "${MEDIA_EDGE_S3_ACCESS_KEY}";
     set $origin_secret_key "${MEDIA_EDGE_S3_SECRET_KEY}";
