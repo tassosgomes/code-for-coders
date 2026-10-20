@@ -33,79 +33,94 @@ public sealed class AuthenticateStaffSession(
         var normalizedEmail = input.Email.Trim().ToLowerInvariant();
         var keyHash = fingerprinter.HashKey(input.IdempotencyKey);
         var fingerprint = fingerprinter.Fingerprint(string.Empty, normalizedEmail, input.Password);
-        var existing = await sessionStore.FindIdempotencyAsync(
-            input.TenantId,
-            OperationId,
-            keyHash,
-            cancellationToken);
-        if (existing is not null && !existing.IsExpired(now))
-        {
-            return await ResolveReplayAsync(existing, fingerprint, now, cancellationToken);
-        }
 
-        var (account, credential) = await sessionStore.FindInternalCredentialAsync(
-            input.TenantId,
-            normalizedEmail,
-            cancellationToken);
-        var passwordIsValid = passwordHasher.Verify(input.Password, credential?.PasswordHash ?? DummyPasswordHash);
-        if (account is null || credential is null || !passwordIsValid)
+        // Each attempt re-reads the credential and re-verifies the password. The commit touches the
+        // authenticated credential under its xmin concurrency token (RACE #8): if a password reset
+        // committed in between, the commit throws ConcurrentWriteException and the retry re-reads the
+        // now-current credential, so a login against a superseded password can never persist a staff
+        // session. A benign conflict (another concurrent login touching the same unchanged credential)
+        // re-verifies successfully and succeeds on the next attempt.
+        for (var attempt = 1; ; attempt++)
         {
-            return await SaveRejectedAttemptAsync(
-                existing,
-                input.TenantId,
-                keyHash,
-                fingerprint,
-                UnauthorizedStatusCode,
-                "INVALID_CREDENTIALS",
-                "Internal actor credentials are invalid.",
-                now,
-                cancellationToken);
-        }
-
-        var expiresAt = now.AddMinutes(sessionOptions.Value.InactivityTimeoutMinutes);
-        var session = StaffSession.Create(
-            Guid.CreateVersion7(now),
-            input.TenantId,
-            account.Id,
-            now,
-            expiresAt);
-        var attempt = CreateAttempt(
-            existing,
-            input.TenantId,
-            keyHash,
-            fingerprint,
-            OkStatusCode,
-            null,
-            null,
-            now);
-        attempt.SetStaffSessionId(session.Id);
-        sessionStore.AddStaffSession(session);
-        if (existing is null)
-        {
-            sessionStore.AddIdempotencyRecord(attempt);
-        }
-
-        try
-        {
-            await unitOfWork.CommitAsync(cancellationToken);
-        }
-        catch (RegistrationWriteConflictException)
-        {
-            var winner = await sessionStore.FindIdempotencyAsync(
+            var existing = await sessionStore.FindIdempotencyAsync(
                 input.TenantId,
                 OperationId,
                 keyHash,
                 cancellationToken);
-            if (winner is not null && !winner.IsExpired(now))
+            if (existing is not null && !existing.IsExpired(now))
             {
-                return await ResolveReplayAsync(winner, fingerprint, now, cancellationToken);
+                return await ResolveReplayAsync(existing, fingerprint, now, cancellationToken);
             }
 
-            throw;
-        }
+            var (account, credential) = await sessionStore.FindInternalCredentialAsync(
+                input.TenantId,
+                normalizedEmail,
+                cancellationToken);
+            var passwordIsValid = passwordHasher.Verify(input.Password, credential?.PasswordHash ?? DummyPasswordHash);
+            if (account is null || credential is null || !passwordIsValid)
+            {
+                return await SaveRejectedAttemptAsync(
+                    existing,
+                    input.TenantId,
+                    keyHash,
+                    fingerprint,
+                    UnauthorizedStatusCode,
+                    "INVALID_CREDENTIALS",
+                    "Internal actor credentials are invalid.",
+                    now,
+                    cancellationToken);
+            }
 
-        var roles = await sessionStore.GetStaffRolesAsync(input.TenantId, account.Id, cancellationToken);
-        return ToOutput(session.Id, account.Id, account.Name, roles, expiresAt);
+            var expiresAt = now.AddMinutes(sessionOptions.Value.InactivityTimeoutMinutes);
+            var session = StaffSession.Create(
+                Guid.CreateVersion7(now),
+                input.TenantId,
+                account.Id,
+                now,
+                expiresAt);
+            var record = CreateAttempt(
+                existing,
+                input.TenantId,
+                keyHash,
+                fingerprint,
+                OkStatusCode,
+                null,
+                null,
+                now);
+            record.SetStaffSessionId(session.Id);
+            sessionStore.AddStaffSession(session);
+            if (existing is null)
+            {
+                sessionStore.AddIdempotencyRecord(record);
+            }
+
+            sessionStore.TouchAuthenticatedCredential(credential);
+
+            try
+            {
+                await unitOfWork.CommitAsync(cancellationToken);
+                var roles = await sessionStore.GetStaffRolesAsync(input.TenantId, account.Id, cancellationToken);
+                return ToOutput(session.Id, account.Id, account.Name, roles, expiresAt);
+            }
+            catch (RegistrationWriteConflictException)
+            {
+                var winner = await sessionStore.FindIdempotencyAsync(
+                    input.TenantId,
+                    OperationId,
+                    keyHash,
+                    cancellationToken);
+                if (winner is not null && !winner.IsExpired(now))
+                {
+                    return await ResolveReplayAsync(winner, fingerprint, now, cancellationToken);
+                }
+
+                throw;
+            }
+            catch (ConcurrentWriteException) when (attempt < MaxConcurrencyAttempts)
+            {
+                // The credential changed under us. Loop: re-read and re-verify before retrying.
+            }
+        }
     }
 
     private async Task<AuthenticateStaffSessionOutput> ResolveReplayAsync(
@@ -230,6 +245,7 @@ public sealed class AuthenticateStaffSession(
     private static StaffSessionException Failure(int statusCode, string code, string title)
         => new(statusCode, code, title, title);
 
+    private const int MaxConcurrencyAttempts = 3;
     private const int OkStatusCode = 200;
     private const int UnauthorizedStatusCode = 401;
     private const int UnprocessableEntityStatusCode = 422;

@@ -198,5 +198,10 @@ public sealed class IdentitySessionStore(IdentityDbContext dbContext) : IIdentit
 
     public void AddStaffSession(StaffSession session) => dbContext.StaffSessions.Add(session);
 
+    public void TouchAuthenticatedCredential(Credential credential)
+        // Re-stages the credential row with no data change so the UPDATE carries its xmin
+        // concurrency token in the WHERE clause; a credential changed meanwhile fails the commit.
+        => dbContext.Entry(credential).Property(item => item.PasswordHash).IsModified = true;
+
     public void AddIdempotencyRecord(IdempotencyRecord record) => dbContext.IdempotencyRecords.Add(record);
 }

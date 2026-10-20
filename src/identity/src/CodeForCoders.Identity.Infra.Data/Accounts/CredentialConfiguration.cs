@@ -16,6 +16,11 @@ public sealed class CredentialConfiguration : IEntityTypeConfiguration<Credentia
         builder.Property(credential => credential.AccountId).HasColumnName("account_id").HasColumnType("uuid").IsRequired();
         builder.Property(credential => credential.PasswordHash).HasColumnName("password_hash").HasColumnType("text").IsRequired();
         builder.Property(credential => credential.CreatedOn).HasColumnName("created_on").HasColumnType("timestamp with time zone").IsRequired();
+        // Optimistic concurrency guard (RACE #8): a password reset/change bumps the row's xmin. A
+        // login that authenticated against the previous hash touches this row under the xmin it read,
+        // so its commit fails if the credential changed meanwhile and the session never materializes.
+        // The uint row-version shadow property maps to PostgreSQL's xmin system column (no DDL).
+        builder.Property<uint>("xmin").IsRowVersion();
         builder.HasIndex(credential => new { credential.TenantId, credential.AccountId })
             .HasDatabaseName("ux_credentials_tenant_id_account_id")
             .IsUnique();

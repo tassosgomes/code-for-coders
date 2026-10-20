@@ -49,6 +49,11 @@ public sealed class StaffInvitationConfiguration : IEntityTypeConfiguration<Staf
         builder.Property(invitation => invitation.SupersededOn)
             .HasColumnName("superseded_on")
             .HasColumnType("timestamp with time zone");
+        // Optimistic concurrency guard (RACE #7): a concurrent supersession bumps the row's xmin, so
+        // an acceptance that loaded the invitation as still pending fails its UPDATE instead of
+        // granting a role for an invitation that was superseded after the acceptability check. The
+        // uint row-version shadow property maps to PostgreSQL's xmin system column (no DDL).
+        builder.Property<uint>("xmin").IsRowVersion();
         builder.HasAlternateKey(invitation => new { invitation.TenantId, invitation.Id })
             .HasName("ak_staff_invitations_tenant_id_id");
         builder.HasIndex(invitation => new { invitation.TenantId, invitation.NormalizedEmail })

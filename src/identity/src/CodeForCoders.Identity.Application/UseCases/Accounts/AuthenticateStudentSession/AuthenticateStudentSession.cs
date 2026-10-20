@@ -33,93 +33,108 @@ public sealed class AuthenticateStudentSession(
         var normalizedEmail = input.Email.Trim().ToLowerInvariant();
         var keyHash = fingerprinter.HashKey(input.IdempotencyKey);
         var fingerprint = fingerprinter.Fingerprint(string.Empty, normalizedEmail, input.Password);
-        var existing = await sessionStore.FindIdempotencyAsync(
-            input.TenantId,
-            OperationId,
-            keyHash,
-            cancellationToken);
-        if (existing is not null && !existing.IsExpired(now))
-        {
-            return await ResolveReplayAsync(existing, fingerprint, now, cancellationToken);
-        }
 
-        var (account, credential) = await sessionStore.FindStudentCredentialAsync(
-            input.TenantId,
-            normalizedEmail,
-            cancellationToken);
-        var passwordIsValid = passwordHasher.Verify(input.Password, credential?.PasswordHash ?? DummyPasswordHash);
-        if (account is null || credential is null || account.Type != AccountType.Student
-            || account.DeactivatedOn is not null || !passwordIsValid)
+        // Each attempt re-reads the credential and re-verifies the password. The commit touches the
+        // authenticated credential under its xmin concurrency token (RACE #8): if a password reset
+        // or change committed in between, the commit throws ConcurrentWriteException and the retry
+        // re-reads the now-current credential, so a login against a superseded password can never
+        // persist a session. A benign conflict (another concurrent login touching the same unchanged
+        // credential) re-verifies successfully and succeeds on the next attempt.
+        for (var attempt = 1; ; attempt++)
         {
-            return await SaveRejectedAttemptAsync(
-                existing,
-                input.TenantId,
-                keyHash,
-                fingerprint,
-                StatusCodesUnauthorized,
-                "INVALID_CREDENTIALS",
-                "Student credentials are invalid.",
-                now,
-                cancellationToken);
-        }
-
-        if (!account.IsConfirmed)
-        {
-            return await SaveRejectedAttemptAsync(
-                existing,
-                input.TenantId,
-                keyHash,
-                fingerprint,
-                StatusCodesUnprocessableEntity,
-                "EMAIL_NOT_CONFIRMED",
-                "The student account email address has not been confirmed.",
-                now,
-                cancellationToken);
-        }
-
-        var expiresOn = now.AddMinutes(sessionOptions.Value.InactivityTimeoutMinutes);
-        var session = StudentSession.Create(
-            Guid.CreateVersion7(now),
-            input.TenantId,
-            account.Id,
-            now,
-            expiresOn);
-        var attempt = CreateAttempt(
-            existing,
-            input.TenantId,
-            keyHash,
-            fingerprint,
-            StatusCodesOk,
-            null,
-            null,
-            now);
-        attempt.SetStudentSessionId(session.Id);
-        sessionStore.AddSession(session);
-        if (existing is null)
-        {
-            sessionStore.AddIdempotencyRecord(attempt);
-        }
-
-        try
-        {
-            await unitOfWork.CommitAsync(cancellationToken);
-        }
-        catch (RegistrationWriteConflictException)
-        {
-            var winner = await sessionStore.FindIdempotencyAsync(
+            var existing = await sessionStore.FindIdempotencyAsync(
                 input.TenantId,
                 OperationId,
                 keyHash,
                 cancellationToken);
-            if (winner is not null && !winner.IsExpired(now))
+            if (existing is not null && !existing.IsExpired(now))
             {
-                return await ResolveReplayAsync(winner, fingerprint, now, cancellationToken);
+                return await ResolveReplayAsync(existing, fingerprint, now, cancellationToken);
             }
 
-            throw;
-        }
+            var (account, credential) = await sessionStore.FindStudentCredentialAsync(
+                input.TenantId,
+                normalizedEmail,
+                cancellationToken);
+            var passwordIsValid = passwordHasher.Verify(input.Password, credential?.PasswordHash ?? DummyPasswordHash);
+            if (account is null || credential is null || account.Type != AccountType.Student
+                || account.DeactivatedOn is not null || !passwordIsValid)
+            {
+                return await SaveRejectedAttemptAsync(
+                    existing,
+                    input.TenantId,
+                    keyHash,
+                    fingerprint,
+                    StatusCodesUnauthorized,
+                    "INVALID_CREDENTIALS",
+                    "Student credentials are invalid.",
+                    now,
+                    cancellationToken);
+            }
 
-        return ToOutput(session.Id, account.Id, account.Name, expiresOn);
+            if (!account.IsConfirmed)
+            {
+                return await SaveRejectedAttemptAsync(
+                    existing,
+                    input.TenantId,
+                    keyHash,
+                    fingerprint,
+                    StatusCodesUnprocessableEntity,
+                    "EMAIL_NOT_CONFIRMED",
+                    "The student account email address has not been confirmed.",
+                    now,
+                    cancellationToken);
+            }
+
+            var expiresOn = now.AddMinutes(sessionOptions.Value.InactivityTimeoutMinutes);
+            var session = StudentSession.Create(
+                Guid.CreateVersion7(now),
+                input.TenantId,
+                account.Id,
+                now,
+                expiresOn);
+            var record = CreateAttempt(
+                existing,
+                input.TenantId,
+                keyHash,
+                fingerprint,
+                StatusCodesOk,
+                null,
+                null,
+                now);
+            record.SetStudentSessionId(session.Id);
+            sessionStore.AddSession(session);
+            if (existing is null)
+            {
+                sessionStore.AddIdempotencyRecord(record);
+            }
+
+            sessionStore.TouchAuthenticatedCredential(credential);
+
+            try
+            {
+                await unitOfWork.CommitAsync(cancellationToken);
+                return ToOutput(session.Id, account.Id, account.Name, expiresOn);
+            }
+            catch (RegistrationWriteConflictException)
+            {
+                var winner = await sessionStore.FindIdempotencyAsync(
+                    input.TenantId,
+                    OperationId,
+                    keyHash,
+                    cancellationToken);
+                if (winner is not null && !winner.IsExpired(now))
+                {
+                    return await ResolveReplayAsync(winner, fingerprint, now, cancellationToken);
+                }
+
+                throw;
+            }
+            catch (ConcurrentWriteException) when (attempt < MaxConcurrencyAttempts)
+            {
+                // The credential changed under us. Loop: re-read and re-verify before retrying.
+            }
+        }
     }
 
     private async Task<AuthenticateStudentSessionOutput> ResolveReplayAsync(
@@ -240,4 +255,5 @@ public sealed class AuthenticateStudentSession(
     private const int StatusCodesOk = 200;
     private const int StatusCodesUnauthorized = 401;
     private const int StatusCodesUnprocessableEntity = 422;
+    private const int MaxConcurrencyAttempts = 3;
 }

@@ -21,6 +21,7 @@ public sealed class ChangeStudentPassword(
     private const int UnauthorizedStatusCode = 401;
     private const string RejectedCode = "PASSWORD_CHANGE_REJECTED";
     private const string RejectedTitle = "The current password or new password is invalid.";
+    private const int MaxConcurrencyAttempts = 3;
     private static readonly TimeSpan IdempotencyWindow = TimeSpan.FromHours(24);
 
     public async Task<ChangeStudentPasswordOutput> ExecuteAsync(
@@ -28,7 +29,14 @@ public sealed class ChangeStudentPassword(
         CancellationToken cancellationToken)
     {
         await validator.ValidateAndThrowAsync(input, cancellationToken);
+        return await ChangeAsync(input, 1, cancellationToken);
+    }
 
+    private async Task<ChangeStudentPasswordOutput> ChangeAsync(
+        ChangeStudentPasswordInput input,
+        int attempt,
+        CancellationToken cancellationToken)
+    {
         var now = timeProvider.GetUtcNow();
         var account = await FindActiveAccountAsync(input.TenantId, input.SessionId, now, cancellationToken);
         var values = new ChangeValues(
@@ -88,6 +96,14 @@ public sealed class ChangeStudentPassword(
         {
             await unitOfWork.CommitAsync(cancellationToken);
             return new ChangeStudentPasswordOutput(204);
+        }
+        catch (ConcurrentWriteException) when (attempt < MaxConcurrencyAttempts)
+        {
+            // A concurrent login re-stages the credential under its xmin token so it cannot mint a
+            // session from a superseded password; that conflicts with this write even when nothing
+            // competed with the change itself. Re-read and re-apply: a real competing change is then
+            // answered from the fresh state (current password no longer matches, or idempotent replay).
+            return await ChangeAsync(input, attempt + 1, cancellationToken);
         }
         catch (ConcurrentWriteException)
         {
