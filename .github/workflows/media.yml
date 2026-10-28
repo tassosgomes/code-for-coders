@@ -43,4 +43,4 @@ jobs:
       coverage-threshold: 70
       build-container: true
       image-name: code-4-coders-media
-      security-mode: observe
+      security-mode: enforce
