@@ -93,11 +93,19 @@ export class AdminApi {
     return this.json(await this.write('post', `/courses/${courseId}/modules`, { title }), 'criar módulo');
   }
 
-  async createLesson(courseId: string, moduleId: string, title: string, videoId: string): Promise<CourseDetail> {
-    return this.json(
-      await this.write('post', `/courses/${courseId}/modules/${moduleId}/lessons`, { title, description: `${title} (e2e)`, videoId }),
-      'criar aula',
-    );
+  /**
+   * O vídeo "pronto" no media chega ao learning por evento; até a projeção chegar, a criação da aula responde
+   * 422 VIDEO_NOT_AVAILABLE. Espera a projeção em vez de falhar o cenário.
+   */
+  async createLesson(courseId: string, moduleId: string, title: string, videoId: string, timeoutMs = 60_000): Promise<CourseDetail> {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const response = await this.write('post', `/courses/${courseId}/modules/${moduleId}/lessons`, { title, description: `${title} (e2e)`, videoId });
+      if (response.ok()) return (await response.json()) as CourseDetail;
+      const text = await response.text();
+      if (!text.includes('VIDEO_NOT_AVAILABLE') || Date.now() > deadline) throw new Error(`criar aula: HTTP ${response.status()} ${text}`);
+      await sleep(1_000);
+    }
   }
 
   async publishCourse(courseId: string, draftRevision: number) {

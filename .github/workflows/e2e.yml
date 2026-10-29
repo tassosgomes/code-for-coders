@@ -6,6 +6,9 @@ name: e2e
 # Não roda em pull_request e não é check obrigatório: roda a cada merge na main que toca SPAs, BFFs ou APIs
 # envolvidas e, se falhar, abre (ou comenta em) uma issue com o label `e2e-failure`. Para rodar numa branch de
 # PR, use workflow_dispatch (repeat=10 mede estabilidade).
+#
+# Quando a branch fixa `dev` existir (fluxo efêmera -> dev -> main): `dev` entra em `push.branches` e o e2e passa
+# a rodar também em `pull_request` com `branches: [main]` (PR de promoção dev -> main).
 on:
   push:
     branches: [main]
