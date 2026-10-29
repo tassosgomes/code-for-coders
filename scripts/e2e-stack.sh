@@ -53,7 +53,15 @@ apply_migrations() {
   cd "$repository_root"
   dotnet tool restore >/dev/null
 
-  # Cada serviço compila só o próprio projeto: aplicar em paralelo reduz o tempo sem disputar estado.
+  # `dotnet ef` não restaura os pacotes. O restore é sequencial (compartilha o cache de pacotes) e deixa as
+  # migrations, que só compilam o próprio projeto, rodarem em paralelo sem disputar estado.
+  local solution
+  for solution in src/*/CodeForCoders.*.slnx; do
+    case "$solution" in src/contract-testing/*|src/media-edge/*) continue ;; esac
+    log "Restaurando pacotes de $solution..."
+    dotnet restore "$solution" --verbosity quiet
+  done
+
   local pids=() services=() target service project database role variable
   for target in "${migration_targets[@]}"; do
     IFS='|' read -r service project database role variable <<<"$target"
