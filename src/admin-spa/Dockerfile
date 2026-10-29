@@ -20,6 +20,9 @@ FROM nginxinc/nginx-unprivileged:alpine
 
 USER root
 
+# Aplica os patches de segurança do Alpine publicados depois do build da imagem base (TASK-42.1).
+RUN apk upgrade --no-cache
+
 ARG BASE_PATH=/admin/
 ENV BASE_PATH=${BASE_PATH}
 
