@@ -1,0 +1,8 @@
+name: tmp-falha
+on:
+  pull_request:
+jobs:
+  falha:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
