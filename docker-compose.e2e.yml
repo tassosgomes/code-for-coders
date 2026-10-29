@@ -1,0 +1,62 @@
+# Override da suíte e2e (TASK-42.3). Troca o Stripe real por um servidor falso que assina o webhook
+# com o segredo abaixo. Funciona sobre o modo local e o `--remote`:
+#   APPS_EXTRA_COMPOSE_FILES=docker-compose.e2e.yml scripts/apps.sh start [--remote]
+# Os valores abaixo são de teste; nenhuma chave real passa por aqui.
+
+x-e2e-stripe-secret: &e2e-stripe-secret whsec_e2e_fake_signing_secret
+
+services:
+  fake-stripe:
+    image: node:24-alpine
+    container_name: code-for-coders-fake-stripe
+    working_dir: /app
+    command: ["node", "server.mjs"]
+    environment:
+      PORT: "8080"
+      PUBLIC_URL: https://localhost:5199
+      TLS_CERT: /tls/cert.pem
+      TLS_KEY: /tls/key.pem
+      BILLING_WEBHOOK_URL: http://billing:8080/webhooks/v1/stripe/events
+      STRIPE_WEBHOOK_SECRET: *e2e-stripe-secret
+    volumes:
+      - ./e2e/fake-stripe:/app:ro
+      # Certificado autoassinado gerado por e2e/fake-stripe/make-cert.sh (o commerce só aceita paymentUrl https).
+      - ./e2e/.state/tls:/tls:ro
+    ports:
+      - "5199:8443"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  billing:
+    environment:
+      Stripe__BaseUrl: http://fake-stripe:8080/
+      Stripe__SecretKey: sk_test_e2e_fake
+      Stripe__WebhookSigningSecret: *e2e-stripe-secret
+    depends_on:
+      fake-stripe:
+        condition: service_healthy
+
+  # Os fluxos anônimos (cadastro, login, recuperação) são repetidos centenas de vezes pela suíte a
+  # partir de um único IP; o limite por IP de produção (ADR-0023) mascararia as falhas reais.
+  # Chaves de teste oficiais do Cloudflare Turnstile (sempre aprovam), fixadas aqui para que um .env com
+  # chaves reais (hosts de deploy) nunca faça a suíte falhar nem dependa de segredo.
+  bff-student:
+    environment:
+      AnonymousRateLimit__PermitLimit: "10000"
+      Turnstile__SecretKey: 1x0000000000000000000000000000000AA
+
+  bff-admin:
+    environment:
+      AnonymousRateLimit__PermitLimit: "10000"
+      Turnstile__SecretKey: 1x0000000000000000000000000000000AA
+
+  student-spa:
+    environment:
+      TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+
+  admin-spa:
+    environment:
+      TURNSTILE_SITE_KEY: 1x00000000000000000000AA

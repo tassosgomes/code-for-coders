@@ -1,0 +1,118 @@
+name: e2e
+
+# Suíte e2e Playwright dos fluxos críticos (TASK-42.3): login do aluno, compra avulsa, aula com player, login e
+# convite no backoffice. Sobe a stack efêmera completa (scripts/e2e-stack.sh) e a derruba ao final.
+#
+# O workflow dispara em todo PR e o job decide, por dentro, se o PR toca algo que a suíte exercita. Assim o check
+# "Playwright e2e" sempre reporta (verde quando o PR é irrelevante) e pode ser exigido na branch protection sem
+# travar PRs que não tocam SPAs, BFFs ou APIs envolvidas.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      repeat:
+        description: 'Repetições de cada teste (--repeat-each); use 10 para medir estabilidade.'
+        required: false
+        default: '1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  DOCKER_BUILDKIT: '1'
+
+jobs:
+  e2e:
+    name: Playwright e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Decidir se o PR toca algo que a suíte exercita
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          relevant='^(src/(student-spa|admin-spa|bff-student|bff-admin|identity|learning|media|media-edge|commerce|billing|notification|audit)/|e2e/|docker-compose[^/]*\.yml$|scripts/(apps|e2e-stack|generate-local-env)\.sh$|scripts/init-local-databases\.sql$|Directory\.[^/]+$|global\.json$|nuget\.config$|BannedSymbols\.txt$|\.config/dotnet-tools\.json$|\.github/workflows/e2e\.yml$)'
+          if [[ "$EVENT" != pull_request ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "Evento $EVENT: a suíte roda sempre."
+            exit 0
+          fi
+          changed="$(git diff --name-only "$BASE_SHA"...HEAD)"
+          if grep -Eq "$relevant" <<<"$changed"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "O PR toca arquivos exercitados pela suíte:"
+            grep -E "$relevant" <<<"$changed" | head -20
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Nenhum arquivo exercitado pela suíte mudou; o check passa sem subir a stack."
+          fi
+
+      - name: Instalar o SDK .NET (migrations)
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Instalar o Node
+        if: steps.scope.outputs.run == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Instalar as dependências da suíte
+        if: steps.scope.outputs.run == 'true'
+        working-directory: e2e
+        run: |
+          npm ci
+          npx tsc --noEmit
+          # O vídeo da aula é H.264: a suíte usa o Google Chrome (já presente no runner), não o Chromium do Playwright.
+          google-chrome --version
+
+      - name: Subir a stack efêmera
+        if: steps.scope.outputs.run == 'true'
+        run: scripts/e2e-stack.sh up
+
+      - name: Rodar a suíte
+        if: steps.scope.outputs.run == 'true'
+        working-directory: e2e
+        env:
+          CI: 'true'
+          REPEAT: ${{ github.event.inputs.repeat || '1' }}
+        run: npx playwright test --repeat-each="$REPEAT"
+
+      - name: Logs da stack (falha)
+        if: failure() && steps.scope.outputs.run == 'true'
+        run: scripts/e2e-stack.sh logs
+
+      - name: Publicar relatório e traces
+        if: always() && steps.scope.outputs.run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Derrubar a stack
+        if: always() && steps.scope.outputs.run == 'true'
+        run: scripts/e2e-stack.sh down
