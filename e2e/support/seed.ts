@@ -40,7 +40,7 @@ const ensureAdmin = async (): Promise<Seed['admin']> => {
 
   const email = `e2e-admin-${Date.now()}@example.test`;
   const result = spawnSync(
-    'docker',
+    env.dockerBin,
     ['exec', env.identityContainer, 'dotnet', 'CodeForCoders.Identity.Api.dll', 'provision-first-admin', '--tenant', env.tenantId, '--email', email, '--name', 'Administrador E2E'],
     { encoding: 'utf8' },
   );

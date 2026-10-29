@@ -39,6 +39,8 @@ export const env = {
 
   tenantId: process.env.E2E_TENANT_ID ?? process.env.STUDENT_TENANT_ID ?? '00000000-0000-7000-8000-000000000001',
   identityContainer: process.env.E2E_IDENTITY_CONTAINER ?? 'code-for-coders-identity',
+  /** Caminho absoluto do docker: não depende do PATH do processo (Sonar S4036). */
+  dockerBin: process.env.E2E_DOCKER_BIN ?? '/usr/bin/docker',
 
   /**
    * Administrador pré-existente. Sem estas variáveis, o setup provisiona o primeiro administrador do tenant
