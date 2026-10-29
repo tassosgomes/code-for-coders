@@ -60,7 +60,7 @@ const PAY_PAGE = `<!doctype html>
     fetch('/pay/' + id + '/data').then((r) => r.json()).then((data) => {
       document.getElementById('description').textContent = data.description;
       document.getElementById('amount').textContent = data.amount;
-      if (/^https?:\/\//.test(data.cancelUrl)) document.getElementById('back').href = data.cancelUrl;
+      if (data.cancelUrl.startsWith('http')) document.getElementById('back').href = data.cancelUrl;
     });
   </script>
 </body>
