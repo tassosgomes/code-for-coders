@@ -38,7 +38,6 @@ const ensureAdmin = async (): Promise<Seed['admin']> => {
   }
 
   const email = `e2e-admin-${Date.now()}@example.test`;
-  const startedAt = new Date(Date.now() - 2_000);
   const result = spawnSync(
     'docker',
     ['exec', env.identityContainer, 'dotnet', 'CodeForCoders.Identity.Api.dll', 'provision-first-admin', '--tenant', env.tenantId, '--email', email, '--name', 'Administrador E2E'],
@@ -50,7 +49,7 @@ const ensureAdmin = async (): Promise<Seed['admin']> => {
     throw new Error('O tenant já tem administrador. Informe E2E_ADMIN_EMAIL e E2E_ADMIN_PASSWORD.');
   }
 
-  const body = await waitForMail({ to: email, subjectIncludes: '', since: startedAt });
+  const body = await waitForMail({ to: email, subjectIncludes: '' });
   const token = new URL(extractLink(body, '/redefinir-senha')).searchParams.get('token');
   if (!token) throw new Error('O e-mail de definição de senha não trouxe token.');
 
@@ -70,9 +69,8 @@ const ensureAdmin = async (): Promise<Seed['admin']> => {
  */
 const ensureEditor = async (admin: AdminApi): Promise<Seed['editor']> => {
   const email = `e2e-editor-${Date.now()}@example.test`;
-  const since = new Date(Date.now() - 2_000);
   await admin.inviteStaff(email, 'professor', 'Conta de montagem do cenário da suíte e2e');
-  const body = await waitForMail({ to: email, subjectIncludes: '', since });
+  const body = await waitForMail({ to: email, subjectIncludes: '' });
   const token = new URL(extractLink(body, '/convite')).searchParams.get('token');
   if (!token) throw new Error('O e-mail de convite não trouxe token.');
   const session = await AdminApi.acceptInvitation(token, 'Editor E2E', STRONG_PASSWORD);

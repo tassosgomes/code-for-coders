@@ -17,7 +17,6 @@ export const newStudent = (label: string): Student => ({
 
 /** Cria a conta pela API do BFF (sem UI) e confirma o e-mail pelo link recebido. */
 export const registerConfirmedStudent = async (student: Student): Promise<void> => {
-  const since = new Date(Date.now() - 2_000);
   const response = await fetch(`${env.studentApiOrigin}/api/v1/student-accounts`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'idempotency-key': randomUUID(), 'x-captcha-token': env.turnstileDummyToken, origin: env.studentOrigin },
@@ -25,7 +24,7 @@ export const registerConfirmedStudent = async (student: Student): Promise<void> 
   });
   if (!response.ok) throw new Error(`Cadastro do aluno: HTTP ${response.status} ${await response.text()}`);
 
-  const mail = await waitForMail({ to: student.email, subjectIncludes: 'Confirme', since });
+  const mail = await waitForMail({ to: student.email, subjectIncludes: 'Confirme' });
   const token = new URL(extractLink(mail, '/confirm-account')).searchParams.get('token');
   if (!token) throw new Error('O e-mail de confirmação não trouxe token.');
   const confirmation = await fetch(`${env.studentApiOrigin}/api/v1/account-confirmations`, {

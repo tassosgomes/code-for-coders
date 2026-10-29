@@ -22,24 +22,21 @@ const sleep = (milliseconds: number) => new Promise((resolve) => setTimeout(reso
 export type MailQuery = {
   to: string;
   subjectIncludes: string;
-  /** Ignora mensagens recebidas antes deste instante (evita ler e-mail antigo do mesmo destinatário). */
-  since?: Date;
   timeoutMs?: number;
 };
 
 /** Espera o e-mail chegar ao smtp4dev e devolve o corpo (HTML decodificado + texto). */
-export const waitForMail = async ({ to, subjectIncludes, since, timeoutMs = 60_000 }: MailQuery): Promise<string> => {
+export const waitForMail = async ({ to, subjectIncludes, timeoutMs = 60_000 }: MailQuery): Promise<string> => {
   const deadline = Date.now() + timeoutMs;
   const recipient = to.toLowerCase();
   let lastError: unknown;
   while (Date.now() < deadline) {
     try {
-      const page = await getJson<{ results: MessageSummary[] }>('/api/messages?pageSize=100');
+      const page = await getJson<{ results: MessageSummary[] }>(`/api/messages?pageSize=50&searchTerms=${encodeURIComponent(to)}`);
       const message = page.results.find(
         (item) =>
           item.to.some((address) => address.toLowerCase() === recipient) &&
-          item.subject.toLowerCase().includes(subjectIncludes.toLowerCase()) &&
-          (!since || new Date(item.receivedDate) >= since),
+          item.subject.toLowerCase().includes(subjectIncludes.toLowerCase()),
       );
       if (message) {
         const [html, plain] = await Promise.all([

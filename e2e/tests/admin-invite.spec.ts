@@ -9,7 +9,6 @@ test.describe('Backoffice: convite da equipe', () => {
   test('o administrador convida uma pessoa e ela aceita o convite', async ({ page }) => {
     const { admin } = await readSeed();
     const invitee = `e2e-convite-${Date.now()}@example.test`;
-    const since = new Date(Date.now() - 2_000);
 
     await signInStaff(page, admin.email, admin.password);
     await page.goto(adminUrl('/acessos'));
@@ -28,7 +27,7 @@ test.describe('Backoffice: convite da equipe', () => {
     await expect(page.getByText(invitee)).toBeVisible();
 
     // O convidado recebe o link por e-mail, define o nome e a senha e já entra com o papel oferecido.
-    const mail = await waitForMail({ to: invitee, subjectIncludes: '', since });
+    const mail = await waitForMail({ to: invitee, subjectIncludes: '' });
     const invitationPage = await page.context().newPage();
     await invitationPage.goto(extractLink(mail, '/convite'));
     await expect(invitationPage.getByRole('heading', { name: 'Você foi convidado para a equipe' })).toBeVisible();
@@ -43,7 +42,6 @@ test.describe('Backoffice: convite da equipe', () => {
   test('convite já usado não vale mais', async ({ page }) => {
     const { admin } = await readSeed();
     const invitee = `e2e-convite-usado-${Date.now()}@example.test`;
-    const since = new Date(Date.now() - 2_000);
 
     await signInStaff(page, admin.email, admin.password);
     await page.goto(adminUrl('/acessos'));
@@ -54,7 +52,7 @@ test.describe('Backoffice: convite da equipe', () => {
     await dialog.getByRole('button', { name: 'Enviar convite' }).click();
     await expect(page.getByRole('dialog', { name: 'Convite enviado' })).toBeVisible();
 
-    const link = extractLink(await waitForMail({ to: invitee, subjectIncludes: '', since }), '/convite');
+    const link = extractLink(await waitForMail({ to: invitee, subjectIncludes: '' }), '/convite');
     const first = await page.context().newPage();
     await first.goto(link);
     await first.getByLabel('Seu nome').fill('Primeiro Aceite E2E');

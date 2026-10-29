@@ -8,7 +8,6 @@ import { newStudent, registerConfirmedStudent, signInStudent } from '../support/
 test.describe('Aluno: conta e login', () => {
   test('cria a conta, confirma o e-mail e entra', async ({ page }) => {
     const student = newStudent('conta');
-    const since = new Date(Date.now() - 2_000);
 
     await page.goto(studentUrl('/cadastro'));
     await expect(page.getByRole('heading', { name: 'Criar conta' })).toBeVisible();
@@ -20,7 +19,7 @@ test.describe('Aluno: conta e login', () => {
     );
 
     // O link de confirmação chega por e-mail (smtp4dev) e leva ao SPA.
-    const mail = await waitForMail({ to: student.email, subjectIncludes: 'Confirme', since });
+    const mail = await waitForMail({ to: student.email, subjectIncludes: 'Confirme' });
     await page.goto(extractLink(mail, '/confirm-account'));
     await expect(page.getByText('E-mail confirmado')).toBeVisible();
 
