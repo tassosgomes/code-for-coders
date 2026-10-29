@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -9,8 +10,8 @@ import { extractLink, waitForMail } from './mail';
 export const LESSON_TITLE = 'Aula E2E com player';
 export const OFFER_NAME = 'Acesso E2E por 12 meses';
 export const OFFER_PRICE_CENTS = 19_900;
-/** Senha que cumpre a política (8+, maiúscula, minúscula, número e símbolo). */
-export const STRONG_PASSWORD = 'Tr1lha!Segura-E2E';
+/** Senha descartável por processo que cumpre a política (8+, maiúscula, minúscula, número e símbolo). */
+export const STRONG_PASSWORD = `Aa1!${randomBytes(12).toString('base64url')}`;
 
 export type Seed = {
   admin: { email: string; password: string };

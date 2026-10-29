@@ -12,7 +12,7 @@
 //   TLS_PORT / TLS_CERT / TLS_KEY  porta HTTPS (padrão 8443) e certificado autoassinado; a página de pagamento
 //                              precisa de https, porque o commerce recusa `paymentUrl` que não seja https
 //   PUBLIC_URL                 URL (https) da página de pagamento vista pelo navegador (padrão https://localhost:5199)
-//   BILLING_WEBHOOK_URL        destino do webhook (padrão http://billing:8080/webhooks/v1/stripe/events)
+//   BILLING_WEBHOOK_URL        destino do webhook (definido em docker-compose.e2e.yml)
 //   STRIPE_WEBHOOK_SECRET      segredo de assinatura (o mesmo do billing)
 import { createHmac, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -22,7 +22,7 @@ import { createServer as createSecureServer } from 'node:https';
 const port = Number(process.env.PORT ?? 8080);
 const tlsPort = Number(process.env.TLS_PORT ?? 8443);
 const publicUrl = (process.env.PUBLIC_URL ?? 'https://localhost:5199').replace(/\/$/, '');
-const webhookUrl = process.env.BILLING_WEBHOOK_URL ?? 'http://billing:8080/webhooks/v1/stripe/events';
+const webhookUrl = process.env.BILLING_WEBHOOK_URL ?? '';
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 
 /** @type {Map<string, any>} */
@@ -35,18 +35,45 @@ const json = (response, status, body) => {
   response.end(JSON.stringify(body));
 };
 
-const html = (response, status, body) => {
+// A página nunca reflete dado da requisição ou da sessão no HTML: o markup é estático e o script preenche os
+// valores com `textContent` a partir de `/pay/<id>/data`.
+const staticPage = (response, status, body) => {
   response.writeHead(status, { 'content-type': 'text/html; charset=utf-8' });
-  response.end(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pagamento de teste</title></head><body>${body}</body></html>`);
+  response.end(body);
 };
+
+const PAY_PAGE = `<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Pagamento de teste</title></head>
+<body>
+  <main>
+    <h1>Pagamento de teste</h1>
+    <p data-testid="payment-description" id="description"></p>
+    <p data-testid="payment-amount" id="amount"></p>
+    <form method="post" action="">
+      <button type="submit">Pagar com cartão de teste</button>
+    </form>
+    <p><a id="back" href="#">Voltar</a></p>
+  </main>
+  <script>
+    const id = location.pathname.split('/')[2];
+    fetch('/pay/' + id + '/data').then((r) => r.json()).then((data) => {
+      document.getElementById('description').textContent = data.description;
+      document.getElementById('amount').textContent = data.amount;
+      if (/^https?:\/\//.test(data.cancelUrl)) document.getElementById('back').href = data.cancelUrl;
+    });
+  </script>
+</body>
+</html>`;
+
+const NOT_FOUND_PAGE = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pagamento de teste</title></head><body><h1>Sessão de pagamento não encontrada</h1></body></html>';
+const WEBHOOK_FAILED_PAGE = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pagamento de teste</title></head><body><h1>Falha ao entregar o webhook</h1></body></html>';
 
 const readBody = async (request) => {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
   return Buffer.concat(chunks).toString('utf8');
 };
-
-const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const view = (session) => ({
   id: session.id,
@@ -137,17 +164,26 @@ const handleApi = async (request, response, url) => {
 };
 
 const handlePayPage = async (request, response, url) => {
-  const match = url.pathname.match(/^\/pay\/([^/]+)(\/confirm)?$/);
+  const match = url.pathname.match(/^\/pay\/([^/]+)(\/confirm|\/data)?$/);
   const session = match ? sessions.get(decodeURIComponent(match[1])) : undefined;
-  if (!session) return html(response, 404, '<h1>Sessão de pagamento não encontrada</h1>');
+  if (!session) return staticPage(response, 404, NOT_FOUND_PAGE);
 
-  if (request.method === 'POST' && match[2]) {
+  if (match[2] === '/data') {
+    return json(response, 200, {
+      description: session.description,
+      amount: `${(session.amountTotal / 100).toFixed(2)} ${session.currency.toUpperCase()}`,
+      cancelUrl: session.cancelUrl ?? '',
+    });
+  }
+
+  // O formulário envia POST para a própria URL da sessão (`action=""`), então a confirmação não depende do script.
+  if (request.method === 'POST') {
     if (session.status === 'open') {
       try {
         await deliverWebhook(session);
       } catch (error) {
         console.error('[fake-stripe]', error);
-        return html(response, 502, `<h1>Falha ao entregar o webhook</h1><pre>${escapeHtml(error.message)}</pre>`);
+        return staticPage(response, 502, WEBHOOK_FAILED_PAGE);
       }
       session.status = 'complete';
       session.paymentStatus = 'paid';
@@ -156,20 +192,11 @@ const handlePayPage = async (request, response, url) => {
     return response.end();
   }
 
-  return html(response, 200, `
-    <main>
-      <h1>Pagamento de teste</h1>
-      <p data-testid="payment-description">${escapeHtml(session.description)}</p>
-      <p data-testid="payment-amount">${(session.amountTotal / 100).toFixed(2)} ${escapeHtml(session.currency.toUpperCase())}</p>
-      <form method="post" action="/pay/${encodeURIComponent(session.id)}/confirm">
-        <button type="submit">Pagar com cartão de teste</button>
-      </form>
-      <p><a href="${escapeHtml(session.cancelUrl ?? '#')}">Voltar</a></p>
-    </main>`);
+  return staticPage(response, 200, PAY_PAGE);
 };
 
 const handle = async (request, response) => {
-  const url = new URL(request.url ?? '/', 'http://fake-stripe');
+  const url = new URL(request.url ?? '/', 'https://fake-stripe');
   try {
     if (url.pathname === '/healthz') return json(response, 200, { status: 'ok' });
     if (url.pathname.startsWith('/v1/')) return await handleApi(request, response, url);

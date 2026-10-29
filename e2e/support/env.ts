@@ -3,7 +3,11 @@ import path from 'node:path';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-const trimSlash = (value: string) => value.replace(/\/+$/, '');
+const trimSlash = (value: string) => {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === '/') end -= 1;
+  return value.slice(0, end);
+};
 
 /**
  * Configuração da suíte, toda por variável de ambiente. Os padrões são os do modo local de

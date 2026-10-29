@@ -81,8 +81,8 @@ jobs:
         if: steps.scope.outputs.run == 'true'
         working-directory: e2e
         run: |
-          npm ci
-          npx tsc --noEmit
+          npm ci --ignore-scripts
+          npm run typecheck
           # O vídeo da aula é H.264: a suíte usa o Google Chrome (já presente no runner), não o Chromium do Playwright.
           google-chrome --version
 
@@ -96,7 +96,7 @@ jobs:
         env:
           CI: 'true'
           REPEAT: ${{ github.event.inputs.repeat || '1' }}
-        run: npx playwright test --repeat-each="$REPEAT"
+        run: npm test -- --repeat-each="$REPEAT"
 
       - name: Logs da stack (falha)
         if: failure() && steps.scope.outputs.run == 'true'
