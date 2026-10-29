@@ -38,6 +38,11 @@ compose() {
   if [[ "$infrastructure_mode" == remote ]]; then
     files+=(--file "$remote_compose_file")
   fi
+  # Overrides opcionais (por exemplo docker-compose.e2e.yml), aplicados por último.
+  local extra_file
+  for extra_file in ${APPS_EXTRA_COMPOSE_FILES:-}; do
+    files+=(--file "$extra_file")
+  done
   LOCAL_DB_PASSWORD="$local_database_password" docker compose --project-directory "$repository_root" "${files[@]}" "$@"
 }
 
@@ -63,6 +68,10 @@ Options:
   --remote  Use the shared development infrastructure (docker-compose.remote.yml) instead of
             local PostgreSQL, RabbitMQ, Valkey, OTel Collector, and smtp4dev containers.
             Prepare it once with: scripts/remote-infra.sh provision && scripts/remote-infra.sh migrate
+
+Environment:
+  APPS_EXTRA_COMPOSE_FILES  Space-separated Compose override files applied last, e.g.
+                            docker-compose.e2e.yml for the e2e suite (see e2e/README.md).
 EOF
 }
 
